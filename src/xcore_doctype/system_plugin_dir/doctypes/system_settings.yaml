@@ -1,0 +1,20 @@
+# Les réglages de BASE de l'application : un seul document par organisation. Édité dans Paramètres > Général.
+# Le Desk applique le nom, le logo, la couleur et le format de date à tous les utilisateurs de l'organisation (voir preferences.py) ;
+# lire ou modifier ce document demande les grants `system:system_settings:read|write` (un administrateur).
+schema_version: 1
+name: System Settings
+label: Paramètres généraux
+module: system
+icon: cog
+single: true
+settings_group: general
+fields:
+  - { fieldname: organization_name, label: Nom de l'organisation, fieldtype: Text, description: Affiché en haut du Desk à la place de « Desk » }
+  - { fieldname: logo, label: Logo, fieldtype: Image, max_mb: 2, description: "Affiché en haut du Desk (PNG, JPEG, GIF ou WebP)" }
+  - { fieldname: brand_color, label: Couleur de l'organisation, fieldtype: Color, description: Teinte des boutons et des éléments actifs ; vide = la teinte par défaut }
+  - { fieldname: date_format, label: Format de date, fieldtype: Select, options: [JJ/MM/AAAA, AAAA-MM-JJ, MM/JJ/AAAA], default: JJ/MM/AAAA }
+layout:
+  - section: Organisation
+    columns: [[organization_name, brand_color], [logo]]
+  - section: Régional
+    columns: [[date_format]]

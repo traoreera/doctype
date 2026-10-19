@@ -1,0 +1,8 @@
+name: hr
+version: 0.1.0
+author: traoreera
+description: "Plugin PROPRIÉTAIRE du module RH : employés (photo, contrat, compte xauth), services en arborescence, congés soumettables, réglages. Presque tout est déclaré en YAML ; un hook désactive le compte d'un employé qui part."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype, auth, iam]  # `iam` : les comptes (Member) vers lesquels une fiche d'employé pointe

@@ -1,0 +1,123 @@
+app:
+  name: .
+  env: development
+  debug: true
+  secret_key: "29a887e53c268fee1900f594e707fbfea1b96594db2fe4ac48ba80b58af3e798"
+  # Les variables du `.env` de la racine (ADMIN_EMAIL, ADMIN_PASSWORD…) sont chargées par xcore lui-même : `uvicorn main:app` marche sans `make`.
+  dotenv: ./.env
+  plugin_prefix: "/app"
+  plugin_tags: []
+  server_key: "b960fddd7d6a6bc4e6770c455d2fa546ce2e70c264c123a512fb0503cec23aba"
+  server_key_iterations: 100000
+
+  fastapi:
+    title: ""
+    version: "0.1.0"
+    docs_url: "/docs"
+    redoc_url: "/redoc"
+    openapi_url: "/openapi.json"
+    redirect_slashes: true
+
+  server:
+    host: "0.0.0.0"
+    port: 8000
+    workers: 1
+    reload: true
+    log_level: "DEBUG"
+    proxy_headers: true
+    forwarded_allow_ips: "*"
+
+# Le tenant vient d'un header non authentifié : xcore-doctype le lie à un claim du principal (D17).
+# isolate_db: false car TenantAwareDB n'isole qu'en PostgreSQL ; l'isolation est la colonne tenant_id (D3).
+tenancy:
+  enabled: true
+  isolate_db: false
+
+plugins:
+  directory: ./app
+  secret_key: "b960fddd7d6a6bc4e6770c455d2fa546ce2e70c264c123a512fb0503cec23aba"
+  strict_trusted: false
+  interval: 10
+  entry_point: src/main.py
+
+services:
+  databases:
+    default:
+      # `sqlite+aio` = adaptateur asynchrone (D11). `sqlite` seul est l'adaptateur synchrone.
+      type: sqlite+aio
+      url: sqlite+aiosqlite:///./xcore.db
+      echo: false
+
+  cache:
+    backend: memory
+    ttl: 300
+    max_size: 1000
+
+  # Extensions : des services que les plugins prennent par `self.get_service("ext.<nom>")`. `email` envoie les e-mails d'xauth (invitations, mots de passe) ;
+  # sans serveur SMTP (XAUTH_SMTP_HOST dans `.env`) l'envoi est SIMULÉ : journalisé avec ses liens, jamais envoyé.
+  extensions:
+    email:
+      module: extensions.xmailler.main:EmailService
+      config:
+        smtp_host: ""        # ou XAUTH_SMTP_HOST
+        smtp_port: 587       # ou XAUTH_SMTP_PORT
+        smtp_user: ""        # ou XAUTH_SMTP_USER
+        smtp_password: ""    # ou XAUTH_SMTP_PASSWORD (de préférence dans .env)
+        from_address: noreply@example.com   # ou XAUTH_SMTP_FROM
+        from_name: XAuth     # ou XAUTH_SMTP_FROM_NAME
+        use_tls: true        # ou XAUTH_SMTP_USE_TLS
+        timeout: 10
+        max_retries: 3
+        queue_size: 100
+
+  scheduler:
+    enabled: false
+    backend: memory
+    timezone: UTC
+
+observability:
+  logging:
+    level: DEBUG
+    format: "%(asctime)s [%(levelname)s] [%(name)s] %(message)s"
+    file: log/app.log
+    max_bytes: 10485760
+    backup_count: 5
+  metrics:
+    enabled: false
+    backend: memory
+    prefix: .
+  tracing:
+    enabled: false
+    backend: noop
+    service_name: .
+    endpoint: null
+
+security:
+  allowed_imports:
+    - fastapi
+    - json
+    - re
+    - math
+    - datetime
+    - typing
+    - dataclasses
+    - enum
+    - functools
+    - collections
+    - hashlib
+    - base64
+    - asyncio
+    - logging
+    - uuid
+    - pydantic
+  forbidden_imports: []
+  rate_limit_default:
+    calls: 100
+    period_seconds: 60
+
+marketplace:
+  # Toujours inclure le schéma — utilisée telle quelle comme base d'URL HTTP
+  # par xcli et xcore.marketplace.MarketplaceClient.
+  url: "https://marketplace.xcorehub.dev"
+  timeout: 10
+  cache_ttl: 300

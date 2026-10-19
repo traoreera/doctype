@@ -1,0 +1,1501 @@
+{
+ "fields": [
+  "a",
+  "b",
+  "c",
+  "n",
+  "m",
+  "s",
+  "t",
+  "flag",
+  "type",
+  "country",
+  "credit_limit",
+  "vip",
+  "since",
+  "title"
+ ],
+ "cases": [
+  {
+   "expr": "true",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "false",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "null",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "True",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "None",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "TRUE",
+   "values": {},
+   "expect": true,
+   "note": "mots-clés insensibles à la casse"
+  },
+  {
+   "expr": "0",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "1",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "-1",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "0.0",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "0.5",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "''",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "'x'",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "'0'",
+   "values": {},
+   "expect": true,
+   "note": "la chaîne '0' est vraie, comme en JS et en Python"
+  },
+  {
+   "expr": "flag",
+   "values": {
+    "flag": true
+   },
+   "expect": true
+  },
+  {
+   "expr": "flag",
+   "values": {
+    "flag": false
+   },
+   "expect": false
+  },
+  {
+   "expr": "flag",
+   "values": {},
+   "expect": false,
+   "note": "champ absent = null"
+  },
+  {
+   "expr": "flag",
+   "values": {
+    "flag": null
+   },
+   "expect": false
+  },
+  {
+   "expr": "n",
+   "values": {
+    "n": 0
+   },
+   "expect": false
+  },
+  {
+   "expr": "n",
+   "values": {
+    "n": 3
+   },
+   "expect": true
+  },
+  {
+   "expr": "n",
+   "values": {
+    "n": 0.0
+   },
+   "expect": false
+  },
+  {
+   "expr": "s",
+   "values": {
+    "s": ""
+   },
+   "expect": false
+  },
+  {
+   "expr": "s",
+   "values": {
+    "s": "0"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s",
+   "values": {
+    "s": " "
+   },
+   "expect": true
+  },
+  {
+   "expr": "type == 'Entreprise'",
+   "values": {
+    "type": "Entreprise"
+   },
+   "expect": true
+  },
+  {
+   "expr": "type == 'Entreprise'",
+   "values": {
+    "type": "Particulier"
+   },
+   "expect": false
+  },
+  {
+   "expr": "type == 'Entreprise'",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "type != 'Entreprise'",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "type != 'Entreprise'",
+   "values": {
+    "type": "Entreprise"
+   },
+   "expect": false
+  },
+  {
+   "expr": "type == \"Entreprise\"",
+   "values": {
+    "type": "Entreprise"
+   },
+   "expect": true,
+   "note": "guillemets doubles"
+  },
+  {
+   "expr": "n == 1",
+   "values": {
+    "n": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "n == 1",
+   "values": {
+    "n": 1.0
+   },
+   "expect": true,
+   "note": "1 et 1.0 sont le même nombre"
+  },
+  {
+   "expr": "n == 1.0",
+   "values": {
+    "n": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "n == 1",
+   "values": {
+    "n": true
+   },
+   "expect": false,
+   "note": "true n'est pas 1"
+  },
+  {
+   "expr": "flag == 1",
+   "values": {
+    "flag": true
+   },
+   "expect": false
+  },
+  {
+   "expr": "flag == true",
+   "values": {
+    "flag": true
+   },
+   "expect": true
+  },
+  {
+   "expr": "flag == true",
+   "values": {
+    "flag": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "n == '1'",
+   "values": {
+    "n": 1
+   },
+   "expect": false,
+   "note": "pas de coercion"
+  },
+  {
+   "expr": "s == 1",
+   "values": {
+    "s": "1"
+   },
+   "expect": false
+  },
+  {
+   "expr": "flag == false",
+   "values": {},
+   "expect": false,
+   "note": "absent n'est pas faux"
+  },
+  {
+   "expr": "flag != false",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "n == null",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "n == null",
+   "values": {
+    "n": null
+   },
+   "expect": true
+  },
+  {
+   "expr": "n == null",
+   "values": {
+    "n": 0
+   },
+   "expect": false
+  },
+  {
+   "expr": "n != null",
+   "values": {
+    "n": 0
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == null",
+   "values": {
+    "s": ""
+   },
+   "expect": false,
+   "note": "chaîne vide n'est pas null"
+  },
+  {
+   "expr": "country == None",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "a == b",
+   "values": {
+    "a": "x",
+    "b": "x"
+   },
+   "expect": true,
+   "note": "deux champs"
+  },
+  {
+   "expr": "a == b",
+   "values": {
+    "a": "x",
+    "b": "y"
+   },
+   "expect": false
+  },
+  {
+   "expr": "a == b",
+   "values": {},
+   "expect": true,
+   "note": "null == null"
+  },
+  {
+   "expr": "a == b",
+   "values": {
+    "a": 1,
+    "b": true
+   },
+   "expect": false
+  },
+  {
+   "expr": "a != b",
+   "values": {
+    "a": 1,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "n == -3",
+   "values": {
+    "n": -3
+   },
+   "expect": true
+  },
+  {
+   "expr": "n == -0.5",
+   "values": {
+    "n": -0.5
+   },
+   "expect": true
+  },
+  {
+   "expr": "n == 9007199254740992",
+   "values": {
+    "n": 9007199254740992
+   },
+   "expect": true
+  },
+  {
+   "expr": "credit_limit > 1000",
+   "values": {
+    "credit_limit": 1500
+   },
+   "expect": true
+  },
+  {
+   "expr": "credit_limit > 1000",
+   "values": {
+    "credit_limit": 1000
+   },
+   "expect": false
+  },
+  {
+   "expr": "credit_limit >= 1000",
+   "values": {
+    "credit_limit": 1000
+   },
+   "expect": true
+  },
+  {
+   "expr": "credit_limit < 1000",
+   "values": {
+    "credit_limit": 999.99
+   },
+   "expect": true
+  },
+  {
+   "expr": "credit_limit <= 1000",
+   "values": {
+    "credit_limit": 1000.0
+   },
+   "expect": true
+  },
+  {
+   "expr": "credit_limit > 1000",
+   "values": {},
+   "expect": false,
+   "note": "null n'est comparable à rien"
+  },
+  {
+   "expr": "credit_limit < 1000",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "credit_limit >= 0",
+   "values": {
+    "credit_limit": null
+   },
+   "expect": false
+  },
+  {
+   "expr": "n > 0",
+   "values": {
+    "n": true
+   },
+   "expect": false,
+   "note": "booléen n'est pas un nombre"
+  },
+  {
+   "expr": "n > 0",
+   "values": {
+    "n": "5"
+   },
+   "expect": false,
+   "note": "chaîne contre nombre : faux"
+  },
+  {
+   "expr": "s > 5",
+   "values": {
+    "s": "9"
+   },
+   "expect": false
+  },
+  {
+   "expr": "n < 0",
+   "values": {
+    "n": -1
+   },
+   "expect": true
+  },
+  {
+   "expr": "n > -2",
+   "values": {
+    "n": -1
+   },
+   "expect": true
+  },
+  {
+   "expr": "since >= '2026-01-01'",
+   "values": {
+    "since": "2026-03-01"
+   },
+   "expect": true
+  },
+  {
+   "expr": "since >= '2026-01-01'",
+   "values": {
+    "since": "2025-12-31"
+   },
+   "expect": false
+  },
+  {
+   "expr": "since < '2026-01-01'",
+   "values": {
+    "since": "2025-12-31"
+   },
+   "expect": true
+  },
+  {
+   "expr": "since > '2026-01-01'",
+   "values": {
+    "since": "2026-01-01"
+   },
+   "expect": false
+  },
+  {
+   "expr": "s < 'b'",
+   "values": {
+    "s": "a"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s < 'b'",
+   "values": {
+    "s": "B"
+   },
+   "expect": true,
+   "note": "'B'(66) < 'b'(98) par point de code"
+  },
+  {
+   "expr": "s > 'a'",
+   "values": {
+    "s": "Z"
+   },
+   "expect": false
+  },
+  {
+   "expr": "s < 'ab'",
+   "values": {
+    "s": "a"
+   },
+   "expect": true,
+   "note": "préfixe plus court"
+  },
+  {
+   "expr": "s > ''",
+   "values": {
+    "s": "a"
+   },
+   "expect": true
+  },
+  {
+   "expr": "a < b",
+   "values": {
+    "a": "x",
+    "b": "y"
+   },
+   "expect": true
+  },
+  {
+   "expr": "a < b",
+   "values": {
+    "a": 1,
+    "b": "y"
+   },
+   "expect": false,
+   "note": "types différents"
+  },
+  {
+   "expr": "a < b",
+   "values": {
+    "a": 1,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a <= b",
+   "values": {
+    "a": 2,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a >= b",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "s < 'b'",
+   "values": {
+    "s": "😀"
+   },
+   "expect": false,
+   "note": "U+1F600 est après 'b' (point de code)"
+  },
+  {
+   "expr": "s > '￿'",
+   "values": {
+    "s": "😀"
+   },
+   "expect": true,
+   "note": "point de code 0x1F600 > 0xFFFF ; un tri par unités UTF-16 donnerait l'inverse (0xD83D < 0xFFFF)"
+  },
+  {
+   "expr": "s < '😀'",
+   "values": {
+    "s": "￿"
+   },
+   "expect": true,
+   "note": "même cas dans l'autre sens"
+  },
+  {
+   "expr": "s >= 'é'",
+   "values": {
+    "s": "z"
+   },
+   "expect": false,
+   "note": "'z'(122) < 'é'(233)"
+  },
+  {
+   "expr": "s > 'e'",
+   "values": {
+    "s": "é"
+   },
+   "expect": true
+  },
+  {
+   "expr": "type in ['Particulier', 'Entreprise']",
+   "values": {
+    "type": "Entreprise"
+   },
+   "expect": true
+  },
+  {
+   "expr": "type in ['Particulier', 'Entreprise']",
+   "values": {
+    "type": "Autre"
+   },
+   "expect": false
+  },
+  {
+   "expr": "type in ['Particulier']",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "type not in ['Particulier']",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "type not in ['Particulier']",
+   "values": {
+    "type": "Particulier"
+   },
+   "expect": false
+  },
+  {
+   "expr": "type not in ['Particulier', 'Entreprise']",
+   "values": {
+    "type": "Autre"
+   },
+   "expect": true
+  },
+  {
+   "expr": "n in [1, 2, 3]",
+   "values": {
+    "n": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "n in [1, 2, 3]",
+   "values": {
+    "n": 2.0
+   },
+   "expect": true
+  },
+  {
+   "expr": "n in [1, 2, 3]",
+   "values": {
+    "n": 4
+   },
+   "expect": false
+  },
+  {
+   "expr": "n in [1, 2, 3]",
+   "values": {
+    "n": true
+   },
+   "expect": false,
+   "note": "true n'est pas 1"
+  },
+  {
+   "expr": "n in [1, 2]",
+   "values": {
+    "n": "1"
+   },
+   "expect": false
+  },
+  {
+   "expr": "n in []",
+   "values": {
+    "n": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "n not in []",
+   "values": {
+    "n": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "n in []",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "n in [null]",
+   "values": {},
+   "expect": true,
+   "note": "null se trouve par égalité"
+  },
+  {
+   "expr": "n in [null, 1]",
+   "values": {
+    "n": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "n in [1, null]",
+   "values": {
+    "n": 0
+   },
+   "expect": false
+  },
+  {
+   "expr": "flag in [true]",
+   "values": {
+    "flag": true
+   },
+   "expect": true
+  },
+  {
+   "expr": "flag in [true]",
+   "values": {
+    "flag": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "flag in [false]",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "s in ['a', 'b']",
+   "values": {
+    "s": "b"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s in ['é']",
+   "values": {
+    "s": "é"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s in ['x']",
+   "values": {
+    "s": "X"
+   },
+   "expect": false,
+   "note": "sensible à la casse"
+  },
+  {
+   "expr": "a and b",
+   "values": {
+    "a": 1,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a and b",
+   "values": {
+    "a": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "a or b",
+   "values": {
+    "b": 5
+   },
+   "expect": true
+  },
+  {
+   "expr": "a or b",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "not a",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "not a",
+   "values": {
+    "a": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "not not a",
+   "values": {
+    "a": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "not not a",
+   "values": {
+    "a": 0
+   },
+   "expect": false
+  },
+  {
+   "expr": "not a == 1",
+   "values": {
+    "a": 2
+   },
+   "expect": true,
+   "note": "not s'applique à la comparaison entière"
+  },
+  {
+   "expr": "not a == 1",
+   "values": {
+    "a": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "a == 1 and b == 2",
+   "values": {
+    "a": 1,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a == 1 and b == 2",
+   "values": {
+    "a": 1,
+    "b": 3
+   },
+   "expect": false
+  },
+  {
+   "expr": "a == 1 or b == 2",
+   "values": {
+    "a": 0,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a == 1 or b == 2",
+   "values": {
+    "a": 0,
+    "b": 0
+   },
+   "expect": false
+  },
+  {
+   "expr": "a or b and c",
+   "values": {
+    "a": 1
+   },
+   "expect": true,
+   "note": "and lie plus fort que or"
+  },
+  {
+   "expr": "a or b and c",
+   "values": {
+    "b": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "(a or b) and c",
+   "values": {
+    "a": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "(a or b) and c",
+   "values": {
+    "a": 1,
+    "c": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "a and b or c",
+   "values": {
+    "c": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "a and (b or c)",
+   "values": {
+    "c": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "not a and b",
+   "values": {
+    "b": 1
+   },
+   "expect": true,
+   "note": "not lie plus fort que and"
+  },
+  {
+   "expr": "not (a and b)",
+   "values": {
+    "a": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "not (a and b)",
+   "values": {
+    "a": 1,
+    "b": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "a and b and c",
+   "values": {
+    "a": 1,
+    "b": 1,
+    "c": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "a and b and c",
+   "values": {
+    "a": 1,
+    "b": 1
+   },
+   "expect": false
+  },
+  {
+   "expr": "a or b or c",
+   "values": {
+    "c": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "a or b or c",
+   "values": {},
+   "expect": false
+  },
+  {
+   "expr": "a AND b",
+   "values": {
+    "a": 1,
+    "b": 1
+   },
+   "expect": true,
+   "note": "mots-clés insensibles à la casse"
+  },
+  {
+   "expr": "a Or b",
+   "values": {
+    "b": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "NOT a",
+   "values": {},
+   "expect": true
+  },
+  {
+   "expr": "type == 'Entreprise' and credit_limit > 1000",
+   "values": {
+    "type": "Entreprise",
+    "credit_limit": 2000
+   },
+   "expect": true
+  },
+  {
+   "expr": "type == 'Entreprise' and credit_limit > 1000",
+   "values": {
+    "type": "Entreprise",
+    "credit_limit": 10
+   },
+   "expect": false
+  },
+  {
+   "expr": "type == 'Entreprise' and credit_limit > 1000",
+   "values": {
+    "type": "Particulier",
+    "credit_limit": 2000
+   },
+   "expect": false
+  },
+  {
+   "expr": "vip or credit_limit >= 5000",
+   "values": {
+    "credit_limit": 6000
+   },
+   "expect": true
+  },
+  {
+   "expr": "vip or credit_limit >= 5000",
+   "values": {
+    "vip": true
+   },
+   "expect": true
+  },
+  {
+   "expr": "vip or credit_limit >= 5000",
+   "values": {
+    "credit_limit": 100
+   },
+   "expect": false
+  },
+  {
+   "expr": "country in ['FR', 'DE'] and not vip",
+   "values": {
+    "country": "FR"
+   },
+   "expect": true
+  },
+  {
+   "expr": "country in ['FR', 'DE'] and not vip",
+   "values": {
+    "country": "FR",
+    "vip": true
+   },
+   "expect": false
+  },
+  {
+   "expr": "s == 'l\\'a'",
+   "values": {
+    "s": "l'a"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == \"dit \\\"x\\\"\"",
+   "values": {
+    "s": "dit \"x\""
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == 'a\\\\b'",
+   "values": {
+    "s": "a\\b"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == 'a\\nb'",
+   "values": {
+    "s": "a\nb"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == 'a\\tb'",
+   "values": {
+    "s": "a\tb"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == 'été'",
+   "values": {
+    "s": "été"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == '😀'",
+   "values": {
+    "s": "😀"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == '日本'",
+   "values": {
+    "s": "日本"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == ' '",
+   "values": {
+    "s": " "
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == 'a b'",
+   "values": {
+    "s": "a b"
+   },
+   "expect": true
+  },
+  {
+   "expr": "s == 'and'",
+   "values": {
+    "s": "and"
+   },
+   "expect": true,
+   "note": "un mot-clé dans une chaîne est une chaîne"
+  },
+  {
+   "expr": "s == 'a == b'",
+   "values": {
+    "s": "a == b"
+   },
+   "expect": true
+  },
+  {
+   "expr": "  a  ==  1  ",
+   "values": {
+    "a": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "(a)",
+   "values": {
+    "a": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "((a == 1))",
+   "values": {
+    "a": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "(a == 1) and (b == 2)",
+   "values": {
+    "a": 1,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a==1",
+   "values": {
+    "a": 1
+   },
+   "expect": true,
+   "note": "sans espaces"
+  },
+  {
+   "expr": "a!=1",
+   "values": {
+    "a": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a>=1",
+   "values": {
+    "a": 1
+   },
+   "expect": true
+  },
+  {
+   "expr": "n<-1",
+   "values": {
+    "n": -2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a\n== 1",
+   "values": {
+    "a": 1
+   },
+   "expect": true,
+   "note": "retour à la ligne comme espace"
+  },
+  {
+   "expr": "(a == 1\n and b == 2)",
+   "values": {
+    "a": 1,
+    "b": 2
+   },
+   "expect": true
+  },
+  {
+   "expr": "a == 1",
+   "values": {
+    "a": [
+     1
+    ]
+   },
+   "expect": false
+  },
+  {
+   "expr": "a",
+   "values": {
+    "a": [
+     1
+    ]
+   },
+   "expect": false,
+   "note": "valeur inconnue : fausse"
+  },
+  {
+   "expr": "a == null",
+   "values": {
+    "a": {
+     "x": 1
+    }
+   },
+   "expect": false
+  },
+  {
+   "expr": "title == 'x'",
+   "values": {
+    "title": "x",
+    "autre": 1
+   },
+   "expect": true,
+   "note": "champs en trop ignorés"
+  },
+  {
+   "expr": "(((((((((((((((a)))))))))))))))",
+   "values": {
+    "a": 1
+   },
+   "expect": true,
+   "note": "15 niveaux : accepté"
+  },
+  {
+   "expr": "not not not not not not not not not not not not not not not a",
+   "values": {
+    "a": 1
+   },
+   "expect": false,
+   "note": "15 not : accepté (nombre impair de négations donne faux)"
+  },
+  {
+   "expr": "a in [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+   "values": {
+    "a": 1
+   },
+   "expect": true,
+   "note": "100 éléments : accepté"
+  }
+ ],
+ "errors": [
+  {
+   "expr": "",
+   "error": "vide"
+  },
+  {
+   "expr": "   ",
+   "error": "vide"
+  },
+  {
+   "expr": "a ==",
+   "error": "valeur"
+  },
+  {
+   "expr": "== 1",
+   "error": "valeur"
+  },
+  {
+   "expr": "a == == 1",
+   "error": "valeur"
+  },
+  {
+   "expr": "a = 1",
+   "error": "caractère"
+  },
+  {
+   "expr": "a && b",
+   "error": "caractère"
+  },
+  {
+   "expr": "a || b",
+   "error": "caractère"
+  },
+  {
+   "expr": "a and",
+   "error": "valeur"
+  },
+  {
+   "expr": "and a",
+   "error": "valeur"
+  },
+  {
+   "expr": "(a",
+   "error": "`)`"
+  },
+  {
+   "expr": "a)",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "a b",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "a == 1 b",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "1 < a < 3",
+   "error": "chaînent"
+  },
+  {
+   "expr": "a == 1 == 2",
+   "error": "chaînent"
+  },
+  {
+   "expr": "a in 1",
+   "error": "liste"
+  },
+  {
+   "expr": "a in b",
+   "error": "liste"
+  },
+  {
+   "expr": "a in ['x'",
+   "error": "`]`"
+  },
+  {
+   "expr": "a in [b]",
+   "error": "littéraux"
+  },
+  {
+   "expr": "a in [a == 1]",
+   "error": "littéraux"
+  },
+  {
+   "expr": "a in [['x']]",
+   "error": "valeur"
+  },
+  {
+   "expr": "a not 1",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "a not in",
+   "error": "liste"
+  },
+  {
+   "expr": "not",
+   "error": "valeur"
+  },
+  {
+   "expr": "a + 1",
+   "error": "caractère"
+  },
+  {
+   "expr": "a * 2 > 1",
+   "error": "caractère"
+  },
+  {
+   "expr": "a / 2",
+   "error": "caractère"
+  },
+  {
+   "expr": "a % 2",
+   "error": "caractère"
+  },
+  {
+   "expr": "a - 1",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "-a",
+   "error": "nombre"
+  },
+  {
+   "expr": "--1 == a",
+   "error": "nombre"
+  },
+  {
+   "expr": "f(a)",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "a.b == 1",
+   "error": "caractère"
+  },
+  {
+   "expr": "a.lower() == 'x'",
+   "error": "caractère"
+  },
+  {
+   "expr": "a[0]",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "__import__('os')",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "a if b else c",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "lambda: 1",
+   "error": "caractère"
+  },
+  {
+   "expr": "'abc",
+   "error": "caractère"
+  },
+  {
+   "expr": "\"abc",
+   "error": "caractère"
+  },
+  {
+   "expr": "'a\\q'",
+   "error": "échappement"
+  },
+  {
+   "expr": "a == 'x' 'y'",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "@",
+   "error": "caractère"
+  },
+  {
+   "expr": "a == 1;",
+   "error": "caractère"
+  },
+  {
+   "expr": "a == 1 # x",
+   "error": "caractère"
+  },
+  {
+   "expr": "$a",
+   "error": "caractère"
+  },
+  {
+   "expr": "a == `x`",
+   "error": "caractère"
+  },
+  {
+   "expr": "{}",
+   "error": "caractère"
+  },
+  {
+   "expr": "a == 9007199254740993",
+   "error": "trop grand"
+  },
+  {
+   "expr": "zzz == 1",
+   "error": "champ(s) inconnu(s) : zzz"
+  },
+  {
+   "expr": "a and zzz",
+   "error": "champ(s) inconnu(s) : zzz"
+  },
+  {
+   "expr": "zz == 1 and yy == 2",
+   "error": "champ(s) inconnu(s) : yy, zz"
+  },
+  {
+   "expr": "a in [1,, 2]",
+   "error": "valeur"
+  },
+  {
+   "expr": "a in [,]",
+   "error": "valeur"
+  },
+  {
+   "expr": "((((((((((((((((((((a))))))))))))))))))))",
+   "error": "imbriquée"
+  },
+  {
+   "expr": "not not not not not not not not not not not not not not not not not not not not a",
+   "error": "imbriquée"
+  },
+  {
+   "expr": "a == 'x'(",
+   "error": "fin de condition"
+  },
+  {
+   "expr": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "error": "trop longue"
+  },
+  {
+   "expr": "a in [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]",
+   "error": "trop longue"
+  }
+ ]
+}

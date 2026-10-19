@@ -1,0 +1,8 @@
+name: system
+version: 0.1.0
+author: traoreera
+description: "Les réglages GLOBAUX de l'application (organisation : nom, logo, couleur ; affichage : format de date), livrés avec xcore-doctype. Aucun code : un DocType unique, édité dans Paramètres > Général."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype]

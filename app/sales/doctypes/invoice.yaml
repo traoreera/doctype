@@ -1,0 +1,32 @@
+# Un DocType à lignes, sans comptabilité (doc/doctype.md §15, phase 3).
+schema_version: 1
+name: Invoice
+label: Facture
+module: sales
+icon: receipt
+# Numérotation par série, par tenant, sans doublon ni trou : FA-2026-00001, FA-2026-00002… Repart de 1 chaque année.
+naming: { series: "FA-{YYYY}-{#####}" }
+fields:
+  - { fieldname: customer, label: Client, fieldtype: Link, options: Customer, required: true, in_list_view: true }
+  - { fieldname: posting_date, label: Date, fieldtype: Date, in_list_view: true }
+  - { fieldname: due_date, label: Échéance, fieldtype: Date }
+  - { fieldname: payment, label: Paiement, fieldtype: Select, options: [Impayée, Payée, En retard, bloqué], default: Impayée }
+  - { fieldname: items, label: Lignes, fieldtype: Table, options: InvoiceLine, required: true }
+  # Calculé par le hook `sales.invoice_totals` (plugin `sales`) : la somme de quantité × prix des lignes.
+  - { fieldname: total, label: Total, fieldtype: Number, in_list_view: true, read_only_depends_on: "true" }
+layout:
+  - section: Facture
+    columns: [[customer, payment], [posting_date, due_date]]
+  - section: Lignes
+    columns: [[items]]
+  - columns: [[total]]
+
+hooks:
+  before_save: [sales.invoice_totals]
+# Aucun bloc `permissions` : par convention sales:invoice:read | write | delete.
+
+# Les vues du type dans le Desk (en plus de la liste, du rapport et du tableau de bord, qui existent toujours) :
+views:
+  kanban: { field: payment, card_fields: [posting_date, total] }      # glisser une facture change son statut de paiement
+  calendar: { start: due_date, title: customer, color: payment }       # les échéances sur un mois
+  gantt: { start: posting_date, end: due_date, title: customer, color: payment }

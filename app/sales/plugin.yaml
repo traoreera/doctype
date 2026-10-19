@@ -1,0 +1,8 @@
+name: sales
+version: 0.1.0
+author: traoreera
+description: "Plugin PROPRIÉTAIRE des DocTypes du module sales (exemple) : déclare leurs grants et leur fournit des hooks."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype, stock, auth]

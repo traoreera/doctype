@@ -1,0 +1,49 @@
+name: xcore-doctype
+version: 0.1.0
+author: traoreera
+description: Moteur de DocTypes et Desk pour xcore.
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+
+# L'autorisation réelle est faite par le service Document (doc/doctype.md D18).
+allowed_callers: ["*"]
+
+# Sans ce bloc, PermissionEngine refuse tout (deny_all).
+permissions:
+  - { resource: "doc.*", actions: ["execute"], effect: allow }
+  - { resource: "meta.*", actions: ["execute"], effect: allow }
+
+resources:
+  timeout_seconds: 30
+  rate_limit: { calls: 5000, period_seconds: 60 } # global au plugin, tous tenants confondus
+
+# Lu via ctx.config["doctype"] (tombe dans manifest.extra).
+doctype:
+  enforce_tenant_binding: true # à mettre à false seulement si tenancy.enabled est false dans xcore
+  tenant_claim: tenant_id
+  require_tenant_claim: true
+  # Un GRANT cherché dans principal["permissions"] (jamais dans les noms de rôle). Avec xauth, "admin:*" désigne l'admin
+  # plateforme ; le défaut ci-dessous n'est accordé à personne tant qu'un plugin ne le déclare pas.
+  cross_tenant_grant: "doctype:cross_tenant"
+  # DocTypes de L'OPÉRATEUR (relatifs au répertoire de lancement ; module libre). Les plugins métier apportent les leurs par le
+  # service `doctype_registry` (module == nom du plugin) : par défaut, aucun dossier.
+  doctypes_dirs: []
+  # Fuseau (nom IANA) dans lequel se lisent les parties de date d'une série de numérotation : {YYYY}, {MM}…
+  timezone: UTC
+  # PostgreSQL seulement : Row Level Security en plus de la couche de requêtes (D14). Exige un rôle de connexion ordinaire (ni
+  # superutilisateur ni BYPASSRLS), propriétaire des tables xdt_* ; le plugin refuse de démarrer sinon. Voir doc/phase4.md.
+  rls: false
+  # Annuaire des utilisateurs (assigner un document, afficher un e-mail à la place d'un UUID). Par défaut xauth : l'action `xauth.users.list.tenant` du
+  # plugin `auth`, qui doit nommer `xcore-doctype` dans son `allowed_callers` (sinon xcore refuse l'appel : `ipc_denied`, journalisé, et on retombe
+  # sur les identités vues dans l'organisation). `provider: none` : jamais d'annuaire. Voir doc/phase-d.md.
+  directory:
+    provider: xauth # xauth | none
+    plugin: auth
+    action: xauth.users.list.tenant
+    ttl_seconds: 60
+  # Le Desk (interface Vue, voir ui/) est servi sous <préfixe du plugin>/desk/. Routes publiques : fichiers statiques seulement.
+  desk:
+    enabled: true
+    login_url: auth # « auth » : xauth sur le MÊME préfixe que le plugin (`<préfixe>/auth/login`), quel qu'il soit. Un chemin ou une URL absolue force une autre adresse ; null : jeton collé.
+

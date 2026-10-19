@@ -1,0 +1,23 @@
+# Le journal : une ligne par entrée ou sortie d'un article dans un entrepôt. Écrit par `stock.post_entry` / `stock.reverse_entry`
+# SEULEMENT (code de confiance, dans la transaction de la soumission) : fermé à tout écrivain humain. Immuable par construction,
+# son nom vient du mouvement (`MS-2026-00001.0.in`) : rejouer la même écriture est refusé par l'unicité du nom.
+# Phase A : stocké dans la table générique. La table dédiée est la phase B (doc/palier40.md).
+schema_version: 1
+name: Stock Ledger Entry
+label: Journal de stock
+module: stock
+icon: book
+track_changes: false
+fields:
+  - { fieldname: posting_date, label: Date, fieldtype: Date, in_list_view: true }
+  - { fieldname: item, label: Article, fieldtype: Link, options: Item, required: true, in_list_view: true }
+  - { fieldname: warehouse, label: Entrepôt, fieldtype: Link, options: Warehouse, required: true, in_list_view: true }
+  - { fieldname: qty_change, label: Variation, fieldtype: Decimal, decimals: 3, required: true, in_list_view: true, unit_from: item.uom }
+  - { fieldname: balance_qty, label: Solde après, fieldtype: Decimal, decimals: 3, required: true, in_list_view: true, unit_from: item.uom }
+  - { fieldname: voucher, label: Mouvement, fieldtype: Link, options: Stock Entry, required: true }
+  - { fieldname: voucher_line, label: Ligne, fieldtype: Number }
+  - { fieldname: is_cancellation, label: Annulation, fieldtype: Boolean }
+permissions:
+  write: []
+  create: []
+  delete: []

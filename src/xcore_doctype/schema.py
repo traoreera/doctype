@@ -1,0 +1,853 @@
+"""Définition d'un DocType (doc/doctype.md §9) : le contrat dont tout le reste dérive.
+
+On ne rejette pas en silence ce qu'on n'applique pas : une clé inconnue est refusée (`extra="forbid"`) plutôt
+qu'ignorée, sinon la définition donnerait l'impression d'être validée alors qu'elle ne l'est pas. Les blocs
+`permissions` et `hooks` sont appliqués depuis la phase 1, `layout` et les conditions depuis la phase 2, la
+numérotation par série depuis la phase 3.
+
+Permissions : par défaut AUCUN bloc. Les grants se déduisent de `module` et du nom du DocType (voir `conventional_grant`),
+et xauth, qui résout déjà rôles et grants à chaque requête, reste la seule source de l'autorisation.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from datetime import date
+from typing import Annotated, Any, Literal
+
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    StrictBool,
+    StringConstraints,
+    ValidationError,
+    model_validator,
+)
+from pydantic import Field as PydanticField
+
+from .dashboards import VIEW_NAMES, ViewsDef, default_dashboard
+from .decimals import MAX_DECIMALS, MAX_DIGITS, canonical
+from .errors import InvalidDefinition
+from . import fieldtypes
+from .expr import ExprError, compile_expr, referenced_fields
+from .naming import SeriesPattern
+
+FieldType = Literal[
+    "Text", "LongText", "Number", "Decimal", "Currency", "Rating", "Date", "Datetime", "Boolean", "Select", "Link", "Color", "Image", "Attach", "Table",
+    "Int", "Percent", "Time", "Duration", "Code", "JSON", "TextEditor", "Password",
+]
+# Image et Attach portent l'identifiant d'un fichier (files.py), pas le fichier.
+FILE_TYPES = ("Image", "Attach")
+# Des types dont la valeur ne se devine pas : ni défaut, ni pré-remplissage par l'adresse.
+NO_DEFAULT_TYPES = ("JSON", "Password", "TextEditor")
+# Deux types portent un nombre EXACT sous forme de chaîne canonique (decimals.py) : tout ce qui vaut pour l'un vaut pour l'autre.
+DECIMAL_TYPES = ("Decimal", "Currency")
+
+# Colonnes système : réservées, jamais acceptées comme nom de champ ni dans un payload client.
+# Dans une condition d'un champ de LIGNE, `parent_<champ>` désigne le champ du document qui porte la table (`parent_purpose`).
+PARENT_PREFIX = "parent_"
+
+RESERVED_FIELDNAMES = frozenset(
+    {"name", "doctype", "owner", "creation", "modified", "version", "tenant_id"}
+    # Mots-clés du langage de conditions (expr.py) : un champ ainsi nommé serait introuvable dans `depends_on`.
+    | {"and", "or", "not", "in", "true", "false", "null", "none"}
+)
+
+# Défaut d'un champ Date : la date du jour (fuseau de l'organisation), posée à la création si le champ est absent du payload.
+TODAY = "today"
+
+# Lignes d'un champ Table : bornées, car elles voyagent avec le document (stockage, réponse, hooks sandboxés à 64 Kio).
+MAX_TABLE_ROWS = 500
+
+_Fieldname = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}$")]
+# Même forme que les grants d'auth (`plugin:ressource:action`, voir xauth `_GRANT_NAME_RE`). Les NOMS DE RÔLE sont des
+# données d'auth, libres et propres à chaque tenant : un fichier de DocType ne peut pas les connaître. Un grant, si.
+# Le grant spécial `@authenticated` : tout utilisateur IDENTIFIÉ, sans rien lui déclarer. Pour ce que chacun fait de soi-même (son profil) : aucun rôle n'est
+# nécessaire, un membre sans le moindre grant peut donc modifier le sien. Il n'est jamais déclaré à auth (voir `grant_specs`). Jamais pour le contexte anonyme.
+AUTHENTICATED = "@authenticated"
+_Grant = Annotated[str, StringConstraints(pattern=r"^(@authenticated|[a-z0-9_]+:[a-z0-9_]+(:[a-z0-9_]+)*)$", max_length=140)]
+# `module` est le NAMESPACE des grants déduits : nom du plugin propriétaire, forme imposée par auth (`[a-z0-9_]+`).
+_Module = Annotated[str, StringConstraints(pattern=r"^[a-z0-9_]+$", max_length=63)]
+# Recopié d'xauth (app/auth/src/services/rbac/grants.py, RESERVED_NAMESPACES) : auth REFUSE en silence la déclaration d'un
+# grant dans ces namespaces, et le `rbac.declare` partirait vide. On échoue au chargement plutôt que de le découvrir en production.
+RESERVED_GRANT_NAMESPACES = frozenset({"admin", "rbac", "auth", "tenants", "user", "license", "plugins"})
+_PrincipalAttr = Annotated[str, StringConstraints(pattern=r"^[A-Za-z_][A-Za-z0-9_]{0,62}$")]
+
+HOOK_EVENTS = ("validate", "before_save", "after_save", "on_submit", "on_cancel")
+# Hooks d'un changement d'ÉTAT (soumission, annulation) : dans la transaction du document, avec le droit d'écrire d'autres
+# documents (hooks.HookTransaction). Ils exigent un DocType `submittable` et ne peuvent pas être des `action:` sandboxées.
+TRANSITION_HOOKS = ("on_submit", "on_cancel")
+# D16 : un nom de hook est une CLÉ du registre, jamais un chemin importé. Aucune importation dynamique.
+TRUSTED_HOOK_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+ACTION_HOOK_RE = re.compile(r"^action:([A-Za-z0-9_-]+)\.([A-Za-z0-9_.-]+)$")
+
+# `match` compare une valeur de document à un attribut du principal : des chaînes seulement
+# (pas de coercion entre types, pas d'égalité `None == None`).
+MATCHABLE_TYPES = ("Text", "Select", "Link")
+
+# `match` est GELÉ. Il lit `principal["user"][attr]`, or xauth ne met que `email` et `tenant_id` dans `user`. Le bon
+# mécanisme chez nous est le scope d'auth (`scope_type`/`scope_id`), qui exige une action listant les scope_id d'un
+# utilisateur pour un grant (voir doc/phase1.md §7). Le code reste en place et testé ; ce drapeau empêche seulement
+# une définition de s'en servir tant qu'aucun backend ne peut l'alimenter. Les tests le lèvent explicitement.
+MATCH_ENABLED = False
+_DocTypeName = Annotated[str, StringConstraints(pattern=r"^[A-Za-z][A-Za-z0-9 _-]{0,62}$")]
+
+
+class FieldDef(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    fieldname: _Fieldname
+    label: str | None = None
+    fieldtype: FieldType
+    required: StrictBool = False
+    default: Any = None
+    options: list[str] | str | None = None
+    # Decimal seulement, et obligatoire pour lui : le nombre de décimales est une décision métier (3 pour des kilos, 2 pour des euros),
+    # pas une valeur par défaut qu'on découvrirait en production.
+    decimals: Annotated[int, PydanticField(ge=0, le=MAX_DECIMALS, strict=True)] | None = None
+    # Rating seulement : le nombre d'étoiles (5 par défaut). Text seulement : `format` (courriel, téléphone, URL), contrôlé à l'écriture.
+    stars: Annotated[int, PydanticField(ge=1, le=fieldtypes.MAX_STARS, strict=True)] | None = None
+    format: Literal["email", "phone", "url"] | None = None
+    # Image et Attach seulement : la taille maximale d'un fichier, en Mo (10 par défaut, 50 au plus).
+    max_mb: Annotated[int, PydanticField(ge=1, le=fieldtypes.MAX_FILE_MB, strict=True)] | None = None
+    description: Annotated[str, StringConstraints(min_length=1, max_length=500)] | None = None
+    hidden: StrictBool = False  # jamais affiché (formulaire ni liste), mais stocké et validé
+    # Table seulement : une « sélection multiple » (des étiquettes à saisir et à retirer) au lieu d'une grille. Le DocType des lignes n'a qu'UN champ, un Link.
+    multiselect: StrictBool = False
+    # Lecture seule : le document le MONTRE mais un client ne peut pas le changer (une mise à jour qui le modifie est refusée, `read_only`). Un hook de
+    # confiance et la source d'un DocType virtuel l'écrivent, eux. Sans condition, contrairement à `read_only_depends_on`.
+    read_only: StrictBool = False
+    in_list_view: StrictBool = False
+    # Conditions (doc/doctype.md D22), voir expr.py. Compilées et vérifiées par DocTypeDef (noms de champs connus).
+    # Une quantité s'affiche avec son unité : `unit_from: uom` (un champ texte du même document ou de la même ligne) ou
+    # `unit_from: item.uom` (le champ `uom` du document que le champ Link `item` désigne). Affichage seulement : rien n'est stocké.
+    unit_from: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}(\.[a-z][a-z0-9_]{0,62})?$")] | None = None
+    depends_on: str | None = None  # faux : le champ est masqué, et n'est plus obligatoire
+    mandatory_depends_on: str | None = None  # vrai : le champ est obligatoire
+    read_only_depends_on: str | None = None  # vrai (sur l'état AVANT modification) : le champ ne peut plus changer
+
+    @model_validator(mode="before")
+    @classmethod
+    def _type_defaults(cls, data: Any) -> Any:
+        """Ce que le type décide quand on ne dit rien : 2 décimales pour une devise, 5 étoiles pour une note."""
+        if isinstance(data, dict):
+            kind = data.get("fieldtype")
+            if kind == "Currency" and data.get("decimals") is None:
+                data = {**data, "decimals": fieldtypes.DEFAULT_CURRENCY_DECIMALS}
+            if kind == "Rating" and data.get("stars") is None:
+                data = {**data, "stars": fieldtypes.DEFAULT_STARS}
+        return data
+
+    @model_validator(mode="after")
+    def _check(self) -> "FieldDef":
+        name, ftype, options = self.fieldname, self.fieldtype, self.options
+        if name in RESERVED_FIELDNAMES:
+            raise ValueError(f"fieldname réservé : {name!r}")
+
+        if ftype == "Select":
+            if not isinstance(options, list) or not options:
+                raise ValueError(f"{name}: Select exige une liste `options` non vide")
+            if len(set(options)) != len(options) or any(not o for o in options):
+                raise ValueError(f"{name}: `options` doit contenir des valeurs uniques non vides")
+        elif ftype in ("Link", "Table"):
+            if not isinstance(options, str) or not options:
+                what = "du DocType cible" if ftype == "Link" else "du DocType des lignes (`istable: true`)"
+                raise ValueError(f"{name}: {ftype} exige `options` = nom {what}")
+            if ftype == "Table" and self.in_list_view:
+                raise ValueError(f"{name}: un champ Table ne peut pas figurer dans la liste (`in_list_view`)")
+        elif ftype == "Currency":
+            if options is not None and (not isinstance(options, str) or not fieldtypes.CURRENCY_CODE_RE.match(options)):
+                raise ValueError(f"{name}: `options` d'une Currency est un code ISO 4217 (EUR, USD…)")
+        elif ftype == "Code":
+            if options is not None and options not in fieldtypes.CODE_LANGUAGES:
+                raise ValueError(f"{name}: `options` d'un Code est son langage ({', '.join(fieldtypes.CODE_LANGUAGES)})")
+        elif options is not None:
+            raise ValueError(f"{name}: `options` n'a pas de sens pour {ftype}")
+
+        if self.format is not None and ftype != "Text":
+            raise ValueError(f"{name}: `format` n'a de sens que pour un Text")
+        if self.max_mb is not None and ftype not in FILE_TYPES:
+            raise ValueError(f"{name}: `max_mb` n'a de sens que pour une Image ou un Attach")
+        if ftype in FILE_TYPES and self.default is not None:
+            raise ValueError(f"{name}: un fichier n'a pas de valeur par défaut")
+        if self.multiselect and ftype != "Table":
+            raise ValueError(f"{name}: `multiselect` n'a de sens que pour un champ Table")
+        if ftype in NO_DEFAULT_TYPES and self.default is not None:
+            raise ValueError(f"{name}: un champ {ftype} n'a pas de valeur par défaut")
+        if self.stars is not None and ftype != "Rating":
+            raise ValueError(f"{name}: `stars` n'a de sens que pour un Rating")
+
+        if ftype in DECIMAL_TYPES:
+            if self.decimals is None:
+                raise ValueError(f"{name}: Decimal exige `decimals` (0 à {MAX_DECIMALS}) : le nombre de chiffres après la virgule")
+            if self.decimals > MAX_DIGITS:  # pragma: no cover - borné par MAX_DECIMALS
+                raise ValueError(f"{name}: decimals trop grand")
+        elif self.decimals is not None:
+            raise ValueError(f"{name}: `decimals` n'a de sens que pour Decimal et Currency")
+
+        if self.unit_from is not None and ftype not in ("Number", "Decimal", "Currency", "Int"):
+            raise ValueError(f"{name}: `unit_from` n'a de sens que pour un Number ou un Decimal")
+        if self.default is not None and not _default_matches(self):
+            raise ValueError(f"{name}: `default` {self.default!r} incompatible avec {ftype}")
+        return self
+
+
+def _default_matches(f: FieldDef) -> bool:
+    v = f.default
+    match f.fieldtype:
+        case "Number":
+            return isinstance(v, (int, float)) and not isinstance(v, bool)
+        case "Int" | "Percent" | "Time" | "Duration":
+            check = {"Int": fieldtypes.integer, "Percent": fieldtypes.percent, "Time": fieldtypes.time_of_day, "Duration": fieldtypes.duration}[f.fieldtype]
+            try:
+                check(v)
+            except (TypeError, ValueError):
+                return False
+            return True
+        case "JSON" | "Password" | "TextEditor":
+            return False  # (déjà refusé plus haut)
+        case "Decimal" | "Currency":
+            try:
+                canonical(v, f.decimals or 0)
+            except ValueError:
+                return False
+            return True
+        case "Rating":
+            try:
+                fieldtypes.rating(v, f.stars or fieldtypes.DEFAULT_STARS)
+            except ValueError:
+                return False
+            return True
+        case "Color":
+            return isinstance(v, str) and bool(fieldtypes.COLOR_RE.match(v))
+        case "Datetime":
+            if v == fieldtypes.NOW:
+                return True  # l'instant de la création, posé par le service (document.py)
+            try:
+                fieldtypes.iso_datetime(v)
+            except (TypeError, ValueError):
+                return False
+            return True
+        case "Boolean":
+            return isinstance(v, bool)
+        case "Select":
+            return v in (f.options or [])
+        case "Table":
+            return False  # les lignes se saisissent, elles n'ont pas de valeur par défaut
+        case "Date":
+            if v == TODAY:
+                return True  # « aujourd'hui » : résolu à la création (document.py), dans le fuseau de l'organisation
+            try:
+                return date.fromisoformat(v).isoformat() == v  # forme canonique seulement, comme à l'écriture
+            except (TypeError, ValueError):
+                return False
+        case "Image" | "Attach":
+            return False  # (déjà refusé plus haut ; un fichier ne se pré-remplit pas)
+        case "Text":
+            if not isinstance(v, str):
+                return False
+            try:
+                return bool(not f.format or fieldtypes.text_format(f.format, v))
+            except ValueError:
+                return False
+        case _:  # LongText, Code, Link
+            return isinstance(v, str)
+
+
+class MatchRule(BaseModel):
+    """`doc[field] == principal["user"][principal_attr]` (D6)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    field: _Fieldname
+    principal_attr: _PrincipalAttr
+
+
+_ACTIONS = ("read", "write", "create", "delete", "submit", "cancel")
+# `submit` et `cancel` n'existent que pour un DocType `submittable` (voir `DocTypeDef.rules_for`). Amender un document annulé
+# est une CRÉATION (droit `create`) : une copie en brouillon, sans droit propre.
+SUBMIT_ACTIONS = ("submit", "cancel")
+
+# Une action sans règle explicite retombe sur la convention `<module>:<doctype>:<action>`. `create` partage le grant de
+# `write` : chez xauth, `xsales:customer:write` signifie « Créer/modifier un client ».
+CONVENTION = {"read": "read", "write": "write", "create": "write", "delete": "delete", "submit": "submit", "cancel": "cancel"}
+_CONVENTION_LABEL = {
+    "read": "Consulter {label}",
+    "write": "Créer/modifier {label}",
+    "delete": "Supprimer {label}",
+    "submit": "Soumettre {label}",
+    "cancel": "Annuler {label}",
+}
+
+
+def slugify(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+
+
+def conventional_grant(module: str, doctype: str, action: str) -> str:
+    return f"{module}:{slugify(doctype)}:{CONVENTION[action]}"
+
+
+class PermissionEntry(BaseModel):
+    """Ce qui ouvre une action : un grant, éventuellement restreint aux documents dont on est propriétaire.
+
+    Écrite en YAML, une entrée est une simple chaîne (`"sales:customer:read"`) ou, pour un cas particulier, un objet
+    (`{ grant: "sales:customer:own", if_owner: true }`). Le grant se vérifie dans `principal["permissions"]` : auth a déjà
+    composé les rôles en grants, par tenant. `description` et `tenant_grantable` ne servent qu'à la DÉCLARATION du grant
+    auprès d'auth (voir `grants.GrantCatalog`).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    grant: _Grant
+    if_owner: StrictBool = False
+    match: MatchRule | None = None
+    description: Annotated[str, StringConstraints(min_length=1, max_length=500)] | None = None
+    tenant_grantable: StrictBool | None = None  # None = non précisé (accordable par un tenant)
+
+    @model_validator(mode="after")
+    def _not_a_role(self) -> "PermissionEntry":
+        if self.grant.split(":", 1)[0] == "role":
+            raise ValueError(
+                f"{self.grant!r}: les rôles ne sont pas pris en charge, citez un grant (auth compose les rôles en grants)"
+            )
+        return self
+
+
+def _entry_from_str(value: Any) -> Any:
+    return {"grant": value} if isinstance(value, str) else value
+
+
+_Entry = Annotated[PermissionEntry, BeforeValidator(_entry_from_str)]
+
+
+class PermissionsDef(BaseModel):
+    """`permissions: {read: [...], write: [...], create: [...], delete: [...], submit: [...], cancel: [...]}`.
+
+    Une action absente retombe sur la convention ; `[]` ne l'ouvre à PERSONNE. Les entrées d'une action s'additionnent (OU).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    read: list[_Entry] | None = None
+    write: list[_Entry] | None = None
+    create: list[_Entry] | None = None
+    delete: list[_Entry] | None = None
+    submit: list[_Entry] | None = None  # DocType `submittable` seulement
+    cancel: list[_Entry] | None = None  # id.
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_row_form(cls, data: Any) -> Any:
+        if isinstance(data, list):
+            raise ValueError(
+                "`permissions` est un objet {read, write, create, delete, submit, cancel} dont chaque clé liste des grants ; "
+                "l'ancienne liste de lignes {grant, read, write…} n'existe plus (doc/phase1.md §7)"
+            )
+        return data
+
+    @model_validator(mode="after")
+    def _no_duplicates(self) -> "PermissionsDef":
+        for action in _ACTIONS:
+            seen: set[tuple] = set()
+            for e in getattr(self, action) or []:
+                key = (e.grant, e.if_owner, e.match)
+                if key in seen:
+                    raise ValueError(f"permissions.{action}: entrée dupliquée {e.grant!r}")
+                seen.add(key)
+        return self
+
+
+@dataclass(frozen=True, slots=True)
+class GrantSpec:
+    """Un grant tel qu'auth l'attend dans `rbac.declare` : nom, description, groupe d'affichage, délégable ou non."""
+
+    name: str
+    description: str
+    group: str
+    tenant_grantable: bool
+
+    @property
+    def namespace(self) -> str:
+        return self.name.split(":", 1)[0]
+
+    def as_declaration(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "group": self.group,
+            "tenant_grantable": self.tenant_grantable,
+        }
+
+
+class LayoutSection(BaseModel):
+    """Une section du formulaire : des colonnes de champs (doc/doctype.md §12)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    section: Annotated[str, StringConstraints(min_length=1, max_length=140)] | None = None
+    collapsible: StrictBool = False
+    collapsed: StrictBool = False
+    columns: list[list[_Fieldname]] = PydanticField(min_length=1, max_length=4)
+
+    @model_validator(mode="after")
+    def _check(self) -> "LayoutSection":
+        if self.collapsed and not self.collapsible:
+            raise ValueError("`collapsed` exige `collapsible: true`")
+        if any(not col for col in self.columns):
+            raise ValueError("une colonne ne peut pas être vide")
+        return self
+
+
+class HooksDef(BaseModel):
+    """Hooks d'un DocType (D2, D4, D16).
+
+    - `"sales.check_credit"` : nom d'un hook de confiance enregistré dans le registre (voir `hooks.HookRegistry`) ;
+    - `"action:sales_rules.check_credit"` : action d'un plugin (typiquement sandboxé), appelée AVANT la transaction (D21).
+    `after_save` n'accepte que des hooks de confiance : une notification ne peut rien annuler. `on_submit` et `on_cancel`
+    aussi : ils tournent DANS la transaction (ce qu'un plugin sandboxé, appelé hors transaction, ne peut pas faire).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+    on_validate: list[str] = PydanticField(default_factory=list, alias="validate")
+    before_save: list[str] = PydanticField(default_factory=list)
+    after_save: list[str] = PydanticField(default_factory=list)
+    on_submit: list[str] = PydanticField(default_factory=list)
+    on_cancel: list[str] = PydanticField(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check(self) -> "HooksDef":
+        for event in HOOK_EVENTS:
+            seen: set[str] = set()
+            for ref in self.for_event(event):
+                if ref in seen:
+                    raise ValueError(f"hooks.{event}: hook dupliqué {ref!r}")
+                seen.add(ref)
+                if ref.startswith("action:"):
+                    if event == "after_save" or event in TRANSITION_HOOKS:
+                        raise ValueError(
+                            f"hooks.{event}: `action:` interdit (les hooks sandboxés précèdent la transaction, D21 : "
+                            "ils ne peuvent ni la rejoindre ni suivre le commit)"
+                        )
+                    if not ACTION_HOOK_RE.match(ref):
+                        raise ValueError(f"hooks.{event}: référence d'action invalide {ref!r} (attendu action:plugin.action)")
+                elif not TRUSTED_HOOK_RE.match(ref):
+                    raise ValueError(f"hooks.{event}: nom de hook invalide {ref!r}")
+        return self
+
+    def for_event(self, event: str) -> list[str]:
+        return list(self.on_validate if event == "validate" else getattr(self, event))
+
+    def all_refs(self) -> list[str]:
+        return [r for e in HOOK_EVENTS for r in self.for_event(e)]
+
+
+class NamingSeries(BaseModel):
+    """`naming: {series: "FA-{YYYY}-{#####}"}` : les noms viennent d'un compteur par tenant (voir naming.py, D7)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    series: str
+
+    @model_validator(mode="after")
+    def _parse(self) -> "NamingSeries":
+        try:
+            SeriesPattern.parse(self.series)
+        except ValueError as e:
+            raise ValueError(f"naming.series: {e}") from None
+        return self
+
+
+class DocTypeDef(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal[1]
+    name: _DocTypeName
+    label: str | None = None
+    module: _Module | None = None
+    # `hash` : identifiant aléatoire. `owner` : l'identifiant de celui qui crée (un document PAR utilisateur : son profil ; une seconde création est refusée,
+    # 409). `{series: ...}` : numéro séquentiel par tenant, sans doublon ni trou (naming.py).
+    naming: Literal["hash", "owner"] | NamingSeries = "hash"
+    # DocType « enfant » : ses documents sont les LIGNES d'un champ Table d'un autre DocType (tableau JSON dans le parent).
+    # Il n'a ni route, ni droits, ni hooks, ni nom propre : voir `_child_rules`.
+    istable: StrictBool = False
+    # Historique des créations, modifications et suppressions (versions.py). Désactivable pour un DocType très bavard.
+    track_changes: StrictBool = True
+    # Document « soumettable » : brouillon (0) -> soumis (1) -> annulé (2). Un document soumis est figé : plus de modification
+    # ni de suppression, on l'annule (et on l'amende : une copie en brouillon). Voir document.py (submit, cancel, amend).
+    submittable: StrictBool = False
+    # Document UNIQUE (« Paramètres ») : un seul enregistrement par organisation, nommé comme son type. Il n'a ni liste, ni création, ni suppression :
+    # le Desk l'ouvre directement, vide de valeurs tant qu'on ne l'a pas enregistré (ses défauts). Exemple : les réglages d'un module.
+    single: StrictBool = False
+    # Un réglage GLOBAL de l'application (pas celui d'un module) : il s'édite dans la rubrique « Général » des Paramètres, à côté des réglages de
+    # base (`System Settings`, plugin `system`), au lieu d'avoir sa propre rubrique. C'est par là qu'un plugin ajoute un réglage global.
+    settings_group: Literal["general"] | None = None
+    # DocType VIRTUEL : ses documents ne sont pas dans la table générique mais chez une SOURCE enregistrée sous ce nom (`doctype_sources`, voir sources.py) :
+    # les comptes, rôles et permissions d'xauth, par exemple. Il a liste, filtres, tri, recherche, liens, rapports et droits comme n'importe quel DocType ;
+    # la source reste l'unique vérité (rien n'est copié). Voir `_source_rules` pour ce qu'il ne peut pas avoir.
+    source: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_.-]{0,62}$")] | None = None
+    fields: list[FieldDef] = PydanticField(min_length=1)
+    layout: list[LayoutSection] | None = None  # absent : un seul bloc, les champs dans l'ordre
+    title_field: _Fieldname | None = None  # champ qui désigne un document (liste, lien) ; défaut : son nom
+    # Le champ Image qui sert de photo au document (profil, article) : l'avatar de la liste, de la fiche et des cartes.
+    image_field: _Fieldname | None = None
+    # Icône du type dans la barre latérale et les raccourcis : un nom PrimeIcons sans préfixe (`receipt` pour `pi pi-receipt`).
+    icon: Annotated[str, StringConstraints(pattern=r"^[a-z0-9-]{1,40}$")] | None = None
+    # Absent : convention `<module>:<doctype>:<action>` (voir `rules_for`). Sans `module` ni règle : personne, hors contexte système.
+    permissions: PermissionsDef = PydanticField(default_factory=PermissionsDef)
+    hooks: HooksDef = PydanticField(default_factory=HooksDef)
+    # Les vues du type dans le Desk : la liste et le rapport existent toujours, le tableau de bord est généré ; on déclare ici le Kanban,
+    # le Calendrier, le Gantt (ils exigent des champs précis) ou un tableau de bord à soi. Voir `dashboards.py`.
+    views: ViewsDef | None = None
+
+    @model_validator(mode="after")
+    def _module_is_declarable(self) -> "DocTypeDef":
+        if self.module in RESERVED_GRANT_NAMESPACES:
+            raise ValueError(
+                f"module {self.module!r} est un namespace réservé d'auth : les grants déduits ne pourraient pas être déclarés"
+            )
+        return self
+
+    @model_validator(mode="after")
+    def _unique_fieldnames(self) -> "DocTypeDef":
+        seen: set[str] = set()
+        for f in self.fields:
+            if f.fieldname in seen:
+                raise ValueError(f"fieldname dupliqué : {f.fieldname!r}")
+            seen.add(f.fieldname)
+        return self
+
+    @model_validator(mode="after")
+    def _child_rules(self) -> "DocTypeDef":
+        """Un DocType enfant ne garde que des champs : tout ce qu'il ne pourrait pas appliquer est refusé, pas ignoré."""
+        if not self.istable:
+            return self
+        refused = {
+            "module": self.module is not None,
+            "permissions": any(getattr(self.permissions, a) is not None for a in _ACTIONS),
+            "hooks": bool(self.hooks.all_refs()),
+            "layout": self.layout is not None,
+            "title_field": self.title_field is not None,
+            "image_field": self.image_field is not None,
+            "icon": self.icon is not None,
+            "naming": self.naming != "hash",
+            "views": self.views is not None,
+            "single": self.single,
+        }
+        refused["submittable"] = self.submittable
+        bad = [k for k, v in refused.items() if v]
+        if bad:
+            raise ValueError(
+                f"istable: {', '.join(bad)} n'a pas de sens pour un DocType enfant (ses lignes héritent des droits, "
+                "des hooks et de la mise en page du parent)"
+            )
+        for f in self.fields:
+            if f.fieldtype == "Table":
+                raise ValueError(f"istable: {f.fieldname!r} est un champ Table, les tables imbriquées ne sont pas prises en charge")
+            if f.fieldtype in FILE_TYPES:
+                raise ValueError(f"istable: {f.fieldname!r} est un champ {f.fieldtype} : les fichiers ne sont pas pris en charge dans les lignes d'une table")
+            if f.fieldname.startswith(PARENT_PREFIX):
+                raise ValueError(f"istable: {f.fieldname}: le préfixe `{PARENT_PREFIX}` est réservé aux conditions qui lisent le document parent")
+            if f.read_only_depends_on is not None:
+                raise ValueError(f"istable: {f.fieldname}.read_only_depends_on : pas pris en charge dans les lignes (une ligne n'a pas d'identité à comparer)")
+            if f.default == TODAY:
+                raise ValueError(f"istable: {f.fieldname}: le défaut `today` n'est pas pris en charge dans les lignes")
+        return self
+
+    @model_validator(mode="after")
+    def _single_rules(self) -> "DocTypeDef":
+        """Un document unique n'a ni numérotation, ni état soumis, ni liste : ce qui n'aurait aucun sens est refusé, pas ignoré."""
+        if self.settings_group is not None and not self.single:
+            raise ValueError("settings_group: seul un document unique (`single: true`) est un réglage")
+        if not self.single:
+            return self
+        if self.submittable:
+            raise ValueError("single: un document unique n'est pas `submittable` (il n'y en a qu'un, on le modifie)")
+        if self.naming != "hash":
+            raise ValueError("single: un document unique est nommé comme son type : `naming` n'a pas de sens")
+        if self.views is not None and (self.views.kanban or self.views.calendar or self.views.gantt or self.views.tree):
+            raise ValueError("single: un seul document, pas de Kanban, de calendrier, de Gantt ni d'arbre")
+        return self
+
+    @model_validator(mode="after")
+    def _source_rules(self) -> "DocTypeDef":
+        """Un DocType virtuel n'a ni numérotation, ni état soumis, ni hook, ni historique, ni fichier : ce que le moteur ne saurait pas appliquer à un
+        document qu'il ne stocke pas est refusé, pas ignoré. (Les noms viennent de la source, ses tables de lignes restent dans le document.)"""
+        if self.source is None:
+            return self
+        refused = {
+            "single": self.single,
+            "istable": self.istable,
+            "submittable": self.submittable,
+            "naming": self.naming != "hash",
+            "hooks": bool(self.hooks.all_refs()),
+            "settings_group": self.settings_group is not None,
+            "track_changes": self.track_changes is True and "track_changes" in self.model_fields_set,
+        }
+        bad = [k for k, v in refused.items() if v]
+        if bad:
+            raise ValueError(f"source: {', '.join(bad)} n'a pas de sens pour un DocType virtuel (le moteur ne stocke pas ses documents)")
+        for f in self.fields:
+            if f.fieldtype in FILE_TYPES:
+                raise ValueError(f"source: {f.fieldname!r} est un champ {f.fieldtype} : pas de fichier dans un DocType virtuel")
+            if f.fieldtype == "Password":
+                raise ValueError(f"source: {f.fieldname!r} est un Password : la source garde ses propres secrets")
+            if f.default == TODAY:
+                raise ValueError(f"source: {f.fieldname}: le défaut `today` n'est pas pris en charge dans un DocType virtuel")
+        return self
+
+    @model_validator(mode="after")
+    def _submittable_rules(self) -> "DocTypeDef":
+        """Ce qui n'a de sens que pour un DocType soumettable est refusé ailleurs, et inversement ce que l'état figé exige."""
+        if self.submittable:
+            if not self.track_changes:
+                # Qui a soumis, qui a annulé : la trace est ce qui rend un document figé opposable. Pas de DocType soumettable sans.
+                raise ValueError("submittable: exige `track_changes: true` (l'historique garde qui a soumis et annulé)")
+            return self
+        stray = [a for a in SUBMIT_ACTIONS if getattr(self.permissions, a) is not None]
+        stray += [e for e in TRANSITION_HOOKS if self.hooks.for_event(e)]
+        if stray:
+            raise ValueError(f"{', '.join(stray)} n'a de sens que pour un DocType `submittable: true`")
+        return self
+
+    @model_validator(mode="after")
+    def _check_conditions_and_layout(self) -> "DocTypeDef":
+        names = [f.fieldname for f in self.fields]
+        tables = {f.fieldname for f in self.fields if f.fieldtype == "Table"}
+        decimals = {f.fieldname for f in self.fields if f.fieldtype in DECIMAL_TYPES}
+        for f in self.fields:
+            for kind in ("depends_on", "mandatory_depends_on", "read_only_depends_on"):
+                src = getattr(f, kind)
+                if src is None:
+                    continue
+                try:
+                    # Une ligne peut lire son parent (`parent_purpose`) : ces noms-là ne se vérifient qu'à l'enregistrement du parent.
+                    used = referenced_fields(compile_expr(src, names, allow_prefix=PARENT_PREFIX if self.istable else None))
+                except ExprError as e:
+                    raise ValueError(f"{f.fieldname}.{kind}: {e}") from None
+                if used & tables:
+                    raise ValueError(f"{f.fieldname}.{kind}: un champ Table ({', '.join(sorted(used & tables))}) n'a pas de valeur comparable")
+                opaque = {x.fieldname for x in self.fields if x.fieldtype in ("Password", "JSON")}
+                if used & opaque:
+                    raise ValueError(f"{f.fieldname}.{kind}: un champ Password ou JSON ({', '.join(sorted(used & opaque))}) n'a pas de valeur comparable")
+                if used & decimals:
+                    # Une chaîne décimale ne se compare pas à un nombre sans perdre l'exactitude, et la grammaire est typée strictement.
+                    raise ValueError(f"{f.fieldname}.{kind}: un champ Decimal ({', '.join(sorted(used & decimals))}) ne peut pas servir dans une condition")
+        if self.title_field is not None:
+            target = next((f for f in self.fields if f.fieldname == self.title_field), None)
+            if target is None:
+                raise ValueError(f"title_field: champ inconnu {self.title_field!r}")
+            if target.fieldtype not in MATCHABLE_TYPES:
+                raise ValueError(f"title_field: {target.fieldname!r} ({target.fieldtype}) doit être textuel")
+        if self.image_field is not None:
+            image = next((f for f in self.fields if f.fieldname == self.image_field), None)
+            if image is None:
+                raise ValueError(f"image_field: champ inconnu {self.image_field!r}")
+            if image.fieldtype != "Image":
+                raise ValueError(f"image_field: {image.fieldname!r} est un {image.fieldtype}, il faut une Image")
+        hidden = {f.fieldname for f in self.fields if f.hidden}
+        placed: set[str] = set()
+        for section in self.layout or []:
+            for column in section.columns:
+                for name in column:
+                    if name not in names:
+                        raise ValueError(f"layout: champ inconnu {name!r}")
+                    if name in hidden:
+                        raise ValueError(f"layout: le champ caché {name!r} ne peut pas être placé")
+                    if name in placed:
+                        raise ValueError(f"layout: champ placé deux fois {name!r}")
+                    placed.add(name)
+        return self
+
+    @model_validator(mode="after")
+    def _check_views(self) -> "DocTypeDef":
+        """Chaque vue déclarée désigne des champs qui existent et qui ont le bon type : sinon elle serait vide ou cassée en production."""
+        v = self.views
+        if v is None:
+            return self
+        by_name = {f.fieldname: f for f in self.fields}
+
+        def field(where: str, name: str, types: tuple[str, ...], what: str) -> FieldDef:
+            target = by_name.get(name)
+            if target is None:
+                raise ValueError(f"views.{where}: champ inconnu {name!r}")
+            if target.fieldtype not in types:
+                raise ValueError(f"views.{where}: {name!r} est un {target.fieldtype}, il faut {what}")
+            return target
+
+        scalar = ("Text", "LongText", "Number", "Decimal", "Currency", "Rating", "Date", "Datetime", "Boolean", "Select", "Link", "Color", "Int", "Percent", "Time", "Duration")
+        if v.kanban is not None:
+            column = field("kanban.field", v.kanban.field, ("Select",), "un Select (une colonne par valeur)")
+            if not column.required and column.default is None:
+                # Un document sans valeur n'aurait aucune colonne : il disparaîtrait du tableau sans que rien ne le dise.
+                raise ValueError(f"views.kanban.field: {column.fieldname!r} doit être `required: true` ou avoir un `default` (chaque document doit avoir une colonne)")
+            for name in v.kanban.card_fields or []:
+                field("kanban.card_fields", name, scalar, "un champ simple")
+        if v.calendar is not None:
+            field("calendar.start", v.calendar.start, ("Date",), "une Date")
+            if v.calendar.end is not None:
+                field("calendar.end", v.calendar.end, ("Date",), "une Date")
+            if v.calendar.title is not None:
+                field("calendar.title", v.calendar.title, scalar, "un champ simple")
+            if v.calendar.color is not None:
+                field("calendar.color", v.calendar.color, ("Select",), "un Select (une teinte par valeur)")
+        if v.gantt is not None:
+            field("gantt.start", v.gantt.start, ("Date",), "une Date")
+            field("gantt.end", v.gantt.end, ("Date",), "une Date")
+            if v.gantt.start == v.gantt.end:
+                raise ValueError("views.gantt: `start` et `end` doivent être deux champs différents")
+            if v.gantt.title is not None:
+                field("gantt.title", v.gantt.title, scalar, "un champ simple")
+            if v.gantt.color is not None:
+                field("gantt.color", v.gantt.color, ("Select",), "un Select (une teinte par valeur)")
+        if v.tree is not None:
+            parent = field("tree.parent", v.tree.parent, ("Link",), "un Link vers ce même type")
+            if parent.options != self.name:
+                raise ValueError(f"views.tree.parent: {parent.fieldname!r} est un Link vers {parent.options!r}, il faut un Link vers {self.name!r}")
+        if v.default not in self.available_views():
+            raise ValueError(f"views.default: la vue {v.default!r} n'est pas déclarée (disponibles : {', '.join(self.available_views())})")
+        return self
+
+    def available_views(self) -> list[str]:
+        """Les vues que le Desk propose pour ce type, dans l'ordre du sélecteur."""
+        v = self.views
+        declared = {
+            "kanban": v.kanban if v else None,
+            "calendar": v.calendar if v else None,
+            "gantt": v.gantt if v else None,
+            "tree": v.tree if v else None,
+        }
+        return [name for name in VIEW_NAMES if name in ("list", "report", "dashboard") or declared.get(name) is not None]
+
+    def effective_views(self) -> dict[str, Any]:
+        """Ce que `/meta` envoie : les vues disponibles, celle qui s'ouvre d'abord, la configuration de chacune et le tableau de bord
+        (celui du type, ou le généré). Les blocs du tableau de bord citent toujours leur `doctype`, comme ceux d'un espace."""
+        v = self.views or ViewsDef()
+        out: dict[str, Any] = {"available": self.available_views(), "default": v.default}
+        if v.kanban is not None:
+            cards = v.kanban.card_fields or [n for n in self.list_columns() if n != v.kanban.field][:3]
+            out["kanban"] = {"field": v.kanban.field, "card_fields": cards}
+        if v.calendar is not None:
+            out["calendar"] = v.calendar.model_dump(mode="json", exclude_none=True)
+        if v.gantt is not None:
+            out["gantt"] = v.gantt.model_dump(mode="json", exclude_none=True)
+        if v.tree is not None:
+            out["tree"] = {"parent": v.tree.parent}
+        blocks = [b.model_dump(mode="json", exclude_none=True) for b in v.dashboard] if v.dashboard else default_dashboard(self)
+        out["dashboard"] = [{**b, "doctype": self.name} if b["type"] in ("number_card", "chart") else b for b in blocks]
+        return out
+
+    @model_validator(mode="after")
+    def _check_permissions(self) -> "DocTypeDef":
+        by_name = {f.fieldname: f for f in self.fields}
+        for action in _ACTIONS:
+            for entry in getattr(self.permissions, action) or []:
+                if entry.match is None:
+                    continue
+                if not MATCH_ENABLED:
+                    raise ValueError(
+                        "permissions: `match` est gelé (aucun backend d'auth ne fournit d'attribut ou de scope par "
+                        "utilisateur) ; utilisez `if_owner`, voir doc/phase1.md §7"
+                    )
+                target = by_name.get(entry.match.field)
+                if target is None:
+                    raise ValueError(f"permissions: match sur un champ inconnu {entry.match.field!r}")
+                if target.fieldtype not in MATCHABLE_TYPES:
+                    raise ValueError(
+                        f"permissions: match sur {target.fieldname!r} ({target.fieldtype}) impossible, "
+                        f"types acceptés : {', '.join(MATCHABLE_TYPES)}"
+                    )
+        self.grant_specs()  # métadonnées contradictoires pour un même grant : refusées dès le chargement
+        return self
+
+    def effective_layout(self) -> list[dict[str, Any]]:
+        """Le formulaire tel que le Desk l'affiche : les sections déclarées, puis les champs non placés dans un dernier bloc
+        (ajouter un champ ne le cache donc jamais en silence ; pour le cacher, `hidden: true`)."""
+        visible = [f.fieldname for f in self.fields if not f.hidden]
+        out = [
+            {"section": s.section, "collapsible": s.collapsible, "collapsed": s.collapsed, "columns": [list(c) for c in s.columns]}
+            for s in (self.layout or [])
+        ]
+        placed = {n for sec in out for col in sec["columns"] for n in col}
+        rest = [n for n in visible if n not in placed]
+        if rest:
+            out.append({"section": None, "collapsible": False, "collapsed": False, "columns": [rest]})
+        return out
+
+    def list_columns(self) -> list[str]:
+        """Colonnes de la liste : les champs `in_list_view`, sinon les quatre premiers champs visibles (jamais une table)."""
+        visible = [f for f in self.fields if not f.hidden and f.fieldtype != "Table"]
+        flagged = [f.fieldname for f in visible if f.in_list_view]
+        return flagged or [f.fieldname for f in visible[:4]]
+
+    def rules_for(self, action: str) -> tuple[PermissionEntry, ...]:
+        """Les entrées qui ouvrent `action` : celles de `permissions`, sinon la convention (si `module`), sinon aucune."""
+        if action in SUBMIT_ACTIONS and not self.submittable:
+            return ()  # pas de grant `submit`/`cancel` pour un DocType qui ne se soumet pas : rien à déclarer à auth
+        explicit = getattr(self.permissions, action)
+        if explicit is not None:
+            return tuple(explicit)
+        if self.module is None:
+            return ()
+        return (PermissionEntry(grant=conventional_grant(self.module, self.name, action)),)
+
+    def grant_specs(self) -> dict[str, GrantSpec]:
+        """Tous les grants cités par ce DocType (déduits ou explicites), prêts pour `rbac.declare`."""
+        label, slug = self.label or self.name, slugify(self.name)
+        explicit: dict[str, dict[str, Any]] = {}
+        defaults: dict[str, str] = {}
+        for action in _ACTIONS:
+            for e in self.rules_for(action):
+                if e.grant == AUTHENTICATED:
+                    continue  # pas un grant d'auth : rien à déclarer
+                mine = explicit.setdefault(e.grant, {})
+                for key, value in (("description", e.description), ("tenant_grantable", e.tenant_grantable)):
+                    if value is None:
+                        continue
+                    if key in mine and mine[key] != value:
+                        raise ValueError(f"permissions: {e.grant!r} a un {key} contradictoire ({mine[key]!r} / {value!r})")
+                    mine[key] = value
+                if e.grant not in defaults:
+                    conventional = self.module is not None and e.grant == conventional_grant(self.module, self.name, action)
+                    defaults[e.grant] = (
+                        _CONVENTION_LABEL[CONVENTION[action]].format(label=label) if conventional else f"{label} : {e.grant}"
+                    )
+        return {
+            name: GrantSpec(
+                name=name,
+                description=explicit[name].get("description", defaults[name]),
+                group=f"{name.split(':', 1)[0]}-{slug}",
+                tenant_grantable=explicit[name].get("tenant_grantable", True),
+            )
+            for name in sorted(defaults)
+        }
+
+    @property
+    def secret_fields(self) -> tuple[str, ...]:
+        """Les champs `Password` : chiffrés au repos, jamais renvoyés (voir sealing.py)."""
+        return tuple(f.fieldname for f in self.fields if f.fieldtype == "Password")
+
+    @property
+    def series(self) -> SeriesPattern | None:
+        return SeriesPattern.parse(self.naming.series) if isinstance(self.naming, NamingSeries) else None
+
+    @property
+    def field_map(self) -> dict[str, FieldDef]:
+        return {f.fieldname: f for f in self.fields}
+
+
+def parse_definition(raw: Any, *, source: str = "<définition>") -> DocTypeDef:
+    """Valide une définition brute (dict issu de YAML/JSON) ou lève `InvalidDefinition`."""
+    if not isinstance(raw, dict):
+        raise InvalidDefinition(f"{source}: la définition doit être un objet")
+    try:
+        return DocTypeDef.model_validate(raw)
+    except ValidationError as e:
+        lines = []
+        for err in e.errors(include_url=False, include_input=False):
+            where = ".".join(str(p) for p in err["loc"]) or "(racine)"
+            lines.append(f"  - {where}: {err['msg']}")
+        raise InvalidDefinition(f"{source}: définition invalide\n" + "\n".join(lines)) from e

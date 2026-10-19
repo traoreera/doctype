@@ -1,0 +1,11 @@
+name: auth
+version: 0.1.0
+author: traoreera
+description: "Backend d'authentification de TEST (jetons HMAC), pour les tests du moteur seulement. xauth (app/auth) est l'authentification du produit."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+
+# Aucun secret par défaut : les tests l'exportent (XCORE_DEV_AUTH_SECRET).
+env:
+  DEV_AUTH_SECRET: "${XCORE_DEV_AUTH_SECRET}"

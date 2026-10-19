@@ -1,0 +1,126 @@
+# CI d'xcore-doctype : tests Python sur SQLite ET PostgreSQL, tests du Desk, scénario navigateur, et installation du wheel dans un
+# environnement vierge. Chaque étape correspond à une cible du `makefile` : on les rejoue à l'identique en local (`make help`).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.14"
+  NODE_VERSION: "24"
+  POETRY_VERSION: "2.4.1"
+
+jobs:
+  # ── Python + Desk + navigateur, sur les deux bases ─────────────────────────────────────────────
+  test:
+    name: Tests (SQLite + PostgreSQL 18, Desk, navigateur)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: xdt
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d xdt"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      # Superutilisateur : indispensable aux tests de RLS, qui créent eux-mêmes un rôle ordinaire (tests/conftest.py, rls_app_url).
+      PG_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/xdt
+      # Le test d'installation du wheel a son propre job, avec les dépendances résolues sur l'index.
+      XCORE_DOCTYPE_SKIP_DELIVERY: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Poetry
+        run: pip install "poetry==${POETRY_VERSION}"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('poetry.lock') }}
+
+      - name: Métadonnées du projet (pyproject.toml valide, verrou à jour)
+        run: poetry check --lock
+
+      - name: Dépendances Python
+        run: poetry install
+
+      - uses: pnpm/action-setup@v4 # la version vient du champ packageManager de ui/package.json
+        with:
+          package_json_file: ui/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Desk (vérification de types + build dans le paquet)
+        run: make build-ui
+
+      - name: Tests du Desk (vitest)
+        run: make test-ui
+
+      - name: Chromium pour le scénario navigateur
+        run: pnpm -C ui exec playwright-core install --with-deps chromium
+
+      - name: Tests Python sur SQLite et PostgreSQL (scénario navigateur compris)
+        run: make test-pg PG_URL="$PG_URL"
+
+  # ── Le wheel, installé comme un utilisateur le ferait ──────────────────────────────────────────
+  wheel:
+    name: Wheel installé dans un environnement vierge
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Vrai `pip install` : les dépendances (xcore, FastAPI…) sont résolues sur l'index, pas prises dans l'environnement de test.
+      XCORE_DOCTYPE_INSTALL_DEPS: "1"
+      XCORE_DOCTYPE_SKIP_E2E: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: pip install "poetry==${POETRY_VERSION}"
+
+      - run: poetry install
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: ui/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Desk construit (il doit se retrouver dans le wheel)
+        run: make build-ui
+
+      - name: Build du wheel puis installation dans un venv vierge, instance xcore neuve (xcli init), démarrage
+        run: poetry run pytest tests/delivery -v
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wheel
+          path: dist/*.whl
+          if-no-files-found: ignore

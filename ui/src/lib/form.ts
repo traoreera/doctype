@@ -1,0 +1,351 @@
+/**
+ * Logique du formulaire, SANS interface : ce que le Desk affiche, exige et verrouille, et ce qu'il envoie.
+ *
+ * Les règles reprennent EXACTEMENT celles que le serveur revérifie à l'écriture (`CompiledDocType._condition_errors`) :
+ *  - visible    = `depends_on` (vrai si absent) ;
+ *  - obligatoire = (required ET visible) OU `mandatory_depends_on` ;
+ *  - lecture seule = `read_only_depends_on` évalué sur l'état ENREGISTRÉ du document (le serveur ne regarde pas autre chose).
+ * Le navigateur n'est jamais l'autorité : il évite seulement un aller-retour inutile et guide l'utilisateur.
+ */
+import { ApiError } from './api'
+import { nowUtc } from './datetime'
+import { canonicalDecimal } from './decimal'
+import { COLOR, MAX_LONG_TEXT, isValidDatetime, isValidFormat, isValidRating } from './fieldrules'
+import { evaluate } from './expr'
+import { todayIn } from './format'
+import { t } from '@/i18n'
+import { isDecimalType } from './types'
+import type { ChildMeta, DocData, DocRecord, DocTypeMeta, FieldMeta } from './types'
+
+export type Values = Record<string, unknown>
+/** Une ligne d'un champ Table : les valeurs de ses champs, comme un document en miniature. */
+export type Row = Record<string, unknown>
+
+export interface FieldState {
+  /** Affiché dans le formulaire. */
+  visible: boolean
+  required: boolean
+  readOnly: boolean
+}
+export type FieldStates = Record<string, FieldState>
+
+/** Vide : rien, une chaîne vide, ou un tableau sans ligne (0 et `false` sont des valeurs). */
+export const isEmpty = (v: unknown): boolean => v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0)
+
+/** Le DocType des lignes d'un champ Table (absent : métadonnées incomplètes, le champ est alors traité comme vide). */
+export const childOf = (meta: DocTypeMeta, f: FieldMeta): ChildMeta | undefined =>
+  f.fieldtype === 'Table' && typeof f.options === 'string' ? meta.children?.[f.options] : undefined
+
+/** Dans une condition d'un champ de ligne, `parent_<champ>` lit le document qui porte la table (miroir de `schema.PARENT_PREFIX`). */
+export const PARENT_PREFIX = 'parent_'
+
+/** Le défaut d'un champ. `today` (dates) se lit dans le fuseau de l'organisation, au moment où le formulaire s'ouvre. */
+const blank = (f: FieldMeta, timeZone?: string): unknown =>
+  f.default === 'today' && f.fieldtype === 'Date'
+    ? todayIn(timeZone)
+    : f.default === 'now' && f.fieldtype === 'Datetime'
+      ? nowUtc()
+      : f.default !== undefined
+        ? f.default
+        : f.fieldtype === 'Boolean'
+          ? false
+          : null
+
+/** Une ligne neuve : les défauts du DocType enfant, les cases décochées, le reste vide. */
+export function newRow(child: ChildMeta): Row {
+  const out: Row = {}
+  for (const f of child.fields) out[f.fieldname] = blank(f)
+  return out
+}
+
+function recordRow(child: ChildMeta, raw: unknown): Row {
+  const src = (raw && typeof raw === 'object' ? raw : {}) as Row
+  const out: Row = {}
+  for (const f of child.fields) {
+    const v = src[f.fieldname]
+    out[f.fieldname] = v === undefined ? (f.fieldtype === 'Boolean' ? false : null) : v
+  }
+  return out
+}
+
+/** Valeurs d'un nouveau document : les défauts du DocType, les cases à cocher décochées, le reste vide. */
+export function newValues(meta: DocTypeMeta): Values {
+  const out: Values = {}
+  for (const f of meta.fields) out[f.fieldname] = f.fieldtype === 'Table' ? [] : blank(f, meta.timezone)
+  return out
+}
+
+/**
+ * Valeurs d'un nouveau document pré-remplies par l'adresse (`#/app/Facture/new?posting_date=2026-10-20`) : un clic sur un jour du calendrier,
+ * sur « + » d'une colonne de Kanban. Chaque valeur est CONTRÔLÉE par le type de son champ (la même exigence qu'une saisie) ; une valeur
+ * invalide, un champ inconnu ou un tableau est ignoré, jamais passé tel quel.
+ */
+export function presetValues(meta: DocTypeMeta, query: Record<string, unknown>): Values {
+  const out: Values = {}
+  for (const f of meta.fields) {
+    const raw = query[f.fieldname]
+    if (typeof raw !== 'string' || f.hidden || f.fieldtype === 'Table' || raw.length > 500) continue
+    switch (f.fieldtype) {
+      case 'Date':
+        if (isValidIsoDate(raw)) out[f.fieldname] = raw
+        break
+      case 'Select':
+        if (Array.isArray(f.options) && f.options.includes(raw)) out[f.fieldname] = raw
+        break
+      case 'Boolean':
+        if (raw === 'true' || raw === 'false') out[f.fieldname] = raw === 'true'
+        break
+      case 'Number':
+        if (raw.trim() !== '' && Number.isFinite(Number(raw))) out[f.fieldname] = Number(raw)
+        break
+      case 'Decimal':
+      case 'Currency': {
+        const canon = canonicalDecimal(raw, f.decimals ?? (f.fieldtype === 'Currency' ? 2 : 0))
+        if (canon !== null) out[f.fieldname] = canon
+        break
+      }
+      case 'Rating':
+        if (/^\d+$/.test(raw) && isValidRating(Number(raw), f.stars ?? 5)) out[f.fieldname] = Number(raw)
+        break
+      case 'Datetime':
+        if (isValidDatetime(raw)) out[f.fieldname] = raw
+        break
+      case 'Color':
+        if (COLOR.test(raw)) out[f.fieldname] = raw
+        break
+      default:
+        out[f.fieldname] = raw
+    }
+  }
+  return out
+}
+
+/** Le formulaire d'un nouveau document à son ouverture : les défauts, puis ce que l'adresse pré-remplit. */
+export const startValues = (meta: DocTypeMeta, query: Record<string, unknown> = {}): Values => ({ ...newValues(meta), ...presetValues(meta, query) })
+
+/** Valeurs d'un document existant. Un champ absent reste vide : un défaut ne s'applique qu'à la création. */
+export function recordValues(meta: DocTypeMeta, rec: DocRecord): Values {
+  const out: Values = {}
+  for (const f of meta.fields) {
+    const v = rec.data[f.fieldname]
+    if (f.fieldtype === 'Table') {
+      const child = childOf(meta, f)
+      out[f.fieldname] = child && Array.isArray(v) ? v.map((r) => recordRow(child, r)) : []
+    } else out[f.fieldname] = v === undefined ? (f.fieldtype === 'Boolean' ? false : null) : v
+  }
+  return out
+}
+
+export function fieldStates(meta: DocTypeMeta, values: Values, saved: Values | null): FieldStates {
+  const out: FieldStates = {}
+  for (const f of meta.fields) {
+    const conditionVisible = f.depends_on ? evaluate(f.depends_on, values) : true
+    const mandatory = f.mandatory_depends_on ? evaluate(f.mandatory_depends_on, values) : false
+    // Un document existant : le serveur évalue la lecture seule sur l'état d'AVANT. Un nouveau : l'interface suit les valeurs.
+    const readOnly = f.read_only === true || (f.read_only_depends_on ? evaluate(f.read_only_depends_on, saved ?? values) : false)
+    out[f.fieldname] = { visible: !f.hidden && conditionVisible, required: (f.required && conditionVisible) || mandatory, readOnly }
+  }
+  return out
+}
+
+export interface CellState {
+  /** La cellule existe pour cette ligne : ni `hidden`, ni écartée par sa condition `depends_on`. */
+  visible: boolean
+  required: boolean
+  /** La condition `depends_on` est vraie (ou absente) : sinon la valeur ne part pas, elle ne correspond plus à la nature du document. */
+  active: boolean
+}
+
+/** Ce que lit la condition d'un champ de ligne : la ligne elle-même, et les champs du parent sous `parent_<champ>`. */
+export function rowContext(row: Row, parent: Values): Values {
+  const ctx: Values = { ...row }
+  for (const [k, v] of Object.entries(parent)) if (!Array.isArray(v)) ctx[`${PARENT_PREFIX}${k}`] = v
+  return ctx
+}
+
+/** Visibilité et obligation de chaque cellule d'une ligne : les règles du document (`fieldStates`), appliquées à la ligne et à son parent. */
+export function cellStates(child: ChildMeta, row: Row, parent: Values): Record<string, CellState> {
+  const ctx = rowContext(row, parent)
+  const out: Record<string, CellState> = {}
+  for (const f of child.fields) {
+    const active = f.depends_on ? evaluate(f.depends_on, ctx) : true
+    const mandatory = f.mandatory_depends_on ? evaluate(f.mandatory_depends_on, ctx) : false
+    out[f.fieldname] = { visible: !f.hidden && active, required: (f.required && active) || mandatory, active }
+  }
+  return out
+}
+
+const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/
+
+export function isValidIsoDate(s: unknown): boolean {
+  if (typeof s !== 'string') return false
+  const m = ISO_DATE.exec(s)
+  if (!m) return false
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const date = new Date(Date.UTC(y, mo - 1, d))
+  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d
+}
+
+function typeError(f: FieldMeta, v: unknown): string | null {
+  switch (f.fieldtype) {
+    case 'Number':
+      return typeof v === 'number' && Number.isFinite(v) ? null : t.form.invalid
+    case 'Decimal':
+    case 'Currency': {
+      // Même règle que le serveur : au plus `decimals` décimales (jamais d'arrondi silencieux), 18 chiffres au plus.
+      const decimals = f.decimals ?? (f.fieldtype === 'Currency' ? 2 : 0)
+      if (typeof v !== 'string') return t.form.invalid
+      if (canonicalDecimal(v, decimals) !== null) return null
+      return /^-?\d+(\.\d+)?$/.test(v) && (v.split('.')[1]?.replace(/0+$/, '').length ?? 0) > decimals ? t.form.tooManyDecimals(decimals) : t.form.invalid
+    }
+    case 'Rating':
+      return isValidRating(v, f.stars ?? 5) ? null : t.form.invalid
+    case 'Datetime':
+      return isValidDatetime(v) ? null : t.form.invalid
+    case 'Color':
+      return typeof v === 'string' && COLOR.test(v) ? null : t.form.invalid
+    case 'LongText':
+      return typeof v === 'string' && v.length <= MAX_LONG_TEXT ? null : t.form.invalid
+    case 'Text':
+      return typeof v === 'string' && (!f.format || isValidFormat(f.format, v)) ? null : (t.form.invalidFormat[f.format ?? 'email'] ?? t.form.invalid)
+    case 'Boolean':
+      return typeof v === 'boolean' ? null : t.form.invalid
+    case 'Date':
+      return isValidIsoDate(v) ? null : t.form.invalid
+    case 'Select':
+      return typeof v === 'string' && Array.isArray(f.options) && f.options.includes(v) ? null : t.form.invalid
+    case 'Table':
+      return Array.isArray(v) ? null : t.form.invalid
+    default:
+      return typeof v === 'string' ? null : t.form.invalid
+  }
+}
+
+/** Clé d'une erreur de cellule : `items.0.qty` (champ Table, numéro de ligne à partir de 0, champ de la ligne). */
+export const cellKey = (table: string, row: number, field: string): string => `${table}.${row}.${field}`
+
+/** Erreurs de chaque cellule d'un champ Table. Les lignes se contrôlent comme un document : obligatoire, puis type. */
+function validateRows(f: FieldMeta, child: ChildMeta, rows: unknown, errors: Record<string, string>, parent: Values): void {
+  if (!Array.isArray(rows)) return
+  rows.forEach((row: Row, i) => {
+    const states = cellStates(child, row ?? {}, parent)
+    for (const cf of child.fields) {
+      const st = states[cf.fieldname]!
+      if (cf.hidden || (!st.visible && !st.required)) continue
+      const v = row?.[cf.fieldname]
+      if (isEmpty(v)) {
+        if (st.required) errors[cellKey(f.fieldname, i, cf.fieldname)] = t.form.required
+        continue
+      }
+      const bad = typeError(cf, v)
+      if (bad) errors[cellKey(f.fieldname, i, cf.fieldname)] = bad
+    }
+  })
+}
+
+/** Erreurs par champ (et par cellule : `items.0.qty`). Un champ masqué par sa condition et non obligatoire n'est pas contrôlé. */
+export function validate(meta: DocTypeMeta, values: Values, states: FieldStates): Record<string, string> {
+  const errors: Record<string, string> = {}
+  for (const f of meta.fields) {
+    const st = states[f.fieldname]
+    if (!st || f.hidden || (!st.visible && !st.required)) continue
+    const v = values[f.fieldname]
+    if (isEmpty(v)) {
+      if (st.required) errors[f.fieldname] = t.form.required
+      continue
+    }
+    const bad = typeError(f, v)
+    if (bad) errors[f.fieldname] = bad
+    else if (f.fieldtype === 'Table') {
+      const child = childOf(meta, f)
+      if (child) validateRows(f, child, v, errors, values)
+    }
+  }
+  return errors
+}
+
+/** Un Decimal valide part sous sa forme canonique (« 12.5 » -> « 12.500 ») : ressaisir la même valeur n'est pas une modification. */
+const sendable = (f: FieldMeta, v: unknown): unknown =>
+  isDecimalType(f.fieldtype) ? (canonicalDecimal(v, f.decimals ?? (f.fieldtype === 'Currency' ? 2 : 0)) ?? v) : v
+
+function rowPayload(child: ChildMeta, row: Row, parent: Values): DocData {
+  const out: DocData = {}
+  const states = cellStates(child, row ?? {}, parent)
+  for (const f of child.fields) {
+    const v = row?.[f.fieldname]
+    // Une cellule que la nature du document écarte (l'entrepôt source d'une réception) ne part pas : l'utilisateur ne la voit plus.
+    if (!isEmpty(v) && states[f.fieldname]!.active) out[f.fieldname] = sendable(f, v)
+  }
+  return out
+}
+
+/** Ce que le serveur reçoit : les champs renseignés. `false` et `0` sont des valeurs ; vide et « » n'en sont pas. */
+export function toPayload(meta: DocTypeMeta, values: Values): DocData {
+  const out: DocData = {}
+  for (const f of meta.fields) {
+    const v = values[f.fieldname]
+    if (isEmpty(v)) continue
+    if (f.fieldtype === 'Table') {
+      const child = childOf(meta, f)
+      if (child && Array.isArray(v)) out[f.fieldname] = v.map((r: Row) => rowPayload(child, r, values))
+    } else out[f.fieldname] = sendable(f, v)
+  }
+  return out
+}
+
+export function isDirty(meta: DocTypeMeta, values: Values, original: Values): boolean {
+  return JSON.stringify(toPayload(meta, values)) !== JSON.stringify(toPayload(meta, original))
+}
+
+export interface MappedErrors {
+  /** Erreurs rattachées à un champ du formulaire. */
+  fields: Record<string, string>
+  /** Message à afficher en haut : refus d'un hook, erreur sans champ… */
+  general: string | null
+}
+
+/** Traduit une réponse d'erreur du serveur pour le formulaire. Les champs inconnus du formulaire passent en message général. */
+export function mapServerErrors(err: ApiError, meta: DocTypeMeta): MappedErrors {
+  const known = new Set(meta.fields.map((f) => f.fieldname))
+  const fields: Record<string, string> = {}
+  const loose: string[] = []
+  for (const d of err.details) {
+    const msg = typeof d.msg === 'string' && d.msg ? d.msg : t.form.invalid
+    // `items.0.qty` : l'erreur d'une cellule se range sous sa clé complète, si `items` est un champ du formulaire.
+    if (typeof d.field === 'string' && known.has(d.field.split('.')[0] ?? '')) fields[d.field] ??= translateServerMessage(d, msg)
+    else if (typeof d.msg === 'string' && d.msg) loose.push(d.msg)
+  }
+  let general: string | null = null
+  switch (err.code) {
+    case 'validation_failed':
+      general = Object.keys(fields).length ? t.form.fixErrors : (loose[0] ?? err.message)
+      break
+    case 'hook_rejected':
+      general = err.message // le message du hook est écrit pour l'utilisateur
+      break
+    case 'hook_unavailable':
+      general = t.errors.hookUnavailable
+      break
+    case 'hook_timeout':
+      general = t.errors.hookTimeout
+      break
+    case 'hook_payload_too_large':
+      general = t.errors.tooLarge
+      break
+    case 'permission_denied':
+      general = t.errors.forbidden
+      break
+    default:
+      general = err.message || t.errors.generic
+  }
+  return { fields, general }
+}
+
+/** Les messages des contrôles du serveur sont en français, sauf ceux de Pydantic : on ne laisse pas de l'anglais brut. */
+function translateServerMessage(d: { type?: string; msg?: string }, msg: string): string {
+  if (d.type === 'missing') return t.form.required
+  if (d.type === 'read_only') return t.form.readOnly
+  // Types Pydantic courants : le message anglais n'aide pas l'utilisateur.
+  if (d.type && /^(literal_error|string_type|bool_type|date|value_error|extra_forbidden)/.test(d.type)) return t.form.invalid
+  return msg
+}
