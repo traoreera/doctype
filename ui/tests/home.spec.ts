@@ -84,3 +84,34 @@ describe('accueil', () => {
     expect((await mountHome([], [], [])).find('[data-testid="no-doctype"]').exists()).toBe(true)
   })
 })
+
+describe('accueil : salutation et création rapide', () => {
+  it('la salutation suit l’heure et nomme la personne d’après son adresse', async () => {
+    const w = await mountHome()
+    const hello = w.find('[data-testid="greeting"]').text()
+    expect(hello).toMatch(/^(Bonjour|Bonsoir)/)
+    expect(hello).toMatch(/^(Bonjour|Bonsoir)(, \S+)?$/)
+  })
+
+  it('« Créer » ne propose que les types qu’on peut créer, ceux qu’on a ouverts récemment d’abord', async () => {
+    const w = await mountHome(SUMMARIES, [{ doctype: 'Stock Entry', name: 'MS-1', title: 'Réception', at: Date.now() }])
+    const chips = w.findAll('[data-testid^="create-"]').map((c) => c.attributes('data-testid'))
+    expect(chips).toEqual(['create-Stock Entry', 'create-Invoice']) // Client (create: false) et Solde ne figurent pas
+    expect(w.find('[data-testid="create-Invoice"]').attributes('href')).toBe('/app/Invoice/new')
+  })
+
+  it('sans type créable, pas de rangée vide', async () => {
+    const w = await mountHome(SUMMARIES.map((d) => ({ ...d, create: false })))
+    expect(w.find('[data-testid="home-create"]').exists()).toBe(false)
+  })
+
+  it('les réglages et les types virtuels ne sont pas proposés à la création', async () => {
+    const w = await mountHome([
+      { name: 'Invoice', label: 'Facture', module: 'sales', create: true },
+      { name: 'Settings', label: 'Réglages', module: 'sales', create: true, single: true },
+      { name: 'Member', label: 'Membre', module: 'iam', create: true, virtual: true },
+    ] as DocTypeSummary[])
+    expect(w.findAll('[data-testid^="create-"]').map((c) => c.attributes('data-testid'))).toEqual(['create-Invoice'])
+  })
+})
+

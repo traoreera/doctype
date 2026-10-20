@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { piIcon } from '@/lib/icons'
 import type { LinksCardBlock } from '@/lib/types'
 
 defineProps<{ block: LinksCardBlock }>()
@@ -10,7 +11,7 @@ defineProps<{ block: LinksCardBlock }>()
     <ul class="links-list">
       <li v-for="l in block.links" :key="l.doctype">
         <RouterLink :to="{ name: 'list', params: { doctype: l.doctype } }" class="desk-link" :data-testid="`link-${l.doctype}`">
-          <i :class="`pi pi-${l.icon ?? 'file'}`" /> {{ l.label }}
+          <i :class="piIcon(l.icon, 'file')" /> {{ l.label }}
         </RouterLink>
       </li>
     </ul>

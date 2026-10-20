@@ -3,6 +3,7 @@ import Dialog from 'primevue/dialog'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
+import { piIcon } from '@/lib/icons'
 import { buildCommands, documentCommands, rank, step, type ActionName, type Command } from '@/lib/commands'
 import { useServices } from '@/lib/services'
 import { useMeta } from '@/stores/meta'
@@ -132,7 +133,7 @@ const rows = computed(() => results.value.map((c, i) => ({ c, i, group: i === 0 
         <template v-for="r in rows" :key="r.c.id">
           <li v-if="r.group" class="palette-group" role="presentation">{{ t.palette.groups[r.group] }}</li>
           <li :id="`palette-${r.c.id}`" role="option" :aria-selected="r.i === active" class="palette-item" :class="{ active: r.i === active }" :data-testid="`cmd-${r.c.id}`" @mousemove="active = r.i" @click="run(r.c)">
-            <i :class="`pi pi-${r.c.icon}`" />
+            <i :class="piIcon(r.c.icon, 'file')" />
             <span class="palette-label">{{ r.c.label }}</span>
             <span v-if="r.c.hint" class="desk-muted palette-hint">{{ r.c.hint }}</span>
           </li>

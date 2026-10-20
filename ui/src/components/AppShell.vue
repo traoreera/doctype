@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CommandPalette from '@/components/CommandPalette.vue'
 import { useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
+import { piIcon } from '@/lib/icons'
 import { initials, readNav, writeNav } from '@/lib/navstate'
 import { useServices } from '@/lib/services'
 import type { ThemeMode } from '@/lib/theme'
@@ -75,6 +76,40 @@ function toggleSidebar(): void {
   }
 }
 watch(() => route.fullPath, () => (navOpen.value = false))
+
+// ── Changement de page : le titre de l'onglet, et le focus sur le titre de la page (lecteur d'écran, clavier) ─────────────
+const main = ref<HTMLElement | null>(null)
+let pageTicket = 0
+/** Les pages se remplissent après un appel au serveur : on cherche leur titre (h1) pendant ~1,5 s, puis on y pose le focus. Un simple changement de filtre (la requête) n'y touche pas. */
+async function landOnPage(focus: boolean): Promise<void> {
+  const mine = ++pageTicket
+  await nextTick()
+  for (let i = 0; i < 10; i++) {
+    const heading = main.value?.querySelector('h1')
+    if (heading?.textContent?.trim()) {
+      if (mine !== pageTicket) return
+      prefs.page = heading.textContent.trim()
+      if (focus) {
+        heading.setAttribute('tabindex', '-1')
+        heading.focus({ preventScroll: true })
+      }
+      return
+    }
+    await new Promise((r) => setTimeout(r, 150))
+    if (mine !== pageTicket || !main.value) return
+  }
+  prefs.page = ''
+  if (focus) main.value?.focus({ preventScroll: true })
+}
+watch(() => route.path, () => void landOnPage(true))
+onMounted(() => void landOnPage(false)) // la première page : son titre, sans voler le focus
+function skipToContent(): void {
+  const heading = main.value?.querySelector('h1') as HTMLElement | null
+  if (heading) {
+    heading.setAttribute('tabindex', '-1')
+    heading.focus()
+  } else main.value?.focus()
+}
 
 /** L'espace de la page courante : celui qu'on déplie d'office, et celui qu'on met en évidence. */
 /** Un compte qui peut lire au moins un document unique voit « Paramètres ». */
@@ -177,6 +212,7 @@ const items = computed(() => [
 
 <template>
   <div class="desk-shell" :class="{ collapsed: nav.collapsed && !narrow }">
+    <a class="skip-link" href="#desk-main" data-testid="skip-link" @click.prevent="skipToContent">{{ t.nav.skip }}</a>
     <header class="desk-navbar">
       <Button
         class="desk-burger"
@@ -219,7 +255,7 @@ const items = computed(() => [
       <h6>{{ t.workspace.spaces }}</h6>
       <div v-for="w in workspaces.items ?? []" :key="w.name" class="ws-item" :data-testid="`ws-${w.name}`">
         <div class="desk-link ws-row" :class="{ 'router-link-active': currentSpace === w.name }">
-          <RouterLink class="ws-main" :to="{ name: 'workspace', params: { name: w.name } }"><i :class="`pi pi-${w.icon ?? 'folder'}`" /><span>{{ w.label }}</span></RouterLink>
+          <RouterLink class="ws-main" :to="{ name: 'workspace', params: { name: w.name } }"><i :class="piIcon(w.icon, 'folder')" /><span>{{ w.label }}</span></RouterLink>
           <button
             type="button"
             class="ws-toggle"
@@ -246,7 +282,7 @@ const items = computed(() => [
             </button>
             <template v-if="!sec.title || sectionsOf(w).length === 1 || sectionOpen(w, sec.title)">
               <RouterLink v-for="s in sec.items" :key="s.doctype" class="desk-link ws-sublink" :to="{ name: 'list', params: { doctype: s.doctype } }" :data-testid="`nav-${s.doctype}`">
-                <i :class="`pi pi-${s.icon ?? 'file'}`" aria-hidden="true" />{{ s.label }}
+                <i :class="piIcon(s.icon, 'file')" aria-hidden="true" />{{ s.label }}
               </RouterLink>
             </template>
           </template>
@@ -257,7 +293,7 @@ const items = computed(() => [
       </div>
     </nav>
 
-    <main class="desk-main"><slot /></main>
+    <main id="desk-main" ref="main" class="desk-main" tabindex="-1"><slot /></main>
     <CommandPalette v-model:open="paletteOpen" />
   </div>
 </template>

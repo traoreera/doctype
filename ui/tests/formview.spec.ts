@@ -14,6 +14,7 @@ import type { DocRecord, DocTypeMeta } from '@/lib/types'
 import { formatDate, todayIn } from '@/lib/format'
 import { recentsKey } from '@/lib/recents'
 import { CUSTOMER, INVOICE, MOVE, STOCK_ENTRY } from './fixtures'
+import { menuItem, openMore } from './menu'
 
 // PrimeVue monte la boîte de confirmation dans un composant à part : ici on garde seulement ce qu'on lui demande, pour
 // pouvoir « cliquer » sur Supprimer en appelant `accept` au moment voulu.
@@ -35,7 +36,7 @@ const rec = (doctype: string, name: string, data: Record<string, unknown>, versi
   doctype, name, owner: 'u', creation: '2026-01-01T00:00:00+00:00', modified: '2026-01-01T00:00:00+00:00', version, docstatus: 0, amended_from: null, data,
 })
 
-function setup(overrides: Record<string, unknown> = {}) {
+function setup(overrides: Record<string, unknown> = {}, attach = false) {
   const metas: Record<string, DocTypeMeta> = { Customer: CUSTOMER, Invoice: INVOICE, 'Stock Entry': STOCK_ENTRY, Move: MOVE }
   const api = {
     meta: vi.fn(async (d: string) => metas[d]),
@@ -62,6 +63,7 @@ function setup(overrides: Record<string, unknown> = {}) {
   })
   const Root = defineComponent({ render: () => h(RouterView) })
   const w = mount(Root, {
+    ...(attach ? { attachTo: document.body } : {}),
     global: {
       plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
       provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api } },
@@ -166,6 +168,22 @@ describe('FormView : une réponse tardive ne touche pas la page où l’on est',
     expect(w.find('[data-testid="error-customer_name"]').exists()).toBe(false)
   })
 
+  it('un enregistrement refusé liste les erreurs et met le focus sur le premier champ en cause', async () => {
+    const { w, router } = setup({}, true)
+    await router.push('/app/Customer/new')
+    await flushPromises()
+    await w.find('[data-testid="save"]').trigger('click') // le nom est obligatoire et vide
+    await flushPromises()
+    const list = w.find('[data-testid="error-list"]')
+    expect(list.exists()).toBe(true)
+    expect(list.text()).toContain('Nom')
+    expect(document.activeElement).toBe(nameInput(w).element)
+    ;(document.activeElement as HTMLElement).blur()
+    await w.find('[data-testid="error-link-customer_name"]').trigger('click') // l'erreur de la liste mène au champ
+    expect(document.activeElement).toBe(nameInput(w).element)
+    w.unmount()
+  })
+
   it('une création normale mène au document créé, sans le relire', async () => {
     const { w, api, router } = setup({ create: vi.fn(async () => rec('Customer', 'c1', { customer_name: 'Alpha' })) })
     await router.push('/app/Customer/new')
@@ -188,7 +206,8 @@ describe('FormView : une réponse tardive ne touche pas la page où l’on est',
     asked.length = 0
     await router.push('/app/Invoice/FA-1')
     await flushPromises()
-    await w.find('[data-testid="delete"]').trigger('click')
+    await openMore(w)
+    menuItem('delete')!.click()
     expect(asked).toHaveLength(1)
     const deleting = asked[0]!.accept!()
     await flushPromises()
@@ -210,7 +229,8 @@ describe('FormView : une réponse tardive ne touche pas la page où l’on est',
     asked.length = 0
     await router.push('/app/Invoice/FA-1')
     await flushPromises()
-    await w.find('[data-testid="delete"]').trigger('click')
+    await openMore(w)
+    menuItem('delete')!.click()
     await asked[0]!.accept!()
     await flushPromises()
     expect(router.currentRoute.value.fullPath).toBe('/app/Invoice')
@@ -240,7 +260,9 @@ describe('FormView : documents soumettables', () => {
   it('un brouillon propose Enregistrer, Supprimer et Soumettre, rien d’autre', async () => {
     const { w } = await openEntry(0)
     expect(status(w)).toBe('Brouillon')
-    expect(['save', 'delete', 'submit'].map((id) => has(w, id))).toEqual([true, true, true])
+    expect(['save', 'submit'].map((id) => has(w, id))).toEqual([true, true])
+    await openMore(w) // Supprimer vit dans le menu « ⋯ »
+    expect(menuItem('delete')).not.toBeNull()
     expect(['cancel-doc', 'amend', 'form-frozen'].map((id) => has(w, id))).toEqual([false, false, false])
   })
 
@@ -263,7 +285,11 @@ describe('FormView : documents soumettables', () => {
     expect(submit).toHaveBeenCalledWith('Stock Entry', 'MS-2026-00001', 2)
     expect(status(w)).toBe('Soumis')
     // Figé : ni saisie, ni enregistrement, ni suppression, ni nouvelle soumission ; on peut annuler.
-    expect(['save', 'delete', 'submit'].map((id) => has(w, id))).toEqual([false, false, false])
+    expect(['save', 'submit'].map((id) => has(w, id))).toEqual([false, false])
+    if (has(w, 'more-actions')) {
+      await openMore(w)
+      expect(menuItem('delete')).toBeNull() // un document soumis ne se supprime pas
+    }
     expect(has(w, 'cancel-doc')).toBe(true)
     expect(has(w, 'form-frozen')).toBe(true)
     expect(w.find('[data-field="purpose"] input').exists()).toBe(false)

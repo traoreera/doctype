@@ -68,6 +68,17 @@ export function router(): Router {
 }
 
 /** Monte un composant avec le client d'API simulé que le test fournit. */
+/** Les composants montés par `mountWith` et pas encore démontés (voir `unmountAll`). */
+const mounted: VueWrapper[] = []
+
+/**
+ * À appeler en `afterEach` AVANT de vider `document.body` : une fenêtre PrimeVue se téléporte dans le corps de la page ; effacer
+ * celui-ci pendant que le composant vit encore laisse Vue corriger plus tard un nœud sans parent (« insertBefore » de null).
+ */
+export function unmountAll(): void {
+  for (const w of mounted.splice(0)) w.unmount()
+}
+
 export function mountWith(component: unknown, props: Record<string, unknown>, api: Record<string, unknown> = {}, r: Router = router()) {
   const w = mount(component as never, {
     props: props as never,
@@ -77,6 +88,7 @@ export function mountWith(component: unknown, props: Record<string, unknown>, ap
       provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api: { meta: async () => TASK, ...api } } },
     },
   }) as unknown as VueWrapper
+  mounted.push(w)
   return { w, router: r }
 }
 

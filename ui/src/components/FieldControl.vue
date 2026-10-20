@@ -4,6 +4,7 @@ import FieldInput from '@/components/FieldInput.vue'
 import CellValue from '@/components/CellValue.vue'
 import LinkField from '@/components/LinkField.vue'
 import { t } from '@/i18n'
+import { isWide } from '@/lib/form'
 import { formatCell } from '@/lib/format'
 import { sanitizeRich } from '@/lib/richtext'
 import type { FieldMeta } from '@/lib/types'
@@ -30,7 +31,7 @@ const target = computed(() => (typeof props.field.options === 'string' ? props.f
 </script>
 
 <template>
-  <div class="form-field" :data-field="field.fieldname">
+  <div class="form-field" :data-field="field.fieldname" :data-wide="isWide(field) || undefined">
     <label :for="id" :class="{ 'form-checkbox-label': field.fieldtype === 'Boolean' }">
       {{ label }}<span v-if="required && !readOnly" class="req" aria-hidden="true">*</span>
     </label>

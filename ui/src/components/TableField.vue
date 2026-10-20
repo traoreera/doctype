@@ -128,7 +128,7 @@ function remove(i: number): void {
 </script>
 
 <template>
-  <div v-if="field.multiselect" class="form-tags" :data-field="field.fieldname" data-testid="multiselect">
+  <div v-if="field.multiselect" class="form-tags" :data-field="field.fieldname" data-wide data-testid="multiselect">
     <span class="form-table-title">{{ label }}<span v-if="required && !readOnly" class="req" aria-hidden="true">*</span></span>
     <ul class="tag-list" :aria-label="label">
       <li v-for="v in tags" :key="v" class="tag" :data-testid="`tag-${v}`">
@@ -141,7 +141,7 @@ function remove(i: number): void {
     <span v-if="tableError" class="error" role="alert" :data-testid="`error-${field.fieldname}`">{{ tableError }}</span>
     <span v-else-if="field.description" class="hint">{{ field.description }}</span>
   </div>
-  <div v-else ref="root" class="form-table" :data-field="field.fieldname" @keydown="onTab">
+  <div v-else ref="root" class="form-table" :data-field="field.fieldname" data-wide @keydown="onTab">
     <div class="form-table-head">
       <span class="form-table-title">{{ label }}<span v-if="required && !readOnly" class="req" aria-hidden="true">*</span></span>
       <span v-if="field.description" class="hint">{{ field.description }}</span>

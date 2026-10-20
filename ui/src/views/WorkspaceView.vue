@@ -3,6 +3,7 @@ import Button from 'primevue/button'
 import { computed, ref, watch } from 'vue'
 import BlockEditor from '@/components/BlockEditor.vue'
 import { t } from '@/i18n'
+import { piIcon } from '@/lib/icons'
 import type { DeclaredBlock } from '@/lib/blocksedit'
 import { useServices } from '@/lib/services'
 import type { LayoutScope, Workspace, WorkspaceOverride } from '@/lib/types'
@@ -41,7 +42,7 @@ async function reset(scope: LayoutScope): Promise<void> {
   <div class="desk-page" data-testid="workspace">
     <template v-if="ws">
       <div class="desk-page-head">
-        <i v-if="ws.icon" :class="`pi pi-${ws.icon}`" class="ws-icon" />
+        <i v-if="ws.icon" :class="piIcon(ws.icon, 'folder')" class="ws-icon" />
         <h1 data-testid="workspace-title">{{ ws.label }}</h1>
         <span class="desk-spacer" />
         <Button v-if="!editing" :label="t.editor.start" icon="pi pi-pencil" severity="secondary" text size="small" data-testid="workspace-edit" @click="editor?.start()" />

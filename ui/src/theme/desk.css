@@ -13,8 +13,8 @@
   --desk-subtle: var(--p-surface-50);
   --desk-line: var(--p-surface-100);
   --desk-line-strong: var(--p-surface-200);
-  --desk-danger: var(--p-red-600);
-  --desk-danger-soft: var(--p-red-500);
+  --desk-danger: var(--p-red-700); /* texte rouge : 6:1 sur blanc (le rouge 600 n'en faisait que 4,5, le 500 que 3,8) */
+  --desk-danger-soft: var(--p-red-700);
   --pill-bg: var(--p-surface-100);
   --pill-fg: var(--p-surface-700);
   --pill-warn-bg: var(--p-orange-100);
@@ -149,6 +149,9 @@ button {
 }
 
 .desk-brand {
+  min-height: 28px; /* une cible de 24 px au moins (WCAG 2.5.8) */
+  padding: 0 4px;
+  border-radius: var(--p-border-radius-md);
   font-weight: 600;
   letter-spacing: -0.01em;
   text-decoration: none;
@@ -860,6 +863,7 @@ kbd {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  min-height: 24px;
   margin: 0.5rem 0 0.1rem;
   padding: 0.15rem 0.5rem;
   border: 0;
@@ -968,6 +972,7 @@ kbd {
 
 .palette-input input {
   flex: 1;
+  min-height: 2rem;
   border: 0;
   outline: 0;
   background: transparent;
@@ -1646,6 +1651,7 @@ table.grid .error {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  min-height: 28px;
   padding: 0.3rem 0.65rem;
   border: 0;
   border-radius: calc(var(--desk-radius) - 2px);
@@ -2106,7 +2112,7 @@ table.grid .error {
 }
 
 .p-datatable .p-datatable-header-cell {
-  background: var(--p-surface-50);
+  background: var(--desk-subtle); /* un jeton qui suit le schéma : l'échelle brute restait CLAIRE en mode sombre (texte à 1,6:1) */
   color: var(--p-text-muted-color);
   font-size: 12px;
   font-weight: 600;
@@ -2229,14 +2235,29 @@ table.grid .error {
 }
 
 .link-field {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  position: relative;
+  width: 100%;
+  --actions: 0;
 }
 
-.link-field > :first-child {
-  flex: 1;
-  min-width: 0;
+/* Le champ garde la largeur des autres champs : ses boutons se posent dans sa marge droite. */
+.link-field .p-autocomplete-input {
+  padding-right: calc(0.5rem + var(--actions) * 1.75rem);
+}
+
+.link-actions {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  transform: translateY(-50%);
+}
+
+.link-actions .link-open {
+  width: 1.75rem; /* 24 px au moins (WCAG 2.5.8) */
+  height: 1.75rem;
 }
 
 .link-open {
@@ -2700,7 +2721,7 @@ button.link-open {
 }
 
 .assignment-due.overdue {
-  color: var(--p-red-500, #d33);
+  color: var(--desk-danger);
   font-weight: 500;
 }
 
@@ -3074,7 +3095,7 @@ button.link-open {
 }
 
 .rich-field.invalid {
-  border-color: var(--p-red-500);
+  border-color: var(--desk-danger);
 }
 
 .rich-toolbar,
@@ -3231,4 +3252,221 @@ button.link-open {
   background: color-mix(in srgb, var(--p-primary-color) 10%, transparent);
   border-radius: 4px;
   padding: 0 0.2em;
+}
+
+
+/* ── Accès au contenu et focus (clavier, lecteur d'écran) ─────────────────────────────── */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  z-index: 200;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--p-border-radius-md);
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+}
+
+/* Le contenu reçoit le focus à chaque changement de page (pour le lecteur d'écran) : pas de cadre autour de toute la page, ni du titre. */
+.desk-main:focus,
+.desk-main h1:focus {
+  outline: none;
+}
+
+
+/* ── Formulaire : en-tête collant, deux colonnes quand la place le permet, erreurs qui mènent au champ ───────────────── */
+.desk-page-head {
+  position: sticky;
+  top: -1.25rem; /* le conteneur défilant a 1,25 rem de marge haute : l'en-tête se colle à son bord */
+  z-index: 6;
+  padding: 0.75rem 0 0.5rem;
+  margin-top: -0.75rem;
+  background: var(--desk-page-bg);
+}
+
+@media (max-width: 640px) {
+  .desk-page-head {
+    position: static;
+  }
+}
+
+.form-section {
+  container-type: inline-size;
+}
+
+/* La colonne que personne n'a composée : deux colonnes dès qu'elle a 44 rem de large ; texte long, code, tableau : pleine largeur. */
+.form-columns > .auto-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 2rem;
+  align-content: start;
+}
+
+@container (min-width: 44rem) {
+  .form-columns > .auto-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form-columns > .auto-cols > [data-wide] {
+    grid-column: 1 / -1;
+  }
+}
+
+.error-list {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.85rem;
+}
+
+.error-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+
+/* ── Liste : ligne cliquable, barre de sélection, états vides et de chargement ─────────────────────────────────────── */
+.p-datatable .row-open {
+  cursor: pointer;
+}
+
+.selection-bar {
+  position: sticky;
+  top: 2.5rem;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--desk-line);
+  background: var(--p-highlight-background);
+  border-radius: var(--desk-radius) var(--desk-radius) 0 0;
+}
+
+.skeleton-rows {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.1rem 1rem 1.4rem;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+}
+
+
+/* ── Accueil : salutation, création rapide, tâches ─────────────────────────────────────────────────────────────── */
+.home-greeting {
+  margin: -0.25rem 0 1rem;
+  font-size: 1.05rem;
+  color: var(--p-text-muted-color);
+}
+
+.home-create {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.home-more {
+  display: block;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--desk-line);
+  font-size: 0.85rem;
+  color: var(--p-text-muted-color);
+  text-decoration: none;
+}
+
+.home-more:hover {
+  color: var(--p-text-color);
+}
+
+.task-late {
+  color: var(--desk-danger);
+  font-weight: 600;
+}
+
+
+/* ── Cibles de 24 px au moins (WCAG 2.5.8) et pastilles lisibles ──────────────────────────────────────────────── */
+.sidebar-group button,
+.card-title,
+.login-links a,
+.link-button {
+  min-height: 28px;
+}
+
+.login-links a {
+  display: inline-flex;
+  align-items: center;
+}
+
+.desk-brand {
+  min-width: 28px;
+}
+
+/* La case à cocher se dessine à 20 px mais se touche sur 28 : la zone sensible déborde de son cadre. */
+.p-checkbox {
+  position: relative;
+}
+
+.p-checkbox::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+.method {
+  font-size: 0.72rem;
+}
+
+.method.ok {
+  background: var(--p-green-700);
+}
+
+.method.warn {
+  background: var(--p-orange-700);
+}
+
+.method.bad {
+  background: var(--p-red-700);
+}
+
+/* Le lien du titre d'une ligne : sa zone sensible fait la hauteur de la ligne, sans l'agrandir. */
+.p-datatable .avatar-cell a {
+  display: inline-block;
+  padding-block: 5px;
+  margin-block: -5px;
+}
+
+/* Un bouton qui est un lien (`as="router-link"`) ne se souligne pas. */
+a.p-button,
+a.p-button:hover {
+  text-decoration: none;
+}
+
+/* Un choix destructeur d'un menu (Supprimer) : en rouge lisible, comme le bouton qu'il remplace. */
+.p-menu .danger-item,
+.p-menu .danger-item .p-menu-item-label,
+.p-menu .danger-item span {
+  color: var(--desk-danger);
 }

@@ -64,7 +64,9 @@ button {
   width: 100%;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.3rem 0.5rem;
+  align-items: center;
+  min-height: 28px; /* une cible de 24 px au moins (WCAG 2.5.8) */
+  padding: 0.2rem 0.5rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.875rem;

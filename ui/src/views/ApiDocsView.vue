@@ -175,7 +175,7 @@ const methodTone = (m: string) => ({ GET: 'ok', POST: 'info', PUT: 'warn', DELET
 }
 
 .method {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   padding: 0.1rem 0.45rem;
@@ -185,15 +185,15 @@ const methodTone = (m: string) => ({ GET: 'ok', POST: 'info', PUT: 'warn', DELET
 }
 
 .method.bad {
-  background: var(--p-red-600, #dc2626);
+  background: var(--p-red-700);
 }
 
 .method.warn {
-  background: var(--p-orange-600, #ea580c);
+  background: var(--p-orange-700);
 }
 
 .method.ok {
-  background: var(--p-green-600, #16a34a);
+  background: var(--p-green-700);
 }
 
 .curl {
