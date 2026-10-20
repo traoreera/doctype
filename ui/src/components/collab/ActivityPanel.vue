@@ -117,6 +117,14 @@ function onKey(e: KeyboardEvent): void {
     void send()
   }
 }
+
+const filterKeys = computed(() => Object.keys(t.collab.filters) as FeedFilter[])
+function moveFilter(delta: number): void {
+  const keys = filterKeys.value
+  const i = keys.indexOf(filter.value)
+  const next = keys[(i + delta + keys.length) % keys.length]
+  if (next) filter.value = next
+}
 </script>
 
 <template>
@@ -125,7 +133,21 @@ function onKey(e: KeyboardEvent): void {
       <h3>{{ t.collab.title }}</h3>
       <span class="desk-spacer" />
       <div class="view-switcher" role="radiogroup" :aria-label="t.collab.title">
-        <button v-for="(label, key) in t.collab.filters" :key="key" type="button" role="radio" :aria-checked="filter === key" :class="['view-btn', { active: filter === key }]" :data-testid="`feed-filter-${key}`" @click="filter = key as FeedFilter">
+        <button
+          v-for="(label, key) in t.collab.filters"
+          :key="key"
+          type="button"
+          role="radio"
+          :aria-checked="filter === key"
+          :tabindex="filter === key ? 0 : -1"
+          :class="['view-btn', { active: filter === key }]"
+          :data-testid="`feed-filter-${key}`"
+          @click="filter = key as FeedFilter"
+          @keydown.right.prevent="moveFilter(1)"
+          @keydown.down.prevent="moveFilter(1)"
+          @keydown.left.prevent="moveFilter(-1)"
+          @keydown.up.prevent="moveFilter(-1)"
+        >
           <span>{{ label }}</span>
         </button>
       </div>
