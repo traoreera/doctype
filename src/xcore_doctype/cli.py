@@ -239,7 +239,18 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
         if d.istable:
             kind = "enfant (lignes)"
         else:
-            kind = f"source {d.source}" if d.source else f"série {d.series.key(datetime.now())}" if d.series else "nom = utilisateur" if d.naming == "owner" else "nom aléatoire"
+            if d.source:
+                kind = f"source {d.source}"
+            elif d.series:
+                kind = f"série {d.series.key(datetime.now())}"
+            elif d.naming == "owner":
+                kind = "nom = utilisateur"
+            elif d.naming == "prompt":
+                kind = "nom saisi"
+            elif not isinstance(d.naming, str):
+                kind = f"nom = champ {d.naming.field}"  # NamingField (la série a été traitée plus haut)
+            else:
+                kind = "nom aléatoire"
         lines.append(f"  {name:<22} module={d.module or '-':<10} {len(d.fields):>2} champs  {kind}")
     grants = sorted(grants_cited)
     summary = [f"{len(mine)} DocType(s) valides :", *lines]

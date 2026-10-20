@@ -53,10 +53,13 @@ EXPECTED_ROUTES = sorted(
         ("GET", "/my-assignments"),
         ("GET", "/users"),
         ("GET", "/people/{doctype}"),
+        ("GET", "/mentionable/{doctype}/{name}"),
+        ("POST", "/assign-many/{doctype}"),
         ("POST", "/attachments/{doctype}/{name}"),
         ("DELETE", "/attachments/{attachment_id}"),
         ("GET", "/files/{tenant}/{file_id}"),  # PUBLIQUE : la signature de l'URL fait foi (voir api/files.py)
         ("GET", "/tree/{doctype}"),
+        ("GET", "/connections/{doctype}/{name}"),
         ("GET", "/views/{doctype}"),
         ("POST", "/views/{doctype}/{name}"),
         ("DELETE", "/views/{doctype}/{name}"),
@@ -73,6 +76,8 @@ EXPECTED_ROUTES = sorted(
         ("POST", "/doc/{doctype}/{name}/submit"),
         ("POST", "/doc/{doctype}/{name}/cancel"),
         ("POST", "/doc/{doctype}/{name}/amend"),
+        ("POST", "/doc/{doctype}/{name}/rename"),
+        ("POST", "/bulk/{doctype}"),
         ("DELETE", "/doc/{doctype}/{name}"),
     ]
 )

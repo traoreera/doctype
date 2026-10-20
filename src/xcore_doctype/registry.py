@@ -31,6 +31,37 @@ class Referrer:
     doctype: str
     fieldname: str
     table: str | None = None
+    # Un champ DynamicLink : le champ (du document ou de la ligne) qui dit DANS quel DocType chercher. `None` pour un Link ordinaire.
+    type_field: str | None = None
+
+    def key(self) -> tuple[Any, ...]:
+        """La forme que `Query.references_to` / `referrers_of` attendent : 3 éléments, 4 avec un champ de type."""
+        base = (self.doctype, self.fieldname, self.table)
+        return base if self.type_field is None else (*base, self.type_field)
+
+
+# Les types dont un champ `fetch_from` peut recevoir la valeur : des valeurs simples que la cible a déjà validées (jamais un fichier, un secret, un lien ni un tableau).
+FETCHABLE_TYPES = (
+    "Text", "LongText", "Select", "Number", "Int", "Percent", "Rating", "Decimal", "Currency", "Date", "Datetime", "Time", "Duration",
+    "Boolean", "Color", "Code", "TextEditor",
+)
+
+
+def fetch_incompatible(dest: Any, source: Any) -> str | None:
+    """Pourquoi `dest` ne peut pas recevoir la valeur de `source` (copiée telle quelle), ou `None`. Une copie refusée à l'écriture serait découverte à la première saisie."""
+    if dest.fieldtype not in FETCHABLE_TYPES:
+        return f"un champ {dest.fieldtype} ne peut pas être rempli par fetch_from"
+    if source.fieldtype != dest.fieldtype and not (dest.fieldtype == "Text" and source.fieldtype == "Select"):
+        return f"{dest.fieldtype} ne reçoit pas un {source.fieldtype}"
+    if dest.fieldtype in ("Decimal", "Currency") and dest.decimals != source.decimals:
+        return f"décimales différentes ({dest.decimals} contre {source.decimals} dans la source)"
+    if dest.fieldtype == "Select" and not set(source.options or []) <= set(dest.options or []):
+        return "le Select ne propose pas toutes les valeurs de la source"
+    if dest.fieldtype == "Rating" and dest.stars != source.stars:
+        return f"nombre d'étoiles différent ({dest.stars} contre {source.stars})"
+    if dest.fieldtype == "Text" and dest.format is not None and dest.format != getattr(source, "format", None):
+        return f"le format {dest.format!r} n'est pas celui de la source"
+    return None
 
 
 # Un plugin propriétaire donne son nom au `module` de ses DocTypes, donc au premier segment de leurs grants (`sales:customer:read`) :
@@ -197,6 +228,8 @@ class DocTypeRegistry:
         problems = []
         for name in (self.names() if only is None else sorted(only)):
             self._check_units(name, problems)
+            self._check_fetch(name, problems)
+            self._check_dynamic(name, problems)
             for f in self._items[name].definition.fields:
                 if f.fieldtype != "Link":
                     continue
@@ -207,6 +240,39 @@ class DocTypeRegistry:
                     problems.append(f"{name}.{f.fieldname}: {f.options!r} est un DocType enfant, on ne peut pas le citer par un Link")
         if problems:
             raise InvalidDefinition("champs Link invalides :\n" + "\n".join(f"  - {p}" for p in problems))
+
+    def _check_fetch(self, name: str, problems: list[str]) -> None:
+        """`fetch_from: lien.champ` : le Link vise un DocType chargé qui a ce champ, et la valeur copiée sera acceptée par le champ qui la reçoit."""
+        d = self._items[name].definition
+        for f in d.fields:
+            if f.fetch_from is None:
+                continue
+            link_name, _, source_name = f.fetch_from.partition(".")
+            link = d.field_map[link_name]  # la présence et le type du Link sont vérifiés par le schéma
+            target = self._items.get(str(link.options))
+            where = f"{name}.{f.fieldname}: fetch_from {f.fetch_from!r}"
+            if target is None:
+                continue  # la cible inconnue est signalée plus bas, avec les autres Link
+            source = target.definition.field_map.get(source_name)
+            if source is None:
+                problems.append(f"{where} : le DocType {link.options!r} n'a pas de champ {source_name!r}")
+                continue
+            if (why := fetch_incompatible(f, source)) is not None:
+                problems.append(f"{where} : {why}")
+
+    def _check_dynamic(self, name: str, problems: list[str]) -> None:
+        """Un DynamicLink dont le champ de type est un Select ne peut désigner que des DocTypes chargés (les options le disent d'avance)."""
+        d = self._items[name].definition
+        for f in d.fields:
+            if f.fieldtype != "DynamicLink":
+                continue
+            holder = d.field_map[str(f.options)]
+            for option in (holder.options if holder.fieldtype == "Select" else None) or []:
+                target = self._items.get(option)
+                if target is None:
+                    problems.append(f"{name}.{f.fieldname}: DynamicLink : l'option {option!r} de {holder.fieldname!r} n'est pas un DocType chargé")
+                elif target.definition.istable:
+                    problems.append(f"{name}.{f.fieldname}: DynamicLink : {option!r} est un DocType enfant, on ne peut pas le citer")
 
     def _check_units(self, name: str, problems: list[str]) -> None:
         """`unit_from` doit désigner un champ qui existe : `uom` (même document ou même ligne) ou `item.uom` (champ Link, puis champ de la cible)."""
@@ -233,7 +299,10 @@ class DocTypeRegistry:
                     problems.append(f"{where} : {holder.options}.{rest} doit être un texte (Text ou Select), pas un {unit.fieldtype}")
 
     def referrers(self, target: str) -> list[Referrer]:
-        """Les champs Link qui visent `target`, dans les documents ET dans les lignes de leurs tables (le sien compris)."""
+        """Les champs Link qui visent `target`, dans les documents ET dans les lignes de leurs tables (le sien compris).
+
+        Les champs DynamicLink y sont TOUS : ils peuvent viser n'importe quel DocType, `type_field` dit au moment de chercher lequel.
+        """
         out = []
         for name in self.names():
             compiled = self._items[name]
@@ -242,9 +311,15 @@ class DocTypeRegistry:
             for f in compiled.definition.fields:
                 if f.fieldtype == "Link" and f.options == target:
                     out.append(Referrer(name, f.fieldname))
+                elif f.fieldtype == "DynamicLink":
+                    out.append(Referrer(name, f.fieldname, None, str(f.options)))
                 elif f.fieldtype == "Table":
                     child = compiled.children[str(f.options)]
-                    out.extend(Referrer(name, cf.fieldname, f.fieldname) for cf in child.fields if cf.fieldtype == "Link" and cf.options == target)
+                    for cf in child.fields:
+                        if cf.fieldtype == "Link" and cf.options == target:
+                            out.append(Referrer(name, cf.fieldname, f.fieldname))
+                        elif cf.fieldtype == "DynamicLink":
+                            out.append(Referrer(name, cf.fieldname, f.fieldname, str(cf.options)))
         return out
 
     def get(self, name: str) -> CompiledDocType:

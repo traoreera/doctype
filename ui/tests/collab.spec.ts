@@ -286,7 +286,9 @@ describe('pièces jointes', () => {
     expect(link.attributes('rel')).toContain('noopener')
     expect(a.w.text()).toContain('2 Ko')
     expect(a.w.find('[data-testid="attach-open"]').exists()).toBe(false)
-    expect(setup(collab({ can_attach: true })).w.find('[data-testid="attach-open"]').exists()).toBe(true)
+    const writer = setup(collab({ can_attach: true }))
+    await flushPromises() // sans cela le second montage finit de s'afficher APRÈS le test, quand la page est déjà vidée
+    expect(writer.w.find('[data-testid="attach-open"]').exists()).toBe(true)
   })
 
   it('une vraie image s’affiche en vignette, un autre fichier par une icône', async () => {

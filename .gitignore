@@ -13,3 +13,4 @@ log/
 main.py
 node_modules/
 conf/
+app/

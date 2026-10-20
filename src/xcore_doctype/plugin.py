@@ -6,6 +6,7 @@ au reload, xcore ne purge de `sys.modules` que le shim `xcore_plugin_xcore-docty
 
 from __future__ import annotations
 
+import os
 import secrets
 from pathlib import Path
 from typing import Any, Awaitable, Callable
@@ -30,6 +31,7 @@ from .errors import ConfigurationError, DoctypeError, ValidationFailed
 from .collaboration import CollaborationService
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
+from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
 from .preferences import Preferences
 from .hooks import ActionHooks, HookRegistry, HookSettings
 from .registry import DocTypeChannel, DocTypeRegistry
@@ -85,6 +87,29 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return XauthDirectory(call, plugin=plugin, action=action, ttl=float(ttl), logger=self.logger)
 
+    def _notifier(self, raw: Any) -> Notifier:
+        """Qui prévient les gens (`doctype.notifications`) : xauth par défaut (`provider: xauth`, action `xauth.notify`), ou personne (`provider: none`)."""
+        raw = raw if raw is not None else {}
+        if not isinstance(raw, dict):
+            raise ConfigurationError("doctype.notifications doit être un objet")
+        provider = raw.get("provider", "xauth")
+        if provider == "none":
+            return NoNotifier()
+        if provider != "xauth":
+            raise ConfigurationError("doctype.notifications.provider : `xauth` ou `none`")
+        plugin, act = raw.get("plugin", NOTIFY_PLUGIN), raw.get("action", NOTIFY_ACTION)
+        if not isinstance(plugin, str) or not isinstance(act, str):
+            raise ConfigurationError("doctype.notifications : `plugin` et `action` sont des textes")
+        caller = self.ctx.caller
+        if caller is None:
+            return NoNotifier()
+        me = self.ctx.name
+
+        async def call(target: str, act_: str, payload: dict[str, Any], tenant_id: str) -> Any:
+            return await caller(target, act_, payload, caller=me, tenant_id=tenant_id, principal=None)
+
+        return XauthNotifier(call, plugin=plugin, action=act, logger=self.logger)
+
     async def on_load(self) -> None:
         config = self.ctx.config or {}
         block = config.get("doctype") or {}
@@ -136,7 +161,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root = APIRouter()
         root.include_router(build_router(self.documents, self._settings))
         root.include_router(build_files_router(file_service, self._settings))  # téléverser, liens signés : une identité est exigée
-        collab = CollaborationService(self.documents, file_service, self._directory(block.get("directory")))
+        collab = CollaborationService(self.documents, file_service, self._directory(block.get("directory")), self._notifier(block.get("notifications")))
         self.collaboration = collab
         root.include_router(build_collab_router(collab, self._settings))  # commentaires, assignations, pièces jointes
         root.include_router(build_preferences_router(Preferences(self.documents, file_service), self._settings))  # nom, logo, couleur de l'organisation
@@ -176,7 +201,9 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         )
 
     def _sealer(self, raw: Any) -> Sealer:
-        """La clé des champs `Password` (`doctype.secret_key`, 16 caractères au moins) ; absente, une écriture qui porte un secret est refusée (503)."""
+        """La clé des champs `Password` : `doctype.secret_key` du manifeste, sinon la variable d'environnement `XCORE_DOCTYPE_SECRET_KEY` (16 caractères au moins, jamais commitée :
+        `make env` en tire une au hasard dans `.env`) ; absente, une écriture qui porte un secret est refusée (503)."""
+        raw = raw if raw is not None else (os.environ.get("XCORE_DOCTYPE_SECRET_KEY") or None)
         if raw is None:
             return Sealer(None)
         if not isinstance(raw, str):
@@ -420,6 +447,13 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.users.resolve", op)
 
+    @action("doc.mentionable")
+    async def doc_mentionable(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.mentionable(ctx, _need(payload, "doctype"), _need(payload, "name"), q=payload.get("q", ""))
+
+        return await self._run("doc.mentionable", op)
+
     @action("doc.assign")
     async def doc_assign(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:
@@ -429,6 +463,16 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             )
 
         return await self._run("doc.assign", op)
+
+    @action("doc.assign.many")
+    async def doc_assign_many(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.assign_many(
+                ctx, _need(payload, "doctype"), payload.get("names"),
+                assignee=payload.get("assignee"), description=payload.get("description"), due_date=payload.get("due_date"),
+            )
+
+        return await self._run("doc.assign.many", op)
 
     @action("doc.assignment.update")
     async def doc_assignment_update(self, payload: dict) -> dict:
@@ -447,13 +491,13 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
     @action("doc.save")
     async def doc_save(self, payload: dict) -> dict:
-        """Sans `name` : création. Avec `name` : mise à jour, `version` obligatoire (D15)."""
+        """Sans `name` : création (`new_name` : le nom choisi d'un DocType `naming: prompt`). Avec `name` : mise à jour, `version` obligatoire (D15)."""
 
         async def op(ctx: RequestContext) -> dict:
             doctype, data = _need(payload, "doctype"), _need(payload, "data")
             name = payload.get("name")
             if name is None:
-                return {"doc": await self.documents.create(ctx, doctype, data)}
+                return {"doc": await self.documents.create(ctx, doctype, data, name=payload.get("new_name"))}
             return {"doc": await self.documents.update(ctx, doctype, name, data, payload.get("version"))}
 
         return await self._run("doc.save", op)
@@ -471,6 +515,29 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return {"doc": await self.documents.cancel(ctx, _need(payload, "doctype"), _need(payload, "name"), payload.get("version"))}
 
         return await self._run("doc.cancel", op)
+
+    @action("doc.rename")
+    async def doc_rename(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return {"doc": await self.documents.rename(ctx, _need(payload, "doctype"), _need(payload, "name"), payload.get("new_name"))}
+
+        return await self._run("doc.rename", op)
+
+    @action("doc.connections")
+    async def doc_connections(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.documents.connections(ctx, _need(payload, "doctype"), _need(payload, "name"))
+
+        return await self._run("doc.connections", op)
+
+    @action("doc.bulk")
+    async def doc_bulk(self, payload: dict) -> dict:
+        """Une action sur plusieurs documents : `action` (`update`|`delete`|`submit`|`cancel`), `names`, `data` (pour `update`)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.documents.bulk(ctx, _need(payload, "doctype"), payload.get("action"), payload.get("names"), data=payload.get("data"))
+
+        return await self._run("doc.bulk", op)
 
     @action("doc.amend")
     async def doc_amend(self, payload: dict) -> dict:

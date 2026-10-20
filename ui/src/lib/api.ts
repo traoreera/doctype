@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, Collab, CommentItem, AttachmentItem, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -162,6 +162,11 @@ export class ApiClient {
     return (await this.call<{ items: Person[] }>('GET', `/people/${encodeURIComponent(doctype)}`, { params: new URLSearchParams({ q }) })).items
   }
 
+  /** Des membres à citer (`@adresse`) dans un commentaire de ce document : il suffit de pouvoir le lire. `directory: false` : pas d'annuaire, personne à proposer. */
+  async mentionable(doctype: string, name: string, q = ''): Promise<{ items: Person[]; directory: boolean }> {
+    return this.call('GET', `/mentionable/${this.doc(doctype, name)}`, { params: new URLSearchParams({ q }) })
+  }
+
   /** De quoi afficher des identifiants (UUID) : `{ id: Person }`, les membres de l'organisation seulement. */
   async users(ids: readonly string[]): Promise<Record<string, Person>> {
     const params = new URLSearchParams()
@@ -195,8 +200,29 @@ export class ApiClient {
     return this.call('GET', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
   }
 
-  create(doctype: string, data: DocData): Promise<DocRecord> {
-    return this.call('POST', `/doc/${encodeURIComponent(doctype)}`, { body: { data } })
+  /** `name` : le nom choisi, pour un DocType dont les noms se saisissent (`naming: prompt`). */
+  create(doctype: string, data: DocData, name?: string): Promise<DocRecord> {
+    return this.call('POST', `/doc/${encodeURIComponent(doctype)}`, { body: name === undefined ? { data } : { data, name } })
+  }
+
+  /** Une même action sur plusieurs documents (`update` avec `data`, `delete`, `submit`, `cancel`) : le compte rendu dit, pour chacun, s'il est passé. */
+  bulk(doctype: string, action: 'update' | 'delete' | 'submit' | 'cancel', names: readonly string[], data?: Record<string, unknown>): Promise<BulkResult> {
+    return this.call('POST', `/bulk/${encodeURIComponent(doctype)}`, { body: data === undefined ? { action, names } : { action, names, data } })
+  }
+
+  /** Assigne plusieurs documents à la même personne. */
+  assignMany(doctype: string, names: readonly string[], body: { assignee: string; description?: string | null; due_date?: string | null }): Promise<BulkResult> {
+    return this.call('POST', `/assign-many/${encodeURIComponent(doctype)}`, { body: { names, ...body } })
+  }
+
+  /** Les documents qui citent celui-ci (par type et par champ), avec leur nombre. */
+  async connections(doctype: string, name: string): Promise<Connection[]> {
+    return (await this.call<{ items: Connection[] }>('GET', `/connections/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)).items
+  }
+
+  /** Renomme un brouillon : les documents qui le citent suivent. */
+  rename(doctype: string, name: string, newName: string): Promise<DocRecord> {
+    return this.call('POST', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}/rename`, { body: { new_name: newName } })
   }
 
   update(doctype: string, name: string, version: number, data: DocData): Promise<DocRecord> {

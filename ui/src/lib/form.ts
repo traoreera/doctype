@@ -10,11 +10,13 @@
 import { ApiError } from './api'
 import { nowUtc } from './datetime'
 import { canonicalDecimal } from './decimal'
-import { COLOR, MAX_LONG_TEXT, isValidDatetime, isValidFormat, isValidRating } from './fieldrules'
+import { COLOR, MAX_LONG_TEXT, MAX_PASSWORD, isValidDatetime, isValidFormat, isValidInt, isValidJsonText, isValidPercent, isValidRating, isValidTime, normalizeTime } from './fieldrules'
+import { MAX_DURATION, parseDuration } from './duration'
+import { MAX_RICH } from './richtext'
 import { evaluate } from './expr'
 import { todayIn } from './format'
 import { t } from '@/i18n'
-import { isDecimalType } from './types'
+import { DRAFT, SUBMITTED, isDecimalType } from './types'
 import type { ChildMeta, DocData, DocRecord, DocTypeMeta, FieldMeta } from './types'
 
 export type Values = Record<string, unknown>
@@ -107,6 +109,24 @@ export function presetValues(meta: DocTypeMeta, query: Record<string, unknown>):
       case 'Rating':
         if (/^\d+$/.test(raw) && isValidRating(Number(raw), f.stars ?? 5)) out[f.fieldname] = Number(raw)
         break
+      case 'Int':
+        if (/^-?\d+$/.test(raw) && isValidInt(Number(raw))) out[f.fieldname] = Number(raw)
+        break
+      case 'Percent':
+        if (raw.trim() !== '' && isValidPercent(Number(raw))) out[f.fieldname] = Number(raw)
+        break
+      case 'Time':
+        if (isValidTime(normalizeTime(raw))) out[f.fieldname] = normalizeTime(raw)
+        break
+      case 'Duration': {
+        const seconds = parseDuration(raw)
+        if (seconds !== null) out[f.fieldname] = seconds
+        break
+      }
+      case 'JSON':
+      case 'Password':
+      case 'TextEditor':
+        break // ni un secret, ni du HTML, ni un objet ne se pré-remplissent par l'adresse
       case 'Datetime':
         if (isValidDatetime(raw)) out[f.fieldname] = raw
         break
@@ -131,18 +151,70 @@ export function recordValues(meta: DocTypeMeta, rec: DocRecord): Values {
     if (f.fieldtype === 'Table') {
       const child = childOf(meta, f)
       out[f.fieldname] = child && Array.isArray(v) ? v.map((r) => recordRow(child, r)) : []
-    } else out[f.fieldname] = v === undefined ? (f.fieldtype === 'Boolean' ? false : null) : v
+    } else if (f.fieldtype === 'JSON') out[f.fieldname] = v === undefined || v === null ? null : JSON.stringify(v, null, 2) // le formulaire édite du TEXTE ; il repart en objet (`sendable`)
+    else out[f.fieldname] = v === undefined ? (f.fieldtype === 'Boolean' ? false : null) : v
   }
   return out
 }
 
-export function fieldStates(meta: DocTypeMeta, values: Values, saved: Values | null): FieldStates {
+/**
+ * Les valeurs d'une COPIE de `rec` (« Dupliquer ») : tout ce qui se recopie. Ne partent pas : un champ `no_copy`, un champ `unique` (la copie le
+ * dupliquerait : l'utilisateur en choisit un autre), un secret, un fichier (un fichier appartient à UN document), un champ rempli par `fetch_from`
+ * (le serveur le relit) et le champ qui nomme le document.
+ */
+export function duplicateValues(meta: DocTypeMeta, rec: DocRecord): Values {
+  const source = recordValues(meta, rec)
+  const out = newValues(meta)
+  const naming = namingField(meta)
+  const skip = (f: FieldMeta): boolean =>
+    !!f.no_copy || !!f.unique || !!f.fetch_from || f.fieldtype === 'Password' || f.fieldtype === 'Image' || f.fieldtype === 'Attach' || f.fieldname === naming
+  for (const f of meta.fields) {
+    if (skip(f)) continue
+    const child = childOf(meta, f)
+    out[f.fieldname] = child
+      ? (source[f.fieldname] as Row[]).map((row) => Object.fromEntries(Object.entries(row).filter(([k]) => { const cf = child.fields.find((c) => c.fieldname === k); return !cf || !(cf.fetch_from || cf.fieldtype === 'Image' || cf.fieldtype === 'Attach') })))
+      : source[f.fieldname]
+  }
+  return out
+}
+
+const OPAQUE_FOR_QUICK_ENTRY = ['Table', 'Image', 'Attach', 'Password', 'DynamicLink']
+
+/**
+ * Les champs de la SAISIE RAPIDE d'un type (créer un document depuis un champ Link) : les obligatoires et le titre, rien d'autre. `null` : le type exige ce que cette
+ * saisie ne sait pas remplir (un tableau, un fichier, une obligation qui dépend d'une condition) : il faut alors la fiche complète.
+ */
+export function quickEntryFields(meta: DocTypeMeta): FieldMeta[] | null {
+  const shown = meta.fields.filter((f) => !f.hidden)
+  if (shown.some((f) => f.mandatory_depends_on)) return null
+  const wanted = shown.filter((f) => !f.read_only && !f.fetch_from && (f.required || f.fieldname === meta.title_field))
+  if (wanted.some((f) => OPAQUE_FOR_QUICK_ENTRY.includes(f.fieldtype) || f.depends_on)) return null
+  if (shown.some((f) => f.required && (f.read_only || f.fetch_from))) return null // obligatoire mais jamais saisi ici
+  return wanted
+}
+
+/** Les champs qui lisent leur valeur du document que le Link `linkName` désigne (`fetch_from: lien.champ`). */
+export const fetchDependents = (fields: readonly FieldMeta[], linkName: string): FieldMeta[] => fields.filter((f) => f.fetch_from?.split('.')[0] === linkName)
+/** Le champ de la cible dont ce champ copie la valeur. */
+export const fetchSource = (f: FieldMeta): string => f.fetch_from?.split('.')[1] ?? ''
+
+/** Le champ qui NOMME le document (`naming: {field: code}`) : il ne change plus une fois le document créé. */
+const namingField = (meta: DocTypeMeta): string | null => (typeof meta.naming === 'object' && 'field' in meta.naming ? meta.naming.field : null)
+
+/**
+ * `status` : l'état du document (`docstatus`). Soumis, il est figé SAUF ses champs `allow_on_submit` ; le serveur le revérifie.
+ * Un champ `fetch_from` n'est jamais saisi (le serveur l'écrase), un `set_only_once` se fige dès qu'il a une valeur ENREGISTRÉE.
+ */
+export function fieldStates(meta: DocTypeMeta, values: Values, saved: Values | null, status: number = DRAFT): FieldStates {
   const out: FieldStates = {}
+  const naming = namingField(meta)
   for (const f of meta.fields) {
     const conditionVisible = f.depends_on ? evaluate(f.depends_on, values) : true
     const mandatory = f.mandatory_depends_on ? evaluate(f.mandatory_depends_on, values) : false
+    const lockedOnce = saved !== null && (f.set_only_once === true || f.fieldname === naming) && !isEmpty(saved[f.fieldname])
+    const frozenField = status === SUBMITTED && f.allow_on_submit !== true
     // Un document existant : le serveur évalue la lecture seule sur l'état d'AVANT. Un nouveau : l'interface suit les valeurs.
-    const readOnly = f.read_only === true || (f.read_only_depends_on ? evaluate(f.read_only_depends_on, saved ?? values) : false)
+    const readOnly = f.read_only === true || !!f.fetch_from || lockedOnce || frozenField || (f.read_only_depends_on ? evaluate(f.read_only_depends_on, saved ?? values) : false)
     out[f.fieldname] = { visible: !f.hidden && conditionVisible, required: (f.required && conditionVisible) || mandatory, readOnly }
   }
   return out
@@ -200,6 +272,22 @@ function typeError(f: FieldMeta, v: unknown): string | null {
     }
     case 'Rating':
       return isValidRating(v, f.stars ?? 5) ? null : t.form.invalid
+    case 'Int':
+      return isValidInt(v) ? null : t.form.invalidInt
+    case 'Percent':
+      return isValidPercent(v) ? null : t.form.invalidPercent
+    case 'Time':
+      return isValidTime(v) ? null : t.form.invalidTime
+    case 'Duration':
+      return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= MAX_DURATION ? null : t.form.invalidDuration
+    case 'Code':
+      return typeof v === 'string' && v.length <= MAX_LONG_TEXT ? null : t.form.invalid
+    case 'JSON':
+      return isValidJsonText(v) ? null : t.form.invalidJson
+    case 'TextEditor':
+      return typeof v === 'string' && v.length <= MAX_RICH ? null : t.form.invalid
+    case 'Password':
+      return typeof v === 'string' && v.length >= 1 && v.length <= MAX_PASSWORD ? null : t.form.invalid
     case 'Datetime':
       return isValidDatetime(v) ? null : t.form.invalid
     case 'Color':
@@ -265,8 +353,17 @@ export function validate(meta: DocTypeMeta, values: Values, states: FieldStates)
 }
 
 /** Un Decimal valide part sous sa forme canonique (« 12.5 » -> « 12.500 ») : ressaisir la même valeur n'est pas une modification. */
-const sendable = (f: FieldMeta, v: unknown): unknown =>
-  isDecimalType(f.fieldtype) ? (canonicalDecimal(v, f.decimals ?? (f.fieldtype === 'Currency' ? 2 : 0)) ?? v) : v
+const sendable = (f: FieldMeta, v: unknown): unknown => {
+  if (isDecimalType(f.fieldtype)) return canonicalDecimal(v, f.decimals ?? (f.fieldtype === 'Currency' ? 2 : 0)) ?? v
+  if (f.fieldtype === 'JSON' && typeof v === 'string') {
+    try {
+      return JSON.parse(v) // le formulaire édite du texte, le serveur reçoit l'objet ; un texte invalide est arrêté avant (`validate`)
+    } catch {
+      return v
+    }
+  }
+  return v
+}
 
 function rowPayload(child: ChildMeta, row: Row, parent: Values): DocData {
   const out: DocData = {}
@@ -307,6 +404,7 @@ export interface MappedErrors {
 /** Traduit une réponse d'erreur du serveur pour le formulaire. Les champs inconnus du formulaire passent en message général. */
 export function mapServerErrors(err: ApiError, meta: DocTypeMeta): MappedErrors {
   const known = new Set(meta.fields.map((f) => f.fieldname))
+  if (meta.naming === 'prompt') known.add('name') // le nom saisi à la création est un champ du formulaire
   const fields: Record<string, string> = {}
   const loose: string[] = []
   for (const d of err.details) {

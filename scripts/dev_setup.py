@@ -28,7 +28,8 @@ def write_env(path: Path) -> bool:
     """Complète `.env` : chaque variable manquante est ajoutée (un `.env` ancien, d'avant xauth, reçoit le compte administrateur), aucune n'est réécrite."""
     existing = path.read_text(encoding="utf-8") if path.exists() else ""
     have = {line.split("=", 1)[0].strip() for line in existing.splitlines() if "=" in line and not line.lstrip().startswith("#")}
-    wanted = {"ADMIN_EMAIL": "admin@example.com", "ADMIN_PASSWORD": password()}
+    # XCORE_DOCTYPE_SECRET_KEY : la clé qui chiffre les champs `Password` des DocTypes (sealing.py) ; changer cette clé rend les secrets déjà enregistrés illisibles.
+    wanted = {"ADMIN_EMAIL": "admin@example.com", "ADMIN_PASSWORD": password(), "XCORE_DOCTYPE_SECRET_KEY": secrets.token_urlsafe(32)}
     missing = {k: v for k, v in wanted.items() if k not in have}
     if not missing:
         return False
@@ -55,7 +56,7 @@ def write_keys(directory: Path) -> bool:
 
 def main() -> int:
     if write_env(ROOT / ".env"):
-        print(".env complété : compte administrateur admin@example.com, mot de passe aléatoire (ignoré par git)", file=sys.stderr)
+        print(".env complété (compte administrateur admin@example.com au mot de passe aléatoire, clé de chiffrement des secrets) : ignoré par git", file=sys.stderr)
     if write_keys(ROOT / "conf"):
         print("conf/private.pem et conf/public.pem créés (clés JWT RS256 de développement, ignorées par git)", file=sys.stderr)
     return 0

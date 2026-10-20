@@ -59,9 +59,9 @@ from .errors import (
 from .hooks import ActionHooks, HookEvent, HookRegistry, HookSettings
 from .files import ATTACHMENT_FIELD
 from .permissions import ACTIONS, Action, Scope, require, scope_for
-from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc
+from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
-from .schema import FILE_TYPES, TODAY, DocTypeDef
+from .schema import FILE_TYPES, TODAY, DocTypeDef, FieldDef, NamingField
 from .sealing import MASK, Sealer
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
@@ -99,6 +99,32 @@ DEFAULT_PAGE = 20
 MAX_SEARCH = 50
 MAX_HISTORY = 200
 MAX_NAME = 140  # largeur de la colonne `name`
+MAX_UNIQUE_VALUE = 500  # largeur de la colonne `value` de xdt_unique
+MAX_BULK = 100  # documents par action en lot
+BULK_ACTIONS = ("update", "delete", "submit", "cancel")
+# Un nom se lit dans une URL (`/app/Client/<nom>`) et dans un chemin d'API : ni séparateur, ni caractère de contrôle, ni ce qui change le sens d'une URL.
+_FORBIDDEN_IN_NAME = re.compile(r"[\x00-\x1f\x7f/\\?#%]")
+RESERVED_NAMES = frozenset({"new"})  # `/app/<Type>/new` ouvre le formulaire de création : un document de ce nom serait inatteignable
+
+
+def valid_name(value: Any, field: str = "name") -> str:
+    """Un nom de document choisi (par l'utilisateur ou tiré d'un champ), ou une `ValidationFailed` adressée à `field`."""
+
+    def refuse(msg: str) -> ValidationFailed:
+        return ValidationFailed(details=[{"field": field, "msg": msg, "type": "invalid_name"}])
+
+    if not isinstance(value, str) or not value:
+        raise refuse("Un nom est un texte non vide")
+    if value != value.strip():
+        raise refuse("Le nom ne commence ni ne finit par une espace")
+    if len(value) > MAX_NAME:
+        raise refuse(f"Le nom dépasse {MAX_NAME} caractères")
+    if _FORBIDDEN_IN_NAME.search(value):
+        raise refuse("Le nom ne peut contenir ni / \\ ? # %, ni caractère de contrôle")
+    if value.lower() in RESERVED_NAMES:
+        raise refuse(f"« {value} » est un mot réservé")
+    return value
+
 
 # action -> (état de départ, état d'arrivée, hook de la transition)
 _TRANSITIONS = {"submit": (DRAFT, SUBMITTED, "on_submit"), "cancel": (SUBMITTED, CANCELLED, "on_cancel")}
@@ -547,6 +573,39 @@ class DocumentService:
             docs, total = await query.list(defn, filters={}, order_by="name", descending=False, limit=MAX_PAGE, offset=0, scope=scope)
         return _tree(defn, views.tree.parent, docs, total)
 
+    async def connections(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
+        """Les documents qui CITENT celui-ci (un client : ses factures, ses contacts…), par DocType et par champ, avec leur nombre.
+
+        Il faut pouvoir lire le document ; chaque DocType n'est compté que dans le périmètre de lecture de l'appelant (un type qu'il ne lit pas
+        n'apparaît pas, un document qu'il ne verrait pas n'est pas compté). Les liens dynamiques (`DynamicLink`) comptent aussi.
+        """
+        self._enter(ctx, "doc.connections", doctype, name)
+        compiled = self._doctype(doctype)
+        read = self._scope(ctx, compiled, "read")
+        scopes: dict[str, Scope] = {}
+        usable = []
+        for ref in self._registry.referrers(doctype):
+            if ref.doctype not in scopes:
+                scopes[ref.doctype] = scope_for(self._registry.get(ref.doctype).definition, ctx, "read")
+            if scopes[ref.doctype].granted:
+                usable.append(ref)
+        async with self._query(ctx) as q:
+            if await self._peek(ctx, compiled, q, name, read) is None:
+                raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+            counted = await q.connections(doctype, name, [r.key() for r in usable], scopes)
+        items = []
+        for ref_doctype, fieldname, table, count in sorted(counted, key=lambda c: (c[0], c[1], c[2] or "")):
+            d = self._registry.get(ref_doctype).definition
+            holder = self._registry.get(ref_doctype).children[str(d.field_map[table].options)].field_map[fieldname] if table else d.field_map[fieldname]
+            items.append(
+                {
+                    "doctype": ref_doctype, "label": d.label or ref_doctype, "field": fieldname, "field_label": holder.label or fieldname, "table": table, "count": count,
+                    # Un DynamicLink ne désigne ce document que si son champ de type dit ce DocType : la liste filtrée doit poser les deux.
+                    **({"type_field": str(holder.options)} if holder.fieldtype == "DynamicLink" else {}),
+                }
+            )
+        return {"items": items}
+
     async def history(
         self, ctx: RequestContext, doctype: str, name: str, *, limit: int = DEFAULT_PAGE, offset: int = 0
     ) -> dict[str, Any]:
@@ -756,32 +815,54 @@ class DocumentService:
         return {"name": name, "layer": layer}
 
     # ── Écriture ──────────────────────────────────────────────
-    async def create(self, ctx: RequestContext, doctype: str, data: Any) -> dict[str, Any]:
+    async def create(self, ctx: RequestContext, doctype: str, data: Any, *, name: Any = None) -> dict[str, Any]:
+        """`name` : le nom choisi, seulement pour un DocType `naming: prompt` (et alors obligatoire) ; tout autre nommage le refuse (il vient du système)."""
         self._enter(ctx, "doc.create", doctype)
         compiled = self._doctype(doctype)
         if compiled.definition.single:
             raise ValidationFailed(f"{doctype} est un document unique : on l'enregistre, on ne le crée pas", code="single_document")
         scope = self._scope(ctx, compiled, "create")
         if (source := self._source(compiled)) is not None:
+            if name is not None:
+                raise ValidationFailed(f"{doctype} est un DocType virtuel : sa source nomme les documents", code="name_not_allowed")
             return await self._create_virtual(ctx, compiled, scope, data, source)
         self._require_hooks(compiled)
-        return await self._create(ctx, compiled, scope, data)
+        return await self._create(ctx, compiled, scope, data, requested=name)
+
+    @staticmethod
+    def _requested_name(compiled: CompiledDocType, requested: Any) -> str | None:
+        """Le nom que le client impose : obligatoire pour `naming: prompt`, refusé pour tout autre nommage."""
+        if compiled.definition.naming == "prompt":
+            if requested is None:
+                raise ValidationFailed(details=[{"field": "name", "msg": "Donnez un nom au document", "type": "missing"}])
+            return valid_name(requested)
+        if requested is not None:
+            raise ValidationFailed(f"{compiled.definition.name} nomme ses documents lui-même : `name` n'est pas permis", code="name_not_allowed")
+        return None
 
     async def _create(
         self, ctx: RequestContext, compiled: CompiledDocType, scope: Scope, data: Any,
-        *, name: str | None = None, amended_from: str | None = None,
+        *, name: str | None = None, amended_from: str | None = None, requested: Any = None,
     ) -> dict[str, Any]:
-        """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType."""
+        """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType. `requested` : le nom que le client demande (`naming: prompt`)."""
         doctype = compiled.definition.name
+        naming = compiled.definition.naming
+        if name is None:
+            name = self._requested_name(compiled, requested)
         finalize = self._finalizer(compiled, scope, ctx.owner_id)
         clean = finalize(self._with_today(compiled, data))
         series = None if name else compiled.definition.series
+        by_field = naming if isinstance(naming, NamingField) and not name else None
         # `hash` : le nom existe d'emblée. `owner` : l'identifiant de celui qui crée (un document par utilisateur ; le second est refusé, 409).
-        # Série : il n'existe qu'à l'insertion (voir plus bas), les hooks reçoivent `None`.
-        name = name or (ctx.owner_id if compiled.definition.naming == "owner" else None if series else secrets.token_hex(6))
+        # Série : il n'existe qu'à l'insertion (voir plus bas), les hooks reçoivent `None` ; un nom tiré d'un champ n'existe qu'une fois les hooks passés (ils peuvent le changer).
+        name = name or (ctx.owner_id if naming == "owner" else None if (series or by_field) else secrets.token_hex(6))
         clean = await self._action_phase(ctx, compiled, name, clean, None, finalize)
         async with self._query(ctx) as q:
+            clean = await self._fetched(ctx, q, compiled, clean, None, finalize)
             clean = await self._trusted_phase(ctx, compiled, q, name, clean, None, finalize)
+            clean = await self._fetched(ctx, q, compiled, clean, None, finalize)  # un hook a pu changer un lien
+            if by_field is not None:
+                name = valid_name(str(clean[by_field.field]), by_field.field)
             clean = self._seal(compiled, clean, None)
             await self._check_links(ctx, q, compiled, clean, None)
             await self._check_files(q, compiled, clean, None)
@@ -796,6 +877,7 @@ class DocumentService:
                 if amended_from is None:
                     raise
                 raise DoctypeError("already_amended", f"{doctype} {amended_from!r} a déjà été amendé", status=409) from None
+            await self._sync_unique(q, compiled, doc)
             await self._record(q, ctx, compiled, doc, "create", None, doc.data)
         await self._after_save(ctx, compiled, doc, None)
         return self._present(doc)
@@ -818,7 +900,9 @@ class DocumentService:
         if not isinstance(version, int) or isinstance(version, bool) or version < 1:
             raise ValidationFailed("`version` (entier >= 1) est obligatoire pour une mise à jour", code="version_required")
         current, write = await self._load_for_change(ctx, compiled, name, "write")
-        if current.docstatus != DRAFT:
+        # Un document soumis ne laisse modifier que ses champs `allow_on_submit` ; annulé, il est figé tout à fait.
+        after_submit = current.docstatus == SUBMITTED and bool(compiled.definition.editable_after_submit)
+        if current.docstatus != DRAFT and not after_submit:
             raise DocumentLocked(f"{doctype} {name!r} est {STATUS_WORDS[current.docstatus]} : il n'est plus modifiable")
         if current.version != version:
             raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {version})")
@@ -827,15 +911,26 @@ class DocumentService:
         self._require_hooks(compiled)
         finalize = self._finalizer(compiled, write, current.owner)
         clean = finalize(data, old=current.data)
+        if after_submit:
+            self._check_frozen(compiled, clean, current.data)
         clean = await self._action_phase(ctx, compiled, name, clean, current.data, finalize)
         async with self._query(ctx) as q:
+            if not after_submit:  # un document soumis ne relit plus ses liens : ce qu'il a copié reste ce qu'il était à la soumission
+                clean = await self._fetched(ctx, q, compiled, clean, current.data, finalize)
             clean = await self._trusted_phase(ctx, compiled, q, name, clean, current.data, finalize)
+            if after_submit:
+                self._check_frozen(compiled, clean, current.data)  # un hook ne dégèle rien non plus
+            else:
+                clean = await self._fetched(ctx, q, compiled, clean, current.data, finalize)
             clean = self._seal(compiled, clean, current.data)
             await self._check_links(ctx, q, compiled, clean, current.data)
             await self._check_files(q, compiled, clean, current.data)
             # Le périmètre et la version sont dans le WHERE : une modification concurrente échoue en 409.
-            doc = await q.update(doctype, name, clean, version, scope=write)
+            doc = await q.update(doctype, name, clean, version, scope=write, docstatus=current.docstatus)
+            await self._sync_unique(q, compiled, doc)
             await self._record(q, ctx, compiled, doc, "update", current.data, doc.data)
+            if after_submit:
+                await self._tx_hooks(ctx, compiled, q, doc, "on_update_after_submit", old=current.data)
         await self._after_save(ctx, compiled, doc, current.data)
         await self._release_files(ctx, compiled, current.data, doc.data)  # un fichier remplacé ou retiré n'a plus de raison d'exister
         return self._present(doc)
@@ -862,18 +957,121 @@ class DocumentService:
             return
         async with self._query(ctx) as q:
             await self._check_not_referenced(q, doctype, name, current.data)
+            await self._tx_hooks(ctx, compiled, q, current, "on_trash")  # peut refuser la suppression, ou écrire ce qui doit suivre
             removed = await q.delete(doctype, name, scope=scope)
             if not removed:
                 # Le document existait et était supprimable à la lecture : il a changé entre-temps.
                 raise VersionConflict(f"{doctype} {name!r} a été modifié pendant la suppression")
             await self._record(q, ctx, compiled, current, "delete", current.data, None)
+            await q.drop_unique(doctype, name)  # ses valeurs uniques redeviennent libres
             attached = await q.remove_collaboration(doctype, name)  # commentaires, assignations et pièces jointes disparaissent avec lui
+        await self._after_delete(ctx, compiled, current)
         await self._release_files(ctx, compiled, current.data, None)
         if attached and self.files is not None:
             try:
                 await self.files.release(ctx, {fid: (doctype, ATTACHMENT_FIELD) for fid in attached})
             except Exception as e:  # noqa: BLE001 - un fichier orphelin vaut mieux qu'une suppression qui échoue après coup
                 self._log.error("attachment release failed", doctype=doctype, error=repr(e))
+
+    async def bulk(self, ctx: RequestContext, doctype: str, action: Any, names: Any, *, data: Any = None) -> dict[str, Any]:
+        """Une même action sur plusieurs documents (la liste, « Actions ») : `update` (poser les valeurs de `data` sur chacun), `delete`, `submit`, `cancel`.
+
+        Chaque document est traité SEUL, par la même porte que d'habitude (droits, validation, hooks, liens, version) : un refus sur l'un
+        (introuvable, hook, version périmée…) ne retient pas les autres, il est rendu avec son code. La réponse dit pour chacun s'il est passé.
+        Le droit d'effectuer l'action est exigé UNE fois d'abord (un lecteur seul n'obtient pas cent refus). 100 documents au plus.
+        """
+        self._enter(ctx, f"doc.bulk.{action}", doctype)
+        compiled = self._doctype(doctype)
+        if action not in BULK_ACTIONS:
+            raise ValidationFailed(f"action en lot inconnue : {action!r} (permises : {', '.join(BULK_ACTIONS)})", code="bulk_action")
+        if not isinstance(names, list) or not names or len(names) > MAX_BULK or not all(isinstance(n, str) and n for n in names):
+            raise ValidationFailed(f"names : une liste de 1 à {MAX_BULK} noms", code="bulk_names")
+        if action in ("submit", "cancel"):
+            self._submittable(doctype)
+        self._scope(ctx, compiled, {"update": "write"}.get(action, action))  # type: ignore[arg-type]
+        if compiled.definition.single:
+            raise ValidationFailed(f"{doctype} est un document unique : pas d'action en lot", code="single_document")
+        patch: dict[str, Any] = {}
+        if action == "update":
+            patch = self._bulk_patch(compiled, data)
+        results = []
+        for name in dict.fromkeys(names):
+            try:
+                current = await self.get(ctx, doctype, name)
+                if action == "update":
+                    await self.update(ctx, doctype, name, {**current["data"], **patch}, current["version"])
+                elif action == "delete":
+                    await self.delete(ctx, doctype, name)
+                elif action == "submit":
+                    await self.submit(ctx, doctype, name, current["version"])
+                else:
+                    await self.cancel(ctx, doctype, name, current["version"])
+                results.append({"name": name, "ok": True})
+            except DoctypeError as e:
+                results.append({"name": name, "ok": False, "code": e.code, "message": e.message, **({"details": e.details} if e.details else {})})
+            except Exception as e:  # noqa: BLE001 - un document qui échoue pour une raison interne ne fait pas perdre le compte rendu des autres
+                self._log.error("bulk operation failed", op=action, doctype=doctype, name=name, error=repr(e))
+                results.append({"name": name, "ok": False, "code": "internal_error", "message": "Erreur interne"})
+        done = sum(1 for r in results if r["ok"])
+        return {"results": results, "done": done, "failed": len(results) - done}
+
+    @staticmethod
+    def _bulk_patch(compiled: CompiledDocType, data: Any) -> dict[str, Any]:
+        """Les valeurs à poser : des champs SIMPLES et connus (ni tableau, ni secret, ni fichier, ni champ copié d'un autre document)."""
+        if not isinstance(data, dict) or not data:
+            raise ValidationFailed("data : les champs à modifier, au moins un", code="bulk_data")
+        by_name = compiled.definition.field_map
+        errors = []
+        for key in data:
+            f = by_name.get(key)
+            if f is None:
+                errors.append({"field": key, "msg": "Champ inconnu", "type": "extra_forbidden"})
+            elif f.fieldtype == "Table" or f.fieldtype == "Password" or f.fieldtype in FILE_TYPES or f.fetch_from or f.read_only or f.hidden:
+                errors.append({"field": key, "msg": "Ce champ ne se modifie pas en lot", "type": "bulk_field"})
+        if errors:
+            raise ValidationFailed(details=errors)
+        return dict(data)
+
+    async def rename(self, ctx: RequestContext, doctype: str, name: str, new_name: Any) -> dict[str, Any]:
+        """Change le NOM d'un brouillon (`allow_rename: true`) : tous les documents qui le citent par un Link suivent, dans la même transaction.
+
+        Il faut pouvoir écrire le document (pas de droit distinct). Le renommage est tout ou rien : un nom déjà pris (409), un document qui cite l'ancien
+        nom et que le nouveau rendrait invalide, une panne au milieu, et rien n'a bougé. Les commentaires, assignations, pièces jointes, valeurs uniques et
+        l'historique du document le suivent ; une entrée `rename` y garde l'ancien nom. Les documents qui le citent sont réécrits sans contrôle de leurs
+        droits (c'est la conséquence du renommage, pas une modification de l'utilisateur), mais chacun a son entrée d'historique à son nom.
+        """
+        self._enter(ctx, "doc.rename", doctype, name)
+        compiled = self._doctype(doctype)
+        d = compiled.definition
+        if not d.allow_rename:
+            raise ValidationFailed(f"{doctype} ne se renomme pas (`allow_rename` n'est pas activé)", code="rename_not_allowed")
+        new = valid_name(new_name, "new_name")
+        current, write = await self._load_for_change(ctx, compiled, name, "write")
+        if new == name:
+            raise ValidationFailed("Le nouveau nom est le nom actuel", code="rename_same")
+        if current.docstatus != DRAFT:
+            raise DocumentLocked(f"{doctype} {name!r} est {STATUS_WORDS[current.docstatus]} : il ne se renomme plus")
+        referrers = self._registry.referrers(doctype)
+        async with self._query(ctx) as q:
+            await q.lock_for_delete(doctype, name)  # comme une suppression : une écriture qui crée un lien vers lui attend, ou a fini avant que nous cherchions
+            try:
+                renamed = await q.rename(doctype, name, new, scope=write)
+            except AlreadyExists:
+                raise DoctypeError("already_exists", f"{doctype} {new!r} existe déjà", status=409) from None
+            for ref_doc in await q.referrers_of(doctype, name, [r.key() for r in referrers]):
+                ref_compiled = self._registry.get(ref_doc.doctype)
+                data = _relabel(ref_compiled, [r for r in referrers if r.doctype == ref_doc.doctype], ref_doc.data, doctype, name, new)
+                if data != ref_doc.data:
+                    updated = await q.relink(ref_doc.doctype, ref_doc.name, data)
+                    await self._record(q, ctx, ref_compiled, updated, "update", ref_doc.data, updated.data)
+            doc = await q.get(doctype, new, scope=Scope.everything("read"))  # relu : il a pu se citer lui-même
+            assert doc is not None  # renommé dans cette transaction
+            await self._record(q, ctx, compiled, doc, "rename", {"name": name}, {"name": new})
+        await self._emit(
+            f"doctype.{doctype}.after_rename",
+            {"doctype": doctype, "old_name": name, "name": new, "tenant_id": ctx.tenant_id, "user": ctx.user_id},
+        )
+        return self._present(doc)
 
     # ── Soumission (documents soumettables) ───────────────────
     async def submit(self, ctx: RequestContext, doctype: str, name: str, version: Any) -> dict[str, Any]:
@@ -903,7 +1101,8 @@ class DocumentService:
         new_name = _amended_name(source)
         if len(new_name) > MAX_NAME:
             raise ValidationFailed(f"le nom de l'amendement dépasse {MAX_NAME} caractères", code="name_too_long")
-        carried = {k: v for k, v in source.data.items() if k not in compiled.definition.secret_fields}  # un secret ne se recopie jamais : on le saisit à nouveau
+        skipped = set(compiled.definition.secret_fields) | {f.fieldname for f in compiled.definition.fields if f.no_copy}
+        carried = {k: v for k, v in source.data.items() if k not in skipped}  # un secret ne se recopie jamais (on le saisit à nouveau), ni un champ `no_copy`
         return await self._create(ctx, compiled, create, carried, name=new_name, amended_from=source.name)
 
     async def _transition(self, ctx: RequestContext, doctype: str, name: str, version: Any, action: str) -> dict[str, Any]:
@@ -928,15 +1127,20 @@ class DocumentService:
             # c'est l'écriture qui prend le verrou de la base avant que les hooks ne lisent quoi que ce soit.
             doc = await q.transition(doctype, name, source=source, target=target, expected_version=version, scope=scope)
             await self._record(q, ctx, compiled, doc, action, {"docstatus": source}, {"docstatus": target})
-            await self._transition_hooks(ctx, compiled, q, doc, hook)
+            if action == "cancel":
+                await q.drop_unique(doctype, name)  # un document annulé ne retient plus ses valeurs : son amendement peut les reprendre
+                await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
+            await self._tx_hooks(ctx, compiled, q, doc, hook)
         await self._emit(
             f"doctype.{doctype}.after_{action}",
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version, "user": ctx.user_id, "docstatus": doc.docstatus},
         )
         return self._present(doc)
 
-    async def _transition_hooks(self, ctx: RequestContext, compiled: CompiledDocType, q: Query, doc: StoredDoc, event: str) -> None:
-        """`on_submit` / `on_cancel` : dans la transaction, avec le droit d'écrire d'autres documents. Un refus défait tout."""
+    async def _tx_hooks(
+        self, ctx: RequestContext, compiled: CompiledDocType, q: Query, doc: StoredDoc, event: str, *, old: Mapping[str, Any] | None = None
+    ) -> None:
+        """`on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit`, `on_trash` : dans la transaction, avec le droit d'écrire d'autres documents. Un refus défait tout."""
         refs = compiled.definition.hooks.for_event(event)
         if not refs:
             return
@@ -948,11 +1152,12 @@ class DocumentService:
 
         tx = _Transaction(self, ctx, q, event)
         view = MappingProxyType(self._mask_data(compiled, doc.data) or {})
+        old_view = MappingProxyType(self._mask_data(compiled, old) or {}) if old is not None else None
         for ref in refs:
             fn = self._hooks.get(ref)
             if fn is None:  # désenregistré entre le contrôle initial et maintenant
                 raise DoctypeError("hook_unavailable", "des hooks de ce DocType sont indisponibles", status=503)
-            await self._call_trusted(ref, fn(HookEvent(event, ctx, doctype, doc.name, view, None, get, tx)))  # type: ignore[arg-type]
+            await self._call_trusted(ref, fn(HookEvent(event, ctx, doctype, doc.name, view, old_view, get, tx)))  # type: ignore[arg-type]
 
     # ── Interne ───────────────────────────────────────────────
     def _with_today(self, compiled: CompiledDocType, data: Any) -> Any:
@@ -995,6 +1200,109 @@ class DocumentService:
                 doctype=doctype,
                 name=name,
             )
+
+    # ── Propriétés de champ (palier 70 %, phase H2) ───────────────────────
+    @staticmethod
+    def _check_frozen(compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any]) -> None:
+        """Un document SOUMIS ne laisse changer que ses champs `allow_on_submit` : tout autre champ doit être resté tel qu'il était."""
+        allowed = set(compiled.definition.editable_after_submit)
+        errors = [
+            {"field": f.fieldname, "msg": "Champ figé : le document est soumis", "type": "locked_after_submit"}
+            for f in compiled.definition.fields
+            if f.fieldname not in allowed and clean.get(f.fieldname) != old.get(f.fieldname)
+        ]
+        if errors:
+            raise ValidationFailed(details=errors)
+
+    async def _sync_unique(self, q: Query, compiled: CompiledDocType, doc: StoredDoc) -> None:
+        """Réserve les valeurs `unique` du document (et libère celles qu'il a quittées). La base est juge : une valeur déjà prise ailleurs refuse l'écriture entière."""
+        fields = compiled.definition.unique_fields
+        if not fields:
+            return
+        wanted: dict[str, str] = {}
+        errors = []
+        for field in fields:
+            value = doc.data.get(field)
+            if value is None:
+                continue
+            text = str(value)
+            if len(text) > MAX_UNIQUE_VALUE:
+                errors.append({"field": field, "msg": f"Valeur trop longue pour être unique ({MAX_UNIQUE_VALUE} caractères au plus)", "type": "unique"})
+            wanted[field] = text
+        if errors:
+            raise ValidationFailed(details=errors)
+        try:
+            await q.sync_unique(compiled.definition.name, doc.name, wanted)
+        except UniqueViolation as e:
+            raise ValidationFailed(
+                details=[{"field": e.field, "msg": f"Cette valeur est déjà utilisée : {wanted[e.field]!r}", "type": "unique"}]
+            ) from None
+
+    async def _fetched(
+        self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: dict[str, Any], old: Mapping[str, Any] | None, finalize: Finalize | None = None,
+    ) -> dict[str, Any]:
+        """Remplit les champs `fetch_from` (`lien.champ`) depuis le document que le Link désigne, à CHAQUE écriture : la valeur envoyée par le client est écrasée.
+
+        Le document visé se lit avec les droits de l'appelant. Introuvable ou illisible : la valeur déjà enregistrée reste si le lien n'a pas bougé (la
+        copie existait avant), sinon le champ reste vide. Un lien changé vers un document illisible est refusé plus loin, par le contrôle des liens.
+        """
+        d = compiled.definition
+        has_rows = any(f.fieldtype == "Table" and any(cf.fetch_from for cf in compiled.children[str(f.options)].fields) for f in d.fields)
+        if not has_rows and not any(f.fetch_from for f in d.fields):
+            return clean
+        cache: dict[tuple[str, str], StoredDoc | None] = {}
+
+        async def target(link: FieldDef, value: str) -> StoredDoc | None:
+            key = (str(link.options), value)
+            if key not in cache:
+                tcompiled = self._registry.get(str(link.options))
+                tscope = scope_for(tcompiled.definition, ctx, "read")
+                cache[key] = await self._peek(ctx, tcompiled, q, value, tscope) if tscope.granted else None
+            return cache[key]
+
+        async def fill(container: dict[str, Any], fields: Sequence[FieldDef], before: Mapping[str, Any] | None) -> None:
+            by_name = {f.fieldname: f for f in fields}
+            for f in fields:
+                if f.fetch_from is None:
+                    continue
+                link_name, _, source = f.fetch_from.partition(".")
+                link_value = container.get(link_name)
+                found = await target(by_name[link_name], link_value) if link_value is not None else None
+                if found is not None:
+                    value = found.data.get(source)
+                elif before is not None and link_value is not None and before.get(link_name) == link_value:
+                    value = before.get(f.fieldname)  # le document visé n'est plus lisible, la copie d'avant demeure
+                else:
+                    value = None
+                if value is None:
+                    container.pop(f.fieldname, None)
+                else:
+                    container[f.fieldname] = value
+
+        out = dict(clean)
+        await fill(out, d.fields, old)
+        for f in d.fields:
+            if f.fieldtype != "Table" or not out.get(f.fieldname):
+                continue
+            child = compiled.children[str(f.options)]
+            if not any(cf.fetch_from for cf in child.fields):
+                continue
+            previous = (old or {}).get(f.fieldname) or []
+            rows = []
+            for i, row in enumerate(out[f.fieldname]):
+                row = dict(row)
+                await fill(row, child.fields, previous[i] if i < len(previous) else None)
+                rows.append(row)
+            out[f.fieldname] = rows
+        if out == clean:
+            return clean
+        if finalize is not None:
+            try:
+                return finalize(out)
+            except ValidationFailed as e:  # une copie refusée par le champ qui la reçoit : défaut de la définition, pas une saisie
+                self._log.error("fetch_from produced an invalid value", doctype=d.name, errors=e.details)
+                raise DoctypeError("fetch_from_invalid", f"un champ rempli par fetch_from de {d.name} est invalide", status=500, details=e.details) from None
+        return out
 
     # ── Secrets (champs Password : sealing.py) ────────────────
     def _present(self, doc: StoredDoc) -> dict[str, Any]:
@@ -1094,9 +1402,21 @@ class DocumentService:
         """
         # DocType cible -> valeur -> où elle est portée (chemin du champ : `country` ou `items.0.item`)
         wanted: dict[str, dict[str, list[str]]] = {}
+        errors: list[dict[str, str]] = []
 
         def want(target: Any, value: Any, path: str) -> None:
             wanted.setdefault(str(target), {}).setdefault(value, []).append(path)
+
+        def want_dynamic(kind: Any, value: Any, path: str) -> None:
+            """Un DynamicLink vise le DocType que dit son champ de type : il doit exister et être un DocType qu'on peut citer."""
+            try:
+                known = isinstance(kind, str) and not self._registry.get(kind).definition.istable
+            except NotFound:
+                known = False
+            if known:
+                want(kind, value, path)
+            else:
+                errors.append({"field": path, "msg": "Choisissez d'abord le type de document visé", "type": "link_not_found"})
 
         for f in compiled.definition.fields:
             value = clean.get(f.fieldname)
@@ -1104,20 +1424,29 @@ class DocumentService:
                 continue
             if f.fieldtype == "Link" and not (old is not None and old.get(f.fieldname) == value):
                 want(f.options, value, f.fieldname)
+            elif f.fieldtype == "DynamicLink" and not (old is not None and old.get(f.fieldname) == value and old.get(str(f.options)) == clean.get(str(f.options))):
+                want_dynamic(clean.get(str(f.options)), value, f.fieldname)
             elif f.fieldtype == "Table":
                 child = compiled.children[str(f.options)]
                 # Une ligne déplacée garde son lien : on compare à l'ensemble des valeurs déjà présentes, pas à la même position.
+                # Un DynamicLink se compare avec son type : le même nom visant un autre DocType est un autre lien.
                 before = {
-                    cf.fieldname: {r.get(cf.fieldname) for r in (old or {}).get(f.fieldname, [])}
+                    cf.fieldname: {(r.get(cf.fieldname), r.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None) for r in (old or {}).get(f.fieldname, [])}
                     for cf in child.fields
-                    if cf.fieldtype == "Link"
+                    if cf.fieldtype in ("Link", "DynamicLink")
                 }
                 for i, row in enumerate(value):
                     for cf in child.fields:
                         v = row.get(cf.fieldname)
-                        if cf.fieldtype == "Link" and v is not None and v not in before[cf.fieldname]:
+                        if v is None or cf.fieldtype not in ("Link", "DynamicLink"):
+                            continue
+                        kind = row.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None
+                        if (v, kind) in before[cf.fieldname]:
+                            continue
+                        if cf.fieldtype == "Link":
                             want(cf.options, v, f"{f.fieldname}.{i}.{cf.fieldname}")
-        errors: list[dict[str, str]] = []
+                        else:
+                            want_dynamic(kind, v, f"{f.fieldname}.{i}.{cf.fieldname}")
         for target, values in wanted.items():
             target_def = self._registry.get(target).definition
             scope = scope_for(target_def, ctx, "read")
@@ -1180,7 +1509,7 @@ class DocumentService:
         if not referrers:
             return
         await q.lock_for_delete(doctype, name)
-        used = await q.references_to(doctype, name, [(r.doctype, r.fieldname, r.table) for r in referrers])
+        used = [(d, f, t) for d, f, t, *_ in await q.references_to(doctype, name, [r.key() for r in referrers])]
         if not used:
             return
         labels = []
@@ -1243,7 +1572,7 @@ class DocumentService:
         self, ctx: RequestContext, compiled: CompiledDocType, q: Query, name: str | None, data: dict[str, Any],
         old: Mapping[str, Any] | None, finalize: Finalize,
     ) -> dict[str, Any]:
-        """Hooks de confiance `validate` puis `before_save`, DANS la transaction, appelés directement (D2)."""
+        """Hooks de confiance `validate`, `before_save` puis, à la création, `before_insert`, DANS la transaction, appelés directement (D2)."""
         hooks, doctype = compiled.definition.hooks, compiled.definition.name
         old_view = MappingProxyType(self._mask_data(compiled, old)) if old is not None else None
 
@@ -1252,7 +1581,7 @@ class DocumentService:
             return self._present(doc) if doc else None
 
         work = dict(data)
-        for event in ("validate", "before_save"):
+        for event in ("validate", "before_save", *(("before_insert",) if old is None else ())):
             for ref in hooks.for_event(event):
                 if ref.startswith("action:"):
                     continue
@@ -1287,21 +1616,43 @@ class DocumentService:
             return self._present(found) if found else None
 
         old_view = MappingProxyType(dict(old)) if old is not None else None
-        for ref in compiled.definition.hooks.after_save:
-            fn = self._hooks.get(ref)
-            if fn is None:
-                self._log.error("after_save hook unavailable", hook=ref, doctype=doctype)
-                continue
-            event = HookEvent("after_save", ctx, doctype, doc.name, MappingProxyType(dict(doc.data)), old_view, get)
-            try:
-                await asyncio.wait_for(fn(event), timeout=self._hook_settings.timeout_seconds)
-            except Exception as e:  # noqa: BLE001 - y compris TimeoutError
-                self._log.error("after_save hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
+        for kind in (("after_insert",) if old is None else ()) + ("after_save",):
+            for ref in compiled.definition.hooks.for_event(kind):
+                fn = self._hooks.get(ref)
+                if fn is None:
+                    self._log.error(f"{kind} hook unavailable", hook=ref, doctype=doctype)
+                    continue
+                event = HookEvent(kind, ctx, doctype, doc.name, MappingProxyType(dict(doc.data)), old_view, get)  # type: ignore[arg-type]
+                try:
+                    await asyncio.wait_for(fn(event), timeout=self._hook_settings.timeout_seconds)
+                except Exception as e:  # noqa: BLE001 - y compris TimeoutError
+                    self._log.error(f"{kind} hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
         await self._emit(
             f"doctype.{doctype}.after_save",
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version,
              "user": ctx.user_id, "created": old is None},
         )
+
+    async def _after_delete(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc) -> None:
+        """Après le commit de la suppression : `after_delete` reçoit ce que le document contenait. Les erreurs sont journalisées, jamais levées."""
+        doctype = compiled.definition.name
+
+        async def get(dt: str, nm: str) -> dict[str, Any] | None:
+            async with self._query(ctx) as q:
+                found = await q.get(dt, nm, scope=Scope.everything("read"))
+            return self._present(found) if found else None
+
+        for ref in compiled.definition.hooks.after_delete:
+            fn = self._hooks.get(ref)
+            if fn is None:
+                self._log.error("after_delete hook unavailable", hook=ref, doctype=doctype)
+                continue
+            event = HookEvent("after_delete", ctx, doctype, doc.name, MappingProxyType(self._mask_data(compiled, doc.data) or {}), None, get)
+            try:
+                await asyncio.wait_for(fn(event), timeout=self._hook_settings.timeout_seconds)
+            except Exception as e:  # noqa: BLE001 - y compris TimeoutError
+                self._log.error("after_delete hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
+        await self._emit(f"doctype.{doctype}.after_delete", {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "user": ctx.user_id})
 
     async def _emit(self, topic: str, payload: dict[str, Any]) -> None:
         # Pas de contenu du document : l'EventBus est global au processus, ses abonnés ne sont pas filtrés par tenant.
@@ -1528,6 +1879,21 @@ def _tree(defn: DocTypeDef, parent_field: str, docs: list[StoredDoc], total: int
     return {"parent": parent_field, "items": roots, "total": total, "truncated": total > len(docs)}
 
 
+def _relabel(compiled: CompiledDocType, referrers: Sequence[Any], data: Mapping[str, Any], target: str, old: str, new: str) -> dict[str, Any]:
+    """Le contenu d'un document dont chaque Link (ou ligne de table) qui citait `target`/`old` cite désormais `new`. Ne modifie pas `data`."""
+    out = dict(data)
+    for ref in referrers:
+        def hit(holder: Mapping[str, Any]) -> bool:
+            return holder.get(ref.fieldname) == old and (ref.type_field is None or holder.get(ref.type_field) == target)
+
+        if ref.table is None:
+            if hit(out):
+                out[ref.fieldname] = new
+        elif out.get(ref.table):
+            out[ref.table] = [{**row, ref.fieldname: new} if hit(row) else row for row in out[ref.table]]
+    return out
+
+
 def _amended_name(source: StoredDoc) -> str:
     """Le nom de l'amendement d'un document annulé : `FA-1` -> `FA-1-1`, et l'amendement `FA-1-1` -> `FA-1-2`."""
     m = _AMENDMENT.match(source.name) if source.amended_from else None
@@ -1568,6 +1934,7 @@ class _Transaction:
             name = series.render(now, await self._q.next_number(doctype, series.key(now)))
         owner_named = compiled.definition.naming == "owner"
         doc = await self._q.insert(doctype, name or (self._ctx.owner_id if owner_named else secrets.token_hex(6)), clean)
+        await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
         return self._svc._present(doc)
 
@@ -1578,6 +1945,7 @@ class _Transaction:
             return False
         doc = await self._q.get(doctype, name, scope=Scope.everything("read"))
         assert doc is not None  # insérée à l'instant, dans cette transaction
+        await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
         return True
 
@@ -1590,13 +1958,23 @@ class _Transaction:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         clean = self._svc._seal(compiled, await self._valid(compiled, data, current.data), current.data)
         doc = await self._q.update(doctype, name, clean, version, scope=Scope.everything("write"))
+        await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "update", current.data, doc.data)
         return self._svc._present(doc)
+
+    async def _unique(self, compiled: CompiledDocType, doc: StoredDoc) -> None:
+        """Les valeurs `unique` d'un document écrit par un hook : une valeur déjà prise est un défaut du hook (500), comme tout document invalide écrit d'ici."""
+        try:
+            await self._svc._sync_unique(self._q, compiled, doc)
+        except ValidationFailed as e:
+            self._svc._log.error("hook wrote a duplicate", doctype=compiled.definition.name, errors=e.details)
+            raise DoctypeError("hook_invalid_write", f"un hook a écrit un {compiled.definition.name} en double", status=500, details=e.details) from None
 
     async def _valid(self, compiled: CompiledDocType, data: Mapping[str, Any], old: Mapping[str, Any] | None) -> dict[str, Any]:
         """Schéma strict, puis liens. Un document invalide ici est un défaut du HOOK, pas une saisie de l'utilisateur : 500, pas 422."""
         try:
             clean = compiled.validate_data(dict(data))
+            clean = await self._svc._fetched(self._system, self._q, compiled, clean, old)
             await self._svc._check_links(self._system, self._q, compiled, clean, old)
             await self._svc._check_files(self._q, compiled, clean, old)
         except ValidationFailed as e:

@@ -18,6 +18,7 @@ from __future__ import annotations
 import re
 from datetime import date
 from typing import Any
+from urllib.parse import quote
 
 from . import files as F
 from .context import RequestContext
@@ -26,6 +27,7 @@ from .document import DocumentService
 from .errors import DoctypeError, NotFound, PermissionDenied, ValidationFailed
 from .file_service import FileService
 from .files import ATTACHMENT_FIELD
+from .notifier import NoNotifier, Notifier
 from .permissions import Scope, scope_for
 
 MAX_COMMENT = 4000
@@ -73,12 +75,18 @@ def _check_id(value: Any, what: str) -> str:
 
 
 MAX_RESOLVE = 100
+MAX_MENTIONS = 10
+MAX_MENTION_SUGGESTIONS = 8
+MAX_BULK_ASSIGN = 100
+# Une mention s'écrit @adresse@exemple.fr : seul un membre de l'organisation, désigné par son e-mail, est prévenu.
+_MENTION = re.compile(r"(?<![\w.+-])@([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
 
 
 class CollaborationService:
-    def __init__(self, documents: DocumentService, files: FileService, directory: Directory | None = None) -> None:
+    def __init__(self, documents: DocumentService, files: FileService, directory: Directory | None = None, notifier: Notifier | None = None) -> None:
         self._docs, self._files = documents, files
         self._directory: Directory = directory or NoDirectory()
+        self._notifier: Notifier = notifier or NoNotifier()
 
     # ── Le document d'abord ───────────────────────────────────
     async def _document(self, ctx: RequestContext, q: Any, doctype: str, name: str) -> tuple[Any, Scope]:
@@ -119,7 +127,9 @@ class CollaborationService:
             await self._document(ctx, q, doctype, name)
             if await q.count_comments(doctype, name) >= MAX_COMMENTS_PER_DOC:
                 raise ValidationFailed(f"{MAX_COMMENTS_PER_DOC} commentaires au plus par document", code="too_many_comments")
-            return await q.add_comment(doctype, name, text or "")
+            comment = await q.add_comment(doctype, name, text or "")
+        await self._mentioned(ctx, doctype, name, text or "")
+        return comment
 
     async def edit_comment(self, ctx: RequestContext, comment_id: Any, content: Any) -> dict[str, Any]:
         """Seul l'auteur modifie son commentaire."""
@@ -149,7 +159,7 @@ class CollaborationService:
             await q.delete_comment(cid)
 
     # ── Assignations ──────────────────────────────────────────
-    async def assign(self, ctx: RequestContext, doctype: str, name: str, *, assignee: Any, description: Any = None, due_date: Any = None) -> dict[str, Any]:
+    async def assign(self, ctx: RequestContext, doctype: str, name: str, *, assignee: Any, description: Any = None, due_date: Any = None, notify: bool = True) -> dict[str, Any]:
         """Confie le document à quelqu'un. Il faut pouvoir l'ÉCRIRE. Une même personne n'a qu'une assignation ouverte par document."""
         self._docs._enter(ctx, "collab.assign", doctype, name)
         note, due = _text(description, "description", limit=500, required=False), _due(due_date)
@@ -165,7 +175,61 @@ class CollaborationService:
                 raise DoctypeError("already_assigned", f"{who} a déjà une assignation ouverte sur ce document", status=409)
             if len(current) >= MAX_ASSIGNMENTS_PER_DOC:
                 raise ValidationFailed(f"{MAX_ASSIGNMENTS_PER_DOC} assignations ouvertes au plus par document", code="too_many_assignments")
-            return await q.add_assignment(doctype, name, assignee=who, description=note, due_date=due)
+            assignment = await q.add_assignment(doctype, name, assignee=who, description=note, due_date=due)
+        if notify and who != ctx.owner_id:
+            await self._notifier.notify(
+                ctx.tenant_id, [who], title=f"{await self._author(ctx)} vous a assigné {self._label(doctype)} {name}", message=note, link=self._link(doctype, name), kind="ASSIGNMENT"
+            )
+        return assignment
+
+    async def assign_many(self, ctx: RequestContext, doctype: str, names: Any, *, assignee: Any, description: Any = None, due_date: Any = None) -> dict[str, Any]:
+        """Assigne plusieurs documents à la même personne (liste « Actions »). Chacun est jugé SEUL, comme `assign` : un refus (droit, déjà assigné) n'arrête pas les autres."""
+        self._docs._enter(ctx, "collab.assign_many", doctype)
+        if not isinstance(names, list) or not names or len(names) > MAX_BULK_ASSIGN or not all(isinstance(n, str) and n for n in names):
+            raise ValidationFailed(f"names : une liste de 1 à {MAX_BULK_ASSIGN} noms", code="bulk_names")
+        results = []
+        for name in dict.fromkeys(names):
+            try:
+                await self.assign(ctx, doctype, name, assignee=assignee, description=description, due_date=due_date, notify=False)
+                results.append({"name": name, "ok": True})
+            except DoctypeError as e:
+                if e.code == "unknown_user" or e.status in (401, 403) and not results:
+                    raise  # la personne n'existe pas / aucun droit : inutile de le répéter pour chaque document
+                results.append({"name": name, "ok": False, "code": e.code, "message": e.message})
+        done = sum(1 for r in results if r["ok"])
+        if done:
+            who = (await self._assignee(ctx, assignee)) if done else ""
+            if who != ctx.owner_id:  # UNE notification pour le lot, pas une par document
+                n = f"{done} documents" if done > 1 else "1 document"
+                await self._notifier.notify(ctx.tenant_id, [who], title=f"{await self._author(ctx)} vous a assigné {n} ({self._label(doctype)})", message=_text(description, "description", limit=500, required=False), link="#/tasks", kind="ASSIGNMENT")
+        return {"results": results, "done": done, "failed": len(results) - done}
+
+    # ── Prévenir ──────────────────────────────────────────────
+    def _label(self, doctype: str) -> str:
+        return self._docs._doctype(doctype).definition.label or doctype
+
+    @staticmethod
+    def _link(doctype: str, name: str) -> str:
+        return f"#/app/{quote(doctype, safe='')}/{quote(name, safe='')}"
+
+    async def _author(self, ctx: RequestContext) -> str:
+        members = await self._members(ctx)
+        found = next((p for p in members or [] if p.id == ctx.owner_id), None)
+        return found.label if found else ctx.owner_id
+
+    async def _mentioned(self, ctx: RequestContext, doctype: str, name: str, text: str) -> None:
+        """Les membres cités par `@adresse` dans un commentaire sont prévenus (sauf l'auteur). Sans annuaire, personne : une adresse ne désigne alors aucun compte."""
+        emails = {m.lower() for m in _MENTION.findall(text)}
+        if not emails:
+            return
+        members = await self._members(ctx)
+        if members is None:
+            return
+        ids = [p.id for p in members if p.email and p.email.lower() in emails and p.id != ctx.owner_id][:MAX_MENTIONS]
+        if ids:
+            await self._notifier.notify(
+                ctx.tenant_id, ids, title=f"{await self._author(ctx)} vous a mentionné dans {self._label(doctype)} {name}", link=self._link(doctype, name), kind="MENTION"
+            )
 
     async def update_assignment(self, ctx: RequestContext, assignment_id: Any, *, status: Any = None, description: Any = None, due_date: Any = None, **extra: Any) -> dict[str, Any]:
         """Termine, annule ou rouvre une assignation (l'assigné, ou qui peut écrire le document), ou en change la description / l'échéance (qui
@@ -248,6 +312,21 @@ class CollaborationService:
         if ctx.owner_id.lower().startswith(prefix.lower()) and ctx.owner_id not in seen:
             seen = [ctx.owner_id, *seen][:MAX_PEOPLE]
         return {"items": [Person(i).as_dict() for i in seen], "directory": False}
+
+    async def mentionable(self, ctx: RequestContext, doctype: str, name: str, *, q: Any = "") -> dict[str, Any]:
+        """Des membres à citer (`@adresse`) dans un commentaire de CE document : il suffit de pouvoir LE LIRE (un relecteur doit pouvoir mentionner, contrairement à
+        l'assignation qui demande d'écrire). Seuls des membres avec une adresse, jamais l'auteur ; sans annuaire (pas d'adresses), personne. L'adresse d'un membre
+        n'est donc montrée qu'à qui peut déjà lire un document de l'organisation (comme `resolve`, qui l'affiche à tout membre identifié)."""
+        self._docs._enter(ctx, "collab.mentionable", doctype, name)
+        prefix = (_text(q, "q", limit=100, required=False) or "").lower()
+        async with self._docs._query(ctx) as query:
+            await self._document(ctx, query, doctype, name)
+        members = await self._members(ctx)
+        if members is None:
+            return {"items": [], "directory": False}
+        found = [p for p in members if p.email and p.id != ctx.owner_id and prefix in p.email.lower()]
+        found.sort(key=lambda p: (not (p.email or "").lower().startswith(prefix), (p.email or "").lower()))
+        return {"items": [p.as_dict() for p in found[:MAX_MENTION_SUGGESTIONS]], "directory": True}
 
     async def resolve(self, ctx: RequestContext, ids: Any) -> dict[str, Any]:
         """De quoi AFFICHER des identifiants : `{id: {id, email, name}}`. Avec un annuaire, seuls les membres de l'organisation de l'appelant sont

@@ -80,7 +80,7 @@ function clear(): void {
           @update:model-value="patch(row, { value: $event })"
         />
         <InputNumber
-          v-else-if="fieldOf(row.field)!.fieldtype === 'Number' || fieldOf(row.field)!.fieldtype === 'Rating'"
+          v-else-if="['Number', 'Rating', 'Int', 'Percent'].includes(fieldOf(row.field)!.fieldtype)"
           :model-value="typeof row.value === 'number' ? row.value : null"
           :use-grouping="false"
           :max-fraction-digits="10"

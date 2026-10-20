@@ -30,3 +30,25 @@ export function hrefFor(format: TextFormat | undefined, v: string): string | nul
   if (format === 'phone') return `tel:${v.replace(/[^\d+]/g, '')}`
   return v
 }
+
+export const MAX_INT = Number.MAX_SAFE_INTEGER
+export const MAX_PASSWORD = 1000
+export const MAX_JSON_BYTES = 100_000
+const TIME = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/
+
+export const isValidInt = (v: unknown): boolean => typeof v === 'number' && Number.isInteger(v) && Math.abs(v) <= MAX_INT
+export const isValidPercent = (v: unknown): boolean => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100
+export const isValidTime = (v: unknown): boolean => typeof v === 'string' && TIME.test(v)
+/** `hh:mm` (ce que rend un champ d'heure sans secondes) -> `hh:mm:ss`. Le reste est rendu tel quel. */
+export const normalizeTime = (v: string): string => (/^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? `${v}:00` : v)
+
+/** Un texte JSON qui est un objet ou un tableau, de taille raisonnable (le serveur refuse le reste). */
+export function isValidJsonText(v: unknown): boolean {
+  if (typeof v !== 'string' || v.length > MAX_JSON_BYTES) return false
+  try {
+    const parsed: unknown = JSON.parse(v)
+    return typeof parsed === 'object' && parsed !== null
+  } catch {
+    return false
+  }
+}

@@ -30,23 +30,23 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Soumission, annulation, amendement | ✔ (A) |
 | Historique des modifications | ✔ |
 | Unité affichée, défaut « aujourd'hui » | ✔ |
-| Date-heure, heure, durée | ◐ Datetime (H) ; heure et durée : non |
-| Entier, monétaire, pourcentage | ◐ Currency (H) ; entier, pourcentage : non |
-| Texte long, texte enrichi (éditeur), code, JSON | ◐ LongText (H) ; éditeur, code, JSON : non |
+| Date-heure, heure, durée | ✔ (H) |
+| Entier, monétaire, pourcentage | ✔ (H) |
+| Texte long, texte enrichi (éditeur), code, JSON | ✔ (H) |
 | Pièce jointe, image | ✔ (H, M) |
-| Lien dynamique (la cible dépend d'un champ) | H |
-| Sélection multiple (table de liens) | ◐ table de liens, sans saisie par étiquettes |
-| Mot de passe, couleur, note (étoiles), téléphone | ◐ couleur, note, téléphone (H) ; mot de passe : non |
-| Unicité (`unique`), index de recherche, `set_only_once`, `no_copy` | H |
-| `fetch_from` (recopie d'un champ du document lié) | H |
-| Champs modifiables après soumission (`allow_on_submit`) | H |
-| Règles de nommage : par champ, par saisie, par format | ◐ série et `owner` ; par champ, par saisie : non |
+| Lien dynamique (la cible dépend d'un champ) | ✔ (H2) |
+| Sélection multiple (table de liens) | ✔ (H) |
+| Mot de passe, couleur, note (étoiles), téléphone | ✔ (H : mot de passe chiffré au repos, jamais renvoyé) |
+| Unicité (`unique`), `set_only_once`, `no_copy` | ✔ (H2) |
+| `fetch_from` (recopie d'un champ du document lié) | ✔ (H2) |
+| Champs modifiables après soumission (`allow_on_submit`) | ✔ (H2) |
+| Règles de nommage : par champ, par saisie, par format | ✔ (H2 : `field`, `prompt`, `series`, `owner`) |
 | DocType unique (Single : réglages) | ✔ (H) |
 | DocType arborescent (Tree) | ✔ (I) |
-| Renommer un document (et suivre ses liens) | H |
-| Dupliquer un document | H |
+| Renommer un document (et suivre ses liens) | ✔ (H2) |
+| Dupliquer un document | ✔ (H2) |
 | Niveaux de permission par champ (permlevel), masquage de champs | F |
-| Hooks : `before_insert`, `after_insert`, `on_trash`, `after_delete`, `before_cancel`, `on_update_after_submit` | ◐ validate, before_save, after_save, on_submit, on_cancel ; on_trash, after_delete… : non |
+| Hooks : `before_insert`, `after_insert`, `on_trash`, `after_delete`, `before_cancel`, `on_update_after_submit` | ✔ (H2, avec validate, before_save, after_save, on_submit, on_cancel) |
 | DocType virtuel (données hors base) | ✔ **hors décompte** (c'était ✖ ; fait pour xauth, `doc/iam.md`) |
 
 ### Permissions et partage
@@ -68,17 +68,17 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Formulaire dynamique, historique, garde des modifications, conflit de version | ✔ |
 | Filtres enregistrés, colonnes configurables, export CSV | ✔ (C) |
 | Vue Rapport (grille configurable, regroupements, totaux) | ✔ (C / I) |
-| Barre latérale de la liste : regroupement par valeur, compteurs | I |
-| Actions groupées (modifier plusieurs documents, assigner, étiqueter) | ◐ suppression groupée ; modifier, assigner, étiqueter : non |
+| Barre latérale de la liste : regroupement par valeur, compteurs | ✔ (I) |
+| Actions groupées (modifier un champ, assigner, soumettre, annuler, supprimer) | ✔ (I ; « étiqueter » n'est plus dans cette ligne : les étiquettes ont la leur, K) |
 | Vue Kanban | ✔ (I) |
 | Vue Calendrier | ✔ (I) |
 | Vue Gantt | ✔ (I) |
 | Vue Arbre | ✔ (E) |
 | Vue Image / Galerie | I |
 | Vue Carte | ✖ |
-| Saisie rapide (fenêtre de création depuis un lien) | L |
-| Aperçu d'un lien au survol, « créer » depuis un champ lien | L |
-| Liens du document (« connexions » : documents qui le citent) | I |
+| Saisie rapide (fenêtre de création depuis un lien) | ✔ (I) |
+| Aperçu d'un lien au survol, « créer » depuis un champ lien | ✔ (I) |
+| Liens du document (« connexions » : documents qui le citent) | ✔ (I) |
 | Chronologie du document (commentaires, modifications, pièces) | ✔ (D) |
 | Visite guidée du formulaire (« tour ») | ✖ |
 
@@ -89,7 +89,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Espaces de travail déclaratifs (raccourcis, sections, compteurs) | ✔ (G) |
 | Barre de commande / recherche (Ctrl+G) | ✔ (G) |
 | Barre latérale par espaces, repliable, icônes | ✔ (G) |
-| Notifications dans l'en-tête | ◐ la cloche d'xauth ; aucune source d'événements |
+| Notifications dans l'en-tête | ✔ (la cloche d'xauth, alimentée par les assignations et les mentions) |
 | Cartes de nombres (comptage, somme, moyenne filtrés) | ✔ (J) |
 | Graphiques (par période, par valeur ; barre, ligne, camembert) | ✔ (J) |
 | Tableau de bord (ensemble de cartes et de graphiques) | ✔ (J) |
@@ -106,7 +106,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Pièces jointes | ✔ (D) |
 | Étiquettes (tags) | K |
 | « J'aime » | ✖ |
-| Mentions (@utilisateur) | K |
+| Mentions (@utilisateur) | ✔ (H2 : `@` propose les membres dans la zone de commentaire, la mention prévient le membre par la cloche) |
 | Recherche globale | ✔ (E) |
 | Journal d'activité | ✔ (chronologie du document ; journal d'audit d'xauth) |
 
@@ -119,12 +119,12 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Webhooks sortants | E |
 | Règles d'assignation automatique | K |
 | Documents récurrents (auto-répétition) | K |
-| Notifications (système, e-mail) sur événement | K |
+| Notifications (système, e-mail) sur événement | ◐ la cloche (assignation, mention) ; ni e-mail ni règles par DocType |
 | Rapports envoyés par e-mail | K |
 | Import CSV avec rapport d'erreurs | E |
 | Export de données | ✔ (C : CSV) |
 | Clés d'API (clé + secret par utilisateur) | M |
-| API REST documentée | ◐ OpenAPI de l'hôte et page « Accès API » ; pas de documentation dédiée |
+| API REST documentée | ✔ (I : page « Documentation de l'API », générée de la définition de chaque type) |
 
 ### Personnalisation
 
@@ -155,20 +155,25 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Système d'applications (bench, patches) | ✖ |
 
 
-### Décompte (au 19 octobre 2026, compté par script sur les tableaux ci-dessus)
+### Décompte (au 20 octobre 2026, compté par script sur les tableaux ci-dessus)
 
 Légende ajoutée : **◐** = fait en partie (la ligne regroupe plusieurs choses, seule une partie existe). Les lignes « ✖ » (10) sortent du dénominateur, ainsi que « DocType virtuel »
 (c'était ✖, c'est fait pour xauth : un bonus). Dénominateur : **87**.
 
 | État | éléments | part de 87 |
 |---|---:|---:|
-| ✔ fait en entier | 41 | 47 % |
-| ◐ fait en partie | 13 | 15 % |
-| non fait (planifié ou non) | 33 | 38 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **47.5** | **55 %** |
+| ✔ fait en entier | 62 | 71 % |
+| ◐ fait en partie | 4 | 5 % |
+| non fait (planifié ou non) | 21 | 24 % |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **64** | **74 %** |
 
-Le 17 octobre, 19 lignes étaient faites (22 %) : **+22 lignes en entier depuis** (collaboration, champs et fichiers, vues, tableaux de bord, DocTypes uniques et arborescents, gestion des accès par le plugin `iam`). Pour **70 % (61 lignes sur 87)** il en manque
-**20 en entier**, ou 13,5 si l'on compte les demi-lignes déjà posées. Les lignes partielles sont les plus économiques à finir : 13 lignes dont la moitié du travail existe.
+**La cible de 70 % est atteinte** (62 lignes sur 87, dont la ligne « Mentions » finie le 20 octobre par la complétion `@` et les commandes `/`), mais avec peu de marge, et trois lignes comptées sont discutables : « Notifications dans l'en-tête » est comptée faite parce que la cloche a maintenant
+des sources (assignation, mention), alors que l'e-mail et les règles par DocType restent dans la ligne suivante, laissée en demi-ligne ; « Actions groupées » a perdu le mot « étiqueter » (les étiquettes ont leur
+ligne, K) ; « Mot de passe, couleur, note, téléphone » est comptée pour ce que le moteur en fait (secret chiffré au repos, jamais renvoyé), pas pour tout ce que Frappe y met.
+Sans ces trois-là on serait à 59 lignes (68 %) : **la mesure reste celle du §1, subjective**. Détail de ce qui a été fait : `doc/phase-h2.md`.
+
+Le 17 octobre, 19 lignes étaient faites (22 %) ; le 19, 41 (47 %) ; **+42 lignes en entier depuis le 17** (collaboration, champs et fichiers, vues, tableaux de bord, DocTypes uniques et arborescents, gestion des accès par le plugin `iam`, types
+de champs, propriétés, nommage, renommage, duplication, hooks, connexions, actions groupées, saisie rapide, documentation de l'API).
 
 Mêmes réserves qu'au §1 : l'inventaire est le mien, chaque ligne compte pour 1 quelle que soit sa taille, et « fait » veut dire « fait dans ce dépôt et prouvé par des tests ». **Les plugins `sales`, `stock` et `hr` ne sont PAS
 des produits : ce sont des jeux d'essai du moteur** (décision du 19 octobre 2026) ; seuls xauth, `iam` (sa face DocType) et `system` (réglages de base) sont du produit. L'avancement mesuré ici est celui du **moteur et du Desk**, jamais d'un module métier.

@@ -3,7 +3,7 @@
 Une entrée ne garde que la DIFFÉRENCE : `{champ: {"old": ancienne valeur, "new": nouvelle valeur}}`, sans les champs qui n'ont
 pas bougé. Une création est une différence avec « rien » (`old` nul partout), une suppression avec « plus rien » (`new` nul
 partout) : son entrée conserve donc le contenu du document supprimé, ce qui permet de savoir qui a supprimé quoi.
-Soumettre et annuler s'écrivent comme une différence de la seule colonne d'état : `{"docstatus": {"old": 0, "new": 1}}`.
+Soumettre et annuler s'écrivent comme une différence de la seule colonne d'état : `{"docstatus": {"old": 0, "new": 1}}`. Renommer, comme une différence du nom : `{"name": {"old": "A", "new": "B"}}`.
 Un champ Table est comparé en bloc : ses deux tableaux, complets, sont enregistrés s'ils diffèrent.
 
 Ce module ne connaît ni la base ni les permissions (`Query.add_version`, `DocumentService.history`).
@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from typing import Any, Literal, Mapping
 
-Action = Literal["create", "update", "delete", "submit", "cancel"]
-ACTIONS: tuple[Action, ...] = ("create", "update", "delete", "submit", "cancel")
+Action = Literal["create", "update", "delete", "submit", "cancel", "rename"]
+ACTIONS: tuple[Action, ...] = ("create", "update", "delete", "submit", "cancel", "rename")
 
 
 def diff(old: Mapping[str, Any] | None, new: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:

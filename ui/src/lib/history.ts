@@ -50,7 +50,7 @@ export function changeLines(meta: DocTypeMeta, entry: VersionEntry, links?: (tar
       }
       return {
         field: name,
-        label: field?.label ?? name,
+        label: field?.label ?? (name === 'name' ? t.form.nameLabel : name),
         old: showValue(field, change.old, links),
         new: showValue(field, change.new, links),
       }
@@ -70,5 +70,5 @@ export function linkValues(meta: DocTypeMeta, entries: readonly VersionEntry[]):
   return out
 }
 
-const VERBS = { create: 'created', update: 'updated', delete: 'deleted', submit: 'submitted', cancel: 'cancelled' } as const
+const VERBS = { create: 'created', update: 'updated', delete: 'deleted', submit: 'submitted', cancel: 'cancelled', rename: 'renamed' } as const
 export const verbOf = (action: VersionEntry['action']): string => t.history[VERBS[action]]

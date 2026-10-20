@@ -35,8 +35,13 @@ postgres = ["asyncpg (>=0.31.0,<1.0.0)"]
 
 [tool.poetry]
 packages = [{include = "xcore_doctype", from = "src"}]
-# Le Desk construit (`pnpm build` dans ui/) est ignoré par .gitignore (dist/) mais doit partir dans le wheel.
-include = [{ path = "src/xcore_doctype/ui/dist", format = ["sdist", "wheel"] }]
+# Le Desk construit (`pnpm build` dans ui/) est ignoré par .gitignore (dist/) mais doit partir dans le wheel. Les shims `plugin_dir/src/main.py` et `system_plugin_dir/src/main.py` aussi : le motif
+# `main.py` de .gitignore (pensé pour le `main.py` de la racine, l'hôte de développement) le retire sinon du wheel, et `xcore-doctype install` n'aurait plus rien à poser.
+include = [
+    { path = "src/xcore_doctype/ui/dist", format = ["sdist", "wheel"] },
+    { path = "src/xcore_doctype/plugin_dir/src/main.py", format = ["sdist", "wheel"] },
+    { path = "src/xcore_doctype/system_plugin_dir/src/main.py", format = ["sdist", "wheel"] },
+]
 
 [dependency-groups]
 dev = [

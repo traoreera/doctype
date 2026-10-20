@@ -5,8 +5,10 @@ Deux familles, avec des garanties différentes :
 - **Hooks de confiance** : coroutines enregistrées par nom dans un `HookRegistry` (D16, jamais importées depuis un
   chemin d'un fichier YAML). `validate` et `before_save` s'exécutent dans la transaction d'écriture et sont appelés
   DIRECTEMENT par le service (l'EventBus avale les erreurs et ne peut rien annuler) ; `after_save` s'exécute après le commit.
-  `on_submit` et `on_cancel` (documents soumettables) s'exécutent aussi dans la transaction, avec en plus le droit d'écrire
+  `before_insert` (création seulement, après `before_save`) aussi. `on_submit`, `on_cancel`, `before_cancel` et `on_update_after_submit`
+  (documents soumettables) et `on_trash` (avant une suppression) s'exécutent dans la transaction, avec en plus le droit d'écrire
   d'autres documents DANS cette transaction (`HookEvent.tx`) : ce que le hook écrit est validé et annulé avec le reste.
+  `after_insert` et `after_delete` s'exécutent après le commit, comme `after_save` : une erreur est journalisée et ne défait rien.
 - **Hooks `action:`** (D4, D21) : une action d'un autre plugin, typiquement sandboxé. Appelée AVANT d'ouvrir la
   transaction, avec le tenant et le principal de la requête passés explicitement (jamais les ContextVar ambiantes,
   qui ne sont pas posées pour une route HTTP). Le plugin sandboxé ne touche jamais la base.
@@ -29,7 +31,10 @@ from .context import RequestContext
 from .errors import ConfigurationError, DoctypeError, HookRegistrationError
 from .schema import ACTION_HOOK_RE, TRUSTED_HOOK_RE
 
-HookName = Literal["validate", "before_save", "after_save", "on_submit", "on_cancel"]
+HookName = Literal[
+    "validate", "before_save", "after_save", "on_submit", "on_cancel",
+    "before_insert", "after_insert", "on_trash", "after_delete", "before_cancel", "on_update_after_submit",
+]
 
 # Codes qu'xcore renvoie quand l'APPEL échoue, par opposition à un refus voulu par le hook.
 _INFRA_CODES = frozenset(
@@ -129,12 +134,17 @@ class HookEvent:
 
     - `validate` : `data` et `old` sont en lecture seule ; lever `DocumentValidationError` pour annuler.
     - `before_save` : `data` est modifiable en place (revalidé ensuite par le schéma et les permissions).
-    - `after_save` : appelé après le commit ; une erreur est journalisée et ne défait rien.
-    - `on_submit` / `on_cancel` : dans la transaction du changement d'état, `data` est le document (figé, en lecture seule) et
-      `tx` donne le droit d'écrire d'autres documents ; lever `DocumentValidationError` annule tout, état compris.
-    `old` vaut `None` à la création. `name` vaut `None` pendant `validate` et `before_save` d'une CRÉATION dans une série de
-    numérotation : le numéro est attribué en dernier, juste avant l'insertion, pour ne tenir le compteur que le temps
-    du commit (naming.py). `after_save` reçoit toujours le nom définitif.
+    - `before_insert` : comme `before_save`, mais à la CRÉATION seulement et après lui ; `data` est modifiable en place.
+    - `after_save` : appelé après le commit ; une erreur est journalisée et ne défait rien. `after_insert` : de même, à la création seulement, juste avant lui.
+    - `on_submit` / `on_cancel` / `before_cancel` : dans la transaction du changement d'état, `data` est le document (figé, en lecture seule) et
+      `tx` donne le droit d'écrire d'autres documents ; lever `DocumentValidationError` annule tout, état compris. (`before_cancel` passe avant
+      `on_cancel` ; l'état est déjà posé, un refus le défait.)
+    - `on_update_after_submit` : un document SOUMIS dont un champ `allow_on_submit` vient d'être modifié ; dans la transaction, `old` est l'ancien contenu.
+    - `on_trash` : dans la transaction, juste avant la suppression du document (`data` = ce qu'il contient, `tx` disponible) ; un refus l'empêche.
+      `after_delete` : après le commit, `data` est ce que le document contenait.
+    `old` vaut `None` à la création. `name` vaut `None` pendant `validate`, `before_save` et `before_insert` d'une CRÉATION dans une série de
+    numérotation ou nommée par un champ (`naming: {field: …}`) : le nom est attribué en dernier, juste avant l'insertion (pour la série, afin de ne
+    tenir le compteur que le temps du commit, naming.py). `after_save` et `after_insert` reçoivent toujours le nom définitif.
     """
 
     event: HookName
@@ -144,7 +154,7 @@ class HookEvent:
     data: Mapping[str, Any]
     old: Mapping[str, Any] | None
     _get: Callable[[str, str], Awaitable[dict[str, Any] | None]]
-    tx: HookTransaction | None = None  # seulement pour `on_submit` et `on_cancel`
+    tx: HookTransaction | None = None  # seulement pour `on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit` et `on_trash`
 
     async def get(self, doctype: str, name: str) -> dict[str, Any] | None:
         """Lit un document du même tenant, SANS filtre de permission : le code d'un hook de confiance en répond."""

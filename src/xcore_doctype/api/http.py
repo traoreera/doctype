@@ -22,6 +22,19 @@ T = TypeVar("T")
 class CreateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     data: dict[str, Any]
+    name: Any = None  # le nom choisi, pour un DocType `naming: prompt` (refusé pour tout autre nommage)
+
+
+class BulkBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    action: Any
+    names: Any
+    data: Any = None
+
+
+class RenameBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    new_name: Any
 
 
 class UpdateBody(BaseModel):
@@ -149,6 +162,10 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
     ):
         return await _guard(documents.history(ctx, doctype, name, limit=limit, offset=offset))
 
+    @router.get("/connections/{doctype}/{name}")
+    async def connections(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(documents.connections(ctx, doctype, name))
+
     @router.get("/tree/{doctype}")
     async def doc_tree(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.tree(ctx, doctype))
@@ -208,7 +225,7 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
 
     @router.post("/doc/{doctype}", status_code=201)
     async def doc_create(doctype: str, body: CreateBody, ctx: RequestContext = Depends(ctx_dep)):
-        return await _guard(documents.create(ctx, doctype, body.data))
+        return await _guard(documents.create(ctx, doctype, body.data, name=body.name))
 
     @router.put("/doc/{doctype}/{name}")
     async def doc_update(doctype: str, name: str, body: UpdateBody, ctx: RequestContext = Depends(ctx_dep)):
@@ -221,6 +238,14 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
     @router.post("/doc/{doctype}/{name}/cancel")
     async def doc_cancel(doctype: str, name: str, body: TransitionBody, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.cancel(ctx, doctype, name, body.version))
+
+    @router.post("/bulk/{doctype}")
+    async def doc_bulk(doctype: str, body: BulkBody, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(documents.bulk(ctx, doctype, body.action, body.names, data=body.data))
+
+    @router.post("/doc/{doctype}/{name}/rename")
+    async def doc_rename(doctype: str, name: str, body: RenameBody, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(documents.rename(ctx, doctype, name, body.new_name))
 
     @router.post("/doc/{doctype}/{name}/amend", status_code=201)
     async def doc_amend(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):

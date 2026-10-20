@@ -30,6 +30,14 @@ class AssignBody(BaseModel):
     due_date: str | None = None
 
 
+class AssignManyBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    names: list[str]
+    assignee: str
+    description: str | None = None
+    due_date: str | None = None
+
+
 class AssignmentPatch(BaseModel):
     model_config = ConfigDict(extra="forbid")
     status: str | None = None
@@ -73,6 +81,10 @@ def build_collab_router(collab: CollaborationService, settings: ContextSettings)
     async def assign(doctype: str, name: str, body: AssignBody, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(collab.assign(ctx, doctype, name, assignee=body.assignee, description=body.description, due_date=body.due_date))
 
+    @router.post("/assign-many/{doctype}")
+    async def assign_many(doctype: str, body: AssignManyBody, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(collab.assign_many(ctx, doctype, body.names, assignee=body.assignee, description=body.description, due_date=body.due_date))
+
     @router.put("/assignments/{assignment_id}")
     async def assignment_update(assignment_id: str, body: AssignmentPatch, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(collab.update_assignment(ctx, assignment_id, **body.model_dump(exclude_unset=True)))
@@ -85,6 +97,11 @@ def build_collab_router(collab: CollaborationService, settings: ContextSettings)
     async def users(ids: list[str] = Query(default=[]), ctx: RequestContext = Depends(ctx_dep)):
         """De quoi afficher des identifiants (`?ids=a&ids=b`) : `{items: {id: {id, email, name}}}`, les membres de l'organisation de l'appelant."""
         return await _guard(collab.resolve(ctx, ids))
+
+    @router.get("/mentionable/{doctype}/{name}")
+    async def mentionable(doctype: str, name: str, q: str = Query(""), ctx: RequestContext = Depends(ctx_dep)):
+        """Des membres à citer dans un commentaire de ce document (`@adresse`) : il suffit de pouvoir le lire."""
+        return await _guard(collab.mentionable(ctx, doctype, name, q=q))
 
     @router.get("/people/{doctype}")
     async def people(doctype: str, q: str = Query(""), ctx: RequestContext = Depends(ctx_dep)):

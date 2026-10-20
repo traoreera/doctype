@@ -15,9 +15,11 @@ import type { MenuItem } from 'primevue/menuitem'
 import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BlockEditor from '@/components/BlockEditor.vue'
+import BulkActions from '@/components/BulkActions.vue'
 import CellValue from '@/components/CellValue.vue'
 import FileThumb from '@/components/FileThumb.vue'
 import FilterBar from '@/components/FilterBar.vue'
+import ListSidebar from '@/components/ListSidebar.vue'
 import ViewSwitcher from '@/components/ViewSwitcher.vue'
 import CalendarView from '@/components/views/CalendarView.vue'
 import GanttView from '@/components/views/GanttView.vue'
@@ -104,6 +106,8 @@ const columns = computed<FieldMeta[]>(() => {
 const numbered = computed(() => hasReadableName(meta.value))
 const canCreate = computed(() => meta.value?.rights.create !== 'none')
 const canDelete = computed(() => meta.value?.rights.delete !== 'none')
+/** On coche des lignes quand une action en lot est possible : modifier, assigner, soumettre, annuler ou supprimer. */
+const selectable = computed(() => !!meta.value && (['write', 'delete', 'submit', 'cancel'] as const).some((a) => meta.value!.rights[a] !== 'none'))
 
 // Personnaliser le tableau de bord du type : le serveur valide, puis on relit la définition (qui porte le nouveau tableau).
 const dashEditing = ref(false)
@@ -117,6 +121,25 @@ async function resetDashboard(scope: LayoutScope): Promise<void> {
   meta.value = await metaStore.refresh(props.doctype)
 }
 const quickField = computed(() => meta.value?.title_field ?? 'name')
+
+// ── Barre latérale : les valeurs d'un champ à choix et leur nombre (clic = filtrer) ─────────
+const SIDEBAR_KEY = 'xdt.desk.listSidebar'
+function readSidebar(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) !== 'off'
+  } catch {
+    return true
+  }
+}
+const showSidebar = ref(readSidebar())
+function toggleSidebar(): void {
+  showSidebar.value = !showSidebar.value
+  try {
+    localStorage.setItem(SIDEBAR_KEY, showSidebar.value ? 'on' : 'off')
+  } catch {
+    // un navigateur qui refuse le stockage garde le choix pour la session
+  }
+}
 // Seules les lignes complètes filtrent vraiment : « Filtres · 1 » ne doit pas s'afficher pour une ligne encore vide.
 const activeFilters = computed(() => (meta.value ? Object.keys(buildFilters(filterRows.value, meta.value.fields)).length : 0))
 
@@ -392,6 +415,15 @@ function pickStatus(value: number | null): void {
   commit()
 }
 
+/** Un clic dans la barre latérale : filtre sur cette valeur, ou retire le filtre si elle y est déjà. */
+function pickValue(field: string, value: string | number | boolean): void {
+  const already = filterRows.value.find((r) => r.field === field && r.op === '=' && r.value === value)
+  if (already) {
+    filterRows.value = filterRows.value.filter((r) => r !== already)
+    commit()
+  } else drill(field, value)
+}
+
 /** Un groupe du rapport a été cliqué : on filtre sur sa valeur (la barre de filtres la montre) et on revient à la liste des documents. */
 function drill(field: string, value: string | number | boolean): void {
   if (field === 'docstatus') {
@@ -416,38 +448,6 @@ function title(r: DocRecord): string {
   const v = f ? r.data[f] : undefined
   return typeof v === 'string' && v ? v : r.name
 }
-
-function deleteSelected(): void {
-  const targets = selection.value
-  if (!targets.length) return
-  confirm.require({
-    header: t.delete,
-    message: t.list.confirmDelete(targets.length),
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: t.delete,
-    rejectLabel: t.cancel,
-    acceptProps: { severity: 'danger' },
-    rejectProps: { severity: 'secondary', text: true },
-    accept: async () => {
-      let ok = 0
-      let ko = 0
-      let last: unknown
-      for (const r of targets) {
-        try {
-          await api.remove(props.doctype, r.name)
-          ok++
-        } catch (e) {
-          ko++
-          last = e
-        }
-      }
-      if (ko === 0) notify.success(t.list.deleted(ok))
-      else if (ok === 0) notify.error(last)
-      else notify.warn(t.list.partialDelete(ok, ko))
-      void fetchPage()
-    },
-  })
-}
 </script>
 
 <template>
@@ -456,16 +456,10 @@ function deleteSelected(): void {
       <h1 data-testid="list-title">{{ label }}</h1>
       <ViewSwitcher v-if="meta && views.length > 1" :views="views" :model-value="current" @update:model-value="choose" />
       <span class="desk-spacer" />
-      <Button
-        v-if="selection.length && canDelete && current === 'list'"
-        :label="t.list.deleteSelected(selection.length)"
-        icon="pi pi-trash"
-        severity="danger"
-        size="small"
-        outlined
-        data-testid="bulk-delete"
-        @click="deleteSelected"
-      />
+      <BulkActions v-if="selection.length && selectable && current === 'list' && meta" :doctype="doctype" :meta="meta" :selection="selection" @done="void fetchPage()" />
+      <RouterLink v-if="meta" :to="`/api/${encodeURIComponent(doctype)}`" class="api-link" data-testid="api-docs">
+        <Button icon="pi pi-code" :aria-label="t.apiDocs.title" :title="t.apiDocs.title" text severity="secondary" size="small" />
+      </RouterLink>
       <RouterLink v-if="canCreate && meta" :to="{ name: 'new', params: { doctype } }">
         <Button :label="t.new" icon="pi pi-plus" size="small" data-testid="new-doc" />
       </RouterLink>
@@ -514,6 +508,19 @@ function deleteSelected(): void {
             @click="toggleViewsMenu"
           />
           <Menu ref="viewsMenu" :model="viewsMenuItems" :popup="true" />
+          <Button
+            v-if="current === 'list'"
+            icon="pi pi-align-left"
+            size="small"
+            :severity="showSidebar ? 'primary' : 'secondary'"
+            text
+            :aria-pressed="showSidebar"
+            :aria-label="t.sidebar.toggle"
+            :title="t.sidebar.toggle"
+            class="sidebar-toggle"
+            data-testid="sidebar-toggle"
+            @click="toggleSidebar"
+          />
           <span class="desk-spacer" />
           <span v-if="current === 'list'" class="desk-muted" data-testid="list-count">{{ t.list.count(rows.length, total) }}</span>
         </div>
@@ -521,7 +528,9 @@ function deleteSelected(): void {
         <FilterBar v-if="showFilters" v-model:rows="filterRows" :fields="meta.fields" @apply="commit" />
       </template>
 
-      <div v-if="current === 'list'" class="desk-card">
+      <div v-if="current === 'list'" :class="['list-layout', { 'with-sidebar': showSidebar }]">
+        <ListSidebar v-if="showSidebar" :meta="meta" :filters="applied" @pick="pickValue" />
+        <div class="desk-card list-main">
         <DataTable
           v-model:selection="selection"
           :value="rows"
@@ -541,7 +550,7 @@ function deleteSelected(): void {
           @page="onPage"
           @sort="onSort"
         >
-          <Column v-if="canDelete" selection-mode="multiple" header-style="width: 2.5rem" />
+          <Column v-if="selectable" selection-mode="multiple" header-style="width: 2.5rem" />
           <Column v-if="numbered" field="name" sort-field="name" :header="t.list.number" sortable>
             <template #body="{ data }">
               <span class="avatar-cell"><FileThumb v-if="meta.image_field" :id="data.data[meta.image_field]" :size="28" round /><RouterLink :to="{ name: 'form', params: { doctype, name: data.name } }" :data-testid="`open-${data.name}`" style="font-weight: 500; white-space: nowrap">{{ data.name }}</RouterLink></span>
@@ -581,6 +590,7 @@ function deleteSelected(): void {
             </div>
           </template>
         </DataTable>
+        </div>
       </div>
 
       <ReportView v-else-if="current === 'report'" :doctype="doctype" :meta="meta" :filters="applied" @drill="drill" />

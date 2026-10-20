@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
-import Textarea from 'primevue/textarea'
 import { useConfirm } from 'primevue/useconfirm'
 import { computed, ref, watch } from 'vue'
+import AssignDialog from '@/components/collab/AssignDialog.vue'
+import CommentComposer from '@/components/collab/CommentComposer.vue'
+import { useAttach } from '@/composables/useAttach'
 import { useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { buildFeed, type FeedFilter } from '@/lib/feed'
 import { changeLines, linkValues, verbOf } from '@/lib/history'
 import { formatTimestamp, relativeTime } from '@/lib/format'
+import { splitMentions, type CommandId, type SlashCommand } from '@/lib/mentions'
 import { initials } from '@/lib/navstate'
 import { useServices } from '@/lib/services'
 import type { Collab, CommentItem, DocTypeMeta, VersionEntry } from '@/lib/types'
 import { useLinks } from '@/stores/links'
+import { useTasks } from '@/stores/tasks'
 import { useUsers } from '@/stores/users'
 
 /**
@@ -64,6 +68,46 @@ const feed = computed(() =>
 const mine = (c: CommentItem): boolean => c.owner === props.collab.me
 const canModerate = (c: CommentItem): boolean => mine(c) || props.collab.can_assign
 
+// ── Les commandes de la zone de commentaire (`/assigner`…) : ce qu'on peut faire sur CE document, jugé sur les droits que le serveur a donnés ──
+const tasks = useTasks()
+const assigning = ref(false)
+const picker = ref<HTMLInputElement | null>(null)
+const { upload } = useAttach(() => ({ doctype: props.doctype, name: props.name }), () => emit('changed'))
+const myOpen = computed(() => props.collab.assignments.filter((a) => a.assignee === props.collab.me && a.status === 'open'))
+const commands = computed<SlashCommand[]>(() => {
+  const c = t.collab.commands
+  return [
+    ...(props.collab.can_assign ? [{ id: 'assign' as const, icon: 'user-plus', ...c.assign }] : []),
+    ...(props.collab.can_attach ? [{ id: 'attach' as const, icon: 'paperclip', ...c.attach }] : []),
+    { id: 'mention' as const, icon: 'at', ...c.mention },
+    ...(myOpen.value.length ? [{ id: 'done' as const, icon: 'check-circle', ...c.done }] : []),
+  ]
+})
+
+async function run(id: CommandId): Promise<void> {
+  if (id === 'assign') assigning.value = true
+  else if (id === 'attach') picker.value?.click()
+  else if (id === 'done') {
+    const targets = myOpen.value
+    try {
+      for (const a of targets) await api.updateAssignment(a.id, { status: 'done' })
+      notify.success(t.collab.tasksDone(targets.length))
+    } catch (e) {
+      notify.error(e)
+    } finally {
+      emit('changed')
+      void tasks.refresh()
+    }
+  }
+}
+
+async function picked(e: Event): Promise<void> {
+  const target = e.target as HTMLInputElement
+  const list = [...(target.files ?? [])]
+  target.value = ''
+  await upload(list)
+}
+
 async function send(): Promise<void> {
   const text = draft.value.trim()
   if (!text || sending.value) return
@@ -111,13 +155,6 @@ function ask(c: CommentItem): void {
   })
 }
 
-function onKey(e: KeyboardEvent): void {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault()
-    void send()
-  }
-}
-
 const filterKeys = computed(() => Object.keys(t.collab.filters) as FeedFilter[])
 function moveFilter(delta: number): void {
   const keys = filterKeys.value
@@ -154,7 +191,7 @@ function moveFilter(delta: number): void {
     </header>
 
     <form class="composer" @submit.prevent="send">
-      <Textarea v-model="draft" rows="2" auto-resize maxlength="4000" :placeholder="t.collab.writeComment" :aria-label="t.collab.writeComment" data-testid="comment-input" @keydown="onKey" />
+      <CommentComposer v-model="draft" :doctype="doctype" :name="name" :commands="commands" :label="t.collab.writeComment" :placeholder="`${t.collab.writeComment} (${t.collab.composerHint})`" @submit="send" @command="run" />
       <Button type="submit" :label="t.collab.comment" icon="pi pi-send" size="small" :loading="sending" :disabled="!draft.trim()" data-testid="comment-send" />
     </form>
 
@@ -177,13 +214,14 @@ function moveFilter(delta: number): void {
               </template>
             </div>
             <div v-if="editing?.id === item.comment.id" class="comment-edit">
-              <Textarea v-model="editing.text" rows="2" auto-resize maxlength="4000" :aria-label="t.collab.edit" data-testid="comment-edit-input" />
+              <CommentComposer v-model="editing.text" :doctype="doctype" :name="name" :label="t.collab.edit" testid="comment-edit-input" @submit="saveEdit" />
               <div class="comment-edit-actions">
                 <Button :label="t.collab.cancel" text size="small" severity="secondary" @click="editing = null" />
                 <Button :label="t.collab.save" size="small" :disabled="!editing.text.trim()" data-testid="comment-edit-save" @click="saveEdit" />
               </div>
             </div>
-            <p v-else class="comment-text" data-testid="comment-text">{{ item.comment.content }}</p>
+            <!-- Une mention se voit (en couleur) ; chaque morceau est du TEXTE, jamais du HTML. -->
+            <p v-else class="comment-text" data-testid="comment-text"><template v-for="(seg, i) in splitMentions(item.comment.content)" :key="i"><span v-if="seg.mention" class="mention">{{ seg.text }}</span><template v-else>{{ seg.text }}</template></template></p>
           </template>
 
           <template v-else-if="item.kind === 'version'">
@@ -213,6 +251,8 @@ function moveFilter(delta: number): void {
         </div>
       </li>
     </ol>
+    <input v-if="collab.can_attach" ref="picker" type="file" multiple hidden data-testid="composer-attach-input" @change="picked" />
+    <AssignDialog v-model:visible="assigning" :doctype="doctype" :name="name" :me="collab.me" @saved="emit('changed')" />
     <Button v-if="filter !== 'comments' && versions.length < total" :label="t.collab.more" text size="small" :loading="loadingVersions" data-testid="activity-more" @click="loadVersions(false)" />
   </section>
 </template>

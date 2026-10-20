@@ -36,12 +36,12 @@ from .naming import SeriesPattern
 
 FieldType = Literal[
     "Text", "LongText", "Number", "Decimal", "Currency", "Rating", "Date", "Datetime", "Boolean", "Select", "Link", "Color", "Image", "Attach", "Table",
-    "Int", "Percent", "Time", "Duration", "Code", "JSON", "TextEditor", "Password",
+    "Int", "Percent", "Time", "Duration", "Code", "JSON", "TextEditor", "Password", "DynamicLink",
 ]
 # Image et Attach portent l'identifiant d'un fichier (files.py), pas le fichier.
 FILE_TYPES = ("Image", "Attach")
 # Des types dont la valeur ne se devine pas : ni défaut, ni pré-remplissage par l'adresse.
-NO_DEFAULT_TYPES = ("JSON", "Password", "TextEditor")
+NO_DEFAULT_TYPES = ("JSON", "Password", "TextEditor", "DynamicLink")
 # Deux types portent un nombre EXACT sous forme de chaîne canonique (decimals.py) : tout ce qui vaut pour l'un vaut pour l'autre.
 DECIMAL_TYPES = ("Decimal", "Currency")
 
@@ -75,10 +75,19 @@ _Module = Annotated[str, StringConstraints(pattern=r"^[a-z0-9_]+$", max_length=6
 RESERVED_GRANT_NAMESPACES = frozenset({"admin", "rbac", "auth", "tenants", "user", "license", "plugins"})
 _PrincipalAttr = Annotated[str, StringConstraints(pattern=r"^[A-Za-z_][A-Za-z0-9_]{0,62}$")]
 
-HOOK_EVENTS = ("validate", "before_save", "after_save", "on_submit", "on_cancel")
-# Hooks d'un changement d'ÉTAT (soumission, annulation) : dans la transaction du document, avec le droit d'écrire d'autres
-# documents (hooks.HookTransaction). Ils exigent un DocType `submittable` et ne peuvent pas être des `action:` sandboxées.
-TRANSITION_HOOKS = ("on_submit", "on_cancel")
+HOOK_EVENTS = (
+    "validate", "before_save", "after_save", "on_submit", "on_cancel",
+    "before_insert", "after_insert", "on_trash", "after_delete", "before_cancel", "on_update_after_submit",
+)
+# Hooks d'un changement d'ÉTAT (soumission, annulation, modification d'un document soumis) : dans la transaction du document, avec le droit d'écrire
+# d'autres documents (hooks.HookTransaction). Ils exigent un DocType `submittable` et ne peuvent pas être des `action:` sandboxées.
+TRANSITION_HOOKS = ("on_submit", "on_cancel", "before_cancel", "on_update_after_submit")
+# Seuls `validate` et `before_save` acceptent un hook `action:` (sandboxé, appelé AVANT la transaction) : tout autre événement a lieu DANS la transaction ou APRÈS le commit.
+ACTION_HOOK_EVENTS = ("validate", "before_save")
+# Les types dont une valeur peut être UNIQUE (`unique: true`) : des valeurs qui se comparent exactement, jamais un flottant ni un texte libre long.
+UNIQUE_TYPES = ("Text", "Int", "Select", "Link", "Date", "Datetime", "Time", "Duration", "Decimal", "Currency")
+# Les types d'un champ de NOMMAGE (`naming: {field: …}`) : le nom du document est sa valeur.
+NAMING_FIELD_TYPES = ("Text", "Int", "Select", "Link")
 # D16 : un nom de hook est une CLÉ du registre, jamais un chemin importé. Aucune importation dynamique.
 TRUSTED_HOOK_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 ACTION_HOOK_RE = re.compile(r"^action:([A-Za-z0-9_-]+)\.([A-Za-z0-9_.-]+)$")
@@ -116,6 +125,16 @@ class FieldDef(BaseModel):
     hidden: StrictBool = False  # jamais affiché (formulaire ni liste), mais stocké et validé
     # Table seulement : une « sélection multiple » (des étiquettes à saisir et à retirer) au lieu d'une grille. Le DocType des lignes n'a qu'UN champ, un Link.
     multiselect: StrictBool = False
+    # Unicité (par organisation) : deux documents du même DocType ne portent jamais la même valeur ; garantie par la base (table `xdt_unique`, voir query.py), donc sans course.
+    unique: StrictBool = False
+    # Fixé une fois : une valeur posée ne change plus après l'enregistrement (le champ reste libre tant qu'il est vide).
+    set_only_once: StrictBool = False
+    # Jamais recopié par « Dupliquer » ni par un amendement (un numéro de série, une date de signature).
+    no_copy: StrictBool = False
+    # Modifiable même quand le document est soumis (un commentaire de suivi) ; exige un DocType `submittable`. Tout autre champ reste figé.
+    allow_on_submit: StrictBool = False
+    # `lien.champ` : la valeur est LUE du document que le Link `lien` désigne, à chaque enregistrement (jamais saisie : la valeur envoyée est écrasée). Le Desk la montre en lecture seule.
+    fetch_from: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}\.[a-z][a-z0-9_]{0,62}$")] | None = None
     # Lecture seule : le document le MONTRE mais un client ne peut pas le changer (une mise à jour qui le modifie est refusée, `read_only`). Un hook de
     # confiance et la source d'un DocType virtuel l'écrivent, eux. Sans condition, contrairement à `read_only_depends_on`.
     read_only: StrictBool = False
@@ -151,6 +170,9 @@ class FieldDef(BaseModel):
                 raise ValueError(f"{name}: Select exige une liste `options` non vide")
             if len(set(options)) != len(options) or any(not o for o in options):
                 raise ValueError(f"{name}: `options` doit contenir des valeurs uniques non vides")
+        elif ftype == "DynamicLink":
+            if not isinstance(options, str) or not re.match(r"^[a-z][a-z0-9_]{0,62}$", options):
+                raise ValueError(f"{name}: DynamicLink exige `options` = nom du champ (Text ou Select, du même document ou de la même ligne) qui dit DANS quel DocType chercher")
         elif ftype in ("Link", "Table"):
             if not isinstance(options, str) or not options:
                 what = "du DocType cible" if ftype == "Link" else "du DocType des lignes (`istable: true`)"
@@ -172,6 +194,14 @@ class FieldDef(BaseModel):
             raise ValueError(f"{name}: `max_mb` n'a de sens que pour une Image ou un Attach")
         if ftype in FILE_TYPES and self.default is not None:
             raise ValueError(f"{name}: un fichier n'a pas de valeur par défaut")
+        if self.unique and ftype not in UNIQUE_TYPES:
+            raise ValueError(f"{name}: `unique` n'a pas de sens pour {ftype} (permis : {', '.join(UNIQUE_TYPES)})")
+        if self.fetch_from is not None and self.default is not None:
+            raise ValueError(f"{name}: un champ `fetch_from` prend la valeur du document lié, il n'a pas de `default`")
+        if self.fetch_from is not None and self.fetch_from.split(".")[0] == name:
+            raise ValueError(f"{name}: `fetch_from` ne peut pas viser le champ lui-même")
+        if self.fetch_from is not None and (self.required or self.mandatory_depends_on is not None):
+            raise ValueError(f"{name}: un champ `fetch_from` est rempli par le serveur, il ne peut pas être obligatoire (le lien qui le fournit, lui, peut l'être)")
         if self.multiselect and ftype != "Table":
             raise ValueError(f"{name}: `multiselect` n'a de sens que pour un champ Table")
         if ftype in NO_DEFAULT_TYPES and self.default is not None:
@@ -417,6 +447,12 @@ class HooksDef(BaseModel):
     after_save: list[str] = PydanticField(default_factory=list)
     on_submit: list[str] = PydanticField(default_factory=list)
     on_cancel: list[str] = PydanticField(default_factory=list)
+    before_insert: list[str] = PydanticField(default_factory=list)  # création seulement, dans la transaction, après before_save : peut modifier et refuser
+    after_insert: list[str] = PydanticField(default_factory=list)  # création seulement, après le commit
+    on_trash: list[str] = PydanticField(default_factory=list)  # dans la transaction, juste avant la suppression : peut la refuser
+    after_delete: list[str] = PydanticField(default_factory=list)  # après le commit de la suppression
+    before_cancel: list[str] = PydanticField(default_factory=list)  # `submittable` : dans la transaction de l'annulation, avant `on_cancel`
+    on_update_after_submit: list[str] = PydanticField(default_factory=list)  # `submittable` : un document soumis dont un champ `allow_on_submit` a changé
 
     @model_validator(mode="after")
     def _check(self) -> "HooksDef":
@@ -427,7 +463,7 @@ class HooksDef(BaseModel):
                     raise ValueError(f"hooks.{event}: hook dupliqué {ref!r}")
                 seen.add(ref)
                 if ref.startswith("action:"):
-                    if event == "after_save" or event in TRANSITION_HOOKS:
+                    if event not in ACTION_HOOK_EVENTS:
                         raise ValueError(
                             f"hooks.{event}: `action:` interdit (les hooks sandboxés précèdent la transaction, D21 : "
                             "ils ne peuvent ni la rejoindre ni suivre le commit)"
@@ -443,6 +479,14 @@ class HooksDef(BaseModel):
 
     def all_refs(self) -> list[str]:
         return [r for e in HOOK_EVENTS for r in self.for_event(e)]
+
+
+class NamingField(BaseModel):
+    """`naming: {field: code}` : le nom du document est la valeur de ce champ (obligatoire, unique par nature : une seconde création est refusée, 409)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    field: _Fieldname
 
 
 class NamingSeries(BaseModel):
@@ -468,9 +512,11 @@ class DocTypeDef(BaseModel):
     name: _DocTypeName
     label: str | None = None
     module: _Module | None = None
-    # `hash` : identifiant aléatoire. `owner` : l'identifiant de celui qui crée (un document PAR utilisateur : son profil ; une seconde création est refusée,
+    # `hash` : identifiant aléatoire. `prompt` : l'utilisateur le choisit à la création. `{field: x}` : la valeur du champ `x`. `owner` : l'identifiant de celui qui crée (un document PAR utilisateur : son profil ; une seconde création est refusée,
     # 409). `{series: ...}` : numéro séquentiel par tenant, sans doublon ni trou (naming.py).
-    naming: Literal["hash", "owner"] | NamingSeries = "hash"
+    naming: Literal["hash", "owner", "prompt"] | NamingField | NamingSeries = "hash"
+    # Renommer un document (`POST …/rename`) : son nom change et tous les Link qui le citent le suivent. Pas pour un nom qui n'est pas libre (`owner`, `field`, série).
+    allow_rename: StrictBool = False
     # DocType « enfant » : ses documents sont les LIGNES d'un champ Table d'un autre DocType (tableau JSON dans le parent).
     # Il n'a ni route, ni droits, ni hooks, ni nom propre : voir `_child_rules`.
     istable: StrictBool = False
@@ -570,6 +616,51 @@ class DocTypeDef(BaseModel):
             raise ValueError("single: un document unique est nommé comme son type : `naming` n'a pas de sens")
         if self.views is not None and (self.views.kanban or self.views.calendar or self.views.gantt or self.views.tree):
             raise ValueError("single: un seul document, pas de Kanban, de calendrier, de Gantt ni d'arbre")
+        return self
+
+    @model_validator(mode="after")
+    def _property_rules(self) -> "DocTypeDef":
+        """Les propriétés de champ et de DocType ajoutées au palier 70 % : ce qu'elles exigent de leur voisinage, vérifié au chargement (jamais découvert à la première saisie)."""
+        by_name = {f.fieldname: f for f in self.fields}
+        for f in self.fields:
+            if self.istable:
+                for prop in ("unique", "set_only_once", "allow_on_submit", "no_copy"):
+                    if getattr(f, prop):
+                        raise ValueError(f"istable: {f.fieldname}.{prop} : pas pris en charge dans les lignes (une ligne n'a pas d'identité propre)")
+            if self.source is not None:
+                for prop in ("unique", "allow_on_submit"):
+                    if getattr(f, prop):
+                        raise ValueError(f"source: {f.fieldname}.{prop} n'a pas de sens pour un DocType virtuel (le moteur ne stocke pas ses documents)")
+                if f.fetch_from is not None or f.fieldtype == "DynamicLink":
+                    raise ValueError(f"source: {f.fieldname} ({'fetch_from' if f.fetch_from else 'DynamicLink'}) n'a pas de sens pour un DocType virtuel")
+            if f.allow_on_submit and not self.submittable:
+                raise ValueError(f"{f.fieldname}: `allow_on_submit` n'a de sens que pour un DocType `submittable: true`")
+            if f.allow_on_submit and f.fetch_from is not None:
+                raise ValueError(f"{f.fieldname}: `allow_on_submit` et `fetch_from` ne vont pas ensemble (un document soumis ne relit plus ses liens)")
+            if f.fetch_from is not None:
+                link = by_name.get(f.fetch_from.split(".")[0])
+                if link is None or link.fieldtype != "Link":
+                    raise ValueError(f"{f.fieldname}: `fetch_from` {f.fetch_from!r} : {f.fetch_from.split('.')[0]!r} doit être un champ Link de ce DocType")
+                if f.fieldtype in ("Table", "Password", *FILE_TYPES):
+                    raise ValueError(f"{f.fieldname}: un champ {f.fieldtype} ne peut pas être rempli par `fetch_from`")
+            if f.fieldtype == "DynamicLink":
+                holder = by_name.get(str(f.options))
+                if holder is None or holder.fieldtype not in ("Text", "Select"):
+                    raise ValueError(f"{f.fieldname}: DynamicLink `options` {f.options!r} doit nommer un champ Text ou Select de ce DocType (le nom du DocType visé)")
+        naming = self.naming
+        if isinstance(naming, NamingField):
+            target = by_name.get(naming.field)
+            if target is None:
+                raise ValueError(f"naming.field: champ inconnu {naming.field!r}")
+            if target.fieldtype not in NAMING_FIELD_TYPES or not target.required or target.depends_on is not None:
+                raise ValueError(f"naming.field: {naming.field!r} doit être `required: true`, sans `depends_on`, de type {', '.join(NAMING_FIELD_TYPES)}")
+            if target.fetch_from is not None:
+                raise ValueError(f"naming.field: {naming.field!r} ne peut pas être rempli par `fetch_from` (le nom doit exister avant l'écriture)")
+        if self.allow_rename:
+            bad = [k for k, v in {"istable": self.istable, "single": self.single, "source": self.source is not None,
+                                  "naming owner": naming == "owner", "naming series": isinstance(naming, NamingSeries), "naming field": isinstance(naming, NamingField)}.items() if v]
+            if bad:
+                raise ValueError(f"allow_rename: n'a pas de sens avec {', '.join(bad)} (le nom n'est pas libre)")
         return self
 
     @model_validator(mode="after")
@@ -824,6 +915,16 @@ class DocTypeDef(BaseModel):
             )
             for name in sorted(defaults)
         }
+
+    @property
+    def unique_fields(self) -> tuple[str, ...]:
+        """Les champs `unique: true` : une valeur ne se retrouve jamais sur deux documents de l'organisation (voir `Query.sync_unique`)."""
+        return tuple(f.fieldname for f in self.fields if f.unique)
+
+    @property
+    def editable_after_submit(self) -> tuple[str, ...]:
+        """Les champs `allow_on_submit` : ce qu'un document soumis laisse modifier."""
+        return tuple(f.fieldname for f in self.fields if f.allow_on_submit)
 
     @property
     def secret_fields(self) -> tuple[str, ...]:

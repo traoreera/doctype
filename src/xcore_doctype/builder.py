@@ -30,7 +30,7 @@ from . import fieldtypes
 from .decimals import canonical
 from .errors import ValidationFailed
 from .expr import Node, compile_expr, evaluate
-from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef
+from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef, NamingField
 
 
 def _iso_date(value: str) -> str:
@@ -114,8 +114,8 @@ def python_type(field: FieldDef) -> Any:
             return _IsoDate
         case "Select":
             return Literal[tuple(field.options or [])]
-        case "Link":
-            return _LinkTarget
+        case "Link" | "DynamicLink":
+            return _LinkTarget  # un DynamicLink est aussi un nom de document ; le DocType visé se lit dans son champ de type (document.py, `_check_links`)
     raise AssertionError(f"fieldtype non géré : {field.fieldtype}")  # pragma: no cover
 
 
@@ -142,6 +142,7 @@ FILTER_OPS: dict[str, frozenset[str]] = {
     "Text": frozenset({"=", "!=", "like", "in"}),
     "Select": frozenset({"=", "!=", "in"}),
     "Link": frozenset({"=", "!=", "like", "in"}),
+    "DynamicLink": frozenset({"=", "!=", "like", "in"}),
     "Number": frozenset({"=", "!=", ">", ">=", "<", "<=", "in"}),
     "Decimal": frozenset({"=", "!=", ">", ">=", "<", "<=", "in"}),
     "Currency": frozenset({"=", "!=", ">", ">=", "<", "<=", "in"}),
@@ -266,7 +267,14 @@ class CompiledDocType:
             locked = old is not None and (f.read_only or ("read_only_depends_on" in cond and evaluate(cond["read_only_depends_on"], old)))
             if locked and clean.get(f.fieldname) != old.get(f.fieldname):
                 errors.append({"field": f.fieldname, "msg": "Champ en lecture seule", "type": "read_only"})
+            # `set_only_once` : libre tant qu'il est vide, figé dès qu'il a une valeur. Le champ qui NOMME le document l'est d'office (le nom ne bouge pas).
+            elif old is not None and old.get(f.fieldname) is not None and clean.get(f.fieldname) != old.get(f.fieldname) and self._set_once(f):
+                errors.append({"field": f.fieldname, "msg": "Champ non modifiable une fois renseigné", "type": "set_only_once"})
         return errors
+
+    def _set_once(self, f: FieldDef) -> bool:
+        naming = self.definition.naming
+        return f.set_only_once or (isinstance(naming, NamingField) and naming.field == f.fieldname)
 
     def _row_errors(self, clean: Mapping[str, Any]) -> list[dict[str, str]]:
         """Les conditions des champs de ligne, réévaluées côté serveur : une cellule rendue obligatoire par la nature du document

@@ -2,6 +2,7 @@
 import Button from 'primevue/button'
 import { onMounted, ref, watch } from 'vue'
 import FileThumb from '@/components/FileThumb.vue'
+import { useAttach } from '@/composables/useAttach'
 import { useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { formatBytes, relativeTime } from '@/lib/format'
@@ -18,8 +19,7 @@ const files = useFiles()
 const notify = useNotify()
 const users = useUsers()
 const input = ref<HTMLInputElement | null>(null)
-const uploading = ref(false)
-const MAX_MB = 10 // la limite du serveur pour une pièce jointe : on prévient avant d'envoyer, il tranche de toute façon
+const { uploading, upload } = useAttach(() => ({ doctype: props.doctype, name: props.name }), () => emit('changed'))
 
 function resolve(): void {
   const ids = props.collab.attachments.map((a) => a.file_id)
@@ -35,23 +35,7 @@ async function pick(e: Event): Promise<void> {
   const target = e.target as HTMLInputElement
   const list = [...(target.files ?? [])]
   target.value = '' // le même fichier peut être rechoisi
-  if (!list.length) return
-  uploading.value = true
-  try {
-    for (const file of list) {
-      if (file.size > MAX_MB * 1024 * 1024) {
-        notify.error(new Error(t.collab.tooLarge(MAX_MB)))
-        continue
-      }
-      await api.attach(props.doctype, props.name, file)
-    }
-    emit('changed')
-  } catch (err) {
-    notify.error(err)
-    emit('changed') // ce qui a pu partir est là
-  } finally {
-    uploading.value = false
-  }
+  await upload(list)
 }
 
 async function remove(a: AttachmentItem): Promise<void> {

@@ -19,11 +19,11 @@ from sqlalchemy import event, text
 from tests.conftest import make_ctx
 from xcore_doctype.aggregation import Group, Metric
 from xcore_doctype.db.tables import (
-    ASSIGNMENT_TABLE, ATTACHMENT_TABLE, COMMENT_TABLE, DOCUMENT_TABLE, NAMING_TABLE, OVERRIDE_TABLE, SAVED_VIEW_TABLE, VERSION_TABLE,
+    ASSIGNMENT_TABLE, ATTACHMENT_TABLE, COMMENT_TABLE, DOCUMENT_TABLE, NAMING_TABLE, OVERRIDE_TABLE, SAVED_VIEW_TABLE, UNIQUE_TABLE, VERSION_TABLE,
 )
-from xcore_doctype.errors import DocumentLocked, InvalidDocStatus, NotFound, VersionConflict
+from xcore_doctype.errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, VersionConflict
 from xcore_doctype.permissions import Scope
-from xcore_doctype.query import Query
+from xcore_doctype.query import Query, UniqueViolation
 
 A, B = "acme", "globex"
 ALL = Scope.everything("read")
@@ -39,7 +39,7 @@ class Env:
         event.listen(db.engine.sync_engine, "before_cursor_execute", self._capture)
 
     def _capture(self, conn, cursor, statement, parameters, context, executemany):
-        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE)):
+        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE, UNIQUE_TABLE)):
             self.captured.append((statement, parameters))
 
     def close(self):
@@ -82,9 +82,13 @@ class Env:
                 for table, cols in ((COMMENT_TABLE, "id, docname, owner, content, edited"), (ASSIGNMENT_TABLE, "id, docname, assignee, status, description"), (ATTACHMENT_TABLE, "id, docname, file_id, owner"))
                 for x in (await s.execute(text(f"SELECT {cols} FROM {table} WHERE tenant_id = :t ORDER BY id"), {"t": tenant})).all()
             ]
+            uniques = await s.execute(
+                text(f"SELECT doctype, fieldname, value, docname FROM {UNIQUE_TABLE} WHERE tenant_id = :t ORDER BY doctype, fieldname, value"), {"t": tenant}
+            )
             return (
                 [tuple(x) for x in docs.all()]
                 + collab
+                + [tuple(x) for x in uniques.all()]
                 + [tuple(x) for x in counters.all()]
                 + [tuple(x) for x in history.all()]
                 + [tuple(x) for x in views.all()]
@@ -119,6 +123,9 @@ class Env:
             await q.add_version("Customer", "shared", action="create", changes={"customer_name": {"old": None, "new": "acme:shared"}}, **hist)
             await q.add_version("Customer", "gone-a", action="delete", changes={"customer_name": {"old": "acme:gone", "new": None}}, **hist)
             await q.insert("Order", "a-order", {"lines": [{"item": "X"}]})  # une LIGNE de A cite l'article « X »
+            # Les valeurs uniques de A : B peut porter les mêmes sans conflit, et ne les voit ni ne les libère.
+            await q.sync_unique("Customer", "shared", {"code": "X1"})
+            await q.sync_unique("Customer", "only-a", {"code": "A2"})
             for _ in range(3):  # A en est à 3 : si B partageait ce compteur, son premier numéro serait 4
                 await q.next_number("Customer", "C-{#}")
 
@@ -322,6 +329,93 @@ async def scenario_references_to(env: Env):
         assert await q.references_to("Customer", "self", [("Customer", "country", None)]) == []
 
 
+async def scenario_sync_unique(env: Env):
+    """Une valeur unique est unique PAR organisation : B porte « X1 » alors que A la tient déjà, mais pas deux fois chez lui."""
+    async with env.q(B) as q:
+        await q.sync_unique("Customer", "shared", {"code": "X1"})  # la valeur de A, chez B : pas un conflit
+        await q.sync_unique("Customer", "only-b", {"code": "B2"})
+    async with env.q(B) as q:
+        with pytest.raises(UniqueViolation) as raised:
+            await q.sync_unique("Customer", "only-b", {"code": "X1"})  # chez B, « shared » la tient
+        assert raised.value.field == "code"
+    async with env.q(B) as q:
+        await q.sync_unique("Customer", "only-b", {"code": "B3"})  # il change de valeur : B2 est libérée
+        await q.sync_unique("Customer", "shared", {})  # plus de valeur : X1 est libérée chez B
+    async with env.q(B) as q:
+        await q.sync_unique("Customer", "only-b", {"code": "X1"})  # libre chez B, alors qu'elle reste prise chez A
+
+
+async def scenario_drop_unique(env: Env):
+    async with env.q(B) as q:
+        await q.sync_unique("Customer", "shared", {"code": "X1"})
+    async with env.q(B) as q:
+        await q.drop_unique("Customer", "shared")  # libère celle de B ; « shared » de A garde la sienne
+        await q.drop_unique("Customer", "only-a")  # n'existe que chez A : rien à libérer chez B
+    async with env.q(B) as q:
+        await q.sync_unique("Customer", "only-b", {"code": "X1"})  # libre chez B
+
+
+async def scenario_rename(env: Env):
+    """Renommer chez B ne touche ni au document de A ni à ses commentaires, pièces jointes, valeurs uniques ou historique."""
+    async with env.q(B) as q:
+        with pytest.raises(NotFound):  # n'existe que chez A
+            await q.rename("Customer", "only-a", "only-a-2", scope=ALL)
+    async with env.q(B) as q:
+        await q.sync_unique("Customer", "shared", {"code": "X1"})
+    async with env.q(B) as q:
+        doc = await q.rename("Customer", "shared", "renamed", scope=ALL)
+        assert (doc.name, doc.version) == ("renamed", 2)
+    async with env.q(B) as q:
+        assert await q.get("Customer", "shared", scope=ALL) is None
+        assert (await q.get("Customer", "renamed", scope=ALL)).data["customer_name"] == f"{B}:shared"
+        assert [c["content"] for c in (await q.comments("Customer", "renamed", limit=10))] == [f"note-{B}"]  # ses commentaires l'ont suivi
+        with pytest.raises(AlreadyExists):  # « only-b » existe chez B
+            await q.rename("Customer", "renamed", "only-b", scope=ALL)
+    async with env.q(B) as q:
+        doc = await q.rename("Customer", "renamed", "only-a", scope=ALL)  # ce nom n'est pris que chez A : libre chez B
+        assert doc.name == "only-a"
+        with pytest.raises(UniqueViolation):  # la valeur « X1 » a suivi le document
+            await q.sync_unique("Customer", "only-b", {"code": "X1"})
+
+
+async def scenario_referrers_of(env: Env):
+    """Seul A cite « FR » et « X » : B n'a aucun document à réécrire, et ce qu'il trouve est à lui."""
+    direct, rows = [("Customer", "country", None)], [("Order", "item", "lines")]
+    async with env.q(B) as q:
+        assert await q.referrers_of("Country", "FR", direct) == []
+        assert await q.referrers_of("Item", "X", rows) == []
+        await q.insert("Customer", "b-uses-de", {"customer_name": "b", "country": "DE"})
+        await q.insert("Order", "b-order", {"lines": [{"item": "X"}]})
+    async with env.q(B) as q:
+        assert [d.name for d in await q.referrers_of("Country", "DE", direct)] == ["b-uses-de"]
+        assert [d.name for d in await q.referrers_of("Item", "X", rows)] == ["b-order"]  # pas « a-order »
+        assert await q.referrers_of("Country", "FR", direct) == []
+
+
+async def scenario_connections(env: Env):
+    """Seul A cite « FR » et « X » : B n'en compte aucune connexion, et ce qu'il compte est à lui (dans son périmètre)."""
+    direct, rows = [("Customer", "country", None)], [("Order", "item", "lines")]
+    scopes = {"Customer": ALL, "Order": ALL}
+    async with env.q(B) as q:
+        assert await q.connections("Country", "FR", direct, scopes) == []
+        assert await q.connections("Item", "X", rows, scopes) == []  # A a une ligne qui cite X : invisible pour B
+        await q.insert("Customer", "b-uses-de", {"customer_name": "b", "country": "DE"})
+        await q.insert("Order", "b-order", {"lines": [{"item": "X"}, {"item": "X"}]})
+    async with env.q(B) as q:
+        assert await q.connections("Country", "DE", direct, scopes) == [("Customer", "country", None, 1)]
+        assert await q.connections("Item", "X", rows, scopes) == [("Order", "item", "lines", 1)]  # un document, pas deux lignes, et pas « a-order »
+        assert await q.connections("Country", "FR", direct, scopes) == []
+
+
+async def scenario_relink(env: Env):
+    async with env.q(B) as q:
+        with pytest.raises(NotFound):  # n'existe que chez A
+            await q.relink("Customer", "only-a", {"customer_name": "pwned"})
+    async with env.q(B) as q:
+        doc = await q.relink("Customer", "shared", {"customer_name": "relinked"})
+        assert (doc.data["customer_name"], doc.version) == ("relinked", 2)
+
+
 async def scenario_add_version(env: Env):
     """Une entrée écrite par B s'ajoute à l'historique de B seulement, même pour un document de même nom que chez A."""
     async with env.q(B) as q:
@@ -511,6 +605,12 @@ SCENARIOS = {
     "existing_names": scenario_existing_names,
     "lock_for_delete": scenario_lock_for_delete,
     "references_to": scenario_references_to,
+    "connections": scenario_connections,
+    "referrers_of": scenario_referrers_of,
+    "relink": scenario_relink,
+    "rename": scenario_rename,
+    "sync_unique": scenario_sync_unique,
+    "drop_unique": scenario_drop_unique,
     "next_number": scenario_next_number,
     "get": scenario_get,
     "list": scenario_list,

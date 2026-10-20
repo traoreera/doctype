@@ -43,6 +43,14 @@ DRAFT, SUBMITTED, CANCELLED = 0, 1, 2
 STATUS_WORDS = {DRAFT: "un brouillon", SUBMITTED: "soumis", CANCELLED: "annulé"}
 
 
+class UniqueViolation(Exception):
+    """Une valeur `unique` est déjà portée par un autre document : `field` dit lequel de ses champs."""
+
+    def __init__(self, field: str) -> None:
+        super().__init__(field)
+        self.field = field
+
+
 def _typed(ftype: str, value: Any) -> Any:
     """Un filtre Decimal arrive en chaîne canonique (la forme stockée) mais se compare en NUMERIC : il faut un `Decimal` à lier."""
     if ftype not in DECIMAL_TYPES or value is None:
@@ -100,6 +108,7 @@ class Query:
         self._comments = tables.comments
         self._assignments = tables.assignments
         self._attachments = tables.attachments
+        self._uniques = tables.uniques
 
     # ── Lecture ───────────────────────────────────────────────
     async def get(self, doctype: str, name: str, *, scope: Scope, lock: bool = False) -> StoredDoc | None:
@@ -240,11 +249,12 @@ class Query:
         }
 
     async def update(
-        self, doctype: str, name: str, data: dict[str, Any], expected_version: int, *, scope: Scope
+        self, doctype: str, name: str, data: dict[str, Any], expected_version: int, *, scope: Scope, docstatus: int = DRAFT
     ) -> StoredDoc:
         """Remplace `data` si `version` et `scope` correspondent (D15). `UPDATE` conditionnel, pas de contrôle en Python.
 
         `scope` est le périmètre d'ÉCRITURE sur la ligne actuelle ; la valeur écrite est vérifiée par l'appelant.
+        `docstatus` : l'état dans lequel le document doit être (un brouillon par défaut ; `SUBMITTED` pour les champs `allow_on_submit` d'un document soumis).
         """
         stmt = (
             update(self._t)
@@ -253,7 +263,7 @@ class Query:
                     self._t.c.doctype == doctype,
                     self._t.c.name == name,
                     self._t.c.version == expected_version,
-                    self._t.c.docstatus == DRAFT,  # un document soumis ou annulé est figé : aucune course ne l'écrit
+                    self._t.c.docstatus == docstatus,  # un document soumis ou annulé est figé : aucune course ne l'écrit
                     scope=scope,
                 )
             )
@@ -261,7 +271,7 @@ class Query:
         )
         result = await self._session.execute(stmt)
         if result.rowcount == 0:
-            await self._explain_miss(doctype, name, expected_version, locked=True)
+            await self._explain_miss(doctype, name, expected_version, locked=True, expected_status=docstatus)
         return await self._reload(doctype, name)
 
     async def transition(
@@ -340,34 +350,130 @@ class Query:
         await self._session.execute(stmt.with_for_update())
 
     async def references_to(
-        self, target: str, name: str, referrers: Sequence[tuple[str, str, str | None]]
-    ) -> list[tuple[str, str, str | None]]:
-        """Les `(doctype, champ, table)` parmi `referrers` dont au moins un document pointe vers `target`/`name`.
+        self, target: str, name: str, referrers: Sequence[tuple[Any, ...]]
+    ) -> list[tuple[Any, ...]]:
+        """Les références parmi `referrers` dont au moins un document pointe vers `target`/`name`.
 
-        `table` est le champ Table dont les LIGNES portent le Link (`None` : le Link est dans le document lui-même).
+        Une référence est `(doctype, champ, table)` ou, pour un champ DynamicLink, `(doctype, champ, table, champ_type)` : le champ_type dit
+        DANS quel DocType chercher, il doit valoir `target`. `table` est le champ Table dont les LIGNES portent le Link (`None` : le Link est dans le
+        document lui-même). La réponse reprend les références telles qu'elles ont été données.
         VOLONTAIREMENT sans périmètre de permission : une référence que l'utilisateur ne peut pas lire empêche quand
         même la suppression, sinon il laisserait un lien orphelin. Le tenant, lui, reste imposé par `_scope`.
         """
         used = []
-        for doctype, fieldname, table in referrers:
-            cond = self._points_to(fieldname, name, table)
+        for ref in referrers:
+            doctype, fieldname, table, *rest = ref
+            cond = self._points_to(fieldname, name, table, rest[0] if rest else None, target)
             conds = [self._t.c.doctype == doctype, cond]
             if doctype == target:
                 conds.append(self._t.c.name != name)  # un document qui se cite lui-même ne se bloque pas
             stmt = select(literal(1)).where(self._scope(*conds)).limit(1)
             if (await self._session.execute(stmt)).first() is not None:
-                used.append((doctype, fieldname, table))
+                used.append(ref)
         return used
 
-    def _points_to(self, fieldname: str, name: str, table: str | None) -> Any:
-        """Le document (ou une ligne de sa table `table`) a `fieldname == name`. Opérateurs JSON propres à chaque base."""
+    async def connections(
+        self, target: str, name: str, referrers: Sequence[tuple[Any, ...]], scopes: Mapping[str, Scope]
+    ) -> list[tuple[Any, ...]]:
+        """Pour chaque référence de `referrers` (même forme que `references_to`) : combien de documents LISIBLES par l'appelant citent `target`/`name`.
+
+        Contrairement à `references_to` (qui protège l'intégrité et ne regarde donc aucun périmètre), c'est une réponse faite à un utilisateur :
+        chaque DocType est compté dans SON périmètre de lecture (`scopes[doctype]`), un document hors de portée n'existe pas. Rend
+        `(doctype, champ, table, compte)` pour les seules références dont le compte n'est pas nul.
+        """
+        found = []
+        for ref in referrers:
+            doctype, fieldname, table, *rest = ref
+            conds = [self._t.c.doctype == doctype, self._points_to(fieldname, name, table, rest[0] if rest else None, target)]
+            if doctype == target:
+                conds.append(self._t.c.name != name)
+            stmt = select(func.count()).select_from(self._t).where(self._scope(*conds, scope=scopes[doctype]))
+            if count := (await self._session.execute(stmt)).scalar_one():
+                found.append((doctype, fieldname, table, count))
+        return found
+
+    def _points_to(self, fieldname: str, name: str, table: str | None, type_field: str | None = None, target: str | None = None) -> Any:
+        """Le document (ou une ligne de sa table `table`) a `fieldname == name` ; pour un DynamicLink (`type_field`), son champ de type vaut aussi `target`. Opérateurs JSON propres à chaque base."""
         if table is None:
-            return self._t.c.data[fieldname].as_string() == name
+            cond = self._t.c.data[fieldname].as_string() == name
+            return cond if type_field is None else and_(cond, self._t.c.data[type_field].as_string() == target)
         if self._session.get_bind().dialect.name == "postgresql":
             # Contenance JSONB : `data -> 'items' @> '[{"item": "X"}]'`. Les noms de champs viennent d'une définition validée.
-            return cast(self._t.c.data[table].as_json(), JSONB).contains([{fieldname: name}])
+            wanted = {fieldname: name, **({type_field: target} if type_field else {})}
+            return cast(self._t.c.data[table].as_json(), JSONB).contains([wanted])
         rows = func.json_each(self._t.c.data, f"$.{table}").table_valued("value", joins_implicitly=True)
-        return exists(select(literal(1)).select_from(rows).where(func.json_extract(rows.c.value, f"$.{fieldname}") == name))
+        match = [func.json_extract(rows.c.value, f"$.{fieldname}") == name]
+        if type_field:
+            match.append(func.json_extract(rows.c.value, f"$.{type_field}") == target)
+        return exists(select(literal(1)).select_from(rows).where(and_(*match)))
+
+    # ── Unicité (`unique: true`) ──────────────────────────────
+    async def sync_unique(self, doctype: str, name: str, wanted: Mapping[str, str]) -> None:
+        """Fait en sorte que les valeurs `unique` de ce document soient EXACTEMENT `wanted` (`{champ: valeur}`) : retire ce qui a changé, réserve le nouveau.
+
+        La clé primaire de `xdt_unique` est la garantie : si une autre transaction tient la même valeur, l'insertion échoue (`UniqueViolation`), sans course possible
+        entre « lire » et « écrire ». À appeler DANS la transaction du document : tout se défait avec lui.
+        """
+        t = self._uniques
+        held = {(r["fieldname"], r["value"]) for r in (await self._session.execute(select(t.c.fieldname, t.c.value).where(self._cscope(t, t.c.doctype == doctype, t.c.docname == name)))).mappings().all()}
+        want = set(wanted.items())
+        for field, value in sorted(held - want):
+            await self._session.execute(delete(t).where(self._cscope(t, t.c.doctype == doctype, t.c.fieldname == field, t.c.value == value, t.c.docname == name)))
+        for field, value in sorted(want - held):
+            try:
+                await self._session.execute(insert(t).values(tenant_id=self._tenant, doctype=doctype, fieldname=field, value=value, docname=name))
+            except IntegrityError:
+                raise UniqueViolation(field) from None
+
+    async def drop_unique(self, doctype: str, name: str) -> None:
+        """Le document disparaît (ou est annulé) : ses valeurs redeviennent libres."""
+        t = self._uniques
+        await self._session.execute(delete(t).where(self._cscope(t, t.c.doctype == doctype, t.c.docname == name)))
+
+    # ── Renommer ──────────────────────────────────────────────
+    async def rename(self, doctype: str, old: str, new: str, *, scope: Scope) -> StoredDoc:
+        """Change le NOM d'un brouillon : le document, son historique, ses commentaires, assignations, pièces jointes et valeurs uniques le suivent.
+
+        Un nom déjà pris est un conflit (`AlreadyExists`). Les documents qui le CITENT se réécrivent à part (`referrers_of`, `relink`).
+        """
+        stmt = (
+            update(self._t)
+            .where(self._scope(self._t.c.doctype == doctype, self._t.c.name == old, self._t.c.docstatus == DRAFT, scope=scope))
+            .values(name=new, modified=datetime.now(UTC), version=self._t.c.version + 1)
+        )
+        try:
+            result = await self._session.execute(stmt)
+        except IntegrityError:
+            raise AlreadyExists(f"{doctype} {new!r} existe déjà") from None
+        if result.rowcount == 0:
+            found = await self.get(doctype, old, scope=Scope.everything("read"))
+            if found is None:
+                raise NotFound("document_not_found", f"{doctype} {old!r} introuvable")
+            raise DocumentLocked(f"{doctype} {old!r} est {STATUS_WORDS[found.docstatus]} : il ne se renomme plus") if found.docstatus != DRAFT else NotFound("document_not_found", f"{doctype} {old!r} introuvable")
+        for table in (self._comments, self._assignments, self._attachments, self._uniques):
+            await self._session.execute(update(table).where(self._cscope(table, table.c.doctype == doctype, table.c.docname == old)).values(docname=new))
+        v = self._versions
+        await self._session.execute(update(v).where(self._vscope(v.c.doctype == doctype, v.c.docname == old)).values(docname=new))
+        return await self._reload(doctype, new)
+
+    async def referrers_of(self, target: str, name: str, referrers: Sequence[tuple[Any, ...]]) -> list[StoredDoc]:
+        """Les documents du tenant qui citent `target`/`name` par l'une des références `referrers` (même forme que `references_to`), SANS périmètre de permission."""
+        found: dict[tuple[str, str], StoredDoc] = {}
+        for doctype, fieldname, table, *rest in referrers:
+            conds = [self._t.c.doctype == doctype, self._points_to(fieldname, name, table, rest[0] if rest else None, target)]
+            if doctype == target:
+                conds.append(self._t.c.name != name)
+            for row in (await self._session.execute(select(self._t).where(self._scope(*conds)))).mappings().all():
+                doc = self._doc(row)
+                found[(doc.doctype, doc.name)] = doc
+        return list(found.values())
+
+    async def relink(self, doctype: str, name: str, data: dict[str, Any]) -> StoredDoc:
+        """Réécrit le contenu d'un document dont un Link vient d'être renommé, QUEL QUE SOIT son état (un document soumis cite lui aussi l'ancien nom). Réservé à `rename`."""
+        stmt = update(self._t).where(self._scope(self._t.c.doctype == doctype, self._t.c.name == name)).values(data=data, modified=datetime.now(UTC), version=self._t.c.version + 1)
+        if (await self._session.execute(stmt)).rowcount == 0:
+            raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+        return await self._reload(doctype, name)
 
     async def add_version(
         self, doctype: str, docname: str, *, version: int, action: str, user: str, doc_owner: str, changes: Mapping[str, Any]

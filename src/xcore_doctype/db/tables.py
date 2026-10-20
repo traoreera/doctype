@@ -35,6 +35,7 @@ FILE_TABLE = "xdt_file"
 COMMENT_TABLE = "xdt_comment"
 ASSIGNMENT_TABLE = "xdt_assignment"
 ATTACHMENT_TABLE = "xdt_attachment"
+UNIQUE_TABLE = "xdt_unique"
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,6 +50,7 @@ class SystemTables:
     comments: Table
     assignments: Table
     attachments: Table
+    uniques: Table
 
 
 def build_system_tables() -> SystemTables:
@@ -202,4 +204,17 @@ def build_system_tables() -> SystemTables:
         Index("ix_xdt_attachment_doc", "tenant_id", "doctype", "docname"),
         Index("ix_xdt_attachment_file", "tenant_id", "file_id"),
     )
-    return SystemTables(md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments)
+    # Unicité (`unique: true`) : une ligne par (organisation, DocType, champ, valeur) qui désigne LE document porteur. La clé primaire EST la garantie : deux écritures
+    # simultanées de la même valeur ne passent pas toutes les deux, quelle que soit la base (pas de contrôle « lire puis écrire »).
+    uniques = Table(
+        UNIQUE_TABLE,
+        md,
+        Column("tenant_id", String(63), nullable=False),
+        Column("doctype", String(140), nullable=False),
+        Column("fieldname", String(63), nullable=False),
+        Column("value", String(500), nullable=False),
+        Column("docname", String(140), nullable=False),
+        PrimaryKeyConstraint("tenant_id", "doctype", "fieldname", "value", name="pk_xdt_unique"),
+        Index("ix_xdt_unique_doc", "tenant_id", "doctype", "docname"),
+    )
+    return SystemTables(md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques)

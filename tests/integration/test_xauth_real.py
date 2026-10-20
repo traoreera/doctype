@@ -132,6 +132,36 @@ async def test_the_directory_is_xauth_members_by_email_and_assignment_is_checked
         assert names["items"] == {adm["user_id"]: {"id": adm["user_id"], "email": XAUTH_ADMIN[0], "name": XAUTH_ADMIN[0]}}
 
 
+async def test_an_assignment_and_a_mention_ring_the_bell_of_the_member_concerned(tmp_path):
+    async with boot_host(tmp_path, xauth=True, inline_plugins=PLUGINS, operator_doctypes=False) as h:
+        adm = await admin(h)
+        tenant, token = adm["tenant_id"], adm["access_token"]
+        rita = await add_member(h, adm, *RITA, "shop:order:read")
+        order = (await h.http("POST", "/doc/Order", token=token, tenant=tenant, json={"data": {"title": "o"}})).json()["name"]
+        bell = lambda who: h.client.get("/app/auth/notifications", headers={"Authorization": f"Bearer {who['access_token']}"})  # noqa: E731
+        assert (await bell(rita)).json() == []
+
+        assert (await h.http("POST", f"/assignments/Order/{order}", token=token, tenant=tenant, json={"assignee": RITA[0], "description": "À relire"})).status_code == 201
+        [note] = (await bell(rita)).json()
+        assert (note["type"], note["is_read"], note["message"]) == ("ASSIGNMENT", False, "À relire")
+        assert note["title"] == f"{XAUTH_ADMIN[0]} vous a assigné Commande {order}" and note["link"] == f"#/app/Order/{order}"
+        assert [n["type"] for n in (await bell(adm)).json()] == []  # celui qui assigne n'est pas prévenu
+
+        # Une mention par e-mail : Rita (qui lit la commande) commente et cite l'administrateur.
+        c = await h.http("POST", f"/comments/Order/{order}", token=rita["access_token"], tenant=tenant, json={"content": f"à voir avec @{XAUTH_ADMIN[0]}"})
+        assert c.status_code == 201
+        [mention] = (await bell(adm)).json()
+        assert mention["type"] == "MENTION" and mention["title"].startswith(f"{RITA[0]} vous a mentionné dans Commande")
+
+        # `xauth.notify` : un identifiant qui n'est pas membre de l'organisation est ignoré en silence, un lien douteux ou un titre vide est refusé.
+        ask = lambda **kw: h.action("xauth.notify", {"tenant_id": tenant, "title": "T", **kw}, token=token, tenant=tenant, plugin="auth")  # noqa: E731
+        assert (await ask(user_ids=[rita["user_id"], "00000000-0000-0000-0000-000000000000"], link="https://exemple.fr/x")).get("sent") == 1
+        for bad in ({"user_ids": [rita["user_id"]], "link": "javascript:alert(1)"}, {"user_ids": []}, {"user_ids": [rita["user_id"]], "title": " "}):
+            assert (await ask(**bad)).get("status") == "error", bad
+        links = [n["link"] for n in (await bell(rita)).json()]
+        assert "https://exemple.fr/x" in links and not any(l and l.startswith("javascript") for l in links)
+
+
 async def test_invitations_go_out_through_the_mail_extension_which_simulates_without_smtp(tmp_path):
     async with boot_host(tmp_path, xauth=True, inline_plugins=PLUGINS, operator_doctypes=False) as h:
         adm = await admin(h)

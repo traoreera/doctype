@@ -1,10 +1,12 @@
 import { ref } from 'vue'
 import { formatDatetime } from './datetime'
 import { formatDecimal } from './decimal'
+import { formatDuration } from './duration'
+import { plainText } from './richtext'
 import type { DocTypeMeta, FieldMeta } from './types'
 
 /** Les nombres et quantités s'alignent à droite : une colonne se lit d'un coup d'œil. */
-export const isNumeric = (f: FieldMeta): boolean => f.fieldtype === 'Number' || f.fieldtype === 'Decimal' || f.fieldtype === 'Currency' || f.fieldtype === 'Rating'
+export const isNumeric = (f: FieldMeta): boolean => ['Number', 'Decimal', 'Currency', 'Rating', 'Int', 'Percent', 'Duration'].includes(f.fieldtype)
 
 /** Le nom d'un document n'a de sens pour un humain que s'il est un numéro de série (`MS-2026-00003`), pas un identifiant aléatoire. */
 export const hasReadableName = (meta: DocTypeMeta | null): boolean => typeof meta?.naming === 'object' && meta.naming !== null
@@ -104,6 +106,11 @@ export function currencySymbol(code: string): string {
 /** « ★★★☆☆ » : une note sur `stars` étoiles. */
 export const starsText = (value: number, stars: number): string => '★'.repeat(Math.max(0, Math.min(value, stars))) + '☆'.repeat(Math.max(0, stars - value))
 
+const firstLine = (value: string): string => {
+  const first = value.split('\n', 1)[0] ?? ''
+  return first.length > 80 || value.includes('\n') ? `${first.slice(0, 80)}…` : first
+}
+
 /** Texte d'une cellule de liste. Les liens sont résolus par l'appelant (`links`), le reste se formate ici. */
 export function formatCell(field: FieldMeta, value: unknown, links?: Record<string, string>): string {
   if (value === null || value === undefined || value === '') return ''
@@ -118,12 +125,29 @@ export function formatCell(field: FieldMeta, value: unknown, links?: Record<stri
     }
     case 'Rating':
       return typeof value === 'number' ? starsText(value, field.stars ?? 5) : String(value)
+    case 'Int':
+      return typeof value === 'number' ? new Intl.NumberFormat('fr-FR', { useGrouping: false }).format(value) : String(value)
+    case 'Percent':
+      return typeof value === 'number' ? `${formatNumber(value)} %` : String(value)
+    case 'Duration':
+      return typeof value === 'number' ? formatDuration(value) : String(value)
+    case 'Time':
+      return typeof value === 'string' ? value.replace(/:00$/, '') : String(value) // 08:00:00 -> 08:00 ; 08:00:30 reste entier
+    case 'Password':
+      return '••••••••'
+    case 'TextEditor': {
+      const text = plainText(value)
+      return text.length > 80 ? `${text.slice(0, 80)}…` : text
+    }
+    case 'JSON': {
+      const compact = typeof value === 'string' ? value : JSON.stringify(value)
+      return compact.length > 80 ? `${compact.slice(0, 80)}…` : compact
+    }
+    case 'Code':
+    case 'LongText':
+      return firstLine(String(value))
     case 'Datetime':
       return typeof value === 'string' ? formatDatetime(value) : String(value)
-    case 'LongText': {
-      const first = String(value).split('\n', 1)[0] ?? ''
-      return first.length > 80 || String(value).includes('\n') ? `${first.slice(0, 80)}…` : first
-    }
     case 'Date':
       return typeof value === 'string' ? formatDate(value) : String(value)
     case 'Boolean':

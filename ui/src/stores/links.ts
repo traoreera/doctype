@@ -96,11 +96,19 @@ export const useLinks = defineStore('links', () => {
     }
   }
 
+  /** Un document qu'on vient de créer : son titre et son contenu sont connus d'emblée (le champ qui le cite l'affiche sans le relire). */
+  function seed(target: string, name: string, title: string | null, data: Record<string, unknown>): void {
+    titles[target] ??= {}
+    docs[target] ??= {}
+    titles[target]![name] = title
+    docs[target]![name] = data
+  }
+
   function reset(): void {
     inflight.clear()
     for (const k of Object.keys(titles)) delete titles[k]
     for (const k of Object.keys(docs)) delete docs[k]
   }
 
-  return { title, field, resolve, reset }
+  return { title, field, resolve, seed, reset }
 })

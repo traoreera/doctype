@@ -1,4 +1,6 @@
 import { canonicalDecimal, normalizeDecimal } from './decimal'
+import { parseDuration } from './duration'
+import { isValidTime, normalizeTime } from './fieldrules'
 import { isDecimalType, FILTER_OPS, type FieldMeta, type FilterValue, type Filters, type FieldType } from './types'
 
 /** Une ligne de la barre de filtres. Un seul filtre par champ : le serveur n'en accepte pas deux sur le même. */
@@ -15,8 +17,11 @@ export function opsFor(type: FieldType): readonly string[] {
 
 /** L'opérateur proposé en premier : « contient » pour un texte, « égal à » ailleurs. */
 export function defaultOp(type: FieldType): string {
-  return type === 'Text' || type === 'LongText' || type === 'Link' ? 'like' : '='
+  return type === 'Text' || type === 'LongText' || type === 'Link' || type === 'Code' ? 'like' : '='
 }
+
+/** Les types dont le filtre porte un NOMBRE (une durée se saisit « 1h30 », elle part en secondes). */
+export const NUMERIC_FILTER: readonly FieldType[] = ['Number', 'Rating', 'Int', 'Percent', 'Duration']
 
 function coerce(field: FieldMeta, op: string, raw: unknown): unknown {
   if (op === 'in') {
@@ -29,7 +34,13 @@ function coerce(field: FieldMeta, op: string, raw: unknown): unknown {
   switch (field.fieldtype) {
     case 'Number':
     case 'Rating':
+    case 'Int':
+    case 'Percent':
       return typeof raw === 'number' ? raw : Number(raw)
+    case 'Duration':
+      return typeof raw === 'number' ? raw : (parseDuration(String(raw ?? '')) ?? Number.NaN) // « 1h30 » ou des secondes : le serveur reçoit des secondes
+    case 'Time':
+      return typeof raw === 'string' ? normalizeTime(raw.trim()) : raw
     case 'Decimal':
     case 'Currency':
       return typeof raw === 'string' ? normalizeDecimal(raw) : raw // le serveur reçoit le texte, jamais un number
@@ -46,11 +57,13 @@ function complete(field: FieldMeta, op: string, value: unknown): boolean {
     const parts = coerce(field, op, value)
     if (!Array.isArray(parts) || !parts.length) return false
     if (isDecimalType(field.fieldtype)) return parts.every((p) => canonicalDecimal(p, field.decimals ?? 0) !== null)
-    if (field.fieldtype === 'Number' || field.fieldtype === 'Rating') return parts.every((p) => Number.isFinite(p))
+    if (NUMERIC_FILTER.includes(field.fieldtype)) return parts.every((p) => Number.isFinite(p))
+    if (field.fieldtype === 'Time') return parts.every((p) => isValidTime(p))
     return true
   }
   if (value === null || value === undefined || value === '') return false
-  if (field.fieldtype === 'Number' || field.fieldtype === 'Rating') return Number.isFinite(coerce(field, op, value) as number)
+  if (NUMERIC_FILTER.includes(field.fieldtype)) return Number.isFinite(coerce(field, op, value) as number)
+  if (field.fieldtype === 'Time') return isValidTime(coerce(field, op, value))
   if (isDecimalType(field.fieldtype)) return canonicalDecimal(coerce(field, op, value), field.decimals ?? 0) !== null
   return true
 }

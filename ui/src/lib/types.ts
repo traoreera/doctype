@@ -17,6 +17,15 @@ export type FieldType =
   | 'Image'
   | 'Attach'
   | 'Table'
+  | 'Int'
+  | 'Percent'
+  | 'Time'
+  | 'Duration'
+  | 'Code'
+  | 'JSON'
+  | 'TextEditor'
+  | 'Password'
+  | 'DynamicLink'
 
 /** Deux types portent un nombre EXACT en chaîne canonique : tout ce qui vaut pour l'un vaut pour l'autre. */
 export const isDecimalType = (t: FieldType): boolean => t === 'Decimal' || t === 'Currency'
@@ -250,6 +259,18 @@ export interface FieldMeta {
   in_list_view: boolean
   /** Montré mais jamais modifiable par l'utilisateur (le serveur refuse une mise à jour qui le change). */
   read_only?: boolean
+  /** Table seulement : une sélection multiple (des étiquettes à saisir et à retirer) au lieu d'une grille. */
+  multiselect?: boolean
+  /** Une valeur ne se retrouve jamais sur deux documents (le serveur refuse le doublon). */
+  unique?: boolean
+  /** Libre tant qu'il est vide, figé dès qu'il a une valeur. */
+  set_only_once?: boolean
+  /** Jamais recopié par « Dupliquer » ni par un amendement. */
+  no_copy?: boolean
+  /** Reste modifiable quand le document est soumis. */
+  allow_on_submit?: boolean
+  /** `lien.champ` : la valeur est LUE du document que le Link désigne (jamais saisie). */
+  fetch_from?: string
   /** Arbres compilés par le serveur : le navigateur ne parse jamais de chaîne. */
   depends_on?: ExprNode
   mandatory_depends_on?: ExprNode
@@ -315,7 +336,9 @@ export interface DocTypeMeta {
   /** Fuseau de l'organisation : « aujourd'hui » (défaut `today` des dates) s'y lit, comme sur le serveur. */
   timezone?: string
   /** `"hash"` : un identifiant aléatoire (sans sens pour un humain) ; `{series}` : un numéro lisible (`FA-2026-00001`). */
-  naming?: 'hash' | { series: string }
+  naming?: 'hash' | 'owner' | 'prompt' | { series: string } | { field: string }
+  /** Le document se renomme (`POST …/rename`) : les documents qui le citent suivent. */
+  allow_rename?: boolean
   /** Par nom de DocType enfant, pour les champs Table de ce DocType. */
   children?: Record<string, ChildMeta>
 }
@@ -347,7 +370,7 @@ export interface ListResult {
 export interface VersionEntry {
   id: number
   version: number
-  action: 'create' | 'update' | 'delete' | 'submit' | 'cancel'
+  action: 'create' | 'update' | 'delete' | 'submit' | 'cancel' | 'rename'
   user: string
   owner: string
   creation: string
@@ -446,6 +469,15 @@ export const FILTER_OPS: Record<FieldType, readonly string[]> = {
   Date: ['=', '!=', '>', '>=', '<', '<=', 'in'],
   Boolean: ['=', '!='],
   Table: [], // un tableau de lignes ne se filtre ni ne se trie
+  Int: ['=', '!=', '>', '>=', '<', '<=', 'in'],
+  Percent: ['=', '!=', '>', '>=', '<', '<=', 'in'],
+  Duration: ['=', '!=', '>', '>=', '<', '<=', 'in'],
+  Time: ['=', '!=', '>', '>=', '<', '<=', 'in'],
+  Code: ['like'],
+  JSON: [],
+  TextEditor: [], // du HTML ne se filtre pas
+  Password: [], // un secret ne se compare jamais
+  DynamicLink: ['=', '!=', 'like', 'in'],
 }
 
 /** Ce que le serveur rend d'un téléversement. */
@@ -516,6 +548,33 @@ export interface Collab {
   can_attach: boolean
   /** Mon identité : ce qui me désigne comme auteur ou assigné. */
   me: string
+}
+
+/** Une action en lot, document par document : `ok`, ou le code et le message du refus (écrit pour l'utilisateur). */
+export interface BulkItem {
+  name: string
+  ok: boolean
+  code?: string
+  message?: string
+  details?: { field?: string; msg?: string }[]
+}
+
+export interface BulkResult {
+  results: BulkItem[]
+  done: number
+  failed: number
+}
+
+/** Les documents d'un type qui en citent un autre : `table` renseigné = par les lignes d'un champ Table (la liste ne s'y filtre pas). */
+export interface Connection {
+  doctype: string
+  label: string
+  field: string
+  field_label: string
+  table: string | null
+  count: number
+  /** DynamicLink : le champ qui dit DANS quel type de document le lien est lu (la liste filtrée pose aussi celui-là). */
+  type_field?: string
 }
 
 /** Une personne de l'organisation : `id` est l'identité (un UUID chez xauth, jamais fait pour être lu), `name` ce qu'on affiche (l'e-mail). */

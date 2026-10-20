@@ -55,6 +55,7 @@ export function buildCommands({ workspaces, summaries, recents }: CommandSources
     out.push(make({ id: `go:${d.name}`, label: d.label, hint: d.single ? t.settings.title : t.palette.list, icon: d.icon ?? 'file', group: 'go', to }, d.name))
     if (d.create) out.push(make({ id: `new:${d.name}`, label: t.homeNew(d.label), icon: 'plus', group: 'new', to: { name: 'new', params: { doctype: d.name } } }, `creer ajouter ${d.name}`))
   }
+  if (summaries.length) out.push(make({ id: 'api-docs', label: t.apiDocs.title, icon: 'code', group: 'go', to: { name: 'api-docs' } }, 'api rest swagger curl documentation developpeur'))
   out.push(make({ id: 'theme-light', label: t.palette.themeLight, icon: 'sun', group: 'action', action: 'theme-light' }, 'theme clair'))
   out.push(make({ id: 'theme-dark', label: t.palette.themeDark, icon: 'moon', group: 'action', action: 'theme-dark' }, 'theme sombre nuit'))
   out.push(make({ id: 'theme-system', label: t.palette.themeSystem, icon: 'desktop', group: 'action', action: 'theme-system' }, 'theme systeme automatique'))

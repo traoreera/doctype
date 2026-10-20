@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import AutoComplete from 'primevue/autocomplete'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import LinkPreview from '@/components/LinkPreview.vue'
+import QuickEntryDialog from '@/components/QuickEntryDialog.vue'
+import { t } from '@/i18n'
+import { quickEntryFields } from '@/lib/form'
 import { useServices } from '@/lib/services'
+import type { DocRecord, DocTypeMeta } from '@/lib/types'
 import { useLinks } from '@/stores/links'
+import { useMeta } from '@/stores/meta'
 
 const props = defineProps<{ modelValue: unknown; target: string; inputId?: string; invalid?: boolean; readonly?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
@@ -14,6 +20,7 @@ interface Option {
 
 const { api } = useServices()
 const links = useLinks()
+const metaStore = useMeta()
 
 const shown = ref<string | Option | null>(null)
 const options = ref<Option[]>([])
@@ -35,6 +42,33 @@ watch(
   { immediate: true },
 )
 
+// ── Créer le document cherché, sans quitter le formulaire (saisie rapide) ─────────────────
+const targetMeta = ref<DocTypeMeta | null>(null)
+const typed = ref('')
+const creating = ref(false)
+const canCreate = computed(() => !!targetMeta.value && targetMeta.value.rights?.create !== undefined && targetMeta.value.rights.create !== 'none' && !targetMeta.value.single && !targetMeta.value.virtual)
+const quick = computed(() => !!targetMeta.value && quickEntryFields(targetMeta.value) !== null)
+const label = computed(() => targetMeta.value?.label ?? props.target)
+
+async function loadTarget(): Promise<void> {
+  if (props.readonly || !props.target || targetMeta.value?.name === props.target) return
+  try {
+    targetMeta.value = await metaStore.get(props.target)
+  } catch {
+    targetMeta.value = null // illisible : on ne propose pas de créer
+  }
+}
+// La définition de la cible est déjà lue pour afficher les titres des liens : la relire ici ne coûte rien (cache).
+watch(() => props.target, () => { targetMeta.value = null; void loadTarget() }, { immediate: true })
+/** Ce que l'utilisateur a tapé et pas encore choisi : il devient le titre (ou le nom) du document qu'il crée. Retenu à la frappe (le champ, lui, se vide quand il perd le focus). */
+const draft = computed(() => typed.value)
+
+function created(rec: DocRecord): void {
+  const title = targetMeta.value?.title_field ? rec.data[targetMeta.value.title_field] : undefined
+  links.seed(props.target, rec.name, typeof title === 'string' ? title : null, rec.data)
+  emit('update:modelValue', rec.name)
+}
+
 async function complete(e: { query: string }): Promise<void> {
   try {
     const found = await api.search(props.target, e.query.trim(), 10)
@@ -45,20 +79,24 @@ async function complete(e: { query: string }): Promise<void> {
 }
 
 function select(e: { value: Option }): void {
+  typed.value = ''
   emit('update:modelValue', e.value.name)
 }
 
 function onInput(v: unknown): void {
   shown.value = v as string | Option | null
+  if (typeof v === 'string' && v.trim()) typed.value = v.trim()
   // Champ vidé à la main : la valeur est effacée. Un texte libre n'est jamais envoyé (forceSelection).
   if (v === '' || v === null) emit('update:modelValue', null)
 }
 </script>
 
 <template>
-  <RouterLink v-if="readonly && asName(modelValue)" class="value cell-link" :to="{ name: 'form', params: { doctype: target, name: asName(modelValue) } }" data-testid="link-open">
-    {{ links.title(target, asName(modelValue)) }}
-  </RouterLink>
+  <LinkPreview v-if="readonly && asName(modelValue)" :target="target" :name="asName(modelValue)">
+    <RouterLink class="value cell-link" :to="{ name: 'form', params: { doctype: target, name: asName(modelValue) } }" data-testid="link-open">
+      {{ links.title(target, asName(modelValue)) }}
+    </RouterLink>
+  </LinkPreview>
   <span v-else-if="readonly" class="value" />
   <div v-else class="link-field">
   <AutoComplete
@@ -78,10 +116,25 @@ function onInput(v: unknown): void {
       <span>{{ option.label }}</span>
       <small v-if="option.label !== option.name" class="desk-muted" style="margin-left: 0.5rem">{{ option.name }}</small>
     </template>
+    <template #empty><span class="desk-muted" style="display: block; padding: 0.5rem 0.75rem">{{ t.linkField.none }}</span></template>
   </AutoComplete>
-  <!-- Ouvrir la fiche du document lié (comme la flèche d'un champ lien de Frappe). -->
-  <RouterLink v-if="asName(modelValue)" class="link-open" :to="{ name: 'form', params: { doctype: target, name: asName(modelValue) } }" :aria-label="links.title(target, asName(modelValue))" :title="links.title(target, asName(modelValue))" data-testid="link-open">
-    <i class="pi pi-arrow-up-right" />
-  </RouterLink>
+  <!-- Créer le document qu'on ne trouve pas, sans quitter le formulaire (saisie rapide) ; un type qui exige un tableau ou un fichier ouvre sa fiche complète à part. -->
+  <template v-if="canCreate">
+    <button v-if="quick" type="button" class="link-open link-create" :aria-label="t.quickEntry.new(label)" :title="draft ? t.linkField.createNamed(label, draft) : t.quickEntry.new(label)" data-testid="link-create" @mousedown.prevent @click="creating = true">
+      <i class="pi pi-plus" />
+    </button>
+    <RouterLink v-else :to="{ name: 'new', params: { doctype: target } }" target="_blank" class="link-open link-create" :aria-label="t.quickEntry.full" :title="t.quickEntry.full" data-testid="link-create-full">
+      <i class="pi pi-plus" />
+    </RouterLink>
+  </template>
+  <!-- Ouvrir la fiche du document lié (comme la flèche d'un champ lien de Frappe), avec un aperçu au survol. -->
+  <LinkPreview v-if="asName(modelValue)" :target="target" :name="asName(modelValue)">
+    <RouterLink class="link-open" :to="{ name: 'form', params: { doctype: target, name: asName(modelValue) } }" :aria-label="links.title(target, asName(modelValue))" :title="links.title(target, asName(modelValue))" data-testid="link-open">
+      <i class="pi pi-arrow-up-right" />
+    </RouterLink>
+  </LinkPreview>
+  <!-- La place de la flèche reste réservée : vider le champ (il perd le focus en cliquant ailleurs) ne doit pas décaler « + » sous le doigt qui clique. -->
+  <span v-else-if="canCreate" class="link-open" aria-hidden="true" style="visibility: hidden" />
+  <QuickEntryDialog v-if="creating" v-model:visible="creating" :doctype="target" :initial="draft" @created="created" />
   </div>
 </template>

@@ -10,12 +10,15 @@ import { describeError } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { datePattern, dateFromIso, isoFromDate } from '@/lib/format'
 import { useServices } from '@/lib/services'
-import type { Person } from '@/lib/types'
+import type { BulkResult, Person } from '@/lib/types'
 import { useUsers } from '@/stores/users'
 
-/** Assigner un document : à qui (parmi les personnes que l'organisation a déjà fait apparaître, ou n'importe quel identifiant), quoi faire, pour quand. */
-const props = defineProps<{ visible: boolean; doctype: string; name: string; me: string }>()
-const emit = defineEmits<{ 'update:visible': [value: boolean]; saved: [] }>()
+/**
+ * Assigner un document : à qui (parmi les personnes que l'organisation a déjà fait apparaître, ou n'importe quel identifiant), quoi faire, pour quand.
+ * Avec `names` (la liste), c'est plusieurs documents d'un coup : chacun est jugé seul, `saved` porte le compte rendu.
+ */
+const props = defineProps<{ visible: boolean; doctype: string; name?: string; names?: readonly string[]; me?: string }>()
+const emit = defineEmits<{ 'update:visible': [value: boolean]; saved: [result?: BulkResult] }>()
 const { api } = useServices()
 const users = useUsers()
 
@@ -56,9 +59,16 @@ async function submit(): Promise<void> {
   saving.value = true
   problem.value = null
   try {
-    await api.assign(props.doctype, props.name, { assignee: who, description: description.value.trim() || null, due_date: due.value })
-    emit('update:visible', false)
-    emit('saved')
+    const body = { assignee: who, description: description.value.trim() || null, due_date: due.value }
+    if (props.names) {
+      const result = await api.assignMany(props.doctype, props.names, body)
+      emit('update:visible', false)
+      emit('saved', result)
+    } else {
+      await api.assign(props.doctype, props.name ?? '', body)
+      emit('update:visible', false)
+      emit('saved')
+    }
   } catch (e) {
     problem.value = describeError(e) // « déjà assigné », échéance invalide… : le message du serveur est écrit pour l'utilisateur
   } finally {

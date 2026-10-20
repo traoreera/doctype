@@ -7,6 +7,8 @@
  * négatif reste un nombre). C'est une défense en profondeur, et elle est testée.
  */
 import { statusLabel } from './docstatus'
+import { clockDuration } from './duration'
+import { plainText } from './richtext'
 import type { DocRecord, FieldMeta } from './types'
 
 const SEP = ';'
@@ -44,7 +46,18 @@ export function exportValue(field: FieldMeta | undefined, column: string, rec: D
     case 'Currency':
       return { text: String(v).replace('.', ','), textual: false }
     case 'Rating':
+    case 'Int':
       return { text: String(v), textual: false }
+    case 'Percent':
+      return { text: String(v).replace('.', ','), textual: false }
+    case 'Duration':
+      return { text: typeof v === 'number' ? clockDuration(v) : String(v), textual: true } // « 1:30:00 » : un tableur le lit comme une durée
+    case 'Password':
+      return { text: '', textual: true } // jamais dans un export
+    case 'TextEditor':
+      return { text: plainText(v), textual: true }
+    case 'JSON':
+      return { text: typeof v === 'string' ? v : JSON.stringify(v), textual: true }
     case 'Boolean':
       return { text: v ? 'Oui' : 'Non', textual: true }
     default:
@@ -53,7 +66,7 @@ export function exportValue(field: FieldMeta | undefined, column: string, rec: D
 }
 
 /** Une colonne est du texte (à neutraliser) sauf si c'est un Number ou un Decimal. Les colonnes système sont du texte. */
-export const isTextualColumn = (field: FieldMeta | undefined): boolean => !(field && ['Number', 'Decimal', 'Currency', 'Rating'].includes(field.fieldtype))
+export const isTextualColumn = (field: FieldMeta | undefined): boolean => !(field && ['Number', 'Decimal', 'Currency', 'Rating', 'Int', 'Percent'].includes(field.fieldtype))
 
 /** Un nom de fichier sûr : « Stock Entry » -> « stock-entry-2026-10-17.csv ». */
 export const csvFilename = (doctype: string, today: string): string => `${doctype.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'export'}-${today}.csv`
