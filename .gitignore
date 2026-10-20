@@ -14,3 +14,5 @@ main.py
 node_modules/
 conf/
 app/
+# Fichiers téléversés pendant le développement (jamais du code)
+data/
