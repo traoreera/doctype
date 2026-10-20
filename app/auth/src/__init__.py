@@ -1,1 +1,0 @@
-# xauth plugin source package

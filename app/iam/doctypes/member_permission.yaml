@@ -1,7 +1,0 @@
-# Une ligne de la table « Permissions directes » d'un membre.
-schema_version: 1
-name: Member Permission
-label: Permission du membre
-istable: true
-fields:
-  - { fieldname: permission, label: Permission, fieldtype: Link, options: Permission, required: true, in_list_view: true }

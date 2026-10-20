@@ -1,9 +1,0 @@
-schema_version: 1
-name: Warehouse
-label: Entrepôt
-module: stock
-icon: warehouse
-title_field: warehouse_name
-fields:
-  - { fieldname: warehouse_name, label: Nom, fieldtype: Text, required: true, in_list_view: true }
-  - { fieldname: address, label: Adresse, fieldtype: Text }

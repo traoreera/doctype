@@ -1,8 +1,0 @@
-name: iam
-version: 0.1.0
-author: traoreera
-description: "Accès et profils : les permissions, rôles et membres d'xauth comme DocTypes (source virtuelle), et le profil de chaque utilisateur. xauth reste l'unique source des comptes et des droits."
-framework_version: ">=2.9"
-execution_mode: trusted
-entry_point: src/main.py
-requires: [xcore-doctype, auth]
