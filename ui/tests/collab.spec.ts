@@ -151,6 +151,34 @@ describe('commentaires', () => {
     await w.find('[data-testid="feed-filter-comments"]').trigger('click')
     expect(w.findAll('[data-kind]').map((i) => i.attributes('data-kind'))).toEqual(['comment'])
   })
+
+  it('les filtres du fil : navigation au clavier (flèches) et tabindex', async () => {
+    const { w } = setup(collab())
+    await flushPromises()
+    const allBtn = w.find('[data-testid="feed-filter-all"]')
+    const commentsBtn = w.find('[data-testid="feed-filter-comments"]')
+    const changesBtn = w.find('[data-testid="feed-filter-changes"]')
+
+    expect(allBtn.attributes('aria-checked')).toBe('true')
+    expect(allBtn.attributes('tabindex')).toBe('0')
+    expect(commentsBtn.attributes('aria-checked')).toBe('false')
+    expect(commentsBtn.attributes('tabindex')).toBe('-1')
+
+    await allBtn.trigger('keydown', { key: 'ArrowRight' })
+    await flushPromises()
+    expect(allBtn.attributes('aria-checked')).toBe('false')
+    expect(allBtn.attributes('tabindex')).toBe('-1')
+    expect(commentsBtn.attributes('aria-checked')).toBe('true')
+    expect(commentsBtn.attributes('tabindex')).toBe('0')
+
+    await commentsBtn.trigger('keydown', { key: 'ArrowLeft' })
+    await flushPromises()
+    expect(allBtn.attributes('aria-checked')).toBe('true')
+
+    await allBtn.trigger('keydown', { key: 'ArrowUp' })
+    await flushPromises()
+    expect(changesBtn.attributes('aria-checked')).toBe('true')
+  })
 })
 
 describe('assignations', () => {
