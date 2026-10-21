@@ -24,7 +24,7 @@ describe('configuration', () => {
     const t = transport({ status: 200, json: { api_base: '/app/xcore-doctype/', login_url: '/app/auth/login' } })
     const cfg = await loadConfig(t, at('/app/xcore-doctype/desk/'))
     expect(t.urls).toEqual(['http://host:8000/app/xcore-doctype/desk/config.json'])
-    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login' })
+    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login', extensions: [] })
   })
 
   it('sans login_url : jeton collé', async () => {

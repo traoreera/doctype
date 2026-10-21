@@ -9,7 +9,7 @@ import { t } from '@/i18n'
 import type { Recent } from './recents'
 import type { DocTypeSummary, GlobalSearchItem, Workspace } from './types'
 
-export type CommandGroup = 'recent' | 'space' | 'go' | 'new' | 'doc' | 'action'
+export type CommandGroup = 'recent' | 'space' | 'go' | 'new' | 'doc' | 'action' | 'extension'
 export type ActionName = 'theme-light' | 'theme-dark' | 'theme-system' | 'logout'
 
 export interface Command {
@@ -21,6 +21,8 @@ export interface Command {
   group: CommandGroup
   to?: RouteLocationRaw
   action?: ActionName
+  /** Une commande d'extension (D28) : `run` est lancé par la palette, au nom de l'extension. */
+  extension?: { name: string; run: () => unknown }
   /** Texte normalisé sur lequel on cherche (libellé + précision + mots-clés). */
   search: string
 }
@@ -34,9 +36,11 @@ export interface CommandSources {
   workspaces: readonly Workspace[]
   summaries: readonly DocTypeSummary[]
   recents: readonly Recent[]
+  /** Les commandes que les extensions ajoutent (D28). */
+  extensions?: readonly { extension: string; label: string; icon?: string; keywords?: string; run: () => unknown }[]
 }
 
-export function buildCommands({ workspaces, summaries, recents }: CommandSources): Command[] {
+export function buildCommands({ workspaces, summaries, recents, extensions = [] }: CommandSources): Command[] {
   const out: Command[] = []
   const labelOf = (doctype: string) => summaries.find((d) => d.name === doctype)?.label ?? doctype
   for (const r of recents) {
@@ -56,6 +60,9 @@ export function buildCommands({ workspaces, summaries, recents }: CommandSources
     if (d.create) out.push(make({ id: `new:${d.name}`, label: t.homeNew(d.label), icon: 'plus', group: 'new', to: { name: 'new', params: { doctype: d.name } } }, `creer ajouter ${d.name}`))
   }
   if (summaries.length) out.push(make({ id: 'api-docs', label: t.apiDocs.title, icon: 'code', group: 'go', to: { name: 'api-docs' } }, 'api rest swagger curl documentation developpeur'))
+  extensions.forEach((c, i) => {
+    out.push(make({ id: `ext:${c.extension}:${i}`, label: c.label, hint: t.extensions.palette, icon: c.icon ?? 'bolt', group: 'extension', extension: { name: c.extension, run: c.run } }, `${c.keywords ?? ''} ${c.extension}`))
+  })
   out.push(make({ id: 'theme-light', label: t.palette.themeLight, icon: 'sun', group: 'action', action: 'theme-light' }, 'theme clair'))
   out.push(make({ id: 'theme-dark', label: t.palette.themeDark, icon: 'moon', group: 'action', action: 'theme-dark' }, 'theme sombre nuit'))
   out.push(make({ id: 'theme-system', label: t.palette.themeSystem, icon: 'desktop', group: 'action', action: 'theme-system' }, 'theme systeme automatique'))
@@ -82,7 +89,7 @@ export function documentCommands(items: readonly GlobalSearchItem[]): Command[] 
 
 /** Les groupes qui passent devant, quand on ne tape rien. */
 const EMPTY_ORDER: CommandGroup[] = ['recent', 'space', 'go']
-const WEIGHT: Record<CommandGroup, number> = { recent: -0.5, space: 0, doc: 0.1, go: 0.25, new: 0.5, action: 1 }
+const WEIGHT: Record<CommandGroup, number> = { recent: -0.5, space: 0, doc: 0.1, go: 0.25, extension: 0.4, new: 0.5, action: 1 }
 
 /**
  * Sans saisie : les derniers documents, les espaces, puis les types. Avec saisie : chaque mot tapé doit figurer dans la commande ; un mot

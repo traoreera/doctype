@@ -149,6 +149,15 @@ export interface LinksCardBlock {
   cols?: number
 }
 
+/** Un bloc dessiné par une extension du Desk (D28) : `component` = `<plugin>.<nom>`, `props` lui est transmis tel quel. */
+export interface ExtensionBlock {
+  type: 'extension'
+  component: string
+  label?: string
+  props?: Record<string, unknown>
+  cols?: number
+}
+
 export type WorkspaceBlock =
   | WorkspaceHeader
   | WorkspaceParagraph
@@ -158,6 +167,7 @@ export type WorkspaceBlock =
   | ChartBlock
   | QuickListBlock
   | LinksCardBlock
+  | ExtensionBlock
 
 /** Ce qu'un tableau de bord de type accepte. */
 export type DashboardBlock = WorkspaceHeader | NumberCardBlock | ChartBlock

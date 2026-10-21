@@ -84,7 +84,9 @@ from .workspaces import (
     WorkspaceDef,
     module_label,
     parse_workspace,
+    with_contributions,
     ChartBlock,
+    ExtensionBlock,
     HeaderBlock,
     LinksCardBlock,
     NumberCardBlock,
@@ -216,6 +218,9 @@ class DocumentService:
             if isinstance(b, QuickListBlock):
                 out.update(title_field=d.title_field, submittable=d.submittable, doctype_label=d.label or d.name)
             return out
+        if isinstance(b, ExtensionBlock):
+            # Dessiné par une extension du Desk (D28) : ce qu'il lit passe par l'API, qui juge. Rien à filtrer ici.
+            return b.model_dump(mode="json", exclude_none=True)
         if isinstance(b, LinksCardBlock):
             links = []
             for link in b.links:
@@ -272,7 +277,8 @@ class DocumentService:
         blocks.append({"type": "quick_list", "label": f"Derniers : {first.label or first.name}", "doctype": first.name, "limit": 5, "cols": 12})
         blocks.append({"type": "header", "text": "Accès"})
         blocks += [{"type": "shortcut", "doctype": d.name, "new": True} for d in types]
-        return parse_workspace({"schema_version": 1, "name": module, "label": module_label(module), "blocks": blocks})
+        made = parse_workspace({"schema_version": 1, "name": module, "label": module_label(module), "blocks": blocks})
+        return with_contributions(made, self._registry.contributions_to(module))  # D27 : les blocs d'autres plugins suivent
 
     def _base_workspace(self, ctx: RequestContext, name: str) -> WorkspaceDef | None:
         """L'espace tel que le plugin le décrit (son YAML), ou l'espace fabriqué du module : ce qui reste quand on retire tout habillage."""
@@ -365,6 +371,9 @@ class DocumentService:
         meta["list_columns"] = d.list_columns()
         meta["views"] = d.effective_views()
         meta["rights"] = rights
+        if extended := self._registry.extensions_of(d.name):
+            # Qui a ajouté quels champs (D26) : la fiche et la documentation d'API le disent. Les hooks restent privés, comme ceux du DocType.
+            meta["extended_by"] = [{"plugin": x["plugin"], "label": x["label"] or module_label(x["plugin"]), "fields": x["fields"]} for x in extended]
         if compiled.children:
             # La grille d'un champ Table a besoin des champs de ses lignes : ils voyagent avec le parent, jamais seuls.
             meta["children"] = {

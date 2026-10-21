@@ -18,6 +18,7 @@ from xcore.kernel.tenancy.services import TenantAwareDB
 from xcore.sdk import AutoDispatchMixin, TrustedBase, action, error, ok
 
 from .api.desk import DeskSettings, build_desk_router
+from .desk_extensions import DeskExtensions
 from .api.collab import build_collab_router
 from .api.files import build_files_router, build_preferences_router, build_public_files_router
 from .api.http import build_router
@@ -167,8 +168,9 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root.include_router(build_collab_router(collab, self._settings))  # commentaires, assignations, pièces jointes
         root.include_router(build_preferences_router(Preferences(self.documents, file_service), self._settings))  # nom, logo, couleur de l'organisation
         root.include_router(build_public_files_router(file_service))  # servir : la signature de l'URL fait foi (pas de jeton dans une balise <img>)
+        desk_extensions = DeskExtensions(desk.extensions, self.logger)  # D28 : ce que les plugins livrent au Desk, filtré par l'opérateur
         if desk.enabled:
-            root.include_router(build_desk_router(desk))
+            root.include_router(build_desk_router(desk, desk_extensions))
         self._router = root
         # Les plugins qui dépendent de nous (`requires: [xcore-doctype]`) y enregistrent leurs hooks de confiance...
         self.ctx.services[HOOKS_SERVICE] = hook_registry
@@ -179,7 +181,9 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         self.grant_catalog = catalog
         self.ctx.services[GRANTS_SERVICE] = catalog
         # ...et y apportent leurs propres DocTypes (module == leur nom, voir registry.DocTypeChannel).
-        self.ctx.services[REGISTRY_SERVICE] = DocTypeChannel(registry, self.logger, unique_check=self.documents.ensure_unique_clean)
+        self.ctx.services[REGISTRY_SERVICE] = DocTypeChannel(
+            registry, self.logger, unique_check=self.documents.ensure_unique_clean, desk=desk_extensions
+        )
         # ...et lisent les documents d'un tenant en contexte système, pour vérifier ou rapporter (lecture seule).
         self.ctx.services[DOCUMENTS_SERVICE] = SystemReaders(self.documents)
         # Un champ `unique` posé sur un type qui a déjà des documents refuse le chargement si des valeurs sont déjà en double (D25).

@@ -4,6 +4,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
 import { piIcon } from '@/lib/icons'
+import { useExtensions } from '@/extensions/host'
 import { buildCommands, documentCommands, rank, step, type ActionName, type Command } from '@/lib/commands'
 import { useServices } from '@/lib/services'
 import { useMeta } from '@/stores/meta'
@@ -21,12 +22,14 @@ const recents = useRecents()
 const workspaces = useWorkspaces()
 const theme = useTheme()
 const session = useSession()
+const extensions = useExtensions()
 
 const query = ref('')
 const active = ref(0)
 const input = ref<HTMLInputElement | null>(null)
 
-const commands = computed(() => buildCommands({ workspaces: workspaces.items ?? [], summaries: meta.summaries ?? [], recents: recents.items }))
+const extensionCommands = computed(() => extensions.commandItems.map((c) => ({ ...c, run: () => extensions.run(c.extension, (tools) => c.run(tools)) })))
+const commands = computed(() => buildCommands({ workspaces: workspaces.items ?? [], summaries: meta.summaries ?? [], recents: recents.items, extensions: extensionCommands.value }))
 
 // La recherche GLOBALE (documents, tous types confondus) s'ajoute aux commandes dès deux caractères saisis. Débouncée, et gardée
 // contre l'ordre d'arrivée : une réponse tardive ne doit pas écraser celle d'une saisie plus récente.
@@ -88,6 +91,7 @@ function run(c: Command | undefined): void {
   if (!c) return
   open.value = false
   if (c.action) ACTIONS[c.action]()
+  else if (c.extension) void c.extension.run()
   else if (c.to) void router.push(c.to)
 }
 

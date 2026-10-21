@@ -250,3 +250,71 @@ class TestFiltering:
         svc = service(registry(), db, tables)
         got = {m["name"]: m["icon"] for m in svc.list_meta(make_ctx("acme", "a", permissions=ALL))}
         assert got["Order"] == "receipt" and got["Product"] is None
+
+
+class TestContributions:
+    """D27 : un plugin ajoute des blocs à l'espace d'un AUTRE module (`contributes_to`), filtrés par les mêmes droits."""
+
+    def write(self, tmp_path, **files):
+        return TestLoading.write(self, tmp_path, **files)
+
+    def contribution(self, target="shop", **over):
+        return {"schema_version": 1, "contributes_to": target,
+                "blocks": [{"type": "header", "text": "CRM"}, {"type": "shortcut", "doctype": "Lead", "new": True}], **over}
+
+    def reg(self, *, with_workspace=True):
+        return registry(with_workspace=with_workspace, extra=(dt("Lead", module="crm"),))
+
+    def test_blocks_follow_the_target_workspace_and_leave_with_their_plugin(self, tmp_path):
+        reg = self.reg()
+        assert reg.load_workspaces(self.write(tmp_path, shop=self.contribution()), owner="crm") == ["+shop"]
+        (shop,) = reg.workspaces()
+        assert [b.type for b in shop.blocks][-2:] == ["header", "shortcut"]
+        assert shop.blocks[-1].doctype == "Lead"
+        reg.unregister_owner("crm")
+        assert reg.workspaces()[0].blocks[-1].doctype == "Product"
+
+    @pytest.mark.parametrize(
+        "target, owner, why",
+        [("crm", "crm", "le module du plugin lui-même"), ("ghost", "crm", "module inconnu 'ghost'")],
+    )
+    def test_refused_targets(self, tmp_path, target, owner, why):
+        with pytest.raises(InvalidDefinition, match=why):
+            self.reg().load_workspaces(self.write(tmp_path, a=self.contribution(target)), owner=owner)
+
+    def test_blocks_are_checked_at_load_and_once_per_module(self, tmp_path):
+        reg = self.reg()
+        with pytest.raises(InvalidDefinition, match="Ghost"):
+            reg.load_workspaces(self.write(tmp_path / "a", a=self.contribution(blocks=[{"type": "shortcut", "doctype": "Ghost"}])), owner="crm")
+        with pytest.raises(InvalidDefinition, match="contribue déjà"):
+            reg.load_workspaces(self.write(tmp_path / "b", a=self.contribution(), b=self.contribution()), owner="crm")
+        assert reg.contributions_to("shop") == []  # tout ou rien
+
+    def test_a_made_workspace_receives_them_too(self, tmp_path, db, tables):
+        reg = self.reg(with_workspace=False)
+        reg.load_workspaces(self.write(tmp_path, a=self.contribution()), owner="crm")
+        out = spaces(service(reg, db, tables), [*ALL, "crm:lead:read"])
+        shop = next(w for w in out if w["name"] == "shop")
+        assert shop["blocks"][-1] == {"type": "shortcut", "doctype": "Lead", "label": "Lead", "icon": None, "create": False, "single": False}
+
+    def test_what_the_viewer_cannot_read_disappears_with_its_header(self, tmp_path, db, tables):
+        reg = self.reg()
+        reg.load_workspaces(self.write(tmp_path, a=self.contribution()), owner="crm")
+        shop = next(w for w in spaces(service(reg, db, tables), ALL) if w["name"] == "shop")
+        assert not any(b.get("text") == "CRM" or b.get("doctype") == "Lead" for b in shop["blocks"])
+
+    def test_an_extension_block_is_served_to_whoever_sees_the_workspace(self, tmp_path, db, tables):
+        reg = self.reg()
+        block = {"type": "extension", "component": "crm.pipeline", "label": "Pipeline", "props": {"stage": "won"}}
+        reg.load_workspaces(self.write(tmp_path, a=self.contribution(blocks=[block])), owner="crm")
+        shop = next(w for w in spaces(service(reg, db, tables), ALL) if w["name"] == "shop")
+        assert shop["blocks"][-1] == {**block, "cols": 6}
+
+    @pytest.mark.parametrize(
+        "patch",
+        [{"component": "pipeline"}, {"component": "Crm.pipe"}, {"props": {"x": "y" * 3000}}, {"component": "crm.pipe", "onload": "x"}],
+    )
+    def test_extension_blocks_are_validated(self, patch):
+        block = {"type": "extension", "component": "crm.pipeline", **patch}
+        with pytest.raises(InvalidDefinition):
+            parse_workspace(ws(blocks=[block]))

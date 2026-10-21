@@ -26,6 +26,13 @@ export const t = {
     create: 'Créer',
   },
   homeNew: (label: string) => `Nouveau : ${label}`,
+  extensions: {
+    group: 'Extensions',
+    broken: (name: string) => `L'extension « ${name} » a rencontré une erreur : cette partie de la page n'est pas affichée.`,
+    missingBlock: (component: string) => `Bloc indisponible : aucune extension chargée ne fournit « ${component} ».`,
+    failed: (names: string) => `Extension indisponible : ${names}. Le reste du Desk fonctionne.`,
+    palette: 'Extension',
+  },
   other: 'Autres',
 
   status: {
@@ -43,7 +50,7 @@ export const t = {
     themeDark: 'Thème : sombre',
     themeSystem: 'Thème : automatique',
     title: 'Barre de commande',
-    groups: { recent: 'Récents', space: 'Espaces', go: 'Aller à', new: 'Créer', doc: 'Documents', action: 'Actions' } as Record<string, string>,
+    groups: { recent: 'Récents', space: 'Espaces', go: 'Aller à', new: 'Créer', doc: 'Documents', action: 'Actions', extension: 'Extensions' } as Record<string, string>,
   },
   workspace: {
     notFound: 'Cet espace n’existe pas, ou vous n’avez aucun droit dessus.',
@@ -390,6 +397,7 @@ export const t = {
       chart: 'Graphique',
       quick_list: 'Derniers documents',
       card: 'Liens',
+      extension: 'Extension',
     } as Record<string, string>,
     sizes: { 3: '1/4', 4: '1/3', 6: '1/2', 8: '2/3', 12: '1/1' } as Record<number, string>,
     dialog: {

@@ -141,7 +141,7 @@ class TestChannel:
 
     def test_the_channel_exposes_no_way_to_read_or_edit_the_registry(self, reg):
         public = {n for n in dir(DocTypeChannel(reg)) if not n.startswith("_")}
-        assert public == {"load_dir", "load_workspaces", "unregister_owner"}
+        assert public == {"load_dir", "load_workspaces", "load_extensions", "load_desk", "unregister_owner"}
 
 
 class TestLiveRegistry:

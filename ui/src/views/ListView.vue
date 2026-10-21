@@ -18,6 +18,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import BlockEditor from '@/components/BlockEditor.vue'
 import BulkActions from '@/components/BulkActions.vue'
+import { useExtensions } from '@/extensions/host'
 import CellValue from '@/components/CellValue.vue'
 import FileThumb from '@/components/FileThumb.vue'
 import FilterBar from '@/components/FilterBar.vue'
@@ -111,7 +112,9 @@ const numbered = computed(() => hasReadableName(meta.value))
 const canCreate = computed(() => meta.value?.rights.create !== 'none')
 const canDelete = computed(() => meta.value?.rights.delete !== 'none')
 /** On coche des lignes quand une action en lot est possible : modifier, assigner, soumettre, annuler ou supprimer. */
-const selectable = computed(() => !!meta.value && (['write', 'delete', 'submit', 'cancel'] as const).some((a) => meta.value!.rights[a] !== 'none'))
+const extensions = useExtensions()
+// Cocher des lignes sert aux actions groupées : celles du Desk (selon les droits) ET celles des extensions (D28 ; le serveur juge chaque appel).
+const selectable = computed(() => !!meta.value && ((['write', 'delete', 'submit', 'cancel'] as const).some((a) => meta.value!.rights[a] !== 'none') || extensions.hasListActions(props.doctype)))
 
 // Personnaliser le tableau de bord du type : le serveur valide, puis on relit la définition (qui porte le nouveau tableau).
 const dashEditing = ref(false)

@@ -80,3 +80,52 @@ async def test_unloading_the_plugin_removes_its_doctypes_but_not_its_documents(t
         assert (await h.ipc("POST", "/stock/load")).status_code == 200
         got = await h.http("GET", f"/doc/Item/{item['name']}", token=t)
         assert got.status_code == 200 and got.json()["data"]["item_name"] == "Vis"  # le document était resté en base
+
+
+CRM_MAIN = '''
+from pathlib import Path
+from xcore.sdk import TrustedBase, error
+
+HERE = Path(__file__).resolve().parent.parent
+
+
+class Plugin(TrustedBase):
+    async def on_load(self):
+        self.get_service("doctype_hooks").register("crm.tag_item", self.tag_item, owner=self.ctx.name)
+        self.get_service("doctype_registry").load_extensions(self.ctx.name, HERE / "extends")
+
+    async def on_unload(self):
+        self.get_service("doctype_hooks").unregister_owner(self.ctx.name)
+        self.get_service("doctype_registry").unregister_owner(self.ctx.name)
+
+    async def tag_item(self, event):
+        event.data["crm_tag"] = "suivi"
+
+    async def handle(self, action, payload):
+        return error("no actions", "unknown_action")
+'''
+
+
+async def test_a_plugin_extends_another_plugins_doctype_with_a_field_and_a_hook(tmp_path):
+    """D26 : `crm` ajoute un champ et un hook `before_save` à l'article de `stock`, sans toucher au YAML de `stock`."""
+    extension = {"schema_version": 1, "doctype": "Item", "label": "Relation client",
+                 "fields": [{"fieldname": "crm_tag", "fieldtype": "Text", "label": "Suivi"}], "hooks": {"before_save": ["crm.tag_item"]}}
+    manifest = {"name": "crm", "version": "0.1.0", "framework_version": ">=2.9", "execution_mode": "trusted",
+                "entry_point": "src/main.py", "requires": ["xcore-doctype", "stock"]}
+    crm = (CRM_MAIN, {"plugin.yaml": yaml.safe_dump(manifest), "extends/item.yaml": yaml.safe_dump(extension, allow_unicode=True)})
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}, inline_plugins={"crm": crm}) as h:
+        assert await state_of(h, "crm") == "ready"
+        t = h.token(permissions=GRANTS)
+        meta = (await h.http("GET", "/meta/Item", token=t)).json()
+        assert meta["fields"][-1]["fieldname"] == "crm_tag"
+        assert meta["extended_by"] == [{"plugin": "crm", "label": "Relation client", "fields": ["crm_tag"]}]
+        r = await h.http("POST", "/doc/Item", token=t, json={"data": {"item_name": "Vis", "uom": "pcs"}})
+        assert r.status_code == 201, r.text
+        assert r.json()["data"]["crm_tag"] == "suivi"  # le hook de crm a tourné sur un DocType de stock
+
+        assert (await h.ipc("DELETE", "/crm/unload")).status_code == 200
+        meta = (await h.http("GET", "/meta/Item", token=t)).json()
+        assert "crm_tag" not in [f["fieldname"] for f in meta["fields"]] and "extended_by" not in meta
+        r = await h.http("POST", "/doc/Item", token=t, json={"data": {"item_name": "Clou", "uom": "pcs"}})
+        assert r.status_code == 201, r.text  # ni champ ni hook : le DocType de stock redevient lui-même
+        assert "crm_tag" not in r.json()["data"]

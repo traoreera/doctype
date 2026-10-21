@@ -9,6 +9,7 @@ import { computed, ref } from 'vue'
 import AssignDialog from '@/components/collab/AssignDialog.vue'
 import FieldInput from '@/components/FieldInput.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
+import { useExtensions } from '@/extensions/host'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { toPayload } from '@/lib/form'
@@ -27,6 +28,7 @@ const { api } = useServices()
 const notify = useNotify()
 const confirm = useConfirm()
 const menu = ref<InstanceType<typeof Menu> | null>(null)
+const extensions = useExtensions()
 
 const names = computed(() => props.selection.map((r) => r.name))
 const rights = computed(() => props.meta.rights)
@@ -45,7 +47,15 @@ const items = computed<MenuItem[]>(() => {
   if (canWrite.value && !props.meta.virtual) out.push({ label: t.bulk.assign, icon: 'pi pi-user-plus', command: () => (assigning.value = true) })
   if (props.meta.submittable && rights.value.submit !== 'none') out.push({ label: t.form.submit, icon: 'pi pi-send', command: () => confirmRun('submit') })
   if (props.meta.submittable && rights.value.cancel !== 'none') out.push({ label: t.form.cancelDocument, icon: 'pi pi-ban', command: () => confirmRun('cancel') })
-  return out
+  // D28 : les actions des extensions sur les documents cochés (le serveur juge chaque appel qu'elles font).
+  const ctx = { doctype: props.doctype, meta: props.meta, names: names.value }
+  const ext = extensions.listActions(ctx).map<MenuItem>((a) => ({
+    label: a.label,
+    icon: `pi pi-${a.icon ?? 'bolt'}`,
+    command: () => void extensions.run(a.extension, (tools) => a.run({ ...ctx, ...tools, reload: () => emit('done') })),
+  }))
+  if (ext.length && out.length) out.push({ separator: true })
+  return [...out, ...ext]
 })
 const canDelete = computed(() => rights.value.delete !== 'none')
 

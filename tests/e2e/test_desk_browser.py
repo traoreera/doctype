@@ -63,8 +63,11 @@ def _free_port() -> int:
 
 
 @pytest.fixture
-def host(tmp_path):
-    """Un hôte xcore réel, sur un port libre, avec le plugin, dev-auth et les DocTypes d'exemple."""
+def host(tmp_path, request):
+    """Un hôte xcore réel, sur un port libre, avec le plugin, dev-auth et les DocTypes d'exemple.
+
+    Paramètre indirect `{"extensions": [...]}` : les plugins dont l'opérateur laisse servir l'extension du Desk (D28)."""
+    extensions = getattr(request, "param", {}).get("extensions")
     config = yaml.safe_load((ROOT / "integration.yaml").read_text())
     config["services"]["databases"]["default"]["url"] = f"sqlite+aiosqlite:///{tmp_path / 'e2e.db'}"
     config["tenancy"] = {"enabled": True, "isolate_db": False}
@@ -83,6 +86,10 @@ def host(tmp_path):
     shutil.copytree(PLUGIN_DIR, tmp_path / "app" / "xcore-doctype", ignore=shutil.ignore_patterns("__pycache__"))
     manifest = tmp_path / "app" / "xcore-doctype" / "plugin.yaml"
     manifest.write_text(re.sub(r"^(\s*)login_url:.*$", r"\1login_url: null", manifest.read_text(), flags=re.M))
+    if extensions is not None:
+        data = yaml.safe_load(manifest.read_text())
+        data.setdefault("doctype", {}).setdefault("desk", {})["extensions"] = extensions
+        manifest.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
     install_dev_auth(tmp_path / "app" / "auth", link=True)  # le plugin de TEST, nommé `auth` : les plugins du dépôt le `requires`
     (tmp_path / "app" / "stock").symlink_to(FIXTURES / "stock")  # le stock : articles, entrepôts, mouvements soumettables
     (tmp_path / "app" / "sales").symlink_to(FIXTURES / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
@@ -118,8 +125,7 @@ def host(tmp_path):
         log.close()
 
 
-@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
-def test_the_customer_doctype_is_managed_entirely_from_the_desk(host):
+def _scenario(host: str, script: str) -> subprocess.CompletedProcess:
     missing = _chromium_missing()
     if missing:
         pytest.skip(missing)
@@ -137,5 +143,18 @@ def test_the_customer_doctype_is_managed_entirely_from_the_desk(host):
         "DESK_TENANT": tenant,
         "SHOTS_DIR": os.environ.get("XCORE_DOCTYPE_E2E_SHOTS", ""),
     }
-    run = subprocess.run(["node", "e2e/desk.e2e.mjs"], cwd=UI, env=env, capture_output=True, text=True, timeout=300)
+    return subprocess.run(["node", script], cwd=UI, env=env, capture_output=True, text=True, timeout=300)
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+def test_the_customer_doctype_is_managed_entirely_from_the_desk(host):
+    run = _scenario(host, "e2e/desk.e2e.mjs")
     assert run.returncode == 0, f"scénario du Desk en échec :\n{run.stdout}\n{run.stderr}"
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"extensions": ["sales"]}], indirect=True)
+def test_a_plugins_desk_extension_runs_in_the_browser_under_the_csp(host):
+    """D28 : l'extension de `sales` (autorisée par l'opérateur) se charge par l'import map, sous la CSP stricte, et étend le Desk."""
+    run = _scenario(host, "e2e/extensions.e2e.mjs")
+    assert run.returncode == 0, f"scénario des extensions en échec :\n{run.stdout}\n{run.stderr}"

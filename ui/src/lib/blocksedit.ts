@@ -1,4 +1,4 @@
-import type { ChartBlock, LinksCardBlock, NumberCardBlock, QuickListBlock, WorkspaceBlock, WorkspaceHeader, WorkspaceParagraph, WorkspaceShortcut, WorkspaceSpacer } from './types'
+import type { ChartBlock, ExtensionBlock, LinksCardBlock, NumberCardBlock, QuickListBlock, WorkspaceBlock, WorkspaceHeader, WorkspaceParagraph, WorkspaceShortcut, WorkspaceSpacer } from './types'
 
 /**
  * Éditer les blocs d'un espace : des fonctions pures sur une liste. Le Desk n'invente aucune règle de disposition : il manipule la
@@ -16,7 +16,7 @@ export interface DeclaredShortcut {
 export type DeclaredQuickList = Omit<QuickListBlock, 'title_field' | 'submittable'> & { doctype_label?: never }
 export type DeclaredCard = { type: 'card'; title: string; links: { doctype: string; label?: string }[]; cols?: number }
 
-export type DeclaredBlock = WorkspaceHeader | WorkspaceParagraph | WorkspaceSpacer | DeclaredShortcut | NumberCardBlock | ChartBlock | DeclaredQuickList | DeclaredCard
+export type DeclaredBlock = WorkspaceHeader | WorkspaceParagraph | WorkspaceSpacer | DeclaredShortcut | NumberCardBlock | ChartBlock | DeclaredQuickList | DeclaredCard | ExtensionBlock
 
 export type BlockKind = DeclaredBlock['type']
 
@@ -25,7 +25,7 @@ export const SIZES = [3, 4, 6, 8, 12] as const
 
 export const MAX_BLOCKS = 100
 
-const DEFAULT_COLS: Partial<Record<BlockKind, number>> = { number_card: 3, chart: 6, quick_list: 6, card: 4, paragraph: 12 }
+const DEFAULT_COLS: Partial<Record<BlockKind, number>> = { number_card: 3, chart: 6, quick_list: 6, card: 4, paragraph: 12, extension: 6 }
 
 /** La largeur d'un bloc dans la grille d'ÉDITION : un titre ou un espacement prend la ligne, un raccourci un quart. */
 export function colsOf(block: DeclaredBlock): number {
@@ -38,7 +38,7 @@ export function colsOf(block: DeclaredBlock): number {
 export const hasSize = (block: DeclaredBlock): boolean => !['header', 'spacer', 'shortcut'].includes(block.type)
 
 /** Un bloc a-t-il quelque chose à modifier dans la fenêtre ? (un espacement, non) */
-export const isEditable = (block: DeclaredBlock): boolean => block.type !== 'spacer'
+export const isEditable = (block: DeclaredBlock): boolean => block.type !== 'spacer' && block.type !== 'extension' // un bloc d'extension se règle dans son plugin
 
 /**
  * Ce que le serveur renvoie → ce qu'on lui renvoie. Le serveur AJOUTE des champs de lecture (`create`, `icon`, `single` d'un raccourci ;
@@ -126,6 +126,8 @@ export function blankBlock(kind: BlockKind, doctype = ''): DeclaredBlock {
       return { type: 'paragraph', text: '', cols: 12 }
     case 'spacer':
       return { type: 'spacer' }
+    case 'extension':
+      return { type: 'extension', component: '', cols: 6 } // jamais proposé à l'ajout : un bloc d'extension vient du YAML de son plugin
   }
 }
 
@@ -154,6 +156,7 @@ export function missing(block: DeclaredBlock): 'label' | 'doctype' | 'group_by' 
     case 'paragraph':
       return (block.text ?? '').trim() ? null : 'text'
     case 'spacer':
+    case 'extension':
       return null
   }
 }
