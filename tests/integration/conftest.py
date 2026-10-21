@@ -19,13 +19,13 @@ from fastapi import FastAPI
 from xcore import Xcore
 
 import xcore_doctype
-from tests.support import install_dev_auth, mint_token
+from tests.support import FIXTURES, XAUTH_DIR, install_dev_auth, mint_token
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN_DIR = Path(xcore_doctype.__file__).parent / "plugin_dir"
 DEV_SECRET = "integration-test-secret"
 
-# Grants d'un « gestionnaire » de tous les DocTypes de test (voir app/sales/doctypes/customer.yaml, INVOICE et probe()).
+# Grants d'un « gestionnaire » de tous les DocTypes de test (voir tests/support/plugins/sales/doctypes/customer.yaml, INVOICE et probe()).
 CUSTOMER_MANAGER = ["sales:customer:read", "sales:customer:write", "sales:customer:delete"]
 INVOICE_MANAGER = ["sales:invoice:read", "sales:invoice:write", "sales:invoice:delete"]
 DEFAULT_GRANTS = [*CUSTOMER_MANAGER, *INVOICE_MANAGER, "sales:probe:manage"]
@@ -126,7 +126,7 @@ def _write_xauth(root: Path):
     from cryptography.hazmat.primitives.asymmetric import rsa
 
     dest = root / "app" / "auth"
-    shutil.copytree(ROOT / "app" / "auth", dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    shutil.copytree(XAUTH_DIR, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     keys = root / "conf"
     keys.mkdir()
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
@@ -318,12 +318,15 @@ async def boot_host(
     """`operator_doctypes=False` : le dossier de l'opérateur reste vide, seuls les plugins apportent des DocTypes.
     `link_plugins` : plugins du dépôt (nom -> dossier) liés dans `app/`. `inline_plugins` : nom -> (main.py, fichiers annexes),
     avec un manifeste de confiance qui `requires: [xcore-doctype]`. `auth_callers` : les `allowed_callers` du plugin de test (défaut : le moteur). `auth_members` : l'annuaire que le plugin de test imite (`xauth.users.list.tenant` : organisation -> [{id, email}]). `xauth=True` : le VRAI xauth (`app/auth`) remplace le plugin de test (nommé `auth`, comme xauth : les plugins du dépôt le `requires`)
-    (clés JWT et compte administrateur jetables ; voir `XAUTH_ADMIN`) : les jetons viennent de `POST /app/auth/login`."""
+    (clés JWT et compte administrateur jetables ; voir `XAUTH_ADMIN`) : les jetons viennent de `POST /app/auth/login`. Le vrai xauth
+    (`app/auth`) n'est PAS dans le dépôt : sans lui sur le poste, `xauth=True` saute avec cette raison."""
+    if xauth and not XAUTH_DIR.is_dir():
+        pytest.skip("le vrai xauth (app/auth) est absent de ce poste : test sans objet")
     root = tmp_path / "host"
     (root / "app").mkdir(parents=True)
     doctypes = root / "doctypes"
     doctypes.mkdir()
-    sample = ROOT / "app" / "sales" / "doctypes"
+    sample = FIXTURES / "sales" / "doctypes"
     if operator_doctypes:
         shutil.copy(sample / "customer.yaml", doctypes / "customer.yaml")
         shutil.copy(sample / "country.yaml", doctypes / "country.yaml")  # cible du champ Link `Customer.country`

@@ -252,14 +252,17 @@ class TestCheck:
         assert "sales:order:read" in out and "sales.check" in out
 
     def test_the_sample_plugins_are_valid(self, capsys):
+        from tests.support import FIXTURES
+
         # `sales` cite l'article du plugin `stock` (requires) : sans `--with`, sa cible de Link est inconnue.
-        assert main(["check", "app/sales/doctypes", "--owner", "sales"]) == 1
+        sales, stock = str(FIXTURES / "sales" / "doctypes"), str(FIXTURES / "stock" / "doctypes")
+        assert main(["check", sales, "--owner", "sales"]) == 1
         assert "Item" in capsys.readouterr().err
-        assert main(["check", "app/sales/doctypes", "--owner", "sales", "--with", "app/stock/doctypes"]) == 0
+        assert main(["check", sales, "--owner", "sales", "--with", stock]) == 0
         out = capsys.readouterr().out
         assert "sales.invoice_totals" in out and "4 DocType(s) valides" in out and "Stock Entry" not in out  # les dépendances ne sont pas listées
         assert "espace(s) de travail valides : sales" in out  # l'espace du plugin se valide avec ses DocTypes
-        assert main(["check", "app/stock/doctypes", "--owner", "stock"]) == 0
+        assert main(["check", stock, "--owner", "stock"]) == 0
         out = capsys.readouterr().out
         assert "stock.post_entry" in out and "stock:stock_entry:submit" in out and "stock:stock_entry:cancel" in out
 

@@ -1,0 +1,23 @@
+# Une demande de congé : brouillon, soumise (figée), annulée. Numérotée par année (CG-2026-00001).
+schema_version: 1
+name: Leave Request
+label: Demande de congé
+module: hr
+icon: calendar-plus
+submittable: true
+naming: { series: "CG-{YYYY}-{#####}" }
+title_field: reason
+fields:
+  - { fieldname: employee, label: Employé, fieldtype: Link, options: Employee, required: true, in_list_view: true }
+  - { fieldname: leave_type, label: Type, fieldtype: Select, options: [Congé payé, Maladie, Sans solde, Formation], default: Congé payé, in_list_view: true }
+  - { fieldname: from_date, label: Du, fieldtype: Date, required: true, in_list_view: true }
+  - { fieldname: to_date, label: Au, fieldtype: Date, required: true, in_list_view: true }
+  - { fieldname: reason, label: Motif, fieldtype: Text }
+  - { fieldname: comment, label: Commentaire, fieldtype: LongText }
+layout:
+  - section: Demande
+    columns: [[employee, leave_type, reason], [from_date, to_date]]
+  - columns: [[comment]]
+views:
+  calendar: { start: from_date, end: to_date, title: employee, color: leave_type }
+  gantt: { start: from_date, end: to_date, title: employee, color: leave_type }

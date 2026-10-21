@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import inspect
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import event, text
@@ -303,6 +304,39 @@ async def scenario_existing_names(env: Env):
         assert await q.existing_names("Customer", names, scope=ALL, lock=True) == {"shared", "only-b"}  # verrouiller n'élargit rien
         assert await q.existing_names("Customer", ["only-a"], scope=ALL, lock=True) == set()
         assert await q.existing_names("Customer", [], scope=ALL) == set()
+
+
+async def scenario_existing_docstatus(env: Env):
+    """L'état d'une cible de lien ne se lit que chez le tenant de l'appelant : l'existence d'un document de A ne se devine pas."""
+    async with env.q(B) as q:
+        names = ["only-a", "needle", "shared", "only-b", "absent"]
+        assert await q.existing_docstatus("Customer", names, scope=ALL) == {"shared": 0, "only-b": 0}
+        assert await q.existing_docstatus("Customer", names, scope=ALL, lock=True) == {"shared": 0, "only-b": 0}  # verrouiller n'élargit rien
+        assert await q.existing_docstatus("Customer", ["only-a"], scope=ALL, lock=True) == {}
+        assert await q.existing_docstatus("Customer", [], scope=ALL) == {}
+
+
+async def scenario_purge_versions(env: Env):
+    """La rétention d'historique ne garde que les N entrées du document… et ne purge que celles du tenant de l'appelant."""
+    async with env.q(B) as q:
+        for version in (1, 2):
+            await q.add_version("Customer", "shared", version=version, action="update", user="user-globex", doc_owner="user-globex", changes={})
+    async with env.q(B) as q:
+        assert await q.purge_versions("Customer", "shared", keep=1) == 1  # l'entrée la plus ancienne de B
+        items, total = await q.versions("Customer", "shared", limit=50, offset=0)
+        assert total == 1 and [i["version"] for i in items] == [2]
+        assert await q.purge_versions("Customer", "only-a", keep=1) == 0  # n'existe que chez A : rien à purger chez B
+
+
+async def scenario_purge_versions_before(env: Env):
+    """La purge par âge ne touche que l'historique du tenant de l'appelant, même quand la date est large."""
+    soon = datetime.now(UTC) + timedelta(days=1)
+    async with env.q(B) as q:
+        await q.add_version("Customer", "shared", version=1, action="create", user="user-globex", doc_owner="user-globex", changes={})
+    async with env.q(B) as q:
+        assert await q.purge_versions_before(soon) == 1  # l'entrée de B, plus vieille que la date
+        assert await q.purge_versions_before(soon, doctype="Customer") == 0  # plus rien à purger
+        assert await q.purge_versions_before(datetime.now(UTC) - timedelta(days=1)) == 0  # rien n'est plus vieux que ça
 
 
 async def scenario_lock_for_delete(env: Env):
@@ -603,6 +637,9 @@ SCENARIOS = {
     "versions": scenario_versions,
     "last_deletion": scenario_last_deletion,
     "existing_names": scenario_existing_names,
+    "existing_docstatus": scenario_existing_docstatus,
+    "purge_versions": scenario_purge_versions,
+    "purge_versions_before": scenario_purge_versions_before,
     "lock_for_delete": scenario_lock_for_delete,
     "references_to": scenario_references_to,
     "connections": scenario_connections,

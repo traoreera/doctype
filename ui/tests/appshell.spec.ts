@@ -51,7 +51,7 @@ beforeEach(() => {
   )
 })
 
-async function shell(start = '/') {
+async function shell(start = '/', content = '<p>contenu</p>') {
   const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '')
   sessionStorage.setItem('xdt.desk.token', `${b64({ sub: 'alice.martin', user: { email: 'alice.martin@example.com' }, tenant_id: 'acme', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`)
   const router = createRouter({
@@ -68,7 +68,7 @@ async function shell(start = '/') {
   await router.push(start)
   const pinia = createPinia()
   const w = mount(AppShell, {
-    slots: { default: '<p>contenu</p>' },
+    slots: { default: content },
     attachTo: document.body,
     global: {
       plugins: [PrimeVue, ToastService, pinia, router],
@@ -259,5 +259,34 @@ describe('en-tête', () => {
     const other = new KeyboardEvent('keydown', { key: 'g', cancelable: true }) // un « g » tapé dans un champ ne doit pas être avalé
     window.dispatchEvent(other)
     expect(other.defaultPrevented).toBe(false)
+  })
+})
+
+describe('titre de la page, focus et lien d’évitement', () => {
+  it('le titre de l’onglet est « Page · Organisation », d’après le h1 de la page', async () => {
+    await shell('/', '<h1>Factures</h1>')
+    await vi.waitFor(() => expect(document.title).toMatch(/^Factures · /))
+  })
+
+  it('un changement de page pose le focus sur son titre, pas le premier affichage', async () => {
+    const s = await shell('/', '<h1 id="t">Factures</h1>')
+    await vi.waitFor(() => expect(document.title).toMatch(/^Factures · /))
+    expect(document.activeElement?.id).not.toBe('t') // la première page ne vole pas le focus
+    await s.router.push('/tasks')
+    await vi.waitFor(() => expect(document.activeElement?.id).toBe('t'))
+  })
+
+  it('une page sans titre amène le focus sur la zone principale', async () => {
+    const s = await shell('/', '<p>contenu</p>')
+    await s.router.push('/tasks')
+    await vi.waitFor(() => expect(document.activeElement?.id).toBe('desk-main'), { timeout: 3000 })
+  })
+
+  it('le lien « Aller au contenu » est le premier de la page et mène au titre', async () => {
+    const s = await shell('/', '<h1 id="t">Factures</h1>')
+    const first = s.w.find('a, button')
+    expect(first.attributes('data-testid')).toBe('skip-link')
+    await s.w.find('[data-testid="skip-link"]').trigger('click')
+    expect(document.activeElement?.id).toBe('t')
   })
 })

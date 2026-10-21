@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 import yaml
 
@@ -13,8 +11,6 @@ from xcore_doctype.errors import InvalidDefinition
 from xcore_doctype.registry import DocTypeChannel, DocTypeRegistry
 from xcore_doctype.schema import parse_definition
 from xcore_doctype.workspaces import module_label, parse_workspace
-
-ROOT = Path(__file__).resolve().parents[2]
 
 
 class Log:
@@ -158,12 +154,14 @@ class TestLoading:
         assert reg.workspaces() == []
 
     def test_the_shipped_plugins_workspaces_are_valid(self):
+        from tests.support import FIXTURES
+
         reg = DocTypeRegistry()
         for plugin in ("stock", "sales"):
-            reg.load_dir(ROOT / "app" / plugin / "doctypes", owner=plugin)
+            reg.load_dir(FIXTURES / plugin / "doctypes", owner=plugin)
         reg.validate_links()
         for plugin in ("stock", "sales"):
-            assert reg.load_workspaces(ROOT / "app" / plugin / "workspaces", owner=plugin) == [plugin]
+            assert reg.load_workspaces(FIXTURES / plugin / "workspaces", owner=plugin) == [plugin]
         assert [w.name for w in reg.workspaces()] == ["sales", "stock"]  # `order` : Ventes (10) avant Stock (20)
 
 

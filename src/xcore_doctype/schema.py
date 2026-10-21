@@ -88,6 +88,11 @@ ACTION_HOOK_EVENTS = ("validate", "before_save")
 UNIQUE_TYPES = ("Text", "Int", "Select", "Link", "Date", "Datetime", "Time", "Duration", "Decimal", "Currency")
 # Les types d'un champ de NOMMAGE (`naming: {field: …}`) : le nom du document est sa valeur.
 NAMING_FIELD_TYPES = ("Text", "Int", "Select", "Link")
+# Les états d'un document soumettable (`docstatus`) : leur nom dans les définitions, leur libellé en français, leur valeur.
+DOCSTATUS_NAMES = {"draft": 0, "submitted": 1, "cancelled": 2}
+DOCSTATUS_LABELS = {0: "brouillon", 1: "soumis", 2: "annulé"}
+# Rétention d'historique : le défaut de `max_versions` (25 entrées conservées par document) et le maximum accepté.
+DEFAULT_MAX_VERSIONS = 25
 # D16 : un nom de hook est une CLÉ du registre, jamais un chemin importé. Aucune importation dynamique.
 TRUSTED_HOOK_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 ACTION_HOOK_RE = re.compile(r"^action:([A-Za-z0-9_-]+)\.([A-Za-z0-9_.-]+)$")
@@ -146,6 +151,19 @@ class FieldDef(BaseModel):
     depends_on: str | None = None  # faux : le champ est masqué, et n'est plus obligatoire
     mandatory_depends_on: str | None = None  # vrai : le champ est obligatoire
     read_only_depends_on: str | None = None  # vrai (sur l'état AVANT modification) : le champ ne peut plus changer
+    # Link et DynamicLink seulement : l'état exigé du document visé. `not_cancelled` = « pas annulé » (brouillon ou soumis).
+    # Sans cela, un lien ne regarde que l'existence : la cible soumise par erreur reste citée (D23).
+    target_status: Literal["draft", "submitted", "cancelled", "not_cancelled"] | list[Literal["draft", "submitted", "cancelled"]] | None = None
+
+    @property
+    def allowed_docstatus(self) -> frozenset[int] | None:
+        """Les `docstatus` admis chez la cible d'un Link, ou `None` (tous, sans contrainte)."""
+        if self.target_status is None:
+            return None
+        if self.target_status == "not_cancelled":
+            return frozenset({0, 1})
+        names = [self.target_status] if isinstance(self.target_status, str) else self.target_status
+        return frozenset(DOCSTATUS_NAMES[n] for n in names)
 
     @model_validator(mode="before")
     @classmethod
@@ -208,6 +226,16 @@ class FieldDef(BaseModel):
             raise ValueError(f"{name}: un champ {ftype} n'a pas de valeur par défaut")
         if self.stars is not None and ftype != "Rating":
             raise ValueError(f"{name}: `stars` n'a de sens que pour un Rating")
+        if self.target_status is not None:
+            if ftype not in ("Link", "DynamicLink"):
+                raise ValueError(f"{name}: `target_status` n'a de sens que pour un Link ou un DynamicLink")
+            if isinstance(self.target_status, list):
+                if not self.target_status:
+                    raise ValueError(f"{name}: `target_status` exige au moins un état (draft, submitted, cancelled)")
+                if len(set(self.target_status)) != len(self.target_status):
+                    raise ValueError(f"{name}: `target_status` répète un état")
+                if "not_cancelled" in self.target_status:
+                    raise ValueError(f"{name}: `not_cancelled` se dit seul, à côté des états nommés (draft, submitted, cancelled)")
 
         if ftype in DECIMAL_TYPES:
             if self.decimals is None:
@@ -522,6 +550,9 @@ class DocTypeDef(BaseModel):
     istable: StrictBool = False
     # Historique des créations, modifications et suppressions (versions.py). Désactivable pour un DocType très bavard.
     track_changes: StrictBool = True
+    # Rétention d'historique : les N entrées les plus récentes survivent au document (au moins 1, au plus 1000), les plus vieilles sont
+    # purgées dans la même transaction que l'écriture (pas d'entretien de nuit).
+    max_versions: Annotated[int, PydanticField(ge=1, le=1000, strict=True)] = DEFAULT_MAX_VERSIONS
     # Document « soumettable » : brouillon (0) -> soumis (1) -> annulé (2). Un document soumis est figé : plus de modification
     # ni de suppression, on l'annule (et on l'amende : une copie en brouillon). Voir document.py (submit, cancel, amend).
     submittable: StrictBool = False
@@ -647,6 +678,8 @@ class DocTypeDef(BaseModel):
                 holder = by_name.get(str(f.options))
                 if holder is None or holder.fieldtype not in ("Text", "Select"):
                     raise ValueError(f"{f.fieldname}: DynamicLink `options` {f.options!r} doit nommer un champ Text ou Select de ce DocType (le nom du DocType visé)")
+        if "max_versions" in self.model_fields_set and not self.track_changes:
+            raise ValueError("max_versions: exige `track_changes: true` (sans historique, rien à purger)")
         naming = self.naming
         if isinstance(naming, NamingField):
             target = by_name.get(naming.field)
@@ -677,10 +710,11 @@ class DocTypeDef(BaseModel):
             "hooks": bool(self.hooks.all_refs()),
             "settings_group": self.settings_group is not None,
             "track_changes": self.track_changes is True and "track_changes" in self.model_fields_set,
+            "max_versions": "max_versions" in self.model_fields_set,
         }
         bad = [k for k, v in refused.items() if v]
         if bad:
-            raise ValueError(f"source: {', '.join(bad)} n'a pas de sens pour un DocType virtuel (le moteur ne stocke pas ses documents)")
+            raise ValueError(f"source: {', '.join(bad)} n'a de sens pour un DocType virtuel (le moteur ne stocke pas ses documents)")
         for f in self.fields:
             if f.fieldtype in FILE_TYPES:
                 raise ValueError(f"source: {f.fieldname!r} est un champ {f.fieldtype} : pas de fichier dans un DocType virtuel")
@@ -688,6 +722,8 @@ class DocTypeDef(BaseModel):
                 raise ValueError(f"source: {f.fieldname!r} est un Password : la source garde ses propres secrets")
             if f.default == TODAY:
                 raise ValueError(f"source: {f.fieldname}: le défaut `today` n'est pas pris en charge dans un DocType virtuel")
+            if f.target_status is not None:
+                raise ValueError(f"source: {f.fieldname}.target_status : un DocType virtuel n'a pas d'état que le moteur pourrait juger")
         return self
 
     @model_validator(mode="after")

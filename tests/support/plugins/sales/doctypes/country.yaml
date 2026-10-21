@@ -1,0 +1,17 @@
+# Cible du champ Link `Customer.country` : sert à la recherche du Desk (autocomplétion).
+schema_version: 1
+name: Country
+label: Pays
+module: sales
+icon: globe
+title_field: country_name
+fields:
+  - { fieldname: country_name, label: Nom, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: code, label: Code ISO, fieldtype: Text, in_list_view: true, description: "Deux lettres, ex. FR" }
+  - { fieldname: currency, label: Devise, fieldtype: Text, in_list_view: true }
+  - { fieldname: default_language, label: Langue par defaut, fieldtype: Text, in_list_view: true }
+  - {fieldname: blocked, label: Bloqué, fieldtype: Boolean, in_list_view: true, default: true}
+
+layout:
+  - { section: country, collapsible: false, collapsed: false, columns: [['country_name', 'code']] }
+  - { section: language, collapsible: false, collapsed: false, columns: [['currency', 'default_language']] }

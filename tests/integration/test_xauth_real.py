@@ -1,6 +1,7 @@
 """Le VRAI xauth (`app/auth`) comme système d'authentification : connexion, jetons, grants déclarés par les plugins, membres, annuaire.
 
 Aucun jeton fabriqué à la main : tout vient de `POST /app/auth/login`. C'est ce que fait le Desk, et la seule authentification du produit.
+`app/auth` vit sur le poste de développement (hors dépôt) : sans lui, ces tests sautent.
 """
 
 from __future__ import annotations
@@ -8,9 +9,13 @@ from __future__ import annotations
 import base64
 import json
 
+import pytest
 import yaml
 
 from tests.integration.conftest import XAUTH_ADMIN, boot_host
+from tests.support import XAUTH_DIR
+
+pytestmark = pytest.mark.skipif(not XAUTH_DIR.is_dir(), reason="le vrai xauth (app/auth) est absent de ce poste")
 
 MAIN = '''
 from pathlib import Path

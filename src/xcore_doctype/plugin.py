@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import secrets
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -27,7 +28,7 @@ from .db.tables import SystemTables, build_system_tables
 from .document import DocumentService, SystemReaders
 from .file_service import FileService
 from .files import BlobStore, LocalBlobStore, UrlSigner
-from .errors import ConfigurationError, DoctypeError, ValidationFailed
+from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
 from .collaboration import CollaborationService
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
@@ -178,9 +179,14 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         self.grant_catalog = catalog
         self.ctx.services[GRANTS_SERVICE] = catalog
         # ...et y apportent leurs propres DocTypes (module == leur nom, voir registry.DocTypeChannel).
-        self.ctx.services[REGISTRY_SERVICE] = DocTypeChannel(registry, self.logger)
+        self.ctx.services[REGISTRY_SERVICE] = DocTypeChannel(registry, self.logger, unique_check=self.documents.ensure_unique_clean)
         # ...et lisent les documents d'un tenant en contexte système, pour vérifier ou rapporter (lecture seule).
         self.ctx.services[DOCUMENTS_SERVICE] = SystemReaders(self.documents)
+        # Un champ `unique` posé sur un type qui a déjà des documents refuse le chargement si des valeurs sont déjà en double (D25).
+        for name in registry.names():
+            compiled = registry.get(name)
+            if compiled.definition.unique_fields and not compiled.definition.istable:
+                await self.documents.ensure_unique_clean(compiled)
         for name in registry.names():
             d = registry.get(name).definition
             if d.istable:
@@ -344,6 +350,54 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             )
 
         return await self._run("doc.history", op)
+
+    @action("doc.check_unique")
+    async def doc_check_unique(self, payload: dict) -> dict:
+        """Contrôle rétroactif de l'unicité (D25) : les valeurs `unique` déjà en double, l'installation entière ou un type.
+
+        Appel d'opérateur (clé du plugin) : rien n'est écrit ni corrigé, le résultat nomme les documents fautifs.
+        Charge : `{"doctypes"?: ["…"], "tenant"?: …}` (sous RLS, `tenant` est obligatoire).
+        """
+        body = payload or {}
+        doctypes = body.get("doctypes")
+        if doctypes is not None and (not isinstance(doctypes, list) or not doctypes or not all(isinstance(d, str) for d in doctypes)):
+            return error("`doctypes` doit être une liste de noms de DocTypes", "invalid_payload")
+        tenant = body.get("tenant")
+        if tenant is not None and (not isinstance(tenant, str) or not tenant):
+            return error("`tenant` doit être l'identifiant d'une organisation", "invalid_payload")
+        try:
+            conflicts = await self.documents.check_unique(doctypes=doctypes, tenant=tenant)
+        except NotFound:
+            return error("DocType inconnu", "doctype_not_found")
+        except DoctypeError as e:  # RLS actif sans `tenant`
+            return error(e.message, e.code)
+        return ok(conflicts=conflicts)
+
+    @action("doc.history.purge")
+    async def doc_history_purge(self, payload: dict) -> dict:
+        """Purge l'historique du tenant plus vieux qu'une date (D24) : `{"tenant": …, "before": "2026-01-01T00:00:00+00:00", "doctype"?: …}`.
+
+        Appel d'opérateur (clé du plugin). La rétention par document (`max_versions`) purge à chaque écriture ;
+        celle-ci rattrape le trop-plein d'avant une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        """
+        body = payload or {}
+        tenant = body.get("tenant")
+        if not isinstance(tenant, str) or not tenant:
+            return error("`tenant` est obligatoire", "missing_field")
+        raw = body.get("before")
+        if not isinstance(raw, str) or not raw:
+            return error("`before` est obligatoire (ISO 8601, ex. 2026-01-01T00:00:00+00:00)", "missing_field")
+        try:
+            before = datetime.fromisoformat(raw)
+        except ValueError:
+            return error("`before` doit être une date ISO 8601", "invalid_payload")
+        if before.tzinfo is None:
+            before = before.replace(tzinfo=UTC)
+        doctype = body.get("doctype")
+        if doctype is not None and (not isinstance(doctype, str) or not doctype):
+            return error("`doctype` doit être un nom de DocTypes", "invalid_payload")
+        deleted = await self.documents.purge_history(tenant, before, doctype=doctype)
+        return ok(deleted=deleted)
 
     @action("doc.tree")
     async def doc_tree(self, payload: dict) -> dict:

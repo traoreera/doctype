@@ -3,6 +3,7 @@ import { useConfirm } from 'primevue/useconfirm'
 import { computed, defineAsyncComponent, reactive, watch, type Component } from 'vue'
 import { onBeforeRouteUpdate, useRouter } from 'vue-router'
 import { t } from '@/i18n'
+import { piIcon } from '@/lib/icons'
 import { moduleLabel } from '@/lib/modules'
 import type { ThemeMode } from '@/lib/theme'
 import { useServices } from '@/lib/services'
@@ -146,7 +147,7 @@ onBeforeRouteUpdate((to, from) => {
             :title="t.settings.open(it.label)"
             :data-testid="`setting-${it.name}`"
           >
-            <i :class="`pi pi-${it.icon ?? 'sliders-h'}`" />{{ it.label }}
+            <i :class="piIcon(it.icon, 'sliders-h')" />{{ it.label }}
           </RouterLink>
         </div>
         <div v-if="railItems.length" class="settings-group" data-testid="settings-group-system">

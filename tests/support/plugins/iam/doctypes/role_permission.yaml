@@ -1,0 +1,7 @@
+# Une ligne de la table « Permissions » d'un rôle.
+schema_version: 1
+name: Role Permission
+label: Permission du rôle
+istable: true
+fields:
+  - { fieldname: permission, label: Permission, fieldtype: Link, options: Permission, required: true, in_list_view: true }

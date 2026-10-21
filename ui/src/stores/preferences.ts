@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { brandCss } from '@/lib/brand'
 import { setDateFormat } from '@/lib/format'
 import { useServices } from '@/lib/services'
@@ -20,6 +20,12 @@ export const usePreferences = defineStore('preferences', () => {
 
   /** Le nom affiché en haut : celui de l'organisation, sinon « Desk ». */
   const name = computed(() => items.value.organization_name?.trim() || t.appName)
+  /** Le titre de la page courante (le coque le pose à chaque navigation) : « Visite · hunters » dans l'onglet et l'historique du navigateur. */
+  const page = ref('')
+  const documentTitle = computed(() => (page.value ? `${page.value} · ${name.value}` : name.value))
+  watch(documentTitle, (v) => {
+    if (typeof document !== 'undefined') document.title = v
+  })
   /** L'adresse signée du logo (courte durée : voir `reload` si l'image échoue), ou `null`. */
   const logoUrl = computed(() => (items.value.logo ? `${config.baseUrl}/${items.value.logo.path}` : null))
 
@@ -27,7 +33,7 @@ export const usePreferences = defineStore('preferences', () => {
     items.value = prefs
     setDateFormat(prefs.date_format)
     if (typeof document === 'undefined') return
-    document.title = name.value
+    document.title = documentTitle.value
     let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null
     const css = brandCss(prefs.brand_color)
     if (!css) return void style?.remove()
@@ -55,5 +61,5 @@ export const usePreferences = defineStore('preferences', () => {
     apply({}) // remet aussi le titre de l'onglet
   }
 
-  return { items, name, logoUrl, load, reset }
+  return { items, name, page, documentTitle, logoUrl, load, reset }
 })

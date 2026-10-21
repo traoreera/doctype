@@ -10,9 +10,12 @@ build/
 *.sqlite3
 log/
 .DS_Store
-main.py
+/main.py
 node_modules/
 conf/
 app/
 # Fichiers téléversés pendant le développement (jamais du code)
 data/
+alembic/
+alembic.ini
+extensions/

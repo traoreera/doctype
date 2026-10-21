@@ -1,0 +1,11 @@
+# Une LIGNE de facture. DocType « enfant » (`istable`) : il n'existe que dans le champ Table de `Invoice`, sans route,
+# sans droits ni hooks propres (il hérite de ceux de la facture). Les lignes sont stockées dans le document parent.
+schema_version: 1
+name: InvoiceLine
+label: Ligne de facture
+istable: true
+fields:
+  - { fieldname: item, label: Article, fieldtype: Link, options: Item, required: true }
+  - { fieldname: qty, label: Quantité, fieldtype: Number, required: true, default: 1 }
+  - { fieldname: rate, label: Prix unitaire, fieldtype: Number, required: true }
+  - { fieldname: note, label: Note, fieldtype: Text }

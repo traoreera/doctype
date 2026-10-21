@@ -2,7 +2,7 @@
 
 « Réception, sortie et transfert soumis, annulés par mouvement inverse ; stock négatif refusé en concurrence sur les deux bases. »
 
-Les règles sont dans `app/stock/src/ledger.py` (code de confiance, branché sur `on_submit` / `on_cancel`). Ces tests le font tourner
+Les règles sont dans `tests/support/plugins/stock/src/ledger.py` (code de confiance, branché sur `on_submit` / `on_cancel`). Ces tests le font tourner
 sur le VRAI moteur (DocumentService, SQLite et PostgreSQL), avec les DocTypes réels du plugin : seul l'hôte xcore est absent
 (il est couvert par tests/integration/test_stock_plugin.py).
 """
@@ -20,13 +20,14 @@ from pathlib import Path
 import pytest
 
 from tests.conftest import make_ctx
+from tests.support import FIXTURES
 from xcore_doctype import DocumentValidationError
 from xcore_doctype.document import DocumentService
 from xcore_doctype.errors import DoctypeError, InvalidDocStatus, PermissionDenied, ValidationFailed
 from xcore_doctype.hooks import HookRegistry
 from xcore_doctype.registry import DocTypeRegistry
 
-STOCK = Path(__file__).resolve().parents[2] / "app" / "stock"
+STOCK = FIXTURES / "stock"
 
 
 def _load_ledger():

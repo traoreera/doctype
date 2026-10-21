@@ -31,12 +31,13 @@ export const FrappePreset = definePreset(Aura, {
     transitionDuration: '0.15s',
     // Le bouton principal et les accents sont les gris les plus sombres, comme dans le Desk de Frappe.
     primary: { 50: gray[50], 100: gray[100], 200: gray[200], 300: gray[300], 400: gray[400], 500: gray[900], 600: gray[800], 700: gray[700], 800: gray[800], 900: gray[900], 950: gray[950] },
-    focusRing: { width: '2px', style: 'solid', color: gray[300], offset: '1px' },
+    // Le repère de focus doit se VOIR (3:1 au moins contre le fond) : l'ancien gris 300 sur blanc ne faisait que 1,3:1. Il suit le schéma par son jeton.
+    focusRing: { width: '2px', style: 'solid', color: '{text.color}', offset: '2px' },
     formField: {
       paddingX: '0.625rem',
       paddingY: '0.25rem',
       borderRadius: '8px',
-      focusRing: { width: '0', style: 'none', color: 'transparent', offset: '0', shadow: `0 0 0 2px ${gray[300]}` },
+      focusRing: { width: '0', style: 'none', color: 'transparent', offset: '0', shadow: '0 0 0 2px {text.muted.color}' },
     },
     list: { option: { padding: '0.375rem 0.625rem', borderRadius: '{border.radius.md}' } },
     content: { borderRadius: '{border.radius.lg}' },
@@ -55,10 +56,11 @@ export const FrappePreset = definePreset(Aura, {
           focusBorderColor: gray[400],
           invalidBorderColor: '{red.400}',
           color: gray[900],
-          placeholderColor: gray[500],
+          placeholderColor: '#6e6e6e', // 4,5:1 contre le champ gris clair (le gris 500 n'en faisait que 2,5)
           shadow: 'none',
         },
-        text: { color: gray[900], hoverColor: gray[900], mutedColor: gray[600], hoverMutedColor: gray[700] },
+        // Le texte discret doit rester lisible : 5,6:1 sur le fond de page (le gris 600 n'en faisait que 3,9, sous le seuil AA de 4,5).
+        text: { color: gray[900], hoverColor: gray[900], mutedColor: '#636363', hoverMutedColor: gray[700] },
         content: { background: gray[0], hoverBackground: gray[50], borderColor: gray[200] },
         overlay: {
           select: { borderColor: gray[200] },
@@ -80,7 +82,7 @@ export const FrappePreset = definePreset(Aura, {
           focusBorderColor: gray[600],
           invalidBorderColor: '{red.400}',
           color: gray[50],
-          placeholderColor: gray[500],
+          placeholderColor: '#b0b0b0', // 5,4:1 contre le champ sombre (le gris 500 n'en faisait que 4,1)
           shadow: 'none',
         },
         text: { color: gray[50], hoverColor: gray[0], mutedColor: gray[400], hoverMutedColor: gray[300] },
@@ -102,11 +104,22 @@ export const FrappePreset = definePreset(Aura, {
           root: {
             secondary: { background: gray[100], hoverBackground: gray[200], activeBackground: gray[300], borderColor: gray[100], hoverBorderColor: gray[200], activeBorderColor: gray[300], color: gray[900], hoverColor: gray[900], activeColor: gray[900] },
           },
+          // Un bouton « texte » ou « contour » doit se LIRE (4,5:1) : le gris 500 d'Aura n'en faisait que 2,7, le rouge 500 que 3,5.
+          text: {
+            secondary: { color: gray[700], hoverBackground: gray[100], activeBackground: gray[200] },
+            danger: { color: '{red.700}', hoverBackground: '{red.50}', activeBackground: '{red.100}' },
+          },
+          outlined: {
+            secondary: { color: gray[700], borderColor: gray[300], hoverBackground: gray[100], activeBackground: gray[200] },
+            danger: { color: '{red.700}', borderColor: '{red.300}', hoverBackground: '{red.50}', activeBackground: '{red.100}' },
+          },
         },
         dark: {
           root: {
             secondary: { background: gray[800], hoverBackground: gray[700], activeBackground: gray[600], borderColor: gray[800], hoverBorderColor: gray[700], activeBorderColor: gray[600], color: gray[50], hoverColor: gray[50], activeColor: gray[50] },
           },
+          text: { secondary: { color: gray[300], hoverBackground: gray[800], activeBackground: gray[700] } },
+          outlined: { secondary: { color: gray[300], borderColor: gray[700], hoverBackground: gray[800], activeBackground: gray[700] } },
         },
       },
     },
@@ -119,6 +132,7 @@ export const FrappePreset = definePreset(Aura, {
     paginator: { root: { padding: '0.5rem 0.75rem' }, navButton: { width: '2rem', height: '2rem', borderRadius: '{border.radius.md}', selectedBackground: '{highlight.background}' } },
     dialog: { root: { borderRadius: '{border.radius.xl}' }, title: { fontSize: '1.125rem', fontWeight: '600' } },
     toast: { root: { width: '22rem' } },
+    checkbox: { root: { width: '1.25rem', height: '1.25rem' } },
     tag: { root: { fontSize: '0.75rem', fontWeight: '500', padding: '0.125rem 0.5rem' } },
   },
 })

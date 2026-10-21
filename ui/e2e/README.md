@@ -22,10 +22,13 @@ pnpm e2e
 
 Le jeton est celui de l'administrateur de `.env` (xauth) ; `DESK_TENANT` est l'identifiant de son organisation (le claim `tenant_id` du jeton, que le Desk envoie en `X-Tenant-ID`). Les scripts à deux
 utilisateurs (`look-collab.mjs`, `look-layouts.mjs`) lisent en plus `DESK_TOKEN2` : `make member EMAIL=bob@example.com PASSWORD='Bob-Passw0rd!1'`, puis
-`DESK_TOKEN2=$(poetry run python scripts/login.py --email bob@example.com --password 'Bob-Passw0rd!1')`. L'hôte doit charger `app/auth`, `app/sales` et `app/stock`
-(les plugins déclarent leurs hooks, sans eux une sauvegarde est refusée en 503 `hook_unavailable`) ; l'administrateur a tous leurs grants.
+`DESK_TOKEN2=$(poetry run python scripts/login.py --email bob@example.com --password 'Bob-Passw0rd!1')`. L'hôte doit charger `auth` (xauth, `app/auth`,
+local au poste) et les plugins de démonstration `sales` et `stock` (versionnés dans `tests/support/plugins/`, liés dans `app/` par le développeur :
+les tests les prennent directement dans `tests/support/plugins/`) ; les plugins déclarent leurs hooks, sans eux une sauvegarde est refusée en 503
+`hook_unavailable` ; l'administrateur a tous leurs grants.
 `look-h2.mjs` (palier 70 %, phases H2/I : propriétés de champ, nommage, renommer, dupliquer, connexions, saisie rapide, actions en lot, barre latérale, documentation de l'API) se lance comme `look-types.mjs` : `DESK_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (ceux de `.env`), `SHOTS_DIR` ; il sème des lieux et des visites du plugin `lab` et les retire (un bon soumis puis annulé reste : un document figé ne se supprime pas).
 `E2E_TIMEOUT=8000` (ms) raccourcit les attentes de Playwright (30 s par défaut) : les échecs remontent vite.
 `E2E_DEBUG=1` affiche chaque réponse HTTP d'erreur avec son corps : le premier réflexe quand une étape échoue.
 `CHROME=<exécutable>` impose un Chromium précis (sinon celui de `playwright-core`).
 Le fuseau du navigateur est Pacific/Auckland (UTC+13) exprès : une date locale à minuit y tombe la veille en UTC.
+`audit.mjs` (mesures d'accessibilité et de lisibilité des écrans principaux, clair/sombre, ordinateur/téléphone) et `look-ux.mjs` (comportements : titre d'onglet, focus, lien d'évitement, sélection, Échap, erreurs, cartes) se lancent comme `look-h2.mjs`; `LOGIN=<identifiant>` (facultatif) remplace `ADMIN_EMAIL` pour la connexion de `audit.mjs`. Détail et résultats : `doc/ux-revue.md`.

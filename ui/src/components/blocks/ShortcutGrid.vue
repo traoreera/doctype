@@ -3,6 +3,7 @@ import { reactive, watch } from 'vue'
 import { formatNumber } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import { t } from '@/i18n'
+import { piIcon } from '@/lib/icons'
 import type { WorkspaceShortcut } from '@/lib/types'
 
 const props = defineProps<{ shortcuts: WorkspaceShortcut[] }>()
@@ -39,7 +40,7 @@ const countOf = (d: string): string | null => (typeof counts[d] === 'number' ? f
   <div class="home-grid">
     <div v-for="sc in shortcuts" :key="sc.doctype" class="desk-card home-card">
       <RouterLink class="desk-link home-open" :to="sc.single ? { name: 'settings', params: { doctype: sc.doctype } } : { name: 'list', params: { doctype: sc.doctype } }" :data-testid="`shortcut-${sc.doctype}`">
-        <i :class="`pi pi-${sc.icon ?? 'file'}`" />
+        <i :class="piIcon(sc.icon, 'file')" />
         <span class="home-label">{{ sc.label }}</span>
         <span v-if="countOf(sc.doctype) !== null" class="count" :data-testid="`count-${sc.doctype}`">{{ countOf(sc.doctype) }}</span>
       </RouterLink>

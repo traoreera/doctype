@@ -193,6 +193,16 @@ export function quickEntryFields(meta: DocTypeMeta): FieldMeta[] | null {
   return wanted
 }
 
+/** Les types qui prennent toute la largeur d'un formulaire en deux colonnes : du texte long, du code, un tableau. */
+export const WIDE_TYPES: readonly string[] = ['LongText', 'TextEditor', 'Code', 'JSON', 'Table']
+export const isWide = (f: FieldMeta): boolean => WIDE_TYPES.includes(f.fieldtype)
+
+/**
+ * Une section SANS titre et à une seule colonne est celle que personne n'a composée (les champs d'un type sans `layout`, ou ceux que le `layout` n'a pas placés) :
+ * le Desk la range en deux colonnes quand la place le permet, les champs longs gardant toute la largeur. Une section composée (titre, plusieurs colonnes) reste telle quelle.
+ */
+export const isAutoSection = (s: { section: string | null; collapsible: boolean; columns: readonly unknown[] }): boolean => s.section === null && !s.collapsible && s.columns.length === 1
+
 /** Les champs qui lisent leur valeur du document que le Link `linkName` désigne (`fetch_from: lien.champ`). */
 export const fetchDependents = (fields: readonly FieldMeta[], linkName: string): FieldMeta[] => fields.filter((f) => f.fetch_from?.split('.')[0] === linkName)
 /** Le champ de la cible dont ce champ copie la valeur. */

@@ -49,6 +49,8 @@ const creating = ref(false)
 const canCreate = computed(() => !!targetMeta.value && targetMeta.value.rights?.create !== undefined && targetMeta.value.rights.create !== 'none' && !targetMeta.value.single && !targetMeta.value.virtual)
 const quick = computed(() => !!targetMeta.value && quickEntryFields(targetMeta.value) !== null)
 const label = computed(() => targetMeta.value?.label ?? props.target)
+/** Combien de boutons dans le champ (ouvrir, créer) : le champ réserve leur place à droite. */
+const actionCount = computed(() => (asName(props.modelValue) ? 1 : 0) + (canCreate.value ? 1 : 0))
 
 async function loadTarget(): Promise<void> {
   if (props.readonly || !props.target || targetMeta.value?.name === props.target) return
@@ -98,43 +100,44 @@ function onInput(v: unknown): void {
     </RouterLink>
   </LinkPreview>
   <span v-else-if="readonly" class="value" />
-  <div v-else class="link-field">
-  <AutoComplete
-    :model-value="shown"
-    :suggestions="options"
-    option-label="label"
-    force-selection
-    dropdown
-    :invalid="invalid"
-    :input-id="inputId"
-    fluid
-    @update:model-value="onInput"
-    @complete="complete"
-    @option-select="select"
-  >
-    <template #option="{ option }">
-      <span>{{ option.label }}</span>
-      <small v-if="option.label !== option.name" class="desk-muted" style="margin-left: 0.5rem">{{ option.name }}</small>
-    </template>
-    <template #empty><span class="desk-muted" style="display: block; padding: 0.5rem 0.75rem">{{ t.linkField.none }}</span></template>
-  </AutoComplete>
-  <!-- Créer le document qu'on ne trouve pas, sans quitter le formulaire (saisie rapide) ; un type qui exige un tableau ou un fichier ouvre sa fiche complète à part. -->
-  <template v-if="canCreate">
-    <button v-if="quick" type="button" class="link-open link-create" :aria-label="t.quickEntry.new(label)" :title="draft ? t.linkField.createNamed(label, draft) : t.quickEntry.new(label)" data-testid="link-create" @mousedown.prevent @click="creating = true">
-      <i class="pi pi-plus" />
-    </button>
-    <RouterLink v-else :to="{ name: 'new', params: { doctype: target } }" target="_blank" class="link-open link-create" :aria-label="t.quickEntry.full" :title="t.quickEntry.full" data-testid="link-create-full">
-      <i class="pi pi-plus" />
-    </RouterLink>
-  </template>
-  <!-- Ouvrir la fiche du document lié (comme la flèche d'un champ lien de Frappe), avec un aperçu au survol. -->
-  <LinkPreview v-if="asName(modelValue)" :target="target" :name="asName(modelValue)">
-    <RouterLink class="link-open" :to="{ name: 'form', params: { doctype: target, name: asName(modelValue) } }" :aria-label="links.title(target, asName(modelValue))" :title="links.title(target, asName(modelValue))" data-testid="link-open">
-      <i class="pi pi-arrow-up-right" />
-    </RouterLink>
-  </LinkPreview>
-  <!-- La place de la flèche reste réservée : vider le champ (il perd le focus en cliquant ailleurs) ne doit pas décaler « + » sous le doigt qui clique. -->
-  <span v-else-if="canCreate" class="link-open" aria-hidden="true" style="visibility: hidden" />
-  <QuickEntryDialog v-if="creating" v-model:visible="creating" :doctype="target" :initial="draft" @created="created" />
+  <div v-else class="link-field" :style="{ '--actions': actionCount }">
+    <AutoComplete
+      :model-value="shown"
+      :suggestions="options"
+      option-label="label"
+      force-selection
+      complete-on-focus
+      :invalid="invalid"
+      :input-id="inputId"
+      fluid
+      @update:model-value="onInput"
+      @complete="complete"
+      @option-select="select"
+    >
+      <template #option="{ option }">
+        <span>{{ option.label }}</span>
+        <small v-if="option.label !== option.name" class="desk-muted" style="margin-left: 0.5rem">{{ option.name }}</small>
+      </template>
+      <template #empty><span class="desk-muted" style="display: block; padding: 0.5rem 0.75rem">{{ t.linkField.none }}</span></template>
+    </AutoComplete>
+    <!-- Les actions du champ vivent DANS le champ, à droite (ancrées à son bord : rien ne se décale quand le contenu change, et il garde la largeur des autres champs). -->
+    <span class="link-actions">
+      <!-- Ouvrir la fiche du document lié, avec un aperçu au survol. -->
+      <LinkPreview v-if="asName(modelValue)" :target="target" :name="asName(modelValue)">
+        <RouterLink class="link-open" :to="{ name: 'form', params: { doctype: target, name: asName(modelValue) } }" :aria-label="links.title(target, asName(modelValue))" :title="links.title(target, asName(modelValue))" data-testid="link-open">
+          <i class="pi pi-arrow-up-right" />
+        </RouterLink>
+      </LinkPreview>
+      <!-- Créer le document qu'on ne trouve pas, sans quitter le formulaire (saisie rapide) ; un type qui exige un tableau ou un fichier ouvre sa fiche complète à part. -->
+      <template v-if="canCreate">
+        <button v-if="quick" type="button" class="link-open link-create" :aria-label="t.quickEntry.new(label)" :title="draft ? t.linkField.createNamed(label, draft) : t.quickEntry.new(label)" data-testid="link-create" @mousedown.prevent @click="creating = true">
+          <i class="pi pi-plus" />
+        </button>
+        <RouterLink v-else :to="{ name: 'new', params: { doctype: target } }" target="_blank" class="link-open link-create" :aria-label="t.quickEntry.full" :title="t.quickEntry.full" data-testid="link-create-full">
+          <i class="pi pi-plus" />
+        </RouterLink>
+      </template>
+    </span>
+    <QuickEntryDialog v-if="creating" v-model:visible="creating" :doctype="target" :initial="draft" @created="created" />
   </div>
 </template>

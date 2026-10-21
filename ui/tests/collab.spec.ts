@@ -9,9 +9,10 @@ import { buildFeed, isOverdue, sortAssignments } from '@/lib/feed'
 import { fallbackName, useUsers } from '@/stores/users'
 import type { AssignmentItem, AttachmentItem, Collab, CommentItem, VersionEntry } from '@/lib/types'
 import TasksView from '@/views/TasksView.vue'
-import { TASK, flushPromises, mountWith } from './views-fixtures'
+import { TASK, flushPromises, mountWith, unmountAll } from './views-fixtures'
 
 afterEach(() => {
+  unmountAll()
   document.body.innerHTML = ''
 })
 

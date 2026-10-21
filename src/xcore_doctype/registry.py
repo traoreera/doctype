@@ -6,7 +6,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 import yaml
 
@@ -238,6 +238,10 @@ class DocTypeRegistry:
                     problems.append(f"{name}.{f.fieldname}: DocType cible inconnu {f.options!r}")
                 elif target.definition.istable:
                     problems.append(f"{name}.{f.fieldname}: {f.options!r} est un DocType enfant, on ne peut pas le citer par un Link")
+                elif (allowed := f.allowed_docstatus) is not None and 0 not in allowed and not target.definition.submittable:
+                    problems.append(
+                        f"{name}.{f.fieldname}: `target_status` vise {f.options!r}, qui n'est jamais soumettable : aucun document ne satisfera jamais cette contrainte"
+                    )
         if problems:
             raise InvalidDefinition("champs Link invalides :\n" + "\n".join(f"  - {p}" for p in problems))
 
@@ -273,6 +277,10 @@ class DocTypeRegistry:
                     problems.append(f"{name}.{f.fieldname}: DynamicLink : l'option {option!r} de {holder.fieldname!r} n'est pas un DocType chargé")
                 elif target.definition.istable:
                     problems.append(f"{name}.{f.fieldname}: DynamicLink : {option!r} est un DocType enfant, on ne peut pas le citer")
+                elif (allowed := f.allowed_docstatus) is not None and 0 not in allowed and not target.definition.submittable:
+                    problems.append(
+                        f"{name}.{f.fieldname}: `target_status` peut viser {option!r}, qui n'est jamais soumettable : aucun document ne satisfera jamais cette contrainte"
+                    )
 
     def _check_units(self, name: str, problems: list[str]) -> None:
         """`unit_from` doit désigner un champ qui existe : `uom` (même document ou même ligne) ou `item.uom` (champ Link, puis champ de la cible)."""
@@ -354,14 +362,20 @@ class DocTypeChannel:
     Le registre n'est pas exposé : ni lecture des définitions compilées, ni retrait d'un DocType qu'on n'a pas apporté.
     """
 
-    def __init__(self, registry: DocTypeRegistry, logger: Any = None) -> None:
-        self._registry, self._log = registry, logger
+    def __init__(self, registry: DocTypeRegistry, logger: Any = None, *, unique_check: Callable[[CompiledDocType], Awaitable[None]] | None = None) -> None:
+        self._registry, self._log, self._unique_check = registry, logger, unique_check
 
     def load_dir(self, owner: str, directory: str | Path) -> list[str]:
         names = self._registry.load_dir(Path(directory), owner=owner)
         # Tout ce que le dossier apporte doit pouvoir être lié : une cible de Link inconnue échoue ici, pas à la première saisie.
         try:
             self._registry.validate_links(names)
+            if self._unique_check is not None:
+                # Un champ rendu `unique` après coup refuse le chargement si des documents sont déjà en double (D25).
+                for name in names:
+                    compiled = self._registry.get(name)
+                    if compiled.definition.unique_fields and not compiled.definition.istable:
+                        self._unique_check(compiled)
         except InvalidDefinition:
             self._registry.unregister_owner(owner)
             raise

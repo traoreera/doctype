@@ -2,23 +2,26 @@
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import Column from 'primevue/column'
-import DataTable, { type DataTablePageEvent, type DataTableSortEvent } from 'primevue/datatable'
+import DataTable, { type DataTablePageEvent, type DataTableRowClickEvent, type DataTableSortEvent } from 'primevue/datatable'
 import Dialog from 'primevue/dialog'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
 import Menu from 'primevue/menu'
 import Message from 'primevue/message'
+import Paginator from 'primevue/paginator'
+import Skeleton from 'primevue/skeleton'
 import SelectButton from 'primevue/selectbutton'
 import { useConfirm } from 'primevue/useconfirm'
 import type { MenuItem } from 'primevue/menuitem'
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import BlockEditor from '@/components/BlockEditor.vue'
 import BulkActions from '@/components/BulkActions.vue'
 import CellValue from '@/components/CellValue.vue'
 import FileThumb from '@/components/FileThumb.vue'
 import FilterBar from '@/components/FilterBar.vue'
+import RecordCards from '@/components/RecordCards.vue'
 import ListSidebar from '@/components/ListSidebar.vue'
 import ViewSwitcher from '@/components/ViewSwitcher.vue'
 import CalendarView from '@/components/views/CalendarView.vue'
@@ -33,6 +36,7 @@ import { statusLabel, statusTone } from '@/lib/docstatus'
 import { buildFilters, parseFiltersParam, rowsFromFilters, type FilterRow } from '@/lib/filters'
 import { formatCell, hasReadableName, isNumeric, relativeTime } from '@/lib/format'
 import { useServices } from '@/lib/services'
+import { sidebarFields } from '@/lib/sidebar'
 import { unitLinks, unitOf } from '@/lib/units'
 import type { DocRecord, DocTypeMeta, FieldMeta, Filters, LayoutScope, SavedView, ViewName } from '@/lib/types'
 import { pickView, readView, writeView } from '@/lib/viewprefs'
@@ -132,6 +136,8 @@ function readSidebar(): boolean {
   }
 }
 const showSidebar = ref(readSidebar())
+/** La colonne de la barre latérale n'existe que si le type a de quoi la remplir : sans cela, le tableau se retrouverait dans sa colonne étroite. */
+const hasSidebar = computed(() => showSidebar.value && !!meta.value && sidebarFields(meta.value).length > 0)
 function toggleSidebar(): void {
   showSidebar.value = !showSidebar.value
   try {
@@ -395,7 +401,7 @@ watch(quick, () => {
 })
 onBeforeUnmount(() => clearTimeout(timer))
 
-function onPage(e: DataTablePageEvent): void {
+function onPage(e: Pick<DataTablePageEvent, 'first' | 'rows'>): void {
   first.value = e.first
   pageSize.value = e.rows
   void fetchPage()
@@ -414,6 +420,49 @@ function pickStatus(value: number | null): void {
   status.value = value
   commit()
 }
+
+// ── Une liste qui se lit sur un téléphone, qu'on ouvre d'un clic sur la ligne, qu'on relit à la demande ─────────────────────────
+const compact = ref(typeof matchMedia === 'function' && matchMedia('(max-width: 700px)').matches)
+let compactQuery: MediaQueryList | null = null
+const onCompact = (e: MediaQueryListEvent) => (compact.value = e.matches)
+onMounted(() => {
+  if (typeof matchMedia === 'function') {
+    compactQuery = matchMedia('(max-width: 700px)')
+    compact.value = compactQuery.matches
+    compactQuery.addEventListener('change', onCompact)
+  }
+  window.addEventListener('keydown', onEscape)
+})
+onBeforeUnmount(() => {
+  compactQuery?.removeEventListener('change', onCompact)
+  window.removeEventListener('keydown', onEscape)
+})
+/** Échap vide la sélection (sauf dans un champ de saisie ou une boîte ouverte, qui ont leur propre Échap). */
+function onEscape(e: KeyboardEvent): void {
+  if (e.key !== 'Escape' || !selection.value.length) return
+  // Une case cochée a le focus après un clic : Échap y vaut « tout désélectionner ». Un champ de saisie ou une boîte ouverte ont le leur.
+  if ((e.target as HTMLElement | null)?.closest('input:not([type="checkbox"]):not([type="radio"]), textarea, [role="dialog"], [role="listbox"], [role="menu"]')) return
+  selection.value = []
+}
+function openRow(row: DocRecord): void {
+  void router.push({ name: 'form', params: { doctype: props.doctype, name: row.name } })
+}
+/** Un clic sur la ligne l'ouvre, sauf sur ce qui a son propre rôle (un lien, un bouton, la case à cocher). */
+function onRowClick(e: DataTableRowClickEvent): void {
+  const target = e.originalEvent.target as HTMLElement | null
+  if (target?.closest('a, button, input, label, .p-checkbox')) return
+  if (window.getSelection()?.toString()) return // on était en train de sélectionner du texte
+  openRow(e.data as DocRecord)
+}
+const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
+const moreItems = computed<MenuItem[]>(() => [
+  { label: t.list.refresh, icon: 'pi pi-refresh', command: () => void fetchPage(), disabled: current.value !== 'list' },
+  { label: t.sidebar.toggle, icon: 'pi pi-align-left', command: toggleSidebar, disabled: current.value !== 'list' },
+  { separator: true },
+  { label: t.apiDocs.title, icon: 'pi pi-code', command: () => void router.push(`/api/${encodeURIComponent(props.doctype)}`) },
+])
+/** Aucun filtre ne cache de documents : la liste est vide pour de bon, on propose d'en créer un. */
+const trulyEmpty = computed(() => !loading.value && !total.value && !quick.value && !activeFilters.value && status.value === null)
 
 /** Un clic dans la barre latérale : filtre sur cette valeur, ou retire le filtre si elle y est déjà. */
 function pickValue(field: string, value: string | number | boolean): void {
@@ -456,13 +505,9 @@ function title(r: DocRecord): string {
       <h1 data-testid="list-title">{{ label }}</h1>
       <ViewSwitcher v-if="meta && views.length > 1" :views="views" :model-value="current" @update:model-value="choose" />
       <span class="desk-spacer" />
-      <BulkActions v-if="selection.length && selectable && current === 'list' && meta" :doctype="doctype" :meta="meta" :selection="selection" @done="void fetchPage()" />
-      <RouterLink v-if="meta" :to="`/api/${encodeURIComponent(doctype)}`" class="api-link" data-testid="api-docs">
-        <Button icon="pi pi-code" :aria-label="t.apiDocs.title" :title="t.apiDocs.title" text severity="secondary" size="small" />
-      </RouterLink>
-      <RouterLink v-if="canCreate && meta" :to="{ name: 'new', params: { doctype } }">
-        <Button :label="t.new" icon="pi pi-plus" size="small" data-testid="new-doc" />
-      </RouterLink>
+      <Button v-if="meta" icon="pi pi-ellipsis-h" text severity="secondary" size="small" :aria-label="t.list.more" :title="t.list.more" aria-haspopup="menu" data-testid="more-actions" @click="moreMenu?.toggle($event)" />
+      <Menu ref="moreMenu" :model="moreItems" popup />
+      <Button v-if="canCreate && meta" :as="RouterLink" :to="{ name: 'new', params: { doctype } }" :label="t.new" icon="pi pi-plus" size="small" data-testid="new-doc" />
     </div>
 
     <Message v-if="failure" severity="error" class="banner-error" data-testid="list-error">{{ failure }}</Message>
@@ -509,7 +554,7 @@ function title(r: DocRecord): string {
           />
           <Menu ref="viewsMenu" :model="viewsMenuItems" :popup="true" />
           <Button
-            v-if="current === 'list'"
+            v-if="current === 'list' && meta && sidebarFields(meta).length"
             icon="pi pi-align-left"
             size="small"
             :severity="showSidebar ? 'primary' : 'secondary'"
@@ -528,11 +573,32 @@ function title(r: DocRecord): string {
         <FilterBar v-if="showFilters" v-model:rows="filterRows" :fields="meta.fields" @apply="commit" />
       </template>
 
-      <div v-if="current === 'list'" :class="['list-layout', { 'with-sidebar': showSidebar }]">
-        <ListSidebar v-if="showSidebar" :meta="meta" :filters="applied" @pick="pickValue" />
+      <div v-if="current === 'list'" :class="['list-layout', { 'with-sidebar': hasSidebar }]">
+        <ListSidebar v-if="hasSidebar" :meta="meta" :filters="applied" @pick="pickValue" />
         <div class="desk-card list-main">
+        <div v-if="selection.length && selectable" class="selection-bar" role="region" :aria-label="t.list.selectionBar" data-testid="selection-bar">
+          <strong>{{ t.list.selected(selection.length) }}</strong>
+          <BulkActions :doctype="doctype" :meta="meta" :selection="selection" @done="void fetchPage()" />
+          <span class="desk-spacer" />
+          <Button :label="t.list.clearSelection" text severity="secondary" size="small" data-testid="clear-selection" @click="selection = []" />
+        </div>
+        <!-- Premier affichage : des lignes grises à la place d'un cadre vide (on voit venir la forme de la liste). -->
+        <div v-if="loading && !rows.length" class="skeleton-rows" role="status" :aria-label="t.loading" data-testid="list-skeleton">
+          <Skeleton v-for="n in 6" :key="n" height="1.4rem" :width="`${96 - n * 3}%`" />
+        </div>
+        <template v-else-if="compact">
+          <RecordCards v-if="rows.length" v-model:selection="selection" :doctype="doctype" :meta="meta" :rows="rows" :columns="columns" :selectable="selectable" :cell="cell" :title="title" @open="openRow" />
+          <div v-else class="empty-state" data-testid="list-empty">
+            <p class="desk-muted">{{ quick || activeFilters || status !== null ? t.list.emptyFiltered : t.list.empty(label) }}</p>
+            <Button v-if="trulyEmpty && canCreate" :as="RouterLink" :to="{ name: 'new', params: { doctype } }" :label="t.list.createFirst(label)" icon="pi pi-plus" size="small" data-testid="create-first" />
+          </div>
+          <Paginator v-if="total > pageSize || first > 0" :rows="pageSize" :first="first" :total-records="total" :rows-per-page-options="[20, 50, 100]" @page="onPage" />
+        </template>
         <DataTable
+          v-else
           v-model:selection="selection"
+          :row-class="() => 'row-open'"
+          @row-click="onRowClick"
           :value="rows"
           data-key="name"
           lazy
@@ -585,8 +651,9 @@ function title(r: DocRecord): string {
             <template #body="{ data }"><span class="desk-muted">{{ relativeTime(data.modified) }}</span></template>
           </Column>
           <template #empty>
-            <div class="desk-muted" style="padding: 1.5rem; text-align: center" data-testid="list-empty">
-              {{ quick || activeFilters || status !== null ? t.list.emptyFiltered : t.list.empty(label) }}
+            <div class="empty-state" data-testid="list-empty">
+              <p class="desk-muted">{{ quick || activeFilters || status !== null ? t.list.emptyFiltered : t.list.empty(label) }}</p>
+              <Button v-if="trulyEmpty && canCreate" :as="RouterLink" :to="{ name: 'new', params: { doctype } }" :label="t.list.createFirst(label)" icon="pi pi-plus" size="small" data-testid="create-first" />
             </div>
           </template>
         </DataTable>

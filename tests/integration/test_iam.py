@@ -6,10 +6,11 @@ administrateur de la plateforme). Le moteur applique ses droits (`iam:…`), son
 
 from __future__ import annotations
 
-from tests.integration.conftest import ROOT, XAUTH_ADMIN, boot_host
+from tests.integration.conftest import XAUTH_ADMIN, boot_host
 from tests.integration.test_xauth_real import RITA, add_member, admin, login
+from tests.support import FIXTURES
 
-IAM = {"iam": ROOT / "app" / "iam"}
+IAM = {"iam": FIXTURES / "iam"}
 
 
 async def api(h, method, path, adm_or_token, *, tenant=None, **kw):

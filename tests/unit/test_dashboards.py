@@ -6,8 +6,6 @@ qu'un utilisateur reçoit est FILTRÉ par ses droits.
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 import yaml
 
@@ -18,8 +16,6 @@ from xcore_doctype.errors import InvalidDefinition
 from xcore_doctype.registry import DocTypeRegistry
 from xcore_doctype.schema import parse_definition
 from xcore_doctype.workspaces import parse_workspace
-
-ROOT = Path(__file__).resolve().parents[2]
 
 
 class Log:
@@ -413,10 +409,13 @@ class TestShippedApps:
     """Les espaces et DocTypes livrés avec le dépôt se chargent : ce que le Desk montre en démonstration est contrôlé comme le reste."""
 
     def test_every_shipped_doctype_has_a_computable_dashboard(self):
+        from xcore_doctype import system_plugin_dir
         from xcore_doctype.dashboards import check_measured
+        from tests.support import FIXTURES
 
         reg = DocTypeRegistry()
-        for folder in sorted((ROOT / "app").glob("*/doctypes")):
+        folders = [system_plugin_dir() / "doctypes", *sorted(p / "doctypes" for p in FIXTURES.iterdir() if (p / "doctypes").is_dir())]
+        for folder in folders:
             reg.load_dir(folder)
         for name in reg.names():
             defn = reg.get(name).definition

@@ -12,6 +12,7 @@ import { changeLines, verbOf } from '@/lib/history'
 import { SERVICES } from '@/lib/services'
 import type { DocRecord, DocTypeMeta, FieldMeta } from '@/lib/types'
 import FormView from '@/views/FormView.vue'
+import { menuItem, openMore } from './menu'
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
   fieldname, fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
@@ -213,7 +214,8 @@ describe('FormView : renommer et dupliquer', () => {
     )
     await router.push('/app/Place/p1')
     await flushPromises()
-    await w.find('[data-testid="rename"]').trigger('click')
+    await openMore(w)
+    menuItem('rename')!.click()
     await flushPromises()
     const input = document.body.querySelector('[data-testid="rename-input"]') as HTMLInputElement
     expect(input.value).toBe('p1')
@@ -237,7 +239,8 @@ describe('FormView : renommer et dupliquer', () => {
     )
     await router.push('/app/Place/p1')
     await flushPromises()
-    await w.find('[data-testid="rename"]').trigger('click')
+    await openMore(w)
+    menuItem('rename')!.click()
     await flushPromises()
     const input = document.body.querySelector('[data-testid="rename-input"]') as HTMLInputElement
     input.value = 'autre'
@@ -251,15 +254,17 @@ describe('FormView : renommer et dupliquer', () => {
     const { w, router } = setup({ Tag: { ...TAG, naming: 'hash' } }, { get: vi.fn(async (_d: string, name: string) => rec('Tag', name, { color: 'red' })) })
     await router.push('/app/Tag/t1')
     await flushPromises()
-    expect(w.find('[data-testid="rename"]').exists()).toBe(false)
-    expect(w.find('[data-testid="duplicate"]').exists()).toBe(true)
+    await openMore(w)
+    expect(menuItem('rename')).toBeNull()
+    expect(menuItem('duplicate')).not.toBeNull()
   })
 
   it('Dupliquer ouvre un formulaire neuf pré-rempli par la copie, sans l’unique ni no_copy', async () => {
     const { w, router } = setup({ Contact: CONTACT, Company: COMPANY }, { get: vi.fn(async (_d: string, name: string) => rec('Contact', name, { email: 'a@x.fr', note: 'à rappeler', nickname: 'Bibi' })) })
     await router.push('/app/Contact/c1')
     await flushPromises()
-    await w.find('[data-testid="duplicate"]').trigger('click')
+    await openMore(w)
+    menuItem('duplicate')!.click()
     await flushPromises()
     expect(router.currentRoute.value.name).toBe('new')
     expect(router.currentRoute.value.query.copy).toBe('c1')

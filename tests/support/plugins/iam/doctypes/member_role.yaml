@@ -1,0 +1,7 @@
+# Une ligne de la table « Rôles supplémentaires » d'un membre.
+schema_version: 1
+name: Member Role
+label: Rôle du membre
+istable: true
+fields:
+  - { fieldname: role, label: Rôle, fieldtype: Link, options: Role, required: true, in_list_view: true }

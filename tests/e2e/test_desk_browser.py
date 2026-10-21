@@ -25,7 +25,7 @@ import pytest
 import yaml
 
 import xcore_doctype
-from tests.support import install_dev_auth, mint_token
+from tests.support import FIXTURES, install_dev_auth, mint_token
 
 ROOT = Path(__file__).resolve().parents[2]
 UI = ROOT / "ui"
@@ -70,15 +70,22 @@ def host(tmp_path):
     config["tenancy"] = {"enabled": True, "isolate_db": False}
     config["app"]["server"]["reload"] = False
     (tmp_path / "integration.yaml").write_text(yaml.safe_dump(config))
-    shutil.copy(ROOT / "main.py", tmp_path / "main.py")
+    # Le point d'entrée de l'hôte : écrit sur place (le `main.py` de la racine est local au développement, hors dépôt).
+    (tmp_path / "main.py").write_text(
+        "from contextlib import asynccontextmanager\n\nfrom fastapi import FastAPI\nfrom xcore import Xcore\n\n"
+        'xcore = Xcore(config_path="integration.yaml")\n\n\n'
+        "@asynccontextmanager\nasync def lifespan(app: FastAPI):\n    await xcore.boot(app)\n    yield\n    await xcore.shutdown()\n\n\n"
+        'app = FastAPI(title=".", version="0.1.0", lifespan=lifespan)\n\n'
+        "xcore.setup(app)\n\n\n@app.get(\"/health\")\nasync def health():\n    return {\"status\": \"ok\"}\n"
+    )
     (tmp_path / "app").mkdir()
     # Une COPIE du plugin : ce scénario se connecte par jeton collé (plugin de test `auth`, HMAC), pas par xauth : `login_url` y est retiré.
     shutil.copytree(PLUGIN_DIR, tmp_path / "app" / "xcore-doctype", ignore=shutil.ignore_patterns("__pycache__"))
     manifest = tmp_path / "app" / "xcore-doctype" / "plugin.yaml"
     manifest.write_text(re.sub(r"^(\s*)login_url:.*$", r"\1login_url: null", manifest.read_text(), flags=re.M))
     install_dev_auth(tmp_path / "app" / "auth", link=True)  # le plugin de TEST, nommé `auth` : les plugins du dépôt le `requires`
-    (tmp_path / "app" / "stock").symlink_to(ROOT / "app" / "stock")  # le stock : articles, entrepôts, mouvements soumettables
-    (tmp_path / "app" / "sales").symlink_to(ROOT / "app" / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
+    (tmp_path / "app" / "stock").symlink_to(FIXTURES / "stock")  # le stock : articles, entrepôts, mouvements soumettables
+    (tmp_path / "app" / "sales").symlink_to(FIXTURES / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
 
     port = _free_port()
     log = (tmp_path / "host.log").open("w")

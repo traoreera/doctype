@@ -2,9 +2,11 @@
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
+import Menu from 'primevue/menu'
 import Message from 'primevue/message'
+import type { MenuItem } from 'primevue/menuitem'
 import { useConfirm } from 'primevue/useconfirm'
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import FieldControl from '@/components/FieldControl.vue'
 import FileThumb from '@/components/FileThumb.vue'
@@ -17,7 +19,7 @@ import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
-import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isDirty, mapServerErrors, recordValues, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
+import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isAutoSection, isDirty, mapServerErrors, recordValues, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import { SUBMITTED, type DocRecord, type DocTypeMeta, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
@@ -190,11 +192,47 @@ function visibleColumns(section: LayoutSection): string[][] {
 }
 const sections = computed(() =>
   (meta.value?.layout ?? [])
-    .map((s, index) => ({ s, index, cols: visibleColumns(s) }))
+    .map((s, index) => ({ s, index, cols: visibleColumns(s), auto: isAutoSection(s) }))
     // Une section dont tous les champs sont masqués par leurs conditions disparaît (comme dans Frappe).
     .filter((x) => x.cols.length),
 )
 const fieldOf = (name: string) => meta.value?.fields.find((f) => f.fieldname === name)
+
+// ── Erreurs : on amène l'utilisateur AU premier champ à corriger, et le bandeau les liste ──────────────────────────────
+/** Le libellé d'une erreur : « Objet » pour un champ, « Lignes › Quantité (ligne 2) » pour une cellule. */
+function errorLabel(key: string): string {
+  const [first, row, col] = key.split('.')
+  const f = fieldOf(first ?? '')
+  if (!f) return key
+  if (row === undefined) return f.label ?? f.fieldname
+  const child = childOf(meta.value!, f)
+  const cf = child?.fields.find((c) => c.fieldname === col)
+  return `${f.label ?? f.fieldname} › ${cf?.label ?? col ?? ''} (${t.form.rowN(Number(row) + 1)})`
+}
+/** Les erreurs dans l'ordre du formulaire (celles qui n'ont pas de champ, comme le nom d'un document nommé à la saisie, en tête). */
+const errorLines = computed(() => {
+  const order = new Map((meta.value?.fields ?? []).map((f, i) => [f.fieldname, i]))
+  return Object.entries(errors.value)
+    .sort(([a], [b]) => (order.get(a.split('.')[0] ?? '') ?? -1) - (order.get(b.split('.')[0] ?? '') ?? -1) || a.localeCompare(b))
+    .map(([key, message]) => ({ key, label: key === 'name' ? t.form.nameLabel : errorLabel(key), message }))
+})
+/** Pose le focus sur le champ en erreur (ou sa cellule) et l'amène à l'écran. */
+function focusField(key: string): void {
+  const [field, row, col] = key.split('.')
+  const id = row === undefined ? `${formId}-${key === 'name' ? 'name' : field}` : `${formId}-${field}-${row}-${col}`
+  const target =
+    document.getElementById(id) ??
+    (document.querySelector(`[data-field="${field}"] input, [data-field="${field}"] textarea, [data-field="${field}"] [role="combobox"], [data-field="${field}"] button`) as HTMLElement | null)
+  if (!target) return
+  const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+  target.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' })
+  target.focus({ preventScroll: true })
+}
+async function revealFirstError(): Promise<void> {
+  await nextTick()
+  const first = errorLines.value[0]
+  if (first) focusField(first.key)
+}
 /** DynamicLink : le DocType que le champ de type désigne en ce moment (`null` tant qu'on ne l'a pas choisi). */
 const dynamicTarget = (f: FieldMeta): string | null => {
   if (f.fieldtype !== 'DynamicLink' || typeof f.options !== 'string') return null
@@ -267,6 +305,7 @@ async function save(): Promise<void> {
   if (Object.keys(found).length) {
     errors.value = found
     banner.value = t.form.fixErrors
+    void revealFirstError()
     return
   }
   errors.value = {}
@@ -298,6 +337,7 @@ async function save(): Promise<void> {
       const mapped = mapServerErrors(e, m)
       errors.value = mapped.fields
       banner.value = mapped.general
+      void revealFirstError()
     } else notify.error(e)
   } finally {
     if (here()) saving.value = false
@@ -342,6 +382,7 @@ async function transition(kind: 'submit' | 'cancel'): Promise<void> {
       const mapped = mapServerErrors(e, m)
       errors.value = mapped.fields
       banner.value = mapped.general
+      void revealFirstError()
     } else notify.error(e)
   } finally {
     if (here()) saving.value = false
@@ -406,6 +447,21 @@ function remove(): void {
     },
   })
 }
+
+// ── Le menu « ⋯ » : ce qu'on fait rarement (renommer, dupliquer, habiller, supprimer) ne prend pas la place de ce qu'on fait toujours ──────
+type MoreItem = MenuItem & { testid: string; danger?: boolean }
+const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
+const moreItems = computed<MoreItem[]>(() => {
+  const out: MoreItem[] = []
+  if (canRename.value) out.push({ label: t.form.rename, icon: 'pi pi-pencil', testid: 'rename', command: openRename })
+  if (canDuplicate.value) out.push({ label: t.form.duplicate, icon: 'pi pi-clone', testid: 'duplicate', command: duplicate })
+  if (writable.value) out.push({ label: t.override.edit, icon: 'pi pi-table', testid: 'form-layout-edit', command: () => void openLayout() })
+  if (canDelete.value && !props.embedded) {
+    if (out.length) out.push({ separator: true } as MoreItem)
+    out.push({ label: t.delete, icon: 'pi pi-trash', testid: 'delete', danger: true, command: remove })
+  }
+  return out
+})
 
 // ── Dupliquer, renommer ────────────────────────────────────
 function duplicate(): void {
@@ -558,16 +614,6 @@ onBeforeUnmount(() => {
         <span v-else class="status-pill ok" data-testid="status">{{ t.form.saved }}</span>
         <span class="desk-spacer" />
         <Button
-          v-if="writable"
-          :label="t.override.edit"
-          icon="pi pi-table"
-          severity="secondary"
-          text
-          size="small"
-          data-testid="form-layout-edit"
-          @click="openLayout"
-        />
-        <Button
           v-if="transitions.submit"
           :label="t.form.submit"
           icon="pi pi-send"
@@ -580,12 +626,27 @@ onBeforeUnmount(() => {
         />
         <Button v-if="transitions.cancel" :label="t.form.cancelDocument" icon="pi pi-ban" severity="danger" outlined size="small" :loading="saving" data-testid="cancel-doc" @click="confirmTransition('cancel')" />
         <Button v-if="transitions.amend" :label="t.form.amend" icon="pi pi-copy" size="small" :loading="saving" data-testid="amend" @click="amend" />
-        <Button v-if="canRename" :label="t.form.rename" icon="pi pi-pencil" severity="secondary" text size="small" data-testid="rename" @click="openRename" />
-        <Button v-if="canDuplicate" :label="t.form.duplicate" icon="pi pi-clone" severity="secondary" text size="small" data-testid="duplicate" @click="duplicate" />
-        <Button v-if="canDelete && !embedded" :label="t.delete" icon="pi pi-trash" severity="danger" text size="small" data-testid="delete" @click="remove" />
-        <Button v-if="writable" :label="t.save" icon="pi pi-check" size="small" :loading="saving" :disabled="!isNew && !touched" data-testid="save" @click="save" />      </div>
+        <Button v-if="moreItems.length" icon="pi pi-ellipsis-h" text severity="secondary" size="small" :aria-label="t.list.more" :title="t.list.more" aria-haspopup="menu" data-testid="more-actions" @click="moreMenu?.toggle($event)" />
+        <Menu ref="moreMenu" :model="moreItems" popup>
+          <template #item="{ item, props: slot }">
+            <a v-bind="slot.action" :data-testid="(item as MoreItem).testid" :class="{ 'danger-item': (item as MoreItem).danger }">
+              <span :class="item.icon" aria-hidden="true" />
+              <span class="p-menu-item-label">{{ item.label }}</span>
+            </a>
+          </template>
+        </Menu>
+        <Button v-if="writable" :label="t.save" icon="pi pi-check" size="small" :loading="saving" :disabled="!isNew && !touched" :title="t.form.saveShortcut" data-testid="save" @click="save" />
+      </div>
 
-      <Message v-if="banner" severity="error" class="banner-error" data-testid="form-banner">{{ banner }}</Message>
+      <Message v-if="banner" severity="error" class="banner-error" data-testid="form-banner" role="alert">
+        {{ banner }}
+        <ul v-if="errorLines.length" class="error-list" data-testid="error-list">
+          <li v-for="e in errorLines.slice(0, 6)" :key="e.key">
+            <button type="button" class="error-link" :data-testid="`error-link-${e.key}`" @click="focusField(e.key)">{{ e.label }}</button> : {{ e.message }}
+          </li>
+          <li v-if="errorLines.length > 6" class="desk-muted">{{ t.form.moreErrors(errorLines.length - 6) }}</li>
+        </ul>
+      </Message>
       <Message v-if="frozen && submittable" severity="info" class="banner-error" data-testid="form-frozen">{{ editableAfterSubmit ? t.form.frozenEditable : t.form.frozen }}</Message>
       <Message v-if="copiedFrom" severity="info" class="banner-error" data-testid="form-copy">{{ t.form.duplicatedFrom(copiedFrom) }}</Message>
 
@@ -615,7 +676,7 @@ onBeforeUnmount(() => {
             {{ x.s.section }}
           </header>
           <div v-show="!collapsed[x.index]" class="form-columns" :style="{ '--cols': x.cols.length }">
-            <div v-for="(col, i) in x.cols" :key="i">
+            <div v-for="(col, i) in x.cols" :key="i" :class="{ 'auto-cols': x.auto }">
               <template v-for="n in col" :key="n">
                 <TableField
                   v-if="fieldOf(n)?.fieldtype === 'Table' && states[n] && childOf(meta, fieldOf(n)!)"

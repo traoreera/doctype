@@ -1,6 +1,6 @@
 """Permissions de bout en bout : les grants viennent du jeton (comme chez xauth), HTTP et actions donnent le même résultat.
 
-Règles de `app/sales/doctypes/customer.yaml` (par GRANT, jamais par nom de rôle) :
+Règles de `tests/support/plugins/sales/doctypes/customer.yaml` (par GRANT, jamais par nom de rôle) :
 - `sales:customer:read` lit ; `sales:customer:write` modifie et crée ; `sales:customer:delete` supprime ;
 - `sales:customer:own` lit, modifie et crée ses PROPRES clients (`if_owner`), sans suppression.
 Auth compose les rôles à partir de ces grants, par tenant : le moteur ne voit que `principal["permissions"]`.

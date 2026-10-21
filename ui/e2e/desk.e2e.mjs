@@ -315,7 +315,13 @@ try {
     await toast('Document soumis')
     await page.locator('[data-testid="status"][data-docstatus="1"]').waitFor()
     assert((await page.getByTestId('status').innerText()) === 'Soumis', 'statut')
-    assert((await page.getByTestId('save').count()) === 0 && (await page.getByTestId('delete').count()) === 0, 'plus de Enregistrer ni de Supprimer')
+    assert((await page.getByTestId('save').count()) === 0, 'plus de Enregistrer')
+    if ((await page.getByTestId('more-actions').count()) > 0) {
+      await page.getByTestId('more-actions').click()
+      await page.locator('.p-menu').waitFor()
+      assert((await page.locator('.p-menu [data-testid="delete"]').count()) === 0, 'plus de Supprimer dans le menu « ⋯ »')
+      await page.keyboard.press('Escape')
+    }
     assert((await field('purpose').locator('input').count()) === 0, 'plus aucun champ de saisie')
     assert((await page.getByTestId('form-frozen').count()) === 1, 'le message « figé » est affiché')
     assert(JSON.stringify(await bins()) === '["12.500"]', `solde: ${await bins()}`)

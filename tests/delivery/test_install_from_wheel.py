@@ -27,7 +27,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from tests.support import install_dev_auth, mint_token
+from tests.support import FIXTURES, install_dev_auth, mint_token
 
 ROOT = Path(__file__).resolve().parents[2]
 SECRET = "delivery-test-secret"
@@ -143,11 +143,11 @@ class TestFreshInstance:
         py, env = venv
         tool = py.parent / "xcore-doctype"
         # `sales` cite l'article du plugin `stock` : sans lui, la cible de son champ Link est inconnue.
-        alone = run([tool, "check", ROOT / "app" / "sales" / "doctypes", "--owner", "sales"], cwd=instance, env=env)
+        alone = run([tool, "check", FIXTURES / "sales" / "doctypes", "--owner", "sales"], cwd=instance, env=env)
         assert alone.returncode == 1 and "Item" in alone.stderr
-        out = ok(run([tool, "check", ROOT / "app" / "sales" / "doctypes", "--owner", "sales", "--with", ROOT / "app" / "stock" / "doctypes"], cwd=instance, env=env))
+        out = ok(run([tool, "check", FIXTURES / "sales" / "doctypes", "--owner", "sales", "--with", FIXTURES / "stock" / "doctypes"], cwd=instance, env=env))
         assert "4 DocType(s) valides" in out and "sales.invoice_totals" in out
-        out = ok(run([tool, "check", ROOT / "app" / "stock" / "doctypes", "--owner", "stock"], cwd=instance, env=env))
+        out = ok(run([tool, "check", FIXTURES / "stock" / "doctypes", "--owner", "stock"], cwd=instance, env=env))
         assert "6 DocType(s) valides" in out and "stock.post_entry" in out and "stock:stock_entry:submit" in out
 
 
@@ -165,8 +165,8 @@ def running(venv, instance, request):
         main.write_text(main.read_text().replace('@app.get("/health")', 'xcore.setup(app)\n\n\n@app.get("/health")'))
     ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
     install_dev_auth(instance / "app" / "auth")  # le plugin de TEST : une instance neuve n'a pas xauth
-    shutil.copytree(ROOT / "app" / "stock", instance / "app" / "stock", ignore=ignore, dirs_exist_ok=True)
-    shutil.copytree(ROOT / "app" / "sales", instance / "app" / "sales", ignore=ignore, dirs_exist_ok=True)
+    shutil.copytree(FIXTURES / "stock", instance / "app" / "stock", ignore=ignore, dirs_exist_ok=True)
+    shutil.copytree(FIXTURES / "sales", instance / "app" / "sales", ignore=ignore, dirs_exist_ok=True)
 
     port = free_port()
     log = (instance / "uvicorn.log").open("w")

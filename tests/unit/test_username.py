@@ -1,27 +1,32 @@
-"""Le nom d'utilisateur d'xauth : sa règle, et l'évolution d'une base ANCIENNE (colonne et index ajoutés, rien d'autre touché)."""
+"""Le nom d'utilisateur d'xauth : sa règle, et l'évolution d'une base ANCIENNE (colonne et index ajoutés, rien d'autre touché).
+
+Le code d'xauth (`app/auth`) vit sur le poste de développement (hors dépôt) : sans lui, ce module saute.
+"""
 
 from __future__ import annotations
 
 import importlib.util
 import sys
-from pathlib import Path
 
 import pytest
 import sqlalchemy as sa
 
-ROOT = Path(__file__).resolve().parents[2]
+from tests.support import XAUTH_DIR
+
+pytestmark = pytest.mark.skipif(not XAUTH_DIR.is_dir(), reason="le vrai xauth (app/auth) est absent de ce poste")
 
 
 def load(name: str, relative: str):
-    spec = importlib.util.spec_from_file_location(name, ROOT / relative)
+    spec = importlib.util.spec_from_file_location(name, XAUTH_DIR / relative)
     module = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
     sys.modules[name] = module
     spec.loader.exec_module(module)  # type: ignore[union-attr]
     return module
 
 
-username = load("xauth_username", "app/auth/src/services/auth/username.py")
-db_upgrade = load("xauth_db_upgrade", "app/auth/src/utils/db_upgrade.py")
+# Chargé sous un autre nom, comme un hôte xcore chargerait le plugin : sans xauth sur le poste, rien ne s'exécute et le module saute.
+username = load("xauth_username", "src/services/auth/username.py") if XAUTH_DIR.is_dir() else None
+db_upgrade = load("xauth_db_upgrade", "src/utils/db_upgrade.py") if XAUTH_DIR.is_dir() else None
 
 
 @pytest.mark.parametrize("raw,expected", [("alice", "alice"), ("  Alice  ", "alice"), ("jean.dupont", "jean.dupont"), ("a_b-c", "a_b-c"), ("007", "007"), ("x" * 32, "x" * 32)])
