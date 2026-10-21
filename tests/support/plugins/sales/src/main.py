@@ -2,7 +2,8 @@
 
 1. il apporte ses DocTypes (`../doctypes/*.yaml`), dont le `module` est son propre nom : xcore-doctype refuse les autres ;
 2. il enregistre les hooks de confiance que ces DocTypes citent par leur nom ;
-3. il déclare à auth les grants que ses DocTypes exigent, tirés du YAML (source unique : rien n'est retapé ici).
+3. il déclare à auth les grants que ses DocTypes exigent, tirés du YAML (source unique : rien n'est retapé ici) ;
+4. il livre une extension JavaScript du Desk (`../desk/index.js`) : un panneau et une action sur la fiche Client, une page, une commande.
 """
 
 from pathlib import Path
@@ -19,6 +20,8 @@ class Plugin(TrustedBase):
         registry = self.get_service("doctype_registry")
         registry.load_dir(self.ctx.name, DOCTYPES)
         registry.load_workspaces(self.ctx.name, DOCTYPES.parent / "workspaces")  # APRÈS les DocTypes : les raccourcis les visent
+        # 4. son extension du Desk (D28) : servie seulement si l'opérateur l'autorise (`doctype.desk.extensions`).
+        registry.load_desk(self.ctx.name, DOCTYPES.parent / "desk")
         # Un SEUL `rbac.declare` pour tout le plugin, APRÈS le chargement des DocTypes : auth désactive les grants
         # qu'il ne retrouve plus dans la liste reçue.
         grants = self.get_service("doctype_grants").for_plugin(self.ctx.name)

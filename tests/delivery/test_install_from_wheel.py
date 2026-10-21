@@ -93,6 +93,8 @@ class TestWheel:
             # Le plugin `system` (réglages globaux) voyage dans le wheel, DocType compris.
             assert {"xcore_doctype/system_plugin_dir/plugin.yaml", "xcore_doctype/system_plugin_dir/src/main.py", "xcore_doctype/system_plugin_dir/doctypes/system_settings.yaml"} <= names
             assert any(n.startswith("xcore_doctype/ui/dist/assets/") and n.endswith(".js") for n in names)
+            # D28 : les deux modules que l'import map donne aux extensions, sous leurs noms FIXES.
+            assert {"xcore_doctype/ui/dist/shared/vue.js", "xcore_doctype/ui/dist/shared/sdk.js"} <= names
             assert not any("node_modules" in n or n.endswith(".map") for n in names)
             entry_points = next(z.read(n).decode() for n in names if n.endswith("entry_points.txt")).replace(" = ", "=")
         assert "[xcore.plugins]" in entry_points and "xcore-doctype=xcore_doctype:plugin_dir" in entry_points
@@ -204,7 +206,7 @@ class TestRunningInstance:
         asset = next(part for part in index.text.split('"') if part.startswith("./assets/") and part.endswith(".js"))
         js = httpx.get(f"{running}/desk/{asset[2:]}")
         assert js.status_code == 200 and js.headers["content-type"].startswith("text/javascript")
-        assert httpx.get(f"{running}/desk/config.json").json() == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login"}  # xauth est l'authentification par défaut
+        assert httpx.get(f"{running}/desk/config.json").json() == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login", "extensions": []}  # xauth est l'authentification par défaut
 
     def test_the_api_needs_an_identity(self, running):
         assert httpx.get(f"{running}/meta").status_code == 401

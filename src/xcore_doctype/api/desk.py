@@ -6,7 +6,9 @@ l'utilisateur ait un jeton. Elles ne donnent donc jamais accès à une donnée, 
 - `GET desk/`             : `index.html` du build (`src/xcore_doctype/ui/dist`, embarqué dans le wheel) ;
 - `GET desk/<fichier>`    : un fichier du build, et rien d'autre (la traversée de chemin est refusée) ;
 - `GET desk/config.json`  : où se trouve l'API et où se connecter. Dérivé de l'URL de la requête : le Desk n'a donc pas
-                            à connaître le préfixe sous lequel xcore monte le plugin (`app.plugin_prefix`).
+                            à connaître le préfixe sous lequel xcore monte le plugin (`app.plugin_prefix`). Liste aussi les
+                            extensions JavaScript que l'opérateur autorise (D28) ;
+- `GET desk/ext/<plugin>/<fichier>` : un fichier de l'extension d'un plugin autorisé, avec la même garde qu'un fichier du build.
 
 Le routeur du Desk est monté séparément de celui de l'API : la dépendance d'identité de l'API ne s'applique pas ici,
 et une route ajoutée ici ne peut pas l'hériter par accident (voir `tests/integration/test_desk.py`).
@@ -14,7 +16,10 @@ et une route ajoutée ici ne peut pas l'hériter par accident (voir `tests/integ
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import base64
+import hashlib
+import re
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 from urllib.parse import urlsplit
@@ -22,6 +27,7 @@ from urllib.parse import urlsplit
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 
+from ..desk_extensions import DeskExtensions
 from ..errors import ConfigurationError
 
 DEFAULT_DIST = Path(__file__).resolve().parent.parent / "ui" / "dist"
@@ -57,13 +63,15 @@ class DeskSettings:
     # Où le Desk envoie email et mot de passe (xauth : `/app/auth/login`). None : le Desk demande un jeton collé (développement).
     login_url: str | None = None
     dist_dir: Path = DEFAULT_DIST
+    # Les plugins dont l'extension JavaScript est servie (D28) : des noms, ou `*` pour tous. Vide : aucune (fermé par défaut).
+    extensions: tuple[str, ...] = field(default=())
 
     @classmethod
     def from_plugin_config(cls, config: Mapping[str, Any]) -> "DeskSettings":
         block = ((config or {}).get("doctype") or {}).get("desk") or {}
         if not isinstance(block, Mapping):
             raise ConfigurationError("doctype.desk doit être un objet")
-        unknown = sorted(set(block) - {"enabled", "login_url", "dist_dir"})
+        unknown = sorted(set(block) - {"enabled", "login_url", "dist_dir", "extensions"})
         if unknown:
             raise ConfigurationError(f"doctype.desk: clé(s) inconnue(s) {unknown}")
         out: dict[str, Any] = {}
@@ -86,11 +94,19 @@ class DeskSettings:
             if not isinstance(block["dist_dir"], str) or not block["dist_dir"]:
                 raise ConfigurationError("doctype.desk.dist_dir doit être un chemin")
             out["dist_dir"] = Path(block["dist_dir"]).expanduser()
+        if block.get("extensions") is not None:
+            names = block["extensions"]
+            if not isinstance(names, list) or not all(isinstance(n, str) and (n == "*" or re.fullmatch(r"[a-z0-9_]+", n)) for n in names):
+                raise ConfigurationError("doctype.desk.extensions doit être une liste de noms de plugins (ou [\"*\"] : tous)")
+            out["extensions"] = tuple(names)
         return cls(**out)
 
 
-def _csp(login_url: str | None) -> str:
-    """Politique stricte. Les styles en ligne restent permis : PrimeVue injecte ses feuilles de style à l'exécution."""
+def _csp(login_url: str | None, script_hashes: tuple[str, ...] = ()) -> str:
+    """Politique stricte. Les styles en ligne restent permis : PrimeVue injecte ses feuilles de style à l'exécution.
+
+    `script_hashes` : l'empreinte de l'import map d'`index.html` (D28), le seul script en ligne permis ; jamais `'unsafe-inline'`.
+    """
     connect = ["'self'"]
     if login_url and login_url.startswith(("http://", "https://")):
         parts = urlsplit(login_url)
@@ -98,7 +114,7 @@ def _csp(login_url: str | None) -> str:
     return "; ".join(
         [
             "default-src 'self'",
-            "script-src 'self'",
+            " ".join(["script-src 'self'", *(f"'sha256-{h}'" for h in script_hashes)]),
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data:",
             "font-src 'self' data:",
@@ -119,16 +135,43 @@ def _login_url(configured: str | None, api_base: str) -> str | None:
     return f"{prefix}/auth/login"
 
 
-def build_desk_router(settings: DeskSettings) -> APIRouter:
+_IMPORT_MAP = re.compile(r'<script type="importmap">(.*?)</script>', re.DOTALL)
+
+
+def inline_script_hashes(html: str) -> tuple[str, ...]:
+    """Les empreintes SHA-256 (base64) des import maps d'une page : ce que la CSP doit nommer pour que le navigateur les accepte."""
+    return tuple(base64.b64encode(hashlib.sha256(m.encode()).digest()).decode() for m in _IMPORT_MAP.findall(html))
+
+
+def _safe_file(root: Path, relative: str) -> Path | None:
+    """Le fichier `relative` sous `root`, ou `None` : traversée, lien symbolique qui sort, octet nul, absent."""
+    try:
+        target = (root / relative).resolve()
+    except (ValueError, OSError):  # octet nul, chemin trop long…
+        return None
+    # `resolve()` suit les liens symboliques : un lien qui sort du dossier est refusé comme une traversée.
+    return target if target.is_relative_to(root) and target.is_file() else None
+
+
+def build_desk_router(settings: DeskSettings, extensions: DeskExtensions | None = None) -> APIRouter:
     dist = settings.dist_dir.resolve()
+    extensions = extensions if extensions is not None else DeskExtensions()
     router = APIRouter(include_in_schema=False)
     common = {"X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer"}
-    html_headers = {
-        **common,
-        "Content-Security-Policy": _csp(settings.login_url),
-        "X-Frame-Options": "DENY",
-        "Cache-Control": "no-cache",
-    }
+    # L'empreinte de l'import map se relit quand `index.html` change (un nouveau build sous un serveur qui tourne).
+    seen: dict[str, Any] = {"stamp": None, "hashes": ()}
+
+    def html_headers(index: Path) -> dict[str, str]:
+        stat = index.stat()
+        stamp = (stat.st_mtime_ns, stat.st_size)
+        if seen["stamp"] != stamp:
+            seen["hashes"], seen["stamp"] = inline_script_hashes(index.read_text(encoding="utf-8")), stamp
+        return {
+            **common,
+            "Content-Security-Policy": _csp(settings.login_url, seen["hashes"]),
+            "X-Frame-Options": "DENY",
+            "Cache-Control": "no-cache",
+        }
 
     def not_built() -> Response:
         return JSONResponse(
@@ -150,7 +193,11 @@ def build_desk_router(settings: DeskSettings) -> APIRouter:
         path = request.url.path
         api_base = path[: -len("/desk/config.json")] if path.endswith("/desk/config.json") else ""
         return JSONResponse(
-            {"api_base": api_base, "login_url": _login_url(settings.login_url, api_base)},
+            {
+                "api_base": api_base,
+                "login_url": _login_url(settings.login_url, api_base),
+                "extensions": [{"name": e.name, "url": e.url} for e in extensions.served()],
+            },
             headers={**common, "Cache-Control": "no-store"},
         )
 
@@ -159,16 +206,22 @@ def build_desk_router(settings: DeskSettings) -> APIRouter:
         index = dist / "index.html"
         if not index.is_file():
             return not_built()
-        return FileResponse(index, media_type=_MEDIA[".html"], headers=html_headers)
+        return FileResponse(index, media_type=_MEDIA[".html"], headers=html_headers(index))
+
+    @router.get("/desk/ext/{plugin}/{asset_path:path}")
+    async def desk_extension_file(plugin: str, asset_path: str) -> Response:
+        # D28 : seulement l'extension d'un plugin que l'opérateur autorise ; inconnue et refusée répondent pareil.
+        ext = extensions.get(plugin)
+        target = _safe_file(ext.directory, asset_path) if ext is not None else None
+        media = _MEDIA.get(target.suffix.lower()) if target is not None else None
+        if target is None or media is None or media.startswith("text/html"):
+            return missing()  # ni type inconnu (servi comme quoi ?), ni page HTML (elle échapperait à la CSP du Desk)
+        return FileResponse(target, media_type=media, headers={**common, "Cache-Control": "no-cache"})
 
     @router.get("/desk/{asset_path:path}")
     async def desk_file(asset_path: str) -> Response:
-        try:
-            target = (dist / asset_path).resolve()
-        except (ValueError, OSError):  # octet nul, chemin trop long…
-            return missing()
-        # `resolve()` suit les liens symboliques : un lien qui sort du build est refusé comme une traversée.
-        if not target.is_relative_to(dist) or not target.is_file():
+        target = _safe_file(dist, asset_path)
+        if target is None:
             return missing() if dist.is_dir() else not_built()
         hashed = target.parent.name == "assets"  # Vite nomme ces fichiers d'après leur contenu : cache sans limite
         headers = {**common, "Cache-Control": "public, max-age=31536000, immutable" if hashed else "no-cache"}

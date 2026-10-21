@@ -16,6 +16,9 @@ import HistoryPanel from '@/components/HistoryPanel.vue'
 import OverrideEditor from '@/components/OverrideEditor.vue'
 import TableField from '@/components/TableField.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
+import ExtensionSlot from '@/extensions/ExtensionSlot.vue'
+import { useExtensions, type Owned } from '@/extensions/host'
+import type { FormAction, FormContext } from '@/extensions/types'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
@@ -48,6 +51,7 @@ const links = useLinks()
 const recents = useRecents()
 const users = useUsers()
 const profile = useProfile()
+const extensions = useExtensions()
 
 const meta = shallowRef<DocTypeMeta | null>(null)
 const record = shallowRef<DocRecord | null>(null)
@@ -451,6 +455,23 @@ function remove(): void {
 // ── Le menu « ⋯ » : ce qu'on fait rarement (renommer, dupliquer, habiller, supprimer) ne prend pas la place de ce qu'on fait toujours ──────
 type MoreItem = MenuItem & { testid: string; danger?: boolean }
 const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
+// ── Extensions du Desk (D28) : actions et panneaux que des plugins ajoutent à cette fiche ─────────────────────────────
+const extContext = computed<FormContext | null>(() =>
+  meta.value ? { doctype: props.doctype, name: props.name, record: record.value, meta: meta.value, values: values.value } : null,
+)
+const extActions = computed(() => (extContext.value && !props.embedded ? extensions.formActions(extContext.value) : []))
+const extPrimary = computed(() => extActions.value.filter((a) => a.primary))
+/** Un panneau parle d'un document ENREGISTRÉ (il le lit par l'API) : pas sur un brouillon jamais sauvé ni sur un réglage. */
+const extPanels = computed(() => (extContext.value && record.value && record.value.version > 0 && !props.embedded && !meta.value?.single ? extensions.formPanels(extContext.value) : []))
+async function reloadRecord(): Promise<void> {
+  if (!meta.value || !record.value) return
+  init(meta.value, await api.get(props.doctype, record.value.name))
+}
+function runExtension(action: Owned<FormAction>): void {
+  const ctx = extContext.value
+  if (ctx) void extensions.run(action.extension, (tools) => action.run({ ...ctx, ...tools, reload: reloadRecord }))
+}
+
 const moreItems = computed<MoreItem[]>(() => {
   const out: MoreItem[] = []
   if (canRename.value) out.push({ label: t.form.rename, icon: 'pi pi-pencil', testid: 'rename', command: openRename })
@@ -460,7 +481,11 @@ const moreItems = computed<MoreItem[]>(() => {
     if (out.length) out.push({ separator: true } as MoreItem)
     out.push({ label: t.delete, icon: 'pi pi-trash', testid: 'delete', danger: true, command: remove })
   }
-  return out
+  // Les actions des extensions passent en tête, séparées de celles du Desk.
+  const ext: MoreItem[] = extActions.value
+    .filter((a) => !a.primary)
+    .map((a) => ({ label: a.label, icon: `pi pi-${a.icon ?? 'bolt'}`, testid: `ext-action-${a.extension}-${a.label}`, danger: a.danger, command: () => runExtension(a) }))
+  return ext.length && out.length ? [...ext, { separator: true } as MoreItem, ...out] : [...ext, ...out]
 })
 
 // ── Dupliquer, renommer ────────────────────────────────────
@@ -626,6 +651,17 @@ onBeforeUnmount(() => {
         />
         <Button v-if="transitions.cancel" :label="t.form.cancelDocument" icon="pi pi-ban" severity="danger" outlined size="small" :loading="saving" data-testid="cancel-doc" @click="confirmTransition('cancel')" />
         <Button v-if="transitions.amend" :label="t.form.amend" icon="pi pi-copy" size="small" :loading="saving" data-testid="amend" @click="amend" />
+        <Button
+          v-for="a in extPrimary"
+          :key="`${a.extension}:${a.label}`"
+          :label="a.label"
+          :icon="`pi pi-${a.icon ?? 'bolt'}`"
+          :severity="a.danger ? 'danger' : 'secondary'"
+          outlined
+          size="small"
+          :data-testid="`ext-action-${a.extension}-${a.label}`"
+          @click="runExtension(a)"
+        />
         <Button v-if="moreItems.length" icon="pi pi-ellipsis-h" text severity="secondary" size="small" :aria-label="t.list.more" :title="t.list.more" aria-haspopup="menu" data-testid="more-actions" @click="moreMenu?.toggle($event)" />
         <Menu ref="moreMenu" :model="moreItems" popup>
           <template #item="{ item, props: slot }">
@@ -710,6 +746,12 @@ onBeforeUnmount(() => {
         </section>
         <button type="submit" hidden tabindex="-1" aria-hidden="true" />
       </form>
+
+      <!-- D28 : les panneaux que des extensions ajoutent à la fiche, chacun isolé (une erreur n'atteint pas la page). -->
+      <section v-for="p in extPanels" :key="`${p.extension}:${p.title ?? ''}`" class="desk-card form-section ext-panel" :data-extension="p.extension" data-testid="ext-panel">
+        <header v-if="p.title">{{ p.title }}</header>
+        <ExtensionSlot :extension="p.extension" :component="p.component" :props="{ doctype, name: record!.name, record, meta }" />
+      </section>
 
       <!-- Ce qui cite ce document : seulement un document enregistré qui n'est pas un réglage. (Sa propre chaîne `v-if` : il ne doit jamais faire taire l'activité ci-dessous.) -->
       <ConnectionsPanel v-if="record && record.doctype === doctype && record.version > 0 && !meta.single && !embedded" :doctype="doctype" :name="record.name" :version="record.version" />

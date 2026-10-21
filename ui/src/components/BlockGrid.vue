@@ -7,9 +7,11 @@ import LinksCard from '@/components/blocks/LinksCard.vue'
 import NumberCard from '@/components/blocks/NumberCard.vue'
 import QuickList from '@/components/blocks/QuickList.vue'
 import ShortcutGrid from '@/components/blocks/ShortcutGrid.vue'
+import ExtensionSlot from '@/extensions/ExtensionSlot.vue'
+import { useExtensions } from '@/extensions/host'
 import { t } from '@/i18n'
 import { colsOf, hasSize, isEditable, SIZES } from '@/lib/blocksedit'
-import type { ChartBlock, LinksCardBlock, NumberCardBlock, QuickListBlock, WorkspaceBlock, WorkspaceShortcut } from '@/lib/types'
+import type { ChartBlock, ExtensionBlock, LinksCardBlock, NumberCardBlock, QuickListBlock, WorkspaceBlock, WorkspaceShortcut } from '@/lib/types'
 
 /**
  * Les blocs d'un espace ou d'un tableau de bord, posés sur une grille de 12 colonnes (comme Frappe) : un titre, des raccourcis en rangée,
@@ -38,6 +40,9 @@ type Item =
   | { kind: 'chart'; key: string; block: ChartBlock; span: number }
   | { kind: 'quick'; key: string; block: QuickListBlock; span: number }
   | { kind: 'links'; key: string; block: LinksCardBlock; span: number }
+  | { kind: 'extension'; key: string; block: ExtensionBlock; span: number }
+
+const extensions = useExtensions()
 
 const items = computed<Item[]>(() => {
   const out: Item[] = []
@@ -70,6 +75,9 @@ const items = computed<Item[]>(() => {
         break
       case 'card':
         out.push({ kind: 'links', key, block: b, span: b.cols ?? 4 })
+        break
+      case 'extension':
+        out.push({ kind: 'extension', key, block: b, span: b.cols ?? 6 })
         break
     }
   })
@@ -173,6 +181,23 @@ function dragEnd(): void {
       <div v-else-if="it.kind === 'chart'" class="block-item" :style="{ '--span': fill ? 12 : it.span }"><ChartCard :block="it.block" /></div>
       <div v-else-if="it.kind === 'quick'" class="block-item" :style="{ '--span': fill ? 12 : it.span }"><QuickList :block="it.block" /></div>
       <div v-else-if="it.kind === 'links'" class="block-item" :style="{ '--span': fill ? 12 : it.span }"><LinksCard :block="it.block" /></div>
+      <!-- D28 : un bloc dessiné par une extension ; absent (extension non chargée), un encart discret plutôt qu'un trou. -->
+      <div v-else-if="it.kind === 'extension'" class="block-item" :style="{ '--span': fill ? 12 : it.span }" :data-component="it.block.component" data-testid="block-extension">
+        <ExtensionSlot
+          v-if="extensions.block(it.block.component)"
+          :extension="extensions.block(it.block.component)!.extension"
+          :component="extensions.block(it.block.component)!.component"
+          :props="{ ...(it.block.props ?? {}), label: it.block.label ?? null }"
+        />
+        <div v-else class="desk-card desk-muted ext-missing" role="status" data-testid="ext-missing">{{ t.extensions.missingBlock(it.block.component) }}</div>
+      </div>
     </template>
   </div>
 </template>
+
+<style scoped>
+.ext-missing {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+</style>

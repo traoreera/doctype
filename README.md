@@ -56,6 +56,32 @@ class Plugin(TrustedBase):
 enregistrer) : à mettre dans la CI du plugin (`--with` : les DocTypes des plugins dont il dépend, cibles de ses liens). Deux exemples
 complets sont livrés : `tests/support/plugins/sales/` (clients, factures à lignes) et `tests/support/plugins/stock/` (articles, entrepôts, mouvements soumettables) ; ce sont des jeux d'essai du moteur, pas des produits.
 
+### Étendre un autre plugin, étendre le Desk
+
+Un plugin peut aller au-delà de ses propres DocTypes (détails et règles : `doc/extensions.md`) :
+
+- **ajouter des champs et des hooks au DocType d'un plugin dont il dépend**, sans toucher à son YAML : `extends/*.yaml`
+  (`doctype: Stock Entry`, champs `sales_…`, `hooks: {on_submit: [sales.on_stock_entry]}`), chargé par
+  `doctype_registry.load_extensions(self.ctx.name, dossier)` ;
+- **ajouter des blocs à l'espace d'un autre module** : un fichier de `workspaces/` avec `contributes_to: stock` au lieu de `name` ;
+- **livrer une extension JavaScript du Desk** (pages, panneaux et actions de fiche, actions de liste, blocs d'espace, commandes) :
+  un module ES `desk/index.js` déclaré par `doctype_registry.load_desk(self.ctx.name, dossier)`, que l'opérateur autorise dans
+  `doctype.desk.extensions` (fermé par défaut). Il importe `vue` et `@xcore-doctype/desk` (la copie du Desk, par une import map), est
+  servi depuis la même origine sous la CSP stricte, et une panne de l'extension n'arrête jamais le Desk.
+
+```js
+import { defineExtension } from '@xcore-doctype/desk'
+
+export default defineExtension({
+  name: 'sales',
+  apiVersion: 1,
+  setup(desk) {
+    desk.form.action({ doctype: 'Customer', label: 'Nouvelle facture', run: ({ record, router }) =>
+      router.push({ name: 'new', params: { doctype: 'Invoice' }, query: { customer: record.name } }) })
+  },
+})
+```
+
 ### Un document soumettable
 
 ```yaml

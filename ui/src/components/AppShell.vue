@@ -5,6 +5,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } 
 import { useRoute, useRouter } from 'vue-router'
 import CommandPalette from '@/components/CommandPalette.vue'
 import { useNotify } from '@/composables/useNotify'
+import { useExtensions } from '@/extensions/host'
 import { t } from '@/i18n'
 import { piIcon } from '@/lib/icons'
 import { initials, readNav, writeNav } from '@/lib/navstate'
@@ -33,6 +34,11 @@ const theme = useTheme()
 const router = useRouter()
 const route = useRoute()
 const notify = useNotify()
+const extensions = useExtensions()
+// D28 : les liens que les extensions ajoutent sous un espace, ou dans un groupe à part quand elles n'en nomment aucun affiché.
+const spaceNames = computed(() => (workspaces.items ?? []).map((w) => w.name))
+const extLinks = (w: Workspace) => extensions.sidebarLinks(w.name)
+const looseLinks = computed(() => extensions.sidebarLinks(null, spaceNames.value))
 const services = useServices()
 
 // Le logo est servi par un lien signé de courte durée : s'il a expiré pendant que la page restait ouverte, on le redemande UNE fois.
@@ -48,6 +54,10 @@ function onLogoError(): void {
 }
 watch(() => prefs.logoUrl, () => (logoFailed.value = false))
 
+onMounted(() => {
+  // Une extension écartée au démarrage : une seule notification, le Desk fonctionne sans elle (le détail est dans la console).
+  if (extensions.failures.length) notify.warn(t.extensions.failed(extensions.failures.map((f) => f.name).join(', ')))
+})
 onMounted(async () => {
   recents.load()
   void tasks.refresh() // la pastille de « Mes tâches »
@@ -286,8 +296,17 @@ const items = computed(() => [
               </RouterLink>
             </template>
           </template>
+          <RouterLink v-for="l in extLinks(w)" :key="`${l.extension}:${l.to}`" class="desk-link ws-sublink" :to="l.to" :data-testid="`nav-ext-${l.extension}-${l.label}`">
+            <i :class="piIcon(l.icon, 'bolt')" aria-hidden="true" />{{ l.label }}
+          </RouterLink>
         </div>
       </div>
+      <template v-if="looseLinks.length">
+        <h6>{{ t.extensions.group }}</h6>
+        <RouterLink v-for="l in looseLinks" :key="`${l.extension}:${l.to}`" class="desk-link" :to="l.to" :data-testid="`nav-ext-${l.extension}-${l.label}`">
+          <i :class="piIcon(l.icon, 'bolt')" aria-hidden="true" />{{ l.label }}
+        </RouterLink>
+      </template>
       <div class="desk-sidebar-foot" v-if="hasSettings">
         <RouterLink class="desk-link" :to="{ name: 'settings' }" data-testid="nav-settings"><i class="pi pi-cog" />{{ t.settings.title }}</RouterLink>
       </div>

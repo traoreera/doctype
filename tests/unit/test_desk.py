@@ -128,7 +128,7 @@ class TestFiles:
 class TestConfig:
     async def test_it_tells_the_desk_where_the_api_is_from_the_request_itself(self, c):
         r = await c.get(f"{PREFIX}/desk/config.json")
-        assert r.json() == {"api_base": PREFIX, "login_url": None}
+        assert r.json() == {"api_base": PREFIX, "login_url": None, "extensions": []}
         assert r.headers["cache-control"] == "no-store"
 
     @pytest.mark.parametrize("prefix", ["/plugin/xcore-doctype", "/a/b/c/d", "/x"])
@@ -153,7 +153,7 @@ class TestConfig:
             assert (await client.get(f"{prefix}/desk/config.json")).json()["login_url"] == login
 
     async def test_it_contains_nothing_secret(self, c):
-        assert set((await c.get(f"{PREFIX}/desk/config.json")).json()) == {"api_base", "login_url"}
+        assert set((await c.get(f"{PREFIX}/desk/config.json")).json()) == {"api_base", "login_url", "extensions"}
 
 
 class TestNotBuilt:
@@ -211,3 +211,93 @@ class TestSettings:
     def test_rejected(self, block):
         with pytest.raises(ConfigurationError):
             self.parse(block)
+
+
+# ── D28 : les extensions JavaScript des plugins ────────────────────────────────────────────────────────────────────
+
+from xcore_doctype.desk_extensions import DeskExtensions  # noqa: E402
+from xcore_doctype.errors import InvalidDefinition  # noqa: E402
+
+
+@pytest.fixture
+def ext_dir(tmp_path):
+    d = tmp_path / "plugins" / "sales" / "desk"
+    (d / "chunks").mkdir(parents=True)
+    (d / "index.js").write_text("export default { name: 'sales', apiVersion: 1, setup() {} }")
+    (d / "chunks" / "panel.js").write_text("export const x = 1")
+    (d / "style.css").write_text(".x{}")
+    (d / "page.html").write_text("<script>alert(1)</script>")
+    (d / "notes.unknown").write_text("?")
+    (tmp_path / "plugins" / "sales" / "secret.py").write_text("KEY = 'x'")
+    return d
+
+
+def ext_client(dist, extensions, **settings):
+    app = FastAPI()
+    app.include_router(build_desk_router(DeskSettings(dist_dir=dist, **settings), extensions), prefix=PREFIX)
+    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t")
+
+
+class TestExtensions:
+    def test_settings_name_the_allowed_plugins(self):
+        assert DeskSettings.from_plugin_config({}).extensions == ()
+        assert DeskSettings.from_plugin_config({"doctype": {"desk": {"extensions": ["sales", "*"]}}}).extensions == ("sales", "*")
+        for bad in ("sales", ["Sales"], ["../x"], [1]):
+            with pytest.raises(ConfigurationError, match="extensions"):
+                DeskSettings.from_plugin_config({"doctype": {"desk": {"extensions": bad}}})
+
+    def test_registration_rules(self, ext_dir, tmp_path):
+        exts = DeskExtensions(["sales"])
+        assert exts.register("sales", ext_dir) is True
+        with pytest.raises(InvalidDefinition, match="déjà"):
+            exts.register("sales", ext_dir)
+        with pytest.raises(InvalidDefinition, match="index.js"):
+            exts.register("stock", tmp_path)
+        with pytest.raises(InvalidDefinition, match="nom"):
+            exts.register("my-plugin", ext_dir)
+        assert exts.register("hr", ext_dir) is False  # pas autorisée : déclarée, jamais servie
+        assert [e.name for e in exts.served()] == ["sales"] and exts.get("hr") is None
+
+    def test_the_version_follows_the_content(self, ext_dir):
+        a = DeskExtensions(["*"])
+        a.register("sales", ext_dir)
+        (ext_dir / "chunks" / "panel.js").write_text("export const x = 2")
+        b = DeskExtensions(["*"])
+        b.register("sales", ext_dir)
+        assert a.get("sales").version != b.get("sales").version
+        assert b.get("sales").url == f"ext/sales/index.js?v={b.get('sales').version}"
+
+    async def test_only_allowed_extensions_are_listed_and_served(self, dist, ext_dir):
+        exts = DeskExtensions(["sales"])
+        exts.register("sales", ext_dir)
+        exts.register("hr", ext_dir)
+        async with ext_client(dist, exts) as c:
+            config = (await c.get(f"{PREFIX}/desk/config.json")).json()
+            assert config["extensions"] == [{"name": "sales", "url": exts.get("sales").url}]
+            r = await c.get(f"{PREFIX}/desk/ext/sales/index.js")
+            assert r.status_code == 200 and r.headers["content-type"].startswith("text/javascript")
+            assert r.headers["cache-control"] == "no-cache" and r.headers["x-content-type-options"] == "nosniff"
+            assert (await c.get(f"{PREFIX}/desk/ext/sales/chunks/panel.js")).status_code == 200
+            assert (await c.get(f"{PREFIX}/desk/ext/sales/style.css")).headers["content-type"].startswith("text/css")
+            for path in ("hr/index.js", "ghost/index.js", "sales/page.html", "sales/notes.unknown", "sales/../secret.py",
+                         "sales/%2e%2e/secret.py", "sales/missing.js"):
+                assert (await c.get(f"{PREFIX}/desk/ext/{path}")).status_code == 404, path
+
+    async def test_a_symlink_out_of_the_extension_is_refused(self, dist, ext_dir, tmp_path):
+        (ext_dir / "leak.js").symlink_to(tmp_path / "plugins" / "sales" / "secret.py")
+        exts = DeskExtensions(["*"])
+        exts.register("sales", ext_dir)
+        async with ext_client(dist, exts) as c:
+            assert (await c.get(f"{PREFIX}/desk/ext/sales/leak.js")).status_code == 404
+
+    async def test_the_import_map_is_allowed_by_its_hash_only(self, dist):
+        import base64
+        import hashlib
+
+        body = '{"imports":{"vue":"./shared/vue.js"}}'
+        (dist / "index.html").write_text(f'<!doctype html><script type="importmap">{body}</script><title>Desk</title>')
+        async with ext_client(dist, DeskExtensions()) as c:
+            csp = (await c.get(f"{PREFIX}/desk/")).headers["content-security-policy"]
+        digest = base64.b64encode(hashlib.sha256(body.encode()).digest()).decode()
+        assert f"script-src 'self' 'sha256-{digest}';" in csp
+        assert "unsafe-inline'" not in csp.split("style-src")[0]

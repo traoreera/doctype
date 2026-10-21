@@ -336,3 +336,60 @@ export class ApiClient {
     throw err
   }
 }
+
+/**
+ * Les routes HTTP d'un PLUGIN (pas celles de xcore-doctype), avec la même session : jeton, organisation, renouvellement sur un 401.
+ * C'est le `plugin` qu'une extension du Desk reçoit (D28) : `desk.plugin.get('/pipeline')` appelle `<préfixe>/<plugin>/pipeline`.
+ */
+export class PluginClient {
+  private readonly raw: RawClient
+
+  constructor(transport: Transport, context: () => ClientContext, onUnauthorized?: () => boolean | Promise<boolean> | void) {
+    this.raw = new RawClient(transport, context, onUnauthorized)
+  }
+
+  get<T = unknown>(path: string, query?: Record<string, string | number | boolean>): Promise<T> {
+    const params = new URLSearchParams()
+    for (const [k, v] of Object.entries(query ?? {})) params.set(k, String(v))
+    return this.raw.request('GET', pluginPath(path), { params })
+  }
+
+  post<T = unknown>(path: string, body?: unknown): Promise<T> {
+    return this.raw.request('POST', pluginPath(path), body === undefined ? {} : { body })
+  }
+
+  put<T = unknown>(path: string, body?: unknown): Promise<T> {
+    return this.raw.request('PUT', pluginPath(path), body === undefined ? {} : { body })
+  }
+
+  patch<T = unknown>(path: string, body?: unknown): Promise<T> {
+    return this.raw.request('PATCH', pluginPath(path), body === undefined ? {} : { body })
+  }
+
+  delete<T = unknown>(path: string): Promise<T> {
+    return this.raw.request('DELETE', pluginPath(path))
+  }
+}
+
+/** Le transport authentifié d'`ApiClient` (jeton, organisation, renouvellement), sans ses méthodes de documents. */
+class RawClient extends ApiClient {
+  request<T>(method: HttpMethod, path: string, opts: { params?: URLSearchParams; body?: unknown } = {}): Promise<T> {
+    return this.call(method, path, opts)
+  }
+}
+
+/** Un chemin RELATIF au plugin : jamais une URL, jamais une remontée (`..`) vers les routes d'un autre plugin. */
+function pluginPath(path: string): string {
+  const p = path.startsWith('/') ? path : `/${path}`
+  if (p.startsWith('//') || /(^|\/)\.\.?(\/|$)/.test(p) || p.includes('\\') || /^\/[a-z][a-z0-9+.-]*:/i.test(p)) {
+    throw new TypeError(`chemin de plugin invalide : ${path}`)
+  }
+  return p
+}
+
+/** La racine des routes d'un plugin : celle de xcore-doctype (`/app/xcore-doctype`) donne le préfixe d'xcore (`/app`). */
+export function pluginBase(apiBase: string, plugin: string): string {
+  const i = apiBase.lastIndexOf('/')
+  return `${i >= 0 ? apiBase.slice(0, i) : ''}/${plugin}`
+}
+

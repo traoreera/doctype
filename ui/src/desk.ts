@@ -5,7 +5,10 @@ import { createPinia } from 'pinia'
 import { createApp, watch, type App as VueApp } from 'vue'
 import type { Router } from 'vue-router'
 import App from '@/App.vue'
-import { ApiClient } from '@/lib/api'
+import { useNotify } from '@/composables/useNotify'
+import { EXTENSIONS, ExtensionHost } from '@/extensions/host'
+import { loadExtensions, type Importer } from '@/extensions/loader'
+import { ApiClient, PluginClient, pluginBase } from '@/lib/api'
 import type { DeskConfig } from '@/lib/config'
 import { SERVICES, type Services } from '@/lib/services'
 import type { Transport } from '@/lib/transport'
@@ -26,6 +29,9 @@ export interface Desk {
   app: VueApp
   router: Router
   services: Services
+  extensions: ExtensionHost
+  /** Charge les extensions que `config.json` annonce (D28) : AVANT la première navigation, pour que leurs pages répondent aux liens directs. */
+  loadExtensions(importer?: Importer): Promise<void>
 }
 
 /**
@@ -75,6 +81,35 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
   app.use(ToastService)
   app.use(ConfirmationService)
 
+  // Les extensions des plugins (D28) : leurs appels passent par la même session que le Desk, leurs notifications par la même file.
+  const plugins = new Map<string, PluginClient>()
+  const extensions = new ExtensionHost({
+    api,
+    router,
+    notify: app.runWithContext(() => useNotify()),
+    plugin(name) {
+      let client = plugins.get(name)
+      if (!client) {
+        client = new PluginClient(
+          transport,
+          () => {
+            const s = useSession(pinia)
+            return { baseUrl: pluginBase(config.baseUrl, name), token: s.token, tenant: s.tenant }
+          },
+          async () => {
+            const s = useSession(pinia)
+            if ((await s.refresh()) === 'ok') return true
+            s.expire()
+            return false
+          },
+        )
+        plugins.set(name, client)
+      }
+      return client
+    },
+  })
+  app.provide(EXTENSIONS, extensions)
+
   useSession(pinia).start() // renouvelle le jeton avant son expiration (xauth)
   useTheme(pinia).start() // avant le premier affichage : pas d'éclair de thème clair pour qui préfère le sombre
 
@@ -94,5 +129,11 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
       if (!here.meta.public) void router.replace({ name: 'login', query: here.fullPath !== '/' ? { next: here.fullPath } : {} })
     },
   )
-  return { app, router, services }
+  return {
+    app,
+    router,
+    services,
+    extensions,
+    loadExtensions: (importer) => loadExtensions(extensions, config.extensions ?? [], importer ? { importer } : {}),
+  }
 }

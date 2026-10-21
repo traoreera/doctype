@@ -5,6 +5,8 @@ export interface DeskConfig {
   baseUrl: string
   /** Où envoyer e-mail et mot de passe ; `null` : le Desk demande un jeton collé (développement). */
   loginUrl: string | null
+  /** Les extensions JavaScript que l'opérateur autorise (D28), URL absolues sur la même origine que le Desk. */
+  extensions?: { name: string; url: string }[]
 }
 
 declare global {
@@ -15,6 +17,29 @@ declare global {
 }
 
 const trimSlash = (s: string) => s.replace(/\/+$/, '')
+
+/**
+ * Les extensions annoncées par `config.json`, gardées seulement si elles sont bien formées ET servies par la MÊME origine que le Desk
+ * (la CSP l'exigerait de toute façon : on n'essaie même pas de charger autre chose).
+ */
+export function readExtensions(raw: unknown, href: string): { name: string; url: string }[] {
+  if (!Array.isArray(raw)) return []
+  const here = new URL(href)
+  const out: { name: string; url: string }[] = []
+  for (const e of raw) {
+    if (!e || typeof e !== 'object') continue
+    const { name, url } = e as { name?: unknown; url?: unknown }
+    if (typeof name !== 'string' || !/^[a-z0-9_]+$/.test(name) || typeof url !== 'string') continue
+    let full: URL
+    try {
+      full = new URL(url, here)
+    } catch {
+      continue
+    }
+    if (full.origin === here.origin && !out.some((x) => x.name === name)) out.push({ name, url: full.toString() })
+  }
+  return out
+}
 
 /**
  * xauth sert `…/auth/login`, `…/auth/refresh`, `…/auth/logout`, `…/auth/select-tenant` et `…/auth/auth/verify-mfa` sous un même préfixe : l'adresse de
@@ -45,9 +70,13 @@ export async function loadConfig(
 
   try {
     const res = await transport.request({ method: 'GET', url: new URL('config.json', where.href).toString(), headers: { Accept: 'application/json' } })
-    const body = res.json as { api_base?: unknown; login_url?: unknown } | null
+    const body = res.json as { api_base?: unknown; login_url?: unknown; extensions?: unknown } | null
     if (res.status === 200 && body && typeof body.api_base === 'string') {
-      return { baseUrl: trimSlash(body.api_base), loginUrl: typeof body.login_url === 'string' ? body.login_url : null }
+      return {
+        baseUrl: trimSlash(body.api_base),
+        loginUrl: typeof body.login_url === 'string' ? body.login_url : null,
+        extensions: readExtensions(body.extensions, where.href),
+      }
     }
   } catch {
     // injoignable ou pas du JSON : on retombe sur le défaut

@@ -26,13 +26,14 @@ fichier d'espace en reçoit un fabriqué (un raccourci par type lisible) : aucun
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 
 from .dashboards import (
     MAX_BLOCKS,
     ChartBlock,
+    ExtensionBlock,
     HeaderBlock,
     LinksCardBlock,
     NumberCardBlock,
@@ -45,8 +46,8 @@ from .dashboards import (
 from .errors import InvalidDefinition
 
 __all__ = [
-    "ChartBlock", "HeaderBlock", "LinksCardBlock", "NumberCardBlock", "ParagraphBlock", "QuickListBlock", "ShortcutBlock", "SpacerBlock",
-    "WorkspaceDef", "parse_workspace", "module_label",
+    "ChartBlock", "ExtensionBlock", "HeaderBlock", "LinksCardBlock", "NumberCardBlock", "ParagraphBlock", "QuickListBlock", "ShortcutBlock", "SpacerBlock",
+    "WorkspaceContribution", "WorkspaceDef", "parse_contribution", "parse_workspace", "module_label",
 ]
 
 _Module = Annotated[str, StringConstraints(pattern=r"^[a-z0-9_]+$", max_length=63)]
@@ -78,6 +79,49 @@ class WorkspaceDef(BaseModel):
     def measured(self) -> list[NumberCardBlock | ChartBlock]:
         """Les cartes et graphiques : ceux dont les champs et filtres se contrôlent contre le DocType visé."""
         return [b for b in self.blocks if isinstance(b, (NumberCardBlock, ChartBlock))]
+
+
+class WorkspaceContribution(BaseModel):
+    """Des blocs qu'un plugin ajoute à l'espace d'un AUTRE module (D27, `doc/extensions.md`) : un fichier de ses `workspaces/` qui porte
+    `contributes_to` au lieu de `name`. Les blocs suivent ceux de l'espace visé (déclaré ou fabriqué), filtrés par les mêmes droits."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal[1]
+    contributes_to: _Module
+    blocks: Annotated[list[WorkspaceBlock], Field(min_length=1, max_length=MAX_BLOCKS)]
+
+    def doctypes(self) -> list[str]:
+        return WorkspaceDef.doctypes(self)  # type: ignore[arg-type]  # mêmes blocs, même lecture
+
+    def measured(self) -> list[NumberCardBlock | ChartBlock]:
+        return WorkspaceDef.measured(self)  # type: ignore[arg-type]
+
+
+def _validated(model: type[BaseModel], raw: object, source: str, what: str) -> Any:
+    if not isinstance(raw, dict):
+        raise InvalidDefinition(f"{source}: {what} doit être un objet")
+    try:
+        return model.model_validate(raw)
+    except ValidationError as e:
+        lines = []
+        for err in e.errors(include_url=False, include_input=False):
+            where = ".".join(str(p) for p in err["loc"]) or "(racine)"
+            lines.append(f"  - {where}: {err['msg']}")
+        raise InvalidDefinition(f"{source}: {what} invalide\n" + "\n".join(lines)) from e
+
+
+def parse_contribution(raw: object, *, source: str = "<contribution>") -> WorkspaceContribution:
+    """Valide une contribution d'espace brute ou lève `InvalidDefinition`."""
+    return _validated(WorkspaceContribution, raw, source, "la contribution d'espace")
+
+
+def with_contributions(ws: WorkspaceDef, contributions: list[WorkspaceContribution]) -> WorkspaceDef:
+    """L'espace suivi des blocs que d'autres plugins y ajoutent. Sans revalidation : chaque partie l'a été à son chargement
+    (et la somme peut dépasser `MAX_BLOCKS`, qui borne un FICHIER, pas ce que plusieurs plugins composent ensemble)."""
+    if not contributions:
+        return ws
+    return ws.model_copy(update={"blocks": [*ws.blocks, *(b for c in contributions for b in c.blocks)]})
 
 
 def parse_workspace(raw: object, *, source: str = "<espace>") -> WorkspaceDef:

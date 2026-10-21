@@ -18,4 +18,4 @@ app/
 data/
 alembic/
 alembic.ini
-extensions/
+/extensions/

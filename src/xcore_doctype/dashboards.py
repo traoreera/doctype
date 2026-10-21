@@ -19,9 +19,10 @@ droits de celui qui regarde. Ce module ne contient que les modèles (extra="forb
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING, Annotated, Any, Callable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, model_validator
 
 from . import aggregation
 from .errors import ValidationFailed
@@ -45,6 +46,7 @@ PART_TO_WHOLE = ("pie", "donut", "percentage")
 Function = Literal["count", "sum", "avg", "min", "max"]
 MAX_BLOCKS = 100
 MAX_LINKS = 30
+MAX_EXTENSION_PROPS = 2000
 
 
 class _Model(BaseModel):
@@ -138,9 +140,29 @@ class LinksCardBlock(_Model):
     cols: Cols = 4
 
 
+class ExtensionBlock(_Model):
+    """Un bloc dessiné par une extension JavaScript du Desk (D28) : `component` = `<plugin>.<nom>` que l'extension enregistre (`desk.blocks.add`).
+
+    Le serveur ne peut pas savoir si ce composant existe (il vit dans le navigateur) : il le sert à qui voit l'espace, le Desk montre un encart
+    discret quand aucune extension chargée ne le fournit. `props` : un petit objet JSON transmis tel quel au composant (jamais du code).
+    """
+
+    type: Literal["extension"]
+    component: Annotated[str, StringConstraints(pattern=r"^[a-z0-9_]+\.[a-z0-9_-]{1,40}$")]
+    label: _Label | None = None
+    props: dict[str, Any] | None = None
+    cols: Cols = 6
+
+    @model_validator(mode="after")
+    def _small_props(self) -> "ExtensionBlock":
+        if self.props is not None and len(json.dumps(self.props, ensure_ascii=False)) > MAX_EXTENSION_PROPS:
+            raise ValueError(f"props : au plus {MAX_EXTENSION_PROPS} caractères en JSON")
+        return self
+
+
 # Les blocs qu'un ESPACE accepte. Un DocType, lui, n'en accepte que ceux qui parlent de lui-même (voir `DOCTYPE_BLOCKS`).
 WorkspaceBlock = Annotated[
-    HeaderBlock | ParagraphBlock | SpacerBlock | ShortcutBlock | NumberCardBlock | ChartBlock | QuickListBlock | LinksCardBlock,
+    HeaderBlock | ParagraphBlock | SpacerBlock | ShortcutBlock | NumberCardBlock | ChartBlock | QuickListBlock | LinksCardBlock | ExtensionBlock,
     Field(discriminator="type"),
 ]
 DashboardBlock = Annotated[HeaderBlock | NumberCardBlock | ChartBlock, Field(discriminator="type")]
