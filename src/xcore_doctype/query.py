@@ -342,6 +342,21 @@ class Query:
             stmt = stmt.with_for_update(read=True, key_share=True)
         return set((await self._session.execute(stmt)).scalars())
 
+    async def existing_docstatus(self, doctype: str, names: Collection[str], *, scope: Scope, lock: bool = False) -> dict[str, int]:
+        """Parmi `names`, les documents lisibles par `scope` AVEC leur `docstatus` (contrôle de l'état d'une cible de lien, D23).
+
+        Même lecture que `existing_names` (existence + périmètre, verrou `lock` identique) : le champ en plus permet de refuser
+        un lien vers un document annulé, par exemple.
+        """
+        if not names:
+            return {}
+        stmt = select(self._t.c.name, self._t.c.docstatus).where(
+            self._scope(self._t.c.doctype == doctype, self._t.c.name.in_(sorted(names)), scope=scope)
+        )
+        if lock:
+            stmt = stmt.with_for_update(read=True, key_share=True)
+        return {row[0]: row[1] for row in (await self._session.execute(stmt)).all()}
+
     async def lock_for_delete(self, doctype: str, name: str) -> None:
         """Prend le verrou exclusif de la ligne avant de chercher ses références (`FOR UPDATE`, sans effet sur SQLite)."""
         stmt = select(self._t.c.name).where(
@@ -501,6 +516,29 @@ class Query:
         stmt = select(v).where(self._vscope(v.c.doctype == doctype, v.c.docname == docname, v.c.action == "delete")).order_by(v.c.id.desc()).limit(1)
         row = (await self._session.execute(stmt)).mappings().first()
         return self._version(row) if row is not None else None
+
+    async def purge_versions(self, doctype: str, docname: str, *, keep: int) -> int:
+        """Rétention d'historique : ne garde que les `keep` entrées les plus récentes de CE document, purge le reste (D24).
+
+        À appeler DANS la transaction du document, juste après `add_version` : la conservation est un effet immédiat de
+        l'écriture, pas d'un entretien de nuit. Renvoie le nombre d'entrées supprimées.
+        """
+        v = self._versions
+        base = self._vscope(v.c.doctype == doctype, v.c.docname == docname)
+        kept = select(v.c.id).where(base).order_by(v.c.id.desc()).limit(keep)
+        return (await self._session.execute(delete(v).where(base, v.c.id.not_in(kept)))).rowcount
+
+    async def purge_versions_before(self, before: datetime, *, doctype: str | None = None) -> int:
+        """Les entrées d'historique du tenant PLUS VIEILLES que `before` (d'un seul DocType si on le nomme).
+
+        Action opérateur (`doc.history.purge`) : la rétention par document (`purge_versions`) ne rattrape pas le trop-plein
+        d'avant une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        """
+        v = self._versions
+        conds: list[Any] = [v.c.creation < before]
+        if doctype is not None:
+            conds.append(v.c.doctype == doctype)
+        return (await self._session.execute(delete(v).where(self._vscope(*conds)))).rowcount
 
     # ── Vues sauvegardées (phase C) ───────────────────────────
     async def saved_views(self, doctype: str, owner: str) -> list[dict[str, Any]]:

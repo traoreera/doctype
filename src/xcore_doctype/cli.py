@@ -7,7 +7,7 @@ tenancy désactivée). Voir doc/phase4.md.
 
     xcore-doctype install ./app            # dépose ./app/xcore-doctype/ et vérifie ./integration.yaml
     xcore-doctype doctor                   # revérifie une instance déjà installée
-    xcore-doctype check app/sales/doctypes --owner sales --with app/stock/doctypes   # valide un dossier (CI d'un plugin métier)
+    xcore-doctype check tests/support/plugins/sales/doctypes --owner sales --with tests/support/plugins/stock/doctypes   # valide un dossier (CI d'un plugin métier)
     xcore-doctype path                     # dossier du plugin dans le paquet (pour `xcli plugin local link`)
 """
 

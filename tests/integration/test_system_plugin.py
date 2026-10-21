@@ -79,4 +79,6 @@ def test_the_shipped_plugin_is_valid_and_ships_with_the_package():
 
     lines, findings = check([system_plugin_dir() / "doctypes"], "system")
     assert "1 DocType(s) valides" in lines[0] and not [f for f in findings if f.level == "error"]
-    assert (ROOT / "app" / "system").resolve() == system_plugin_dir().resolve()
+    dev_link = ROOT / "app" / "system"  # lien de confort de l'hôte de développement : présent seulement sur le poste du développeur
+    if dev_link.exists() or dev_link.is_symlink():
+        assert dev_link.resolve() == system_plugin_dir().resolve()

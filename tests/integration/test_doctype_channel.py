@@ -7,9 +7,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tests.integration.conftest import ROOT, boot_host
+from tests.integration.conftest import boot_host
+from tests.support import FIXTURES
 
-SALES, STOCK = ROOT / "app" / "sales", ROOT / "app" / "stock"
+SALES, STOCK = FIXTURES / "sales", FIXTURES / "stock"
 # `sales` exige `stock` (requires) : l'article, cible des lignes de facture, est un DocType du module stock.
 PLUGINS = {"sales": SALES, "stock": STOCK}
 GRANTS = [f"sales:{t}:{a}" for t in ("customer", "country", "invoice") for a in ("read", "write", "delete")] + [

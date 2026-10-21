@@ -1,0 +1,19 @@
+# Les réglages du module RH : UN seul document par organisation (`single`), qu'on ouvre depuis « Paramètres ».
+schema_version: 1
+name: HR Settings
+label: Paramètres RH
+module: hr
+icon: cog
+single: true
+fields:
+  - { fieldname: annual_leave_days, label: Jours de congé payé par an, fieldtype: Number, default: 25 }
+  - { fieldname: week_start, label: La semaine commence le, fieldtype: Select, options: [Lundi, Dimanche], default: Lundi }
+  - { fieldname: manager_approval, label: Validation par le responsable, fieldtype: Boolean, default: true }
+  - { fieldname: hr_email, label: E-mail du service RH, fieldtype: Text, format: email }
+  - { fieldname: brand_color, label: Couleur de l'entreprise, fieldtype: Color, default: "#2a78d6" }
+  - { fieldname: logo, label: Logo, fieldtype: Image, max_mb: 2 }
+layout:
+  - section: Congés
+    columns: [[annual_leave_days, manager_approval], [week_start]]
+  - section: Entreprise
+    columns: [[hr_email, brand_color], [logo]]

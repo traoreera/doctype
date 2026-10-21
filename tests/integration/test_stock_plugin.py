@@ -1,6 +1,6 @@
 """Le module Stock sur un vrai hôte xcore : le plugin `stock` se charge, ses hooks et ses DocTypes suivent, et le parcours HTTP tient.
 
-Pas de mock : un `Xcore` réel, le plugin du dépôt (`app/stock`) lié tel quel, des jetons de développement. Les règles fines du stock
+Pas de mock : un `Xcore` réel, le plugin de test (`tests/support/plugins/stock`) lié tel quel, des jetons de développement. Les règles fines du stock
 (concurrence, antidatage…) sont dans tests/unit/test_stock.py ; ici on vérifie le BRANCHEMENT : manifeste, hooks enregistrés sous
 leurs noms, grants déclarés, routes de transition, codes d'erreur vus d'un client HTTP.
 """
@@ -9,9 +9,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from tests.integration.conftest import ROOT, boot_host
+from tests.integration.conftest import boot_host
+from tests.support import FIXTURES
 
-STOCK = ROOT / "app" / "stock"
+STOCK = FIXTURES / "stock"
 KEEPER = [
     "stock:item:read", "stock:item:write", "stock:warehouse:read", "stock:warehouse:write",
     "stock:stock_entry:read", "stock:stock_entry:write", "stock:stock_entry:delete", "stock:stock_entry:submit", "stock:stock_entry:cancel",

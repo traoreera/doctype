@@ -1,0 +1,13 @@
+# Une ligne de mouvement. Quel entrepôt existe dépend de la NATURE du mouvement, un champ du parent que la ligne lit par `parent_purpose` :
+# réception -> cible seulement ; sortie -> source seulement ; transfert -> les deux. Le Desk masque la colonne qui n'a pas lieu d'être
+# et le serveur réévalue ces conditions (une cellule obligatoire ne peut pas manquer). Le hook `stock.check_entry` garde le reste
+# (quantité positive, transfert vers un AUTRE entrepôt, pas d'entrepôt superflu).
+schema_version: 1
+name: Stock Entry Line
+label: Ligne de mouvement
+istable: true
+fields:
+  - { fieldname: item, label: Article, fieldtype: Link, options: Item, required: true }
+  - { fieldname: qty, label: Quantité, fieldtype: Decimal, decimals: 3, required: true, unit_from: item.uom }
+  - { fieldname: source_warehouse, label: Entrepôt source, fieldtype: Link, options: Warehouse, depends_on: "parent_purpose != 'Réception'", mandatory_depends_on: "parent_purpose in ['Sortie', 'Transfert']" }
+  - { fieldname: target_warehouse, label: Entrepôt cible, fieldtype: Link, options: Warehouse, depends_on: "parent_purpose != 'Sortie'", mandatory_depends_on: "parent_purpose in ['Réception', 'Transfert']" }

@@ -11,7 +11,7 @@ app:
   server_key_iterations: 100000
 
   fastapi:
-    title: ""
+    title: "doctype"
     version: "0.1.0"
     docs_url: "/docs"
     redoc_url: "/redoc"
@@ -35,8 +35,8 @@ tenancy:
 
 plugins:
   directory: ./app
-  secret_key: "b960fddd7d6a6bc4e6770c455d2fa546ce2e70c264c123a512fb0503cec23aba"
-  strict_trusted: false
+  secret_key: ${PLUGIN_SECRET}
+  strict_trusted: false # for developement
   interval: 10
   entry_point: src/main.py
 
@@ -46,7 +46,7 @@ services:
       # `sqlite+aio` = adaptateur asynchrone (D11). `sqlite` seul est l'adaptateur synchrone.
       type: sqlite+aio
       url: sqlite+aiosqlite:///./xcore.db
-      echo: false
+      echo: true
 
   cache:
     backend: memory
@@ -71,7 +71,7 @@ services:
         queue_size: 100
 
   scheduler:
-    enabled: false
+    enabled: true
     backend: memory
     timezone: UTC
 

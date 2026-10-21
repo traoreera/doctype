@@ -1,0 +1,29 @@
+# Un membre de l'organisation : son compte xauth (e-mail, nom d'utilisateur, en lecture seule) et ses ACCÈS : un rôle principal, des rôles supplémentaires,
+# des permissions directes, et s'il est actif ici. Le propriétaire de l'organisation gère tout cela depuis cette fiche. DocType VIRTUEL (`source: xauth`) : le
+# nom d'un document est l'identifiant du compte ; on ne crée pas un membre ici (il rejoint l'organisation par invitation).
+schema_version: 1
+name: Member
+label: Membre
+module: iam
+icon: users
+source: xauth
+title_field: email
+fields:
+  - { fieldname: email, label: Adresse e-mail, fieldtype: Text, read_only: true, in_list_view: true }
+  - { fieldname: username, label: Nom d'utilisateur, fieldtype: Text, read_only: true, in_list_view: true }
+  - { fieldname: is_owner, label: Propriétaire, fieldtype: Boolean, read_only: true, in_list_view: true }
+  - { fieldname: is_active, label: Actif, fieldtype: Boolean, default: true, in_list_view: true, description: "Un membre désactivé ne se connecte plus à CETTE organisation (son compte reste actif ailleurs)" }
+  - { fieldname: joined_at, label: Membre depuis, fieldtype: Datetime, read_only: true }
+  - { fieldname: primary_role, label: Rôle principal, fieldtype: Link, options: Role, in_list_view: true, description: "Un rôle de l'organisation ; le rôle de la plateforme d'un membre se garde tel quel" }
+  - { fieldname: roles, label: Rôles supplémentaires, fieldtype: Table, options: Member Role, description: "S'ajoutent au rôle principal" }
+  - { fieldname: permissions, label: Permissions directes, fieldtype: Table, options: Member Permission, description: "Accordées en plus de celles de ses rôles (délégables seulement)" }
+layout:
+  - section: Compte
+    columns: [[email, username], [is_owner, is_active, joined_at]]
+  - section: Accès
+    columns: [[primary_role, roles], [permissions]]
+permissions:
+  read: [iam:member:read]  # délégable : tout membre qui l'a lit l'annuaire ; rôles et permissions restent au propriétaire (xauth juge)
+  write: [{ grant: iam:member:write, tenant_grantable: false }]
+  create: []
+  delete: [{ grant: iam:member:delete, tenant_grantable: false }]

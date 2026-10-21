@@ -12,6 +12,13 @@ from pathlib import Path
 
 DEV_AUTH_DIR = Path(__file__).resolve().parent / "dev-auth"
 
+# Les plugins de démonstration/test versionnés (`sales`, `stock`, `hr`, `iam`) vivent ICI, pas dans `app/` :
+# `app/` n'est plus du dépôt (gitignoré, hôte de développement local). Les tests ne dépendent que de ce dossier.
+FIXTURES = Path(__file__).resolve().parent / "plugins"
+
+# Le VRAI xauth : sur le poste de développement (`app/auth`), hors dépôt. Sans lui, les tests qui le démarrent sautent.
+XAUTH_DIR = Path(__file__).resolve().parents[2] / "app" / "auth"
+
 _spec = importlib.util.spec_from_file_location("xdt_test_devauth", DEV_AUTH_DIR / "src" / "main.py")
 assert _spec is not None and _spec.loader is not None
 devauth = importlib.util.module_from_spec(_spec)

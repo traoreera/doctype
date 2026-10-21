@@ -39,7 +39,7 @@ from datetime import UTC, date, datetime, tzinfo
 from types import MappingProxyType
 from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, Sequence
 
-from . import aggregation, fieldtypes, memory
+from . import aggregation, fieldtypes, integrity, memory
 from .builder import CompiledDocType
 from .decimals import canonical
 from .context import RequestContext
@@ -50,6 +50,7 @@ from .errors import (
     DoctypeError,
     DocumentInUse,
     DocumentLocked,
+    InvalidDefinition,
     InvalidDocStatus,
     NotFound,
     PermissionDenied,
@@ -1361,6 +1362,62 @@ class DocumentService:
         except ValueError as e:
             raise DoctypeError("secret_unreadable", str(e), status=500) from None
 
+    # ── Contrôle rétroactif de l'unicité (D25) ────────────────
+    async def check_unique(self, *, doctypes: Sequence[str] | None = None, tenant: str | None = None) -> list[dict[str, Any]]:
+        """Les valeurs `unique` déjà en double : `[{doctype, tenant, field, value, names}]` (voir `integrity.py`).
+
+        L'installation entière, ou les seuls types nommés. Rien n'est écrit ni corrigé : c'est un contrôle, pas un
+        nettoyage. Sous RLS, le scan doit nommer l'organisation (la politique ne laisserait voir qu'elle sans cela).
+        """
+        targets: list[tuple[str, tuple[str, ...]]] = []
+        for name in self._registry.names() if doctypes is None else doctypes:
+            compiled = self._registry.get(name)
+            fields = compiled.definition.unique_fields
+            if fields and not compiled.definition.istable and compiled.definition.source is None:
+                targets.append((compiled.definition.name, fields))
+        out: list[dict[str, Any]] = []
+        async with self._db.session() as session:
+            if self._rls:
+                if tenant is None:
+                    raise DoctypeError("tenant_required", "RLS actif : nommez l'organisation (tenant) à contrôler", status=400)
+                await bind_tenant(session, tenant)  # AVANT toute autre instruction, comme partout sous RLS
+            for name, fields in sorted(targets):
+                out.extend(await integrity.unique_conflicts(session, name, fields, tenant=tenant))
+        return out
+
+    async def ensure_unique_clean(self, compiled: CompiledDocType) -> None:
+        """Avant d'ACTIVER un champ `unique` sur un type qui a déjà des documents : un double existant refuse le chargement.
+
+        Rien n'est écrit ni corrigé : le message dit le champ et le nombre de documents, jamais les noms ni l'organisation
+        (un chargement n'a pas d'appelant à qui les nommer). Sous RLS, le scan ne verrait qu'un tenant : prévenir faux
+        serait pire que ne pas prévenir, on préfère ne pas prévenir du tout.
+        """
+        fields = compiled.definition.unique_fields
+        if not fields or compiled.definition.source is not None:
+            return
+        if self._rls:
+            self._log.warning("retroactive unique check skipped (RLS would hide other organisations)", doctype=compiled.definition.name)
+            return
+        async with self._db.session() as session:
+            conflicts = await integrity.unique_conflicts(session, compiled.definition.name, fields)
+        if conflicts:
+            summary = ", ".join(f"{c['field']} ({len(c['names'])} documents)" for c in conflicts[:5])
+            more = f" et {len(conflicts) - 5} autres" if len(conflicts) > 5 else ""
+            raise InvalidDefinition(
+                f"{compiled.definition.name}: `unique: true` rétroactif rencontre des valeurs déjà prises — "
+                f"{summary}{more} : corrigez les données avant d'activer le champ"
+            )
+
+    async def purge_history(self, tenant: str, before: datetime, doctype: str | None = None) -> int:
+        """L'historique du tenant plus vieux que `before` disparaît (action opérateur `doc.history.purge`, D24).
+
+        La rétention par document (`max_versions`) purge à chaque écriture ; celle-ci rattrape le trop-plein d'avant
+        une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        """
+        ctx = RequestContext.system(tenant, "history purge")
+        async with self._query(ctx) as q:
+            return await q.purge_versions_before(before, doctype=doctype)
+
     def _finalizer(self, compiled: CompiledDocType, scope: Scope, owner: str) -> Finalize:
         def finalize(data: Any, *, old: Mapping[str, Any] | None = None) -> dict[str, Any]:
             clean = compiled.validate_data(data, old=old)
@@ -1389,6 +1446,8 @@ class DocumentService:
         await q.add_version(
             compiled.definition.name, doc.name, version=doc.version, action=action, user=who, doc_owner=doc.owner, changes=changes
         )
+        # Rétention (D24) : les `max_versions` entrées les plus récentes survivent dans la MÊME transaction.
+        await q.purge_versions(compiled.definition.name, doc.name, keep=compiled.definition.max_versions)
 
     async def _check_links(
         self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None
@@ -1399,22 +1458,24 @@ class DocumentService:
         recontrôlée : le lien est déjà là, et un document que l'utilisateur ne peut plus lire ne doit pas l'empêcher de
         corriger autre chose. « Introuvable » couvre aussi « illisible » : on ne révèle pas l'existence d'un document hors
         périmètre. Les lignes cibles sont verrouillées (`lock`) jusqu'au commit : voir `_check_not_referenced`.
+        Quand un champ porte `target_status` (D23), l'état de la cible est lu dans la même requête et un état refusé
+        échoue avec le type `link_status` (distinct de `link_not_found` : la cible existe, c'est son état qui gêne).
         """
-        # DocType cible -> valeur -> où elle est portée (chemin du champ : `country` ou `items.0.item`)
-        wanted: dict[str, dict[str, list[str]]] = {}
+        # DocType cible -> valeur -> où elle est portée (chemin du champ : `country` ou `items.0.item`) et l'état exigé de la cible
+        wanted: dict[str, dict[str, list[tuple[str, frozenset[int] | None]]]] = {}
         errors: list[dict[str, str]] = []
 
-        def want(target: Any, value: Any, path: str) -> None:
-            wanted.setdefault(str(target), {}).setdefault(value, []).append(path)
+        def want(target: Any, value: Any, path: str, allowed: frozenset[int] | None = None) -> None:
+            wanted.setdefault(str(target), {}).setdefault(value, []).append((path, allowed))
 
-        def want_dynamic(kind: Any, value: Any, path: str) -> None:
+        def want_dynamic(kind: Any, value: Any, path: str, allowed: frozenset[int] | None = None) -> None:
             """Un DynamicLink vise le DocType que dit son champ de type : il doit exister et être un DocType qu'on peut citer."""
             try:
                 known = isinstance(kind, str) and not self._registry.get(kind).definition.istable
             except NotFound:
                 known = False
             if known:
-                want(kind, value, path)
+                want(kind, value, path, allowed)
             else:
                 errors.append({"field": path, "msg": "Choisissez d'abord le type de document visé", "type": "link_not_found"})
 
@@ -1423,9 +1484,9 @@ class DocumentService:
             if value is None:
                 continue
             if f.fieldtype == "Link" and not (old is not None and old.get(f.fieldname) == value):
-                want(f.options, value, f.fieldname)
+                want(f.options, value, f.fieldname, f.allowed_docstatus)
             elif f.fieldtype == "DynamicLink" and not (old is not None and old.get(f.fieldname) == value and old.get(str(f.options)) == clean.get(str(f.options))):
-                want_dynamic(clean.get(str(f.options)), value, f.fieldname)
+                want_dynamic(clean.get(str(f.options)), value, f.fieldname, f.allowed_docstatus)
             elif f.fieldtype == "Table":
                 child = compiled.children[str(f.options)]
                 # Une ligne déplacée garde son lien : on compare à l'ensemble des valeurs déjà présentes, pas à la même position.
@@ -1444,19 +1505,38 @@ class DocumentService:
                         if (v, kind) in before[cf.fieldname]:
                             continue
                         if cf.fieldtype == "Link":
-                            want(cf.options, v, f"{f.fieldname}.{i}.{cf.fieldname}")
+                            want(cf.options, v, f"{f.fieldname}.{i}.{cf.fieldname}", cf.allowed_docstatus)
                         else:
-                            want_dynamic(kind, v, f"{f.fieldname}.{i}.{cf.fieldname}")
+                            want_dynamic(kind, v, f"{f.fieldname}.{i}.{cf.fieldname}", cf.allowed_docstatus)
         for target, values in wanted.items():
-            target_def = self._registry.get(target).definition
+            target_compiled = self._registry.get(target)
+            target_def = target_compiled.definition
             scope = scope_for(target_def, ctx, "read")
-            found = await self._existing(ctx, self._registry.get(target), q, list(values), scope) if scope.granted else set()
+            if not scope.granted:
+                found, statuses = set(), {}
+            elif self._source(target_compiled) is not None:
+                # Un DocType virtuel n'a pas d'état que le moteur pourrait juger : l'existence suffit (la source porte sa
+                # vérité). Ses documents sont des brouillons pour l'état : `not_cancelled` les accepte, `submitted` non.
+                found = await self._existing(ctx, target_compiled, q, list(values), scope)
+                statuses = {name: DRAFT for name in found}
+            elif any(allowed is not None for paths in values.values() for _, allowed in paths):
+                statuses = await q.existing_docstatus(target, list(values), scope=scope, lock=True)
+                found = set(statuses)
+            else:
+                found, statuses = await self._existing(ctx, target_compiled, q, list(values), scope), {}
             for value, paths in values.items():
                 if value not in found:
                     errors.extend(
                         {"field": path, "msg": f"{target_def.label or target} introuvable : {value!r}", "type": "link_not_found"}
-                        for path in paths
+                        for path, _ in paths
                     )
+                    continue
+                state = statuses.get(value)
+                errors.extend(
+                    {"field": path, "msg": f"{target_def.label or target} {value!r} est {STATUS_WORDS[state]} : ce lien n'accepte pas cet état", "type": "link_status"}
+                    for path, allowed in paths
+                    if allowed is not None and state not in allowed
+                )
         if errors:
             raise ValidationFailed(details=errors)
 

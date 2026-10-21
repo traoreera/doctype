@@ -5,11 +5,12 @@ Contre le VRAI xauth : le lien est vérifié chez xauth, la désactivation aussi
 
 from __future__ import annotations
 
-from tests.integration.conftest import ROOT, boot_host
+from tests.integration.conftest import boot_host
 from tests.integration.test_iam import api
 from tests.integration.test_xauth_real import RITA, add_member, admin, login
+from tests.support import FIXTURES
 
-PLUGINS = {"iam": ROOT / "app" / "iam", "hr": ROOT / "app" / "hr"}
+PLUGINS = {"iam": FIXTURES / "iam", "hr": FIXTURES / "hr"}
 HR_MANAGER = ("hrm@example.com", "Hr-Manager-Passw0rd!9")
 
 
