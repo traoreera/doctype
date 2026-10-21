@@ -282,3 +282,74 @@ class TestCheck:
     def test_a_missing_folder_is_reported(self, tmp_path, capsys):
         assert main(["check", str(tmp_path / "nope")]) == 1
         assert "introuvable" in capsys.readouterr().err
+
+
+class TestCheckPluginExtensions:
+    """`check --owner` valide aussi ce que le plugin apporte À CÔTÉ de ses DocTypes (doc/extensions.md, D26-D28)."""
+
+    def plugin(self, tmp_path, *, extends=None, spaces=None, desk=None):
+        home = tmp_path / "crm"
+        TestCheck.write(self, home / "doctypes", lead=TestCheck.dt(self, "Lead", module="crm"))
+        if extends is not None:
+            TestCheck.write(self, home / "extends", **extends)
+        if spaces is not None:
+            TestCheck.write(self, home / "workspaces", **spaces)
+        if desk is not None:
+            (home / "desk").mkdir()
+            for name, text in desk.items():
+                (home / "desk" / name).write_text(text)
+        stock = TestCheck.write(self, tmp_path / "stock", item=TestCheck.dt(self, "Item", module="stock"))
+        return home / "doctypes", stock
+
+    def test_extensions_contributions_and_desk_are_validated_and_listed(self, tmp_path, capsys):
+        ext = {"schema_version": 1, "doctype": "Item", "fields": [{"fieldname": "crm_lead", "fieldtype": "Link", "options": "Lead"}],
+               "hooks": {"before_save": ["crm.tag_item"]}}
+        contribution = {"schema_version": 1, "contributes_to": "stock", "blocks": [{"type": "shortcut", "doctype": "Lead"}]}
+        doctypes, stock = self.plugin(tmp_path, extends={"item": ext}, spaces={"stock": contribution},
+                                      desk={"index.js": "export default { name: 'crm', apiVersion: 1, setup() {} }"})
+        assert main(["check", str(doctypes), "--owner", "crm", "--with", str(stock)]) == 0
+        out = capsys.readouterr().out
+        assert "extension(s) de DocType valides (1)" in out and "Item" in out and "+1 champ(s), 1 hook(s)" in out
+        assert "contribution(s) à l'espace d'un autre module : stock" in out
+        assert "extension du Desk : desk/index.js" in out
+        assert "crm.tag_item" in out  # un hook d'extension est aussi à enregistrer
+
+    @pytest.mark.parametrize(
+        "kind, payload, fragment",
+        [
+            ("extends", {"item": {"schema_version": 1, "doctype": "Item", "fields": [{"fieldname": "lead", "fieldtype": "Text"}]}}, "commence par 'crm_'"),
+            ("extends", {"item": {"schema_version": 1, "doctype": "Ghost", "fields": [{"fieldname": "crm_x", "fieldtype": "Text"}]}}, "inconnu"),
+            ("spaces", {"s": {"schema_version": 1, "contributes_to": "ghost", "blocks": [{"type": "shortcut", "doctype": "Lead"}]}}, "module inconnu"),
+            ("desk", {"main.js": "export default {}"}, "index.js"),
+        ],
+    )
+    def test_a_bad_neighbour_fails_the_check(self, tmp_path, capsys, kind, payload, fragment):
+        doctypes, stock = self.plugin(tmp_path, **{kind: payload})
+        assert main(["check", str(doctypes), "--owner", "crm", "--with", str(stock)]) == 1
+        assert fragment in capsys.readouterr().err
+
+
+class TestNewDeskExtension:
+    def test_it_lays_a_loadable_extension_that_check_accepts(self, tmp_path, capsys):
+        home = tmp_path / "crm"
+        TestCheck.write(TestCheck(), home / "doctypes", lead={"schema_version": 1, "name": "Lead", "module": "crm",
+                                                             "fields": [{"fieldname": "x", "fieldtype": "Text"}]})
+        assert main(["new-desk-extension", str(home), "--label", "Relation client"]) == 0
+        index = (home / "desk" / "index.js").read_text()
+        assert "name: 'crm'" in index and "'/x/crm/home'" in index and "Relation client" in index
+        assert "__PLUGIN__" not in index and "__LABEL__" not in index
+        assert "__PLUGIN__" not in (home / "desk" / "README.md").read_text()
+        assert "load_desk" in capsys.readouterr().out
+        assert main(["check", str(home / "doctypes"), "--owner", "crm"]) == 0
+        assert "extension du Desk : desk/index.js" in capsys.readouterr().out
+
+    def test_it_never_overwrites_without_force_and_checks_the_name(self, tmp_path, capsys):
+        home = tmp_path / "crm"
+        assert main(["new-desk-extension", str(home)]) == 0
+        (home / "desk" / "index.js").write_text("// mon travail")
+        assert main(["new-desk-extension", str(home)]) == 1
+        assert "existe déjà" in capsys.readouterr().err
+        assert (home / "desk" / "index.js").read_text() == "// mon travail"
+        assert main(["new-desk-extension", str(home), "--force"]) == 0
+        assert main(["new-desk-extension", str(tmp_path / "My-Plugin")]) == 1
+        assert "minuscules" in capsys.readouterr().err

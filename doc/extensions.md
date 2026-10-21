@@ -139,7 +139,7 @@ plugin lui-même, `<préfixe>/<plugin>/…`, avec le même jeton et le même ren
   JSON). Le serveur ne peut pas savoir si le composant existe : il le sert à tous ceux qui voient l'espace ; le Desk montre un encart
   discret quand aucune extension chargée ne fournit ce composant.
 
-**Écrire une extension.** Un module ES ; le plus simple est un fichier écrit à la main (`tests/support/plugins/sales/desk/index.js`,
+**Écrire une extension.** `xcore-doctype new-desk-extension <dossier du plugin>` pose `desk/index.js` (une page, un lien, une commande, et en commentaire les autres points d'extension) et `desk/README.md` : il se charge tel quel. `xcore-doctype check <plugin>/doctypes --owner <plugin>` valide `desk/`, `extends/` et les contributions d'espace avec les DocTypes. Un module ES ; le plus simple est un fichier écrit à la main (`tests/support/plugins/sales/desk/index.js`,
 sans build : `h()` plutôt que des templates). Avec des composants `.vue`, la construire en bibliothèque :
 
 ```js
@@ -163,7 +163,7 @@ Vite relaie les extensions que le backend sert.
 version, CSP de l'import map), `ui/tests/extensions.spec.ts` (contrat, isolation des pannes et du délai, contributions mal formées,
 routes, filtres `when`, client du plugin confiné à ses routes, `readExtensions` même origine, blocs, fiche), et le scénario Chromium
 `ui/e2e/extensions.e2e.mjs` (`tests/e2e/test_desk_browser.py`) : l'extension de `sales` se charge sous la vraie CSP, lien direct,
-rechargement, panneau, action, barre latérale, palette, sans aucune erreur de console.
+rechargement, panneau, action, barre latérale, palette, sans aucune erreur de console. `ui/tests/extension-contract.spec.ts` charge pour de vrai l'extension de `sales` et le modèle de `new-desk-extension` ; `tests/unit/test_cli.py` couvre `check` (D26-D28) et `new-desk-extension`.
 
 **Écarts et limites.** Pas de bac à sable (iframe) : l'opérateur autorise du code qu'il a choisi d'installer, comme un plugin `trusted`
 côté serveur. Pas de version d'API autre que 1 (une extension `apiVersion: 2` est refusée avec un message, pas devinée). Les
