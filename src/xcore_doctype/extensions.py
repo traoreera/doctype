@@ -26,7 +26,12 @@ from .schema import HOOK_EVENTS, DocTypeDef, FieldDef, HooksDef, parse_definitio
 from .workspaces import module_label
 
 # Ce qu'une extension ne peut pas poser sur un champ : les documents existants et le code du propriétaire (ses `tx.create`) l'ignorent.
-_REFUSED_FIELD_FLAGS = ("required", "unique", "set_only_once")
+# `mandatory_depends_on` est un `required` conditionnel (il casserait les créations du propriétaire) ; `in_list_view` remplacerait les
+# colonnes par défaut de SA liste (`DocTypeDef.list_columns` n'en garde que les champs marqués dès qu'il y en a un).
+_REFUSED_FIELD_FLAGS = ("required", "unique", "set_only_once", "mandatory_depends_on", "in_list_view")
+# Les types qu'une extension n'ajoute pas : un Table (son DocType de lignes appartiendrait à un autre propriétaire) ; un Password (sa valeur
+# chiffrée resterait dans les documents si le plugin qui étend part, sans plus être un secret pour la définition).
+_REFUSED_FIELD_TYPES = ("Table", "Password")
 
 
 class ExtensionDef(BaseModel):
@@ -69,12 +74,24 @@ def parse_extension(raw: object, *, owner: str, source: str = "<extension>") -> 
             problems.append(f"fields.{f.fieldname}: le nom d'un champ ajouté commence par {prefix!r} (le plugin qui l'apporte)")
         for flag in _REFUSED_FIELD_FLAGS:
             if getattr(f, flag):
-                problems.append(f"fields.{f.fieldname}: `{flag}` n'est pas permis dans une extension (les documents existants ne le respectent pas)")
-        if f.fieldtype == "Table":
-            problems.append(f"fields.{f.fieldname}: un champ Table ne s'ajoute pas par une extension")
+                problems.append(f"fields.{f.fieldname}: `{flag}` n'est pas permis dans une extension (il changerait ce que fait le DocType de son propriétaire)")
+        if f.fieldtype in _REFUSED_FIELD_TYPES:
+            problems.append(f"fields.{f.fieldname}: un champ {f.fieldtype} ne s'ajoute pas par une extension")
     if problems:
         raise InvalidDefinition(f"{source}: " + "; ".join(problems))
     return ext
+
+
+def target_problem(target: DocTypeDef, target_owner: str | None, extension_owner: str) -> str | None:
+    """Pourquoi ce DocType ne peut pas être étendu par ce plugin, ou `None`. Vérifié au chargement de l'extension ET quand le DocType
+    visé revient (son propriétaire le recharge : il a pu devenir un DocType de lignes ou virtuel, ou passer au plugin qui l'étendait)."""
+    if target.istable:
+        return "c'est un DocType de lignes (ses lignes se compilent avec chaque parent) : étendez le parent"
+    if target.source is not None:
+        return "c'est un DocType virtuel (ses documents vivent chez sa source)"
+    if target_owner == extension_owner:
+        return "il appartient déjà à ce plugin : modifiez sa définition"
+    return None
 
 
 def merge(origin: DocTypeDef, extensions: list[Extension]) -> DocTypeDef:
@@ -93,8 +110,10 @@ def merge(origin: DocTypeDef, extensions: list[Extension]) -> DocTypeDef:
         d = ext.definition
         added = [f.model_dump(by_alias=True, exclude_unset=True, mode="python") for f in d.fields]
         fields += added
-        if layout is not None and added:
-            layout.append({"section": d.label or module_label(ext.owner), "columns": [[f["fieldname"] for f in added]]})
+        # Un champ caché ne se place pas dans une section (le schéma le refuse) : il est stocké, jamais affiché.
+        shown = [f["fieldname"] for f in added if not f.get("hidden")]
+        if layout is not None and shown:
+            layout.append({"section": d.label or module_label(ext.owner), "columns": [shown]})
         for e in HOOK_EVENTS:
             hooks[e] += d.hooks.for_event(e)
     raw["fields"] = fields

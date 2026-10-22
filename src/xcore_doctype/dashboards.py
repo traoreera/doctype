@@ -20,6 +20,7 @@ droits de celui qui regarde. Ce module ne contient que les modèles (extra="forb
 from __future__ import annotations
 
 import json
+import re
 from typing import TYPE_CHECKING, Annotated, Any, Callable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StringConstraints, model_validator
@@ -45,8 +46,11 @@ ChartKind = Literal["bar", "line", "pie", "donut", "percentage"]
 PART_TO_WHOLE = ("pie", "donut", "percentage")
 Function = Literal["count", "sum", "avg", "min", "max"]
 MAX_BLOCKS = 100
+# Un espace COMPOSÉ (son fichier + les contributions d'autres plugins, D27) et donc son habillage : chaque fichier reste borné par MAX_BLOCKS.
+MAX_COMPOSED_BLOCKS = 1000
 MAX_LINKS = 30
 MAX_EXTENSION_PROPS = 2000
+_PROP_KEY = re.compile(r"[a-z][a-z0-9_]{0,40}")
 
 
 class _Model(BaseModel):
@@ -155,8 +159,14 @@ class ExtensionBlock(_Model):
 
     @model_validator(mode="after")
     def _small_props(self) -> "ExtensionBlock":
-        if self.props is not None and len(json.dumps(self.props, ensure_ascii=False)) > MAX_EXTENSION_PROPS:
-            raise ValueError(f"props : au plus {MAX_EXTENSION_PROPS} caractères en JSON")
+        if self.props is not None:
+            if len(json.dumps(self.props, ensure_ascii=False)) > MAX_EXTENSION_PROPS:
+                raise ValueError(f"props : au plus {MAX_EXTENSION_PROPS} caractères en JSON")
+            # Des noms de RÉGLAGES, jamais ceux d'attributs ou de propriétés DOM (`innerHTML`, `style`, `onClick`) : le Desk les passe au
+            # composant dans UN objet (`config`), mais le contrat se tient aussi côté serveur.
+            bad = [k for k in self.props if not _PROP_KEY.fullmatch(k)]
+            if bad:
+                raise ValueError(f"props : clés invalides {bad[:5]} (minuscules, chiffres et `_`, une lettre d'abord)")
         return self
 
 

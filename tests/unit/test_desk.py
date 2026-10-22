@@ -284,11 +284,34 @@ class TestExtensions:
                 assert (await c.get(f"{PREFIX}/desk/ext/{path}")).status_code == 404, path
 
     async def test_a_symlink_out_of_the_extension_is_refused(self, dist, ext_dir, tmp_path):
-        (ext_dir / "leak.js").symlink_to(tmp_path / "plugins" / "sales" / "secret.py")
+        # La cible est un `.js` servi s'il était dans le dossier : seule la garde du lien symbolique peut la refuser.
+        (tmp_path / "plugins" / "sales" / "outside.js").write_text("export const secret = 1")
+        (ext_dir / "leak.js").symlink_to(tmp_path / "plugins" / "sales" / "outside.js")
         exts = DeskExtensions(["*"])
         exts.register("sales", ext_dir)
         async with ext_client(dist, exts) as c:
             assert (await c.get(f"{PREFIX}/desk/ext/sales/leak.js")).status_code == 404
+
+    def test_the_path_guard_itself(self, ext_dir, tmp_path):
+        """httpx normalise `..` avant d'envoyer : la garde se prouve donc aussi en direct, sur des chemins qui sortent vraiment."""
+        from xcore_doctype.api.desk import _safe_file
+
+        (tmp_path / "plugins" / "sales" / "outside.js").write_text("x")
+        root = ext_dir.resolve()
+        assert _safe_file(root, "index.js") == root / "index.js"
+        assert _safe_file(root, "chunks/panel.js") == root / "chunks" / "panel.js"
+        for bad in ("../outside.js", "chunks/../../outside.js", "/etc/passwd", "../secret.py", "chunks", "nul\x00.js"):
+            assert _safe_file(root, bad) is None, bad
+
+    async def test_desk_index_html_carries_the_same_policy_as_desk(self, dist):
+        body = '{"imports":{"vue":"./shared/vue.js"}}'
+        (dist / "index.html").write_text(f'<!doctype html><script type="importmap">{body}</script><title>Desk</title>')
+        async with ext_client(dist, DeskExtensions()) as c:
+            root = await c.get(f"{PREFIX}/desk/")
+            direct = await c.get(f"{PREFIX}/desk/index.html")
+        assert direct.status_code == 200 and "<title>Desk</title>" in direct.text
+        for header in ("content-security-policy", "x-frame-options", "cache-control"):
+            assert direct.headers[header] == root.headers[header], header
 
     async def test_the_import_map_is_allowed_by_its_hash_only(self, dist):
         import base64

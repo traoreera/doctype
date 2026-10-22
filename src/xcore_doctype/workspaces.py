@@ -32,6 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 
 from .dashboards import (
     MAX_BLOCKS,
+    MAX_COMPOSED_BLOCKS,
     ChartBlock,
     ExtensionBlock,
     HeaderBlock,
@@ -64,7 +65,8 @@ class WorkspaceDef(BaseModel):
     icon: Icon | None = None
     description: Annotated[str, StringConstraints(min_length=1, max_length=300)] | None = None
     order: Annotated[int, Field(ge=0, le=1000, strict=True)] = 100  # rang dans la barre latérale (puis l'ordre alphabétique)
-    blocks: Annotated[list[WorkspaceBlock], Field(min_length=1, max_length=MAX_BLOCKS)]
+    # Un FICHIER d'espace en a au plus MAX_BLOCKS (contrôlé au chargement) ; l'espace composé avec les contributions et son habillage, davantage.
+    blocks: Annotated[list[WorkspaceBlock], Field(min_length=1, max_length=MAX_COMPOSED_BLOCKS)]
 
     def doctypes(self) -> list[str]:
         """Les DocTypes que les raccourcis, listes rapides et cartes de liens visent (leur existence se contrôle au chargement)."""

@@ -95,6 +95,8 @@ class TestWheel:
             assert any(n.startswith("xcore_doctype/ui/dist/assets/") and n.endswith(".js") for n in names)
             # D28 : les deux modules que l'import map donne aux extensions, sous leurs noms FIXES.
             assert {"xcore_doctype/ui/dist/shared/vue.js", "xcore_doctype/ui/dist/shared/sdk.js"} <= names
+            # Le modèle de `xcore-doctype new-desk-extension` voyage avec la commande.
+            assert {"xcore_doctype/desk_template/index.js", "xcore_doctype/desk_template/README.md"} <= names
             assert not any("node_modules" in n or n.endswith(".map") for n in names)
             entry_points = next(z.read(n).decode() for n in names if n.endswith("entry_points.txt")).replace(" = ", "=")
         assert "[xcore.plugins]" in entry_points and "xcore-doctype=xcore_doctype:plugin_dir" in entry_points

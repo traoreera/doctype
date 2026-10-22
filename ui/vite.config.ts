@@ -78,6 +78,8 @@ export default defineConfig({
   // `make dev-frontend` passe DESK_API_URL quand le serveur n'est pas sur le port 8000.
   server: { port: 5173, proxy: { '/app': process.env.DESK_API_URL ?? 'http://127.0.0.1:8000' } },
   test: {
+    // Une extension de plugin importe le SDK par son nom nu (D28) : dans les tests, il se résout vers la source (au build : l'import map).
+    alias: { '@xcore-doctype/desk': fileURLToPath(new URL(`./${SHARED['@xcore-doctype/desk']}`, import.meta.url)) },
     environment: 'happy-dom',
     include: ['tests/**/*.spec.ts'],
     // Le premier test d'un fichier qui monte PrimeVue paie la transformation du module : plus de 5 s quand la machine est chargée

@@ -181,13 +181,14 @@ function dragEnd(): void {
       <div v-else-if="it.kind === 'chart'" class="block-item" :style="{ '--span': fill ? 12 : it.span }"><ChartCard :block="it.block" /></div>
       <div v-else-if="it.kind === 'quick'" class="block-item" :style="{ '--span': fill ? 12 : it.span }"><QuickList :block="it.block" /></div>
       <div v-else-if="it.kind === 'links'" class="block-item" :style="{ '--span': fill ? 12 : it.span }"><LinksCard :block="it.block" /></div>
-      <!-- D28 : un bloc dessiné par une extension ; absent (extension non chargée), un encart discret plutôt qu'un trou. -->
+      <!-- D28 : un bloc dessiné par une extension ; absent (extension non chargée), un encart discret plutôt qu'un trou. Ses réglages
+           arrivent dans UNE prop (`config`) : jamais étalés, sinon une clé non déclarée (`innerHTML`, `style`) tomberait sur l'élément racine. -->
       <div v-else-if="it.kind === 'extension'" class="block-item" :style="{ '--span': fill ? 12 : it.span }" :data-component="it.block.component" data-testid="block-extension">
         <ExtensionSlot
           v-if="extensions.block(it.block.component)"
           :extension="extensions.block(it.block.component)!.extension"
           :component="extensions.block(it.block.component)!.component"
-          :props="{ ...(it.block.props ?? {}), label: it.block.label ?? null }"
+          :props="{ config: it.block.props ?? {}, label: it.block.label ?? null }"
         />
         <div v-else class="desk-card desk-muted ext-missing" role="status" data-testid="ext-missing">{{ t.extensions.missingBlock(it.block.component) }}</div>
       </div>

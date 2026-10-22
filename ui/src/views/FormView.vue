@@ -24,6 +24,7 @@ import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
 import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isAutoSection, isDirty, mapServerErrors, recordValues, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
 import { formatTimestamp, relativeTime } from '@/lib/format'
+import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
 import { SUBMITTED, type DocRecord, type DocTypeMeta, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
@@ -456,16 +457,25 @@ function remove(): void {
 type MoreItem = MenuItem & { testid: string; danger?: boolean }
 const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
 // ── Extensions du Desk (D28) : actions et panneaux que des plugins ajoutent à cette fiche ─────────────────────────────
-const extContext = computed<FormContext | null>(() =>
-  meta.value ? { doctype: props.doctype, name: props.name, record: record.value, meta: meta.value, values: values.value } : null,
-)
+/** Le contexte d'une extension : seulement quand la fiche montre CE document (pendant un changement de page, meta et record sont encore
+ * ceux du document précédent : ni ses actions ni ses panneaux ne doivent alors s'évaluer ou s'afficher). */
+const extContext = computed<FormContext | null>(() => {
+  if (!meta.value || meta.value.name !== props.doctype || loading.value) return null
+  if (props.name !== null && record.value?.name !== props.name) return null
+  return { doctype: props.doctype, name: props.name, record: record.value, meta: meta.value, values: values.value }
+})
 const extActions = computed(() => (extContext.value && !props.embedded ? extensions.formActions(extContext.value) : []))
 const extPrimary = computed(() => extActions.value.filter((a) => a.primary))
 /** Un panneau parle d'un document ENREGISTRÉ (il le lit par l'API) : pas sur un brouillon jamais sauvé ni sur un réglage. */
 const extPanels = computed(() => (extContext.value && record.value && record.value.version > 0 && !props.embedded && !meta.value?.single ? extensions.formPanels(extContext.value) : []))
 async function reloadRecord(): Promise<void> {
   if (!meta.value || !record.value) return
-  init(meta.value, await api.get(props.doctype, record.value.name))
+  const mine = ++loadTicket // comme `load` : une relecture tardive ne doit pas réécrire la page où l'utilisateur est allé entre-temps
+  const { doctype } = props
+  const m = meta.value
+  const rec = await api.get(doctype, record.value.name)
+  if (mine !== loadTicket || props.doctype !== doctype || props.name !== rec.name) return
+  init(m, rec)
 }
 function runExtension(action: Owned<FormAction>): void {
   const ctx = extContext.value
@@ -484,7 +494,7 @@ const moreItems = computed<MoreItem[]>(() => {
   // Les actions des extensions passent en tête, séparées de celles du Desk.
   const ext: MoreItem[] = extActions.value
     .filter((a) => !a.primary)
-    .map((a) => ({ label: a.label, icon: `pi pi-${a.icon ?? 'bolt'}`, testid: `ext-action-${a.extension}-${a.label}`, danger: a.danger, command: () => runExtension(a) }))
+    .map((a) => ({ label: a.label, icon: piIcon(a.icon, 'bolt'), testid: `ext-action-${a.extension}-${a.label}`, danger: a.danger, command: () => runExtension(a) }))
   return ext.length && out.length ? [...ext, { separator: true } as MoreItem, ...out] : [...ext, ...out]
 })
 
@@ -655,7 +665,7 @@ onBeforeUnmount(() => {
           v-for="a in extPrimary"
           :key="`${a.extension}:${a.label}`"
           :label="a.label"
-          :icon="`pi pi-${a.icon ?? 'bolt'}`"
+          :icon="piIcon(a.icon, 'bolt')"
           :severity="a.danger ? 'danger' : 'secondary'"
           outlined
           size="small"
@@ -748,7 +758,7 @@ onBeforeUnmount(() => {
       </form>
 
       <!-- D28 : les panneaux que des extensions ajoutent à la fiche, chacun isolé (une erreur n'atteint pas la page). -->
-      <section v-for="p in extPanels" :key="`${p.extension}:${p.title ?? ''}`" class="desk-card form-section ext-panel" :data-extension="p.extension" data-testid="ext-panel">
+      <section v-for="p in extPanels" :key="`${p.extension}:${p.title ?? ''}:${record!.name}`" class="desk-card form-section ext-panel" :data-extension="p.extension" data-testid="ext-panel">
         <header v-if="p.title">{{ p.title }}</header>
         <ExtensionSlot :extension="p.extension" :component="p.component" :props="{ doctype, name: record!.name, record, meta }" />
       </section>

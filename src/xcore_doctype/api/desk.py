@@ -223,6 +223,10 @@ def build_desk_router(settings: DeskSettings, extensions: DeskExtensions | None 
         target = _safe_file(dist, asset_path)
         if target is None:
             return missing() if dist.is_dir() else not_built()
+        if target.suffix.lower() == ".html":
+            # `desk/index.html` est le Desk lui-même : mêmes en-têtes que `desk/` (CSP avec l'empreinte de SON import map, X-Frame-Options),
+            # sinon il tournerait, extensions comprises, sans la politique de D28.
+            return FileResponse(target, media_type=_MEDIA[".html"], headers=html_headers(target))
         hashed = target.parent.name == "assets"  # Vite nomme ces fichiers d'après leur contenu : cache sans limite
         headers = {**common, "Cache-Control": "public, max-age=31536000, immutable" if hashed else "no-cache"}
         media = _MEDIA.get(target.suffix.lower(), "application/octet-stream")

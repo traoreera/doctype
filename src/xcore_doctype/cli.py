@@ -7,13 +7,16 @@ tenancy désactivée). Voir doc/phase4.md.
 
     xcore-doctype install ./app            # dépose ./app/xcore-doctype/ et vérifie ./integration.yaml
     xcore-doctype doctor                   # revérifie une instance déjà installée
-    xcore-doctype check tests/support/plugins/sales/doctypes --owner sales --with tests/support/plugins/stock/doctypes   # valide un dossier (CI d'un plugin métier)
+    xcore-doctype check tests/support/plugins/sales/doctypes --owner sales --with tests/support/plugins/stock/doctypes   # valide un dossier (CI d'un plugin métier),
+                                                                                                                     # ses espaces, ses extensions (extends/) et son extension du Desk (desk/)
+    xcore-doctype new-desk-extension ./app/sales   # pose ./app/sales/desk/ : une extension du Desk prête à charger (D28)
     xcore-doctype path                     # dossier du plugin dans le paquet (pour `xcli plugin local link`)
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import shutil
 import sys
@@ -25,6 +28,7 @@ from typing import Literal, Sequence
 import yaml
 
 from . import __version__, plugin_dir, system_plugin_dir
+from .desk_extensions import DeskExtensions
 from .errors import InvalidDefinition
 from .registry import DocTypeRegistry
 
@@ -213,10 +217,17 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
     """Charge des dossiers de DocTypes comme le ferait le plugin ; retourne un résumé et les problèmes.
 
     `needs` : les dossiers des plugins dont celui-ci dépend (`requires:`). Leurs DocTypes servent de cibles aux champs Link du dossier
-    vérifié (le plugin `sales` cite l'article du plugin `stock`), sans être eux-mêmes contrôlés ni listés.
+    vérifié (le plugin `sales` cite l'article du plugin `stock`), aux extensions (`extends/`) et aux contributions d'espace, sans être
+    eux-mêmes contrôlés ni listés.
+
+    Avec `--owner`, les dossiers FRÈRES de celui des DocTypes sont validés comme le plugin les chargerait (doc/extensions.md) :
+    `workspaces/` (espace et contributions `contributes_to`), `extends/` (champs et hooks ajoutés aux DocTypes d'un autre plugin, D26)
+    et `desk/` (extension JavaScript du Desk, D28 : point d'entrée, taille).
     """
     registry = DocTypeRegistry()
     lines: list[str] = []
+    extended: list[str] = []
+    desk_version: str | None = None
     try:
         for d in needs:
             registry.load_dir(d)
@@ -225,9 +236,17 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
             registry.load_dir(d, owner=owner)
         mine = sorted(set(registry.names()) - provided)
         registry.validate_links(mine)
-        # L'espace de travail du plugin (`<plugin>/workspaces/`, frère du dossier des DocTypes) : validé avec eux, contre ces DocTypes.
-        spaces = Path(directories[0]).parent / "workspaces" if directories and owner else None
+        # Les dossiers frères de celui des DocTypes (`resolve` : `check .` lancé DANS doctypes/ les trouve aussi), dans l'ordre où le
+        # plugin les charge : extensions d'abord (un bloc d'espace peut mesurer un champ qu'elles ajoutent), puis espaces, puis Desk.
+        home = Path(directories[0]).resolve().parent if directories and owner else None
+        if home is not None and (home / "extends").is_dir():
+            extended = registry.load_extensions(home / "extends", owner=owner)
+        spaces = home / "workspaces" if home is not None else None
         loaded_spaces = registry.load_workspaces(spaces, owner=owner) if spaces is not None and spaces.is_dir() and owner else []
+        if home is not None and (home / "desk").is_dir():
+            desk = DeskExtensions(["*"])
+            desk.register(owner, home / "desk")
+            desk_version = desk.get(owner).version  # type: ignore[union-attr]  # autorisée : `*`
     except InvalidDefinition as e:
         return [], [Finding("error", str(e))]
     hooks: set[str] = set()
@@ -252,14 +271,74 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
             else:
                 kind = "nom aléatoire"
         lines.append(f"  {name:<22} module={d.module or '-':<10} {len(d.fields):>2} champs  {kind}")
+    ext_lines = []
+    for target in extended:
+        mine_ext = next(x for x in registry.extensions_of(target) if x["plugin"] == owner)
+        hooks.update(r for r in mine_ext["hooks"] if not r.startswith("action:"))
+        ext_lines.append(f"  {target:<22} +{len(mine_ext['fields'])} champ(s), {len(mine_ext['hooks'])} hook(s)")
     grants = sorted(grants_cited)
     summary = [f"{len(mine)} DocType(s) valides :", *lines]
-    if loaded_spaces:
-        summary.append(f"espace(s) de travail valides : {', '.join(loaded_spaces)}")
+    spaces_own = [n for n in loaded_spaces if not n.startswith("+")]
+    contributions = [n[1:] for n in loaded_spaces if n.startswith("+")]
+    if spaces_own:
+        summary.append(f"espace(s) de travail valides : {', '.join(spaces_own)}")
+    if contributions:
+        summary.append(f"contribution(s) à l'espace d'un autre module : {', '.join(contributions)}")
+    if extended:
+        summary += [f"extension(s) de DocType valides ({len(extended)}) :", *ext_lines]
+    if desk_version is not None:
+        summary.append(f"extension du Desk : desk/index.js (version {desk_version}) — l'opérateur doit l'autoriser (doctype.desk.extensions)")
     summary.append(f"grants cités ({len(grants)}) : {', '.join(grants) or 'aucun'}")
     if hooks:
         summary.append(f"hooks de confiance à enregistrer ({len(hooks)}) : {', '.join(sorted(hooks))}")
     return summary, []
+
+
+# ── new-desk-extension ────────────────────────────────────────────────────────────────────────────
+
+DESK_TEMPLATE = Path(__file__).resolve().parent / "desk_template"
+
+
+def _plugin_name(plugin_home: Path) -> str:
+    """Le nom du plugin : celui de son `plugin.yaml` (la vérité pour xcore), sinon le nom du dossier tel qu'on l'a nommé (pas la cible
+    d'un lien symbolique : `app/sales` lié vers `…/plugins/sales-v2` reste `sales`)."""
+    manifest = plugin_home / "plugin.yaml"
+    if manifest.is_file():
+        try:
+            data = _load_yaml(manifest)
+        except (OSError, ValueError, yaml.YAMLError):
+            data = {}
+        if isinstance(data.get("name"), str):
+            return data["name"]
+    return plugin_home.absolute().name
+
+
+def new_desk_extension(plugin_home: Path, name: str | None = None, *, label: str | None = None, force: bool = False) -> list[Finding]:
+    """Pose `<plugin>/desk/` (index.js + README.md) à partir du modèle : une extension du Desk qui se charge telle quelle (doc/extensions.md)."""
+    name = name or _plugin_name(plugin_home)
+    if not re.fullmatch(r"[a-z0-9_]+", name):
+        return [Finding("error", f"nom de plugin {name!r} : une extension du Desk se nomme comme son plugin, en minuscules, chiffres et `_` (--name)")]
+    label = label or name.replace("_", " ").capitalize()
+    if not 0 < len(label) <= 80 or re.search(r"[\x00-\x1f\x7f]", label):
+        return [Finding("error", "--label : 1 à 80 caractères, sans caractère de contrôle")]
+    target = plugin_home / "desk"
+    sources = sorted(p for p in DESK_TEMPLATE.iterdir() if p.is_file())
+    taken = [target / s.name for s in sources if (target / s.name).exists()]
+    if taken and not force:
+        return [Finding("error", f"{', '.join(str(t) for t in taken)} existe(nt) déjà (--force pour remplacer)")]
+    target.mkdir(parents=True, exist_ok=True)
+    for source in sources:
+        text = source.read_text(encoding="utf-8")
+        if source.suffix == ".js":
+            # Le libellé devient une chaîne JavaScript ÉCHAPPÉE (guillemets, barres obliques inverses, retours à la ligne) : jamais collé tel quel.
+            text = text.replace("'__LABEL__'", json.dumps(label, ensure_ascii=False))
+        text = text.replace("__PLUGIN__", name).replace("__LABEL__", label)
+        (target / source.name).write_text(text, encoding="utf-8")
+    return [
+        Finding("ok", f"extension du Desk posée dans {target}"),
+        Finding("warn", f"à faire : dans le on_load du plugin, self.get_service(\"doctype_registry\").load_desk(self.ctx.name, <dossier>/desk)"),
+        Finding("warn", f"à faire : l'opérateur l'autorise dans le manifeste d'xcore-doctype : doctype.desk.extensions: [{name}]"),
+    ]
 
 
 # ── Ligne de commande ─────────────────────────────────────────────────────────────────────────────
@@ -281,11 +360,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--config", type=Path, default=None, help="integration.yaml (défaut : ./integration.yaml)")
     p.add_argument("--plugins-dir", type=Path, default=None)
 
-    p = sub.add_parser("check", help="valider des dossiers de DocTypes (utile à la CI d'un plugin métier)")
+    p = sub.add_parser("check", help="valider des dossiers de DocTypes, et avec --owner les espaces, extensions et extension du Desk du plugin (CI d'un plugin métier)")
     p.add_argument("directories", type=Path, nargs="+")
     p.add_argument("--owner", help="nom du plugin propriétaire : impose `module: <ce nom>`, comme le fait le service doctype_registry")
     p.add_argument("--with", dest="needs", type=Path, action="append", default=[], metavar="DIR",
                    help="dossier de DocTypes d'un plugin dont celui-ci dépend (cibles des champs Link), répétable ; non contrôlé")
+
+    p = sub.add_parser("new-desk-extension", help="poser <plugin>/desk/ : une extension du Desk prête à charger (doc/extensions.md)")
+    p.add_argument("plugin_home", type=Path, help="dossier du plugin (celui de son plugin.yaml)")
+    p.add_argument("--name", help="nom du plugin (défaut : le nom du dossier)")
+    p.add_argument("--label", help="libellé de sa page et de son lien (défaut : déduit du nom)")
+    p.add_argument("--force", action="store_true", help="remplacer un desk/index.js existant")
 
     sub.add_parser("path", help="afficher le dossier du plugin dans le paquet installé")
 
@@ -309,6 +394,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             findings = diagnose(config, args.plugins_dir)
             for f in findings:
                 print(f)
+            return 1 if any(f.level == "error" for f in findings) else 0
+        if args.command == "new-desk-extension":
+            findings = new_desk_extension(args.plugin_home, args.name, label=args.label, force=args.force)
+            for f in findings:
+                print(f, file=sys.stderr if f.level == "error" else sys.stdout)
             return 1 if any(f.level == "error" for f in findings) else 0
         if args.command == "check":
             summary, problems = check(args.directories, args.owner, args.needs)

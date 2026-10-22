@@ -31,7 +31,8 @@ try {
 
   await r.step('le lien de l’extension se range sous l’espace Ventes', async () => {
     await page.goto(`${cfg.desk}#/`)
-    const link = page.getByTestId('nav-ext-sales-Synthèse')
+    // DANS le bloc de l'espace Ventes de la barre latérale (pas dans le groupe « Extensions »).
+    const link = page.getByTestId('ws-sales').getByTestId('nav-ext-sales-Synthèse')
     if (!(await link.isVisible())) await page.getByTestId('ws-toggle-sales').click()
     await link.click()
     await page.waitForURL(/#\/x\/sales\/overview$/)

@@ -23,8 +23,8 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Texte, nombre, date, case à cocher, liste, lien, table (8 types) | ✔ |
 | Décimal exact | ✔ (A) |
 | Valeur par défaut, obligatoire, masqué, lecture seule, description | ✔ |
-| Conditions `depends_on` / `mandatory_depends_on` / `read_only_depends_on`, dans les lignes | ✔ |
-| Sections, colonnes, sections repliables | ✔ |
+| Conditions `depends_on` / `mandatory_depends_on` / `read_only_depends_on`, dans les lignes | ◐ (recompte du 22 oct. : `read_only_depends_on` est refusé dans les lignes) |
+| Sections, colonnes, sections repliables | ◐ (recompte du 22 oct. : le repli d'une section n'a aucun test dans le Desk) |
 | Numérotation par série, `hash` | ✔ |
 | Documents enfants (tables) | ✔ |
 | Soumission, annulation, amendement | ✔ (A) |
@@ -42,7 +42,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Champs modifiables après soumission (`allow_on_submit`) | ✔ (H2) |
 | Règles de nommage : par champ, par saisie, par format | ✔ (H2 : `field`, `prompt`, `series`, `owner`) |
 | DocType unique (Single : réglages) | ✔ (H) |
-| DocType arborescent (Tree) | ✔ (I) |
+| DocType arborescent (Tree) | ◐ (I ; recompte du 22 oct. : rien ne refuse une boucle, pas d'arbre de plus de 200 nœuds) |
 | Renommer un document (et suivre ses liens) | ✔ (H2) |
 | Dupliquer un document | ✔ (H2) |
 | Niveaux de permission par champ (permlevel), masquage de champs | F |
@@ -108,7 +108,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | « J'aime » | ✖ |
 | Mentions (@utilisateur) | ✔ (H2 : `@` propose les membres dans la zone de commentaire, la mention prévient le membre par la cloche) |
 | Recherche globale | ✔ (E) |
-| Journal d'activité | ✔ (chronologie du document ; journal d'audit d'xauth) |
+| Journal d'activité | ◐ (chronologie du document ; le journal d'audit est celui d'xauth, hors dépôt) |
 
 ### Automatisation et intégration
 
@@ -130,9 +130,9 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 
 | Fonctionnalité | État |
 |---|---|
-| Champs personnalisés (ajout par site sur un DocType existant) | L |
+| Champs personnalisés (ajout par site sur un DocType existant) | ◐ (D26 : ajoutés par un PLUGIN, `doc/extensions.md` ; pas encore par un administrateur, sans code) |
 | Propriétés modifiées par site (« property setter ») | ◐ habillage de formulaire par organisation (libellé, description, masqué, disposition) |
-| Formulaire personnalisable (écran) | ✔ (« Habiller ») |
+| Formulaire personnalisable (écran) | ◐ (« Habiller » ; recompte du 22 oct. : le chemin de la fiche n'a aucun test dans le Desk) |
 | Éditeur de DocType dans le Desk | L |
 | Formats d'impression et papier à en-tête | F / L |
 | Impression PDF | F |
@@ -146,7 +146,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Multi-tenant, isolation, RLS optionnelle | ✔ |
 | Plugins métier qui apportent leurs DocTypes | ✔ |
 | Corbeille (documents supprimés, restaurables) | M |
-| Journal d'accès et d'audit | ✔ (xauth : Paramètres > Journal d'audit ; historique par document) |
+| Journal d'accès et d'audit | ◐ (historique par document ; journal d'audit d'xauth, hors dépôt ; pas de journal des lectures) |
 | Gestionnaire de fichiers | ◐ stockage, liens signés, pièces jointes ; pas d'écran de gestion |
 | E-mail entrant (IMAP) et file d'envoi | ✖ |
 | Site web, blog, portail, formulaires web | ✖ |
@@ -155,28 +155,69 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Système d'applications (bench, patches) | ✖ |
 
 
-### Décompte (au 20 octobre 2026, compté par script sur les tableaux ci-dessus)
+### Décompte (recompté et VÉRIFIÉ le 22 octobre 2026)
 
-Légende ajoutée : **◐** = fait en partie (la ligne regroupe plusieurs choses, seule une partie existe). Les lignes « ✖ » (10) sortent du dénominateur, ainsi que « DocType virtuel »
-(c'était ✖, c'est fait pour xauth : un bonus). Dénominateur : **87**.
+Chaque ligne a été vérifiée contre le code et les tests par un auditeur, puis par un contradicteur chargé de réfuter le verdict (règle du
+§1 appliquée strictement : « fait » = fait DANS CE DÉPÔT et prouvé par un test). Les lignes « ✖ » (10) sortent du dénominateur, ainsi
+que « DocType virtuel » (bonus). Dénominateur : **87**.
 
 | État | éléments | part de 87 |
 |---|---:|---:|
-| ✔ fait en entier | 62 | 71 % |
-| ◐ fait en partie | 4 | 5 % |
-| non fait (planifié ou non) | 21 | 24 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **64** | **74 %** |
+| ✔ fait en entier | 56 | 64 % |
+| ◐ fait en partie | 11 | 13 % |
+| non fait | 20 | 23 % |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **61,5** | **71 %** |
 
-**La cible de 70 % est atteinte** (62 lignes sur 87, dont la ligne « Mentions » finie le 20 octobre par la complétion `@` et les commandes `/`), mais avec peu de marge, et trois lignes comptées sont discutables : « Notifications dans l'en-tête » est comptée faite parce que la cloche a maintenant
-des sources (assignation, mention), alors que l'e-mail et les règles par DocType restent dans la ligne suivante, laissée en demi-ligne ; « Actions groupées » a perdu le mot « étiqueter » (les étiquettes ont leur
-ligne, K) ; « Mot de passe, couleur, note, téléphone » est comptée pour ce que le moteur en fait (secret chiffré au repos, jamais renvoyé), pas pour tout ce que Frappe y met.
-Sans ces trois-là on serait à 59 lignes (68 %) : **la mesure reste celle du §1, subjective**. Détail de ce qui a été fait : `doc/phase-h2.md`.
+Le 20 octobre le décompte (non vérifié) disait 62 lignes en entier (71 %, 74 % avec les demi-lignes). Six lignes comptées faites ne sont
+prouvées qu'en partie (conditions dans les lignes, sections repliables, DocType arborescent, journal d'activité, écran « Habiller »,
+journal d'accès et d'audit) ; une monte (champs personnalisés, par les extensions de DocType D26). Les 20 lignes non faites : permlevel,
+permissions utilisateur, partage, droits d'export/impression/e-mail, vue Galerie, rapports requête de plugin, étiquettes, Workflow, tâches
+planifiées, webhooks, assignation automatique, documents récurrents, rapports par e-mail, import CSV, clés d'API, éditeur de DocType,
+formats d'impression, PDF, traductions, corbeille.
 
-Le 17 octobre, 19 lignes étaient faites (22 %) ; le 19, 41 (47 %) ; **+42 lignes en entier depuis le 17** (collaboration, champs et fichiers, vues, tableaux de bord, DocTypes uniques et arborescents, gestion des accès par le plugin `iam`, types
-de champs, propriétés, nommage, renommage, duplication, hooks, connexions, actions groupées, saisie rapide, documentation de l'API).
+### Angles morts de l'inventaire (22 octobre 2026)
 
-Mêmes réserves qu'au §1 : l'inventaire est le mien, chaque ligne compte pour 1 quelle que soit sa taille, et « fait » veut dire « fait dans ce dépôt et prouvé par des tests ». **Les plugins `sales`, `stock` et `hr` ne sont PAS
-des produits : ce sont des jeux d'essai du moteur** (décision du 19 octobre 2026) ; seuls xauth, `iam` (sa face DocType) et `system` (réglages de base) sont du produit. L'avancement mesuré ici est celui du **moteur et du Desk**, jamais d'un module métier.
+L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnalités du FRAMEWORK Frappe (pas ERPNext, ni ce que les lignes
+✖ excluent) qu'aucune ligne ne couvre, l'un depuis Frappe, l'autre depuis ce que fait le dépôt ; chaque trouvaille a été contre-vérifiée.
+32 restent :
+
+| Fonctionnalité | État ici |
+|---|---|
+| Étendre le DocType d'une autre app (doc_events, champs, blocs d'espace) | ✔ (D26, D27) |
+| Pages Desk fournies par une app (Page, lien, commande) | ✔ (D28) |
+| Thème clair / sombre / automatique | ✔ |
+| Deux moteurs de base (SQLite, PostgreSQL) avec tests de parité | ✔ |
+| Scripts de formulaire et de liste fournis par une app (doctype_js, listview_settings) | ◐ actions, panneaux, actions de liste ; ni événements de champ, ni écriture dans la fiche, ni formateurs de cellule |
+| Personnaliser un espace / tableau de bord dans le Desk (organisation + personnel) | ◐ on ne crée pas d'espace nouveau |
+| Comptes et sécurité de connexion (MFA, sessions, invitations, politique de mot de passe) | ◐ Desk prouvé, serveur = xauth hors dépôt, politique figée |
+| API serveur des documents pour le code d'une app (get_doc, insert, get_list) | ◐ `event.tx` et `doctype_documents` (lecture) |
+| Rétention et purge des journaux | ◐ `max_versions` et purge d'historique, sans test de service |
+| Réglages régionaux et de marque | ◐ fuseau, format de date, nom, logo, couleur |
+| Sources de graphiques / cartes de nombres fournies par une app | ◐ blocs `extension` (D28), pas de source de données déclarée |
+| Profil utilisateur | ◐ |
+| Champ titre et champ image | ◐ |
+| Raccourcis clavier du Desk | ◐ |
+| Filtres sur les choix d'un Lien (link_filters / set_query) | non fait |
+| Onglets de formulaire (Tab Break) | non fait |
+| Types de champ restants (code-barres, signature, autocomplétion, HTML, bouton) | non fait |
+| Intégrité liens/états (lien vers un annulé, annulation d'un document cité) | non fait (`target_status` est dans le code, sans test) |
+| Tables dédiées, index par champ, synchronisation du schéma | non fait (phase B) |
+| Fixtures livrées par une app | non fait |
+| Règles de permission écrites par une app (has_permission, permission_query_conditions) | non fait |
+| Temps réel (rafraîchissement, notifications poussées) | non fait |
+| Journal des erreurs et santé du système | non fait |
+| Limitation de débit de l'API | non fait |
+| Valeurs par défaut de session et d'utilisateur | non fait |
+| Écran des séries de numérotation | non fait |
+| Suivre un document | non fait |
+| Rappels sur un document | non fait |
+| Jalons (Milestone Tracker) | non fait |
+| E-mail depuis un document (Communication, modèles) | non fait |
+| Fournisseur OAuth 2 | non fait |
+| Outils de diagnostic (Recorder, inspecteur de permissions) | non fait |
+
+**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 60 faites, 21 partielles, 38 non faites, soit **50 % en entier, 59 % avec les
+demi-lignes**. Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
 
 ## 3. Ce qu'on retient pour 70 %
 

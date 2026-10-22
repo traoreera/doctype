@@ -10,7 +10,7 @@ import BlockGrid from '@/components/BlockGrid.vue'
 import OverrideEditor from '@/components/OverrideEditor.vue'
 import { useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
-import { blankBlock, declare, MAX_BLOCKS, moveBlock, preview, removeBlock, replaceBlock, resizeBlock, type BlockKind, type DeclaredBlock, type Known } from '@/lib/blocksedit'
+import { blankBlock, declare, MAX_BLOCKS, MAX_COMPOSED_BLOCKS, moveBlock, preview, removeBlock, replaceBlock, resizeBlock, type BlockKind, type DeclaredBlock, type Known } from '@/lib/blocksedit'
 import type { LayoutScope, WorkspaceBlock } from '@/lib/types'
 import { useMeta } from '@/stores/meta'
 
@@ -94,7 +94,8 @@ const kinds: BlockKind[] = props.doctype ? ['number_card', 'chart', 'header', 's
 const addItems = kinds.map((kind) => ({ label: t.editor.kinds[kind], command: () => add(kind) }))
 
 function add(kind: BlockKind): void {
-  if (draft.value.length >= MAX_BLOCKS) return notify.error(new Error(`${MAX_BLOCKS} blocs au plus`))
+  const limit = props.doctype ? MAX_BLOCKS : MAX_COMPOSED_BLOCKS // un tableau de bord de type : 100 ; un espace avec ses contributions : davantage
+  if (draft.value.length >= limit) return notify.error(new Error(`${limit} blocs au plus`))
   const block = blankBlock(kind, props.doctype ?? '')
   if (kind === 'spacer') draft.value = [...draft.value, block]
   else dialog.value = { index: null, block }

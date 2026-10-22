@@ -114,7 +114,7 @@ const canDelete = computed(() => meta.value?.rights.delete !== 'none')
 /** On coche des lignes quand une action en lot est possible : modifier, assigner, soumettre, annuler ou supprimer. */
 const extensions = useExtensions()
 // Cocher des lignes sert aux actions groupées : celles du Desk (selon les droits) ET celles des extensions (D28 ; le serveur juge chaque appel).
-const selectable = computed(() => !!meta.value && ((['write', 'delete', 'submit', 'cancel'] as const).some((a) => meta.value!.rights[a] !== 'none') || extensions.hasListActions(props.doctype)))
+const selectable = computed(() => !!meta.value && ((['write', 'delete', 'submit', 'cancel'] as const).some((a) => meta.value!.rights[a] !== 'none') || extensions.hasListActions({ doctype: props.doctype, meta: meta.value })))
 
 // Personnaliser le tableau de bord du type : le serveur valide, puis on relit la définition (qui porte le nouveau tableau).
 const dashEditing = ref(false)

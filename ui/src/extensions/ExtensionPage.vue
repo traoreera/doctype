@@ -11,6 +11,7 @@ const route = useRoute()
 <template>
   <div class="desk-page" :data-extension="extension">
     <div v-if="title" class="desk-page-head"><h1>{{ title }}</h1></div>
-    <ExtensionSlot :extension="extension" :component="component" :props="{ ...route.params }" />
+    <!-- Une clé par adresse : une page à paramètre (`deal/:id`) repart de zéro pour un autre document, panne comprise. -->
+    <ExtensionSlot :key="route.fullPath" :extension="extension" :component="component" :props="{ ...route.params }" />
   </div>
 </template>

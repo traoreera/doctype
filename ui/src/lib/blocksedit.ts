@@ -24,6 +24,8 @@ export type BlockKind = DeclaredBlock['type']
 export const SIZES = [3, 4, 6, 8, 12] as const
 
 export const MAX_BLOCKS = 100
+/** Un espace composé (son fichier + les contributions d'autres plugins, D27) s'habille jusqu'à cette taille (serveur : `MAX_COMPOSED_BLOCKS`). */
+export const MAX_COMPOSED_BLOCKS = 1000
 
 const DEFAULT_COLS: Partial<Record<BlockKind, number>> = { number_card: 3, chart: 6, quick_list: 6, card: 4, paragraph: 12, extension: 6 }
 

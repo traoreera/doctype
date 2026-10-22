@@ -159,6 +159,20 @@ export class ExtensionHost {
           add(host.commandItems, { ...command, extension: name })
         },
       },
+      styles: {
+        add(href: string) {
+          need(typeof href === 'string', 'styles.add : une URL attendue')
+          const url = new URL(href, document.baseURI)
+          need(url.origin === location.origin && /^https?:$/.test(url.protocol), `styles.add : même origine seulement (${href})`)
+          if (host.closed.has(name)) return
+          const link = document.createElement('link')
+          link.rel = 'stylesheet'
+          link.href = url.href
+          link.dataset.extension = name
+          document.head.append(link)
+          host.onDrop(name, () => link.remove())
+        },
+      },
     } satisfies DeskHandle)
   }
 
@@ -185,8 +199,9 @@ export class ExtensionHost {
   }
 
   /** Un type a-t-il des actions de liste d'extension (pour offrir la sélection même sans droit d'écriture) ? */
-  hasListActions(doctype: string): boolean {
-    return this.listActionItems.some((a) => matches(a.doctype, doctype))
+  hasListActions(ctx: Omit<ListContext, 'names'>): boolean {
+    // `when` est évalué avec une sélection VIDE : une action qui se cache pour ce type n'offre pas, à elle seule, les cases à cocher.
+    return this.listActions({ ...ctx, names: [] }).length > 0
   }
 
   /** Les liens d'un espace (`workspace` donné), ou ceux qui n'en nomment aucun connu (`known` : les espaces affichés). */
