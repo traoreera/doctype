@@ -1,6 +1,7 @@
 import { inject, type InjectionKey } from 'vue'
 import type { ApiClient } from './api'
 import type { DeskConfig } from './config'
+import type { TabSync } from './tabsync'
 import type { Transport } from './transport'
 import type { XauthClient } from './xauth'
 
@@ -11,6 +12,8 @@ export interface Services {
   api: ApiClient
   /** xauth (comptes, organisation, rôles, sessions, journal, courrier), quand l'adresse de connexion le désigne ; `null` sinon (jeton collé). */
   auth?: XauthClient | null
+  /** Ce que les onglets d'une même session se passent (jeton de renouvellement, déconnexion) ; défaut : le navigateur (`lib/tabsync`). */
+  tabs?: TabSync
 }
 
 export const SERVICES: InjectionKey<Services> = Symbol('desk-services')

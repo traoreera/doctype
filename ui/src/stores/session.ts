@@ -5,9 +5,12 @@ import { authUrl } from '@/lib/config'
 import { decodeClaims, displayName, isExpired, tenantOf } from '@/lib/token'
 import { NetworkError } from '@/lib/transport'
 import { useServices } from '@/lib/services'
+import { browserTabSync, SHARED_TTL_MS, type TabMessage } from '@/lib/tabsync'
 
 const STORAGE_KEY = 'xdt.desk.token'
 const REFRESH_KEY = 'xdt.desk.refresh'
+/** La LIGNÉE de la session : un identifiant tiré à chaque connexion, que l'onglet dupliqué copie avec les jetons (`lib/tabsync`). */
+const LINEAGE_KEY = 'xdt.desk.lineage'
 /** Le nonce `app_state` d'une connexion OAuth en cours : vérifié au retour du fournisseur (contre un callback forgé). */
 const OAUTH_STATE_KEY = 'xdt.desk.oauth'
 /** Le jeton est renouvelé UNE minute avant son expiration ; sans renouvellement possible, on prévient DEUX minutes avant. */
@@ -31,6 +34,12 @@ function writeStored(token: string | null, key = STORAGE_KEY): void {
   } catch {
     // stockage indisponible (navigation privée…) : la session ne survivra pas à un rechargement, rien de plus
   }
+}
+
+/** Le jeton d'accès expire-t-il dans moins de `ms` (ou ne se lit-il pas) ? */
+function expiresWithin(access: string | null, ms: number): boolean {
+  const exp = access ? decodeClaims(access)?.exp : undefined
+  return typeof exp !== 'number' || exp * 1000 - Date.now() <= ms
 }
 
 /** En-têtes d'un appel d'authentification ; `Authorization` seulement quand un jeton est fourni (`accept`, annuaire). */
@@ -112,10 +121,13 @@ interface LoginBody {
 }
 
 export const useSession = defineStore('session', () => {
-  const { transport, config } = useServices()
+  const { transport, config, tabs: injected } = useServices()
+  const tabs = injected ?? browserTabSync()
   const token = ref<string | null>(readStored())
   /** Un jeton de renouvellement à usage unique (xauth le fait tourner à chaque usage). Dans l'onglet, comme le jeton d'accès. */
   const refreshToken = ref<string | null>(readStored(REFRESH_KEY))
+  /** Les onglets d'une même lignée (une connexion, et les onglets dupliqués qui en héritent) se passent le jeton de renouvellement. */
+  const lineage = ref<string | null>(readStored(LINEAGE_KEY))
   /**
    * Le jeton de renouvellement d'une connexion encore incomplète : il faut choisir une organisation (`/select-tenant`), confirmer une double
    * authentification (`/auth/verify-mfa`) ou créer/rejoindre une organisation (onboarding). Tant qu'il n'est pas échangé, il ne remplace pas la
@@ -147,12 +159,26 @@ export const useSession = defineStore('session', () => {
   })
   const canPasswordLogin = computed(() => !!config.loginUrl)
 
-  function setToken(value: string | null, refresh: string | null = null): void {
+  /**
+   * `share` : `new` pour une connexion (une nouvelle lignée), `same` pour un renouvellement (la lignée continue et les autres onglets en
+   * sont prévenus), `quiet` pour un couple ADOPTÉ d'un autre onglet (rien à republier).
+   */
+  function setToken(value: string | null, refresh: string | null = null, share: 'new' | 'same' | 'quiet' = 'new'): void {
     token.value = value
     writeStored(value)
     refreshToken.value = value ? refresh : null // un nouveau jeton sans jeton de renouvellement ne garde pas celui d'une autre session
     writeStored(refreshToken.value, REFRESH_KEY)
     expiringSoon.value = false
+    if (!value || !refresh) {
+      lineage.value = null
+    } else if (share === 'new' || !lineage.value) {
+      lineage.value = randomState()
+    }
+    writeStored(lineage.value, LINEAGE_KEY)
+    if (value && refresh && lineage.value && share !== 'quiet') {
+      tabs.write(lineage.value, { access: value, refresh, at: Date.now() })
+      if (share === 'same') tabs.post({ type: 'rotated', lineage: lineage.value })
+    }
   }
 
   /** Jeton collé à la main (développement) : accepté s'il se lit et n'est pas expiré. Le serveur reste juge de sa validité. */
@@ -478,13 +504,34 @@ export const useSession = defineStore('session', () => {
   // ── Renouvellement ──────────────────────────────────────
   let inflight: Promise<RefreshOutcome> | null = null
 
-  /** Échange le jeton de renouvellement contre un nouveau couple de jetons. Un seul échange à la fois : il est à usage unique. */
+  /**
+   * Échange le jeton de renouvellement contre un nouveau couple de jetons. Un seul échange à la fois DANS l'onglet (single-flight) ET entre
+   * les onglets de la lignée (verrou commun) : le jeton est à usage unique. Sous le verrou, on relit d'abord le couple partagé : si un
+   * autre onglet a déjà renouvelé, on l'adopte au lieu d'envoyer un jeton déjà usé (que le serveur refuserait).
+   */
   function refresh(): Promise<RefreshOutcome> {
     const url = authUrl(config.loginUrl, 'refresh')
-    const used = refreshToken.value
-    if (!url || !used) return Promise.resolve('none')
-    inflight ??= exchange(url, used).finally(() => (inflight = null))
+    if (!url || !refreshToken.value) return Promise.resolve('none')
+    const name = `xdt.desk.refresh.${lineage.value ?? 'tab'}`
+    const asked = refreshToken.value
+    inflight ??= tabs.withLock(name, () => renew(url, asked)).finally(() => (inflight = null))
     return inflight
+  }
+
+  /** `asked` : le jeton qu'on tenait en demandant ; s'il a changé pendant l'attente du verrou, un autre onglet a renouvelé pour nous. */
+  async function renew(url: string, asked: string | null): Promise<RefreshOutcome> {
+    const used = refreshToken.value
+    if (!used) return 'none' // déconnecté pendant l'attente du verrou
+    if (used !== asked && !expiresWithin(token.value, RENEW_BEFORE_MS)) return 'ok' // adopté (diffusion) pendant l'attente : rien à échanger
+    const shared = lineage.value ? tabs.read(lineage.value) : null
+    if (shared && shared.refresh !== used) {
+      if (!expiresWithin(shared.access, RENEW_BEFORE_MS)) {
+        setToken(shared.access, shared.refresh, 'quiet') // un autre onglet vient de renouveler : son couple vaut pour nous
+        return 'ok'
+      }
+      return exchange(url, shared.refresh) // son couple est lui-même près d'expirer : on renouvelle à partir de SON jeton, pas du nôtre (usé)
+    }
+    return exchange(url, used)
   }
 
   async function exchange(url: string, used: string): Promise<RefreshOutcome> {
@@ -497,7 +544,7 @@ export const useSession = defineStore('session', () => {
     }
     const body = (res.json ?? {}) as LoginBody
     if (res.status === 200 && typeof body.access_token === 'string' && body.access_token) {
-      setToken(body.access_token, typeof body.refresh_token === 'string' && body.refresh_token ? body.refresh_token : used)
+      setToken(body.access_token, typeof body.refresh_token === 'string' && body.refresh_token ? body.refresh_token : used, 'same')
       return 'ok'
     }
     return res.status >= 500 ? 'offline' : 'rejected' // 5xx : le serveur est malade, la session ne l'est pas
@@ -523,17 +570,33 @@ export const useSession = defineStore('session', () => {
     }
   }
 
-  /** À appeler une fois au démarrage : le calendrier suit le jeton, quelle que soit la façon dont il change. */
+  /** Ce qu'un autre onglet de la même lignée annonce : il a renouvelé (on prend son couple) ou il s'est déconnecté (on le suit). */
+  function onTab(message: TabMessage): void {
+    if (!lineage.value || message.lineage !== lineage.value) return
+    if (message.type === 'logout') {
+      clear(t.login.loggedOutElsewhere, false)
+      return
+    }
+    const shared = tabs.read(lineage.value)
+    if (shared && shared.refresh !== refreshToken.value) setToken(shared.access, shared.refresh, 'quiet')
+  }
+
+  /** À appeler une fois au démarrage : le calendrier suit le jeton, quelle que soit la façon dont il change ; l'onglet écoute les autres. */
   function start(): () => void {
+    tabs.prune(SHARED_TTL_MS, Date.now())
+    const stopTabs = tabs.subscribe(onTab)
     const stop = watch([token, refreshToken], schedule, { immediate: true })
     return () => {
       stop()
+      stopTabs()
       clearTimeout(timer)
     }
   }
 
   // ── Fin de session ──────────────────────────────────────
-  function clear(message: string | null): void {
+  /** `forget` : retirer aussi le couple partagé de la lignée (la session est finie pour tous ses onglets). */
+  function clear(message: string | null, forget = true): void {
+    if (forget && lineage.value) tabs.remove(lineage.value)
     setToken(null)
     pendingRefresh.value = null
     mfaToken.value = null
@@ -545,6 +608,8 @@ export const useSession = defineStore('session', () => {
   function logout(message: string | null = null): void {
     const url = authUrl(config.loginUrl, 'logout')
     const used = refreshToken.value
+    // Les autres onglets de la lignée partagent cette session, que le serveur va révoquer : ils se déconnectent aussi.
+    if (lineage.value) tabs.post({ type: 'logout', lineage: lineage.value })
     if (url && used) {
       void transport
         .request({ method: 'POST', url, headers: { Accept: 'application/json', 'Content-Type': 'application/json' }, body: { refresh_token: used } })

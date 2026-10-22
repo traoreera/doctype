@@ -573,6 +573,7 @@ export const t = {
     mfaInvalid: 'Code de vérification incorrect ou expiré',
     unreachable: 'Le serveur est injoignable',
     sessionExpired: 'Votre session a expiré, reconnectez-vous',
+    loggedOutElsewhere: 'Vous vous êtes déconnecté dans un autre onglet.',
     expiresSoon: 'Votre session expire dans moins de 2 minutes : enregistrez votre travail, puis reconnectez-vous.',
     refused: 'Accès refusé par le serveur',
     tooMany: 'Trop de tentatives, patientez une minute',
