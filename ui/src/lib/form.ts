@@ -203,6 +203,26 @@ export const isWide = (f: FieldMeta): boolean => WIDE_TYPES.includes(f.fieldtype
  */
 export const isAutoSection = (s: { section: string | null; collapsible: boolean; columns: readonly unknown[] }): boolean => s.section === null && !s.collapsible && s.columns.length === 1
 
+/**
+ * Les filtres d'un champ Link (D29), prêts pour `/search` : `$champ` devient la valeur de ce champ dans le CONTENEUR (le document,
+ * ou la ligne pour un champ de table). Un champ source vide ne restreint rien — il disparaît des filtres, exactement comme le serveur
+ * l'entend à l'écriture. `null` quand il ne reste rien à filtrer.
+ */
+export function resolveLinkFilters(f: FieldMeta, values: Record<string, unknown>): Record<string, unknown> | null {
+  if (!f.link_filters) return null
+  const out: Record<string, unknown> = {}
+  for (const [key, raw] of Object.entries(f.link_filters)) {
+    if (typeof raw === 'string' && raw.startsWith('$')) {
+      const mine = values[raw.slice(1)]
+      if (mine === null || mine === undefined || mine === '') continue
+      out[key] = mine
+    } else {
+      out[key] = raw
+    }
+  }
+  return Object.keys(out).length ? out : null
+}
+
 /** Les champs qui lisent leur valeur du document que le Link `linkName` désigne (`fetch_from: lien.champ`). */
 export const fetchDependents = (fields: readonly FieldMeta[], linkName: string): FieldMeta[] => fields.filter((f) => f.fetch_from?.split('.')[0] === linkName)
 /** Le champ de la cible dont ce champ copie la valeur. */

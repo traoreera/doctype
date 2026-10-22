@@ -4,7 +4,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import FieldInput from '@/components/FieldInput.vue'
 import LinkField from '@/components/LinkField.vue'
 import { t } from '@/i18n'
-import { cellKey, cellStates, newRow, type Row, type Values } from '@/lib/form'
+import { cellKey, cellStates, newRow, resolveLinkFilters, type Row, type Values } from '@/lib/form'
 import { formatCell, isNumeric } from '@/lib/format'
 import { unitLinks, unitOf } from '@/lib/units'
 import type { ChildMeta, FieldMeta } from '@/lib/types'
@@ -184,6 +184,7 @@ function remove(i: number): void {
                     :input-id="`${formId}-${field.fieldname}-${i}-${c.fieldname}`"
                     :invalid="!!cellError(i, c)"
                     :dynamic-target="dynamicOf(c, row)"
+                    :link-filters="resolveLinkFilters(c, row)"
                     @update:model-value="emit('cell', i, c.fieldname, $event)"
                   />
                   <span v-if="unit(c, row)" class="unit" :data-testid="`unit-${i}-${c.fieldname}`">{{ unit(c, row) }}</span>

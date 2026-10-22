@@ -194,8 +194,11 @@ class Query:
         rows = [tuple(r) for r in (await self._session.execute(stmt.limit(limit + 1))).all()]
         return rows[:limit], len(rows) > limit
 
-    async def search(self, defn: DocTypeDef, q: str, *, limit: int, scope: Scope) -> list[StoredDoc]:
-        """Documents dont le nom ou le `title_field` CONTIENT `q` (sans casse), pour l'autocomplétion d'un champ Link."""
+    async def search(self, defn: DocTypeDef, q: str, *, limit: int, scope: Scope, filters: Mapping[str, Any] | None = None) -> list[StoredDoc]:
+        """Documents dont le nom ou le `title_field` CONTIENT `q` (sans casse), pour l'autocomplétion d'un champ Link.
+
+        `filters` : déjà validés par type (comme pour `list`), par exemple les `link_filters` du champ qu'on complète (D29).
+        """
         pattern = "%" + self._like_escape(q) + "%"
         match = [self._t.c.name.ilike(pattern, escape="\\")]
         order: list[Any] = []
@@ -205,7 +208,7 @@ class Query:
             order.append(title.asc().nulls_last())
         stmt = (
             select(self._t)
-            .where(self._scope(self._t.c.doctype == defn.name, or_(*match), scope=scope))
+            .where(self._scope(self._t.c.doctype == defn.name, or_(*match), *self._filter_conds(defn, filters or {}), scope=scope))
             .order_by(*order, self._t.c.name.asc())
             .limit(limit)
         )

@@ -64,7 +64,7 @@ from .files import ATTACHMENT_FIELD
 from .permissions import ACTIONS, Action, Scope, require, scope_for
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
-from .schema import FILE_TYPES, TODAY, DocTypeDef, FieldDef, NamingField
+from .schema import FILE_TYPES, LINK_FILTER_REF, TODAY, DocTypeDef, FieldDef, NamingField
 from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
@@ -520,8 +520,12 @@ class DocumentService:
             )
         return aggregation.result(compiled.definition, spec, rows, keys, truncated=truncated)
 
-    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10) -> dict[str, Any]:
-        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6)."""
+    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10, filters: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6).
+
+        `filters` : les mêmes filtres typés qu'une liste. Le Desk y met ceux du champ (`link_filters`, D29) pour ne proposer que des
+        documents que l'écriture acceptera ; un appelant peut en mettre d'autres, ce ne sont que des filtres de lecture.
+        """
         self._enter(ctx, "doc.search", doctype)
         compiled = self._doctype(doctype)
         scope = self._scope(ctx, compiled, "read")
@@ -529,11 +533,12 @@ class DocumentService:
             raise ValidationFailed("q doit être un texte d'au plus 100 caractères")
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_SEARCH:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_SEARCH}")
+        coerced = aggregation.validate_filters(compiled, filters)
         if (source := self._source(compiled)) is not None:
-            docs = memory.search(compiled.definition, memory.visible(await self._source_docs(ctx, compiled, source), scope), q, limit)
+            docs = memory.search(compiled.definition, memory.select(compiled.definition, memory.visible(await self._source_docs(ctx, compiled, source), scope), coerced), q, limit)
         else:
             async with self._query(ctx) as query:
-                docs = await query.search(compiled.definition, q, limit=limit, scope=scope)
+                docs = await query.search(compiled.definition, q, limit=limit, scope=scope, filters=coerced)
         title = compiled.definition.title_field
         return {"items": [{"name": d.name, "title": d.data.get(title) if title else None} for d in docs]}
 
@@ -914,6 +919,7 @@ class DocumentService:
                 name = valid_name(str(clean[by_field.field]), by_field.field)
             clean = self._seal(compiled, clean, None)
             await self._check_links(ctx, q, compiled, clean, None)
+            await self._check_link_filters(ctx, q, compiled, clean, None)
             await self._check_files(q, compiled, clean, None)
             if series:
                 # En DERNIER dans la transaction : le verrou du compteur n'est tenu que le temps du reste de l'écriture, et
@@ -973,6 +979,7 @@ class DocumentService:
                 clean = await self._fetched(ctx, q, compiled, clean, current.data, finalize)
             clean = self._seal(compiled, clean, current.data)
             await self._check_links(ctx, q, compiled, clean, current.data)
+            await self._check_link_filters(ctx, q, compiled, clean, current.data)
             await self._check_files(q, compiled, clean, current.data)
             # Le périmètre et la version sont dans le WHERE : une modification concurrente échoue en 409.
             doc = await q.update(doctype, name, clean, version, scope=write, docstatus=current.docstatus)
@@ -1511,6 +1518,59 @@ class DocumentService:
         )
         # Rétention (D24) : les `max_versions` entrées les plus récentes survivent dans la MÊME transaction.
         await q.purge_versions(compiled.definition.name, doc.name, keep=compiled.definition.max_versions)
+
+    async def _check_link_filters(
+        self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None
+    ) -> None:
+        """`link_filters` (D29) : un lien MODIFIÉ doit viser un document qui satisfait les filtres déclarés sur le champ.
+
+        Le Desk ne propose déjà que ceux-là, mais un client d'API ne passe pas par le Desk : la contrainte est donc vérifiée ici,
+        comme `target_status`. La valeur d'un filtre `$champ` est lue dans le MÊME conteneur (le document, ou la ligne pour un champ
+        de table) — sans valeur, rien n'est exigé, puisque rien n'a été restreint. La cible se lit avec le périmètre de l'appelant :
+        un document qu'il ne peut pas lire a déjà échoué au contrôle des liens.
+
+        Le même interprète que les listes : les filtres passent par `coerce_filter` (typage) puis par `memory.select` (la version
+        Python des filtres SQL, tenue en parité par `test_virtual_doctypes.py`). Une seule lecture par lien modifié qui en porte.
+        """
+        d = compiled.definition
+        rows_with = {
+            f.fieldname: compiled.children[str(f.options)] for f in d.fields
+            if f.fieldtype == "Table" and any(cf.link_filters for cf in compiled.children[str(f.options)].fields)
+        }
+        if not rows_with and not any(f.link_filters for f in d.fields):
+            return
+        errors: list[dict[str, str]] = []
+
+        async def check(container: Mapping[str, Any], before: Mapping[str, Any] | None, fields: Sequence[FieldDef], prefix: str) -> None:
+            for f in fields:
+                value = container.get(f.fieldname)
+                if not f.link_filters or not isinstance(value, str) or (before is not None and before.get(f.fieldname) == value):
+                    continue  # pas de filtre, pas de valeur, ou lien inchangé : rien à revérifier
+                target = self._registry.get(str(f.options))
+                wanted: dict[str, Any] = {}
+                for key, raw in f.link_filters.items():
+                    if isinstance(raw, str) and raw.startswith(LINK_FILTER_REF):
+                        mine = container.get(raw[len(LINK_FILTER_REF):])
+                        if mine is None:
+                            continue  # le champ qui filtre est vide : il ne restreint rien
+                        wanted[key] = mine
+                    else:
+                        wanted[key] = raw
+                if not wanted:
+                    continue
+                scope = scope_for(target.definition, ctx, "read")
+                found = await self._peek(ctx, target, q, value, scope) if scope.granted else None
+                if found is None or not memory.select(target.definition, [found], {k: target.coerce_filter(k, v) for k, v in wanted.items()}):
+                    label = target.definition.label or target.definition.name
+                    errors.append({"field": f"{prefix}{f.fieldname}", "msg": f"{label} {value!r} ne convient pas ici", "type": "link_filtered"})
+
+        await check(clean, old, d.fields, "")
+        for fieldname, child in rows_with.items():
+            previous = (old or {}).get(fieldname) or []
+            for i, row in enumerate(clean.get(fieldname) or []):
+                await check(row, previous[i] if i < len(previous) else None, child.fields, f"{fieldname}.{i}.")
+        if errors:
+            raise ValidationFailed("un lien ne satisfait pas les filtres de son champ", details=errors)
 
     async def _check_links(
         self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None

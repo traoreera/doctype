@@ -25,6 +25,8 @@ const props = defineProps<{
   doctype?: string
   /** DynamicLink : le DocType que le champ de type désigne en ce moment (vide tant qu'on ne l'a pas choisi). */
   dynamicTarget?: string | null
+  /** Link : les documents proposés (D29), `$champ` déjà résolu par le conteneur. */
+  linkFilters?: Record<string, unknown> | null
 }>()
 const emit = defineEmits<{ 'update:modelValue': [value: unknown] }>()
 
@@ -269,7 +271,7 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
 
   <FileField v-else-if="(field.fieldtype === 'Image' || field.fieldtype === 'Attach') && doctype" :field="field" :model-value="modelValue" :doctype="doctype" :input-id="inputId" :invalid="invalid" @update:model-value="set" />
 
-  <LinkField v-else-if="field.fieldtype === 'Link'" :input-id="inputId" :model-value="modelValue" :target="target" :invalid="invalid" @update:model-value="set" />
+  <LinkField v-else-if="field.fieldtype === 'Link'" :input-id="inputId" :model-value="modelValue" :target="target" :invalid="invalid" :filters="linkFilters" @update:model-value="set" />
 
   <LinkField
     v-else-if="field.fieldtype === 'DynamicLink' && dynamicTarget"

@@ -264,6 +264,8 @@ export interface FieldMeta {
   format?: 'email' | 'phone' | 'url'
   /** L'unité affichée à côté d'une quantité : `uom` (un champ du même document ou de la même ligne) ou `item.uom` (champ de la cible d'un Link). */
   unit_from?: string
+  /** Link : les documents qu'on peut choisir (D29). Une valeur, ou `$champ` pour celle d'un autre champ du document (ou de la ligne). Le serveur l'exige aussi à l'écriture. */
+  link_filters?: Record<string, unknown>
   /** Select : la liste des valeurs. Link : le nom du DocType cible. Table : le nom du DocType des lignes (voir `children`). Currency : le code ISO (EUR). */
   options?: string[] | string
   description?: string

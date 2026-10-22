@@ -22,6 +22,8 @@ const props = defineProps<{
   unit?: string | null
   /** DynamicLink : le DocType que le champ de type désigne en ce moment. */
   dynamicTarget?: string | null
+  /** Link : les documents proposés (D29). */
+  linkFilters?: Record<string, unknown> | null
 }>()
 const emit = defineEmits<{ 'update:modelValue': [value: unknown] }>()
 
@@ -49,7 +51,7 @@ const target = computed(() => (typeof props.field.options === 'string' ? props.f
       </span>
     </template>
     <div v-else-if="unit" class="cell-input">
-      <FieldInput :field="field" :model-value="modelValue" :input-id="id" :invalid="!!error" :aria-required="required" :doctype="doctype" :dynamic-target="dynamicTarget" @update:model-value="emit('update:modelValue', $event)" />
+      <FieldInput :field="field" :model-value="modelValue" :input-id="id" :invalid="!!error" :aria-required="required" :doctype="doctype" :dynamic-target="dynamicTarget" :link-filters="linkFilters" @update:model-value="emit('update:modelValue', $event)" />
       <span class="unit" :data-testid="`unit-${field.fieldname}`">{{ unit }}</span>
     </div>
     <FieldInput
@@ -61,6 +63,7 @@ const target = computed(() => (typeof props.field.options === 'string' ? props.f
       :aria-required="required"
       :doctype="doctype"
       :dynamic-target="dynamicTarget"
+      :link-filters="linkFilters"
       @update:model-value="emit('update:modelValue', $event)"
     />
 

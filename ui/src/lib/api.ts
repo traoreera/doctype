@@ -247,8 +247,10 @@ export class ApiClient {
     await this.call('DELETE', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
   }
 
-  async search(doctype: string, q: string, limit = 10): Promise<SearchItem[]> {
+  async search(doctype: string, q: string, limit = 10, filters?: Record<string, unknown> | null): Promise<SearchItem[]> {
     const params = new URLSearchParams({ q, limit: String(limit) })
+    // Les filtres du champ (`link_filters`) : ne proposer que ce que l'écriture acceptera. Le serveur les revérifie de toute façon.
+    if (filters && Object.keys(filters).length) params.set('filters', JSON.stringify(filters))
     const res = await this.call<{ items: SearchItem[] }>('GET', `/search/${encodeURIComponent(doctype)}`, { params })
     return res.items
   }

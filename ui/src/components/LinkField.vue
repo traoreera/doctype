@@ -10,7 +10,7 @@ import type { DocRecord, DocTypeMeta } from '@/lib/types'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
 
-const props = defineProps<{ modelValue: unknown; target: string; inputId?: string; invalid?: boolean; readonly?: boolean }>()
+const props = defineProps<{ modelValue: unknown; target: string; inputId?: string; invalid?: boolean; readonly?: boolean; filters?: Record<string, unknown> | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
 interface Option {
@@ -73,12 +73,15 @@ function created(rec: DocRecord): void {
 
 async function complete(e: { query: string }): Promise<void> {
   try {
-    const found = await api.search(props.target, e.query.trim(), 10)
+    const found = await api.search(props.target, e.query.trim(), 10, props.filters)
     options.value = found.map((i) => ({ name: i.name, label: i.title || i.name }))
   } catch {
     options.value = []
   }
 }
+
+// Les filtres du champ ont changé (le pays du document, par exemple) : ce qui était proposé ne vaut plus.
+watch(() => JSON.stringify(props.filters ?? null), () => { options.value = [] })
 
 function select(e: { value: Option }): void {
   typed.value = ''

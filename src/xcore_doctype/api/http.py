@@ -153,8 +153,20 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
         return await _guard(documents.global_search(ctx, q, limit=limit))
 
     @router.get("/search/{doctype}")
-    async def doc_search(doctype: str, q: str = "", limit: int = 10, ctx: RequestContext = Depends(ctx_dep)):
-        return await _guard(documents.search(ctx, doctype, q, limit=limit))
+    async def doc_search(
+        doctype: str,
+        q: str = "",
+        limit: int = 10,
+        filters: str | None = Query(None, description="les filtres de /list (le Desk y met les `link_filters` du champ)"),
+        ctx: RequestContext = Depends(ctx_dep),
+    ):
+        try:
+            parsed = json.loads(filters) if filters else None
+        except ValueError:
+            raise HTTPException(
+                status_code=422, detail={"code": "validation_failed", "msg": "filters n'est pas du JSON valide"}
+            ) from None
+        return await _guard(documents.search(ctx, doctype, q, limit=limit, filters=parsed))
 
     @router.get("/history/{doctype}/{name}")
     async def doc_history(
