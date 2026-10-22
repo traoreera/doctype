@@ -254,17 +254,28 @@ class TestCheck:
     def test_the_sample_plugins_are_valid(self, capsys):
         from tests.support import FIXTURES
 
-        # `sales` cite l'article du plugin `stock` (requires) : sans `--with`, sa cible de Link est inconnue.
+        # La chaîne des dépendances du dépôt : `sales` cite l'article de `stock`, qui situe ses entrepôts dans le
+        # référentiel de `geo`. Sans `--with`, la cible de Link du plugin examiné est inconnue.
         sales, stock = str(FIXTURES / "sales" / "doctypes"), str(FIXTURES / "stock" / "doctypes")
+        geo, crm = str(FIXTURES / "geo" / "doctypes"), str(FIXTURES / "crm" / "doctypes")
         assert main(["check", sales, "--owner", "sales"]) == 1
         assert "Item" in capsys.readouterr().err
         assert main(["check", sales, "--owner", "sales", "--with", stock]) == 0
         out = capsys.readouterr().out
         assert "sales.invoice_totals" in out and "4 DocType(s) valides" in out and "Stock Entry" not in out  # les dépendances ne sont pas listées
         assert "espace(s) de travail valides : sales" in out  # l'espace du plugin se valide avec ses DocTypes
-        assert main(["check", stock, "--owner", "stock"]) == 0
+        assert main(["check", stock, "--owner", "stock"]) == 1
+        assert "Warehouse.pays: DocType cible inconnu 'Pays'" in capsys.readouterr().err
+        assert main(["check", stock, "--owner", "stock", "--with", geo]) == 0
         out = capsys.readouterr().out
         assert "stock.post_entry" in out and "stock:stock_entry:submit" in out and "stock:stock_entry:cancel" in out
+        # Le référentiel ne dépend de personne, et sa LECTURE n'est pas un grant (`@authenticated`) : rien à déclarer.
+        assert main(["check", geo, "--owner", "geo"]) == 0
+        out = capsys.readouterr().out
+        assert "geo:pays:write" in out and "geo:pays:read" not in out
+        # `crm` le réutilise : un champ Link et deux `fetch_from` vers un DocType d'un autre plugin.
+        assert main(["check", crm, "--owner", "crm", "--with", geo]) == 0
+        assert "crm:lead:read" in capsys.readouterr().out
 
     def test_the_owner_rule_is_applied(self, tmp_path, capsys):
         d = self.write(tmp_path / "d", a=self.dt("Order", module="stock"))

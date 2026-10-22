@@ -7,3 +7,6 @@ title_field: warehouse_name
 fields:
   - { fieldname: warehouse_name, label: Nom, fieldtype: Text, required: true, in_list_view: true }
   - { fieldname: address, label: Adresse, fieldtype: Text }
+  # Le pays appartient au référentiel de `geo` (plugin que `stock` requires) : `stock` ne redéfinit pas une liste de
+  # pays, il cite celle de tout le monde. Ses utilisateurs n'ont pas besoin d'un grant `geo` pour la lire.
+  - { fieldname: pays, label: Pays, fieldtype: Link, options: Pays, in_list_view: true }

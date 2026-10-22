@@ -5,7 +5,7 @@ description: "Plugin PROPRIÉTAIRE du module stock (quantités, palier 40 % phas
 framework_version: ">=2.9"
 execution_mode: trusted
 entry_point: src/main.py
-requires: [xcore-doctype, auth]
+requires: [xcore-doctype, auth, geo]  # `geo` : le pays de l'entrepôt vient du référentiel partagé, pas d'une liste propre au stock
 
 # Sans ce bloc, PermissionEngine refuse toute action (deny_all). Seule `balances.verify` existe : un contrôle d'opérateur, appelé par la route
 # IPC d'xcore (clé du plugin). Aucun `allowed_callers` : aucun autre plugin ne peut l'appeler (il lit les soldes de n'importe quel tenant).

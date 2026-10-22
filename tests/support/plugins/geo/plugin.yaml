@@ -1,0 +1,8 @@
+name: geo
+version: 0.1.0
+author: traoreera
+description: "Plugin PROPRIÉTAIRE du référentiel géographique : pays et devises. Il n'a pas de métier propre : il existe pour être RÉUTILISÉ (stock y situe ses entrepôts, crm ses prospects). Lecture ouverte à tout utilisateur identifié, écriture réservée à geo."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype, auth]

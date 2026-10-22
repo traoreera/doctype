@@ -1,0 +1,17 @@
+# L'espace « Référentiel ». Tout utilisateur identifié LIT ces deux types : l'espace est donc visible par tous, mais le
+# « + » de chaque raccourci n'apparaît qu'à qui peut créer (le serveur filtre les blocs sur les droits du demandeur).
+schema_version: 1
+name: geo
+label: Référentiel
+icon: globe
+description: Pays et devises, partagés par tous les modules (stock y situe ses entrepôts, crm ses prospects).
+order: 80
+blocks:
+  - { type: header, text: Vue d'ensemble }
+  - { type: number_card, label: Pays, doctype: Pays, color: blue }
+  - { type: number_card, label: Devises, doctype: Devise, color: teal }
+  - { type: chart, label: Pays par devise, doctype: Pays, kind: donut, group_by: devise, limit: 8, cols: 6 }
+  - { type: chart, label: Pays par langue, doctype: Pays, kind: donut, group_by: langue, cols: 6 }
+  - { type: header, text: Tables }
+  - { type: shortcut, doctype: Pays, new: true }
+  - { type: shortcut, doctype: Devise, new: true }

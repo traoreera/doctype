@@ -157,12 +157,14 @@ class TestLoading:
         from tests.support import FIXTURES
 
         reg = DocTypeRegistry()
-        for plugin in ("stock", "sales"):
+        shipped = ("geo", "stock", "sales", "crm")  # dans l'ordre des dépendances : `geo` ne cite personne
+        for plugin in shipped:
             reg.load_dir(FIXTURES / plugin / "doctypes", owner=plugin)
         reg.validate_links()
-        for plugin in ("stock", "sales"):
+        for plugin in shipped:
             assert reg.load_workspaces(FIXTURES / plugin / "workspaces", owner=plugin) == [plugin]
-        assert [w.name for w in reg.workspaces()] == ["sales", "stock"]  # `order` : Ventes (10) avant Stock (20)
+        # `order` : Ventes (10), Stock (20), Relation client (40), Référentiel (80).
+        assert [w.name for w in reg.workspaces()] == ["sales", "stock", "crm", "geo"]
 
 
 class TestFiltering:

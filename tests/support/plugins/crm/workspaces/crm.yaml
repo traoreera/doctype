@@ -1,0 +1,19 @@
+# L'espace « Relation client ». Les chiffres se calculent avec les droits de celui qui regarde : un bloc sur un type
+# qu'il ne peut pas lire disparaît. Le pays d'un prospect se groupe comme n'importe quel champ Link, même si le DocType
+# visé appartient à `geo`.
+schema_version: 1
+name: crm
+label: Relation client
+icon: user-plus
+description: Prospects et affaires, situés dans le référentiel partagé (pays, devises).
+order: 40
+blocks:
+  - { type: header, text: Vue d'ensemble }
+  - { type: number_card, label: Prospects, doctype: Lead, color: blue }
+  - { type: number_card, label: À qualifier, doctype: Lead, filters: { status: Nouveau }, color: orange }
+  - { type: number_card, label: Gagnés, doctype: Lead, filters: { status: Gagné }, color: green }
+  - { type: chart, label: Prospects par état, doctype: Lead, kind: donut, group_by: status, cols: 6 }
+  - { type: chart, label: Prospects par pays, doctype: Lead, kind: bar, group_by: pays, limit: 8, cols: 6 }
+  - { type: quick_list, label: Derniers prospects, doctype: Lead, limit: 5, cols: 12 }
+  - { type: header, text: Prospection }
+  - { type: shortcut, doctype: Lead, new: true }

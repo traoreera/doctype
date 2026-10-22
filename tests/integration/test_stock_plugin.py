@@ -12,7 +12,9 @@ from datetime import UTC, datetime
 from tests.integration.conftest import boot_host
 from tests.support import FIXTURES
 
-STOCK = FIXTURES / "stock"
+STOCK, GEO = FIXTURES / "stock", FIXTURES / "geo"
+# `stock` requires `geo` : l'entrepôt situe son pays dans le référentiel partagé, il n'en garde pas de liste propre.
+PLUGINS = {"geo": GEO, "stock": STOCK}
 KEEPER = [
     "stock:item:read", "stock:item:write", "stock:warehouse:read", "stock:warehouse:write",
     "stock:stock_entry:read", "stock:stock_entry:write", "stock:stock_entry:delete", "stock:stock_entry:submit", "stock:stock_entry:cancel",
@@ -39,10 +41,18 @@ def entry(purpose, lines, day=None):
 
 
 async def test_the_plugin_loads_with_its_doctypes_hooks_and_grants(tmp_path):
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
         t = h.token(permissions=KEEPER)
         names = [m["name"] for m in (await h.http("GET", "/meta", token=t)).json()]
-        assert names == ["Bin", "Item", "Stock Entry", "Stock Ledger Entry", "Warehouse"]  # le DocType de lignes n'est pas listé
+        # Le DocType de lignes n'est pas listé. `Devise` et `Pays` viennent du référentiel `geo` : ce gestionnaire ne
+        # détient AUCUN grant `geo` et les voit quand même, parce que leur lecture est ouverte à tout utilisateur
+        # identifié (`@authenticated`) — c'est ce qui rend l'entrepôt capable de citer un pays.
+        assert names == ["Bin", "Devise", "Item", "Pays", "Stock Entry", "Stock Ledger Entry", "Warehouse"]
+        assert (await h.http("GET", "/meta/Pays", token=t)).json()["rights"] == {
+            "read": "all", "write": "none", "create": "none", "delete": "none", "submit": "none", "cancel": "none"}
+        # Et `geo` ne déclare à auth que l'écriture : un grant de lecture n'existe pas pour un référentiel.
+        (declared_geo,) = [e for e in h.rbac_declared if e["plugin"] == "geo"]
+        assert {g["name"] for g in declared_geo["grants"]} == {"geo:pays:write", "geo:pays:delete", "geo:devise:write", "geo:devise:delete"}
         meta = (await h.http("GET", "/meta/Stock Entry", token=t)).json()
         assert meta["submittable"] is True and meta["rights"]["submit"] == "all" and "Stock Entry Line" in meta["children"]
         # Fermés à tout écrivain humain : même ce gestionnaire ne peut pas écrire le journal ni les soldes.
@@ -55,7 +65,7 @@ async def test_the_plugin_loads_with_its_doctypes_hooks_and_grants(tmp_path):
 
 
 async def test_the_http_journey_receipt_issue_transfer_cancel(tmp_path):
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
         t = h.token(permissions=KEEPER)
         vis, paris, lyon = await world(h, t)
 
@@ -125,7 +135,7 @@ async def test_the_http_journey_receipt_issue_transfer_cancel(tmp_path):
 
 
 async def test_the_actions_of_the_plugin_do_the_same_through_xcore(tmp_path):
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
         t = h.token(permissions=KEEPER)
         vis, paris, _ = await world(h, t)
         saved = (await h.action("doc.save", {"doctype": "Stock Entry", "data": entry("Réception", [{"item": vis, "qty": 3, "target_warehouse": paris}])}, token=t))["doc"]
@@ -140,7 +150,7 @@ async def test_the_actions_of_the_plugin_do_the_same_through_xcore(tmp_path):
 
 
 async def test_submitting_needs_its_own_grant_and_not_write(tmp_path):
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
         t = h.token(permissions=KEEPER)
         vis, paris, _ = await world(h, t)
         doc = await make(h, t, "Stock Entry", entry("Réception", [{"item": vis, "qty": "1", "target_warehouse": paris}]))
@@ -157,7 +167,7 @@ async def test_submitting_needs_its_own_grant_and_not_write(tmp_path):
 
 
 async def test_two_tenants_do_not_share_stock(tmp_path):
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
         a, g = h.token(permissions=KEEPER), h.token(sub="gina", tenant="globex", permissions=KEEPER)
         vis, paris, _ = await world(h, a)
         doc = await make(h, a, "Stock Entry", entry("Réception", [{"item": vis, "qty": "5", "target_warehouse": paris}]))
@@ -169,9 +179,10 @@ async def test_two_tenants_do_not_share_stock(tmp_path):
 
 
 async def test_the_workspace_is_served_filtered_by_the_callers_rights(tmp_path):
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
         full = (await h.http("GET", "/workspaces", token=h.token(permissions=KEEPER))).json()
-        assert [w["name"] for w in full] == ["stock"] and full[0]["icon"] == "warehouse"
+        # Deux espaces : celui du stock (order 20) et le référentiel de `geo` (order 80), que tout utilisateur identifié lit.
+        assert [w["name"] for w in full] == ["stock", "geo"] and full[0]["icon"] == "warehouse"
         blocks = full[0]["blocks"]
         # Le module s'ouvre sur un tableau de bord : des chiffres, des graphiques, les derniers mouvements, PUIS les accès.
         assert [b["type"] for b in blocks[:12]] == ["header", "number_card", "number_card", "number_card", "number_card", "chart", "chart", "chart", "chart", "quick_list", "header", "shortcut"]
@@ -182,18 +193,22 @@ async def test_the_workspace_is_served_filtered_by_the_callers_rights(tmp_path):
         only_bins = (await h.http("GET", "/workspaces", token=h.token(permissions=["stock:bin:read"]))).json()
         seen = [(b["type"], b.get("doctype") or b["text"]) for b in only_bins[0]["blocks"]]
         assert seen == [("header", "Vue d'ensemble"), ("chart", "Bin"), ("chart", "Bin"), ("header", "Opérations"), ("shortcut", "Bin")]
-        # Sans aucun droit : aucun espace.
-        assert (await h.http("GET", "/workspaces", token=h.token(permissions=[]))).json() == []
+        # Sans aucun grant : plus rien du stock, mais le référentiel demeure — c'est le prix EXACT de `@authenticated`,
+        # et il est voulu (un pays se lit par tous, sinon aucun autre module ne pourrait en citer un) ; ses raccourcis
+        # n'offrent pas « + », faute du droit d'écrire dans `geo`.
+        bare = (await h.http("GET", "/workspaces", token=h.token(permissions=[]))).json()
+        assert [w["name"] for w in bare] == ["geo"]
+        assert [(b["doctype"], b["create"]) for b in bare[0]["blocks"] if b["type"] == "shortcut"] == [("Pays", False), ("Devise", False)]
         assert (await h.http("GET", "/workspaces", token=None)).status_code == 401
         done = await h.action("meta.workspaces", {}, token=h.token(permissions=KEEPER))
-        assert [w["name"] for w in done["items"]] == ["stock"]
+        assert [w["name"] for w in done["items"]] == ["stock", "geo"]
 
 
 async def test_the_verify_action_recomputes_the_balances_from_the_ledger(tmp_path):
     """La commande de recalcul (doc/palier40.md §4.5) : appel d'opérateur par la route IPC d'xcore, lecture en contexte système."""
     import sqlite3
 
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
         t = h.token(permissions=KEEPER)
         vis, paris, _ = await world(h, t)
         doc = await make(h, t, "Stock Entry", entry("Réception", [{"item": vis, "qty": "10", "target_warehouse": paris}]))
@@ -239,7 +254,7 @@ async def test_simultaneous_http_issues_never_overdraw_on_postgresql(tmp_path):
     for name in build_system_tables().metadata.tables:
         await conn.execute(f"DROP TABLE IF EXISTS public.{name}")
     try:
-        async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}, db_type="postgresql+aio", db_url=PG_URL) as h:
+        async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS, db_type="postgresql+aio", db_url=PG_URL) as h:
             t = h.token(permissions=KEEPER)
             vis, paris, _ = await world(h, t)
             first = await make(h, t, "Stock Entry", entry("Réception", [{"item": vis, "qty": "10", "target_warehouse": paris}]))
