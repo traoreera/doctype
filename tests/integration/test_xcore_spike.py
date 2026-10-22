@@ -57,6 +57,8 @@ EXPECTED_ROUTES = sorted(
         ("POST", "/assign-many/{doctype}"),
         ("POST", "/attachments/{doctype}/{name}"),
         ("DELETE", "/attachments/{attachment_id}"),
+        ("GET", "/file-library"),
+        ("POST", "/file-library/detach"),
         ("GET", "/files/{tenant}/{file_id}"),  # PUBLIQUE : la signature de l'URL fait foi (voir api/files.py)
         ("GET", "/tree/{doctype}"),
         ("GET", "/connections/{doctype}/{name}"),

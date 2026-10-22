@@ -75,3 +75,52 @@ async def test_the_links_of_a_file_you_cannot_read_are_absent_not_forbidden(tmp_
         foreign = h.token(sub="g", tenant="globex", permissions=HR)
         assert (await h.http("POST", "/file-links", token=foreign, tenant="globex", json={"ids": [meta["id"]]})).json() == {}
         assert (await h.http("POST", "/file-links", token=t, json={"ids": ["nope"]})).status_code == 422
+
+
+async def test_the_files_screen_lists_what_one_may_read_and_detaches_by_ordinary_writes(tmp_path):
+    """`/file-library` : une identité exigée, la liste jugée sur le document citant, détacher = modifier le document (version, droits) ou retirer la pièce jointe."""
+    async with boot_host(tmp_path, extra_doctypes=(EMPLOYEE,), operator_doctypes=False) as h:
+        t, reader = h.token(permissions=HR), h.token(sub="rita", permissions=["hr:employee:read"])
+        photo = (await upload(h, t)).json()["id"]
+        doc = (await h.http("POST", "/doc/Employee", token=t, json={"data": {"full_name": "Hana", "photo": photo}})).json()
+        att = (await h.http("POST", f"/attachments/Employee/{doc['name']}", token=t, files={"file": ("avenant.pdf", b"%PDF", "application/pdf")})).json()
+
+        assert (await h.http("GET", "/file-library", token=None)).status_code == 401
+        listed = await h.http("GET", "/file-library", token=reader, params={"q": "AVENANT"})
+        assert listed.status_code == 200, listed.text
+        body = listed.json()
+        assert [(i["filename"], i["docname"], i["attachment"], i["can_detach"]) for i in body["items"]] == [("avenant.pdf", doc["name"], att["id"], False)]
+        assert body["total"] == 1 and body["doctypes"] == [{"name": "Employee", "label": "Employee", "count": 1}]
+        assert (await h.http("GET", "/file-library", token=h.token(sub="zed", permissions=[]))).json()["total"] == 0
+        assert (await h.http("GET", "/file-library", token=t, params={"doctype": "Nope"})).status_code == 404
+        assert (await h.http("GET", "/file-library", token=t, params={"limit": 0})).status_code == 422
+        assert (await h.http("GET", "/file-library", token=t, params={"order": "sideways"})).status_code == 422
+
+        target = {"doctype": "Employee", "name": doc["name"], "field": "photo", "file_id": photo, "version": doc["version"]}
+        assert (await h.http("POST", "/file-library/detach", token=reader, json=target)).status_code == 403  # lire n'est pas écrire
+        assert (await h.http("POST", "/file-library/detach", token=t, json={**target, "version": doc["version"] + 1})).status_code == 409
+        assert (await h.http("POST", "/file-library/detach", token=t, json={**target, "extra": 1})).status_code == 422
+        done = await h.http("POST", "/file-library/detach", token=t, json=target)
+        assert done.status_code == 200 and done.json() == {"detached": "field", "version": doc["version"] + 1}, done.text
+        assert "photo" not in (await h.http("GET", f"/doc/Employee/{doc['name']}", token=t)).json()["data"]
+
+        assert (await h.http("POST", "/file-library/detach", token=reader, json={"attachment": att["id"]})).status_code == 403
+        assert (await h.http("POST", "/file-library/detach", token=t, json={"attachment": att["id"]})).json() == {"detached": "attachment", "version": None}
+        assert (await h.http("GET", "/file-library", token=t)).json()["total"] == 0
+
+
+async def test_the_files_screen_ipc_actions_apply_the_same_rules(tmp_path):
+    """`doc.files.list` / `doc.files.detach` : les mêmes règles que les routes (lecture du document citant, détacher = l'écriture ordinaire)."""
+    async with boot_host(tmp_path, extra_doctypes=(EMPLOYEE,), operator_doctypes=False) as h:
+        t, reader = h.token(permissions=HR), h.token(sub="rita", permissions=["hr:employee:read"])
+        photo = (await upload(h, t)).json()["id"]
+        doc = (await h.http("POST", "/doc/Employee", token=t, json={"data": {"full_name": "Hana", "photo": photo}})).json()
+        listed = await h.action("doc.files.list", {"doctype": "Employee"}, token=reader)
+        assert [(i["file_id"], i["field"], i["can_detach"]) for i in listed["items"]] == [(photo, "photo", False)] and listed["total"] == 1
+        assert (await h.action("doc.files.list", {}, token=h.token(sub="zed", permissions=[])))["total"] == 0
+        target = {"doctype": "Employee", "name": doc["name"], "field": "photo", "file_id": photo, "version": doc["version"]}
+        assert (await h.action("doc.files.detach", target, token=reader))["status"] == "error"  # lire n'est pas écrire
+        assert (await h.action("doc.files.detach", {**target, "extra": 1}, token=t))["code"] == "detach_target"
+        done = await h.action("doc.files.detach", target, token=t)
+        assert (done["detached"], done["version"]) == ("field", doc["version"] + 1)
+        assert (await h.action("doc.files.list", {}, token=t))["total"] == 0

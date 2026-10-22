@@ -20,13 +20,14 @@ from xcore.sdk import AutoDispatchMixin, TrustedBase, action, error, ok
 from .api.desk import DeskSettings, build_desk_router
 from .desk_extensions import DeskExtensions
 from .api.collab import build_collab_router
-from .api.files import build_files_router, build_preferences_router, build_public_files_router
+from .api.files import build_file_library_router, build_files_router, build_preferences_router, build_public_files_router
 from .api.http import build_router
 from .context import ContextSettings, RequestContext
 from .db.access import create_system_tables, ensure_async_database
 from .db.rls import ensure_rls
 from .db.tables import SystemTables, build_system_tables
 from .document import DocumentService, SystemReaders
+from .file_library import FileLibrary
 from .file_service import FileService
 from .files import BlobStore, LocalBlobStore, UrlSigner
 from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
@@ -60,6 +61,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     hook_registry: HookRegistry | None = None
     grant_catalog: GrantCatalog | None = None
     collaboration: CollaborationService | None = None
+    file_library: FileLibrary | None = None
     documents: DocumentService | None = None
     _tables: SystemTables | None = None
     _settings: ContextSettings | None = None
@@ -193,6 +195,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         hook_registry.register(RULE_HOOK, make_rule_hook(self.documents), owner=self.ctx.name)
         self.collaboration = collab
         root.include_router(build_collab_router(collab, self._settings))  # commentaires, assignations, pièces jointes
+        self.file_library = FileLibrary(self.documents, collab)
+        root.include_router(build_file_library_router(self.file_library, self._settings))  # l'écran « Fichiers » : lister, détacher
         root.include_router(build_preferences_router(Preferences(self.documents, file_service), self._settings))  # nom, logo, couleur de l'organisation
         root.include_router(build_public_files_router(file_service))  # servir : la signature de l'URL fait foi (pas de jeton dans une balise <img>)
         desk_extensions = DeskExtensions(desk.extensions, self.logger)  # D28 : ce que les plugins livrent au Desk, filtré par l'opérateur
@@ -294,7 +298,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             self.ctx.services.pop(GRANTS_SERVICE, None)
             self.ctx.services.pop(REGISTRY_SERVICE, None)
             self.ctx.services.pop(DOCUMENTS_SERVICE, None)
-        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = None
+        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = None
 
     def get_router(self) -> APIRouter | None:
         return self._router
@@ -575,6 +579,36 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return await self.collaboration.mine(ctx, status=payload.get("status", "open"), limit=payload.get("limit", 100))
 
         return await self._run("doc.assignments.mine", op)
+
+    @action("doc.files.list")
+    async def doc_files_list(self, payload: dict) -> dict:
+        """L'écran « Fichiers » : les fichiers que des documents lisibles par l'appelant citent (voir `file_library.py`)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.file_library.list(
+                ctx,
+                doctype=payload.get("doctype"),
+                q=payload.get("q"),
+                order_by=payload.get("order_by", "creation"),
+                descending=payload.get("order", "desc") != "asc",
+                limit=payload.get("limit", 20),
+                offset=payload.get("offset", 0),
+            )
+
+        return await self._run("doc.files.list", op)
+
+    @action("doc.files.detach")
+    async def doc_files_detach(self, payload: dict) -> dict:
+        """Détacher par l'écriture ordinaire : `{attachment}` ou `{doctype, name, field, file_id, version}`."""
+
+        async def op(ctx: RequestContext) -> dict:
+            known = ("attachment", "doctype", "name", "field", "file_id", "version")
+            extra = sorted(k for k in payload if k not in known)
+            if extra:
+                raise ValidationFailed(f"champs inconnus : {', '.join(extra)}", code="detach_target")
+            return await self.file_library.detach(ctx, **{k: payload.get(k) for k in known})
+
+        return await self._run("doc.files.detach", op)
 
     @action("doc.save")
     async def doc_save(self, payload: dict) -> dict:

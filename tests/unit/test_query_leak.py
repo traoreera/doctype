@@ -24,7 +24,7 @@ from xcore_doctype.db.tables import (
 )
 from xcore_doctype.errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, VersionConflict
 from xcore_doctype.permissions import Scope
-from xcore_doctype.query import Query, UniqueViolation
+from xcore_doctype.query import FileCiters, Query, UniqueViolation
 
 A, B = "acme", "globex"
 ALL = Scope.everything("read")
@@ -212,6 +212,45 @@ async def scenario_files(env: Env):
     async with env.q(A) as q:
         assert set(await q.get_files({same, "e" * 32})) == {same, "e" * 32}  # intacts chez A
         await q.remove_files({same, "e" * 32})  # (on rend la table comme on l'a trouvée)
+
+
+async def scenario_cited_files(env: Env):
+    """L'écran « Fichiers » de B : ses fichiers cités, jamais ceux de A, ni dans la page, ni dans le total, ni dans les comptes, même sous un nom de document commun."""
+    cited = dict(doctype="Customer", fieldname="customer_name", content_type="image/png", size=3, namespace="n", blob_id="b", stored_name="b")
+    async with env.q(A) as q:
+        await q.add_file(f"{A}:needle", filename="secret-a.png", **cited)  # « needle » de A cite ce fichier par son champ
+    async with env.q(B) as q:
+        await q.add_file(f"{B}:only-b", filename="mine-b.png", **cited)
+        page = dict(doctype=None, search=None, order_by="creation", descending=True, limit=50, offset=0)
+        everything = [FileCiters("Customer", ALL, Scope.everything("write"), fields=("customer_name",))]
+        rows, total, counts = await q.cited_files(everything, **page)
+        assert sorted((r["file_id"], r["docname"], r["fieldname"]) for r in rows) == [(env.ids[B]["file"], "shared", "_attachment"), (f"{B}:only-b", "only-b", "customer_name")]
+        assert total == 2 and counts == {"Customer": 2} and all(r["writable"] for r in rows)
+        # Le nom d'un fichier que seul A a joint (« acme.pdf ») ne ramène rien chez B ; une page plus loin non plus.
+        assert await q.cited_files(everything, **{**page, "search": A}) == ([], 0, {})
+        assert (await q.cited_files(everything, **{**page, "offset": 2}))[0] == []
+        # Un DocType virtuel : les noms lisibles viennent de sa source, le tenant reste celui de l'appelant (« shared » existe chez les deux).
+        virtual = [FileCiters("Customer", Scope("read"), Scope("write"), names=frozenset({"shared", "only-a"}))]
+        rows, total, _ = await q.cited_files(virtual, **page)
+        assert [(r["file_id"], r["writable"], r["version"]) for r in rows] == [(env.ids[B]["file"], False, None)] and total == 1
+        await q.remove_files({f"{B}:only-b"})
+    async with env.q(A) as q:
+        await q.remove_files({f"{A}:needle"})
+
+
+async def scenario_attachment_doctypes(env: Env):
+    """Les types qui ont des pièces jointes sont ceux du tenant : une pièce jointe que seul A a sur une commande n'en fait pas un type « avec pièces jointes » pour B."""
+    env.recording = False
+    async with env.q(A) as q:
+        att = await q.add_attachment("Order", "a-order", "d" * 32)
+    env.recording = True
+    async with env.q(B) as q:
+        assert await q.attachment_doctypes({"Customer", "Order"}) == {"Customer"}
+        assert await q.attachment_doctypes(set()) == set()
+    env.recording = False
+    async with env.q(A) as q:
+        assert await q.delete_attachment(att["id"])  # (on rend la table comme on l'a trouvée)
+    env.recording = True
 
 
 async def scenario_search(env: Env):
@@ -657,6 +696,8 @@ SCENARIOS = {
     "get_files": scenario_files,
     "file_cited": scenario_files,
     "remove_files": scenario_files,
+    "cited_files": scenario_cited_files,
+    "attachment_doctypes": scenario_attachment_doctypes,
     "insert": scenario_insert,
     "update": scenario_update,
     "delete": scenario_delete,

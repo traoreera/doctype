@@ -59,6 +59,7 @@ export function buildCommands({ workspaces, summaries, recents, extensions = [] 
     out.push(make({ id: `go:${d.name}`, label: d.label, hint: d.single ? t.settings.title : t.palette.list, icon: d.icon ?? 'file', group: 'go', to }, d.name))
     if (d.create) out.push(make({ id: `new:${d.name}`, label: t.homeNew(d.label), icon: 'plus', group: 'new', to: { name: 'new', params: { doctype: d.name } } }, `creer ajouter ${d.name}`))
   }
+  if (summaries.length) out.push(make({ id: 'files', label: t.fileLibrary.title, icon: 'paperclip', group: 'go', to: { name: 'files' } }, t.fileLibrary.keywords))
   if (summaries.length) out.push(make({ id: 'api-docs', label: t.apiDocs.title, icon: 'code', group: 'go', to: { name: 'api-docs' } }, 'api rest swagger curl documentation developpeur'))
   extensions.forEach((c, i) => {
     out.push(make({ id: `ext:${c.extension}:${i}`, label: c.label, hint: t.extensions.palette, icon: c.icon ?? 'bolt', group: 'extension', extension: { name: c.extension, run: c.run } }, `${c.keywords ?? ''} ${c.extension}`))

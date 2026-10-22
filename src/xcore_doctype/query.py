@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Collection, Mapping, Sequence
 
-from sqlalchemy import and_, cast, delete, exists, false, func, insert, literal, literal_column, or_, select, true, update
+from sqlalchemy import Integer, SmallInteger, String, and_, case, cast, delete, exists, false, func, insert, literal, literal_column, null, or_, select, true, update
 from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import IntegrityError
@@ -31,6 +31,7 @@ from .decimals import MAX_DIGITS
 from .context import RequestContext
 from .db.tables import SystemTables
 from .errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, ValidationFailed, VersionConflict
+from .files import ATTACHMENT_FIELD
 from .permissions import Scope
 from .schema import DECIMAL_TYPES, DocTypeDef
 
@@ -90,6 +91,26 @@ class StoredDoc:
             "amended_from": self.amended_from,
             "data": self.data,
         }
+
+
+# Ce sur quoi l'écran « Fichiers » trie : la date de dépôt, le nom, la taille (le nom suit la collation de chaque base, comme tout tri de texte).
+FILE_SORTABLE = ("creation", "filename", "size")
+
+
+@dataclass(frozen=True, slots=True)
+class FileCiters:
+    """Où l'appelant peut voir des fichiers dans UN DocType (`Query.cited_files`) : ses champs Image/Attach et ses pièces jointes, jugés sur le
+    document qui les cite. `read` / `write` : les périmètres de l'appelant sur ce type (`write` ne sert qu'à dire s'il pourra les détacher).
+    Un DocType VIRTUEL (ses documents ne sont pas dans `xdt_document`) donne à la place les noms des documents que sa source lui laisse lire (`names`) et
+    écrire (`writable`)."""
+
+    doctype: str
+    read: Scope
+    write: Scope
+    fields: tuple[str, ...] = ()
+    attachments: bool = True
+    names: frozenset[str] | None = None
+    writable: frozenset[str] = frozenset()
 
 
 class Query:
@@ -663,6 +684,102 @@ class Query:
         f = self._files
         result = await self._session.execute(delete(f).where(and_(f.c.tenant_id == self._tenant, f.c.id.in_(sorted(ids)))))
         return result.rowcount
+
+    # ── L'écran « Fichiers » (file_library.py) ────────────────
+    async def cited_files(
+        self, citers: Sequence[FileCiters], *, doctype: str | None, search: str | None, order_by: str, descending: bool, limit: int, offset: int
+    ) -> tuple[list[dict[str, Any]], int, dict[str, int]]:
+        """Les fichiers que des documents LISIBLES citent : une ligne par citation (un fichier cité par deux documents en donne deux).
+
+        Le droit se juge sur le document citant, dans le SQL (jamais de filtrage après coup) : chaque `FileCiters` apporte le périmètre de lecture de
+        l'appelant sur SON DocType, appliqué à la ligne de `xdt_document` qui cite le fichier, par un champ Image/Attach (`data[champ] = id`) ou par une pièce
+        jointe (`xdt_attachment`). Un fichier qu'aucun document lisible ne cite n'existe pas ici, ni dans le total, ni dans les comptes par type.
+        `doctype` restreint la page et le total ; les comptes par DocType (de quoi proposer le filtre) ne suivent que la recherche. Rend `(page, total, comptes)`.
+        """
+        counts: dict[str, int] = {}
+        parts = self._citations(citers, search)
+        if parts:
+            u = parts[0].union_all(*parts[1:]).subquery() if len(parts) > 1 else parts[0].subquery()
+            rows = (await self._session.execute(select(u.c.doctype, func.count()).group_by(u.c.doctype))).all()
+            counts = {r[0]: int(r[1]) for r in rows}
+        total = counts.get(doctype, 0) if doctype is not None else sum(counts.values())
+        if not total:
+            return [], total, counts
+        chosen = [c for c in citers if doctype is None or c.doctype == doctype]
+        parts = self._citations(chosen, search)
+        u = parts[0].union_all(*parts[1:]).subquery() if len(parts) > 1 else parts[0].subquery()
+        sort = u.c[order_by].desc().nulls_last() if descending else u.c[order_by].asc().nulls_last()
+        # Départage complet : sans lui la pagination peut dupliquer ou perdre des lignes (deux fichiers déposés dans la même seconde).
+        stmt = select(u).order_by(sort, u.c.file_id.asc(), u.c.doctype.asc(), u.c.docname.asc(), u.c.fieldname.asc()).limit(limit).offset(offset)
+        page = [self._citation(r) for r in (await self._session.execute(stmt)).mappings().all()]
+        return page, total, counts
+
+    async def attachment_doctypes(self, doctypes: Collection[str]) -> set[str]:
+        """Parmi `doctypes`, ceux dont au moins un document de ce tenant a une pièce jointe (avant de demander ses documents à la source d'un DocType virtuel)."""
+        if not doctypes:
+            return set()
+        t = self._attachments
+        stmt = select(t.c.doctype).where(self._cscope(t, t.c.doctype.in_(sorted(doctypes)))).distinct()
+        return {r[0] for r in (await self._session.execute(stmt)).all()}
+
+    def _citations(self, citers: Sequence[FileCiters], search: str | None) -> list[Any]:
+        """Une instruction par façon de citer un fichier : un champ fichier d'un DocType, ou ses pièces jointes. Toutes ont les mêmes colonnes (union)."""
+        f, d, a = self._files, self._t, self._attachments
+        found = [f.c.filename.ilike(f"%{self._like_escape(search)}%", escape="\\")] if search else []
+        parts: list[Any] = []
+
+        # `owner` / `creation` : qui a déposé le fichier d'un champ, quand ; pour une pièce jointe, qui l'a JOINTE et quand (c'est l'auteur qui peut la
+        # retirer, `CollaborationService.detach`).
+        def columns(doctype: Any, docname: Any, attachment: Any, version: Any, docstatus: Any, writable: Any, by: Any = f) -> list[Any]:
+            return [
+                f.c.id.label("file_id"), f.c.filename.label("filename"), f.c.content_type.label("content_type"), f.c.size.label("size"),
+                by.c.owner.label("owner"), by.c.creation.label("creation"), doctype.label("doctype"), docname.label("docname"),
+                f.c.fieldname.label("fieldname"), attachment.label("attachment_id"), version.label("version"), docstatus.label("docstatus"),
+                case((writable, 1), else_=0).label("writable"),
+            ]
+
+        for c in citers:
+            if not c.read.granted and c.names is None:
+                continue
+            if c.names is None:
+                write = self._permission_clause(c.write)
+                for field in c.fields:
+                    # Le document cite le fichier par la valeur de son champ ; le fichier a été déposé POUR ce champ de ce type (`_check_files`).
+                    joined = f.join(d, and_(d.c.tenant_id == f.c.tenant_id, d.c.doctype == f.c.doctype, d.c.data[field].as_string() == f.c.id))
+                    parts.append(
+                        select(*columns(d.c.doctype, d.c.name, cast(null(), String(32)), d.c.version, d.c.docstatus, write))
+                        .select_from(joined)
+                        .where(and_(f.c.tenant_id == self._tenant, f.c.doctype == c.doctype, f.c.fieldname == field, self._scope(d.c.doctype == c.doctype, scope=c.read), *found))
+                    )
+                if c.attachments:
+                    joined = a.join(f, and_(f.c.tenant_id == a.c.tenant_id, f.c.id == a.c.file_id)).join(
+                        d, and_(d.c.tenant_id == a.c.tenant_id, d.c.doctype == a.c.doctype, d.c.name == a.c.docname)
+                    )
+                    parts.append(
+                        select(*columns(a.c.doctype, a.c.docname, a.c.id, d.c.version, d.c.docstatus, write, by=a))
+                        .select_from(joined)
+                        .where(and_(self._cscope(a, a.c.doctype == c.doctype), f.c.tenant_id == self._tenant, f.c.fieldname == ATTACHMENT_FIELD, self._scope(d.c.doctype == c.doctype, scope=c.read), *found))
+                    )
+            elif c.attachments and c.names:
+                # DocType virtuel : ses documents ne sont pas ici, sa source a dit lesquels l'appelant lit (et écrit).
+                joined = a.join(f, and_(f.c.tenant_id == a.c.tenant_id, f.c.id == a.c.file_id))
+                writable = a.c.docname.in_(sorted(c.writable)) if c.writable else false()
+                parts.append(
+                    select(*columns(a.c.doctype, a.c.docname, a.c.id, cast(null(), Integer), literal(DRAFT, SmallInteger), writable, by=a))
+                    .select_from(joined)
+                    .where(and_(self._cscope(a, a.c.doctype == c.doctype, a.c.docname.in_(sorted(c.names))), f.c.tenant_id == self._tenant, f.c.fieldname == ATTACHMENT_FIELD, *found))
+                )
+        return parts
+
+    @staticmethod
+    def _citation(row: Mapping[str, Any]) -> dict[str, Any]:
+        out = dict(row)
+        out["writable"] = bool(out["writable"])
+        out["size"] = int(out["size"])
+        out["docstatus"] = int(out["docstatus"])
+        if isinstance(out.get("creation"), datetime):
+            out["creation"] = _utc(out["creation"]).astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return out
 
     # ── Collaboration : commentaires, assignations, pièces jointes (collaboration.py) ─────────────────────
     # Aucune de ces méthodes ne juge un DROIT : elles imposent le tenant (`_cscope`) et rien d'autre. Savoir si l'appelant peut lire le document
