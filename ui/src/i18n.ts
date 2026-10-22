@@ -20,6 +20,7 @@ export const t = {
     tasks: (n: number, late: number) =>
       n === 0 ? 'Rien à faire : tout est à jour.' : `${n} tâche${n > 1 ? 's' : ''} à faire${late ? `, dont ${late} en retard` : ''}.`,
     todo: 'À faire',
+    figures: 'Vue d’ensemble',
     seeAll: 'Tout voir',
     due: (d: string) => `pour le ${d}`,
     late: 'en retard',

@@ -151,13 +151,16 @@ class TestFreshInstance:
         assert alone.returncode == 1 and "Item" in alone.stderr
         out = ok(run([tool, "check", FIXTURES / "sales" / "doctypes", "--owner", "sales", "--with", FIXTURES / "stock" / "doctypes"], cwd=instance, env=env))
         assert "4 DocType(s) valides" in out and "sales.invoice_totals" in out
-        out = ok(run([tool, "check", FIXTURES / "stock" / "doctypes", "--owner", "stock"], cwd=instance, env=env))
+        # `stock` cite à son tour le pays du référentiel `geo` : la chaîne complète est sales -> stock -> geo.
+        out = ok(run([tool, "check", FIXTURES / "stock" / "doctypes", "--owner", "stock", "--with", FIXTURES / "geo" / "doctypes"], cwd=instance, env=env))
         assert "6 DocType(s) valides" in out and "stock.post_entry" in out and "stock:stock_entry:submit" in out
+        out = ok(run([tool, "check", FIXTURES / "geo" / "doctypes", "--owner", "geo"], cwd=instance, env=env))
+        assert "2 DocType(s) valides" in out and "geo:pays:write" in out and "geo:pays:read" not in out  # la lecture n'est pas un grant
 
 
 @pytest.fixture(scope="module")
 def running(venv, instance, request):
-    """L'instance corrigée, avec dev-auth et le plugin métier `sales`, démarrée par uvicorn."""
+    """L'instance corrigée, avec dev-auth et les plugins métier (`geo`, `stock`, `sales`), démarrée par uvicorn."""
     py, env = venv
     # Les tests précédents du module l'ont préparée ; si on est exécuté seul, on la prépare ici.
     tool = py.parent / "xcore-doctype"
@@ -169,6 +172,7 @@ def running(venv, instance, request):
         main.write_text(main.read_text().replace('@app.get("/health")', 'xcore.setup(app)\n\n\n@app.get("/health")'))
     ignore = shutil.ignore_patterns("__pycache__", "*.pyc")
     install_dev_auth(instance / "app" / "auth")  # le plugin de TEST : une instance neuve n'a pas xauth
+    shutil.copytree(FIXTURES / "geo", instance / "app" / "geo", ignore=ignore, dirs_exist_ok=True)  # le référentiel que `stock` requires
     shutil.copytree(FIXTURES / "stock", instance / "app" / "stock", ignore=ignore, dirs_exist_ok=True)
     shutil.copytree(FIXTURES / "sales", instance / "app" / "sales", ignore=ignore, dirs_exist_ok=True)
 
@@ -222,7 +226,7 @@ class TestRunningInstance:
             return r
 
         assert [m["name"] for m in call("GET", "/meta").json()] == [
-            "Bin", "Country", "Customer", "Invoice", "Item", "Stock Entry", "Stock Ledger Entry", "Warehouse"]
+            "Bin", "Country", "Customer", "Devise", "Invoice", "Item", "Pays", "Stock Entry", "Stock Ledger Entry", "Warehouse"]
         customer = call("POST", "/doc/Customer", json={"data": {"customer_name": "Acme"}}).json()
         item = call("POST", "/doc/Item", json={"data": {"item_name": "Vis", "uom": "pcs"}}).json()
         rows = [{"item": item["name"], "qty": 2, "rate": 5}, {"item": item["name"], "qty": 1, "rate": 0.5}]

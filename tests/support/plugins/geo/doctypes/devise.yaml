@@ -1,0 +1,22 @@
+# La devise : citée par `Pays.devise` et par les plugins qui veulent une monnaie sans la redéfinir.
+# Le document s'APPELLE son code (`naming: {field: code}`) : le lien se lit « EUR » partout, et une seconde création du
+# même code est refusée (409) sans qu'aucun contrôle d'unicité n'ait à être écrit.
+schema_version: 1
+name: Devise
+label: Devise
+module: geo
+icon: dollar
+naming: { field: code }
+title_field: nom
+fields:
+  - { fieldname: code, label: Code ISO, fieldtype: Text, required: true, in_list_view: true, description: "Trois lettres (ISO 4217), ex. EUR, XOF" }
+  - { fieldname: nom, label: Nom, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: symbole, label: Symbole, fieldtype: Text, in_list_view: true }
+  - { fieldname: decimales, label: Décimales, fieldtype: Int, default: 2, description: "Nombre de décimales d'usage : 2 pour l'euro, 0 pour le franc CFA" }
+
+# Un RÉFÉRENTIEL se lit par tout le monde et ne s'écrit que par son propriétaire. `@authenticated` = tout utilisateur
+# IDENTIFIÉ, sans qu'aucun grant ne lui soit accordé : c'est ce qui permet à `stock` et `crm` de citer ce DocType par un
+# champ Link sans que leurs utilisateurs détiennent un grant du module `geo` (l'autocomplétion du Desk passe par la même
+# vérification de lecture que la liste). Les actions NON listées retombent sur la convention : `geo:devise:write|delete`.
+permissions:
+  read: ["@authenticated"]

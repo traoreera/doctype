@@ -91,6 +91,7 @@ def host(tmp_path, request):
         data.setdefault("doctype", {}).setdefault("desk", {})["extensions"] = extensions
         manifest.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
     install_dev_auth(tmp_path / "app" / "auth", link=True)  # le plugin de TEST, nommé `auth` : les plugins du dépôt le `requires`
+    (tmp_path / "app" / "geo").symlink_to(FIXTURES / "geo")  # le référentiel partagé (pays, devises) que `stock` requires
     (tmp_path / "app" / "stock").symlink_to(FIXTURES / "stock")  # le stock : articles, entrepôts, mouvements soumettables
     (tmp_path / "app" / "sales").symlink_to(FIXTURES / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
 

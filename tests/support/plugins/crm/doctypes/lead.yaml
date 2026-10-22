@@ -1,0 +1,31 @@
+# Le prospect : un DocType du module `crm` qui cite le référentiel de `geo` (plugin que `crm` requires).
+# Rien ici ne dit que `Pays` appartient à un autre plugin : un Link est un Link, et le moteur applique les mêmes
+# contrôles (le pays doit exister dans l'organisation ET être lisible par l'appelant ; un pays cité ne peut plus être
+# supprimé). Les grants de `Pays`, eux, restent ceux de `geo`.
+schema_version: 1
+name: Lead
+label: Prospect
+module: crm
+icon: user-plus
+title_field: lead_name
+fields:
+  - { fieldname: lead_name, label: Nom, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: email, label: Courriel, fieldtype: Text, format: email, in_list_view: true }
+  - { fieldname: pays, label: Pays, fieldtype: Link, options: Pays, required: true, in_list_view: true }
+  # Ce que `crm` VEUT du pays, champ par champ : recopié par le serveur à CHAQUE écriture (`fetch_from`), jamais saisi
+  # ni envoyé par le client (ce qu'il enverrait serait écrasé), donc toujours d'accord avec le référentiel. Le Desk les
+  # affiche en lecture seule et en montre l'aperçu dès que le pays change.
+  - { fieldname: indicatif, label: Indicatif, fieldtype: Text, fetch_from: pays.indicatif, in_list_view: true }
+  - { fieldname: langue, label: Langue, fieldtype: Text, fetch_from: pays.langue }
+  # La devise est un LIEN, pas une copie : `fetch_from` ne recopie que des valeurs simples (jamais un lien), et une
+  # affaire peut se traiter dans une autre monnaie que celle du pays. Le « + » du champ permet de créer la devise
+  # manquante sans quitter la fiche, si l'utilisateur a le droit d'écrire dans `geo`.
+  - { fieldname: devise, label: Devise, fieldtype: Link, options: Devise, in_list_view: true }
+  - { fieldname: status, label: État, fieldtype: Select, options: [Nouveau, Qualifié, Gagné, Perdu], default: Nouveau, in_list_view: true }
+
+layout:
+  - section: Prospect
+    columns: [[lead_name, email, status], [pays, indicatif, langue, devise]]
+
+# Aucun bloc `permissions` : la convention donne `crm:lead:read|write|delete`. Lire un prospect n'exige RIEN de `geo`
+# (le référentiel se lit avec `@authenticated`), et créer un pays depuis ce formulaire exige `geo:pays:write`.
