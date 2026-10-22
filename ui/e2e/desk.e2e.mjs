@@ -412,10 +412,18 @@ try {
     assert((await page.locator('[data-testid="recents"] .recent-row').count()) >= 1, 'au moins un document récent')
     const spaces = await page.locator('.home-space strong').allTextContents()
     assert(spaces.includes('Ventes') && spaces.includes('Stock'), `espaces de l'accueil: ${spaces}`)
+    // Les cartes d'espaces ne doublent pas le menu : la barre latérale dépliée les liste déjà (224 px sur 720 pour rien), elles
+    // s'effacent donc ici — tout en restant dans la page pour les cas où le menu ne les montre pas.
+    await page.getByTestId('space-stock').waitFor({ state: 'hidden' })
     await r.shot(page, '21-home')
+    // Barre repliée : le menu ne liste plus rien, les cartes reviennent et redeviennent le chemin vers les espaces.
+    await page.getByTestId('nav-toggle').click()
+    await page.waitForFunction(() => document.querySelector('.desk-shell').classList.contains('collapsed'))
     // La page d'un espace : raccourcis, chiffres, « + » là où l'on peut créer.
     await page.getByTestId('space-stock').click()
     await page.waitForURL(/#\/w\/stock$/)
+    await page.getByTestId('nav-toggle').click() // on redéploie : la suite parle du menu déplié
+    await page.waitForFunction(() => !document.querySelector('.desk-shell').classList.contains('collapsed'))
     await page.getByTestId('count-Stock Entry').waitFor()
     assert((await page.getByTestId('count-Stock Entry').innerText()) === '3', 'trois mouvements de stock comptés')
     assert((await page.getByTestId('new-Bin').count()) === 0, 'pas de « + » là où on ne peut pas créer (soldes)')
@@ -504,6 +512,8 @@ try {
       await p.locator('#login-token').fill(cfg.token)
       await p.getByRole('button', { name: 'Se connecter' }).click()
       await p.waitForURL(/#\/$/)
+      // Le menu est escamoté : les cartes d'espaces de l'accueil sont la porte d'entrée du téléphone, elles s'affichent.
+      await p.getByTestId('space-stock').waitFor()
       const overflow = () => p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
       const left = async () => (await p.locator('#desk-sidebar').boundingBox())?.x ?? 0
       assert((await left()) < 0, 'le menu est rangé hors écran')

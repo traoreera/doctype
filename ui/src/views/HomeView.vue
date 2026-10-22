@@ -10,6 +10,8 @@ import { useMeta } from '@/stores/meta'
 import { useProfile } from '@/stores/profile'
 import { useRecents } from '@/stores/recents'
 import { useTasks } from '@/stores/tasks'
+import BlockGrid from '@/components/BlockGrid.vue'
+import type { NumberCardBlock, WorkspaceShortcut } from '@/lib/types'
 import { useWorkspaces } from '@/stores/workspaces'
 
 const meta = useMeta()
@@ -39,11 +41,45 @@ const late = computed(() => tasks.items.filter((a) => isOverdue(a, today)).lengt
 /** Les tâches les plus proches : l'échéance la plus proche d'abord. */
 const upcoming = computed(() => sortAssignments(tasks.items).slice(0, 4))
 
-/** « Créer » : les types qu'on a ouverts récemment d'abord (on y revient), puis les autres, six au plus. */
+/**
+ * Les chiffres de l'accueil. Ils ne s'inventent pas : ce sont les cartes que les ESPACES déclarent déjà dans leur YAML, filtrées par
+ * le serveur sur les droits du demandeur. Même règle que « Créer » : la première carte de chaque espace d'abord (un chiffre par
+ * module), puis les suivantes dans l'ordre, jusqu'à deux rangées pleines. Cliquer une carte ouvre la liste qu'elle vient de compter.
+ */
+const MAX_FIGURES = 8
+const figures = computed<NumberCardBlock[]>(() => {
+  const spaces = (workspaces.items ?? []).map((w) => w.blocks.filter((b): b is NumberCardBlock => b.type === 'number_card'))
+  const first = spaces.map((cards) => cards[0]).filter((c): c is NumberCardBlock => c !== undefined)
+  const rest = spaces.flatMap((cards) => cards.slice(1))
+  return [...first, ...rest].slice(0, MAX_FIGURES)
+})
+
+/** L'accueil n'a rien à raconter : ni chiffre, ni tâche, ni document repris. Les espaces sont alors le seul contenu, on les montre partout. */
+const bare = computed(() => !figures.value.length && !upcoming.value.length && !shown.value.length)
+
+/**
+ * « Créer » : six types au plus, et les bons. L'ordre ne peut pas être l'alphabet (il mettait « Devise » devant « Facture »), ni les seuls
+ * récents (vides sur tout navigateur neuf, donc l'alphabet gouvernait en pratique). Il vient des ESPACES, qui disent déjà la priorité
+ * métier : leur `order` du YAML, puis la place du raccourci dans l'espace. On prend le PREMIER type créable de chaque espace — un par
+ * module, donc la facture et le mouvement de stock, pas deux référentiels —, puis les types ouverts récemment, puis le reste par ordre
+ * alphabétique. Un document par utilisateur (un profil) n'est jamais proposé : il n'y en a qu'un, et c'est sa page qui le crée.
+ */
 const creatable = computed(() => {
-  const types = (meta.summaries ?? []).filter((d) => d.create && !d.single && !d.virtual)
+  const types = (meta.summaries ?? []).filter((d) => d.create && !d.single && !d.virtual && !d.per_user)
+  const known = new Set(types.map((d) => d.name))
+  const champions: string[] = []
+  for (const w of workspaces.items ?? []) {
+    const shortcuts = w.blocks.filter((b): b is WorkspaceShortcut => b.type === 'shortcut')
+    const first = shortcuts.find((s) => s.create && known.has(s.doctype) && !champions.includes(s.doctype))
+    if (first) champions.push(first.doctype)
+  }
   const used = [...new Set(recents.items.map((r) => r.doctype))]
-  const rank = (name: string) => (used.includes(name) ? used.indexOf(name) : used.length)
+  const rank = (name: string) => {
+    const champion = champions.indexOf(name)
+    if (champion >= 0) return champion
+    const recent = used.indexOf(name)
+    return champions.length + (recent >= 0 ? recent : used.length)
+  }
   return [...types].sort((a, b) => rank(a.name) - rank(b.name) || a.label.localeCompare(b.label, 'fr')).slice(0, 6)
 })
 </script>
@@ -57,6 +93,13 @@ const creatable = computed(() => {
     <div v-if="creatable.length" class="home-create" data-testid="home-create" role="group" :aria-label="t.welcome.create">
       <Button v-for="d in creatable" :key="d.name" :as="RouterLink" :to="{ name: 'new', params: { doctype: d.name } }" :label="d.label" icon="pi pi-plus" size="small" severity="secondary" :data-testid="`create-${d.name}`" />
     </div>
+
+    <!-- Les chiffres d'abord : c'est ce qu'on vient lire en ouvrant l'application. Les cartes sont celles des espaces (BlockGrid), donc
+         elles se cliquent vers la liste qu'elles comptent et portent les couleurs déclarées dans les YAML. -->
+    <section v-if="figures.length" class="home-section" data-testid="home-figures">
+      <h2 class="home-title">{{ t.welcome.figures }}</h2>
+      <BlockGrid :blocks="figures" />
+    </section>
 
     <section v-if="upcoming.length" class="home-section" data-testid="home-tasks">
       <h2 class="home-title">{{ t.welcome.todo }}</h2>
@@ -83,7 +126,10 @@ const creatable = computed(() => {
       </div>
     </section>
 
-    <section v-if="workspaces.items?.length" class="home-section">
+    <!-- Les espaces : la barre latérale les liste déjà. Dès que l'accueil a de quoi parler (des tâches, des documents repris), ces cartes
+         ne sont plus qu'une redite du menu visible à côté : `home-spaces` les réserve alors aux écrans où le menu est escamoté (desk.css).
+         Quand l'accueil n'a rien d'autre à montrer — compte neuf, navigateur neuf — elles restent partout : c'est la porte d'entrée. -->
+    <section v-if="workspaces.items?.length" class="home-section" :class="{ 'home-spaces': !bare }" data-testid="home-spaces">
       <h2 class="home-title">{{ t.workspace.spaces }}</h2>
       <div class="home-grid">
         <RouterLink v-for="w in workspaces.items" :key="w.name" class="desk-card home-space" :to="{ name: 'workspace', params: { name: w.name } }" :data-testid="`space-${w.name}`">

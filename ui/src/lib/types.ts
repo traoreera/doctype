@@ -49,6 +49,8 @@ export interface DocTypeSummary {
   single?: boolean
   /** Source externe (xauth…) : le serveur ne stocke pas ces documents. */
   virtual?: boolean
+  /** Un document par utilisateur (`naming: owner`, un profil) : jamais proposé dans « Créer », sa propre page l'ouvre. */
+  per_user?: boolean
   /** `general` : un réglage GLOBAL de l'application, édité dans la rubrique « Général » des Paramètres (pas dans une rubrique à lui). */
   settings_group?: 'general'
 }
