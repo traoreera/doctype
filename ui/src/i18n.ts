@@ -459,6 +459,8 @@ export const t = {
     title: 'Paramètres',
     intro: 'Tous les réglages au même endroit : ceux de l’application, de chaque module, puis ceux de votre affichage.',
     general: 'Général',
+    /** Les listes de l'application qui se règlent par organisation (liens sous « Général »), au pluriel. */
+    lists: { 'Notification Rule': 'Règles de notification' } as Record<string, string>,
     modules: 'Réglages des applications',
     none: 'Aucune application n’expose de réglages à ce compte.',
     appearance: 'Affichage',

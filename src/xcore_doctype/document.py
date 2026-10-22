@@ -59,6 +59,7 @@ from .errors import (
     VersionConflict,
 )
 from .hooks import ActionHooks, HookEvent, HookRegistry, HookSettings
+from .notification_rules import DocEvent
 from .files import ATTACHMENT_FIELD
 from .permissions import ACTIONS, Action, Scope, require, scope_for
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
@@ -177,6 +178,7 @@ class DocumentService:
         # émise le 1er janvier à 00 h 30 ne doit pas porter l'année précédente. `clock` est injectable pour les tests.
         self._timezone, self._clock = timezone, clock
         self.files: Any = None  # le `FileService`, posé par le plugin après coup (il a besoin de ce service)
+        self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
 
     # ── Méta ──────────────────────────────────────────────────
@@ -1179,6 +1181,7 @@ class DocumentService:
             f"doctype.{doctype}.after_{action}",
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version, "user": ctx.user_id, "docstatus": doc.docstatus},
         )
+        self._rules(ctx, compiled, doc, action, None)
         return self._present(doc)
 
     async def _tx_hooks(
@@ -1758,6 +1761,7 @@ class DocumentService:
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version,
              "user": ctx.user_id, "created": old is None},
         )
+        self._rules(ctx, compiled, doc, "create" if old is None else "update", old)
 
     async def _after_delete(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc) -> None:
         """Après le commit de la suppression : `after_delete` reçoit ce que le document contenait. Les erreurs sont journalisées, jamais levées."""
@@ -1779,6 +1783,19 @@ class DocumentService:
             except Exception as e:  # noqa: BLE001 - y compris TimeoutError
                 self._log.error("after_delete hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
         await self._emit(f"doctype.{doctype}.after_delete", {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "user": ctx.user_id})
+        self._rules(ctx, compiled, doc, "delete", None)
+
+    def _rules(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, kind: str, old: Mapping[str, Any] | None) -> None:
+        """Après le commit : les règles de notification de l'organisation (notification_rules.py), en tâche de fond. Jamais d'erreur ici."""
+        if self.notifications is None:
+            return
+        try:
+            self.notifications.dispatch(DocEvent(
+                ctx.tenant_id, compiled.definition.name, doc.name, kind, self._mask_data(compiled, doc.data) or {},
+                self._mask_data(compiled, old), doc.owner, ctx.user_id,
+            ))
+        except Exception as e:  # noqa: BLE001 - une notification ne défait rien
+            self._log.error("notification rules not dispatched", doctype=compiled.definition.name, name=doc.name, error=repr(e))
 
     async def _emit(self, topic: str, payload: dict[str, Any]) -> None:
         # Pas de contenu du document : l'EventBus est global au processus, ses abonnés ne sont pas filtrés par tenant.

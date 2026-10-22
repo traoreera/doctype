@@ -1,0 +1,35 @@
+# Une règle de notification de l'organisation : « quand un document de tel type est créé / modifié / soumis…, prévenir telles personnes ».
+# Le moteur les évalue APRÈS le commit (notification_rules.py) : une règle ne refuse ni ne défait jamais une écriture, une panne est journalisée.
+# Le hook `doctype.notification_rule` (enregistré par xcore-doctype) vérifie la règle à l'enregistrement : type connu, condition et modèles
+# qui ne citent que des champs du type, et l'auteur doit pouvoir LIRE tous les documents du type (on ne diffuse pas ce qu'on ne lit pas soi-même).
+schema_version: 1
+name: Notification Rule
+label: Règle de notification
+module: system
+icon: bell
+title_field: rule_name
+fields:
+  - { fieldname: rule_name, label: Nom de la règle, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: enabled, label: Active, fieldtype: Boolean, default: true, in_list_view: true }
+  - { fieldname: document_type, label: Type de document, fieldtype: Text, required: true, in_list_view: true, description: "Le nom du DocType, tel que l'affiche l'adresse d'une liste (ex. : Sales Invoice)" }
+  - { fieldname: event, label: Événement, fieldtype: Select, options: [Création, Modification, Changement de valeur, Soumission, Annulation, Suppression], default: Création, in_list_view: true }
+  - { fieldname: value_field, label: Champ surveillé, fieldtype: Text, depends_on: "event == 'Changement de valeur'", mandatory_depends_on: "event == 'Changement de valeur'", description: La règle se déclenche quand ce champ change de valeur }
+  - { fieldname: condition, label: Condition, fieldtype: Text, description: "Facultative, dans la langue des conditions des formulaires (ex. : status == 'Ouvert' and priority == 'Haute')" }
+  - { fieldname: channel, label: Canal, fieldtype: Select, options: [Cloche, E-mail, Cloche et e-mail], default: Cloche }
+  - { fieldname: notify_owner, label: Prévenir l'auteur du document, fieldtype: Boolean, default: false }
+  - { fieldname: notify_assignees, label: Prévenir les personnes assignées, fieldtype: Boolean, default: false }
+  - { fieldname: recipient_field, label: Champ désignant un destinataire, fieldtype: Text, description: "Un champ du document qui contient l'e-mail ou l'identifiant d'un membre (ex. : approver)" }
+  - { fieldname: recipients, label: Membres prévenus, fieldtype: Table, options: Notification Rule Recipient }
+  - { fieldname: subject, label: Objet, fieldtype: Text, required: true, description: "Ex. : {{ doctype }} {{ name }} soumis par {{ actor }} ; un champ du document s'écrit {{ doc.champ }}" }
+  - { fieldname: message, label: Message, fieldtype: LongText, description: "Texte brut. Variables : {{ doctype }}, {{ name }}, {{ event }}, {{ actor }}, {{ link }}, {{ doc.champ }}" }
+hooks:
+  validate: [doctype.notification_rule]
+layout:
+  - section: Déclencheur
+    columns: [[rule_name, document_type, event, value_field], [enabled, condition]]
+  - section: Destinataires
+    columns: [[channel, notify_owner, notify_assignees], [recipient_field]]
+  - section: Membres prévenus
+    columns: [[recipients]]
+  - section: Message
+    columns: [[subject, message]]

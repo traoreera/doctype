@@ -34,6 +34,7 @@ from .collaboration import CollaborationService
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
+from .notification_rules import RULE_HOOK, ExtensionMailer, Mailer, NoMailer, NotificationRules, make_rule_hook
 from .preferences import Preferences
 from .hooks import ActionHooks, HookRegistry, HookSettings
 from .registry import DocTypeChannel, DocTypeRegistry
@@ -112,6 +113,27 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return XauthNotifier(call, plugin=plugin, action=act, logger=self.logger)
 
+    def _rule_delivery(self, raw: Any) -> dict[str, Any]:
+        """L'e-mail des règles de notification : l'extension `ext.email` de l'hôte quand elle existe (`doctype.notifications.email: false` la coupe),
+        et `desk_url`, l'adresse du Desk que l'e-mail cite (sans elle, pas de lien : le moteur ne devine pas l'adresse publique de l'hôte)."""
+        raw = raw if isinstance(raw, dict) else {}
+        email, desk_url = raw.get("email", True), raw.get("desk_url")
+        if not isinstance(email, bool):
+            raise ConfigurationError("doctype.notifications.email doit être un booléen")
+        if desk_url is not None and (not isinstance(desk_url, str) or not desk_url.startswith(("https://", "http://"))):
+            raise ConfigurationError("doctype.notifications.desk_url doit être une adresse http(s)")
+        mailer: Mailer = NoMailer()
+        if email:
+            try:
+                service = self.get_service("ext.email")
+            except Exception:  # noqa: BLE001 - l'absence de l'extension n'est pas une erreur : pas d'e-mail
+                service = None
+            if service is not None and callable(getattr(service, "send", None)):
+                mailer = ExtensionMailer(service, logger=self.logger)
+            else:
+                self.logger.info("notification rules send no e-mail: no ext.email extension")
+        return {"mailer": mailer, "desk_url": desk_url}
+
     async def on_load(self) -> None:
         config = self.ctx.config or {}
         block = config.get("doctype") or {}
@@ -163,7 +185,12 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root = APIRouter()
         root.include_router(build_router(self.documents, self._settings))
         root.include_router(build_files_router(file_service, self._settings))  # téléverser, liens signés : une identité est exigée
-        collab = CollaborationService(self.documents, file_service, self._directory(block.get("directory")), self._notifier(block.get("notifications")))
+        directory, notifier = self._directory(block.get("directory")), self._notifier(block.get("notifications"))
+        collab = CollaborationService(self.documents, file_service, directory, notifier)
+        # Les règles de notification de l'organisation (DocType `Notification Rule` du plugin `system`) : cloche et e-mail, après le commit.
+        rules = NotificationRules(self.documents, directory=directory, notifier=notifier, logger=self.logger, **self._rule_delivery(block.get("notifications")))
+        self.documents.notifications = rules
+        hook_registry.register(RULE_HOOK, make_rule_hook(self.documents), owner=self.ctx.name)
         self.collaboration = collab
         root.include_router(build_collab_router(collab, self._settings))  # commentaires, assignations, pièces jointes
         root.include_router(build_preferences_router(Preferences(self.documents, file_service), self._settings))  # nom, logo, couleur de l'organisation
@@ -255,6 +282,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         return UrlSigner(secret)
 
     async def on_unload(self) -> None:
+        if self.documents is not None and self.documents.notifications is not None:
+            await self.documents.notifications.close()
         if self.registry is not None:
             self.registry.clear()
         if self.hook_registry is not None:

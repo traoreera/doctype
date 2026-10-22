@@ -91,7 +91,8 @@ class TestWheel:
             names = set(z.namelist())
             assert {"xcore_doctype/plugin_dir/plugin.yaml", "xcore_doctype/plugin_dir/src/main.py", "xcore_doctype/ui/dist/index.html"} <= names
             # Le plugin `system` (réglages globaux) voyage dans le wheel, DocType compris.
-            assert {"xcore_doctype/system_plugin_dir/plugin.yaml", "xcore_doctype/system_plugin_dir/src/main.py", "xcore_doctype/system_plugin_dir/doctypes/system_settings.yaml"} <= names
+            assert {"xcore_doctype/system_plugin_dir/plugin.yaml", "xcore_doctype/system_plugin_dir/src/main.py", "xcore_doctype/system_plugin_dir/doctypes/system_settings.yaml",
+                    "xcore_doctype/system_plugin_dir/doctypes/notification_rule.yaml", "xcore_doctype/system_plugin_dir/workspaces/system.yaml"} <= names
             assert any(n.startswith("xcore_doctype/ui/dist/assets/") and n.endswith(".js") for n in names)
             # D28 : les deux modules que l'import map donne aux extensions, sous leurs noms FIXES.
             assert {"xcore_doctype/ui/dist/shared/vue.js", "xcore_doctype/ui/dist/shared/sdk.js"} <= names
@@ -126,7 +127,7 @@ class TestFreshInstance:
         out = ok(run([py.parent / "xcore-doctype", "install", "./app"], cwd=instance, env=env))
         assert (instance / "app" / "xcore-doctype" / "plugin.yaml").is_file()
         assert (instance / "app" / "xcore-doctype" / "src" / "main.py").is_file()
-        for rel in ("plugin.yaml", "src/main.py", "doctypes/system_settings.yaml"):  # le plugin `system` est posé avec lui
+        for rel in ("plugin.yaml", "src/main.py", "doctypes/system_settings.yaml", "doctypes/notification_rule.yaml", "workspaces/system.yaml"):  # le plugin `system` est posé avec lui
             assert (instance / "app" / "system" / rel).is_file(), rel
         # Les deux pièges d'une instance `xcli init` : adaptateur SQLite synchrone, xcore.setup(app) absent.
         assert "adaptateur SYNCHRONE" in out and "xcore.setup(app)" in out

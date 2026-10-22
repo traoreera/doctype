@@ -35,6 +35,7 @@ from .registry import DocTypeRegistry
 Level = Literal["ok", "warn", "error"]
 PLUGIN_NAME = "xcore-doctype"
 SYSTEM_PLUGIN_NAME = "system"
+SYSTEM_YAML_DIRS = ("doctypes", "workspaces")  # ce que le plugin `system` livre en YAML (réécrit à chaque install)
 _MARK = {"ok": "✔", "warn": "⚠", "error": "✖"}
 
 
@@ -198,10 +199,15 @@ def install(plugins_dir: Path, *, config: Path | None = None, force: bool = Fals
     # Le plugin `system` (réglages globaux) : ses fichiers appartiennent au paquet, pas à l'opérateur : on les réécrit toujours.
     sys_dest = plugins_dir / SYSTEM_PLUGIN_NAME
     sys_src = system_plugin_dir()
-    for rel in ("plugin.yaml", "src/main.py", "doctypes/system_settings.yaml"):
+    shipped = ["plugin.yaml", "src/main.py"] + [f"{d}/{p.name}" for d in SYSTEM_YAML_DIRS for p in sorted((sys_src / d).glob("*.yaml"))]
+    for rel in shipped:
         (sys_dest / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(sys_src / rel, sys_dest / rel)
-    out.append(Finding("ok", f"{sys_dest} écrit (plugin `system` : Paramètres > Général, nom, logo, couleur et format de date de l'organisation)"))
+    for d in SYSTEM_YAML_DIRS:  # un YAML que le paquet ne livre plus (renommé, retiré) ne doit pas rester chargé
+        for stale in sorted((sys_dest / d).glob("*.yaml")) if (sys_dest / d).is_dir() else []:
+            if f"{d}/{stale.name}" not in shipped:
+                stale.unlink()
+    out.append(Finding("ok", f"{sys_dest} écrit (plugin `system` : Paramètres > Général, règles de notification de l'organisation)"))
 
     if config_path is not None:
         out.extend(diagnose(config_path, plugins_dir))
