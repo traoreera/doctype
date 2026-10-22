@@ -290,3 +290,51 @@ describe('titre de la page, focus et lien d’évitement', () => {
     expect(document.activeElement?.id).toBe('t')
   })
 })
+
+describe('tiroir : clavier et lecteur d’écran (C3.2)', () => {
+  const tab = (shift = false) => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: shift, cancelable: true }))
+
+  it('ouvert, c’est une fenêtre modale : le focus y entre, la page est inerte, Tab tourne entre le menu et le tiroir', async () => {
+    narrowNow = true
+    const s = await shell()
+    const nav = sidebar(s)
+    expect(nav.attributes('inert')).toBeDefined() // fermé hors écran : Tab ne s'y perd pas
+    await s.w.find('[data-testid="nav-toggle"]').trigger('click')
+    await flushPromises()
+    expect(nav.attributes('inert')).toBeUndefined()
+    expect(nav.attributes('role')).toBe('dialog')
+    expect(nav.attributes('aria-modal')).toBe('true')
+    expect(s.w.find('#desk-main').attributes('inert')).toBeDefined()
+    const items = [...nav.element.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')]
+    expect(document.activeElement).toBe(items[0]) // le premier lien du tiroir
+    items.at(-1)!.focus()
+    tab()
+    expect(document.activeElement).toBe(s.w.find('[data-testid="nav-toggle"]').element) // du dernier, on revient au bouton du menu
+    tab(true)
+    expect(document.activeElement).toBe(items.at(-1)) // et Maj+Tab repart en arrière dans le tiroir
+  })
+
+  it('Échap et le fond rendent le focus au bouton du menu ; fermé, rien n’est modal', async () => {
+    narrowNow = true
+    const s = await shell()
+    const toggle = s.w.find('[data-testid="nav-toggle"]')
+    await toggle.trigger('click')
+    await flushPromises()
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await flushPromises()
+    expect(document.activeElement).toBe(toggle.element)
+    expect(sidebar(s).attributes('role')).toBeUndefined()
+    expect(s.w.find('#desk-main').attributes('inert')).toBeUndefined()
+    await toggle.trigger('click')
+    await flushPromises()
+    await s.w.find('[data-testid="nav-backdrop"]').trigger('click')
+    await flushPromises()
+    expect(document.activeElement).toBe(toggle.element)
+  })
+
+  it('sur grand écran, la barre latérale n’est jamais modale ni inerte', async () => {
+    const s = await shell()
+    expect(sidebar(s).attributes('inert')).toBeUndefined()
+    expect(sidebar(s).attributes('role')).toBeUndefined()
+  })
+})
