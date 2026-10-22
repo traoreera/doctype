@@ -15,10 +15,10 @@ from xcore_doctype import system_plugin_dir
 from xcore_doctype.context import RequestContext
 from xcore_doctype.directory import Person
 from xcore_doctype.document import DocumentService
-from xcore_doctype.errors import ValidationFailed
+from xcore_doctype.errors import DocumentValidationError, ValidationFailed
 from xcore_doctype.hooks import HookRegistry
 from xcore_doctype.notification_rules import (
-    RULE_DOCTYPE, RULE_HOOK, DocEvent, ExtensionMailer, NotificationRules, make_rule_hook, render, rule_problems,
+    RULE_DOCTYPE, RULE_HOOK, DocEvent, ExtensionMailer, NotificationRules, make_rule_hook, render, rule_problems, template_problems,
 )
 from xcore_doctype.registry import DocTypeRegistry
 from xcore_doctype.schema import parse_definition
@@ -291,7 +291,7 @@ async def test_a_failing_bell_or_mailer_never_fails_the_write_and_is_logged(env)
     await e.rule(channel="Cloche et e-mail")
     doc = await e.ticket()
     assert (await e.svc.get(AGENT, "Ticket", doc["name"]))["name"] == doc["name"]
-    assert any(m == "notification rules failed" for m, _ in e.log.warnings)
+    assert any(m == "notification rule failed" for m, _ in e.log.warnings)  # journalisé règle par règle
 
     class Broken:
         async def send(self, **kw):
@@ -430,3 +430,157 @@ def test_email_comes_from_the_hosts_extension_and_can_be_switched_off():
     for bad in ({"email": "oui"}, {"desk_url": "javascript:alert(1)"}, {"desk_url": 3}):
         with pytest.raises(ConfigurationError):
             Plugin._rule_delivery(_Host(), bad)
+
+
+# ── Revue adversariale de C4.1 : chaque constat a son test ──────────────────────────────────────
+
+
+def _order_and_log():
+    """Un type soumettable dont le hook `on_submit` écrit un `Log` par `event.tx` (comme le stock écrit son grand livre)."""
+    order = parse_definition({
+        "schema_version": 1, "name": "Order", "module": "helpdesk", "submittable": True,
+        "fields": [{"fieldname": "title", "fieldtype": "Text", "required": True}],
+        "hooks": {"on_submit": ["helpdesk.write_log"]},
+    })
+    log = parse_definition({"schema_version": 1, "name": "Log", "module": "helpdesk", "fields": [{"fieldname": "what", "fieldtype": "Text"}]})
+    return order, log
+
+
+LOG_GRANTS = [f"helpdesk:{dt}:{a}" for dt in ("order", "log") for a in ("read", "write", "delete", "submit", "cancel")]
+
+
+async def test_what_a_hook_writes_in_the_transaction_fires_the_rules_after_the_commit_and_never_on_rollback(env):
+    e = env()
+    order, log = _order_and_log()
+    e.reg.register(log, owner="helpdesk")
+    e.reg.register(order, owner="helpdesk")
+    refuse = {"on": False}
+
+    async def write_log(event):
+        await event.tx.create("Log", {"what": f"commande {event.name} soumise"})
+        if refuse["on"]:
+            raise DocumentValidationError("stock insuffisant")
+
+    e.hooks.register("helpdesk.write_log", write_log, owner="helpdesk")
+    boss, clerk = make_ctx("acme", ADA, permissions=RULES + LOG_GRANTS), make_ctx("acme", LEO, permissions=LOG_GRANTS)
+    await e.svc.create(boss, RULE_DOCTYPE, {"rule_name": "Alerte", "document_type": "Log", "event": "Création", "subject": "{{ doc.what }}",
+                                            "recipients": [{"email": "rita@acme.test"}]})
+    first = await e.svc.create(clerk, "Order", {"title": "CMD-1"})
+    await e.svc.submit(clerk, "Order", first["name"], first["version"])
+    await e.rules.settled()
+    assert [s["title"] for s in e.bell.sent] == [f"commande {first['name']} soumise"]
+    refuse["on"] = True  # le hook écrit, puis refuse : la transaction est défaite, le Log n'a jamais existé
+    second = await e.svc.create(clerk, "Order", {"title": "CMD-2"})
+    with pytest.raises(ValidationFailed):
+        await e.svc.submit(clerk, "Order", second["name"], second["version"])
+    await e.rules.settled()
+    assert len(e.bell.sent) == 1
+
+
+async def test_a_deletion_rule_reaches_the_assignees_the_deletion_removed(env):
+    e = env()
+    await e.rule(event="Suppression", notify_assignees=True, recipients=[], subject="{{ name }} supprimé")
+    doc = await e.ticket()
+    async with e.svc._query(RequestContext.system("acme", "test")) as q:
+        await q.add_assignment("Ticket", doc["name"], assignee=RITA, description=None, due_date=None)
+    await e.svc.delete(AGENT, "Ticket", doc["name"])
+    await e.rules.settled()
+    assert [(s["title"], s["users"]) for s in e.bell.sent] == [(f"{doc['name']} supprimé", [RITA])]
+
+
+async def test_a_rename_is_a_value_change_for_the_documents_that_cited_the_old_name(db, tables):
+    reg = DocTypeRegistry()
+    reg.load_dir(system_plugin_dir() / "doctypes", owner="system")
+    reg.register(parse_definition({"schema_version": 1, "name": "Client", "module": "helpdesk", "naming": "prompt", "allow_rename": True,
+                                   "fields": [{"fieldname": "label", "fieldtype": "Text"}]}), owner="helpdesk")
+    reg.register(parse_definition({"schema_version": 1, "name": "Log", "module": "helpdesk",
+                                   "fields": [{"fieldname": "client", "fieldtype": "Link", "options": "Client"}]}), owner="helpdesk")
+    hooks, bell = HookRegistry(), Bell()
+    svc = DocumentService(reg, db, tables, Log(), hooks=hooks)
+    hooks.register(RULE_HOOK, make_rule_hook(svc), owner="xcore-doctype")
+    rules = NotificationRules(svc, directory=People(MEMBERS), notifier=bell)
+    svc.notifications = rules
+    grants = RULES + [f"helpdesk:{dt}:{a}" for dt in ("client", "log") for a in ("read", "write", "delete")]
+    boss, clerk = make_ctx("acme", ADA, permissions=grants), make_ctx("acme", LEO, permissions=grants)
+    await svc.create(boss, RULE_DOCTYPE, {"rule_name": "client changé", "document_type": "Log", "event": "Changement de valeur", "value_field": "client",
+                                          "subject": "{{ name }} : {{ doc.client }}", "recipients": [{"email": "rita@acme.test"}]})
+    await svc.create(clerk, "Client", {"label": "x"}, name="ACME")
+    entry = await svc.create(clerk, "Log", {"client": "ACME"})
+    await svc.rename(clerk, "Client", "ACME", "ACME-SA")
+    await rules.settled()
+    assert [s["title"] for s in bell.sent] == [f"{entry['name']} : ACME-SA"]
+
+
+async def test_a_template_is_judged_on_a_bounded_text_and_the_placeholder_pattern_is_linear(env):
+    import time
+
+    e = env()
+    start = time.perf_counter()
+    with pytest.raises(ValidationFailed) as err:
+        await e.rule(subject="{{" + " " * 100_000)
+    assert {d["field"] for d in err.value.details} == {"subject"} and "255" in err.value.details[0]["msg"]
+    assert render("{{" + " " * 100_000, {}, {}) == "{{" + " " * 100_000  # rien à remplacer, et sans revenir en arrière
+    assert template_problems("{{" + " " * 1990, {}) == []
+    assert time.perf_counter() - start < 1.0
+    await e.rule(subject="{{   doc.title   }} / {{name}}")  # les blancs autour d'un nom restent permis
+    doc = await e.ticket()
+    assert e.bell.sent[-1]["title"] == f"Imprimante / {doc['name']}"
+
+
+async def test_the_rules_of_an_organisation_are_read_once_per_period_and_at_once_after_a_rule_changes_here(db, tables):
+    now = [1000.0]
+    e = Env(db, tables)
+    e.rules = NotificationRules(e.svc, directory=People(MEMBERS), notifier=e.bell, logger=e.log, clock=lambda: now[0])
+    e.svc.notifications = e.rules
+    reads = lambda: len([kw for m, kw in e.log.infos if m == "system context operation" and kw.get("reason") == "notification rules"])  # noqa: E731
+    for _ in range(5):
+        await e.ticket()
+    assert reads() == 1 and e.bell.sent == []  # une organisation sans règle : une lecture pour cinq écritures
+    await e.rule()  # écrite ICI : le cache de l'organisation est vidé, la règle vaut dès l'écriture suivante
+    await e.ticket()
+    assert reads() == 2 and len(e.bell.sent) == 1
+    # Une règle écrite par un AUTRE processus (un service sans évaluateur) n'est vue qu'à la période suivante.
+    other = DocumentService(e.reg, db, tables, Log(), hooks=e.hooks)
+    await other.create(ADMIN, RULE_DOCTYPE, {"rule_name": "autre", "document_type": "Ticket", "event": "Création", "subject": "bis",
+                                             "recipients": [{"email": "ada@acme.test"}]})
+    await e.ticket()
+    assert [s["title"] for s in e.bell.sent].count("bis") == 0
+    now[0] += 31
+    await e.ticket()
+    assert [s["title"] for s in e.bell.sent].count("bis") == 1
+
+
+async def test_one_failing_rule_does_not_stop_the_next_one(env):
+    class Flaky(Bell):
+        async def notify(self, tenant_id, user_ids, **kw):
+            if not self.sent and not getattr(self, "failed", False):
+                self.failed = True
+                raise ConnectionError("xauth vient de tomber")
+            await super().notify(tenant_id, user_ids, **kw)
+
+    e = env(bell=Flaky())
+    await e.rule(rule_name="première", subject="un")
+    await e.rule(rule_name="seconde", subject="deux")
+    await e.ticket()
+    assert [s["title"] for s in e.bell.sent] == ["deux"]
+    assert any(m == "notification rule failed" and kw["rule"] for m, kw in e.log.warnings)
+
+
+async def test_close_drops_the_evaluation_in_progress(env):
+    e = env()
+    await e.rule()
+    gate = asyncio.Event()
+    real = e.rules.evaluate
+
+    async def stuck(event):
+        await gate.wait()
+        return await real(event)
+
+    e.rules.evaluate = stuck
+    await e.svc.create(AGENT, "Ticket", {"title": "en cours"})
+    await asyncio.sleep(0)
+    assert e.rules._pending
+    await e.rules.close()
+    gate.set()
+    await asyncio.sleep(0)
+    assert not e.rules._pending and e.bell.sent == []

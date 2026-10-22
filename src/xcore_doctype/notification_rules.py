@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Mapping, Protocol, Sequence
 from urllib.parse import quote
@@ -37,6 +38,8 @@ if TYPE_CHECKING:
 RULE_DOCTYPE = "Notification Rule"
 RULE_HOOK = "doctype.notification_rule"
 MAX_RULES = 100  # par type et par tenant : au-delà, les suivantes sont ignorées (et on le journalise)
+MAX_TENANT_RULES = 1000  # toutes les règles actives d'une organisation, lues d'un coup (au-delà : ignorées, journalisé)
+RULES_TTL = 30.0  # secondes : les règles d'une organisation sont relues au plus une fois par période (et aussitôt après qu'une règle change ici)
 MAX_VALUE = 200  # caractères d'une valeur de champ dans un modèle
 MAX_SUBJECT = 255  # le titre d'une notification d'xauth
 MAX_MESSAGE = 2000
@@ -58,7 +61,9 @@ UNQUOTABLE_TYPES = ("Password", "Table", "JSON", "TextEditor", *FILE_TYPES)
 # Un champ qui désigne un destinataire contient un texte : une adresse ou un identifiant.
 RECIPIENT_FIELD_TYPES = ("Text", "Link", "Select")
 SPECIALS = ("doctype", "name", "event", "actor", "link")
-_PLACEHOLDER = re.compile(r"\{\{\s*([^{}]*?)\s*\}\}")
+# Linéaire : aucun quantificateur qui se chevauche (un `\s*` de part et d'autre d'un groupe qui accepte aussi les blancs revenait en arrière en
+# O(n³) sur « {{ » suivi de blancs : une seule règle figeait la boucle d'événements de tout le processus). Le nom se nettoie ensuite (`strip`).
+_PLACEHOLDER = re.compile(r"\{\{([^{}]*)\}\}")
 _DOC_FIELD = re.compile(r"doc\.([a-z][a-z0-9_]*)")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
 
@@ -110,6 +115,9 @@ class DocEvent:
     old: Mapping[str, Any] | None
     owner: str | None
     actor: str | None
+    # Les assignés OUVERTS au moment de l'écriture, quand la base ne les aura plus après le commit (une suppression les retire avec le
+    # document) ; `None` : on les lit après le commit.
+    assignees: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,9 +178,11 @@ def rule_problems(registry: Any, data: Mapping[str, Any]) -> list[dict[str, str]
             bad("recipient_field", "Il faut un champ texte ou lien de ce type (qui contient l'e-mail ou l'identifiant d'un membre)")
     if not (data.get("notify_owner") or data.get("notify_assignees") or recipient or data.get("recipients")):
         bad("recipients", "Personne n'est prévenu : cochez l'auteur ou les personnes assignées, nommez un champ ou des membres")
-    for key in ("subject", "message"):
+    for key, limit in (("subject", MAX_SUBJECT), ("message", MAX_MESSAGE)):
         text = data.get(key)
-        if isinstance(text, str):
+        if isinstance(text, str) and len(text) > limit:
+            bad(key, f"{limit} caractères au plus")  # avant toute expression régulière : un modèle se juge sur un texte borné
+        elif isinstance(text, str):
             for problem in template_problems(text, fields):
                 bad(key, problem)
     return errors
@@ -181,7 +191,7 @@ def rule_problems(registry: Any, data: Mapping[str, Any]) -> list[dict[str, str]
 def template_problems(text: str, fields: Mapping[str, Any]) -> list[str]:
     problems: list[str] = []
     for m in _PLACEHOLDER.finditer(text):
-        token = m.group(1)
+        token = m.group(1).strip()
         if token in SPECIALS:
             continue
         cited = _DOC_FIELD.fullmatch(token)
@@ -198,7 +208,7 @@ def render(text: str, values: Mapping[str, str], data: Mapping[str, Any]) -> str
     """Substitution FERMÉE : `{{ name }}` & co, `{{ doc.champ }}` ; tout le reste reste tel quel. Aucune évaluation."""
 
     def one(m: re.Match[str]) -> str:
-        token = m.group(1)
+        token = m.group(1).strip()
         if token in values:
             return values[token]
         cited = _DOC_FIELD.fullmatch(token)
@@ -251,21 +261,36 @@ class NotificationRules:
         mailer: Mailer | None = None,
         desk_url: str | None = None,
         logger: Any = None,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._docs = documents
         self._directory: Directory = directory or NoDirectory()
         self._notifier: Notifier = notifier or NoNotifier()
         self._mailer: Mailer = mailer or NoMailer()
         self._desk_url = desk_url.rstrip("/") if desk_url else None
-        self._log = logger
+        self._log, self._clock = logger, clock
         self._pending: set[asyncio.Task[None]] = set()
         self._closed = False
+        # tenant -> (échéance, type -> règles actives) : une organisation sans règle ne coûte qu'une lecture par période, pas une par écriture.
+        self._cache: dict[str, tuple[float, dict[str, list[dict[str, Any]]]]] = {}
+        self._generation: dict[str, int] = {}  # +1 à chaque règle changée : une lecture partie avant ne remplace pas le cache vidé après
 
     def dispatch(self, event: DocEvent) -> None:
         """Appelé après le commit. Ne bloque pas la requête : l'évaluation part en tâche de fond."""
-        if self._closed or event.doctype == RULE_DOCTYPE or not self._docs._registry.has(RULE_DOCTYPE):
+        self.dispatch_many([event])
+
+    def dispatch_many(self, events: Sequence[DocEvent]) -> None:
+        """Plusieurs changements d'un même commit (ce que les hooks ont écrit dans la transaction) : UNE tâche de fond, dans l'ordre."""
+        if self._closed or not self._docs._registry.has(RULE_DOCTYPE):
             return
-        task = asyncio.get_running_loop().create_task(self._guarded(event))
+        for e in events:
+            if e.doctype == RULE_DOCTYPE:
+                self._cache.pop(e.tenant_id, None)  # une règle a changé ici : relue à la prochaine écriture
+                self._generation[e.tenant_id] = self._generation.get(e.tenant_id, 0) + 1
+        wanted = [e for e in events if e.doctype != RULE_DOCTYPE]
+        if not wanted:
+            return
+        task = asyncio.get_running_loop().create_task(self._guarded(wanted))
         self._pending.add(task)
         task.add_done_callback(self._pending.discard)
 
@@ -281,13 +306,14 @@ class NotificationRules:
             task.cancel()
         await asyncio.gather(*list(self._pending), return_exceptions=True)
 
-    async def _guarded(self, event: DocEvent) -> None:
-        try:
-            await self.evaluate(event)
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:  # noqa: BLE001 - une notification ne défait rien
-            _warn(self._log, "notification rules failed", doctype=event.doctype, name=event.name, error=repr(e))
+    async def _guarded(self, events: Sequence[DocEvent]) -> None:
+        for event in events:
+            try:
+                await self.evaluate(event)
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:  # noqa: BLE001 - une notification ne défait rien
+                _warn(self._log, "notification rules failed", doctype=event.doctype, name=event.name, error=repr(e))
 
     async def evaluate(self, event: DocEvent) -> list[Delivery]:
         """Les règles du type qui s'appliquent à cet événement, rendues et envoyées. Rend ce qui est parti (vide si rien)."""
@@ -298,38 +324,69 @@ class NotificationRules:
         assignees: list[str] | None = None
         sent: list[Delivery] = []
         for rule in rules:
-            if not self._applies(rule, event):
-                continue
-            if rule.get("notify_assignees") and assignees is None:
-                assignees = await self._assignees(event)
-            delivery = self._prepare(rule, event, members, assignees or [])
-            if delivery is None:
-                continue
-            bell, mail = CHANNELS.get(rule.get("channel"), (True, False))  # type: ignore[arg-type]
-            if bell and delivery.user_ids:
-                await self._notifier.notify(
-                    event.tenant_id, delivery.user_ids, title=delivery.subject, message=delivery.message or None,
-                    link=None if event.kind == "delete" else _link(event.doctype, event.name), kind="RULE",
-                )
-            if mail:
-                for address in delivery.emails:
-                    await self._mailer.send(address, delivery.subject, self._mail_body(delivery, event))
-            sent.append(delivery)
+            try:  # une règle qui échoue (assignés illisibles, cloche en panne) n'empêche pas les suivantes
+                if not self._applies(rule, event):
+                    continue
+                if rule.get("notify_assignees") and assignees is None:
+                    assignees = await self._assignees(event)
+                delivery = self._prepare(rule, event, members, assignees or [])
+                if delivery is None:
+                    continue
+                bell, mail = CHANNELS.get(rule.get("channel"), (True, False))  # type: ignore[arg-type]
+                if bell and delivery.user_ids:
+                    await self._notifier.notify(
+                        event.tenant_id, delivery.user_ids, title=delivery.subject, message=delivery.message or None,
+                        link=None if event.kind == "delete" else _link(event.doctype, event.name), kind="RULE",
+                    )
+                if mail:
+                    for address in delivery.emails:
+                        await self._mailer.send(address, delivery.subject, self._mail_body(delivery, event))
+                sent.append(delivery)
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:  # noqa: BLE001 - une notification ne défait rien
+                _warn(self._log, "notification rule failed", rule=rule.get("_name"), doctype=event.doctype, name=event.name, error=repr(e))
         return sent
 
     async def _rules(self, event: DocEvent) -> list[dict[str, Any]]:
-        ctx = RequestContext.system(event.tenant_id, "notification rules")
-        try:
-            page = await self._docs.list(
-                ctx, RULE_DOCTYPE, filters={"document_type": event.doctype, "enabled": True}, order_by="creation", descending=False, limit=MAX_RULES
-            )
-        except DoctypeError as e:
-            _warn(self._log, "notification rules unreadable", doctype=event.doctype, code=e.code)
-            return []
-        rules = [dict(item["data"], _name=item["name"]) for item in page.get("items", [])]
-        if page.get("total", 0) > MAX_RULES:
+        now = self._clock()
+        hit = self._cache.get(event.tenant_id)
+        if hit is None or hit[0] <= now:
+            generation = self._generation.get(event.tenant_id, 0)
+            by_type = await self._load(event.tenant_id)
+            if by_type is None:
+                return []
+            hit = (now + RULES_TTL, by_type)
+            if self._generation.get(event.tenant_id, 0) == generation:
+                self._cache[event.tenant_id] = hit
+        rules = hit[1].get(event.doctype, [])
+        if len(rules) > MAX_RULES:
             _warn(self._log, "too many notification rules, the oldest ones only are evaluated", doctype=event.doctype, limit=MAX_RULES)
-        return rules
+        return rules[:MAX_RULES]
+
+    async def _load(self, tenant_id: str) -> dict[str, list[dict[str, Any]]] | None:
+        """Toutes les règles ACTIVES de l'organisation, par type, les plus anciennes d'abord. Une seule lecture en contexte système (D20,
+        journalisée) par période, quel que soit le nombre d'écritures. `None` : illisibles (on réessaiera à la prochaine écriture)."""
+        ctx = RequestContext.system(tenant_id, "notification rules")
+        by_type: dict[str, list[dict[str, Any]]] = {}
+        offset = 0
+        try:
+            while offset < MAX_TENANT_RULES:
+                page = await self._docs.list(ctx, RULE_DOCTYPE, filters={"enabled": True}, order_by="creation", descending=False, limit=200, offset=offset)
+                items = page.get("items", [])
+                for item in items:
+                    target = item["data"].get("document_type")
+                    if isinstance(target, str):
+                        by_type.setdefault(target, []).append(dict(item["data"], _name=item["name"]))
+                offset += len(items)
+                if not items or offset >= page.get("total", 0):
+                    break
+            else:
+                _warn(self._log, "too many notification rules in one organisation, the oldest ones only are evaluated", limit=MAX_TENANT_RULES)
+        except DoctypeError as e:
+            _warn(self._log, "notification rules unreadable", code=e.code)
+            return None
+        return by_type
 
     def _applies(self, rule: Mapping[str, Any], event: DocEvent) -> bool:
         if rule_problems(self._docs._registry, rule):
@@ -397,6 +454,8 @@ class NotificationRules:
         return "\n\n".join(parts)
 
     async def _assignees(self, event: DocEvent) -> list[str]:
+        if event.assignees is not None:
+            return list(event.assignees)
         ctx = RequestContext.system(event.tenant_id, "notification rules")
         async with self._docs._query(ctx) as q:
             rows = await q.assignments(event.doctype, event.name)

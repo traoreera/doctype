@@ -86,18 +86,28 @@ class TestInstall:
         assert (root / "app" / "xcore-doctype" / "src" / "main.py").read_text() == (plugin_dir() / "src" / "main.py").read_text()
         assert not errors(findings)
 
-    def test_the_system_plugin_is_laid_down_whole_and_a_yaml_the_package_dropped_goes_away(self, tmp_path):
+    def test_the_system_plugin_is_laid_down_whole_and_only_a_yaml_the_package_dropped_goes_away(self, tmp_path):
         from xcore_doctype import system_plugin_dir
 
         root = instance(tmp_path, tenancy=True)
-        stale = root / "app" / "system" / "doctypes" / "ancien.yaml"
-        stale.parent.mkdir(parents=True)
-        stale.write_text("schema_version: 1\n")
+        sysdir = root / "app" / "system"
+        mine = sysdir / "doctypes" / "company_settings.yaml"  # posé par l'opérateur : jamais retiré, seulement signalé
+        mine.parent.mkdir(parents=True)
+        mine.write_text("schema_version: 1\n")
         install(root / "app")
         src = system_plugin_dir()
         for rel in ("doctypes/system_settings.yaml", "doctypes/notification_rule.yaml", "doctypes/notification_rule_recipient.yaml", "workspaces/system.yaml"):
-            assert (root / "app" / "system" / rel).read_text() == (src / rel).read_text(), rel
-        assert not stale.exists()
+            assert (sysdir / rel).read_text() == (src / rel).read_text(), rel
+        assert mine.exists()
+        # Une version suivante du paquet ne livre plus `ancien.yaml` : l'install précédente l'avait posé, celle-ci le retire et le dit.
+        old = sysdir / "doctypes" / "ancien.yaml"
+        old.write_text("schema_version: 1\n")
+        (sysdir / ".shipped").write_text((sysdir / ".shipped").read_text() + "doctypes/ancien.yaml\n")
+        findings = install(root / "app")
+        assert not old.exists() and mine.exists()
+        said = [f.message for f in findings]
+        assert any("ancien.yaml" in m and "retiré" in m for m in said)
+        assert any("company_settings.yaml" in m and f.level == "warn" for f, m in zip(findings, said))
 
     def test_a_fresh_xcli_instance_gets_every_pitfall_named(self, tmp_path):
         root = instance(tmp_path, db="sqlite", main_py=BAD_MAIN)  # tenancy absente : désactivée

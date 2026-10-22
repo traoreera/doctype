@@ -36,6 +36,7 @@ Level = Literal["ok", "warn", "error"]
 PLUGIN_NAME = "xcore-doctype"
 SYSTEM_PLUGIN_NAME = "system"
 SYSTEM_YAML_DIRS = ("doctypes", "workspaces")  # ce que le plugin `system` livre en YAML (réécrit à chaque install)
+SHIPPED_LIST = ".shipped"  # dans app/system : ce que la dernière install a posé (les seuls fichiers qu'une install suivante peut retirer)
 _MARK = {"ok": "✔", "warn": "⚠", "error": "✖"}
 
 
@@ -203,10 +204,20 @@ def install(plugins_dir: Path, *, config: Path | None = None, force: bool = Fals
     for rel in shipped:
         (sys_dest / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(sys_src / rel, sys_dest / rel)
-    for d in SYSTEM_YAML_DIRS:  # un YAML que le paquet ne livre plus (renommé, retiré) ne doit pas rester chargé
-        for stale in sorted((sys_dest / d).glob("*.yaml")) if (sys_dest / d).is_dir() else []:
-            if f"{d}/{stale.name}" not in shipped:
-                stale.unlink()
+    # Un YAML que le paquet livrait et ne livre plus (renommé, retiré) ne doit pas rester chargé. On ne retire QUE ceux-là, d'après la liste
+    # que l'install précédente a laissée (`.shipped`) : un fichier que l'opérateur a posé lui-même reste, et on le lui signale.
+    record = sys_dest / SHIPPED_LIST
+    before = set(record.read_text(encoding="utf-8").split()) if record.is_file() else set()
+    for rel in sorted(before - set(shipped)):
+        target = sys_dest / rel
+        if rel.split("/")[0] in SYSTEM_YAML_DIRS and target.is_file():
+            target.unlink()
+            out.append(Finding("ok", f"{target} retiré : le paquet ne le livre plus"))
+    for d in SYSTEM_YAML_DIRS:
+        for extra in sorted((sys_dest / d).glob("*.yaml")) if (sys_dest / d).is_dir() else []:
+            if f"{d}/{extra.name}" not in shipped:
+                out.append(Finding("warn", f"{extra} n'est pas livré par le paquet : il est gardé, mais un réglage à vous a sa place dans votre propre plugin"))
+    record.write_text("\n".join(shipped) + "\n", encoding="utf-8")
     out.append(Finding("ok", f"{sys_dest} écrit (plugin `system` : Paramètres > Général, règles de notification de l'organisation)"))
 
     if config_path is not None:
