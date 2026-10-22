@@ -77,6 +77,17 @@ describe('page Paramètres : un seul endroit pour tous les réglages', () => {
     expect(w.find('[data-testid="settings-group-hr"] .settings-module').text()).toBe('RH')
   })
 
+  it('les règles de notification, une liste de l’application, ont un lien sous « Général » pour qui peut les lire', async () => {
+    const rules = S('Notification Rule', 'system', { single: false, label: 'Règle de notification', icon: 'bell' })
+    const { w } = await open('/settings', [rules, ...SUMMARIES])
+    const link = w.find('[data-testid="settings-list-Notification Rule"]')
+    expect(link.attributes('href')).toBe('/app/Notification%20Rule')
+    expect(link.text()).toBe('Règles de notification')
+    expect(link.find('i').classes()).toContain('pi-bell')
+    const { w: other } = await open('/settings', SUMMARIES) // sans le droit de les lire, le type n'est pas dans /meta : pas de lien
+    expect(other.find('[data-testid="settings-list-Notification Rule"]').exists()).toBe(false)
+  })
+
   it('aucun réglage lisible : le dit, sans casser', async () => {
     const { w } = await open('/settings', [S('Item', 'stock', { single: false })])
     expect(w.find('[data-testid="settings-empty"]').exists()).toBe(true)

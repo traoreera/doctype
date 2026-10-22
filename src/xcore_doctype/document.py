@@ -59,6 +59,7 @@ from .errors import (
     VersionConflict,
 )
 from .hooks import ActionHooks, HookEvent, HookRegistry, HookSettings
+from .notification_rules import DocEvent
 from .files import ATTACHMENT_FIELD
 from .permissions import ACTIONS, Action, Scope, require, scope_for
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
@@ -177,6 +178,7 @@ class DocumentService:
         # émise le 1er janvier à 00 h 30 ne doit pas porter l'année précédente. `clock` est injectable pour les tests.
         self._timezone, self._clock = timezone, clock
         self.files: Any = None  # le `FileService`, posé par le plugin après coup (il a besoin de ce service)
+        self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
 
     # ── Méta ──────────────────────────────────────────────────
@@ -976,9 +978,9 @@ class DocumentService:
             doc = await q.update(doctype, name, clean, version, scope=write, docstatus=current.docstatus)
             await self._sync_unique(q, compiled, doc)
             await self._record(q, ctx, compiled, doc, "update", current.data, doc.data)
-            if after_submit:
-                await self._tx_hooks(ctx, compiled, q, doc, "on_update_after_submit", old=current.data)
+            written = await self._tx_hooks(ctx, compiled, q, doc, "on_update_after_submit", old=current.data) if after_submit else []
         await self._after_save(ctx, compiled, doc, current.data)
+        self._dispatch(written)
         await self._release_files(ctx, compiled, current.data, doc.data)  # un fichier remplacé ou retiré n'a plus de raison d'exister
         return self._present(doc)
 
@@ -1004,15 +1006,18 @@ class DocumentService:
             return
         async with self._query(ctx) as q:
             await self._check_not_referenced(q, doctype, name, current.data)
-            await self._tx_hooks(ctx, compiled, q, current, "on_trash")  # peut refuser la suppression, ou écrire ce qui doit suivre
+            written = await self._tx_hooks(ctx, compiled, q, current, "on_trash")  # peut refuser la suppression, ou écrire ce qui doit suivre
             removed = await q.delete(doctype, name, scope=scope)
             if not removed:
                 # Le document existait et était supprimable à la lecture : il a changé entre-temps.
                 raise VersionConflict(f"{doctype} {name!r} a été modifié pendant la suppression")
             await self._record(q, ctx, compiled, current, "delete", current.data, None)
             await q.drop_unique(doctype, name)  # ses valeurs uniques redeviennent libres
+            # Les assignés ouverts, lus AVANT de disparaître avec le document : une règle « Suppression » qui les prévient les trouve.
+            assignees = tuple(a["assignee"] for a in await q.assignments(doctype, name) if a.get("status") == "open") if self.notifications else None
             attached = await q.remove_collaboration(doctype, name)  # commentaires, assignations et pièces jointes disparaissent avec lui
-        await self._after_delete(ctx, compiled, current)
+        await self._after_delete(ctx, compiled, current, assignees=assignees)
+        self._dispatch(written)
         await self._release_files(ctx, compiled, current.data, None)
         if attached and self.files is not None:
             try:
@@ -1099,6 +1104,7 @@ class DocumentService:
         if current.docstatus != DRAFT:
             raise DocumentLocked(f"{doctype} {name!r} est {STATUS_WORDS[current.docstatus]} : il ne se renomme plus")
         referrers = self._registry.referrers(doctype)
+        relinked: list[DocEvent] = []
         async with self._query(ctx) as q:
             await q.lock_for_delete(doctype, name)  # comme une suppression : une écriture qui crée un lien vers lui attend, ou a fini avant que nous cherchions
             try:
@@ -1111,6 +1117,7 @@ class DocumentService:
                 if data != ref_doc.data:
                     updated = await q.relink(ref_doc.doctype, ref_doc.name, data)
                     await self._record(q, ctx, ref_compiled, updated, "update", ref_doc.data, updated.data)
+                    relinked.append(self._doc_event(ctx, ref_compiled, updated, "update", ref_doc.data))
             doc = await q.get(doctype, new, scope=Scope.everything("read"))  # relu : il a pu se citer lui-même
             assert doc is not None  # renommé dans cette transaction
             await self._record(q, ctx, compiled, doc, "rename", {"name": name}, {"name": new})
@@ -1118,6 +1125,7 @@ class DocumentService:
             f"doctype.{doctype}.after_rename",
             {"doctype": doctype, "old_name": name, "name": new, "tenant_id": ctx.tenant_id, "user": ctx.user_id},
         )
+        self._dispatch(relinked)  # les documents qui le citaient ont changé de valeur (le renommé lui-même : un changement de nom, pas une modification)
         return self._present(doc)
 
     # ── Soumission (documents soumettables) ───────────────────
@@ -1174,23 +1182,28 @@ class DocumentService:
             # c'est l'écriture qui prend le verrou de la base avant que les hooks ne lisent quoi que ce soit.
             doc = await q.transition(doctype, name, source=source, target=target, expected_version=version, scope=scope)
             await self._record(q, ctx, compiled, doc, action, {"docstatus": source}, {"docstatus": target})
+            written: list[DocEvent] = []
             if action == "cancel":
                 await q.drop_unique(doctype, name)  # un document annulé ne retient plus ses valeurs : son amendement peut les reprendre
-                await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
-            await self._tx_hooks(ctx, compiled, q, doc, hook)
+                written += await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
+            written += await self._tx_hooks(ctx, compiled, q, doc, hook)
         await self._emit(
             f"doctype.{doctype}.after_{action}",
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version, "user": ctx.user_id, "docstatus": doc.docstatus},
         )
+        self._rules(ctx, compiled, doc, action, None)
+        self._dispatch(written)
         return self._present(doc)
 
     async def _tx_hooks(
         self, ctx: RequestContext, compiled: CompiledDocType, q: Query, doc: StoredDoc, event: str, *, old: Mapping[str, Any] | None = None
-    ) -> None:
-        """`on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit`, `on_trash` : dans la transaction, avec le droit d'écrire d'autres documents. Un refus défait tout."""
+    ) -> list[DocEvent]:
+        """`on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit`, `on_trash` : dans la transaction, avec le droit d'écrire d'autres documents. Un refus défait tout.
+
+        Rend ce que les hooks ont écrit : l'appelant le donne aux règles de notification APRÈS le commit (`_dispatch`), jamais si la transaction échoue."""
         refs = compiled.definition.hooks.for_event(event)
         if not refs:
-            return
+            return []
         doctype = compiled.definition.name
 
         async def get(dt: str, nm: str) -> dict[str, Any] | None:
@@ -1205,6 +1218,7 @@ class DocumentService:
             if fn is None:  # désenregistré entre le contrôle initial et maintenant
                 raise DoctypeError("hook_unavailable", "des hooks de ce DocType sont indisponibles", status=503)
             await self._call_trusted(ref, fn(HookEvent(event, ctx, doctype, doc.name, view, old_view, get, tx)))  # type: ignore[arg-type]
+        return tx.written
 
     # ── Interne ───────────────────────────────────────────────
     def _with_today(self, compiled: CompiledDocType, data: Any) -> Any:
@@ -1761,8 +1775,9 @@ class DocumentService:
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version,
              "user": ctx.user_id, "created": old is None},
         )
+        self._rules(ctx, compiled, doc, "create" if old is None else "update", old)
 
-    async def _after_delete(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc) -> None:
+    async def _after_delete(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, *, assignees: tuple[str, ...] | None = None) -> None:
         """Après le commit de la suppression : `after_delete` reçoit ce que le document contenait. Les erreurs sont journalisées, jamais levées."""
         doctype = compiled.definition.name
 
@@ -1782,6 +1797,32 @@ class DocumentService:
             except Exception as e:  # noqa: BLE001 - y compris TimeoutError
                 self._log.error("after_delete hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
         await self._emit(f"doctype.{doctype}.after_delete", {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "user": ctx.user_id})
+        self._rules(ctx, compiled, doc, "delete", None, assignees=assignees)
+
+    def _doc_event(
+        self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, kind: str, old: Mapping[str, Any] | None, *, assignees: tuple[str, ...] | None = None
+    ) -> DocEvent:
+        """Ce que voient les règles de notification : le document et son ancien contenu, secrets MASQUÉS."""
+        return DocEvent(
+            ctx.tenant_id, compiled.definition.name, doc.name, kind, self._mask_data(compiled, doc.data) or {},
+            self._mask_data(compiled, old), doc.owner, ctx.user_id, assignees,
+        )
+
+    def _rules(
+        self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, kind: str, old: Mapping[str, Any] | None, *, assignees: tuple[str, ...] | None = None
+    ) -> None:
+        """Après le commit : les règles de notification de l'organisation (notification_rules.py), en tâche de fond. Jamais d'erreur ici."""
+        if self.notifications is not None:
+            self._dispatch([self._doc_event(ctx, compiled, doc, kind, old, assignees=assignees)])
+
+    def _dispatch(self, events: list[DocEvent]) -> None:
+        """Après le commit seulement : des changements (ce qu'un hook a écrit dans la transaction, les documents qu'un renommage a réécrits)."""
+        if self.notifications is None or not events:
+            return
+        try:
+            self.notifications.dispatch_many(events)
+        except Exception as e:  # noqa: BLE001 - une notification ne défait rien
+            self._log.error("notification rules not dispatched", doctype=events[0].doctype, name=events[0].name, error=repr(e))
 
     async def _emit(self, topic: str, payload: dict[str, Any]) -> None:
         # Pas de contenu du document : l'EventBus est global au processus, ses abonnés ne sont pas filtrés par tenant.
@@ -2048,6 +2089,7 @@ class _Transaction:
 
     def __init__(self, service: DocumentService, ctx: RequestContext, q: Query, event: str) -> None:
         self._svc, self._ctx, self._q = service, ctx, q
+        self.written: list[DocEvent] = []  # ce que le hook a écrit : les règles de notification le voient APRÈS le commit, jamais avant
         # Les liens se vérifient comme le ferait le système : la cible doit exister, pas être lisible par celui qui soumet
         # (un magasinier soumet une sortie sans avoir le droit de lire les articles).
         self._system = RequestContext.system(ctx.tenant_id, f"hook:{event}")
@@ -2075,6 +2117,7 @@ class _Transaction:
         doc = await self._q.insert(doctype, name or (self._ctx.owner_id if owner_named else secrets.token_hex(6)), clean)
         await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
+        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "create", None))
         return self._svc._present(doc)
 
     async def ensure(self, doctype: str, name: str, data: Mapping[str, Any]) -> bool:
@@ -2086,6 +2129,7 @@ class _Transaction:
         assert doc is not None  # insérée à l'instant, dans cette transaction
         await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
+        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "create", None))
         return True
 
     async def update(self, doctype: str, name: str, data: Mapping[str, Any], version: int) -> dict[str, Any]:
@@ -2099,6 +2143,7 @@ class _Transaction:
         doc = await self._q.update(doctype, name, clean, version, scope=Scope.everything("write"))
         await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "update", current.data, doc.data)
+        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "update", current.data))
         return self._svc._present(doc)
 
     async def _unique(self, compiled: CompiledDocType, doc: StoredDoc) -> None:
