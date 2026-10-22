@@ -130,4 +130,9 @@ export interface DeskHandle {
   /** Un bloc d'espace `{ type: extension, component: <plugin>.<nom> }` ; le composant reçoit `props` (et `label`). */
   blocks: { add(name: string, component: Component): void }
   commands: { add(command: CommandContribution): void }
+  /**
+   * La feuille de style d'une extension construite (Vite en bibliothèque sort le CSS des composants `.vue` dans un fichier à part) :
+   * `desk.styles.add(new URL('./style.css', import.meta.url).href)`. Même origine seulement (la CSP le veut) ; retirée avec l'extension.
+   */
+  styles: { add(href: string): void }
 }

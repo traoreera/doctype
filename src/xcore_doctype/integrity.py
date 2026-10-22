@@ -18,20 +18,22 @@ from typing import Any, AsyncIterator, Sequence
 
 from sqlalchemy import select
 
-from .db.tables import DOCUMENT_TABLE
 
 
-async def _pages(session: Any, doctype: str, tenant: str | None, page_size: int = 1000) -> AsyncIterator[list[Any]]:
-    """Les documents d'un type, par paquets, avec pagination par clé (tenant, name) : ni `OFFSET`, ni charge en mémoire."""
+async def _pages(session: Any, documents: Any, doctype: str, tenant: str | None, page_size: int = 1000) -> AsyncIterator[list[Any]]:
+    """Les documents d'un type, par paquets, avec pagination par clé (tenant, name) : ni `OFFSET`, ni charge en mémoire.
+
+    `documents` : la table SQLAlchemy des documents (`SystemTables.documents`), jamais son nom.
+    """
     last: tuple[str, str] | None = None
     while True:
-        conds = [DOCUMENT_TABLE.c.doctype == doctype]
+        conds = [documents.c.doctype == doctype]
         if tenant is not None:
-            conds.append(DOCUMENT_TABLE.c.tenant_id == tenant)
+            conds.append(documents.c.tenant_id == tenant)
         if last is not None:
-            conds.append((DOCUMENT_TABLE.c.tenant_id, DOCUMENT_TABLE.c.name) > last)  # type: ignore[operator]
-        stmt = select(DOCUMENT_TABLE.c.tenant_id, DOCUMENT_TABLE.c.name, DOCUMENT_TABLE.c.data).where(*conds).order_by(
-            DOCUMENT_TABLE.c.tenant_id, DOCUMENT_TABLE.c.name
+            conds.append((documents.c.tenant_id, documents.c.name) > last)  # type: ignore[operator]
+        stmt = select(documents.c.tenant_id, documents.c.name, documents.c.data).where(*conds).order_by(
+            documents.c.tenant_id, documents.c.name
         ).limit(page_size)
         rows = (await session.execute(stmt)).all()
         if not rows:
@@ -43,7 +45,7 @@ async def _pages(session: Any, doctype: str, tenant: str | None, page_size: int 
 
 
 async def unique_conflicts(
-    session: Any, doctype: str, fieldnames: Sequence[str], *, tenant: str | None = None
+    session: Any, documents: Any, doctype: str, fieldnames: Sequence[str], *, tenant: str | None = None
 ) -> list[dict[str, Any]]:
     """Les valeurs `unique` en double pour `doctype` : `[{field, value, tenant, names}]`, une entrée par valeur.
 
@@ -51,7 +53,7 @@ async def unique_conflicts(
     Les valeurs sont regroupées EXACTEMENT comme `Query.sync_unique` les réserve (`str(valeur)`, `None` hors jeu).
     """
     groups: dict[tuple[str, str, str], list[str]] = defaultdict(list)
-    async for rows in _pages(session, doctype, tenant):
+    async for rows in _pages(session, documents, doctype, tenant):
         for row_tenant, name, data in rows:
             if not isinstance(data, dict):
                 continue

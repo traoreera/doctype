@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from dataclasses import dataclass
@@ -11,11 +12,11 @@ from typing import Any, Awaitable, Callable
 import yaml
 
 from .builder import CompiledDocType
-from .dashboards import check_measured
+from .dashboards import MAX_BLOCKS, MAX_COMPOSED_BLOCKS, check_measured
 from .desk_extensions import DeskExtensions
 from .errors import InvalidDefinition, NotFound
 from .expr import ExprError
-from .extensions import Extension, merge, parse_extension
+from .extensions import Extension, merge, parse_extension, target_problem
 from .schema import DocTypeDef, parse_definition
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
 
@@ -99,6 +100,9 @@ class DocTypeRegistry:
                 f"{source}: DocType {defn.name!r} : `module` doit être {owner!r} (le plugin qui l'apporte), pas {defn.module!r}"
             )
         # Ce que d'autres plugins ont ajouté à ce DocType avant qu'il (re)vienne : s'il ne s'applique plus, le chargement échoue (D26).
+        for ext in self._extensions.get(defn.name, []):
+            if (why := target_problem(defn, owner, ext.owner)) is not None:
+                raise InvalidDefinition(f"{source}: {defn.name!r} est étendu par {ext.owner} ({ext.source}), ce qui n'est plus possible : {why}")
         compiled = self._compile(merge(defn, self._extensions.get(defn.name, [])), source)
         self._items[defn.name] = compiled
         self._origins[defn.name] = (defn, source)
@@ -221,9 +225,15 @@ class DocTypeRegistry:
                     raise InvalidDefinition(f"{path}: ce plugin contribue déjà à l'espace {target!r} (une contribution par module)")
                 if problems := self._block_problems(contribution):
                     raise InvalidDefinition(f"{path}: " + "; ".join(problems))
+                base = len(self._workspaces[target].blocks) if target in self._workspaces else 0
+                total = base + sum(len(c.blocks) for c in self.contributions_to(target)) + len(contribution.blocks)
+                if total > MAX_COMPOSED_BLOCKS:
+                    raise InvalidDefinition(f"{path}: l'espace {target!r} dépasserait {MAX_COMPOSED_BLOCKS} blocs avec cette contribution")
                 contributed.append(contribution)
                 continue
             ws = parse_workspace(raw, source=str(path))
+            if len(ws.blocks) > MAX_BLOCKS:
+                raise InvalidDefinition(f"{path}: un fichier d'espace a au plus {MAX_BLOCKS} blocs (il en a {len(ws.blocks)})")
             if ws.name != owner:
                 raise InvalidDefinition(f"{path}: `name` doit être {owner!r} (le plugin qui l'apporte), pas {ws.name!r}")
             if ws.name in self._workspaces or any(p.name == ws.name for p in parsed):
@@ -239,9 +249,10 @@ class DocTypeRegistry:
         return [ws.name for ws in parsed] + [f"+{c.contributes_to}" for c in contributed]
 
     def _module_exists(self, module: str) -> bool:
-        """Un module « existe » s'il a un espace déclaré ou au moins un DocType (qui lui fabrique son espace)."""
+        """Un module « existe » s'il a un espace déclaré ou au moins un DocType qui lui fabrique son espace."""
+        # (Un réglage, `single`, ne fait pas d'espace : un module qui n'a que des réglages n'en montre aucun, une contribution y serait perdue.)
         return module in self._workspaces or any(
-            (c.definition.module or "other") == module and not c.definition.istable for c in self._items.values()
+            (c.definition.module or "other") == module and not c.definition.istable and not c.definition.single for c in self._items.values()
         )
 
     def _block_problems(self, ws: WorkspaceDef | WorkspaceContribution) -> list[str]:
@@ -304,12 +315,8 @@ class DocTypeRegistry:
             why = None
             if compiled is None:
                 why = "DocType inconnu (son plugin doit être chargé avant : `requires`)"
-            elif compiled.definition.istable:
-                why = "c'est un DocType de lignes (ses lignes se compilent avec chaque parent) : étendez le parent"
-            elif compiled.definition.source is not None:
-                why = "c'est un DocType virtuel (ses documents vivent chez sa source)"
-            elif self._owners.get(target) == owner:
-                why = "il appartient déjà à ce plugin : modifiez sa définition"
+            elif (problem := target_problem(compiled.definition, self._owners.get(target), owner)) is not None:
+                why = problem
             elif any(x.owner == owner for x in self._extensions.get(target, [])) or any(x.definition.doctype == target for x in parsed):
                 why = "ce plugin l'étend déjà (une extension par DocType)"
             if why is not None:
@@ -476,6 +483,10 @@ class DocTypeRegistry:
         except KeyError:
             raise NotFound("doctype_not_found", f"DocType inconnu : {name!r}") from None
 
+    def has(self, name: str) -> bool:
+        """Le DocType est-il chargé ? (Un habillage enregistré peut citer le type d'un plugin parti depuis.)"""
+        return name in self._items
+
     def names(self) -> list[str]:
         return sorted(self._items)
 
@@ -511,24 +522,47 @@ class DocTypeChannel:
     ) -> None:
         self._registry, self._log, self._unique_check = registry, logger, unique_check
         self._desk = desk if desk is not None else DeskExtensions()
+        self._checks: set[asyncio.Task[None]] = set()  # les contrôles `unique` rétroactifs en cours (gardés : une tâche orpheline serait ramassée)
 
     def load_dir(self, owner: str, directory: str | Path) -> list[str]:
         names = self._registry.load_dir(Path(directory), owner=owner)
         # Tout ce que le dossier apporte doit pouvoir être lié : une cible de Link inconnue échoue ici, pas à la première saisie.
         try:
             self._registry.validate_links(names)
-            if self._unique_check is not None:
-                # Un champ rendu `unique` après coup refuse le chargement si des documents sont déjà en double (D25).
-                for name in names:
-                    compiled = self._registry.get(name)
-                    if compiled.definition.unique_fields and not compiled.definition.istable:
-                        self._unique_check(compiled)
         except InvalidDefinition:
             self._registry.unregister_owner(owner)
             raise
+        if self._unique_check is not None:
+            # Un champ rendu `unique` après coup ne s'active pas sur des documents déjà en double (D25). Le contrôle lit la base (asynchrone)
+            # alors que `load_dir` est appelé sans `await` par les plugins : il part en tâche, et un double RETIRE les DocTypes du plugin
+            # (fermé en cas de doute), avec une erreur au journal. Hors boucle (outil, test synchrone), il s'exécute sur place.
+            pending = [c for c in (self._registry.get(n) for n in names) if c.definition.unique_fields and not c.definition.istable]
+            if pending:
+                check = self._check_unique(owner, pending)
+                try:
+                    task = asyncio.get_running_loop().create_task(check)
+                except RuntimeError:
+                    asyncio.run(check)
+                else:
+                    self._checks.add(task)
+                    task.add_done_callback(self._checks.discard)
         if self._log is not None:
             self._log.info("doctypes registered by plugin", plugin=owner, doctypes=names)
         return names
+
+    async def _check_unique(self, owner: str, compiled: list[CompiledDocType]) -> None:
+        try:
+            for c in compiled:
+                await self._unique_check(c)  # type: ignore[misc]  # présent : seul appelant, sous `if self._unique_check`
+        except InvalidDefinition as e:
+            self._registry.unregister_owner(owner)
+            if self._log is not None:
+                self._log.error("doctypes withdrawn: retroactive unique check failed", plugin=owner, reason=str(e))
+
+    async def settled(self) -> None:
+        """Attendre la fin des contrôles `unique` rétroactifs lancés par `load_dir` (tests, outils)."""
+        while self._checks:
+            await asyncio.gather(*list(self._checks), return_exceptions=True)
 
     def load_workspaces(self, owner: str, directory: str | Path) -> list[str]:
         """À appeler APRÈS `load_dir` (les raccourcis visent des DocTypes chargés) : `…load_workspaces(self.ctx.name, dossier / "workspaces")`."""

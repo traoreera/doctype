@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, onErrorCaptured, provide, ref, type Component } from 'vue'
+import { inject, onErrorCaptured, provide, ref, watch, type Component } from 'vue'
 import { t } from '@/i18n'
 import { EXTENSION_CONTEXT, EXTENSIONS } from './keys'
 
@@ -12,6 +12,12 @@ const props = defineProps<{ extension: string; component: Component; props?: Rec
 const host = inject(EXTENSIONS, null)
 if (host) provide(EXTENSION_CONTEXT, host.context(props.extension))
 const broken = ref(false)
+// Un autre composant ou d'autres props (une page d'extension à paramètre, un autre document) : on réessaie, l'échec précédent ne vaut plus.
+watch(
+  () => [props.component, props.props],
+  () => (broken.value = false),
+  { deep: true },
+)
 onErrorCaptured((e) => {
   console.error(`[extension ${props.extension}] composant en échec`, e)
   broken.value = true

@@ -378,11 +378,23 @@ class RawClient extends ApiClient {
   }
 }
 
-/** Un chemin RELATIF au plugin : jamais une URL, jamais une remontée (`..`) vers les routes d'un autre plugin. */
+/**
+ * Un chemin RELATIF au plugin : jamais une URL, jamais une remontée vers les routes d'un autre plugin. Jugé comme le lira le parseur
+ * d'URL du navigateur (WHATWG) : il retire tabulations et sauts de ligne, lit `%2e%2e` comme `..`, et un `..` suivi de `?` remonte aussi.
+ */
 function pluginPath(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`
-  if (p.startsWith('//') || /(^|\/)\.\.?(\/|$)/.test(p) || p.includes('\\') || /^\/[a-z][a-z0-9+.-]*:/i.test(p)) {
-    throw new TypeError(`chemin de plugin invalide : ${path}`)
+  const bad = () => new TypeError(`chemin de plugin invalide : ${path}`)
+  if (/[\u0000-\u001f\u007f\\#]/.test(p) || p.startsWith('//') || /^\/[a-z][a-z0-9+.-]*:/i.test(p)) throw bad()
+  const pathname = p.split('?', 1)[0]!
+  for (const segment of pathname.split('/')) {
+    let decoded: string
+    try {
+      decoded = decodeURIComponent(segment)
+    } catch {
+      throw bad()
+    }
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\')) throw bad()
   }
   return p
 }

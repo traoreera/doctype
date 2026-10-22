@@ -15,11 +15,17 @@ const CustomerInvoices = defineComponent({
     const { api, router } = useDesk()
     const state = ref(null)
     onMounted(async () => {
-      state.value = { count: (await api.list('Invoice', { filters: { customer: props.name }, limit: 1 })).total }
+      try {
+        state.value = { count: (await api.list('Invoice', { filters: { customer: props.name }, limit: 1 })).total }
+      } catch {
+        // Qui lit le client sans lire les factures (403) : le panneau le dit, il ne tombe pas « en panne ».
+        state.value = { denied: true }
+      }
     })
+    const text = () => (!state.value ? 'Chargement…' : state.value.denied ? 'Factures non accessibles' : `${state.value.count} facture(s)`)
     return () =>
       h('div', { 'data-testid': 'sales-customer-invoices', style: 'display:flex;gap:1rem;align-items:center' }, [
-        h('span', state.value ? `${state.value.count} facture(s)` : 'Chargement…'),
+        h('span', text()),
         h(Button, {
           label: 'Voir les factures',
           size: 'small',
@@ -52,7 +58,8 @@ export default defineExtension({
       doctype: 'Customer',
       label: 'Nouvelle facture',
       icon: 'receipt',
-      when: ({ record, meta }) => !!record && meta.rights.write !== 'none',
+      // Sur un client enregistré. Le droit de CRÉER une facture n'est pas celui du client : la fiche de facture le juge (le serveur aussi).
+      when: ({ record }) => !!record,
       run: ({ record, router }) => router.push({ name: 'new', params: { doctype: 'Invoice' }, query: { customer: record.name } }),
     })
     desk.routes.add({ path: 'overview', title: 'Synthèse des ventes', component: Overview })

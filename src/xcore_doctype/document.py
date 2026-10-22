@@ -32,6 +32,7 @@ Un document soumis ou annulé est figé : ni modification ni suppression.
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 import secrets
 from contextlib import asynccontextmanager
@@ -63,7 +64,7 @@ from .permissions import ACTIONS, Action, Scope, require, scope_for
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .schema import FILE_TYPES, TODAY, DocTypeDef, FieldDef, NamingField
-from .sealing import MASK, Sealer
+from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
     KIND_DASHBOARD,
@@ -195,10 +196,15 @@ class DocumentService:
 
     # ── Espaces de travail ────────────────────────────────────
     def _readable(self, ctx: RequestContext, doctype: str) -> DocTypeDef | None:
+        # Un habillage enregistré peut citer le type d'un plugin parti depuis (une contribution, D27) : il est invisible, jamais une erreur.
+        if not self._registry.has(doctype):
+            return None
         d = self._registry.get(doctype).definition
         return d if scope_for(d, ctx, "read").granted else None
 
     def _shortcut(self, ctx: RequestContext, doctype: str, label: str | None, new: bool) -> dict[str, Any] | None:
+        if not self._registry.has(doctype):
+            return None
         d = self._registry.get(doctype).definition
         # Un réglage (document unique) n'est pas un raccourci d'application : tous les réglages vivent dans la page Paramètres du Desk.
         if d.single or not scope_for(d, ctx, "read").granted:
@@ -218,9 +224,6 @@ class DocumentService:
             if isinstance(b, QuickListBlock):
                 out.update(title_field=d.title_field, submittable=d.submittable, doctype_label=d.label or d.name)
             return out
-        if isinstance(b, ExtensionBlock):
-            # Dessiné par une extension du Desk (D28) : ce qu'il lit passe par l'API, qui juge. Rien à filtrer ici.
-            return b.model_dump(mode="json", exclude_none=True)
         if isinstance(b, LinksCardBlock):
             links = []
             for link in b.links:
@@ -235,6 +238,9 @@ class DocumentService:
 
         Titres, espacements et textes n'ont de sens qu'à côté d'une donnée : on les garde seulement si un bloc visible les suit. Les rangs
         montrés servent à retrouver ce que l'utilisateur NE VOIT PAS (pour le conserver quand il enregistre : `_keep_hidden`).
+
+        Un bloc d'EXTENSION (D28) se montre comme une donnée (il garde le titre de sa section) mais n'est jamais du contenu À LUI SEUL :
+        le serveur ne sait pas ce qu'il lit, il ne peut donc pas rendre visible un espace où l'utilisateur ne lit rien.
         """
         served: list[dict[str, Any]] = []
         shown: set[int] = set()
@@ -246,6 +252,13 @@ class DocumentService:
                 pending = [x for x in pending if x[1]["type"] == "spacer"] + [(i, b.model_dump(mode="json", exclude_none=True))]
             elif isinstance(b, (SpacerBlock, ParagraphBlock)):
                 pending.append((i, b.model_dump(mode="json", exclude_none=True)))
+            elif isinstance(b, ExtensionBlock):
+                for j, x in pending:
+                    served.append(x)
+                    shown.add(j)
+                pending = []
+                served.append(b.model_dump(mode="json", exclude_none=True))
+                shown.add(i)
             elif (item := self._visible_block(ctx, b)) is not None:
                 for j, x in pending:
                     served.append(x)
@@ -296,7 +309,7 @@ class DocumentService:
 
     def _workspace_out(self, ctx: RequestContext, ws: WorkspaceDef, blocks: list[dict[str, Any]], layer: str | None) -> dict[str, Any]:
         targets = {b["doctype"] for b in blocks if b.get("doctype")} | {link["doctype"] for b in blocks for link in b.get("links", [])}
-        shareable = bool(targets) and all(scope_for(self._registry.get(t).definition, ctx, "write").granted for t in targets)
+        shareable = bool(targets) and all(self._registry.has(t) and scope_for(self._registry.get(t).definition, ctx, "write").granted for t in targets)
         return {"name": ws.name, "label": ws.label, "icon": ws.icon, "description": ws.description, "blocks": blocks,
                 "layer": layer, "shareable": shareable}
 
@@ -769,6 +782,18 @@ class DocumentService:
             await q.delete_override(kind, target)
         return {"doctype": doctype, "layer": layer}
 
+    def _prune_unloaded(self, blocks: Sequence[Any]) -> list[Any]:
+        """Les blocs sans ce qui cite un DocType qui n'est plus chargé (une carte de liens garde ses autres liens)."""
+        out: list[Any] = []
+        for b in blocks:
+            if isinstance(b, LinksCardBlock):
+                links = [link for link in b.links if self._registry.has(link.doctype)]
+                if links:
+                    out.append(b if len(links) == len(b.links) else b.model_copy(update={"links": links}))
+            elif getattr(b, "doctype", None) is None or self._registry.has(str(b.doctype)):
+                out.append(b)
+        return out
+
     def _targets(self, ws: WorkspaceDef) -> list[str]:
         """Tous les DocTypes qu'un espace met en avant : raccourcis, listes, cartes de liens ET cartes de chiffres et graphiques."""
         return sorted({*ws.doctypes(), *(str(b.doctype) for b in ws.measured())})
@@ -789,6 +814,13 @@ class DocumentService:
             raise NotFound("workspace_not_found", f"espace {name!r} introuvable")
         cleaned = validate_workspace_override(self._registry, name, config)
         submitted = workspace_from_override(name, cleaned)
+        # Un bloc d'extension (D28) vient du YAML d'un plugin : un habillage le DÉPLACE, le RETIRE ou change sa largeur, jamais n'en crée un
+        # ni ne change ce qu'il reçoit (sinon quiconque écrit un seul type imposerait à toute l'organisation des props de son choix).
+        offered = {_extension_key(b) for b in base.blocks if isinstance(b, ExtensionBlock)}
+        if submitted and any(_extension_key(b) not in offered for b in submitted.blocks if isinstance(b, ExtensionBlock)):
+            raise ValidationFailed(
+                "un bloc d'extension ne s'ajoute ni ne se modifie par un habillage : il vient de l'espace du plugin", code="extension_block_not_offered"
+            )
         targets = self._targets(submitted) if submitted else []
         if not targets:
             raise PermissionDenied()  # un espace sans DocType n'a pas de droit à exiger : on refuse plutôt que d'en inventer un
@@ -800,9 +832,11 @@ class DocumentService:
             mine_row = await q.get_override(KIND_WORKSPACE_USER, key) if layer == "user" else None
             # La disposition qu'on remplace : celle d'en dessous pour l'organisation (YAML), la sienne ou celle de l'organisation pour soi.
             current, _ = self._layered(base, {name: org_row["config"]} if org_row else {}, {name: mine_row["config"]} if mine_row else {})
-            # Ce que l'utilisateur ne voit pas dans la disposition qu'il remplace : on le garde.
-            _, shown, _ = self._serve_blocks(ctx, current.blocks)
-            merged = keep_hidden([b.model_dump(mode="json", exclude_none=True) for b in current.blocks], shown, cleaned["blocks"])
+            # Ce que l'utilisateur ne voit pas dans la disposition qu'il remplace : on le garde, sauf ce qui cite un type déchargé depuis
+            # (le plugin qui l'apportait est parti) : le garder rendrait l'habillage invalide pour toujours.
+            alive = self._prune_unloaded(current.blocks)
+            _, shown, _ = self._serve_blocks(ctx, alive)
+            merged = keep_hidden([b.model_dump(mode="json", exclude_none=True) for b in alive], shown, cleaned["blocks"])
             cleaned = validate_workspace_override(self._registry, name, {**cleaned, "blocks": merged})
             made = await q.put_override(kind, key, owner=ctx.owner_id, config=cleaned)
         return {"name": name, "config": made["config"], "layer": layer}
@@ -1316,23 +1350,24 @@ class DocumentService:
 
     # ── Secrets (champs Password : sealing.py) ────────────────
     def _present(self, doc: StoredDoc) -> dict[str, Any]:
-        """Un document tel que l'API le rend : un secret posé s'y lit `********`, jamais en clair ni chiffré."""
+        """Un document tel que l'API le rend : un secret posé s'y lit `********`, jamais en clair ni chiffré.
+
+        Une valeur CHIFFRÉE est masquée même si son champ n'est plus dans la définition (le champ Password d'une extension dont le plugin
+        est parti, D26) : la lecture est tolérante aux clés inconnues, elle ne doit pas l'être pour un secret.
+        """
         out = doc.as_dict()
-        secrets_ = self._registry.get(doc.doctype).definition.secret_fields
-        if secrets_:
-            out["data"] = self._masked(secrets_, doc.data)
+        out["data"] = self._masked(self._registry.get(doc.doctype).definition.secret_fields, doc.data)
         return out
 
     @staticmethod
     def _masked(secret_fields: Sequence[str], data: Mapping[str, Any]) -> dict[str, Any]:
-        return {k: (MASK if k in secret_fields and v else v) for k, v in data.items()}
+        return {k: (MASK if (k in secret_fields and v) or _sealed(v) else v) for k, v in data.items()}
 
     def _mask_data(self, compiled: CompiledDocType, data: Mapping[str, Any] | None) -> dict[str, Any] | None:
         """Ce qu'on montre à un code qui n'a pas à lire un secret (hook sandboxé, `old` d'un hook) : le document, secrets masqués."""
         if data is None:
             return None
-        secret_fields = compiled.definition.secret_fields
-        return self._masked(secret_fields, data) if secret_fields else dict(data)
+        return self._masked(compiled.definition.secret_fields, data)
 
     def _seal(self, compiled: CompiledDocType, clean: dict[str, Any], old: Mapping[str, Any] | None) -> dict[str, Any]:
         """Avant l'écriture : `********` garde le secret enregistré, toute autre valeur est un NOUVEAU secret, chiffré. Sans clé, jamais de secret en clair."""
@@ -1391,7 +1426,7 @@ class DocumentService:
                     raise DoctypeError("tenant_required", "RLS actif : nommez l'organisation (tenant) à contrôler", status=400)
                 await bind_tenant(session, tenant)  # AVANT toute autre instruction, comme partout sous RLS
             for name, fields in sorted(targets):
-                out.extend(await integrity.unique_conflicts(session, name, fields, tenant=tenant))
+                out.extend(await integrity.unique_conflicts(session, self._tables.documents, name, fields, tenant=tenant))
         return out
 
     async def ensure_unique_clean(self, compiled: CompiledDocType) -> None:
@@ -1408,7 +1443,7 @@ class DocumentService:
             self._log.warning("retroactive unique check skipped (RLS would hide other organisations)", doctype=compiled.definition.name)
             return
         async with self._db.session() as session:
-            conflicts = await integrity.unique_conflicts(session, compiled.definition.name, fields)
+            conflicts = await integrity.unique_conflicts(session, self._tables.documents, compiled.definition.name, fields)
         if conflicts:
             summary = ", ".join(f"{c['field']} ({len(c['names'])} documents)" for c in conflicts[:5])
             more = f" et {len(conflicts) - 5} autres" if len(conflicts) > 5 else ""
@@ -1446,9 +1481,11 @@ class DocumentService:
         if not compiled.definition.track_changes:
             return
         changes = diff(old, new)
-        for secret_field in compiled.definition.secret_fields:
-            if secret_field in changes:  # l'historique dit QU'un secret a changé, jamais sa valeur (ni claire ni chiffrée)
-                changes[secret_field] = {"old": MASK if changes[secret_field]["old"] else None, "new": MASK if changes[secret_field]["new"] else None}
+        for field_name, change in changes.items():
+            # L'historique dit QU'un secret a changé, jamais sa valeur (ni claire ni chiffrée) : un champ Password de la définition, ou une
+            # valeur chiffrée d'un champ qu'elle ne connaît plus (extension retirée).
+            if field_name in compiled.definition.secret_fields or _sealed(change.get("old")) or _sealed(change.get("new")):
+                changes[field_name] = {"old": MASK if change.get("old") else None, "new": MASK if change.get("new") else None}
         if not changes and action == "update":
             return
         who = ctx.user_id or f"system:{ctx.reason}"
@@ -1981,6 +2018,16 @@ def _relabel(compiled: CompiledDocType, referrers: Sequence[Any], data: Mapping[
         elif out.get(ref.table):
             out[ref.table] = [{**row, ref.fieldname: new} if hit(row) else row for row in out[ref.table]]
     return out
+
+
+def _sealed(value: Any) -> bool:
+    """Une valeur chiffrée par `Sealer` (un secret) : elle ne sort jamais, même sous un champ que la définition ne connaît plus."""
+    return isinstance(value, str) and value.startswith(SEALED_PREFIX)
+
+
+def _extension_key(block: Any) -> str:
+    """Ce qui identifie un bloc d'extension pour un habillage : son composant, son titre, ce qu'il reçoit (pas sa largeur, qu'on règle)."""
+    return json.dumps([block.component, block.label, block.props], sort_keys=True, ensure_ascii=False)
 
 
 def _amended_name(source: StoredDoc) -> str:

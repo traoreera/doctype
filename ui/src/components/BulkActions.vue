@@ -10,6 +10,7 @@ import AssignDialog from '@/components/collab/AssignDialog.vue'
 import FieldInput from '@/components/FieldInput.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { useExtensions } from '@/extensions/host'
+import { piIcon } from '@/lib/icons'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { toPayload } from '@/lib/form'
@@ -51,7 +52,7 @@ const items = computed<MenuItem[]>(() => {
   const ctx = { doctype: props.doctype, meta: props.meta, names: names.value }
   const ext = extensions.listActions(ctx).map<MenuItem>((a) => ({
     label: a.label,
-    icon: `pi pi-${a.icon ?? 'bolt'}`,
+    icon: piIcon(a.icon, 'bolt'), // un nom inconnu retombe sur l'icône par défaut au lieu de laisser un trou
     command: () => void extensions.run(a.extension, (tools) => a.run({ ...ctx, ...tools, reload: () => emit('done') })),
   }))
   if (ext.length && out.length) out.push({ separator: true })

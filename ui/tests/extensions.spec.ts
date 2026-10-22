@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, inject } from 'vue'
 import { createMemoryHistory, createRouter, RouterView, type Router } from 'vue-router'
 import BlockGrid from '@/components/BlockGrid.vue'
+import ExtensionSlot from '@/extensions/ExtensionSlot.vue'
 import { ExtensionHost, EXTENSIONS, EXTENSION_CONTEXT } from '@/extensions/host'
 import { loadExtensions } from '@/extensions/loader'
 import type { DeskHandle } from '@/extensions/types'
@@ -120,6 +121,26 @@ describe('ce que le Desk lit de l’hôte', () => {
     expect(host.formActions(ctx).map((a) => a.label)).toEqual(['A', 'B'])
   })
 
+  it('une action de liste qui se cache pour ce type n’offre pas, à elle seule, les cases à cocher', () => {
+    const { host } = makeHost()
+    const d = host.handle('sales')
+    d.list.action({ doctype: '*', label: 'Partout', when: ({ doctype }) => doctype === 'Invoice', run: () => {} })
+    expect(host.hasListActions({ doctype: 'Invoice', meta: CUSTOMER })).toBe(true)
+    expect(host.hasListActions({ doctype: 'Customer', meta: CUSTOMER })).toBe(false)
+  })
+
+  it('la feuille de style d’une extension : même origine seulement, retirée avec elle', () => {
+    const { host } = makeHost()
+    const d = host.handle('sales')
+    d.styles.add('/app/xcore-doctype/desk/ext/sales/style.css')
+    const link = document.head.querySelector<HTMLLinkElement>('link[data-extension="sales"]')
+    expect(link?.rel).toBe('stylesheet')
+    expect(() => d.styles.add('https://cdn.example.net/x.css')).toThrow(/même origine/)
+    expect(() => d.styles.add('javascript:alert(1)')).toThrow(/même origine/)
+    host.drop('sales')
+    expect(document.head.querySelector('link[data-extension="sales"]')).toBeNull()
+  })
+
   it('range les liens sous leur espace, les autres à part', () => {
     const { host } = makeHost()
     const d = host.handle('sales')
@@ -175,7 +196,8 @@ describe('config.json et le client du plugin', () => {
     await client.post('deals', { a: 1 })
     expect(calls.map((c) => [c.method, c.url])).toEqual([['GET', '/app/sales/pipeline?stage=won'], ['POST', '/app/sales/deals']])
     expect(calls[0]!.headers).toMatchObject({ Authorization: 'Bearer tok', 'X-Tenant-ID': 'acme' })
-    for (const bad of ['../stock/x', '/a/../../stock', '//evil.example/x', 'https://evil.example/x', '/a\\b']) {
+    // Ce que le parseur d'URL du navigateur lit comme une remontée : `%2e%2e`, `.%2E`, un `..` coupé par une tabulation, un `..` suivi de `?`.
+    for (const bad of ['../stock/x', '/a/../../stock', '//evil.example/x', 'https://evil.example/x', '/a\\b', '/%2e%2e/xcore-doctype/doc/Invoice', '/.%2E/auth/x', '/.\t./auth/x', '/a/..?x', '/a/%2e%2e/%2e%2e/auth', '/x\n', '/a#b', '/%ZZ']) {
       expect(() => client.get(bad)).toThrow(/chemin de plugin invalide/)
     }
   })
@@ -189,10 +211,10 @@ describe('les composants des extensions dans le Desk', () => {
   it('un bloc d’espace d’extension est dessiné par son composant, avec ses props ; absent, un encart', async () => {
     const { host } = makeHost()
     const Block = defineComponent({
-      props: { stage: { type: String, required: true }, label: { type: String, default: null } },
+      props: { config: { type: Object, required: true }, label: { type: String, default: null } },
       setup(props) {
         const desk = useDesk() // le contexte de SON extension
-        return () => h('p', { 'data-testid': 'pipeline' }, `${desk.name}:${props.stage}:${props.label}`)
+        return () => h('p', { 'data-testid': 'pipeline' }, `${desk.name}:${(props.config as { stage: string }).stage}:${props.label}`)
       },
     })
     host.handle('sales').blocks.add('pipeline', Block)
@@ -202,6 +224,37 @@ describe('les composants des extensions dans le Desk', () => {
     })
     expect(w.find('[data-testid="pipeline"]').text()).toBe('sales:won:Pipeline')
     expect(w.find('[data-testid="ext-missing"]').text()).toContain('crm.ghost')
+    w.unmount()
+  })
+
+  it('les réglages d’un bloc ne deviennent jamais des attributs ni des propriétés DOM (innerHTML, style)', async () => {
+    const { host } = makeHost()
+    // Un composant ordinaire, à une racine, qui ne déclare rien : avant, chaque clé du bloc tombait sur cette racine.
+    host.handle('sales').blocks.add('plain', defineComponent({ setup: () => () => h('div', { 'data-testid': 'plain' }, 'contenu') }))
+    const forged = { innerHTML: '<a id="pwn" href="https://evil.example/">x</a>', style: 'position:fixed;inset:0' }
+    const w = mount(BlockGrid, { props: { blocks: [{ type: 'extension', component: 'sales.plain', props: forged }] }, global: provide(host) })
+    const root = w.find('[data-testid="plain"]')
+    expect(root.text()).toBe('contenu')
+    expect(w.find('#pwn').exists()).toBe(false)
+    expect(root.attributes('style')).toBeUndefined()
+    expect(root.attributes('config')).toBe('[object Object]') // non déclarée : UN attribut inerte, jamais les clés une à une
+    w.unmount()
+  })
+
+  it('un composant en panne réessaie quand on lui donne autre chose à afficher', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { host } = makeHost()
+    const Flaky = defineComponent({ props: { id: { type: String, required: true } }, setup(p) {
+      if (p.id === 'bad') throw new Error('panne')
+      return () => h('p', { 'data-testid': 'flaky' }, p.id)
+    } })
+    const w = mount(ExtensionSlot, { props: { extension: 'sales', component: Flaky, props: { id: 'bad' } }, global: provide(host) })
+    await flushPromises()
+    expect(w.find('[data-testid="ext-broken"]').exists()).toBe(true)
+    await w.setProps({ props: { id: 'good' } })
+    await flushPromises()
+    expect(w.find('[data-testid="flaky"]').text()).toBe('good')
     w.unmount()
   })
 
@@ -219,7 +272,7 @@ describe('les composants des extensions dans le Desk', () => {
 
   it('la fiche montre les actions et les panneaux des extensions et leur passe le document', async () => {
     const record: DocRecord = { doctype: 'Customer', name: 'c1', owner: 'u', creation: '2026-01-01T00:00:00+00:00', modified: '2026-01-01T00:00:00+00:00', version: 3, docstatus: 0, amended_from: null, data: { customer_name: 'Acme' } }
-    const api = { meta: vi.fn(async () => CUSTOMER), get: vi.fn(async () => record), history: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })), connections: vi.fn(async () => []), collab: vi.fn(async () => ({ comments: [], assignments: [], attachments: [] })), list: vi.fn(async () => ({ items: [], total: 0, limit: 1, offset: 0 })), search: vi.fn(async () => []) }
+    const api = { meta: vi.fn(async () => CUSTOMER), get: vi.fn(async (_dt: string, _name: string): Promise<DocRecord> => record), history: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })), connections: vi.fn(async () => []), collab: vi.fn(async () => ({ comments: [], assignments: [], attachments: [] })), list: vi.fn(async () => ({ items: [], total: 0, limit: 1, offset: 0 })), search: vi.fn(async () => []) }
     const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/app/:doctype/new', name: 'new', component: Dummy }, { path: '/app/:doctype/:name', name: 'form', component: FormView, props: true }, { path: '/app/:doctype', name: 'list', component: Dummy }] })
     const { host } = makeHost(router)
     const seen: unknown[] = []
@@ -229,7 +282,12 @@ describe('les composants des extensions dans le Desk', () => {
     d.form.panel({
       doctype: 'Customer',
       title: 'Encours',
-      component: defineComponent({ props: { name: { type: String, required: true } }, setup: (p) => () => h('p', { 'data-testid': 'balance' }, `encours de ${p.name} : ${inject(EXTENSION_CONTEXT)!.name}`) }),
+      // Comme un vrai panneau (celui de `sales`) : il lit son document UNE fois, au montage.
+      component: defineComponent({ props: { name: { type: String, required: true } }, setup: (p) => {
+        const first = p.name
+        const ext = inject(EXTENSION_CONTEXT)!.name
+        return () => h('p', { 'data-testid': 'balance' }, `encours de ${first} : ${ext}`)
+      } }),
     })
     await router.push('/app/Customer/c1')
     const w = mount(defineComponent({ render: () => h(RouterView) }), {
@@ -247,6 +305,53 @@ describe('les composants des extensions dans le Desk', () => {
     menuItem('ext-action-sales-Archiver')!.click()
     await flushPromises()
     expect(seen).toEqual([['primary', 'c1', 'Acme'], ['menu', 'c1']])
+
+    // Un autre document : le panneau se remonte pour LUI (avant : monté une fois, il gardait le précédent).
+    api.get.mockImplementation(async (_dt: string, name: string) => ({ ...record, name, data: { customer_name: name === 'c2' ? 'Globex' : 'Acme' } }))
+    await router.push('/app/Customer/c2')
+    await flushPromises()
+    expect(w.find('[data-testid="balance"]').text()).toBe('encours de c2 : sales')
+    w.unmount()
+  })
+
+  it('le reload() d’une action ne réécrit pas la page où l’on est allé entre-temps', async () => {
+    const rec = (name: string, label: string): DocRecord => ({ doctype: 'Customer', name, owner: 'u', creation: '2026-01-01T00:00:00+00:00', modified: '2026-01-01T00:00:00+00:00', version: 1, docstatus: 0, amended_from: null, data: { customer_name: label } })
+    let release!: () => void
+    const late = new Promise<void>((r) => (release = r))
+    let reloading = false
+    const api = {
+      meta: vi.fn(async () => CUSTOMER),
+      get: vi.fn(async (_dt: string, name: string) => {
+        if (name === 'c1' && reloading) {
+          await late // la relecture de c1 arrive APRÈS l'ouverture de c2
+          return rec('c1', 'Acme relu')
+        }
+        return rec(name, name === 'c1' ? 'Acme' : 'Globex')
+      }),
+      history: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })), connections: vi.fn(async () => []),
+      collab: vi.fn(async () => ({ comments: [], assignments: [], attachments: [] })), list: vi.fn(async () => ({ items: [], total: 0, limit: 1, offset: 0 })), search: vi.fn(async () => []),
+    }
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/app/:doctype/new', name: 'new', component: Dummy }, { path: '/app/:doctype/:name', name: 'form', component: FormView, props: true }, { path: '/app/:doctype', name: 'list', component: Dummy }] })
+    const { host } = makeHost(router)
+    let pending: Promise<void> | null = null
+    host.handle('sales').form.action({ doctype: 'Customer', label: 'Relire', primary: true, run: ({ reload }) => {
+      reloading = true
+      pending = reload()
+    } })
+    await router.push('/app/Customer/c1')
+    const w = mount(defineComponent({ render: () => h(RouterView) }), {
+      attachTo: document.body,
+      global: { plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router], provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api }, [EXTENSIONS as symbol]: host } },
+    })
+    await flushPromises()
+    await w.find('[data-testid="ext-action-sales-Relire"]').trigger('click')
+    await router.push('/app/Customer/c2')
+    await flushPromises()
+    expect(w.find('[data-testid="form-title"]').text()).toBe('Globex')
+    release()
+    await pending
+    await flushPromises()
+    expect(w.find('[data-testid="form-title"]').text()).toBe('Globex') // la relecture tardive de c1 n'a rien écrit ici
     w.unmount()
   })
 })

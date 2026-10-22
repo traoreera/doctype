@@ -16,6 +16,7 @@ tenancy désactivée). Voir doc/phase4.md.
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import shutil
 import sys
@@ -235,12 +236,13 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
             registry.load_dir(d, owner=owner)
         mine = sorted(set(registry.names()) - provided)
         registry.validate_links(mine)
-        # L'espace de travail du plugin (`<plugin>/workspaces/`, frère du dossier des DocTypes) : validé avec eux, contre ces DocTypes.
-        spaces = Path(directories[0]).parent / "workspaces" if directories and owner else None
-        loaded_spaces = registry.load_workspaces(spaces, owner=owner) if spaces is not None and spaces.is_dir() and owner else []
-        home = Path(directories[0]).parent if directories and owner else None
+        # Les dossiers frères de celui des DocTypes (`resolve` : `check .` lancé DANS doctypes/ les trouve aussi), dans l'ordre où le
+        # plugin les charge : extensions d'abord (un bloc d'espace peut mesurer un champ qu'elles ajoutent), puis espaces, puis Desk.
+        home = Path(directories[0]).resolve().parent if directories and owner else None
         if home is not None and (home / "extends").is_dir():
             extended = registry.load_extensions(home / "extends", owner=owner)
+        spaces = home / "workspaces" if home is not None else None
+        loaded_spaces = registry.load_workspaces(spaces, owner=owner) if spaces is not None and spaces.is_dir() and owner else []
         if home is not None and (home / "desk").is_dir():
             desk = DeskExtensions(["*"])
             desk.register(owner, home / "desk")
@@ -297,20 +299,41 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
 DESK_TEMPLATE = Path(__file__).resolve().parent / "desk_template"
 
 
+def _plugin_name(plugin_home: Path) -> str:
+    """Le nom du plugin : celui de son `plugin.yaml` (la vérité pour xcore), sinon le nom du dossier tel qu'on l'a nommé (pas la cible
+    d'un lien symbolique : `app/sales` lié vers `…/plugins/sales-v2` reste `sales`)."""
+    manifest = plugin_home / "plugin.yaml"
+    if manifest.is_file():
+        try:
+            data = _load_yaml(manifest)
+        except (OSError, ValueError, yaml.YAMLError):
+            data = {}
+        if isinstance(data.get("name"), str):
+            return data["name"]
+    return plugin_home.absolute().name
+
+
 def new_desk_extension(plugin_home: Path, name: str | None = None, *, label: str | None = None, force: bool = False) -> list[Finding]:
     """Pose `<plugin>/desk/` (index.js + README.md) à partir du modèle : une extension du Desk qui se charge telle quelle (doc/extensions.md)."""
-    name = name or plugin_home.resolve().name
+    name = name or _plugin_name(plugin_home)
     if not re.fullmatch(r"[a-z0-9_]+", name):
         return [Finding("error", f"nom de plugin {name!r} : une extension du Desk se nomme comme son plugin, en minuscules, chiffres et `_` (--name)")]
-    target = plugin_home / "desk"
-    if (target / "index.js").exists() and not force:
-        return [Finding("error", f"{target / 'index.js'} existe déjà (--force pour le remplacer)")]
-    target.mkdir(parents=True, exist_ok=True)
     label = label or name.replace("_", " ").capitalize()
-    for source in sorted(DESK_TEMPLATE.iterdir()):
-        if source.is_file():
-            text = source.read_text(encoding="utf-8").replace("__PLUGIN__", name).replace("__LABEL__", label.replace("'", "’"))
-            (target / source.name).write_text(text, encoding="utf-8")
+    if not 0 < len(label) <= 80 or re.search(r"[\x00-\x1f\x7f]", label):
+        return [Finding("error", "--label : 1 à 80 caractères, sans caractère de contrôle")]
+    target = plugin_home / "desk"
+    sources = sorted(p for p in DESK_TEMPLATE.iterdir() if p.is_file())
+    taken = [target / s.name for s in sources if (target / s.name).exists()]
+    if taken and not force:
+        return [Finding("error", f"{', '.join(str(t) for t in taken)} existe(nt) déjà (--force pour remplacer)")]
+    target.mkdir(parents=True, exist_ok=True)
+    for source in sources:
+        text = source.read_text(encoding="utf-8")
+        if source.suffix == ".js":
+            # Le libellé devient une chaîne JavaScript ÉCHAPPÉE (guillemets, barres obliques inverses, retours à la ligne) : jamais collé tel quel.
+            text = text.replace("'__LABEL__'", json.dumps(label, ensure_ascii=False))
+        text = text.replace("__PLUGIN__", name).replace("__LABEL__", label)
+        (target / source.name).write_text(text, encoding="utf-8")
     return [
         Finding("ok", f"extension du Desk posée dans {target}"),
         Finding("warn", f"à faire : dans le on_load du plugin, self.get_service(\"doctype_registry\").load_desk(self.ctx.name, <dossier>/desk)"),

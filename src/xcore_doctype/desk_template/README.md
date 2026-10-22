@@ -12,13 +12,19 @@ import vue from '@vitejs/plugin-vue'
 export default {
   plugins: [vue()],
   build: {
-    lib: { entry: 'src/index.js', formats: ['es'], fileName: () => 'index.js' },
+    // Le CSS des composants `.vue` sort dans ../desk/style.css : chargez-le dans setup, voir plus bas.
+    lib: { entry: 'src/index.js', formats: ['es'], fileName: () => 'index.js', cssFileName: 'style' },
     outDir: '../desk',
     emptyOutDir: true,
     rollupOptions: { external: ['vue', '@xcore-doctype/desk'] },
   },
 }
 ```
+
+Puis, dans `setup(desk)` : `desk.styles.add(new URL('./style.css', import.meta.url).href)` (même origine, retirée avec l'extension).
+Sans cette ligne, les composants n'ont pas leurs styles.
+
+Un bloc d'espace (`desk.blocks.add('resume', MonBloc)`) reçoit DEUX props : `config` (l'objet `props` du bloc YAML) et `label`.
 
 Ce que le SDK `@xcore-doctype/desk` exporte : `defineExtension`, `useDesk` (dans un composant : `api`, `plugin`, `notify`, `router`),
 `CellValue`, `FieldControl`, `LinkField`, `describeError`, `t`, `piIcon`, et une sélection de PrimeVue (`Button`, `Card`, `Column`,
