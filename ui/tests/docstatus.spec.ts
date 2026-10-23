@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isFrozen, statusLabel, statusTone, transitionsFor } from '@/lib/docstatus'
+import { allowedDocstatus, isFrozen, statusLabel, statusTone, transitionsFor } from '@/lib/docstatus'
 import type { DocRecord, DocTypeMeta, Right } from '@/lib/types'
 import { CUSTOMER, STOCK_ENTRY } from './fixtures'
 
@@ -43,5 +43,17 @@ describe('transitions offertes', () => {
     expect(transitionsFor(CUSTOMER, { ...rec(0), doctype: 'Customer' })).toEqual({ submit: false, cancel: false, amend: false })
     expect(transitionsFor(null, rec(0))).toEqual({ submit: false, cancel: false, amend: false })
     expect(transitionsFor(STOCK_ENTRY, null)).toEqual({ submit: false, cancel: false, amend: false })
+  })
+})
+
+describe('états admis par un lien (`target_status`, miroir de `FieldDef.allowed_docstatus`)', () => {
+  it('chaque forme donne exactement ses états, triés ; sans contrainte : tous (null)', () => {
+    expect(allowedDocstatus({})).toBeNull()
+    expect(allowedDocstatus({ target_status: 'not_cancelled' })).toEqual([0, 1])
+    expect(allowedDocstatus({ target_status: 'draft' })).toEqual([0])
+    expect(allowedDocstatus({ target_status: 'submitted' })).toEqual([1])
+    expect(allowedDocstatus({ target_status: 'cancelled' })).toEqual([2])
+    expect(allowedDocstatus({ target_status: ['cancelled', 'submitted'] })).toEqual([1, 2])
+    expect(allowedDocstatus({ target_status: ['draft'] })).toEqual([0])
   })
 })

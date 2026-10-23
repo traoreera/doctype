@@ -35,13 +35,15 @@ import asyncio
 import json
 import re
 import secrets
+from collections import Counter
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from datetime import UTC, date, datetime, tzinfo
 from types import MappingProxyType
 from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, Sequence
 
 from . import aggregation, fieldtypes, integrity, memory
-from .builder import CompiledDocType
+from .builder import NO_RULES, CompiledDocType, FormRules
 from .decimals import canonical
 from .context import RequestContext
 from .db.rls import bind_tenant
@@ -59,12 +61,13 @@ from .errors import (
     VersionConflict,
 )
 from .hooks import ActionHooks, HookEvent, HookRegistry, HookSettings
+from .notification_rules import DocEvent
 from .files import ATTACHMENT_FIELD
 from .permissions import ACTIONS, Action, Scope, require, scope_for
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .schema import FILE_TYPES, TODAY, DocTypeDef, FieldDef, NamingField
-from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer
+from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer, kept
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
     KIND_DASHBOARD,
@@ -74,6 +77,9 @@ from .overrides import (
     KIND_WORKSPACE_USER,
     apply_dashboard_override,
     apply_form_override,
+    changed_rules,
+    form_base,
+    form_rules,
     keep_hidden,
     validate_dashboard_override,
     validate_form_override,
@@ -141,7 +147,8 @@ class _Logger(Protocol):
 
 
 # Revalide une valeur (schéma strict, puis périmètre d'écriture) et retourne les données à stocker. `old` n'est fourni
-# que pour l'entrée d'un CLIENT : il active `read_only_depends_on`, qu'un hook a le droit de contourner.
+# que pour l'entrée d'un CLIENT : il active `read_only_depends_on`, qu'un hook a le droit de contourner. `rules` (l'habillage
+# de l'organisation : obligatoire, lecture seule) aussi, pour l'entrée d'un client seulement.
 Finalize = Callable[..., dict[str, Any]]
 
 
@@ -177,6 +184,7 @@ class DocumentService:
         # émise le 1er janvier à 00 h 30 ne doit pas porter l'année précédente. `clock` est injectable pour les tests.
         self._timezone, self._clock = timezone, clock
         self.files: Any = None  # le `FileService`, posé par le plugin après coup (il a besoin de ce service)
+        self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
 
     # ── Méta ──────────────────────────────────────────────────
@@ -406,7 +414,8 @@ class DocumentService:
                         if kind in mine:
                             cfield[kind] = mine[kind]
         if override:
-            apply_form_override(meta, override)
+            # Les retouches d'écriture (obligatoire, lecture seule, défaut) sont montrées telles que le serveur les appliquera : `form_rules`, tolérante.
+            apply_form_override(meta, override, form_rules(compiled, override))
         if dashboard and apply_dashboard_override(meta, dashboard, d.name):
             meta["views"]["dashboard_layer"] = dashboard_layer  # d'où vient ce tableau de bord : `user` (le sien) ou `org`
         meta["views"]["dashboard_shareable"] = rights["write"] != "none"  # il peut l'enregistrer pour toute l'organisation
@@ -422,25 +431,30 @@ class DocumentService:
             if found is None:
                 raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
             return self._present(found)
+        virtual = compiled.definition.single and name == doctype
+        override = None
         async with self._query(ctx) as q:
             doc = await q.get(doctype, name, scope=scope)
-        if doc is None and compiled.definition.single and name == doctype:
-            return self._virtual_single(compiled)  # jamais enregistré : ses défauts, version 0
+            if doc is None and virtual:
+                override = await q.get_override(KIND_FORM, doctype)  # ses défauts sont aussi ceux de l'habillage de l'organisation
+        if doc is None and virtual:
+            return self._virtual_single(compiled, form_rules(compiled, (override or {}).get("config")))  # jamais enregistré : ses défauts, version 0
         if doc is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         return self._present(doc)
 
-    def _virtual_single(self, compiled: CompiledDocType) -> dict[str, Any]:
+    def _virtual_single(self, compiled: CompiledDocType, rules: FormRules = NO_RULES) -> dict[str, Any]:
         """Un document unique qu'on n'a pas encore enregistré : une page de réglages doit s'ouvrir, pleine de ses valeurs par défaut. `version: 0`
-        dit qu'il n'existe pas encore ; le premier enregistrement (`update` avec la version 0) le crée."""
+        dit qu'il n'existe pas encore ; le premier enregistrement (`update` avec la version 0) le crée. `rules` : l'habillage de l'organisation,
+        dont les défauts passent avant ceux du YAML (comme à la création)."""
         d = compiled.definition
         now = self._clock().isoformat()
         defaults = {
             f.fieldname: (canonical(f.default, f.decimals) if f.fieldtype in ("Decimal", "Currency") else f.default)
             for f in d.fields
-            if f.default is not None and f.default not in (TODAY, fieldtypes.NOW) and f.fieldtype != "Table"
+            if f.default is not None and f.default not in (TODAY, fieldtypes.NOW) and f.fieldtype != "Table" and f.fieldname not in rules.defaults
         }
-        data = self._with_today(compiled, defaults)
+        data = self._with_today(compiled, self._with_defaults(compiled, defaults, rules, prefill=True))
         return {"doctype": d.name, "name": d.name, "owner": "", "creation": now, "modified": now, "version": 0, "docstatus": 0, "amended_from": None, "data": data}
 
     async def list(
@@ -518,8 +532,13 @@ class DocumentService:
             )
         return aggregation.result(compiled.definition, spec, rows, keys, truncated=truncated)
 
-    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10) -> dict[str, Any]:
-        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6)."""
+    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10, docstatus: Any = None) -> dict[str, Any]:
+        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6).
+
+        `docstatus` : les seuls états proposés (`[0, 1]` pour un lien `target_status: not_cancelled`), pour que le Desk n'offre pas une
+        cible que l'écriture refuserait. Ce n'est qu'un confort : l'écriture rejuge l'état (`_check_links`). Un document d'un DocType
+        virtuel compte pour un brouillon, comme à l'écriture.
+        """
         self._enter(ctx, "doc.search", doctype)
         compiled = self._doctype(doctype)
         scope = self._scope(ctx, compiled, "read")
@@ -527,11 +546,13 @@ class DocumentService:
             raise ValidationFailed("q doit être un texte d'au plus 100 caractères")
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_SEARCH:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_SEARCH}")
+        states = _search_states(docstatus)
         if (source := self._source(compiled)) is not None:
             docs = memory.search(compiled.definition, memory.visible(await self._source_docs(ctx, compiled, source), scope), q, limit)
+            docs = docs if states is None or DRAFT in states else []
         else:
             async with self._query(ctx) as query:
-                docs = await query.search(compiled.definition, q, limit=limit, scope=scope)
+                docs = await query.search(compiled.definition, q, limit=limit, scope=scope, docstatus=states)
         title = compiled.definition.title_field
         return {"items": [{"name": d.name, "title": d.data.get(title) if title else None} for d in docs]}
 
@@ -640,6 +661,8 @@ class DocumentService:
         Un document supprimé n'est plus en base : son entrée de suppression garde son contenu et son propriétaire, ce qui
         permet de juger, avec le même périmètre de lecture, si l'appelant avait le droit de le voir. Hors de ce périmètre
         (ou sans historique), la réponse est « introuvable », comme pour un document absent.
+        Un nom se réutilise : un document ne montre que SA génération (ce qui suit la dernière suppression de son nom), un nom supprimé
+        sa dernière génération, jugée sur son instantané (`Query.versions`). Jamais l'historique d'un homonyme.
         """
         self._enter(ctx, "doc.history", doctype, name)
         compiled = self._doctype(doctype)
@@ -654,11 +677,12 @@ class DocumentService:
                 raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
             return {"items": [], "total": 0, "limit": limit, "offset": offset}
         async with self._query(ctx) as q:
-            if await q.get(doctype, name, scope=read) is None:
+            deleted = await q.get(doctype, name, scope=read) is None
+            if deleted:  # supprimé, ou hors de portée (alors seule la génération supprimée de ce nom peut être la sienne)
                 gone = await q.last_deletion(doctype, name)
                 if gone is None or not read.allows(gone["owner"], snapshot(gone["changes"])):
                     raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
-            items, total = await q.versions(doctype, name, limit=limit, offset=offset)
+            items, total = await q.versions(doctype, name, limit=limit, offset=offset, deleted=deleted)
         return {"items": items, "total": total, "limit": limit, "offset": offset}
 
     # ── Vues sauvegardées (phase C) ───────────────────────────
@@ -728,30 +752,58 @@ class DocumentService:
         return self.get_meta(ctx, doctype, override=(found or {}).get("config"), dashboard=(board or {}).get("config"), dashboard_layer=layer)
 
     async def form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
-        """L'habillage de formulaire de ce type pour ce tenant (vide s'il n'y en a pas). Il faut pouvoir LIRE le type."""
+        """L'habillage de formulaire de ce type pour ce tenant (vide s'il n'y en a pas). Il faut pouvoir LIRE le type. `definition` : ce que le YAML
+        impose à chaque champ (obligatoire, lecture seule, masqué, défaut), que `/meta` ne distingue plus de l'habillage (`overrides.form_base`)."""
         self._enter(ctx, "doc.override.form.get", doctype)
-        self._scope(ctx, self._doctype(doctype), "read")
+        compiled = self._doctype(doctype)
+        self._scope(ctx, compiled, "read")
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
-        return {"doctype": doctype, "config": (found or {}).get("config", {})}
+        return {"doctype": doctype, "config": (found or {}).get("config", {}), "definition": form_base(compiled)}
 
     async def save_form_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
-        """Enregistre l'habillage d'un formulaire. Il faut pouvoir ÉCRIRE le type : cela change sa présentation pour tous."""
+        """Enregistre l'habillage d'un formulaire. Il faut pouvoir ÉCRIRE le type : cela change sa présentation pour tous. Ses règles d'écriture
+        (obligatoire, lecture seule, défaut) lient tout le monde : les poser, les changer ou les retirer exige de pouvoir écrire TOUS les documents
+        du type (`_check_rule_author`)."""
         self._enter(ctx, "doc.override.form.save", doctype)
         compiled = self._doctype(doctype)
-        self._scope(ctx, compiled, "write")
+        write = self._scope(ctx, compiled, "write")
         cleaned = validate_form_override(compiled, config)
         async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, doctype)
+            self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned)
             made = await q.put_override(KIND_FORM, doctype, owner=ctx.owner_id, config=cleaned)
         return {"doctype": doctype, "config": made["config"]}
 
     async def delete_form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
-        """Retire l'habillage d'un formulaire (le YAML reprend la main). Il faut pouvoir ÉCRIRE le type."""
+        """Retire l'habillage d'un formulaire (le YAML reprend la main). Il faut pouvoir ÉCRIRE le type, et TOUS ses documents s'il porte des
+        règles d'écriture (les retirer délie tout le monde)."""
         self._enter(ctx, "doc.override.form.delete", doctype)
-        self._scope(ctx, self._doctype(doctype), "write")
+        compiled = self._doctype(doctype)
+        write = self._scope(ctx, compiled, "write")
         async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, doctype)
+            self._check_rule_author(write, compiled, (found or {}).get("config"), {})
             await q.delete_override(KIND_FORM, doctype)
         return {"doctype": doctype}
+
+    @staticmethod
+    def _check_rule_author(write: Scope, compiled: CompiledDocType, stored: Any, wanted: Any) -> None:
+        """Les règles d'écriture d'un habillage tiennent ceux qui n'écrivent qu'une PARTIE des documents (`if_owner`) : ils ne les posent, ne
+        les changent ni ne les retirent, sinon chacun lèverait la règle qui le lie (ou en imposerait une aux documents des autres). Il faut un
+        périmètre d'écriture total (`level == "all"`, comme l'auteur d'une règle de notification lit tout). Libellés, masquage et disposition
+        gardent la règle commune : un habillage qui les change en laissant les règles telles quelles passe."""
+        if write.level == "all":
+            return
+        changed = changed_rules(compiled, stored, wanted)
+        if changed:
+            name = compiled.definition.name
+            raise ValidationFailed(
+                f"Obligatoire, lecture seule et valeur par défaut s'imposent à tous : seul qui peut modifier TOUS les documents de {name} les règle"
+                f" (champs : {', '.join(changed)})",
+                code="form_rules_reserved",
+                details=[{"field": f"fields.{n}", "msg": "Réservé à qui peut modifier tous les documents du type", "type": "form_rules_reserved"} for n in changed],
+            )
 
     @staticmethod
     def _layer(scope: str | None) -> str:
@@ -869,6 +921,7 @@ class DocumentService:
         if compiled.definition.single:
             raise ValidationFailed(f"{doctype} est un document unique : on l'enregistre, on ne le crée pas", code="single_document")
         scope = self._scope(ctx, compiled, "create")
+        self._check_sealed_lookalikes(compiled, data, None)
         if (source := self._source(compiled)) is not None:
             if name is not None:
                 raise ValidationFailed(f"{doctype} est un DocType virtuel : sa source nomme les documents", code="name_not_allowed")
@@ -889,15 +942,21 @@ class DocumentService:
 
     async def _create(
         self, ctx: RequestContext, compiled: CompiledDocType, scope: Scope, data: Any,
-        *, name: str | None = None, amended_from: str | None = None, requested: Any = None,
+        *, name: str | None = None, amended_from: str | None = None, requested: Any = None, copied: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType. `requested` : le nom que le client demande (`naming: prompt`)."""
+        """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType. `requested` : le nom que le client demande (`naming: prompt`).
+        `copied` : les valeurs recopiées d'un document annulé (un amendement), dont les liens ne se jugent pas sur l'état de leur cible (`_check_links`)."""
         doctype = compiled.definition.name
         naming = compiled.definition.naming
         if name is None:
             name = self._requested_name(compiled, requested)
         finalize = self._finalizer(compiled, scope, ctx.owner_id)
-        clean = finalize(self._with_today(compiled, data))
+        rules = await self._form_rules(ctx, compiled)
+        if amended_from is not None:
+            # Un amendement est la copie qu'on va CORRIGER : ce que l'organisation exige depuis s'y saisira (la mise à jour et la soumission
+            # l'exigent). L'exiger ici rendrait l'amendement impossible, la copie se faisant sans saisie. Ses défauts, eux, s'appliquent.
+            rules = replace(rules, mandatory=frozenset())
+        clean = finalize(self._with_today(compiled, self._with_defaults(compiled, data, rules)), rules=rules)
         series = None if name else compiled.definition.series
         by_field = naming if isinstance(naming, NamingField) and not name else None
         # `hash` : le nom existe d'emblée. `owner` : l'identifiant de celui qui crée (un document par utilisateur ; le second est refusé, 409).
@@ -911,7 +970,7 @@ class DocumentService:
             if by_field is not None:
                 name = valid_name(str(clean[by_field.field]), by_field.field)
             clean = self._seal(compiled, clean, None)
-            await self._check_links(ctx, q, compiled, clean, None)
+            await self._check_links(ctx, q, compiled, clean, None, copied=copied)
             await self._check_files(q, compiled, clean, None)
             if series:
                 # En DERNIER dans la transaction : le verrou du compteur n'est tenu que le temps du reste de l'écriture, et
@@ -940,8 +999,10 @@ class DocumentService:
             if version == 0 and not isinstance(version, bool):
                 # Le premier enregistrement d'un document unique : il n'existe pas encore, on le crée sous le nom de son type.
                 self._require_hooks(compiled)
+                scope = self._scope(ctx, compiled, "create")
+                self._check_sealed_lookalikes(compiled, data, None)
                 try:
-                    return await self._create(ctx, compiled, self._scope(ctx, compiled, "create"), data, name=doctype)
+                    return await self._create(ctx, compiled, scope, data, name=doctype)
                 except AlreadyExists:
                     raise VersionConflict(f"{doctype} a été enregistré entre-temps (rechargez-le)") from None
         if not isinstance(version, int) or isinstance(version, bool) or version < 1:
@@ -953,11 +1014,17 @@ class DocumentService:
             raise DocumentLocked(f"{doctype} {name!r} est {STATUS_WORDS[current.docstatus]} : il n'est plus modifiable")
         if current.version != version:
             raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {version})")
+        self._check_sealed_lookalikes(compiled, data, current.data)
         if (source := self._source(compiled)) is not None:
             return await self._update_virtual(ctx, compiled, write, current, data, version, source)
         self._require_hooks(compiled)
         finalize = self._finalizer(compiled, write, current.owner)
-        clean = finalize(data, old=current.data)
+        rules = await self._form_rules(ctx, compiled)
+        if after_submit:
+            # Soumis, seuls ses champs `allow_on_submit` se changent encore : l'obligation de l'habillage ne vaut que pour eux. Un champ figé
+            # qu'on a rendu obligatoire après la soumission ne se remplira plus, le document resterait sinon immodifiable.
+            rules = replace(rules, mandatory=rules.mandatory & frozenset(compiled.definition.editable_after_submit))
+        clean = finalize(data, old=current.data, rules=rules)
         if after_submit:
             self._check_frozen(compiled, clean, current.data)
         clean = await self._action_phase(ctx, compiled, name, clean, current.data, finalize)
@@ -976,9 +1043,9 @@ class DocumentService:
             doc = await q.update(doctype, name, clean, version, scope=write, docstatus=current.docstatus)
             await self._sync_unique(q, compiled, doc)
             await self._record(q, ctx, compiled, doc, "update", current.data, doc.data)
-            if after_submit:
-                await self._tx_hooks(ctx, compiled, q, doc, "on_update_after_submit", old=current.data)
+            written = await self._tx_hooks(ctx, compiled, q, doc, "on_update_after_submit", old=current.data) if after_submit else []
         await self._after_save(ctx, compiled, doc, current.data)
+        self._dispatch(written)
         await self._release_files(ctx, compiled, current.data, doc.data)  # un fichier remplacé ou retiré n'a plus de raison d'exister
         return self._present(doc)
 
@@ -1004,15 +1071,18 @@ class DocumentService:
             return
         async with self._query(ctx) as q:
             await self._check_not_referenced(q, doctype, name, current.data)
-            await self._tx_hooks(ctx, compiled, q, current, "on_trash")  # peut refuser la suppression, ou écrire ce qui doit suivre
+            written = await self._tx_hooks(ctx, compiled, q, current, "on_trash")  # peut refuser la suppression, ou écrire ce qui doit suivre
             removed = await q.delete(doctype, name, scope=scope)
             if not removed:
                 # Le document existait et était supprimable à la lecture : il a changé entre-temps.
                 raise VersionConflict(f"{doctype} {name!r} a été modifié pendant la suppression")
             await self._record(q, ctx, compiled, current, "delete", current.data, None)
             await q.drop_unique(doctype, name)  # ses valeurs uniques redeviennent libres
+            # Les assignés ouverts, lus AVANT de disparaître avec le document : une règle « Suppression » qui les prévient les trouve.
+            assignees = tuple(a["assignee"] for a in await q.assignments(doctype, name) if a.get("status") == "open") if self.notifications else None
             attached = await q.remove_collaboration(doctype, name)  # commentaires, assignations et pièces jointes disparaissent avec lui
-        await self._after_delete(ctx, compiled, current)
+        await self._after_delete(ctx, compiled, current, assignees=assignees)
+        self._dispatch(written)
         await self._release_files(ctx, compiled, current.data, None)
         if attached and self.files is not None:
             try:
@@ -1040,7 +1110,7 @@ class DocumentService:
             raise ValidationFailed(f"{doctype} est un document unique : pas d'action en lot", code="single_document")
         patch: dict[str, Any] = {}
         if action == "update":
-            patch = self._bulk_patch(compiled, data)
+            patch = self._bulk_patch(compiled, data, await self._form_rules(ctx, compiled))
         results = []
         for name in dict.fromkeys(names):
             try:
@@ -1063,8 +1133,9 @@ class DocumentService:
         return {"results": results, "done": done, "failed": len(results) - done}
 
     @staticmethod
-    def _bulk_patch(compiled: CompiledDocType, data: Any) -> dict[str, Any]:
-        """Les valeurs à poser : des champs SIMPLES et connus (ni tableau, ni secret, ni fichier, ni champ copié d'un autre document)."""
+    def _bulk_patch(compiled: CompiledDocType, data: Any, rules: FormRules = NO_RULES) -> dict[str, Any]:
+        """Les valeurs à poser : des champs SIMPLES et connus (ni tableau, ni secret, ni fichier, ni champ copié d'un autre document), modifiables
+        (ni en lecture seule dans le YAML, ni par l'habillage de l'organisation : `rules`)."""
         if not isinstance(data, dict) or not data:
             raise ValidationFailed("data : les champs à modifier, au moins un", code="bulk_data")
         by_name = compiled.definition.field_map
@@ -1073,7 +1144,7 @@ class DocumentService:
             f = by_name.get(key)
             if f is None:
                 errors.append({"field": key, "msg": "Champ inconnu", "type": "extra_forbidden"})
-            elif f.fieldtype == "Table" or f.fieldtype == "Password" or f.fieldtype in FILE_TYPES or f.fetch_from or f.read_only or f.hidden:
+            elif f.fieldtype == "Table" or f.fieldtype == "Password" or f.fieldtype in FILE_TYPES or f.fetch_from or f.read_only or f.hidden or key in rules.read_only:
                 errors.append({"field": key, "msg": "Ce champ ne se modifie pas en lot", "type": "bulk_field"})
         if errors:
             raise ValidationFailed(details=errors)
@@ -1099,6 +1170,7 @@ class DocumentService:
         if current.docstatus != DRAFT:
             raise DocumentLocked(f"{doctype} {name!r} est {STATUS_WORDS[current.docstatus]} : il ne se renomme plus")
         referrers = self._registry.referrers(doctype)
+        relinked: list[DocEvent] = []
         async with self._query(ctx) as q:
             await q.lock_for_delete(doctype, name)  # comme une suppression : une écriture qui crée un lien vers lui attend, ou a fini avant que nous cherchions
             try:
@@ -1111,6 +1183,7 @@ class DocumentService:
                 if data != ref_doc.data:
                     updated = await q.relink(ref_doc.doctype, ref_doc.name, data)
                     await self._record(q, ctx, ref_compiled, updated, "update", ref_doc.data, updated.data)
+                    relinked.append(self._doc_event(ctx, ref_compiled, updated, "update", ref_doc.data))
             doc = await q.get(doctype, new, scope=Scope.everything("read"))  # relu : il a pu se citer lui-même
             assert doc is not None  # renommé dans cette transaction
             await self._record(q, ctx, compiled, doc, "rename", {"name": name}, {"name": new})
@@ -1118,6 +1191,7 @@ class DocumentService:
             f"doctype.{doctype}.after_rename",
             {"doctype": doctype, "old_name": name, "name": new, "tenant_id": ctx.tenant_id, "user": ctx.user_id},
         )
+        self._dispatch(relinked)  # les documents qui le citaient ont changé de valeur (le renommé lui-même : un changement de nom, pas une modification)
         return self._present(doc)
 
     # ── Soumission (documents soumettables) ───────────────────
@@ -1150,7 +1224,9 @@ class DocumentService:
             raise ValidationFailed(f"le nom de l'amendement dépasse {MAX_NAME} caractères", code="name_too_long")
         skipped = set(compiled.definition.secret_fields) | {f.fieldname for f in compiled.definition.fields if f.no_copy}
         carried = {k: v for k, v in source.data.items() if k not in skipped}  # un secret ne se recopie jamais (on le saisit à nouveau), ni un champ `no_copy`
-        return await self._create(ctx, compiled, create, carried, name=new_name, amended_from=source.name)
+        # Ses liens recopiés ne se jugent pas sur l'ÉTAT de leur cible (annulée depuis, peut-être : c'est souvent la raison de l'amendement) ;
+        # la soumission de l'amendement, elle, les rejugera.
+        return await self._create(ctx, compiled, create, carried, name=new_name, amended_from=source.name, copied=carried)
 
     async def _transition(self, ctx: RequestContext, doctype: str, name: str, version: Any, action: str) -> dict[str, Any]:
         self._enter(ctx, f"doc.{action}", doctype, name)
@@ -1165,32 +1241,44 @@ class DocumentService:
             raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {version})")
         self._require_hooks(compiled)
         if action == "submit":
-            try:  # la définition a pu changer depuis la saisie du brouillon : on ne fige pas ce qu'elle n'accepterait plus
-                compiled.validate_data(current.data)
+            try:  # la définition (ou l'habillage de l'organisation) a pu changer depuis la saisie du brouillon : on ne fige pas ce qu'elle n'accepterait plus
+                compiled.validate_data(current.data, rules=await self._form_rules(ctx, compiled))
             except ValidationFailed as e:
                 raise ValidationFailed("Ce brouillon ne respecte plus la définition : corrigez-le avant de le soumettre", details=e.details) from None
         async with self._query(ctx) as q:
             # L'état D'ABORD : cet UPDATE conditionnel est ce qui rend la transition unique (idempotence), et sur SQLite
             # c'est l'écriture qui prend le verrou de la base avant que les hooks ne lisent quoi que ce soit.
             doc = await q.transition(doctype, name, source=source, target=target, expected_version=version, scope=scope)
+            if action == "submit":
+                # Figer, c'est écrire : un lien qui exige un état de sa cible (`target_status`) se rejuge ici, tous (lignes et DynamicLink
+                # compris), avec le périmètre de celui qui soumet. La cible a pu être annulée depuis la saisie du brouillon.
+                try:
+                    await self._check_links(ctx, q, compiled, doc.data, None, constrained_only=True)
+                except ValidationFailed as e:
+                    raise ValidationFailed("Ce brouillon cite un document dans un état que son lien refuse : corrigez-le avant de le soumettre", details=e.details) from None
             await self._record(q, ctx, compiled, doc, action, {"docstatus": source}, {"docstatus": target})
+            written: list[DocEvent] = []
             if action == "cancel":
                 await q.drop_unique(doctype, name)  # un document annulé ne retient plus ses valeurs : son amendement peut les reprendre
-                await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
-            await self._tx_hooks(ctx, compiled, q, doc, hook)
+                written += await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
+            written += await self._tx_hooks(ctx, compiled, q, doc, hook)
         await self._emit(
             f"doctype.{doctype}.after_{action}",
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version, "user": ctx.user_id, "docstatus": doc.docstatus},
         )
+        self._rules(ctx, compiled, doc, action, None)
+        self._dispatch(written)
         return self._present(doc)
 
     async def _tx_hooks(
         self, ctx: RequestContext, compiled: CompiledDocType, q: Query, doc: StoredDoc, event: str, *, old: Mapping[str, Any] | None = None
-    ) -> None:
-        """`on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit`, `on_trash` : dans la transaction, avec le droit d'écrire d'autres documents. Un refus défait tout."""
+    ) -> list[DocEvent]:
+        """`on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit`, `on_trash` : dans la transaction, avec le droit d'écrire d'autres documents. Un refus défait tout.
+
+        Rend ce que les hooks ont écrit : l'appelant le donne aux règles de notification APRÈS le commit (`_dispatch`), jamais si la transaction échoue."""
         refs = compiled.definition.hooks.for_event(event)
         if not refs:
-            return
+            return []
         doctype = compiled.definition.name
 
         async def get(dt: str, nm: str) -> dict[str, Any] | None:
@@ -1205,6 +1293,7 @@ class DocumentService:
             if fn is None:  # désenregistré entre le contrôle initial et maintenant
                 raise DoctypeError("hook_unavailable", "des hooks de ce DocType sont indisponibles", status=503)
             await self._call_trusted(ref, fn(HookEvent(event, ctx, doctype, doc.name, view, old_view, get, tx)))  # type: ignore[arg-type]
+        return tx.written
 
     # ── Interne ───────────────────────────────────────────────
     def _with_today(self, compiled: CompiledDocType, data: Any) -> Any:
@@ -1220,6 +1309,38 @@ class DocumentService:
         today = self._clock().astimezone(self._timezone).date().isoformat()
         now = fieldtypes.format_instant(self._clock())  # un Datetime est TOUJOURS en UTC
         return {**{k: today for k in dates if k not in data}, **{k: now for k in instants if k not in data}, **data}
+
+    def _with_defaults(self, compiled: CompiledDocType, data: Any, rules: FormRules, *, prefill: bool = False) -> Any:
+        """Pose les défauts de l'habillage de l'organisation (`rules.defaults`) dans les champs que le payload ne renseigne pas : à la CRÉATION
+        seulement, AVANT ceux du YAML (que le modèle ou `_with_today` posent ensuite, sur ce qui reste absent). `today` / `now` se résolvent ici,
+        dans le fuseau de l'organisation pour une date, comme ceux du YAML.
+
+        Jamais sur un champ obligatoire du YAML : son propre défaut n'est pas un défaut serveur (`builder.build_model`, un client d'API DOIT
+        l'envoyer), celui de l'organisation non plus, sinon il le rendrait facultatif. Il n'y est qu'un PRÉ-REMPLISSAGE du Desk (`/meta`), et du
+        document unique pas encore enregistré (`prefill`), que le Desk renvoie tel quel."""
+        if not rules.defaults or not isinstance(data, dict):
+            return data
+        fields = compiled.definition.field_map
+        out: dict[str, Any] = {}
+        for name, value in rules.defaults.items():
+            if name in data or name not in fields:
+                continue
+            if not prefill and fields[name].required and fields[name].depends_on is None:
+                continue
+            kind = fields[name].fieldtype
+            if kind == "Date" and value == TODAY:
+                value = self._clock().astimezone(self._timezone).date().isoformat()
+            elif kind == "Datetime" and value == fieldtypes.NOW:
+                value = fieldtypes.format_instant(self._clock())
+            out[name] = value
+        return {**out, **data}
+
+    async def _form_rules(self, ctx: RequestContext, compiled: CompiledDocType) -> FormRules:
+        """Ce que l'habillage de formulaire de l'ORGANISATION resserre à l'écriture (`overrides.form_rules`) : lu à chaque écriture d'un client,
+        jamais gardé en mémoire (un autre processus peut l'avoir changé). Un DocType sans habillage n'a pas de règle."""
+        async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, compiled.definition.name)
+        return form_rules(compiled, (found or {}).get("config"))
 
     def _submittable(self, name: str) -> CompiledDocType:
         compiled = self._doctype(name)
@@ -1251,12 +1372,15 @@ class DocumentService:
     # ── Propriétés de champ (palier 70 %, phase H2) ───────────────────────
     @staticmethod
     def _check_frozen(compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any]) -> None:
-        """Un document SOUMIS ne laisse changer que ses champs `allow_on_submit` : tout autre champ doit être resté tel qu'il était."""
-        allowed = set(compiled.definition.editable_after_submit)
+        """Un document SOUMIS ne laisse changer que ses champs `allow_on_submit` : tout autre champ doit être resté tel qu'il était. Un secret renvoyé
+        masqué est resté tel qu'il était (`sealing.kept` : `_seal`, plus loin, remet le secret enregistré)."""
+        allowed, secrets = set(compiled.definition.editable_after_submit), set(compiled.definition.secret_fields)
         errors = [
             {"field": f.fieldname, "msg": "Champ figé : le document est soumis", "type": "locked_after_submit"}
             for f in compiled.definition.fields
-            if f.fieldname not in allowed and clean.get(f.fieldname) != old.get(f.fieldname)
+            if f.fieldname not in allowed
+            and clean.get(f.fieldname) != old.get(f.fieldname)
+            and not (f.fieldname in secrets and kept(clean.get(f.fieldname), old.get(f.fieldname)))
         ]
         if errors:
             raise ValidationFailed(details=errors)
@@ -1372,6 +1496,22 @@ class DocumentService:
             return None
         return self._masked(compiled.definition.secret_fields, data)
 
+    @staticmethod
+    def _check_sealed_lookalikes(compiled: CompiledDocType, data: Any, old: Mapping[str, Any] | None) -> None:
+        """Un client n'écrit pas, dans un champ qui n'est pas un secret, une valeur qui commence par `enc:v1:` : c'est la forme d'un secret chiffré, que
+        toute lecture masque (`_present`), et le formulaire ou « Détacher » renverrait `********` à sa place, qui l'écraserait sans bruit. Une valeur
+        déjà enregistrée telle quelle (écrite avant ce contrôle) reste permise : renvoyer le document n'est pas l'écrire de nouveau."""
+        if not isinstance(data, dict):
+            return  # le schéma dira ce qui ne va pas
+        known, secrets = compiled.definition.field_map, set(compiled.definition.secret_fields)
+        errors = [
+            {"field": k, "msg": f"Une valeur ne peut pas commencer par « {SEALED_PREFIX} » : c'est la forme d'un secret chiffré", "type": "sealed_prefix"}
+            for k, v in data.items()
+            if k in known and k not in secrets and _sealed(v) and (old is None or old.get(k) != v)
+        ]
+        if errors:
+            raise ValidationFailed(details=errors)
+
     def _seal(self, compiled: CompiledDocType, clean: dict[str, Any], old: Mapping[str, Any] | None) -> dict[str, Any]:
         """Avant l'écriture : `********` garde le secret enregistré, toute autre valeur est un NOUVEAU secret, chiffré. Sans clé, jamais de secret en clair."""
         fields = compiled.definition.secret_fields
@@ -1456,18 +1596,20 @@ class DocumentService:
             )
 
     async def purge_history(self, tenant: str, before: datetime, doctype: str | None = None) -> int:
-        """L'historique du tenant plus vieux que `before` disparaît (action opérateur `doc.history.purge`, D24).
+        """L'historique du tenant plus vieux que `before` disparaît (action opérateur `ops.history.purge`, D24).
 
-        La rétention par document (`max_versions`) purge à chaque écriture ; celle-ci rattrape le trop-plein d'avant
-        une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        La rétention par document (`max_versions`) ne purge qu'à l'écriture du document ; celle-ci atteint ce qu'aucune écriture ne
+        revoit (un document qu'on n'écrit plus après une baisse de `max_versions`, un document supprimé), entrées de soumission et
+        d'annulation comprises : c'est la décision de l'opérateur. `before` est un instant (naïf = UTC). Renvoie le nombre d'entrées supprimées.
         """
         ctx = RequestContext.system(tenant, "history purge")
         async with self._query(ctx) as q:
             return await q.purge_versions_before(before, doctype=doctype)
 
     def _finalizer(self, compiled: CompiledDocType, scope: Scope, owner: str) -> Finalize:
-        def finalize(data: Any, *, old: Mapping[str, Any] | None = None) -> dict[str, Any]:
-            clean = compiled.validate_data(data, old=old)
+        # `rules` : l'habillage de l'organisation (`_form_rules`), passé pour l'entrée d'un CLIENT seulement ; le résultat d'un hook en est exempt.
+        def finalize(data: Any, *, old: Mapping[str, Any] | None = None, rules: FormRules | None = None) -> dict[str, Any]:
+            clean = compiled.validate_data(data, old=old, rules=rules)
             self._check_written(scope, owner, clean)
             return clean
 
@@ -1495,11 +1637,12 @@ class DocumentService:
         await q.add_version(
             compiled.definition.name, doc.name, version=doc.version, action=action, user=who, doc_owner=doc.owner, changes=changes
         )
-        # Rétention (D24) : les `max_versions` entrées les plus récentes survivent dans la MÊME transaction.
-        await q.purge_versions(compiled.definition.name, doc.name, keep=compiled.definition.max_versions)
+        # Rétention (D24) : les `max_versions` entrées les plus récentes de la génération du document survivent, dans la MÊME transaction.
+        await q.purge_versions(compiled.definition.name, doc.name, keep=compiled.definition.max_versions, ended=action == "delete")
 
     async def _check_links(
-        self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None
+        self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None,
+        *, copied: Mapping[str, Any] | None = None, constrained_only: bool = False,
     ) -> None:
         """Chaque champ Link modifié doit viser un document qui existe ET que l'utilisateur peut lire (D6, doc §7.2).
 
@@ -1509,6 +1652,14 @@ class DocumentService:
         périmètre. Les lignes cibles sont verrouillées (`lock`) jusqu'au commit : voir `_check_not_referenced`.
         Quand un champ porte `target_status` (D23), l'état de la cible est lu dans la même requête et un état refusé
         échoue avec le type `link_status` (distinct de `link_not_found` : la cible existe, c'est son état qui gêne).
+
+        `copied` (un amendement) : les valeurs RECOPIÉES du document annulé se jugent sur l'existence et la lisibilité, pas sur l'état
+        de leur cible (elle a pu être annulée depuis : la soumission de l'amendement le dira). `constrained_only` (une soumission) : seuls
+        les liens qui portent `target_status` se jugent, TOUS, comme une écriture neuve (`old` est alors `None`).
+
+        L'état est jugé au moment de l'écriture, rien de plus : une annulation concurrente de la cible n'attend pas (`FOR KEY SHARE` ne
+        retient pas un UPDATE de `docstatus` sur PostgreSQL) et l'histoire vaut alors « lien, puis annulation », qu'une annulation
+        n'interdit pas (un document annulé reste cité par ceux qui le citaient).
         """
         # DocType cible -> valeur -> où elle est portée (chemin du champ : `country` ou `items.0.item`) et l'état exigé de la cible
         wanted: dict[str, dict[str, list[tuple[str, frozenset[int] | None]]]] = {}
@@ -1528,35 +1679,25 @@ class DocumentService:
             else:
                 errors.append({"field": path, "msg": "Choisissez d'abord le type de document visé", "type": "link_not_found"})
 
-        for f in compiled.definition.fields:
-            value = clean.get(f.fieldname)
-            if value is None:
+        # Une valeur déjà là n'est pas rejugée, même déplacée (une ligne réordonnée garde son lien) : on compte les occurrences par champ, et
+        # chaque occurrence ancienne n'en excuse qu'UNE nouvelle (une seconde ligne qui cite la même cible est un lien nouveau). Un
+        # DynamicLink se compare avec son type : le même nom visant un autre DocType est un autre lien.
+        before = Counter(slot for slot, *_ in _link_slots(compiled, old)) if old is not None else Counter()
+        recopied = Counter(slot for slot, *_ in _link_slots(compiled, copied)) if copied is not None else Counter()
+        for slot, field, value, kind, path in _link_slots(compiled, clean):
+            if before[slot]:
+                before[slot] -= 1
                 continue
-            if f.fieldtype == "Link" and not (old is not None and old.get(f.fieldname) == value):
-                want(f.options, value, f.fieldname, f.allowed_docstatus)
-            elif f.fieldtype == "DynamicLink" and not (old is not None and old.get(f.fieldname) == value and old.get(str(f.options)) == clean.get(str(f.options))):
-                want_dynamic(clean.get(str(f.options)), value, f.fieldname, f.allowed_docstatus)
-            elif f.fieldtype == "Table":
-                child = compiled.children[str(f.options)]
-                # Une ligne déplacée garde son lien : on compare à l'ensemble des valeurs déjà présentes, pas à la même position.
-                # Un DynamicLink se compare avec son type : le même nom visant un autre DocType est un autre lien.
-                before = {
-                    cf.fieldname: {(r.get(cf.fieldname), r.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None) for r in (old or {}).get(f.fieldname, [])}
-                    for cf in child.fields
-                    if cf.fieldtype in ("Link", "DynamicLink")
-                }
-                for i, row in enumerate(value):
-                    for cf in child.fields:
-                        v = row.get(cf.fieldname)
-                        if v is None or cf.fieldtype not in ("Link", "DynamicLink"):
-                            continue
-                        kind = row.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None
-                        if (v, kind) in before[cf.fieldname]:
-                            continue
-                        if cf.fieldtype == "Link":
-                            want(cf.options, v, f"{f.fieldname}.{i}.{cf.fieldname}", cf.allowed_docstatus)
-                        else:
-                            want_dynamic(kind, v, f"{f.fieldname}.{i}.{cf.fieldname}", cf.allowed_docstatus)
+            allowed = field.allowed_docstatus
+            if recopied[slot]:
+                recopied[slot] -= 1
+                allowed = None  # recopiée telle quelle : son existence et sa lisibilité, pas son état
+            if constrained_only and allowed is None:
+                continue
+            if field.fieldtype == "Link":
+                want(field.options, value, path, allowed)
+            else:
+                want_dynamic(kind, value, path, allowed)
         for target, values in wanted.items():
             target_compiled = self._registry.get(target)
             target_def = target_compiled.definition
@@ -1761,8 +1902,9 @@ class DocumentService:
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version,
              "user": ctx.user_id, "created": old is None},
         )
+        self._rules(ctx, compiled, doc, "create" if old is None else "update", old)
 
-    async def _after_delete(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc) -> None:
+    async def _after_delete(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, *, assignees: tuple[str, ...] | None = None) -> None:
         """Après le commit de la suppression : `after_delete` reçoit ce que le document contenait. Les erreurs sont journalisées, jamais levées."""
         doctype = compiled.definition.name
 
@@ -1782,6 +1924,32 @@ class DocumentService:
             except Exception as e:  # noqa: BLE001 - y compris TimeoutError
                 self._log.error("after_delete hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
         await self._emit(f"doctype.{doctype}.after_delete", {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "user": ctx.user_id})
+        self._rules(ctx, compiled, doc, "delete", None, assignees=assignees)
+
+    def _doc_event(
+        self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, kind: str, old: Mapping[str, Any] | None, *, assignees: tuple[str, ...] | None = None
+    ) -> DocEvent:
+        """Ce que voient les règles de notification : le document et son ancien contenu, secrets MASQUÉS."""
+        return DocEvent(
+            ctx.tenant_id, compiled.definition.name, doc.name, kind, self._mask_data(compiled, doc.data) or {},
+            self._mask_data(compiled, old), doc.owner, ctx.user_id, assignees,
+        )
+
+    def _rules(
+        self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, kind: str, old: Mapping[str, Any] | None, *, assignees: tuple[str, ...] | None = None
+    ) -> None:
+        """Après le commit : les règles de notification de l'organisation (notification_rules.py), en tâche de fond. Jamais d'erreur ici."""
+        if self.notifications is not None:
+            self._dispatch([self._doc_event(ctx, compiled, doc, kind, old, assignees=assignees)])
+
+    def _dispatch(self, events: list[DocEvent]) -> None:
+        """Après le commit seulement : des changements (ce qu'un hook a écrit dans la transaction, les documents qu'un renommage a réécrits)."""
+        if self.notifications is None or not events:
+            return
+        try:
+            self.notifications.dispatch_many(events)
+        except Exception as e:  # noqa: BLE001 - une notification ne défait rien
+            self._log.error("notification rules not dispatched", doctype=events[0].doctype, name=events[0].name, error=repr(e))
 
     async def _emit(self, topic: str, payload: dict[str, Any]) -> None:
         # Pas de contenu du document : l'EventBus est global au processus, ses abonnés ne sont pas filtrés par tenant.
@@ -1891,7 +2059,8 @@ class DocumentService:
         """Création chez la source : schéma strict, périmètre d'écriture et liens vérifiés ICI, puis la source applique à sa vérité (et la revérifie).
         Aucune connexion n'est tenue pendant l'appel de la source (elle peut appeler un autre plugin, voire écrire dans la même base)."""
         finalize = self._finalizer(compiled, scope, ctx.owner_id)
-        clean = finalize(data)
+        rules = await self._form_rules(ctx, compiled)
+        clean = finalize(self._with_defaults(compiled, data, rules), rules=rules)
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, None)
         doc = self._checked(compiled, await self._call_source(compiled, source.insert(ctx, compiled.definition, clean)))
@@ -1901,7 +2070,7 @@ class DocumentService:
         self, ctx: RequestContext, compiled: CompiledDocType, write: Scope, current: StoredDoc, data: Any, version: int, source: DocumentSource
     ) -> dict[str, Any]:
         finalize = self._finalizer(compiled, write, current.owner)
-        clean = finalize(data, old=current.data)
+        clean = finalize(data, old=current.data, rules=await self._form_rules(ctx, compiled))
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, current.data)
         doc = self._checked(compiled, await self._call_source(compiled, source.update(ctx, compiled.definition, current.name, clean, version)))
@@ -2023,6 +2192,47 @@ def _relabel(compiled: CompiledDocType, referrers: Sequence[Any], data: Mapping[
     return out
 
 
+def _search_states(raw: Any) -> frozenset[int] | None:
+    """Les états qu'une recherche de lien admet (`None` : tous). Une liste non vide d'états connus, sinon un refus."""
+    if raw is None:
+        return None
+    states = (DRAFT, SUBMITTED, CANCELLED)
+    if not isinstance(raw, list) or not raw or not all(isinstance(s, int) and not isinstance(s, bool) and s in states for s in raw):
+        raise ValidationFailed("docstatus : une liste d'états parmi 0 (brouillon), 1 (soumis) et 2 (annulé)")
+    return frozenset(raw)
+
+
+def _link_slots(compiled: CompiledDocType, data: Mapping[str, Any]) -> list[tuple[tuple[Any, ...], FieldDef, Any, Any, str]]:
+    """Chaque lien que porte `data`, dans l'ordre : `(emplacement, champ, valeur, type visé, chemin)`.
+
+    L'emplacement (le champ, ou le champ Table et le champ de ligne, avec la valeur et, pour un DynamicLink, son type) est ce que
+    `_check_links` compare d'une version à l'autre ; le chemin (`invoice`, `lines.1.invoice`) est celui des erreurs.
+    """
+    out: list[tuple[tuple[Any, ...], FieldDef, Any, Any, str]] = []
+    # Une valeur de lien est un nom (une chaîne) : ce qui n'en est pas une (un contenu stocké sous une définition d'avant) ne se compare à rien.
+    for f in compiled.definition.fields:
+        value = data.get(f.fieldname)
+        if value is None:
+            continue
+        if f.fieldtype in ("Link", "DynamicLink") and isinstance(value, str):
+            kind = data.get(str(f.options)) if f.fieldtype == "DynamicLink" else None
+            kind = kind if isinstance(kind, str) else None
+            out.append(((f.fieldname, value, kind), f, value, kind, f.fieldname))
+        elif f.fieldtype == "Table" and isinstance(value, list):
+            child = compiled.children[str(f.options)]
+            for i, row in enumerate(value):
+                if not isinstance(row, Mapping):
+                    continue
+                for cf in child.fields:
+                    v = row.get(cf.fieldname)
+                    if not isinstance(v, str) or cf.fieldtype not in ("Link", "DynamicLink"):
+                        continue
+                    kind = row.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None
+                    kind = kind if isinstance(kind, str) else None
+                    out.append(((f.fieldname, cf.fieldname, v, kind), cf, v, kind, f"{f.fieldname}.{i}.{cf.fieldname}"))
+    return out
+
+
 def _sealed(value: Any) -> bool:
     """Une valeur chiffrée par `Sealer` (un secret) : elle ne sort jamais, même sous un champ que la définition ne connaît plus."""
     return isinstance(value, str) and value.startswith(SEALED_PREFIX)
@@ -2048,6 +2258,7 @@ class _Transaction:
 
     def __init__(self, service: DocumentService, ctx: RequestContext, q: Query, event: str) -> None:
         self._svc, self._ctx, self._q = service, ctx, q
+        self.written: list[DocEvent] = []  # ce que le hook a écrit : les règles de notification le voient APRÈS le commit, jamais avant
         # Les liens se vérifient comme le ferait le système : la cible doit exister, pas être lisible par celui qui soumet
         # (un magasinier soumet une sortie sans avoir le droit de lire les articles).
         self._system = RequestContext.system(ctx.tenant_id, f"hook:{event}")
@@ -2075,6 +2286,7 @@ class _Transaction:
         doc = await self._q.insert(doctype, name or (self._ctx.owner_id if owner_named else secrets.token_hex(6)), clean)
         await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
+        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "create", None))
         return self._svc._present(doc)
 
     async def ensure(self, doctype: str, name: str, data: Mapping[str, Any]) -> bool:
@@ -2086,6 +2298,7 @@ class _Transaction:
         assert doc is not None  # insérée à l'instant, dans cette transaction
         await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
+        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "create", None))
         return True
 
     async def update(self, doctype: str, name: str, data: Mapping[str, Any], version: int) -> dict[str, Any]:
@@ -2099,6 +2312,7 @@ class _Transaction:
         doc = await self._q.update(doctype, name, clean, version, scope=Scope.everything("write"))
         await self._unique(compiled, doc)
         await self._svc._record(self._q, self._ctx, compiled, doc, "update", current.data, doc.data)
+        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "update", current.data))
         return self._svc._present(doc)
 
     async def _unique(self, compiled: CompiledDocType, doc: StoredDoc) -> None:

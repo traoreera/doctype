@@ -31,6 +31,7 @@ from .decimals import canonical
 from .errors import ValidationFailed
 from .expr import Node, compile_expr, evaluate
 from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef, NamingField
+from .sealing import kept
 
 
 def _iso_date(value: str) -> str:
@@ -182,6 +183,25 @@ class Filter:
 
 
 @dataclass(frozen=True, slots=True)
+class FormRules:
+    """Ce que l'habillage de formulaire d'une ORGANISATION resserre à l'écriture (`overrides.form_rules`), par-dessus le YAML.
+
+    Appliqué à l'entrée d'un CLIENT seulement, par `validate_data(rules=...)` : un hook n'y est pas tenu (comme pour `read_only`), ni l'écriture
+    d'un hook dans une transaction (`tx.create`). `mandatory` : obligatoire (s'il est visible, comme `required`) ; `read_only` : une mise à jour ne
+    le change pas ; `defaults` : la valeur posée à la CRÉATION quand le payload ne dit rien (le service les pose, voir `DocumentService._with_defaults`),
+    sauf sur un champ obligatoire du YAML, où elle ne fait que pré-remplir le Desk. Un habillage ne fait que resserrer : rien ici ne rend
+    facultatif ni modifiable ce que le YAML verrouille.
+    """
+
+    mandatory: frozenset[str] = frozenset()
+    read_only: frozenset[str] = frozenset()
+    defaults: Mapping[str, Any] = dataclass_field(default_factory=dict)
+
+
+NO_RULES = FormRules()
+
+
+@dataclass(frozen=True, slots=True)
 class CompiledDocType:
     definition: DocTypeDef
     model: type[BaseModel]
@@ -234,11 +254,12 @@ class CompiledDocType:
             row_conditions,
         )
 
-    def validate_data(self, payload: Any, *, old: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    def validate_data(self, payload: Any, *, old: Mapping[str, Any] | None = None, rules: FormRules | None = None) -> dict[str, Any]:
         """Valide un payload d'écriture et retourne le JSON à stocker (les `None` sont omis).
 
         `old` : le document avant modification. Fourni pour l'entrée d'un CLIENT, il active `read_only_depends_on` ; il ne
-        l'est pas pour le résultat d'un hook, qui a le droit de poser un champ que l'interface verrouille.
+        l'est pas pour le résultat d'un hook, qui a le droit de poser un champ que l'interface verrouille. `rules` : ce que l'habillage
+        de l'organisation resserre (`FormRules`), lui aussi pour l'entrée d'un client seulement.
         """
         if not isinstance(payload, dict):
             raise ValidationFailed("`data` doit être un objet")
@@ -249,26 +270,42 @@ class CompiledDocType:
         for f in self.definition.fields:
             if f.fieldtype == "Table" and clean.get(f.fieldname) == []:
                 del clean[f.fieldname]  # « aucune ligne » et « champ absent » sont la même chose : un seul état stocké
-        errors = self._condition_errors(clean, old) + self._row_errors(clean)
+        errors = self.rule_errors(clean, old, rules or NO_RULES)
         if errors:
             raise ValidationFailed(details=errors)
         return clean
 
-    def _condition_errors(self, clean: Mapping[str, Any], old: Mapping[str, Any] | None) -> list[dict[str, str]]:
+    def rule_errors(self, clean: Mapping[str, Any], old: Mapping[str, Any] | None, rules: FormRules = NO_RULES) -> list[dict[str, str]]:
+        """Ce que `validate_data` refuse APRÈS le schéma : conditions, obligations (du YAML et de l'organisation), champs figés, conditions des lignes.
+        Aussi ce que l'écran « Fichiers » demande avant de proposer de vider un champ (`FileLibrary._may_empty`) : une seule logique, pas une copie
+        qui divergerait."""
+        return self._condition_errors(clean, old, rules) + self._row_errors(clean)
+
+    def _condition_errors(self, clean: Mapping[str, Any], old: Mapping[str, Any] | None, rules: FormRules = NO_RULES) -> list[dict[str, str]]:
         """Revérifie côté serveur ce que l'interface applique (D22). Un client ne peut pas contourner l'obligation."""
         errors = []
+        secrets = self.definition.secret_fields
         for f in self.definition.fields:
             cond = self.conditions.get(f.fieldname, {})
             visible = evaluate(cond["depends_on"], clean) if "depends_on" in cond else True
-            required = (f.required and visible) or ("mandatory_depends_on" in cond and evaluate(cond["mandatory_depends_on"], clean))
+            # Rendu obligatoire par l'habillage de l'organisation : comme `required`, seulement s'il est visible.
+            mandatory = f.required or f.fieldname in rules.mandatory
+            required = (mandatory and visible) or ("mandatory_depends_on" in cond and evaluate(cond["mandatory_depends_on"], clean))
             if required and f.fieldname not in clean:
                 errors.append({"field": f.fieldname, "msg": "Champ obligatoire", "type": "missing"})
-            # `read_only` (toujours) ou `read_only_depends_on` (vrai sur l'état AVANT) : un client ne change pas le champ ; un hook, qui n'a pas `old`, le peut.
-            locked = old is not None and (f.read_only or ("read_only_depends_on" in cond and evaluate(cond["read_only_depends_on"], old)))
-            if locked and clean.get(f.fieldname) != old.get(f.fieldname):
+            if old is None:
+                continue
+            # Sur un secret, le masque renvoyé tel qu'on l'a lu est « inchangé » (`sealing.kept`), jamais comparé au secret chiffré.
+            new, before = clean.get(f.fieldname), old.get(f.fieldname)
+            changed = new != before and not (f.fieldname in secrets and kept(new, before))
+            # `read_only` (toujours, du YAML ou de l'habillage) ou `read_only_depends_on` (vrai sur l'état AVANT) : un client ne change pas le champ ;
+            # un hook, qui n'a pas `old`, le peut.
+            read_only = f.read_only or f.fieldname in rules.read_only
+            locked = read_only or ("read_only_depends_on" in cond and evaluate(cond["read_only_depends_on"], old))
+            if locked and changed:
                 errors.append({"field": f.fieldname, "msg": "Champ en lecture seule", "type": "read_only"})
             # `set_only_once` : libre tant qu'il est vide, figé dès qu'il a une valeur. Le champ qui NOMME le document l'est d'office (le nom ne bouge pas).
-            elif old is not None and old.get(f.fieldname) is not None and clean.get(f.fieldname) != old.get(f.fieldname) and self._set_once(f):
+            elif before is not None and changed and self._set_once(f):
                 errors.append({"field": f.fieldname, "msg": "Champ non modifiable une fois renseigné", "type": "set_only_once"})
         return errors
 

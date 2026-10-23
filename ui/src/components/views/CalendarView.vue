@@ -6,6 +6,7 @@ import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { addDays, eventsByDay, firstOfMonth, monthGrid, moved, shiftMonth, span, weekDays, type CalEvent } from '@/lib/calendar'
 import { layerFilters, passesLater } from '@/lib/filters'
+import { savedFieldLocked } from '@/lib/form'
 import { formatDate, todayIn } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import type { DocRecord, DocTypeMeta, Filters } from '@/lib/types'
@@ -71,7 +72,12 @@ const events = computed<CalEvent[]>(() => {
       ...range,
       title: typeof raw === 'string' && raw ? raw : r.name,
       color: idx >= 0 ? idx : null,
-      movable: canWrite.value && (!props.meta.submittable || r.docstatus === 0),
+      // Déplacer change la date de début (et de fin, si le document en a une) : verrouillée, le serveur refuserait.
+      movable:
+        canWrite.value &&
+        (!props.meta.submittable || r.docstatus === 0) &&
+        !savedFieldLocked(props.meta, c.start, r) &&
+        !(c.end && typeof r.data[c.end] === 'string' && savedFieldLocked(props.meta, c.end, r)),
     })
   }
   return out

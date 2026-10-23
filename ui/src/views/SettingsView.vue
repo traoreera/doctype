@@ -86,6 +86,11 @@ const groups = computed(() => {
   return list
 })
 
+// Les LISTES de l'application elle-même (plugin `system`) qu'une organisation règle, sans être un réglage unique : les règles de notification.
+// Un lien sous « Général » quand on peut les lire (elles s'ouvrent dans leur liste, comme les membres et les rôles).
+const APP_LISTS = ['Notification Rule']
+const appLists = computed(() => APP_LISTS.flatMap((name) => (meta.summaries ?? []).filter((x) => x.name === name && !x.single)))
+
 const selected = computed(() => (meta.summaries ?? []).find((d) => d.single && !d.settings_group && d.name === props.doctype))
 // Un réglage global n'a pas de rubrique à lui (ancienne adresse, lien partagé) : c'est « Général ».
 watch([() => props.doctype, general], () => {
@@ -136,6 +141,15 @@ onBeforeRouteUpdate((to, from) => {
     <div class="settings-layout">
       <nav class="settings-rail" :aria-label="t.settings.menu" data-testid="settings-rail">
         <RouterLink class="settings-item" :to="{ name: 'settings' }" exact-active-class="active" data-testid="settings-nav-general"><i class="pi pi-sliders-h" />{{ t.settings.general }}</RouterLink>
+        <RouterLink
+          v-for="d in appLists"
+          :key="d.name"
+          class="settings-item"
+          :to="{ name: 'list', params: { doctype: d.name } }"
+          :data-testid="`settings-list-${d.name}`"
+        >
+          <i :class="piIcon(d.icon, 'list')" />{{ t.settings.lists[d.name] ?? d.label }}<i class="pi pi-arrow-up-right settings-out" :title="t.admin.opensList" />
+        </RouterLink>
         <div v-for="g in groups" :key="g.module" class="settings-group" :data-testid="`settings-group-${g.module}`">
           <h4 class="settings-module">{{ g.label }}</h4>
           <RouterLink

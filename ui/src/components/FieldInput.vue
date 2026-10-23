@@ -10,6 +10,7 @@ import FileField from '@/components/FileField.vue'
 import SecretField from '@/components/SecretField.vue'
 import LinkField from '@/components/LinkField.vue'
 import { dateFromUtc, utcFromDate } from '@/lib/datetime'
+import { allowedDocstatus } from '@/lib/docstatus'
 import { canonicalDecimal, normalizeDecimal } from '@/lib/decimal'
 import { formatDuration, parseDuration } from '@/lib/duration'
 import { normalizeTime } from '@/lib/fieldrules'
@@ -269,7 +270,7 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
 
   <FileField v-else-if="(field.fieldtype === 'Image' || field.fieldtype === 'Attach') && doctype" :field="field" :model-value="modelValue" :doctype="doctype" :input-id="inputId" :invalid="invalid" @update:model-value="set" />
 
-  <LinkField v-else-if="field.fieldtype === 'Link'" :input-id="inputId" :model-value="modelValue" :target="target" :invalid="invalid" @update:model-value="set" />
+  <LinkField v-else-if="field.fieldtype === 'Link'" :input-id="inputId" :model-value="modelValue" :target="target" :invalid="invalid" :statuses="allowedDocstatus(field)" @update:model-value="set" />
 
   <LinkField
     v-else-if="field.fieldtype === 'DynamicLink' && dynamicTarget"
@@ -277,6 +278,7 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
     :model-value="modelValue"
     :target="dynamicTarget"
     :invalid="invalid"
+    :statuses="allowedDocstatus(field)"
     @update:model-value="set"
   />
   <InputText v-else-if="field.fieldtype === 'DynamicLink'" :id="inputId" :placeholder="t.form.dynamicFirst" disabled fluid data-testid="dynamic-first" />

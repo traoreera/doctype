@@ -53,6 +53,11 @@ describe('commandes proposées', () => {
     expect(cs.some((c) => c.group === 'recent')).toBe(false)
   })
 
+  it('« Fichiers » est proposé dès qu’on lit un type (on le trouve aussi par « pièces jointes ») ; sans aucun type, rien à y voir', () => {
+    expect(all.find((c) => c.id === 'files')).toMatchObject({ label: 'Fichiers', to: { name: 'files' }, group: 'go' })
+    expect(ids(rank(all, 'pieces jointes'))).toContain('files')
+  })
+
   it('un compte sans aucun droit n’a que l’accueil et les actions', () => {
     const cs = buildCommands(src({ workspaces: [], summaries: [], recents: [] }))
     expect(ids(cs)).toEqual(['home', 'tasks', 'theme-light', 'theme-dark', 'theme-system', 'logout'])

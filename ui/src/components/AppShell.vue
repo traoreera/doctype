@@ -87,6 +87,41 @@ function toggleSidebar(): void {
 }
 watch(() => route.fullPath, () => (navOpen.value = false))
 
+// ── Le tiroir (écran étroit) est une fenêtre modale pour le clavier et le lecteur d'écran (C3.2) ───────────────────────────
+// Ouvert : le focus entre dans le tiroir, Tab tourne entre le bouton du menu (qui le referme) et le tiroir, le contenu de la page est `inert`.
+// Fermé par Échap ou le fond : le focus revient au bouton du menu. Fermé par une navigation : il va au titre de la nouvelle page
+// (`landOnPage`), comme toute navigation. Fermé, le tiroir hors écran est `inert` lui aussi : Tab ne s'y perd plus.
+const drawer = ref<HTMLElement | null>(null)
+const drawerModal = computed(() => narrow.value && navOpen.value)
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+const toggleButton = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-testid="nav-toggle"]')
+const drawerItems = (): HTMLElement[] => [...(drawer.value?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [])]
+const focusables = (): HTMLElement[] => [toggleButton(), ...drawerItems()].filter((x): x is HTMLElement => !!x)
+watch(drawerModal, async (open) => {
+  if (!open) return
+  await nextTick()
+  drawerItems()[0]?.focus()
+})
+/** Fermer le tiroir et rendre le focus au bouton qui l'a ouvert (Échap, clic sur le fond). */
+function closeDrawer(): void {
+  navOpen.value = false
+  void nextTick(() => toggleButton()?.focus())
+}
+function trapTab(e: KeyboardEvent): void {
+  if (!drawerModal.value || e.key !== 'Tab') return
+  const items = focusables()
+  if (!items.length) return
+  const first = items[0]!
+  const last = items[items.length - 1]!
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault()
+    last.focus()
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault()
+    first.focus()
+  }
+}
+
 // ── Changement de page : le titre de l'onglet, et le focus sur le titre de la page (lecteur d'écran, clavier) ─────────────
 const main = ref<HTMLElement | null>(null)
 let pageTicket = 0
@@ -147,7 +182,8 @@ function toggleSpace(w: Workspace): void {
 // ── Raccourcis clavier ──────────────────────────────────────────────────────────────────────────────────────────
 const paletteOpen = ref(false)
 function onKey(e: KeyboardEvent): void {
-  if (e.key === 'Escape' && navOpen.value) navOpen.value = false
+  if (e.key === 'Escape' && navOpen.value) closeDrawer()
+  trapTab(e)
   // Ctrl+G, comme dans Frappe ; Ctrl+K, l'usage ailleurs. Le navigateur y met « suivant » et « recherche » : on les reprend.
   if ((e.ctrlKey || e.metaKey) && !e.altKey && ['g', 'k'].includes(e.key.toLowerCase())) {
     e.preventDefault()
@@ -208,6 +244,8 @@ const items = computed(() => [
     : []),
   ...(profile.available ? [{ label: t.profile.mine, icon: 'pi pi-id-card', command: () => void router.push({ name: 'profile' }) }] : []),
   ...(services.auth ? [{ label: t.admin.sections.account, icon: 'pi pi-user', command: () => void router.push({ name: 'settings', params: { doctype: '~account' } }) }] : []),
+  // Les fichiers de ce que je lis : pour tout utilisateur identifié (le serveur ne liste que ce que chacun peut lire).
+  { label: t.fileLibrary.title, icon: 'pi pi-paperclip', command: () => void router.push({ name: 'files' }) },
   { separator: true },
   { label: t.nav.theme, disabled: true, class: 'desk-menu-title' },
   ...(['light', 'dark', 'system'] as ThemeMode[]).map((m) => ({
@@ -255,8 +293,18 @@ const items = computed(() => [
       <Menu ref="userMenu" :model="items" popup />
     </header>
 
-    <div v-if="navOpen" class="desk-backdrop" data-testid="nav-backdrop" @click="navOpen = false" />
-    <nav id="desk-sidebar" class="desk-sidebar" :class="{ open: navOpen }" :data-open="narrow ? navOpen : !nav.collapsed" aria-label="Espaces de travail">
+    <div v-if="navOpen" class="desk-backdrop" data-testid="nav-backdrop" @click="closeDrawer" />
+    <nav
+      id="desk-sidebar"
+      ref="drawer"
+      class="desk-sidebar"
+      :class="{ open: navOpen }"
+      :data-open="narrow ? navOpen : !nav.collapsed"
+      aria-label="Espaces de travail"
+      :role="drawerModal ? 'dialog' : undefined"
+      :aria-modal="drawerModal ? 'true' : undefined"
+      :inert="(narrow && !navOpen) || undefined"
+    >
       <RouterLink class="desk-link" :to="{ name: 'home' }" exact-active-class="router-link-active"><i class="pi pi-home" />{{ t.home }}</RouterLink>
       <RouterLink class="desk-link" :to="{ name: 'tasks' }" data-testid="nav-tasks">
         <i class="pi pi-check-square" />{{ t.collab.tasks.title }}
@@ -312,7 +360,7 @@ const items = computed(() => [
       </div>
     </nav>
 
-    <main id="desk-main" ref="main" class="desk-main" tabindex="-1"><slot /></main>
+    <main id="desk-main" ref="main" class="desk-main" tabindex="-1" :inert="drawerModal || undefined"><slot /></main>
     <CommandPalette v-model:open="paletteOpen" />
   </div>
 </template>

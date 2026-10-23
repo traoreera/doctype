@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -189,6 +189,23 @@ export class ApiClient {
     return this.call('POST', '/file-links', { body: { ids } })
   }
 
+  /** L'écran « Fichiers » : les fichiers que des documents lisibles citent, une ligne par document citant. */
+  fileLibrary(q: FileLibraryQuery = {}): Promise<FileLibraryResult> {
+    const params = new URLSearchParams()
+    if (q.doctype) params.set('doctype', q.doctype)
+    if (q.q) params.set('q', q.q)
+    if (q.order_by) params.set('order_by', q.order_by)
+    if (q.order) params.set('order', q.order)
+    if (q.limit !== undefined) params.set('limit', String(q.limit))
+    if (q.offset !== undefined) params.set('offset', String(q.offset))
+    return this.call('GET', '/file-library', { params })
+  }
+
+  /** Retirer un fichier de ce qui le cite, par l'écriture ordinaire (le document est modifié, ou la pièce jointe retirée) : ses refus sont ceux de cette écriture. */
+  detachFile(target: DetachTarget): Promise<{ detached: 'field' | 'attachment'; version: number | null }> {
+    return this.call('POST', '/file-library/detach', { body: target })
+  }
+
   history(doctype: string, name: string, page: { limit?: number; offset?: number } = {}): Promise<HistoryResult> {
     const params = new URLSearchParams()
     if (page.limit !== undefined) params.set('limit', String(page.limit))
@@ -247,8 +264,10 @@ export class ApiClient {
     await this.call('DELETE', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
   }
 
-  async search(doctype: string, q: string, limit = 10): Promise<SearchItem[]> {
+  /** `docstatus` : les seuls états proposés (ceux qu'admet le lien, voir `allowedDocstatus`) ; absent ou `null` : tous. */
+  async search(doctype: string, q: string, limit = 10, docstatus: readonly number[] | null = null): Promise<SearchItem[]> {
     const params = new URLSearchParams({ q, limit: String(limit) })
+    if (docstatus?.length) params.set('docstatus', docstatus.join(','))
     const res = await this.call<{ items: SearchItem[] }>('GET', `/search/${encodeURIComponent(doctype)}`, { params })
     return res.items
   }
@@ -283,7 +302,8 @@ export class ApiClient {
 
   // ── Habillages (overrides) ─────────────────────────────────
   /** L'habillage de formulaire du tenant pour ce type (vide s'il n'y en a pas). */
-  formOverride(doctype: string): Promise<{ doctype: string; config: FormOverride }> {
+  /** `definition` : ce que le YAML impose à chaque champ (l'éditeur grise d'après lui ce qu'un habillage ne desserre pas). */
+  formOverride(doctype: string): Promise<{ doctype: string; config: FormOverride; definition?: Record<string, FieldBase> }> {
     return this.call('GET', `/override/form/${encodeURIComponent(doctype)}`)
   }
 

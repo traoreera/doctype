@@ -248,6 +248,9 @@ export interface ViewsMeta {
   dashboard_shareable?: boolean
 }
 
+/** L'état exigé de la cible d'un lien : un état, une liste d'états, ou `not_cancelled` (brouillon ou soumis). */
+export type TargetStatus = 'draft' | 'submitted' | 'cancelled' | 'not_cancelled' | ('draft' | 'submitted' | 'cancelled')[]
+
 export interface FieldMeta {
   fieldname: string
   label?: string
@@ -283,6 +286,8 @@ export interface FieldMeta {
   allow_on_submit?: boolean
   /** `lien.champ` : la valeur est LUE du document que le Link désigne (jamais saisie). */
   fetch_from?: string
+  /** Link, DynamicLink : l'état que doit avoir la cible (D23) ; le serveur refuse les autres (`link_status`). Voir `lib/docstatus.allowedDocstatus`. */
+  target_status?: TargetStatus
   /** Arbres compilés par le serveur : le navigateur ne parse jamais de chaîne. */
   depends_on?: ExprNode
   mandatory_depends_on?: ExprNode
@@ -299,10 +304,31 @@ export interface LayoutSection {
 /** Pour qui on enregistre une disposition : `user` (la mienne seulement) ou `org` (toute l'organisation). */
 export type LayoutScope = 'user' | 'org'
 
+/**
+ * Les retouches d'un champ par l'habillage d'un formulaire. `label`, `hidden`, `description` ne changent que l'affichage ; `read_only`, `mandatory`
+ * et `default` (création seulement) sont APPLIQUÉS par le serveur à l'écriture pour l'organisation, et ne font que resserrer le YAML.
+ */
+export interface FieldTweak {
+  label?: string
+  hidden?: boolean
+  description?: string
+  read_only?: boolean
+  mandatory?: boolean
+  default?: unknown
+}
+
+/** Ce que la DÉFINITION (le YAML) impose à un champ, habillage à part (`GET /override/form`, clé `definition` : seuls les champs qui en ont). */
+export interface FieldBase {
+  required?: boolean
+  read_only?: boolean
+  hidden?: boolean
+  default?: unknown
+}
+
 /** Habillage d'un formulaire (`xdt_layout_override`, genre `form`) : disposition et retouches de champ, par-dessus le YAML. */
 export interface FormOverride {
   layout?: LayoutSection[]
-  fields?: Record<string, { label?: string; hidden?: boolean; description?: string }>
+  fields?: Record<string, FieldTweak>
 }
 
 /** Habillage d'un espace de travail (genre `workspace`) : le corps d'un espace, sans `name`/`schema_version` (ils viennent de la cible). */
@@ -499,6 +525,53 @@ export interface FileMeta {
   content_type: string
   size: number
 }
+
+/**
+ * Une ligne de l'écran « Fichiers » (`GET /file-library`) : un fichier ET le document qui le cite (un fichier que deux documents citent donne
+ * deux lignes). `attachment` : l'identifiant de la pièce jointe, `null` pour un fichier de champ (`field` est alors le champ, `version` celle du document).
+ */
+export interface FileLibraryItem {
+  file_id: string
+  filename: string
+  content_type: string
+  size: number
+  owner: string
+  creation: string
+  doctype: string
+  doctype_label: string
+  docname: string
+  field: string
+  field_label: string | null
+  attachment: string | null
+  version: number | null
+  docstatus: number
+  /** Le type garde-t-il un historique (`track_changes`) : détacher un champ y laisse alors une trace. */
+  track_changes: boolean
+  can_detach: boolean
+}
+
+export interface FileLibraryResult {
+  items: FileLibraryItem[]
+  total: number
+  limit: number
+  offset: number
+  /** Les types qui citent des fichiers lisibles (selon la recherche, pas selon le filtre de type) : de quoi proposer le filtre. */
+  doctypes: { name: string; label: string; count: number }[]
+  /** Des types dont la source ne répond pas : leurs pièces jointes manquent à la liste (on le dit, par leur libellé). */
+  unavailable: { name: string; label: string }[]
+}
+
+export interface FileLibraryQuery {
+  doctype?: string | null
+  q?: string
+  order_by?: 'creation' | 'filename' | 'size'
+  order?: 'asc' | 'desc'
+  limit?: number
+  offset?: number
+}
+
+/** Détacher : une pièce jointe par son identifiant, un fichier de champ par le document qui le cite et la version qu'on en a lue. */
+export type DetachTarget = { attachment: string } | { doctype: string; name: string; field: string; file_id: string; version: number }
 
 /** Un lien signé de courte durée vers un fichier : `path` est relatif à la racine de l'API. */
 export interface FileLink {

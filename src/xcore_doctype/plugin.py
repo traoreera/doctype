@@ -20,13 +20,14 @@ from xcore.sdk import AutoDispatchMixin, TrustedBase, action, error, ok
 from .api.desk import DeskSettings, build_desk_router
 from .desk_extensions import DeskExtensions
 from .api.collab import build_collab_router
-from .api.files import build_files_router, build_preferences_router, build_public_files_router
+from .api.files import build_file_library_router, build_files_router, build_preferences_router, build_public_files_router
 from .api.http import build_router
-from .context import ContextSettings, RequestContext
+from .context import ContextSettings, RequestContext, ipc_operator
 from .db.access import create_system_tables, ensure_async_database
 from .db.rls import ensure_rls
 from .db.tables import SystemTables, build_system_tables
 from .document import DocumentService, SystemReaders
+from .file_library import FileLibrary
 from .file_service import FileService
 from .files import BlobStore, LocalBlobStore, UrlSigner
 from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
@@ -34,6 +35,7 @@ from .collaboration import CollaborationService
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
+from .notification_rules import RULE_HOOK, ExtensionMailer, Mailer, NoMailer, NotificationRules, make_rule_hook
 from .preferences import Preferences
 from .hooks import ActionHooks, HookRegistry, HookSettings
 from .registry import DocTypeChannel, DocTypeRegistry
@@ -46,6 +48,8 @@ GRANTS_SERVICE = "doctype_grants"  # service exporté : `self.get_service("docty
 DOCUMENTS_SERVICE = "doctype_documents"  # service exporté : lecture système, `.system(tenant, raison)` (contrôles, rapports)
 SOURCES_SERVICE = "doctype_sources"  # service exporté : `self.get_service("doctype_sources").register(nom_plugin, "ma_source", source)` (DocTypes virtuels)
 REGISTRY_SERVICE = "doctype_registry"  # service exporté : `self.get_service("doctype_registry").load_dir(nom, dossier)`
+# Les actions d'OPÉRATEUR vivent hors de `doc.*` (que le manifeste ouvre à tous les appelants) : le manifeste livré ne les ouvre pas.
+OPS_HISTORY_PURGE = "ops.history.purge"
 
 
 def _need(payload: dict, key: str) -> Any:
@@ -59,6 +63,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     hook_registry: HookRegistry | None = None
     grant_catalog: GrantCatalog | None = None
     collaboration: CollaborationService | None = None
+    file_library: FileLibrary | None = None
     documents: DocumentService | None = None
     _tables: SystemTables | None = None
     _settings: ContextSettings | None = None
@@ -112,6 +117,27 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return XauthNotifier(call, plugin=plugin, action=act, logger=self.logger)
 
+    def _rule_delivery(self, raw: Any) -> dict[str, Any]:
+        """L'e-mail des règles de notification : l'extension `ext.email` de l'hôte quand elle existe (`doctype.notifications.email: false` la coupe),
+        et `desk_url`, l'adresse du Desk que l'e-mail cite (sans elle, pas de lien : le moteur ne devine pas l'adresse publique de l'hôte)."""
+        raw = raw if isinstance(raw, dict) else {}
+        email, desk_url = raw.get("email", True), raw.get("desk_url")
+        if not isinstance(email, bool):
+            raise ConfigurationError("doctype.notifications.email doit être un booléen")
+        if desk_url is not None and (not isinstance(desk_url, str) or not desk_url.startswith(("https://", "http://"))):
+            raise ConfigurationError("doctype.notifications.desk_url doit être une adresse http(s)")
+        mailer: Mailer = NoMailer()
+        if email:
+            try:
+                service = self.get_service("ext.email")
+            except Exception:  # noqa: BLE001 - l'absence de l'extension n'est pas une erreur : pas d'e-mail
+                service = None
+            if service is not None and callable(getattr(service, "send", None)):
+                mailer = ExtensionMailer(service, logger=self.logger)
+            else:
+                self.logger.info("notification rules send no e-mail: no ext.email extension")
+        return {"mailer": mailer, "desk_url": desk_url}
+
     async def on_load(self) -> None:
         config = self.ctx.config or {}
         block = config.get("doctype") or {}
@@ -163,9 +189,16 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root = APIRouter()
         root.include_router(build_router(self.documents, self._settings))
         root.include_router(build_files_router(file_service, self._settings))  # téléverser, liens signés : une identité est exigée
-        collab = CollaborationService(self.documents, file_service, self._directory(block.get("directory")), self._notifier(block.get("notifications")))
+        directory, notifier = self._directory(block.get("directory")), self._notifier(block.get("notifications"))
+        collab = CollaborationService(self.documents, file_service, directory, notifier)
+        # Les règles de notification de l'organisation (DocType `Notification Rule` du plugin `system`) : cloche et e-mail, après le commit.
+        rules = NotificationRules(self.documents, directory=directory, notifier=notifier, logger=self.logger, **self._rule_delivery(block.get("notifications")))
+        self.documents.notifications = rules
+        hook_registry.register(RULE_HOOK, make_rule_hook(self.documents), owner=self.ctx.name)
         self.collaboration = collab
         root.include_router(build_collab_router(collab, self._settings))  # commentaires, assignations, pièces jointes
+        self.file_library = FileLibrary(self.documents, collab)
+        root.include_router(build_file_library_router(self.file_library, self._settings))  # l'écran « Fichiers » : lister, détacher
         root.include_router(build_preferences_router(Preferences(self.documents, file_service), self._settings))  # nom, logo, couleur de l'organisation
         root.include_router(build_public_files_router(file_service))  # servir : la signature de l'URL fait foi (pas de jeton dans une balise <img>)
         desk_extensions = DeskExtensions(desk.extensions, self.logger)  # D28 : ce que les plugins livrent au Desk, filtré par l'opérateur
@@ -255,6 +288,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         return UrlSigner(secret)
 
     async def on_unload(self) -> None:
+        if self.documents is not None and self.documents.notifications is not None:
+            await self.documents.notifications.close()
         if self.registry is not None:
             self.registry.clear()
         if self.hook_registry is not None:
@@ -265,7 +300,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             self.ctx.services.pop(GRANTS_SERVICE, None)
             self.ctx.services.pop(REGISTRY_SERVICE, None)
             self.ctx.services.pop(DOCUMENTS_SERVICE, None)
-        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = None
+        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = None
 
     def get_router(self) -> APIRouter | None:
         return self._router
@@ -333,7 +368,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     async def doc_search(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:
             return await self.documents.search(
-                ctx, _need(payload, "doctype"), payload.get("q", ""), limit=payload.get("limit", 10)
+                ctx, _need(payload, "doctype"), payload.get("q", ""), limit=payload.get("limit", 10), docstatus=payload.get("docstatus")
             )
 
         return await self._run("doc.search", op)
@@ -377,13 +412,20 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return error(e.message, e.code)
         return ok(conflicts=conflicts)
 
-    @action("doc.history.purge")
-    async def doc_history_purge(self, payload: dict) -> dict:
+    @action(OPS_HISTORY_PURGE)
+    async def ops_history_purge(self, payload: dict) -> dict:
         """Purge l'historique du tenant plus vieux qu'une date (D24) : `{"tenant": …, "before": "2026-01-01T00:00:00+00:00", "doctype"?: …}`.
 
-        Appel d'opérateur (clé du plugin). La rétention par document (`max_versions`) purge à chaque écriture ;
-        celle-ci rattrape le trop-plein d'avant une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        Action d'OPÉRATEUR, hors de `doc.*` : elle efface l'historique de n'importe quel tenant, alors que `allowed_callers: ["*"]` laisse
+        tout plugin appeler ce plugin. Deux verrous, donc. (1) La ressource `ops.history.purge` n'est pas ouverte par le manifeste livré :
+        PermissionEngine la refuse (`permission_denied`) tant que l'opérateur ne l'ajoute pas à SA copie du manifeste. (2) Le principal de
+        l'appel doit porter le grant transverse (`doctype.cross_tenant_grant`, `admin:*` avec xauth) : un appel sans jeton, ou un plugin qui
+        relaie la requête d'un utilisateur ordinaire, est refusé (`forbidden`). La rétention par document (`max_versions`) ne purge qu'à
+        l'écriture du document ; celle-ci atteint les documents qu'on n'écrit plus et les documents supprimés. Renvoie le nombre d'entrées
+        supprimées.
         """
+        if not ipc_operator(self._settings):
+            return error("Réservé à l'opérateur de la plateforme", "forbidden")
         body = payload or {}
         tenant = body.get("tenant")
         if not isinstance(tenant, str) or not tenant:
@@ -546,6 +588,36 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return await self.collaboration.mine(ctx, status=payload.get("status", "open"), limit=payload.get("limit", 100))
 
         return await self._run("doc.assignments.mine", op)
+
+    @action("doc.files.list")
+    async def doc_files_list(self, payload: dict) -> dict:
+        """L'écran « Fichiers » : les fichiers que des documents lisibles par l'appelant citent (voir `file_library.py`)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.file_library.list(
+                ctx,
+                doctype=payload.get("doctype"),
+                q=payload.get("q"),
+                order_by=payload.get("order_by", "creation"),
+                descending=payload.get("order", "desc") != "asc",
+                limit=payload.get("limit", 20),
+                offset=payload.get("offset", 0),
+            )
+
+        return await self._run("doc.files.list", op)
+
+    @action("doc.files.detach")
+    async def doc_files_detach(self, payload: dict) -> dict:
+        """Détacher par l'écriture ordinaire : `{attachment}` ou `{doctype, name, field, file_id, version}`."""
+
+        async def op(ctx: RequestContext) -> dict:
+            known = ("attachment", "doctype", "name", "field", "file_id", "version")
+            extra = sorted(k for k in payload if k not in known)
+            if extra:
+                raise ValidationFailed(f"champs inconnus : {', '.join(extra)}", code="detach_target")
+            return await self.file_library.detach(ctx, **{k: payload.get(k) for k in known})
+
+        return await self._run("doc.files.detach", op)
 
     @action("doc.save")
     async def doc_save(self, payload: dict) -> dict:

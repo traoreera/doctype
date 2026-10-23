@@ -153,8 +153,16 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
         return await _guard(documents.global_search(ctx, q, limit=limit))
 
     @router.get("/search/{doctype}")
-    async def doc_search(doctype: str, q: str = "", limit: int = 10, ctx: RequestContext = Depends(ctx_dep)):
-        return await _guard(documents.search(ctx, doctype, q, limit=limit))
+    async def doc_search(
+        doctype: str,
+        q: str = "",
+        limit: int = 10,
+        docstatus: str | None = Query(None, description="les seuls états proposés, séparés par des virgules : 0 brouillon, 1 soumis, 2 annulé"),
+        ctx: RequestContext = Depends(ctx_dep),
+    ):
+        # « 0,1 » -> [0, 1] ; ce qui n'est pas un entier reste tel quel, et le service le refuse avec son message.
+        states = None if docstatus is None else [int(s) if s.strip().isdigit() else s for s in docstatus.split(",")]
+        return await _guard(documents.search(ctx, doctype, q, limit=limit, docstatus=states))
 
     @router.get("/history/{doctype}/{name}")
     async def doc_history(

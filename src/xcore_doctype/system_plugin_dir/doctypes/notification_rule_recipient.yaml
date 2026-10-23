@@ -1,0 +1,7 @@
+# Un destinataire nommé d'une règle de notification : l'adresse d'un MEMBRE de l'organisation (une adresse inconnue de l'annuaire ne reçoit rien).
+schema_version: 1
+name: Notification Rule Recipient
+label: Destinataire
+istable: true
+fields:
+  - { fieldname: email, label: E-mail du membre, fieldtype: Text, format: email, required: true, in_list_view: true }

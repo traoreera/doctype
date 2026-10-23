@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { reactive } from 'vue'
 import { useServices } from '@/lib/services'
+import { DRAFT } from '@/lib/types'
 import { useMeta } from '@/stores/meta'
 
 const BATCH = 100 // plafond de `in` côté serveur
@@ -16,6 +17,8 @@ export const useLinks = defineStore('links', () => {
   const titles = reactive<Record<string, Record<string, string | null>>>({})
   // cible -> nom -> contenu du document : de quoi lire l'unité d'un article (`item.uom`) sans le rouvrir
   const docs = reactive<Record<string, Record<string, Record<string, unknown> | null>>>({})
+  // cible -> nom -> état (`docstatus`) du document, lu avec son contenu : l'aperçu d'un lien dit s'il est soumis ou annulé
+  const states = reactive<Record<string, Record<string, number>>>({})
 
   function title(target: string, name: string): string {
     return titles[target]?.[name] ?? name
@@ -24,6 +27,11 @@ export const useLinks = defineStore('links', () => {
   /** Un champ du document cible (`undefined` tant qu'on ne l'a pas lu : voir `resolve(…, { data: true })`). */
   function field(target: string, name: string, fieldname: string): unknown {
     return docs[target]?.[name]?.[fieldname]
+  }
+
+  /** L'état (`docstatus`) du document cible, `undefined` tant qu'on ne l'a pas lu (ou s'il est illisible). */
+  function status(target: string, name: string): number | undefined {
+    return states[target]?.[name]
   }
 
   // Lectures en cours, par nom : « d|Item|vis » (titre ET contenu) ou « t|Item|vis » (titre seulement). Dix cellules qui citent le même
@@ -81,10 +89,12 @@ export const useLinks = defineStore('links', () => {
       const chunk = missing.slice(i, i + BATCH)
       try {
         const res = await api.list(target, { filters: { name: ['in', chunk] }, limit: chunk.length })
+        states[target] ??= {}
         for (const item of res.items) {
           const v = titleField ? item.data[titleField] : undefined
           known[item.name] = typeof v === 'string' && v ? v : null
           seen[item.name] = item.data
+          states[target]![item.name] = item.docstatus ?? DRAFT
         }
       } catch {
         // illisible : les noms bruts feront l'affaire
@@ -102,13 +112,16 @@ export const useLinks = defineStore('links', () => {
     docs[target] ??= {}
     titles[target]![name] = title
     docs[target]![name] = data
+    states[target] ??= {}
+    states[target]![name] = DRAFT // on vient de le créer : un brouillon
   }
 
   function reset(): void {
     inflight.clear()
     for (const k of Object.keys(titles)) delete titles[k]
     for (const k of Object.keys(docs)) delete docs[k]
+    for (const k of Object.keys(states)) delete states[k]
   }
 
-  return { title, field, resolve, seed, reset }
+  return { title, field, status, resolve, seed, reset }
 })

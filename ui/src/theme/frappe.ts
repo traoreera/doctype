@@ -11,7 +11,7 @@ import Aura from '@primeuix/themes/aura'
 import { definePreset } from '@primeuix/themes'
 
 /** Échelle de gris du Desk, du plus clair au plus sombre. */
-const gray = {
+export const gray = {
   0: '#ffffff',
   50: '#f8f8f8',
   100: '#f3f3f3',

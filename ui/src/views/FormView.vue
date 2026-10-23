@@ -22,11 +22,11 @@ import type { FormAction, FormContext } from '@/extensions/types'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
-import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isAutoSection, isDirty, mapServerErrors, recordValues, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
+import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
-import { SUBMITTED, type DocRecord, type DocTypeMeta, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
+import { SUBMITTED, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -70,6 +70,10 @@ const formId = `f${Math.random().toString(36).slice(2, 8)}`
 const editingLayout = ref(false)
 const savingLayout = ref(false)
 const layoutDraft = ref<FormOverride>({})
+/** Ce que la définition impose à chaque champ, habillage à part : l'éditeur grise d'après lui ce qu'un habillage ne desserre pas. */
+const layoutBase = ref<Record<string, FieldBase> | null>(null)
+// Le refus du serveur au dernier enregistrement (ou retrait) de l'habillage : montré DANS la fenêtre, qui reste ouverte.
+const layoutProblem = ref<string | null>(null)
 
 const isNew = computed(() => props.name === null)
 const label = computed(() => meta.value?.label ?? props.doctype)
@@ -544,9 +548,12 @@ async function rename(): Promise<void> {
 async function openLayout(): Promise<void> {
   if (!meta.value) return
   let config: FormOverride = { layout: meta.value.layout }
+  layoutBase.value = null
+  layoutProblem.value = null
   try {
     const current = await api.formOverride(props.doctype)
     config = { ...current.config, layout: current.config.layout ?? meta.value.layout }
+    layoutBase.value = current.definition ?? null
   } catch {
     // Un habillage illisible ne doit pas empêcher d'en écrire un : on part de la disposition affichée.
   }
@@ -563,13 +570,14 @@ async function reloadMeta(): Promise<void> {
 
 async function saveLayout(config: unknown): Promise<void> {
   savingLayout.value = true
+  layoutProblem.value = null
   try {
     await api.saveFormOverride(props.doctype, config as FormOverride)
     await reloadMeta()
     editingLayout.value = false
     notify.success(t.override.savedToast)
   } catch (e) {
-    notify.error(e)
+    layoutProblem.value = describeError(e) // ce que le serveur refuse, et pourquoi (`form_rules_reserved`, champ mal placé…)
   } finally {
     savingLayout.value = false
   }
@@ -577,13 +585,14 @@ async function saveLayout(config: unknown): Promise<void> {
 
 async function resetLayout(): Promise<void> {
   savingLayout.value = true
+  layoutProblem.value = null
   try {
     await api.removeFormOverride(props.doctype)
     await reloadMeta()
     editingLayout.value = false
     notify.success(t.override.resetToast)
   } catch (e) {
-    notify.error(e)
+    layoutProblem.value = describeError(e)
   } finally {
     savingLayout.value = false
   }
@@ -788,6 +797,12 @@ onBeforeUnmount(() => {
         v-model:visible="editingLayout"
         :title="t.override.formTitle"
         :initial="layoutDraft"
+        :fields="meta?.fields"
+        :definition="layoutBase"
+        :naming="meta ? namingField(meta) : null"
+        :rules="meta?.rights.write === 'all'"
+        :problem="layoutProblem"
+        :doctype="doctype"
         :saving="savingLayout"
         @save="saveLayout"
         @reset="resetLayout"

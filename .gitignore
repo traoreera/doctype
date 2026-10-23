@@ -19,3 +19,6 @@ data/
 alembic/
 alembic.ini
 /extensions/
+
+# Arbres git des agents (worktrees) : jamais versionnés
+.claude/worktrees/

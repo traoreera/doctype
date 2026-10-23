@@ -32,6 +32,8 @@ export function createDeskRouter(pinia: Pinia): Router {
       // Tous les réglages des modules au même endroit : `/settings` (général), `/settings/<Type unique>` (un réglage, édité sur place).
       { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
       { path: '/tasks', name: 'tasks', component: () => import('@/views/TasksView.vue') },
+      // Les fichiers des documents que je peux lire (champs Image/Attach, pièces jointes) : lister, télécharger, détacher.
+      { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
       { path: '/api/:doctype?', name: 'api-docs', component: () => import('@/views/ApiDocsView.vue'), props: true },
       { path: '/settings/:doctype?', name: 'settings', component: () => import('@/views/SettingsView.vue'), props: true },
       { path: '/w/:name', name: 'workspace', component: () => import('@/views/WorkspaceView.vue'), props: true },

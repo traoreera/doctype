@@ -1,0 +1,11 @@
+# L'espace « Administration » du plugin `system` : ce que l'organisation règle elle-même et qui n'est pas un réglage unique (ceux-là vivent
+# dans Paramètres). Ne le voient que ceux qui peuvent lire au moins un de ses types (les espaces sont filtrés par les droits).
+schema_version: 1
+name: system
+label: Administration
+icon: cog
+description: Les règles de l'organisation.
+order: 90
+blocks:
+  - { type: header, text: Notifications }
+  - { type: shortcut, doctype: Notification Rule, new: true }

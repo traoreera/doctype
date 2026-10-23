@@ -13,6 +13,9 @@ allowed_callers: ["*"]
 permissions:
   - { resource: "doc.*", actions: ["execute"], effect: allow }
   - { resource: "meta.*", actions: ["execute"], effect: allow }
+  # Actions d'OPÉRATEUR (`ops.*`), fermées par défaut : `allowed_callers: ["*"]` les offrirait à tout plugin. Pour purger l'historique par
+  # âge (`ops.history.purge`, route IPC avec la clé du plugin ET un jeton qui porte `cross_tenant_grant`), décommentez dans VOTRE copie :
+  # - { resource: "ops.history.purge", actions: ["execute"], effect: allow }
 
 resources:
   timeout_seconds: 30
@@ -42,6 +45,13 @@ doctype:
     plugin: auth
     action: xauth.users.list.tenant
     ttl_seconds: 60
+  # La cloche (assignations, mentions, règles) : xauth par défaut (action `xauth.notify`), `provider: none` la coupe. Les règles de notification
+  # de l'organisation (DocType `Notification Rule` du plugin `system`) envoient aussi des e-mails par l'extension `ext.email` de l'hôte quand
+  # elle existe (`email: false` les coupe) ; `desk_url` est l'adresse PUBLIQUE du Desk que ces e-mails citent (absente : pas de lien).
+  notifications:
+    provider: xauth # xauth | none
+    email: true
+    # desk_url: https://erp.example.com/app/xcore-doctype/desk/
   # Le Desk (interface Vue, voir ui/) est servi sous <préfixe du plugin>/desk/. Routes publiques : fichiers statiques seulement.
   desk:
     enabled: true

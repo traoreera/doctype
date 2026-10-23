@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { t } from '@/i18n'
+import { statusLabel, statusTone } from '@/lib/docstatus'
 import { formatCell } from '@/lib/format'
 import type { DocTypeMeta, FieldMeta } from '@/lib/types'
 import { useLinks } from '@/stores/links'
@@ -39,6 +40,8 @@ const lines = computed<{ field: FieldMeta; text: string }[]>(() => {
   return out
 })
 const heading = computed(() => links.title(props.target, props.name))
+/** L'état d'un document soumettable (brouillon, soumis, annulé) : un lien vers une facture annulée doit se voir avant qu'on l'ouvre. */
+const state = computed(() => (meta.value?.submittable ? links.status(props.target, props.name) : undefined))
 const found = computed(() => ready.value && links.field(props.target, props.name, meta.value?.title_field ?? '') !== undefined || lines.value.length > 0)
 
 async function load(): Promise<void> {
@@ -75,7 +78,10 @@ onBeforeUnmount(() => clearTimeout(timer))
   <span class="link-preview" @mouseenter="show" @mouseleave="hide" @focusin="show" @focusout="hide" @keydown.esc="hide">
     <slot />
     <span v-if="open && ready && found" class="preview-card" role="tooltip" data-testid="link-preview">
-      <strong class="preview-title">{{ heading }}</strong>
+      <span class="preview-head">
+        <strong class="preview-title">{{ heading }}</strong>
+        <span v-if="state !== undefined" :class="['status-pill', statusTone(state)]" data-testid="link-preview-status" :data-docstatus="state">{{ statusLabel(state) }}</span>
+      </span>
       <span v-if="meta && meta.label !== heading" class="desk-muted preview-kind">{{ meta.label ?? target }} · {{ name }}</span>
       <dl v-if="lines.length">
         <template v-for="l in lines" :key="l.field.fieldname">
@@ -112,6 +118,13 @@ onBeforeUnmount(() => clearTimeout(timer))
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
   font-size: 0.85rem;
   white-space: normal;
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .preview-title {

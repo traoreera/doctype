@@ -28,7 +28,8 @@ from .errors import DoctypeError, NotFound, PermissionDenied, ValidationFailed
 from .file_service import FileService
 from .files import ATTACHMENT_FIELD
 from .notifier import NoNotifier, Notifier
-from .permissions import Scope, scope_for
+from .permissions import scope_for
+from .query import StoredDoc
 
 MAX_COMMENT = 4000
 MAX_COMMENTS_PER_DOC = 1000
@@ -89,25 +90,28 @@ class CollaborationService:
         self._notifier: Notifier = notifier or NoNotifier()
 
     # ── Le document d'abord ───────────────────────────────────
-    async def _document(self, ctx: RequestContext, q: Any, doctype: str, name: str) -> tuple[Any, Scope]:
-        """Le type, et le périmètre de lecture de l'appelant, APRÈS avoir vérifié que le document existe dans ce périmètre."""
+    async def _document(self, ctx: RequestContext, q: Any, doctype: str, name: str) -> tuple[Any, StoredDoc]:
+        """Le type et le document, APRÈS avoir vérifié que le document existe dans le périmètre de lecture de l'appelant."""
         compiled = self._docs._doctype(doctype)
         if compiled.definition.single:
             raise ValidationFailed(f"{doctype} est un document unique : il n'a ni commentaires, ni assignations, ni pièces jointes", code="single_document")
         read = self._docs._scope(ctx, compiled, "read")
-        if not isinstance(name, str) or await self._docs.read_document(ctx, q, doctype, name, read) is None:
+        doc = await self._docs.read_document(ctx, q, doctype, name, read) if isinstance(name, str) else None
+        if doc is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
-        return compiled, read
+        return compiled, doc
 
-    def _can_write(self, ctx: RequestContext, compiled: Any) -> bool:
-        return scope_for(compiled.definition, ctx, "write").granted
+    def _can_write(self, ctx: RequestContext, compiled: Any, doc: StoredDoc) -> bool:
+        """Peut-il écrire CE document ? Le périmètre d'écriture jugé sur le document (`if_owner` compris), comme `DocumentService.update` : avoir le
+        droit d'écrire le type ne suffit pas pour joindre, retirer, assigner ou modérer sur le document d'un autre."""
+        return scope_for(compiled.definition, ctx, "write").allows(doc.owner, doc.data)
 
     # ── Tout ce qui entoure un document ───────────────────────
     async def get(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
         """Commentaires, assignations et pièces jointes du document, du plus ancien au plus récent. Il faut pouvoir LIRE le document."""
         self._docs._enter(ctx, "collab.get", doctype, name)
         async with self._docs._query(ctx) as q:
-            compiled, _ = await self._document(ctx, q, doctype, name)
+            compiled, doc = await self._document(ctx, q, doctype, name)
             comments = await q.comments(doctype, name, limit=MAX_COMMENTS_PER_DOC)
             assignments = await q.assignments(doctype, name)
             attached = await q.attachments(doctype, name)
@@ -116,7 +120,7 @@ class CollaborationService:
             {"id": a["id"], "file_id": a["file_id"], "owner": a["owner"], "creation": a["creation"], **{k: meta[a["file_id"]][k] for k in ("filename", "content_type", "size")}}
             for a in attached if a["file_id"] in meta
         ]
-        writable = self._can_write(ctx, compiled)
+        writable = self._can_write(ctx, compiled, doc)
         return {"comments": comments, "assignments": assignments, "attachments": files, "can_assign": writable, "can_attach": writable, "me": ctx.owner_id}
 
     # ── Commentaires ──────────────────────────────────────────
@@ -153,8 +157,8 @@ class CollaborationService:
             found = await q.get_comment(cid)
             if found is None:
                 raise NotFound("comment_not_found", "commentaire introuvable")
-            compiled, _ = await self._document(ctx, q, found["doctype"], found["docname"])
-            if found["owner"] != ctx.owner_id and not self._can_write(ctx, compiled):
+            compiled, doc = await self._document(ctx, q, found["doctype"], found["docname"])
+            if found["owner"] != ctx.owner_id and not self._can_write(ctx, compiled, doc):
                 raise PermissionDenied()
             await q.delete_comment(cid)
 
@@ -164,12 +168,14 @@ class CollaborationService:
         self._docs._enter(ctx, "collab.assign", doctype, name)
         note, due = _text(description, "description", limit=500, required=False), _due(due_date)
         async with self._docs._query(ctx) as q:  # les droits d'abord : on ne sonde pas l'annuaire pour qui n'a pas le droit d'assigner
-            compiled, _ = await self._document(ctx, q, doctype, name)
-            if not self._can_write(ctx, compiled):
+            compiled, doc = await self._document(ctx, q, doctype, name)
+            if not self._can_write(ctx, compiled, doc):
                 raise PermissionDenied()
         who = await self._assignee(ctx, assignee)
         async with self._docs._query(ctx) as q:
-            await self._document(ctx, q, doctype, name)  # relu : le document a pu disparaître pendant l'appel à l'annuaire
+            compiled, doc = await self._document(ctx, q, doctype, name)  # relu : le document a pu disparaître (ou changer) pendant l'appel à l'annuaire
+            if not self._can_write(ctx, compiled, doc):
+                raise PermissionDenied()
             current = [a for a in await q.assignments(doctype, name) if a["status"] == "open"]
             if any(a["assignee"] == who for a in current):
                 raise DoctypeError("already_assigned", f"{who} a déjà une assignation ouverte sur ce document", status=409)
@@ -255,8 +261,8 @@ class CollaborationService:
                 raise NotFound("assignment_not_found", "assignation introuvable")
             writer = False
             try:
-                compiled, _ = await self._document(ctx, q, found["doctype"], found["docname"])
-                writer = self._can_write(ctx, compiled)
+                compiled, doc = await self._document(ctx, q, found["doctype"], found["docname"])
+                writer = self._can_write(ctx, compiled, doc)
             except NotFound:
                 pass  # le document n'est pas lisible par l'appelant : il ne reste que ses droits d'assigné
             me = ctx.owner_id
@@ -359,8 +365,8 @@ class CollaborationService:
         """Joint un fichier au document. Il faut pouvoir l'ÉCRIRE. Un fichier est SERVI en téléchargement, jamais affiché dans la page."""
         self._docs._enter(ctx, "collab.attach", doctype, name)
         async with self._docs._query(ctx) as q:
-            compiled, _ = await self._document(ctx, q, doctype, name)
-            if not self._can_write(ctx, compiled):
+            compiled, doc = await self._document(ctx, q, doctype, name)
+            if not self._can_write(ctx, compiled, doc):
                 raise PermissionDenied()
             if len(await q.attachments(doctype, name)) >= MAX_ATTACHMENTS_PER_DOC:
                 raise ValidationFailed(f"{MAX_ATTACHMENTS_PER_DOC} pièces jointes au plus par document", code="too_many_attachments")
@@ -374,8 +380,8 @@ class CollaborationService:
             found = await q.get_attachment(aid)
             if found is None:
                 raise NotFound("attachment_not_found", "pièce jointe introuvable")
-            compiled, _ = await self._document(ctx, q, found["doctype"], found["docname"])
-            if found["owner"] != ctx.owner_id and not self._can_write(ctx, compiled):
+            compiled, doc = await self._document(ctx, q, found["doctype"], found["docname"])
+            if found["owner"] != ctx.owner_id and not self._can_write(ctx, compiled, doc):
                 raise PermissionDenied()
             await q.delete_attachment(aid)
         await self._files.release(ctx, {found["file_id"]: (found["doctype"], ATTACHMENT_FIELD)})  # le fichier ne sert plus : on le libère

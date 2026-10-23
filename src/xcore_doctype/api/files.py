@@ -12,7 +12,9 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict
 
 from ..context import ContextSettings, RequestContext, http_context
+from ..document import DEFAULT_PAGE
 from ..errors import DoctypeError
+from ..file_library import FileLibrary
 from ..file_service import FileService
 from ..files import MAX_MB, content_disposition
 from ..preferences import Preferences
@@ -24,6 +26,18 @@ _READ_LIMIT = MAX_MB * 1024 * 1024 + 1
 class LinksBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     ids: list[str]
+
+
+class DetachBody(BaseModel):
+    """Détacher un fichier (écran « Fichiers ») : `attachment` seul pour une pièce jointe, sinon le champ du document qui le cite et la version lue."""
+
+    model_config = ConfigDict(extra="forbid")
+    attachment: str | None = None
+    doctype: str | None = None
+    name: str | None = None
+    field: str | None = None
+    file_id: str | None = None
+    version: int | None = None
 
 
 def _raise(e: DoctypeError) -> None:
@@ -46,6 +60,36 @@ def build_files_router(files: FileService, settings: ContextSettings) -> APIRout
     async def links(body: LinksBody, ctx: RequestContext = Depends(ctx_dep)):
         try:
             return await files.links(ctx, body.ids)
+        except DoctypeError as e:
+            _raise(e)
+
+    return router
+
+
+def build_file_library_router(library: FileLibrary, settings: ContextSettings) -> APIRouter:
+    """L'écran « Fichiers » (voir `file_library.py`) : lister ce que l'appelant peut lire, détacher par l'écriture ordinaire. Une identité est exigée."""
+    ctx_dep = http_context(settings)
+    router = APIRouter(dependencies=[Depends(ctx_dep)])
+
+    @router.get("/file-library")
+    async def listing(
+        doctype: str | None = Query(None, description="les fichiers que ce DocType cite"),
+        q: str = Query("", description="un morceau du nom de fichier (sans distinction de casse)"),
+        order_by: str = "creation",
+        order: str = Query("desc", pattern="^(asc|desc)$"),
+        limit: int = DEFAULT_PAGE,
+        offset: int = 0,
+        ctx: RequestContext = Depends(ctx_dep),
+    ):
+        try:
+            return await library.list(ctx, doctype=doctype or None, q=q, order_by=order_by, descending=order == "desc", limit=limit, offset=offset)
+        except DoctypeError as e:
+            _raise(e)
+
+    @router.post("/file-library/detach")
+    async def detach(body: DetachBody, ctx: RequestContext = Depends(ctx_dep)):
+        try:
+            return await library.detach(ctx, **body.model_dump())
         except DoctypeError as e:
             _raise(e)
 
