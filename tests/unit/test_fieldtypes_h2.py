@@ -266,6 +266,59 @@ class TestPasswords:
         amended = await svc.amend(CTX, "Voucher", made["name"])
         assert "token" not in amended["data"] and amended["data"]["title"] == "v" and done["docstatus"] == 2
 
+    async def test_the_mask_a_form_sends_back_is_unchanged_even_on_a_frozen_secret(self, db, tables):
+        """Le formulaire renvoie le document tel qu'il l'a lu : un secret posé y vaut `********`. Sur un secret `set_only_once` ou `read_only`, et sur un
+        document soumis (seul un champ `allow_on_submit` change), ce masque est « inchangé », comme pour `_seal` : jamais comparé au secret chiffré. Un
+        VRAI changement du secret reste refusé."""
+        locked = {**SAMPLE, "name": "Locked", "fields": [
+            {"fieldname": "title", "fieldtype": "Text"},
+            {"fieldname": "pin", "fieldtype": "Password", "set_only_once": True},
+            {"fieldname": "seal", "fieldtype": "Password", "read_only": True},
+        ], "permissions": {"read": ["lab:sample:read"], "write": ["lab:sample:write"], "create": ["lab:sample:write"]}}
+        voucher = {**SAMPLE, "name": "Voucher", "submittable": True, "fields": [
+            {"fieldname": "note", "fieldtype": "Text", "allow_on_submit": True}, {"fieldname": "token", "fieldtype": "Password"},
+        ], "permissions": {"read": ["lab:sample:read"], "write": ["lab:sample:write"], "create": ["lab:sample:write"], "submit": ["lab:sample:write"]}}
+        svc = build(db, tables, definitions=(locked, voucher))
+        made = await svc.create(CTX, "Locked", {"title": "a", "pin": "1234", "seal": "scellé"})
+        stored = await _raw(db, tables, "Locked", made["name"])
+        read = await svc.get(CTX, "Locked", made["name"])
+        assert (read["data"]["pin"], read["data"]["seal"]) == (MASK, MASK)
+        saved = await svc.update(CTX, "Locked", made["name"], {**read["data"], "title": "b"}, read["version"])
+        assert await _raw(db, tables, "Locked", made["name"]) == {**stored, "title": "b"}  # les mêmes secrets chiffrés
+        for field, refusal in (("pin", "set_only_once"), ("seal", "read_only")):
+            with pytest.raises(ValidationFailed) as e:
+                await svc.update(CTX, "Locked", made["name"], {**read["data"], field: "nouveau"}, saved["version"])
+            assert [(d["field"], d["type"]) for d in e.value.details] == [(field, refusal)]
+
+        sub = await svc.create(CTX, "Voucher", {"note": "a", "token": self.SECRET})
+        sub = await svc.submit(CTX, "Voucher", sub["name"], sub["version"])
+        read = await svc.get(CTX, "Voucher", sub["name"])
+        changed = await svc.update(CTX, "Voucher", sub["name"], {**read["data"], "note": "b"}, read["version"])
+        assert changed["data"] == {"note": "b", "token": MASK}
+        with pytest.raises(ValidationFailed) as e:
+            await svc.update(CTX, "Voucher", sub["name"], {**read["data"], "token": "un-autre"}, changed["version"])
+        assert [(d["field"], d["type"]) for d in e.value.details] == [("token", "locked_after_submit")]
+
+    async def test_a_value_shaped_like_a_sealed_secret_is_refused_outside_a_secret(self, db, tables, svc):
+        """Toute lecture masque une valeur au préfixe des secrets, quel que soit son champ : en écrire une dans un champ texte, c'est la perdre au premier
+        enregistrement du formulaire (qui renverrait `********`). Refusée à l'écriture d'un client ; une valeur déjà enregistrée telle quelle, renvoyée sans
+        changement, reste permise. Dans un Password, c'est un secret comme un autre."""
+        for bad in ({"title": f"{PREFIX}abc"}, {"src": f"{PREFIX}x", "title": "ok"}):
+            with pytest.raises(ValidationFailed) as e:
+                await make(svc, **bad)
+            assert [d["type"] for d in e.value.details] == ["sealed_prefix"] and PREFIX in e.value.details[0]["msg"]
+        made = await make(svc, title="ok", token=f"{PREFIX}même-ici")
+        assert (await svc.get(CTX, "Sample", made["name"]))["data"]["token"] == MASK
+        with pytest.raises(ValidationFailed) as e:
+            await svc.update(CTX, "Sample", made["name"], {"title": f"{PREFIX}abc"}, made["version"])
+        assert e.value.details[0] == {"field": "title", "msg": e.value.details[0]["msg"], "type": "sealed_prefix"}
+        async with db.session() as session:  # écrite avant ce contrôle
+            from xcore_doctype.query import Query
+
+            legacy = await Query(session, CTX, tables).insert("Sample", "legacy", {"title": f"{PREFIX}ancien"})
+        kept = await svc.update(CTX, "Sample", "legacy", {"title": f"{PREFIX}ancien", "n": 1}, legacy.version)
+        assert kept["version"] == legacy.version + 1 and (await _raw(db, tables, "Sample", "legacy"))["title"] == f"{PREFIX}ancien"
+
     async def test_a_secret_cannot_serve_in_a_condition_or_a_virtual_doctype(self):
         with pytest.raises(InvalidDefinition):
             parse_definition({**SAMPLE, "fields": [{"fieldname": "token", "fieldtype": "Password"}, {"fieldname": "note", "fieldtype": "Text", "depends_on": "token != ''"}]})

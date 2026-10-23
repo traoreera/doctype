@@ -22,6 +22,13 @@ MASK = "********"
 MIN_KEY_LENGTH = 16
 
 
+def kept(value: object, stored: object) -> bool:
+    """`********` envoyé pour un secret ENREGISTRÉ veut dire « inchangé » : `DocumentService._seal` remettra le secret stocké. Tout contrôle qui compare la
+    valeur envoyée à l'enregistrée sur un champ secret (`read_only`, `set_only_once`, champ figé d'un document soumis) doit le lire de même, sinon renvoyer
+    un document tel qu'on l'a lu (le formulaire, détacher un fichier) serait refusé : le masque n'est pas le secret chiffré."""
+    return value == MASK and stored is not None
+
+
 class Sealer:
     def __init__(self, secret: str | None) -> None:
         if secret is not None and len(secret) < MIN_KEY_LENGTH:

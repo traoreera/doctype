@@ -3,7 +3,7 @@ import Paginator from 'primevue/paginator'
 import Select from 'primevue/select'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/lib/api'
-import { citationKey, detachTarget, detailLines, isImage } from '@/lib/filelibrary'
+import { FILE_SORTS, citationKey, detachTarget, detailLines, isImage, sortQuery } from '@/lib/filelibrary'
 import type { DocTypeMeta, FileLibraryItem, FileLibraryResult } from '@/lib/types'
 import FilesView from '@/views/FilesView.vue'
 import { TASK, captureToasts, doc, flushPromises, mountWith, unmountAll } from './views-fixtures'
@@ -31,6 +31,7 @@ const item = (over: Partial<FileLibraryItem> = {}): FileLibraryItem => ({
   attachment: null,
   version: 3,
   docstatus: 0,
+  track_changes: true,
   can_detach: true,
   ...over,
 })
@@ -91,6 +92,17 @@ describe('écran « Fichiers » (lib)', () => {
     expect(lines).toEqual(['Photo : Champ obligatoire', 'Refusé par la règle'])
   })
 
+  it('les tris proposés : date, nom, taille, dans les deux sens, comme le serveur les attend', () => {
+    expect(FILE_SORTS.map(sortQuery)).toEqual([
+      { order_by: 'creation', order: 'desc' },
+      { order_by: 'creation', order: 'asc' },
+      { order_by: 'filename', order: 'asc' },
+      { order_by: 'filename', order: 'desc' },
+      { order_by: 'size', order: 'desc' },
+      { order_by: 'size', order: 'asc' },
+    ])
+  })
+
   it('seules les vraies images ont une vignette (le serveur sert le reste en téléchargement)', () => {
     expect(isImage({ content_type: 'image/png' })).toBe(true)
     expect(isImage({ content_type: 'image/svg+xml' })).toBe(false)
@@ -105,7 +117,7 @@ describe('écran « Fichiers »', () => {
     const { w, fileLibrary } = setup()
     await flushPromises()
     expect(w.find('h1').text()).toBe('Fichiers')
-    expect(fileLibrary).toHaveBeenCalledWith({ doctype: null, q: undefined, limit: 20, offset: 0 })
+    expect(fileLibrary).toHaveBeenCalledWith({ doctype: null, q: undefined, order_by: 'creation', order: 'desc', limit: 20, offset: 0 })
     expect(rows(w)).toHaveLength(2)
     const [photo, pdf] = rows(w)
     expect(photo!.text()).toContain('photo.png')
@@ -120,11 +132,12 @@ describe('écran « Fichiers »', () => {
   })
 
   it('télécharger : un lien signé ; s’il a expiré, il est redemandé avant d’être suivi', async () => {
-    const fileLinks = vi.fn(async (ids: string[]) => Object.fromEntries(ids.map((id) => [id, link(id, later(600))])))
+    const exp = later(600) // une seule fois : recalculée, elle changerait de seconde entre le lien et l'attente
+    const fileLinks = vi.fn(async (ids: string[]) => Object.fromEntries(ids.map((id) => [id, link(id, exp)])))
     const { w } = setup({ fileLinks })
     await flushPromises()
     const a = rows(w)[1]!.find('[data-testid="file-download"]')
-    expect(a.attributes('href')).toBe(`/files/acme/${PDF}?exp=${later(600)}&sig=x`)
+    expect(a.attributes('href')).toBe(`/files/acme/${PDF}?exp=${exp}&sig=x`)
     expect(a.attributes('download')).toBe('avenant.pdf')
 
     // Le lien expire dans 10 s : trop court pour servir, le clic en redemande un avant de télécharger.
@@ -146,7 +159,7 @@ describe('écran « Fichiers »', () => {
     await w.find('[data-testid="files-search"]').setValue('  avenant ')
     await new Promise((r) => setTimeout(r, 350))
     await flushPromises()
-    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: null, q: 'avenant', limit: 20, offset: 0 })
+    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: null, q: 'avenant', order_by: 'creation', order: 'desc', limit: 20, offset: 0 })
   })
 
   it('filtrer par type : les types proposés sont ceux du serveur, avec leur nombre', async () => {
@@ -156,7 +169,58 @@ describe('écran « Fichiers »', () => {
     expect(select.props('options')).toEqual([{ value: 'Employee', label: 'Salarié (2)' }])
     select.vm.$emit('update:modelValue', 'Employee')
     await flushPromises()
-    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: 'Employee', q: undefined, limit: 20, offset: 0 })
+    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: 'Employee', q: undefined, order_by: 'creation', order: 'desc', limit: 20, offset: 0 })
+  })
+
+  it('trier : par date, nom ou taille, dans les deux sens ; un nouveau tri repart de la première page', async () => {
+    const many = Array.from({ length: 20 }, (_, i) => item({ file_id: String(i).padStart(32, '0'), filename: `f${i}.png` }))
+    const fileLibrary = vi.fn(async () => result(many, { total: 45 }))
+    const { w } = setup({ fileLibrary })
+    await flushPromises()
+    const sort = w.findAllComponents(Select).find((c) => c.attributes('data-testid') === 'files-sort')!
+    expect((sort.props('options') as { label: string }[]).map((o) => o.label)).toEqual([
+      'Les plus récents',
+      'Les plus anciens',
+      'Nom (A → Z)',
+      'Nom (Z → A)',
+      'Les plus gros',
+      'Les plus petits',
+    ])
+    w.findComponent(Paginator).vm.$emit('page', { first: 20, rows: 20, page: 1, pageCount: 3 })
+    await flushPromises()
+    sort.vm.$emit('update:modelValue', 'size:asc')
+    await flushPromises()
+    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: null, q: undefined, order_by: 'size', order: 'asc', limit: 20, offset: 0 })
+    sort.vm.$emit('update:modelValue', 'filename:desc')
+    await flushPromises()
+    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: null, q: undefined, order_by: 'filename', order: 'desc', limit: 20, offset: 0 })
+  })
+
+  it('l’état du document citant : soumis, annulé, rien pour un brouillon', async () => {
+    const { w } = setup({ fileLibrary: async () => result([item(), item({ docname: 'E-2', docstatus: 1 }), item({ docname: 'E-3', docstatus: 2 })]) })
+    await flushPromises()
+    expect(rows(w).map((r) => r.find('[data-testid="file-doctype"]').text())).toEqual(['Salarié', 'Salarié · soumis', 'Salarié · annulé'])
+  })
+
+  it('la confirmation ne promet « historisé » que si le type garde un historique', async () => {
+    const said: string[] = []
+    const capture = (o: { message?: string; reject?: () => void }) => {
+      said.push(o.message ?? '')
+      o.reject?.()
+    }
+    ConfirmationEventBus.on('confirm', capture as never)
+    try {
+      const { w } = setup({ fileLibrary: async () => result([item(), item({ docname: 'E-2', track_changes: false })]) })
+      await flushPromises()
+      for (const r of rows(w)) await r.find('[data-testid="file-detach"]').trigger('click')
+      await flushPromises()
+    } finally {
+      ConfirmationEventBus.off('confirm', capture as never)
+    }
+    expect(said).toHaveLength(2)
+    expect(said[0]).toContain('(et historisé)')
+    expect(said[1]).not.toContain('historisé')
+    expect(said[1]).toContain('Le document est modifié ;')
   })
 
   it('une page à la fois : la page suivante demande la suite', async () => {
@@ -167,7 +231,7 @@ describe('écran « Fichiers »', () => {
     expect(w.find('[data-testid="files-paginator"]').exists()).toBe(true)
     w.findComponent(Paginator).vm.$emit('page', { first: 20, rows: 20, page: 1, pageCount: 3 })
     await flushPromises()
-    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: null, q: undefined, limit: 20, offset: 20 })
+    expect(fileLibrary).toHaveBeenLastCalledWith({ doctype: null, q: undefined, order_by: 'creation', order: 'desc', limit: 20, offset: 20 })
   })
 
   it('« Détacher » seulement là où le serveur le permet ; refuser la confirmation ne retire rien', async () => {
@@ -264,9 +328,12 @@ describe('écran « Fichiers »', () => {
     expect(down.w.find('[data-testid="files-failed"]').text()).toContain('La liste des fichiers n’a pas pu être chargée.')
     unmountAll()
 
-    const partial = setup({ fileLibrary: async () => result([item()], { unavailable: ['Member'] }) })
+    // Un type dont la source ne répond pas est nommé par son LIBELLÉ, celui que l'utilisateur connaît, pas par son nom d'API.
+    const partial = setup({ fileLibrary: async () => result([item()], { unavailable: [{ name: 'Member', label: 'Adhérent' }] }) })
     await flushPromises()
-    expect(partial.w.find('[data-testid="files-unavailable"]').text()).toContain('Member')
+    const said = partial.w.find('[data-testid="files-unavailable"]').text()
+    expect(said).toContain('Adhérent')
+    expect(said).not.toContain('Member')
   })
 
   it('une page vidée entre-temps (sa dernière ligne détachée) : on revient à la page d’avant plutôt que d’afficher un tableau vide', async () => {

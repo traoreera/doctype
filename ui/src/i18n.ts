@@ -922,7 +922,8 @@ export const t = {
     openDoc: 'Ouvrir le document',
     detach: 'Détacher',
     detachTitle: 'Détacher ce fichier ?',
-    confirmField: (file: string, field: string, doc: string) => `« ${file} » sera retiré du champ ${field} de ${doc}. Le document est modifié (et historisé) ; le fichier est supprimé si plus rien ne le cite.`,
+    confirmField: (file: string, field: string, doc: string, tracked: boolean) =>
+      `« ${file} » sera retiré du champ ${field} de ${doc}. Le document est modifié${tracked ? ' (et historisé)' : ''} ; le fichier est supprimé si plus rien ne le cite.`,
     confirmAttachment: (file: string, doc: string) => `« ${file} » ne sera plus joint à ${doc}, et il sera supprimé.`,
     detached: (file: string) => `${file} a été détaché`,
     refused: (file: string) => `« ${file} » n’a pas été détaché`,
@@ -934,6 +935,16 @@ export const t = {
     unavailable: (types: string) => `Les pièces jointes de ${types} n’ont pas pu être lues (source indisponible) : elles manquent à cette liste.`,
     count: (n: number) => `${n} fichier${n > 1 ? 's' : ''}`,
     submitted: 'soumis',
+    cancelled: 'annulé',
+    sort: 'Trier',
+    sorts: {
+      'creation:desc': 'Les plus récents',
+      'creation:asc': 'Les plus anciens',
+      'filename:asc': 'Nom (A → Z)',
+      'filename:desc': 'Nom (Z → A)',
+      'size:desc': 'Les plus gros',
+      'size:asc': 'Les plus petits',
+    } as Record<string, string>,
   },
   errors: {
     forbidden: 'Vous n’avez pas le droit d’effectuer cette action',

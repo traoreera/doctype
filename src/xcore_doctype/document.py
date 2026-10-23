@@ -65,7 +65,7 @@ from .permissions import ACTIONS, Action, Scope, require, scope_for
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .schema import FILE_TYPES, TODAY, DocTypeDef, FieldDef, NamingField
-from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer
+from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer, kept
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
     KIND_DASHBOARD,
@@ -868,6 +868,7 @@ class DocumentService:
         if compiled.definition.single:
             raise ValidationFailed(f"{doctype} est un document unique : on l'enregistre, on ne le crée pas", code="single_document")
         scope = self._scope(ctx, compiled, "create")
+        self._check_sealed_lookalikes(compiled, data, None)
         if (source := self._source(compiled)) is not None:
             if name is not None:
                 raise ValidationFailed(f"{doctype} est un DocType virtuel : sa source nomme les documents", code="name_not_allowed")
@@ -939,8 +940,10 @@ class DocumentService:
             if version == 0 and not isinstance(version, bool):
                 # Le premier enregistrement d'un document unique : il n'existe pas encore, on le crée sous le nom de son type.
                 self._require_hooks(compiled)
+                scope = self._scope(ctx, compiled, "create")
+                self._check_sealed_lookalikes(compiled, data, None)
                 try:
-                    return await self._create(ctx, compiled, self._scope(ctx, compiled, "create"), data, name=doctype)
+                    return await self._create(ctx, compiled, scope, data, name=doctype)
                 except AlreadyExists:
                     raise VersionConflict(f"{doctype} a été enregistré entre-temps (rechargez-le)") from None
         if not isinstance(version, int) or isinstance(version, bool) or version < 1:
@@ -952,6 +955,7 @@ class DocumentService:
             raise DocumentLocked(f"{doctype} {name!r} est {STATUS_WORDS[current.docstatus]} : il n'est plus modifiable")
         if current.version != version:
             raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {version})")
+        self._check_sealed_lookalikes(compiled, data, current.data)
         if (source := self._source(compiled)) is not None:
             return await self._update_virtual(ctx, compiled, write, current, data, version, source)
         self._require_hooks(compiled)
@@ -1251,12 +1255,15 @@ class DocumentService:
     # ── Propriétés de champ (palier 70 %, phase H2) ───────────────────────
     @staticmethod
     def _check_frozen(compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any]) -> None:
-        """Un document SOUMIS ne laisse changer que ses champs `allow_on_submit` : tout autre champ doit être resté tel qu'il était."""
-        allowed = set(compiled.definition.editable_after_submit)
+        """Un document SOUMIS ne laisse changer que ses champs `allow_on_submit` : tout autre champ doit être resté tel qu'il était. Un secret renvoyé
+        masqué est resté tel qu'il était (`sealing.kept` : `_seal`, plus loin, remet le secret enregistré)."""
+        allowed, secrets = set(compiled.definition.editable_after_submit), set(compiled.definition.secret_fields)
         errors = [
             {"field": f.fieldname, "msg": "Champ figé : le document est soumis", "type": "locked_after_submit"}
             for f in compiled.definition.fields
-            if f.fieldname not in allowed and clean.get(f.fieldname) != old.get(f.fieldname)
+            if f.fieldname not in allowed
+            and clean.get(f.fieldname) != old.get(f.fieldname)
+            and not (f.fieldname in secrets and kept(clean.get(f.fieldname), old.get(f.fieldname)))
         ]
         if errors:
             raise ValidationFailed(details=errors)
@@ -1371,6 +1378,22 @@ class DocumentService:
         if data is None:
             return None
         return self._masked(compiled.definition.secret_fields, data)
+
+    @staticmethod
+    def _check_sealed_lookalikes(compiled: CompiledDocType, data: Any, old: Mapping[str, Any] | None) -> None:
+        """Un client n'écrit pas, dans un champ qui n'est pas un secret, une valeur qui commence par `enc:v1:` : c'est la forme d'un secret chiffré, que
+        toute lecture masque (`_present`), et le formulaire ou « Détacher » renverrait `********` à sa place, qui l'écraserait sans bruit. Une valeur
+        déjà enregistrée telle quelle (écrite avant ce contrôle) reste permise : renvoyer le document n'est pas l'écrire de nouveau."""
+        if not isinstance(data, dict):
+            return  # le schéma dira ce qui ne va pas
+        known, secrets = compiled.definition.field_map, set(compiled.definition.secret_fields)
+        errors = [
+            {"field": k, "msg": f"Une valeur ne peut pas commencer par « {SEALED_PREFIX} » : c'est la forme d'un secret chiffré", "type": "sealed_prefix"}
+            for k, v in data.items()
+            if k in known and k not in secrets and _sealed(v) and (old is None or old.get(k) != v)
+        ]
+        if errors:
+            raise ValidationFailed(details=errors)
 
     def _seal(self, compiled: CompiledDocType, clean: dict[str, Any], old: Mapping[str, Any] | None) -> dict[str, Any]:
         """Avant l'écriture : `********` garde le secret enregistré, toute autre valeur est un NOUVEAU secret, chiffré. Sans clé, jamais de secret en clair."""

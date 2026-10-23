@@ -6,6 +6,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+from sqlalchemy import event
 
 from tests.conftest import make_ctx
 from tests.unit.test_files import MemoryStore, _Log, png
@@ -19,7 +20,9 @@ from xcore_doctype.file_service import FileService
 from xcore_doctype.hooks import HookRegistry
 from xcore_doctype.query import StoredDoc
 from xcore_doctype.registry import DocTypeRegistry
+from xcore_doctype.permissions import Scope
 from xcore_doctype.schema import parse_definition
+from xcore_doctype.sealing import MASK, PREFIX, Sealer
 from xcore_doctype.sources import DocumentSources
 
 EMPLOYEE = {
@@ -40,21 +43,47 @@ EMPLOYEE = {
         "write": ["hr:employee:write", {"grant": "hr:employee:own", "if_owner": True}],
     },
 }
-# Un type que les lecteurs de salariés ne lisent pas : ses fichiers n'existent pas pour eux.
-PAYSLIP = {"schema_version": 1, "name": "Payslip", "label": "Bulletin", "module": "hr", "fields": [{"fieldname": "pdf", "fieldtype": "Attach"}]}
-# Un champ obligatoire, un champ figé une fois posé : on ne peut pas les vider.
+# Un type que les lecteurs de salariés ne lisent pas : ses fichiers n'existent pas pour eux. Sans historique (`track_changes: false`).
+PAYSLIP = {"schema_version": 1, "name": "Payslip", "label": "Bulletin", "module": "hr", "track_changes": False, "fields": [{"fieldname": "pdf", "fieldtype": "Attach"}]}
+# Un champ obligatoire, un champ figé une fois posé, un champ en lecture seule : on ne peut pas les vider.
 CARD = {
     "schema_version": 1, "name": "Card", "module": "hr",
-    "fields": [{"fieldname": "picture", "fieldtype": "Image", "required": True}, {"fieldname": "scan", "fieldtype": "Attach", "set_only_once": True}],
+    "fields": [{"fieldname": "picture", "fieldtype": "Image", "required": True}, {"fieldname": "scan", "fieldtype": "Attach", "set_only_once": True},
+               {"fieldname": "stamp", "fieldtype": "Attach", "read_only": True}],
 }
 EXPENSE = {"schema_version": 1, "name": "Expense", "module": "hr", "submittable": True, "fields": [{"fieldname": "receipt", "fieldtype": "Attach"}]}
 MEMBER = {"schema_version": 1, "name": "Member", "module": "hr", "source": "memory", "fields": [{"fieldname": "email", "fieldtype": "Text"}]}
+# Soumis, il laisse encore changer son justificatif (`allow_on_submit`) ; il porte un secret, que toute lecture rend masqué.
+VOUCHER = {
+    "schema_version": 1, "name": "Voucher", "module": "hr", "submittable": True,
+    "fields": [{"fieldname": "proof", "fieldtype": "Attach", "allow_on_submit": True}, {"fieldname": "api_key", "fieldtype": "Password"}],
+}
+# Des secrets figés (posé une fois, lecture seule) à côté d'une photo qu'on peut retirer.
+DEVICE = {
+    "schema_version": 1, "name": "Device", "module": "hr",
+    "fields": [{"fieldname": "photo", "fieldtype": "Image"}, {"fieldname": "pin", "fieldtype": "Password", "set_only_once": True},
+               {"fieldname": "seal", "fieldtype": "Password", "read_only": True}],
+}
+# Des champs que leurs CONDITIONS rendent obligatoires, figés, ou au contraire facultatifs.
+CLAIM = {
+    "schema_version": 1, "name": "Claim", "module": "hr",
+    "fields": [
+        {"fieldname": "kind", "fieldtype": "Select", "options": ["Simple", "Justifiée"]},
+        {"fieldname": "proof", "fieldtype": "Attach", "mandatory_depends_on": "kind == 'Justifiée'"},
+        {"fieldname": "status", "fieldtype": "Select", "options": ["Ouverte", "Close"]},
+        {"fieldname": "scan", "fieldtype": "Attach", "read_only_depends_on": "status == 'Close'"},
+        {"fieldname": "abroad", "fieldtype": "Boolean"},
+        {"fieldname": "visa", "fieldtype": "Attach", "required": True, "depends_on": "abroad"},
+    ],
+}
 
 EVERY = ["hr:employee:read", "hr:employee:write", "hr:payslip:read", "hr:payslip:write", "hr:card:read", "hr:card:write",
-         "hr:expense:read", "hr:expense:write", "hr:expense:submit", "hr:member:read", "hr:member:write"]
+         "hr:expense:read", "hr:expense:write", "hr:expense:submit", "hr:member:read", "hr:member:write",
+         "hr:voucher:read", "hr:voucher:write", "hr:voucher:submit", "hr:device:read", "hr:device:write", "hr:claim:read", "hr:claim:write"]
 HR = make_ctx("acme", "hana", permissions=EVERY)
 READER = make_ctx("acme", "rita", permissions=["hr:employee:read", "hr:member:read"])
 OWN = make_ctx("acme", "olga", permissions=["hr:employee:own"])
+OLGA = make_ctx("acme", "olga", permissions=["hr:employee:read", "hr:employee:own"])  # lit tous les salariés, n'écrit que les siens
 STRANGER = make_ctx("acme", "sam", permissions=[])
 OTHER_TENANT = make_ctx("globex", "hana", permissions=EVERY)
 NOW = datetime(2026, 10, 22, 9, 0, tzinfo=UTC)
@@ -63,7 +92,7 @@ NOW = datetime(2026, 10, 22, 9, 0, tzinfo=UTC)
 @pytest.fixture
 def env(db, tables):
     reg = DocTypeRegistry()
-    for d in (EMPLOYEE, PAYSLIP, CARD, EXPENSE, MEMBER):
+    for d in (EMPLOYEE, PAYSLIP, CARD, EXPENSE, MEMBER, VOUCHER, DEVICE, CLAIM):
         reg.register(parse_definition(d))
     hooks = HookRegistry()
 
@@ -74,7 +103,7 @@ def env(db, tables):
     hooks.register("hr.keep_contract", keep_contract)
     source, sources = MemorySource(), DocumentSources()
     sources.register("test", "memory", source)
-    docs = DocumentService(reg, db, tables, _Log(), hooks=hooks, sources=sources)
+    docs = DocumentService(reg, db, tables, _Log(), hooks=hooks, sources=sources, sealer=Sealer("k" * 32))
     store = MemoryStore()
     files = FileService(docs, store, F.UrlSigner("s" * 32))
     docs.files = files
@@ -94,6 +123,12 @@ async def employee(env, ctx=HR, full_name="Hana", **files):
 
 def names(page):
     return [(i["doctype"], i["docname"], i["field"], i["filename"]) for i in page["items"]]
+
+
+async def raw(env, doctype, name):
+    """Le document tel qu'il est ENREGISTRÉ (secrets chiffrés compris), sans passer par ce que l'API en montre."""
+    async with env.docs._query(HR) as q:
+        return (await q.get(doctype, name, scope=Scope.everything("read"))).data
 
 
 class TestListing:
@@ -165,7 +200,9 @@ class TestListing:
         assert first["total"] == second["total"] == last["total"] == 5 and (await env.lib.list(HR, offset=5))["items"] == []
         assert [i["filename"] for i in (await env.lib.list(HR, order_by="size", limit=1))["items"]] == ["f4.png"]  # le plus gros d'abord
 
-    @pytest.mark.parametrize("kw", [{"limit": 0}, {"limit": 201}, {"limit": True}, {"offset": -1}, {"order_by": "owner"}, {"q": 3}, {"q": "x" * 101}])
+    @pytest.mark.parametrize(
+        "kw", [{"limit": 0}, {"limit": 201}, {"limit": True}, {"offset": -1}, {"order_by": "owner"}, {"q": 3}, {"q": "x" * 101}, {"doctype": ["Employee"]}, {"doctype": 3}]
+    )
     async def test_bad_requests_are_refused(self, env, kw):
         with pytest.raises(ValidationFailed):
             await env.lib.list(HR, **kw)
@@ -175,6 +212,44 @@ class TestListing:
             await env.lib.list(HR, doctype="Nope")
         with pytest.raises(PermissionDenied):
             await env.lib.list(READER, doctype="Payslip")  # il ne peut pas lire ce type : comme sa liste, 403
+
+    async def test_can_detach_follows_the_write_scope_of_each_document(self, env):
+        """Lire tous les salariés, n'écrire que les siens (`if_owner`) : « Détacher » n'est offert que sur ses documents, jamais par simple droit sur le type."""
+        theirs = await employee(env, photo=await up(env))
+        mine = await employee(env, OLGA, full_name="Olga", photo=await up(env, OLGA))
+        rows = {i["docname"]: i["can_detach"] for i in (await env.lib.list(OLGA))["items"]}
+        assert rows == {theirs["name"]: False, mine["name"]: True}
+
+    async def test_an_attachment_is_offered_to_any_writer_of_its_document_not_only_its_author(self, env):
+        doc = await employee(env)
+        await env.collab.attach(HR, "Employee", doc["name"], content=b"x", filename="a.txt", content_type="text/plain")
+        other_writer = make_ctx("acme", "wes", permissions=["hr:employee:read", "hr:employee:write"])
+        row = (await env.lib.list(other_writer))["items"][0]
+        assert (row["owner"], row["can_detach"]) == ("hana", True)
+        await env.lib.detach(other_writer, attachment=row["attachment"])
+        assert (await env.lib.list(HR))["total"] == 0
+
+    async def test_every_row_says_whether_its_document_keeps_a_history(self, env):
+        """Le Desk ne promet « historisé » que si le type garde un historique (`track_changes`)."""
+        await employee(env, photo=await up(env))
+        await env.docs.create(HR, "Payslip", {"pdf": await up(env, doctype="Payslip", field="pdf", name="b.pdf", content=b"%PDF")})
+        assert {i["doctype"]: i["track_changes"] for i in (await env.lib.list(HR))["items"]} == {"Employee": True, "Payslip": False}
+
+    @pytest.mark.parametrize("descending", [True, False])
+    async def test_ties_are_broken_by_file_then_document_in_both_directions(self, env, descending):
+        """Même taille partout : l'ordre ne dépend que du départage (fichier, puis type, document, champ), jamais de l'ordre de lecture de la base, sans quoi
+        deux pages pourraient se recouvrir. Le fichier du champ est lu avant la pièce jointe (l'union les donne dans cet ordre) : le départage les inverse."""
+        meta = dict(content_type="image/png", size=7, namespace="n", blob_id="b", stored_name="s")
+        async with env.docs._query(HR) as q:
+            await q.add_file("f" * 32, doctype="Employee", fieldname="photo", filename="f.png", **meta)
+            await q.add_file("a" * 32, doctype="Employee", fieldname=F.ATTACHMENT_FIELD, filename="a.png", **meta)
+            await q.insert("Employee", "z-2", {"full_name": "Z", "photo": "f" * 32})
+            await q.insert("Employee", "z-1", {"full_name": "Y", "photo": "f" * 32})
+            await q.add_attachment("Employee", "z-2", "a" * 32)
+        got = await env.lib.list(HR, order_by="size", descending=descending)
+        assert [(i["file_id"][0], i["docname"], i["field"]) for i in got["items"]] == [("a", "z-2", "_attachment"), ("f", "z-1", "photo"), ("f", "z-2", "photo")]
+        pages = [i["docname"] + i["field"] for o in (0, 1, 2) for i in (await env.lib.list(HR, order_by="size", descending=descending, limit=1, offset=o))["items"]]
+        assert pages == [i["docname"] + i["field"] for i in got["items"]]
 
     async def test_the_attachments_of_a_virtual_doctype_follow_its_source(self, env):
         env.source.put("acme", StoredDoc("Member", "m-1", {"email": "a@x.fr"}, "hana", NOW, NOW, 1))
@@ -193,7 +268,7 @@ class TestListing:
         calls = len(env.source.calls)
         env.source.boom = RuntimeError("xauth est arrêté")
         got = await env.lib.list(READER)
-        assert got["unavailable"] == ["Member"] and [i["doctype"] for i in got["items"]] == ["Employee"]
+        assert got["unavailable"] == [{"name": "Member", "label": "Member"}] and [i["doctype"] for i in got["items"]] == ["Employee"]
         assert len(env.source.calls) == calls + 1  # demandée UNE fois, parce qu'elle a des pièces jointes
 
     async def test_a_virtual_doctype_without_attachments_is_not_asked(self, env):
@@ -265,13 +340,60 @@ class TestDetachingAField:
 
     async def test_what_the_definition_forbids_is_refused_and_not_offered(self, env):
         picture, scan = await up(env, doctype="Card", field="picture"), await up(env, doctype="Card", field="scan", name="s.pdf", content=b"%PDF")
-        card = await env.docs.create(HR, "Card", {"picture": picture, "scan": scan})
+        stamp = await up(env, doctype="Card", field="stamp", name="t.pdf", content=b"%PDF")
+        card = await env.docs.create(HR, "Card", {"picture": picture, "scan": scan, "stamp": stamp})
         rows = {i["field"]: i for i in (await env.lib.list(HR, doctype="Card"))["items"]}
-        assert rows["picture"]["can_detach"] is False and rows["scan"]["can_detach"] is False
-        with pytest.raises(ValidationFailed):  # obligatoire
-            await env.lib.detach(HR, doctype="Card", name=card["name"], field="picture", file_id=picture, version=card["version"])
-        with pytest.raises(ValidationFailed):  # figé une fois posé
-            await env.lib.detach(HR, doctype="Card", name=card["name"], field="scan", file_id=scan, version=card["version"])
+        assert {f: r["can_detach"] for f, r in rows.items()} == {"picture": False, "scan": False, "stamp": False}
+        for field, fid, refusal in (("picture", picture, "missing"), ("scan", scan, "set_only_once"), ("stamp", stamp, "read_only")):
+            with pytest.raises(ValidationFailed) as e:  # obligatoire, figé une fois posé, en lecture seule
+                await env.lib.detach(HR, doctype="Card", name=card["name"], field=field, file_id=fid, version=card["version"])
+            assert e.value.details[0]["type"] == refusal
+
+    async def test_a_secret_beside_it_goes_back_masked_and_stays_what_it_was(self, env):
+        """Un document qui porte un secret : toute lecture le rend `********`. Le renvoyer ainsi veut dire « inchangé », même quand le secret est figé (posé
+        une fois, lecture seule) ou le document soumis (seul le justificatif `allow_on_submit` change) : la liste l'offre, le serveur l'accepte."""
+        proof = await up(env, doctype="Voucher", field="proof", name="p.pdf", content=b"%PDF")
+        voucher = await env.docs.create(HR, "Voucher", {"proof": proof, "api_key": "s3cret"})
+        voucher = await env.docs.submit(HR, "Voucher", voucher["name"], voucher["version"])
+        photo = await up(env, doctype="Device", field="photo")
+        device = await env.docs.create(HR, "Device", {"photo": photo, "pin": "1234", "seal": "scellé"})
+        before = {n: await raw(env, t, n) for t, n in (("Voucher", voucher["name"]), ("Device", device["name"]))}
+        rows = {i["doctype"]: i for i in (await env.lib.list(HR))["items"] if i["doctype"] in ("Voucher", "Device")}
+        assert rows["Voucher"]["can_detach"] is True and rows["Device"]["can_detach"] is True
+        await env.lib.detach(HR, doctype="Voucher", name=voucher["name"], field="proof", file_id=proof, version=rows["Voucher"]["version"])
+        await env.lib.detach(HR, doctype="Device", name=device["name"], field="photo", file_id=photo, version=rows["Device"]["version"])
+        after_v, after_d = await raw(env, "Voucher", voucher["name"]), await raw(env, "Device", device["name"])
+        assert "proof" not in after_v and after_v["api_key"] == before[voucher["name"]]["api_key"]  # le même secret chiffré : rien n'a été rechiffré
+        assert "photo" not in after_d and (after_d["pin"], after_d["seal"]) == (before[device["name"]]["pin"], before[device["name"]]["seal"])
+
+    async def test_what_goes_back_is_the_stored_document_not_its_masked_view(self, env):
+        """Une valeur au préfixe des secrets dans un champ texte (écrite avant qu'on la refuse) est masquée à la lecture ; détacher la photo renvoie la
+        valeur ENREGISTRÉE, pas `********`, qui l'aurait écrasée sans bruit."""
+        photo = await up(env)
+        async with env.docs._query(HR) as q:
+            stored = await q.insert("Employee", "e-1", {"full_name": f"{PREFIX}Hana", "photo": photo})
+        assert (await env.docs.get(HR, "Employee", "e-1"))["data"]["full_name"] == MASK
+        await env.lib.detach(HR, doctype="Employee", name="e-1", field="photo", file_id=photo, version=stored.version)
+        assert await raw(env, "Employee", "e-1") == {"full_name": f"{PREFIX}Hana"}
+
+    async def test_what_conditions_forbid_is_not_offered_and_what_they_allow_is(self, env):
+        """`can_detach` évalue les conditions comme le serveur : obligatoire (`mandatory_depends_on`) ou figé (`read_only_depends_on`) par une condition vraie,
+        non offert et refusé ; `required` d'un champ que `depends_on` cache, offert et accepté."""
+        proof, scan, visa = [await up(env, doctype="Claim", field=f, name=f"{f}.pdf", content=b"%PDF") for f in ("proof", "scan", "visa")]
+        claim = await env.docs.create(HR, "Claim", {"kind": "Justifiée", "proof": proof, "status": "Close", "scan": scan, "abroad": False, "visa": visa})
+        rows = {i["field"]: i["can_detach"] for i in (await env.lib.list(HR, doctype="Claim"))["items"]}
+        assert rows == {"proof": False, "scan": False, "visa": True}
+        for field, fid, refusal in (("proof", proof, "missing"), ("scan", scan, "read_only")):
+            with pytest.raises(ValidationFailed) as e:
+                await env.lib.detach(HR, doctype="Claim", name=claim["name"], field=field, file_id=fid, version=claim["version"])
+            assert e.value.details[0]["type"] == refusal
+        await env.lib.detach(HR, doctype="Claim", name=claim["name"], field="visa", file_id=visa, version=claim["version"])
+        # Les mêmes champs, conditions fausses : offerts, et le serveur les accepte.
+        open_claim = await env.docs.create(HR, "Claim", {"kind": "Simple", "proof": proof, "status": "Ouverte", "scan": scan})
+        rows = {i["field"]: i["can_detach"] for i in (await env.lib.list(HR, doctype="Claim"))["items"] if i["docname"] == open_claim["name"]}
+        assert rows == {"proof": True, "scan": True}
+        done = await env.lib.detach(HR, doctype="Claim", name=open_claim["name"], field="scan", file_id=scan, version=open_claim["version"])
+        await env.lib.detach(HR, doctype="Claim", name=open_claim["name"], field="proof", file_id=proof, version=done["version"])
 
     async def test_a_submitted_document_is_frozen(self, env):
         receipt = await up(env, doctype="Expense", field="receipt", name="r.pdf", content=b"%PDF")
@@ -335,8 +457,87 @@ class TestDetachingAnAttachment:
         await env.lib.detach(olga_reads, attachment=att["id"])
         assert (await env.lib.list(HR))["total"] == 0
 
+    async def test_a_writer_of_their_own_documents_only_cannot_detach_another_s_attachment(self, env):
+        """`if_owner` en écriture : la pièce jointe du document d'un autre n'est ni offerte ni retirée (ni par cet écran, ni par la collaboration), même
+        par qui lit tout ; la sienne, jointe au document d'un autre, reste à lui (« qui l'a jointe la retire »)."""
+        theirs = await employee(env)
+        att = await env.collab.attach(HR, "Employee", theirs["name"], content=b"%PDF", filename="contrat.pdf", content_type="application/pdf")
+        row = (await env.lib.list(OLGA))["items"][0]
+        assert row["can_detach"] is False
+        with pytest.raises(PermissionDenied):
+            await env.lib.detach(OLGA, attachment=att["id"])
+        assert (await env.lib.list(HR))["total"] == 1 and len(env.store.blobs) == 1  # ni retirée, ni son fichier supprimé
+        async with env.docs._query(OLGA) as q:  # jointe par elle (quand elle en avait le droit)
+            await q.add_file("e" * 32, doctype="Employee", fieldname=F.ATTACHMENT_FIELD, filename="sienne.txt", content_type="text/plain", size=1,
+                             namespace="n", blob_id="b", stored_name="s")
+            hers = await q.add_attachment("Employee", theirs["name"], "e" * 32)
+        assert {i["filename"]: i["can_detach"] for i in (await env.lib.list(OLGA))["items"]} == {"contrat.pdf": False, "sienne.txt": True}
+        await env.lib.detach(OLGA, attachment=hers["id"])
+
     async def test_an_attachment_of_a_document_one_cannot_read_does_not_exist(self, env):
         other = await env.collab.attach(HR, "Employee", (await employee(env))["name"], content=b"y", filename="b.txt", content_type="text/plain")
         with pytest.raises(NotFound):
             await env.lib.detach(OWN, attachment=other["id"])
         assert (await env.lib.list(HR))["total"] == 1
+
+
+class TestManyDoctypes:
+    """L'union de `Query.cited_files` : une partie par place qui a des fichiers dans l'organisation (pas une par champ et par type lisibles), et jamais plus
+    de termes par instruction que SQLite n'en accepte (500)."""
+
+    @staticmethod
+    def library(db, tables, n: int):
+        reg = DocTypeRegistry()
+        for i in range(n):
+            reg.register(parse_definition({"schema_version": 1, "name": f"A{i}", "module": "m", "fields": [{"fieldname": "scan", "fieldtype": "Attach"}]}))
+        docs = DocumentService(reg, db, tables, _Log())
+        files = FileService(docs, MemoryStore(), F.UrlSigner("s" * 32))
+        docs.files = files
+        return docs, FileLibrary(docs, CollaborationService(docs, files))
+
+    @staticmethod
+    def statements(db):
+        seen: list[str] = []
+
+        def capture(conn, cursor, statement, *args):
+            seen.append(statement)
+
+        event.listen(db.engine.sync_engine, "before_cursor_execute", capture)
+        return seen, lambda: event.remove(db.engine.sync_engine, "before_cursor_execute", capture)
+
+    async def test_only_the_places_that_hold_files_are_queried(self, db, tables):
+        """251 types lisibles à un champ Attach : sans fichiers, rien à unir ; avec des fichiers dans UN type, deux parties (son champ, ses pièces jointes)."""
+        docs, lib = self.library(db, tables, 251)
+        reader = make_ctx("acme", "rita", permissions=[f"m:a{i}:{a}" for i in range(251) for a in ("read", "write")])
+        seen, stop = self.statements(db)
+        try:
+            assert (await lib.list(reader))["total"] == 0
+            meta = dict(content_type="application/pdf", size=4, namespace="n", blob_id="b", stored_name="s")
+            async with docs._query(reader) as q:
+                await q.add_file("c" * 32, doctype="A7", fieldname="scan", filename="scan.pdf", **meta)
+                await q.add_file("d" * 32, doctype="A7", fieldname=F.ATTACHMENT_FIELD, filename="joint.pdf", **meta)
+                await q.insert("A7", "a-7", {"scan": "c" * 32})
+                await q.add_attachment("A7", "a-7", "d" * 32)
+            seen.clear()
+            got = await lib.list(reader)
+        finally:
+            stop()
+        assert got["total"] == 2 and {i["filename"] for i in got["items"]} == {"scan.pdf", "joint.pdf"}
+        assert max(s.count("UNION ALL") for s in seen) == 1, "une partie par champ et par type lisibles, fichiers ou pas"
+
+    async def test_more_places_with_files_than_one_statement_may_unite(self, db, tables):
+        """260 types qui ont chacun un fichier de champ et une pièce jointe : 520 parties, découpées en sous-requêtes (SQLite en refuse plus de 500 d'un coup)."""
+        n = 260
+        docs, lib = self.library(db, tables, n)
+        reader = make_ctx("acme", "rita", permissions=[f"m:a{i}:read" for i in range(n)])
+        meta = dict(content_type="application/pdf", size=4, namespace="n", blob_id="b", stored_name="s")
+        async with docs._query(reader) as q:
+            for i in range(n):
+                field_file, joined_file = f"{i:032x}", f"{i + 1000:032x}"
+                await q.add_file(field_file, doctype=f"A{i}", fieldname="scan", filename=f"scan-{i}.pdf", **meta)
+                await q.add_file(joined_file, doctype=f"A{i}", fieldname=F.ATTACHMENT_FIELD, filename=f"joint-{i}.pdf", **meta)
+                await q.insert(f"A{i}", f"d-{i}", {"scan": field_file})
+                await q.add_attachment(f"A{i}", f"d-{i}", joined_file)
+        got = await lib.list(reader, order_by="filename", descending=False, limit=3)
+        assert got["total"] == 2 * n and len(got["doctypes"]) == n
+        assert [i["filename"] for i in got["items"]] == ["joint-0.pdf", "joint-1.pdf", "joint-10.pdf"]

@@ -13,7 +13,7 @@ import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { downloadUrl } from '@/lib/download'
-import { citationKey, detachTarget, detailLines, isImage } from '@/lib/filelibrary'
+import { FILE_SORTS, type FileSort, citationKey, detachTarget, detailLines, isImage, sortQuery } from '@/lib/filelibrary'
 import { formatBytes, formatTimestamp, relativeTime } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import type { FileLibraryItem, FileLibraryResult } from '@/lib/types'
@@ -38,6 +38,8 @@ const page = ref<FileLibraryResult | null>(null)
 const failure = ref<string | null>(null)
 const search = ref('')
 const doctype = ref<string | null>(null)
+const sort = ref<FileSort>('creation:desc')
+const sortOptions = FILE_SORTS.map((value) => ({ value, label: t.fileLibrary.sorts[value] }))
 const first = ref(0)
 const rows = ref(20)
 const busy = ref<string | null>(null)
@@ -48,7 +50,7 @@ async function load(): Promise<void> {
   const mine = ++ticket
   failure.value = null
   try {
-    const got = await api.fileLibrary({ doctype: doctype.value, q: search.value.trim() || undefined, limit: rows.value, offset: first.value })
+    const got = await api.fileLibrary({ doctype: doctype.value, q: search.value.trim() || undefined, ...sortQuery(sort.value), limit: rows.value, offset: first.value })
     if (mine !== ticket) return
     if (!got.items.length && got.total && first.value > 0) {
       // La dernière ligne de la dernière page vient d'être détachée : on revient à la page d'avant au lieu d'afficher une page vide.
@@ -73,7 +75,7 @@ function restart(): void {
   first.value = 0
   void load()
 }
-watch(doctype, restart)
+watch([doctype, sort], restart)
 // La recherche part à la fin de la frappe.
 let timer: ReturnType<typeof setTimeout> | undefined
 watch(search, () => {
@@ -96,7 +98,8 @@ const typeOptions = computed(() => {
   if (doctype.value && !found.some((o) => o.value === doctype.value)) found.unshift({ value: doctype.value, label: t.fileLibrary.typeOption(doctype.value, 0) })
   return found
 })
-const unavailable = computed(() => page.value?.unavailable ?? [])
+/** Les types dont la source ne répond pas, nommés comme l'utilisateur les connaît (leur libellé, pas leur nom d'API). */
+const unavailable = computed(() => (page.value?.unavailable ?? []).map((u) => u.label))
 
 const docLabel = (f: FileLibraryItem): string => (f.docname === f.doctype ? f.doctype_label : links.title(f.doctype, f.docname))
 const fieldLabel = (f: FileLibraryItem): string => (f.attachment ? t.fileLibrary.attachment : (f.field_label ?? f.field))
@@ -119,7 +122,8 @@ function ask(f: FileLibraryItem): void {
   const doc = `${f.doctype_label} ${docLabel(f)}`
   confirm.require({
     header: t.fileLibrary.detachTitle,
-    message: f.attachment ? t.fileLibrary.confirmAttachment(f.filename, doc) : t.fileLibrary.confirmField(f.filename, fieldLabel(f), doc),
+    // « historisé » seulement si le type garde un historique (`track_changes`) : ne pas promettre une trace qui n'existera pas.
+    message: f.attachment ? t.fileLibrary.confirmAttachment(f.filename, doc) : t.fileLibrary.confirmField(f.filename, fieldLabel(f), doc, f.track_changes),
     icon: 'pi pi-exclamation-triangle',
     acceptLabel: t.fileLibrary.detach,
     rejectLabel: t.collab.cancel,
@@ -176,6 +180,7 @@ async function detach(f: FileLibraryItem): Promise<void> {
         size="small"
         data-testid="files-doctype"
       />
+      <Select v-model="sort" :options="sortOptions" option-label="label" option-value="value" :aria-label="t.fileLibrary.sort" size="small" data-testid="files-sort" />
       <span class="desk-spacer" />
       <span v-if="page" class="desk-muted" data-testid="files-count">{{ t.fileLibrary.count(page.total) }}</span>
     </div>
@@ -227,7 +232,10 @@ async function detach(f: FileLibraryItem): Promise<void> {
               </td>
               <td :data-label="t.fileLibrary.document">
                 <RouterLink class="desk-link" :to="{ name: 'form', params: { doctype: f.doctype, name: f.docname } }" :title="t.fileLibrary.openDoc" data-testid="file-doc">{{ docLabel(f) }}</RouterLink>
-                <span class="desk-muted file-meta">{{ f.doctype_label }}<template v-if="f.docstatus === 1"> · {{ t.fileLibrary.submitted }}</template></span>
+                <span class="desk-muted file-meta" data-testid="file-doctype"
+                  >{{ f.doctype_label }}<template v-if="f.docstatus === 1"> · {{ t.fileLibrary.submitted }}</template
+                  ><template v-else-if="f.docstatus === 2"> · {{ t.fileLibrary.cancelled }}</template></span
+                >
               </td>
               <td :data-label="t.fileLibrary.field" data-testid="file-field">{{ fieldLabel(f) }}</td>
               <td :data-label="t.fileLibrary.size" class="num">{{ formatBytes(f.size) }}</td>

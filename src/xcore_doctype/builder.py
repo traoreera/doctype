@@ -31,6 +31,7 @@ from .decimals import canonical
 from .errors import ValidationFailed
 from .expr import Node, compile_expr, evaluate
 from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef, NamingField
+from .sealing import kept
 
 
 def _iso_date(value: str) -> str:
@@ -249,26 +250,37 @@ class CompiledDocType:
         for f in self.definition.fields:
             if f.fieldtype == "Table" and clean.get(f.fieldname) == []:
                 del clean[f.fieldname]  # « aucune ligne » et « champ absent » sont la même chose : un seul état stocké
-        errors = self._condition_errors(clean, old) + self._row_errors(clean)
+        errors = self.rule_errors(clean, old)
         if errors:
             raise ValidationFailed(details=errors)
         return clean
 
+    def rule_errors(self, clean: Mapping[str, Any], old: Mapping[str, Any] | None) -> list[dict[str, str]]:
+        """Ce que `validate_data` refuse APRÈS le schéma : conditions, obligations, champs figés, conditions des lignes. Aussi ce que l'écran « Fichiers »
+        demande avant de proposer de vider un champ (`FileLibrary._may_empty`) : une seule logique, pas une copie qui divergerait."""
+        return self._condition_errors(clean, old) + self._row_errors(clean)
+
     def _condition_errors(self, clean: Mapping[str, Any], old: Mapping[str, Any] | None) -> list[dict[str, str]]:
         """Revérifie côté serveur ce que l'interface applique (D22). Un client ne peut pas contourner l'obligation."""
         errors = []
+        secrets = self.definition.secret_fields
         for f in self.definition.fields:
             cond = self.conditions.get(f.fieldname, {})
             visible = evaluate(cond["depends_on"], clean) if "depends_on" in cond else True
             required = (f.required and visible) or ("mandatory_depends_on" in cond and evaluate(cond["mandatory_depends_on"], clean))
             if required and f.fieldname not in clean:
                 errors.append({"field": f.fieldname, "msg": "Champ obligatoire", "type": "missing"})
+            if old is None:
+                continue
+            # Sur un secret, le masque renvoyé tel qu'on l'a lu est « inchangé » (`sealing.kept`), jamais comparé au secret chiffré.
+            new, before = clean.get(f.fieldname), old.get(f.fieldname)
+            changed = new != before and not (f.fieldname in secrets and kept(new, before))
             # `read_only` (toujours) ou `read_only_depends_on` (vrai sur l'état AVANT) : un client ne change pas le champ ; un hook, qui n'a pas `old`, le peut.
-            locked = old is not None and (f.read_only or ("read_only_depends_on" in cond and evaluate(cond["read_only_depends_on"], old)))
-            if locked and clean.get(f.fieldname) != old.get(f.fieldname):
+            locked = f.read_only or ("read_only_depends_on" in cond and evaluate(cond["read_only_depends_on"], old))
+            if locked and changed:
                 errors.append({"field": f.fieldname, "msg": "Champ en lecture seule", "type": "read_only"})
             # `set_only_once` : libre tant qu'il est vide, figé dès qu'il a une valeur. Le champ qui NOMME le document l'est d'office (le nom ne bouge pas).
-            elif old is not None and old.get(f.fieldname) is not None and clean.get(f.fieldname) != old.get(f.fieldname) and self._set_once(f):
+            elif before is not None and changed and self._set_once(f):
                 errors.append({"field": f.fieldname, "msg": "Champ non modifiable une fois renseigné", "type": "set_only_once"})
         return errors
 

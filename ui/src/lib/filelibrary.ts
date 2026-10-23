@@ -1,5 +1,5 @@
 import type { ApiErrorDetail } from './api'
-import type { DetachTarget, FileLibraryItem } from './types'
+import type { DetachTarget, FileLibraryItem, FileLibraryQuery } from './types'
 
 /**
  * L'écran « Fichiers » (`FilesView`) : ce qui se calcule sans l'écran. Le serveur juge tout (qui voit quoi, qui peut détacher) ; le Desk
@@ -32,3 +32,13 @@ export function detailLines(details: readonly ApiErrorDetail[], label: (field: s
 
 /** Un fichier que le navigateur ouvrira « en ligne » s'il le peut : seules les vraies images (le serveur sert tout le reste en téléchargement). */
 export const isImage = (f: Pick<FileLibraryItem, 'content_type'>): boolean => /^image\/(png|jpeg|gif|webp)$/.test(f.content_type)
+
+/** Les tris que l'écran propose : la date de dépôt, le nom, la taille, dans les deux sens (le serveur ne trie que sur ces trois colonnes). */
+export const FILE_SORTS = ['creation:desc', 'creation:asc', 'filename:asc', 'filename:desc', 'size:desc', 'size:asc'] as const
+export type FileSort = (typeof FILE_SORTS)[number]
+
+/** `creation:desc` -> ce que `GET /file-library` attend (`order_by`, `order`). */
+export function sortQuery(sort: FileSort): Pick<FileLibraryQuery, 'order_by' | 'order'> {
+  const [order_by, order] = sort.split(':') as [NonNullable<FileLibraryQuery['order_by']>, NonNullable<FileLibraryQuery['order']>]
+  return { order_by, order }
+}

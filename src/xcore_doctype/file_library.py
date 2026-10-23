@@ -17,14 +17,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from .builder import CompiledDocType
 from .collaboration import CollaborationService
 from .context import RequestContext
 from .document import DEFAULT_PAGE, MAX_PAGE, DocumentService
-from .errors import DoctypeError, ValidationFailed
+from .errors import DoctypeError, NotFound, ValidationFailed
 from .memory import visible
 from .permissions import scope_for
 from .query import DRAFT, FILE_SORTABLE, SUBMITTED, FileCiters
 from .schema import FILE_TYPES
+from .sealing import MASK
 
 MAX_SEARCH = 100
 
@@ -46,6 +48,8 @@ class FileLibrary:
         offset: int = 0,
     ) -> dict[str, Any]:
         """Une page des fichiers que l'appelant peut lire, les plus récents d'abord. `doctype` : ceux que ce type cite ; `q` : un morceau du nom de fichier."""
+        if doctype is not None and not isinstance(doctype, str):
+            raise ValidationFailed("doctype doit être un texte (le nom d'un DocType)")
         self._docs._enter(ctx, "file.library", doctype)
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_PAGE:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_PAGE}")
@@ -71,7 +75,7 @@ class FileLibrary:
             "limit": limit,
             "offset": offset,
             "doctypes": sorted(({"name": n, "label": self._label(n), "count": c} for n, c in counts.items()), key=lambda d: d["label"].lower()),
-            "unavailable": unavailable,
+            "unavailable": [{"name": n, "label": self._label(n)} for n in unavailable],
         }
 
     async def _citers(self, ctx: RequestContext, query: Any) -> tuple[list[FileCiters], list[str]]:
@@ -113,7 +117,8 @@ class FileLibrary:
         return self._docs._registry.get(doctype).definition.label or doctype
 
     def _item(self, ctx: RequestContext, row: dict[str, Any]) -> dict[str, Any]:
-        d = self._docs._registry.get(row["doctype"]).definition
+        compiled = self._docs._registry.get(row["doctype"])
+        d = compiled.definition
         attachment = row["attachment_id"]
         if attachment is not None:
             # Une pièce jointe : qui l'a jointe la retire, qui peut écrire le document aussi (`CollaborationService.detach`).
@@ -123,7 +128,7 @@ class FileLibrary:
             field_label = f.label or f.fieldname
             # Vider le champ est une modification : il faut pouvoir écrire CE document, qu'il soit encore modifiable et que le champ puisse être vide.
             editable = row["docstatus"] == DRAFT or (row["docstatus"] == SUBMITTED and f.fieldname in d.editable_after_submit)
-            can_detach = row["writable"] and editable and not (f.required or f.read_only or f.set_only_once)
+            can_detach = row["writable"] and editable and self._may_empty(compiled, f.fieldname, row["data"] or {})
         return {
             "file_id": row["file_id"],
             "filename": row["filename"],
@@ -139,8 +144,17 @@ class FileLibrary:
             "attachment": attachment,
             "version": row["version"],
             "docstatus": row["docstatus"],
+            "track_changes": d.track_changes,
             "can_detach": bool(can_detach),
         }
+
+    @staticmethod
+    def _may_empty(compiled: CompiledDocType, field: str, stored: dict[str, Any]) -> bool:
+        """Le document enregistré, sans ce champ, passerait-il les contrôles d'une écriture de client ? Ceux mêmes de `validate_data` (`required` quand le
+        champ est visible, `mandatory_depends_on`, `read_only` / `read_only_depends_on` jugés sur l'état enregistré, `set_only_once` et le champ qui nomme le
+        document), évalués sur les données STOCKÉES : ne pas proposer ce que le serveur refusera, ne pas taire ce qu'il accepterait."""
+        after = {k: v for k, v in stored.items() if k != field}
+        return not compiled.rule_errors(after, stored)
 
     # ── Détacher ──────────────────────────────────────────────
     async def detach(
@@ -169,15 +183,23 @@ class FileLibrary:
         if not all(isinstance(v, str) for v in (doctype, name, field, file_id)):
             raise ValidationFailed("doctype, name, field et file_id sont des textes", code="detach_target")
         compiled = self._docs._doctype(doctype)
-        target = compiled.definition.field_map.get(field)
+        d = compiled.definition
+        target = d.field_map.get(field)
         if target is None or target.fieldtype not in FILE_TYPES:
             raise ValidationFailed(f"{doctype}.{field} n'est pas un champ Image ou Attach", code="not_a_file_field")
-        current = await self._docs.get(ctx, doctype, name)  # le droit de LIRE d'abord : un document hors périmètre est introuvable
-        if current["data"].get(field) != file_id:
+        # Le droit de LIRE d'abord, avec le périmètre de l'appelant : un document hors périmètre est introuvable. Le document est lu tel qu'il est ENREGISTRÉ,
+        # pas tel que l'API le montre : `_present` masque toute valeur au préfixe des secrets, quel que soit son champ, et la renvoyer écraserait la vraie.
+        read = self._docs._scope(ctx, compiled, "read")
+        async with self._docs._query(ctx) as q:
+            current = await self._docs.read_document(ctx, q, doctype, name, read)
+        if current is None:
+            raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+        if current.data.get(field) != file_id:
             raise DoctypeError("file_not_cited", "Ce document ne cite plus ce fichier (il a changé depuis) : rechargez la liste", status=409)
         # Le document tel qu'il est, sans ce champ : ce que le formulaire enverrait si l'on y retirait le fichier. Seuls les champs que la définition connaît
-        # repartent (une valeur laissée par une extension retirée serait refusée par le schéma strict) ; un secret part masqué et reste ce qu'il était.
-        known = compiled.definition.field_map
-        data = {k: v for k, v in current["data"].items() if k in known and k != field}
+        # repartent (une valeur laissée par une extension retirée serait refusée par le schéma strict) ; un secret part MASQUÉ, ce qui veut dire « inchangé »
+        # (`DocumentService._seal`) : jamais sa forme chiffrée, qu'une écriture prendrait pour un nouveau secret.
+        secrets = set(d.secret_fields)
+        data = {k: (MASK if k in secrets else v) for k, v in current.data.items() if k in d.field_map and k != field}
         doc = await self._docs.update(ctx, doctype, name, data, version)
         return {"detached": "field", "version": doc["version"]}

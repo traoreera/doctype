@@ -517,6 +517,8 @@ export interface FileLibraryItem {
   attachment: string | null
   version: number | null
   docstatus: number
+  /** Le type garde-t-il un historique (`track_changes`) : détacher un champ y laisse alors une trace. */
+  track_changes: boolean
   can_detach: boolean
 }
 
@@ -527,8 +529,8 @@ export interface FileLibraryResult {
   offset: number
   /** Les types qui citent des fichiers lisibles (selon la recherche, pas selon le filtre de type) : de quoi proposer le filtre. */
   doctypes: { name: string; label: string; count: number }[]
-  /** Des types dont la source ne répond pas : leurs pièces jointes manquent à la liste (on le dit). */
-  unavailable: string[]
+  /** Des types dont la source ne répond pas : leurs pièces jointes manquent à la liste (on le dit, par leur libellé). */
+  unavailable: { name: string; label: string }[]
 }
 
 export interface FileLibraryQuery {

@@ -118,6 +118,8 @@ async def test_the_files_screen_ipc_actions_apply_the_same_rules(tmp_path):
         listed = await h.action("doc.files.list", {"doctype": "Employee"}, token=reader)
         assert [(i["file_id"], i["field"], i["can_detach"]) for i in listed["items"]] == [(photo, "photo", False)] and listed["total"] == 1
         assert (await h.action("doc.files.list", {}, token=h.token(sub="zed", permissions=[])))["total"] == 0
+        for bad in ({"doctype": ["Employee"]}, {"doctype": {"x": 1}}, {"doctype": 3}):  # un refus de la demande, jamais une erreur interne
+            assert (await h.action("doc.files.list", bad, token=t))["code"] == "validation_failed", bad
         target = {"doctype": "Employee", "name": doc["name"], "field": "photo", "file_id": photo, "version": doc["version"]}
         assert (await h.action("doc.files.detach", target, token=reader))["status"] == "error"  # lire n'est pas écrire
         assert (await h.action("doc.files.detach", {**target, "extra": 1}, token=t))["code"] == "detach_target"
