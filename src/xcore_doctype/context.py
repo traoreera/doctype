@@ -156,6 +156,12 @@ def _bind_tenant(requested: str, principal: Mapping[str, Any], s: ContextSetting
     return tenant
 
 
+def ipc_operator(settings: ContextSettings) -> bool:
+    """Dans une action : le principal de l'appel porte-t-il le grant transverse (`cross_tenant_grant`) ? C'est ce qu'exige une action
+    d'opérateur (`ops.*`), qui nomme le tenant dans sa charge. Sans principal (pas de jeton, un plugin qui appelle hors requête) : non."""
+    return settings.cross_tenant_grant in _str_set((get_current_principal() or {}).get("permissions"))
+
+
 def http_context(settings: ContextSettings) -> Callable[..., Any]:
     """Dépendance FastAPI à placer sur TOUT le routeur du plugin."""
 

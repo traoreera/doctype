@@ -246,6 +246,9 @@ export interface ViewsMeta {
   dashboard_shareable?: boolean
 }
 
+/** L'état exigé de la cible d'un lien : un état, une liste d'états, ou `not_cancelled` (brouillon ou soumis). */
+export type TargetStatus = 'draft' | 'submitted' | 'cancelled' | 'not_cancelled' | ('draft' | 'submitted' | 'cancelled')[]
+
 export interface FieldMeta {
   fieldname: string
   label?: string
@@ -281,6 +284,8 @@ export interface FieldMeta {
   allow_on_submit?: boolean
   /** `lien.champ` : la valeur est LUE du document que le Link désigne (jamais saisie). */
   fetch_from?: string
+  /** Link, DynamicLink : l'état que doit avoir la cible (D23) ; le serveur refuse les autres (`link_status`). Voir `lib/docstatus.allowedDocstatus`. */
+  target_status?: TargetStatus
   /** Arbres compilés par le serveur : le navigateur ne parse jamais de chaîne. */
   depends_on?: ExprNode
   mandatory_depends_on?: ExprNode

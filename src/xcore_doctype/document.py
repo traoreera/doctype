@@ -35,6 +35,7 @@ import asyncio
 import json
 import re
 import secrets
+from collections import Counter
 from contextlib import asynccontextmanager
 from dataclasses import replace
 from datetime import UTC, date, datetime, tzinfo
@@ -528,8 +529,13 @@ class DocumentService:
             )
         return aggregation.result(compiled.definition, spec, rows, keys, truncated=truncated)
 
-    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10) -> dict[str, Any]:
-        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6)."""
+    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10, docstatus: Any = None) -> dict[str, Any]:
+        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6).
+
+        `docstatus` : les seuls états proposés (`[0, 1]` pour un lien `target_status: not_cancelled`), pour que le Desk n'offre pas une
+        cible que l'écriture refuserait. Ce n'est qu'un confort : l'écriture rejuge l'état (`_check_links`). Un document d'un DocType
+        virtuel compte pour un brouillon, comme à l'écriture.
+        """
         self._enter(ctx, "doc.search", doctype)
         compiled = self._doctype(doctype)
         scope = self._scope(ctx, compiled, "read")
@@ -537,11 +543,13 @@ class DocumentService:
             raise ValidationFailed("q doit être un texte d'au plus 100 caractères")
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_SEARCH:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_SEARCH}")
+        states = _search_states(docstatus)
         if (source := self._source(compiled)) is not None:
             docs = memory.search(compiled.definition, memory.visible(await self._source_docs(ctx, compiled, source), scope), q, limit)
+            docs = docs if states is None or DRAFT in states else []
         else:
             async with self._query(ctx) as query:
-                docs = await query.search(compiled.definition, q, limit=limit, scope=scope)
+                docs = await query.search(compiled.definition, q, limit=limit, scope=scope, docstatus=states)
         title = compiled.definition.title_field
         return {"items": [{"name": d.name, "title": d.data.get(title) if title else None} for d in docs]}
 
@@ -650,6 +658,8 @@ class DocumentService:
         Un document supprimé n'est plus en base : son entrée de suppression garde son contenu et son propriétaire, ce qui
         permet de juger, avec le même périmètre de lecture, si l'appelant avait le droit de le voir. Hors de ce périmètre
         (ou sans historique), la réponse est « introuvable », comme pour un document absent.
+        Un nom se réutilise : un document ne montre que SA génération (ce qui suit la dernière suppression de son nom), un nom supprimé
+        sa dernière génération, jugée sur son instantané (`Query.versions`). Jamais l'historique d'un homonyme.
         """
         self._enter(ctx, "doc.history", doctype, name)
         compiled = self._doctype(doctype)
@@ -664,11 +674,12 @@ class DocumentService:
                 raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
             return {"items": [], "total": 0, "limit": limit, "offset": offset}
         async with self._query(ctx) as q:
-            if await q.get(doctype, name, scope=read) is None:
+            deleted = await q.get(doctype, name, scope=read) is None
+            if deleted:  # supprimé, ou hors de portée (alors seule la génération supprimée de ce nom peut être la sienne)
                 gone = await q.last_deletion(doctype, name)
                 if gone is None or not read.allows(gone["owner"], snapshot(gone["changes"])):
                     raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
-            items, total = await q.versions(doctype, name, limit=limit, offset=offset)
+            items, total = await q.versions(doctype, name, limit=limit, offset=offset, deleted=deleted)
         return {"items": items, "total": total, "limit": limit, "offset": offset}
 
     # ── Vues sauvegardées (phase C) ───────────────────────────
@@ -928,9 +939,10 @@ class DocumentService:
 
     async def _create(
         self, ctx: RequestContext, compiled: CompiledDocType, scope: Scope, data: Any,
-        *, name: str | None = None, amended_from: str | None = None, requested: Any = None,
+        *, name: str | None = None, amended_from: str | None = None, requested: Any = None, copied: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType. `requested` : le nom que le client demande (`naming: prompt`)."""
+        """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType. `requested` : le nom que le client demande (`naming: prompt`).
+        `copied` : les valeurs recopiées d'un document annulé (un amendement), dont les liens ne se jugent pas sur l'état de leur cible (`_check_links`)."""
         doctype = compiled.definition.name
         naming = compiled.definition.naming
         if name is None:
@@ -955,7 +967,7 @@ class DocumentService:
             if by_field is not None:
                 name = valid_name(str(clean[by_field.field]), by_field.field)
             clean = self._seal(compiled, clean, None)
-            await self._check_links(ctx, q, compiled, clean, None)
+            await self._check_links(ctx, q, compiled, clean, None, copied=copied)
             await self._check_files(q, compiled, clean, None)
             if series:
                 # En DERNIER dans la transaction : le verrou du compteur n'est tenu que le temps du reste de l'écriture, et
@@ -1209,7 +1221,9 @@ class DocumentService:
             raise ValidationFailed(f"le nom de l'amendement dépasse {MAX_NAME} caractères", code="name_too_long")
         skipped = set(compiled.definition.secret_fields) | {f.fieldname for f in compiled.definition.fields if f.no_copy}
         carried = {k: v for k, v in source.data.items() if k not in skipped}  # un secret ne se recopie jamais (on le saisit à nouveau), ni un champ `no_copy`
-        return await self._create(ctx, compiled, create, carried, name=new_name, amended_from=source.name)
+        # Ses liens recopiés ne se jugent pas sur l'ÉTAT de leur cible (annulée depuis, peut-être : c'est souvent la raison de l'amendement) ;
+        # la soumission de l'amendement, elle, les rejugera.
+        return await self._create(ctx, compiled, create, carried, name=new_name, amended_from=source.name, copied=carried)
 
     async def _transition(self, ctx: RequestContext, doctype: str, name: str, version: Any, action: str) -> dict[str, Any]:
         self._enter(ctx, f"doc.{action}", doctype, name)
@@ -1232,6 +1246,13 @@ class DocumentService:
             # L'état D'ABORD : cet UPDATE conditionnel est ce qui rend la transition unique (idempotence), et sur SQLite
             # c'est l'écriture qui prend le verrou de la base avant que les hooks ne lisent quoi que ce soit.
             doc = await q.transition(doctype, name, source=source, target=target, expected_version=version, scope=scope)
+            if action == "submit":
+                # Figer, c'est écrire : un lien qui exige un état de sa cible (`target_status`) se rejuge ici, tous (lignes et DynamicLink
+                # compris), avec le périmètre de celui qui soumet. La cible a pu être annulée depuis la saisie du brouillon.
+                try:
+                    await self._check_links(ctx, q, compiled, doc.data, None, constrained_only=True)
+                except ValidationFailed as e:
+                    raise ValidationFailed("Ce brouillon cite un document dans un état que son lien refuse : corrigez-le avant de le soumettre", details=e.details) from None
             await self._record(q, ctx, compiled, doc, action, {"docstatus": source}, {"docstatus": target})
             written: list[DocEvent] = []
             if action == "cancel":
@@ -1572,10 +1593,11 @@ class DocumentService:
             )
 
     async def purge_history(self, tenant: str, before: datetime, doctype: str | None = None) -> int:
-        """L'historique du tenant plus vieux que `before` disparaît (action opérateur `doc.history.purge`, D24).
+        """L'historique du tenant plus vieux que `before` disparaît (action opérateur `ops.history.purge`, D24).
 
-        La rétention par document (`max_versions`) purge à chaque écriture ; celle-ci rattrape le trop-plein d'avant
-        une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        La rétention par document (`max_versions`) ne purge qu'à l'écriture du document ; celle-ci atteint ce qu'aucune écriture ne
+        revoit (un document qu'on n'écrit plus après une baisse de `max_versions`, un document supprimé), entrées de soumission et
+        d'annulation comprises : c'est la décision de l'opérateur. `before` est un instant (naïf = UTC). Renvoie le nombre d'entrées supprimées.
         """
         ctx = RequestContext.system(tenant, "history purge")
         async with self._query(ctx) as q:
@@ -1612,11 +1634,12 @@ class DocumentService:
         await q.add_version(
             compiled.definition.name, doc.name, version=doc.version, action=action, user=who, doc_owner=doc.owner, changes=changes
         )
-        # Rétention (D24) : les `max_versions` entrées les plus récentes survivent dans la MÊME transaction.
-        await q.purge_versions(compiled.definition.name, doc.name, keep=compiled.definition.max_versions)
+        # Rétention (D24) : les `max_versions` entrées les plus récentes de la génération du document survivent, dans la MÊME transaction.
+        await q.purge_versions(compiled.definition.name, doc.name, keep=compiled.definition.max_versions, ended=action == "delete")
 
     async def _check_links(
-        self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None
+        self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None,
+        *, copied: Mapping[str, Any] | None = None, constrained_only: bool = False,
     ) -> None:
         """Chaque champ Link modifié doit viser un document qui existe ET que l'utilisateur peut lire (D6, doc §7.2).
 
@@ -1626,6 +1649,14 @@ class DocumentService:
         périmètre. Les lignes cibles sont verrouillées (`lock`) jusqu'au commit : voir `_check_not_referenced`.
         Quand un champ porte `target_status` (D23), l'état de la cible est lu dans la même requête et un état refusé
         échoue avec le type `link_status` (distinct de `link_not_found` : la cible existe, c'est son état qui gêne).
+
+        `copied` (un amendement) : les valeurs RECOPIÉES du document annulé se jugent sur l'existence et la lisibilité, pas sur l'état
+        de leur cible (elle a pu être annulée depuis : la soumission de l'amendement le dira). `constrained_only` (une soumission) : seuls
+        les liens qui portent `target_status` se jugent, TOUS, comme une écriture neuve (`old` est alors `None`).
+
+        L'état est jugé au moment de l'écriture, rien de plus : une annulation concurrente de la cible n'attend pas (`FOR KEY SHARE` ne
+        retient pas un UPDATE de `docstatus` sur PostgreSQL) et l'histoire vaut alors « lien, puis annulation », qu'une annulation
+        n'interdit pas (un document annulé reste cité par ceux qui le citaient).
         """
         # DocType cible -> valeur -> où elle est portée (chemin du champ : `country` ou `items.0.item`) et l'état exigé de la cible
         wanted: dict[str, dict[str, list[tuple[str, frozenset[int] | None]]]] = {}
@@ -1645,35 +1676,25 @@ class DocumentService:
             else:
                 errors.append({"field": path, "msg": "Choisissez d'abord le type de document visé", "type": "link_not_found"})
 
-        for f in compiled.definition.fields:
-            value = clean.get(f.fieldname)
-            if value is None:
+        # Une valeur déjà là n'est pas rejugée, même déplacée (une ligne réordonnée garde son lien) : on compte les occurrences par champ, et
+        # chaque occurrence ancienne n'en excuse qu'UNE nouvelle (une seconde ligne qui cite la même cible est un lien nouveau). Un
+        # DynamicLink se compare avec son type : le même nom visant un autre DocType est un autre lien.
+        before = Counter(slot for slot, *_ in _link_slots(compiled, old)) if old is not None else Counter()
+        recopied = Counter(slot for slot, *_ in _link_slots(compiled, copied)) if copied is not None else Counter()
+        for slot, field, value, kind, path in _link_slots(compiled, clean):
+            if before[slot]:
+                before[slot] -= 1
                 continue
-            if f.fieldtype == "Link" and not (old is not None and old.get(f.fieldname) == value):
-                want(f.options, value, f.fieldname, f.allowed_docstatus)
-            elif f.fieldtype == "DynamicLink" and not (old is not None and old.get(f.fieldname) == value and old.get(str(f.options)) == clean.get(str(f.options))):
-                want_dynamic(clean.get(str(f.options)), value, f.fieldname, f.allowed_docstatus)
-            elif f.fieldtype == "Table":
-                child = compiled.children[str(f.options)]
-                # Une ligne déplacée garde son lien : on compare à l'ensemble des valeurs déjà présentes, pas à la même position.
-                # Un DynamicLink se compare avec son type : le même nom visant un autre DocType est un autre lien.
-                before = {
-                    cf.fieldname: {(r.get(cf.fieldname), r.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None) for r in (old or {}).get(f.fieldname, [])}
-                    for cf in child.fields
-                    if cf.fieldtype in ("Link", "DynamicLink")
-                }
-                for i, row in enumerate(value):
-                    for cf in child.fields:
-                        v = row.get(cf.fieldname)
-                        if v is None or cf.fieldtype not in ("Link", "DynamicLink"):
-                            continue
-                        kind = row.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None
-                        if (v, kind) in before[cf.fieldname]:
-                            continue
-                        if cf.fieldtype == "Link":
-                            want(cf.options, v, f"{f.fieldname}.{i}.{cf.fieldname}", cf.allowed_docstatus)
-                        else:
-                            want_dynamic(kind, v, f"{f.fieldname}.{i}.{cf.fieldname}", cf.allowed_docstatus)
+            allowed = field.allowed_docstatus
+            if recopied[slot]:
+                recopied[slot] -= 1
+                allowed = None  # recopiée telle quelle : son existence et sa lisibilité, pas son état
+            if constrained_only and allowed is None:
+                continue
+            if field.fieldtype == "Link":
+                want(field.options, value, path, allowed)
+            else:
+                want_dynamic(kind, value, path, allowed)
         for target, values in wanted.items():
             target_compiled = self._registry.get(target)
             target_def = target_compiled.definition
@@ -2165,6 +2186,47 @@ def _relabel(compiled: CompiledDocType, referrers: Sequence[Any], data: Mapping[
                 out[ref.fieldname] = new
         elif out.get(ref.table):
             out[ref.table] = [{**row, ref.fieldname: new} if hit(row) else row for row in out[ref.table]]
+    return out
+
+
+def _search_states(raw: Any) -> frozenset[int] | None:
+    """Les états qu'une recherche de lien admet (`None` : tous). Une liste non vide d'états connus, sinon un refus."""
+    if raw is None:
+        return None
+    states = (DRAFT, SUBMITTED, CANCELLED)
+    if not isinstance(raw, list) or not raw or not all(isinstance(s, int) and not isinstance(s, bool) and s in states for s in raw):
+        raise ValidationFailed("docstatus : une liste d'états parmi 0 (brouillon), 1 (soumis) et 2 (annulé)")
+    return frozenset(raw)
+
+
+def _link_slots(compiled: CompiledDocType, data: Mapping[str, Any]) -> list[tuple[tuple[Any, ...], FieldDef, Any, Any, str]]:
+    """Chaque lien que porte `data`, dans l'ordre : `(emplacement, champ, valeur, type visé, chemin)`.
+
+    L'emplacement (le champ, ou le champ Table et le champ de ligne, avec la valeur et, pour un DynamicLink, son type) est ce que
+    `_check_links` compare d'une version à l'autre ; le chemin (`invoice`, `lines.1.invoice`) est celui des erreurs.
+    """
+    out: list[tuple[tuple[Any, ...], FieldDef, Any, Any, str]] = []
+    # Une valeur de lien est un nom (une chaîne) : ce qui n'en est pas une (un contenu stocké sous une définition d'avant) ne se compare à rien.
+    for f in compiled.definition.fields:
+        value = data.get(f.fieldname)
+        if value is None:
+            continue
+        if f.fieldtype in ("Link", "DynamicLink") and isinstance(value, str):
+            kind = data.get(str(f.options)) if f.fieldtype == "DynamicLink" else None
+            kind = kind if isinstance(kind, str) else None
+            out.append(((f.fieldname, value, kind), f, value, kind, f.fieldname))
+        elif f.fieldtype == "Table" and isinstance(value, list):
+            child = compiled.children[str(f.options)]
+            for i, row in enumerate(value):
+                if not isinstance(row, Mapping):
+                    continue
+                for cf in child.fields:
+                    v = row.get(cf.fieldname)
+                    if not isinstance(v, str) or cf.fieldtype not in ("Link", "DynamicLink"):
+                        continue
+                    kind = row.get(str(cf.options)) if cf.fieldtype == "DynamicLink" else None
+                    kind = kind if isinstance(kind, str) else None
+                    out.append(((f.fieldname, cf.fieldname, v, kind), cf, v, kind, f"{f.fieldname}.{i}.{cf.fieldname}"))
     return out
 
 

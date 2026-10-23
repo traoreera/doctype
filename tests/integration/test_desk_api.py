@@ -85,9 +85,20 @@ async def test_search_is_filtered_by_permissions_and_tenant(host):
 
 async def test_search_parameters_are_validated(host):
     t = host.token()
-    for params in ({"limit": 0}, {"limit": 51}, {"q": "x" * 101}):
+    for params in ({"limit": 0}, {"limit": 51}, {"q": "x" * 101}, {"docstatus": "x"}, {"docstatus": "3"}, {"docstatus": ""}):
         assert (await host.http("GET", "/search/Customer", token=t, params=params)).status_code == 422, params
     assert (await host.http("GET", "/search/Nope", token=t)).status_code == 404
+
+
+async def test_search_can_offer_only_some_states(host):
+    """`docstatus=0,1` (ce qu'envoie le Desk pour un lien `not_cancelled`) : un client n'est jamais soumis, ses documents sont des brouillons."""
+    t = host.token()
+    await make(host, t, customer_name="Paris SA")
+    titles = lambda r: [i["title"] for i in r.json()["items"]]  # noqa: E731
+    assert titles(await host.http("GET", "/search/Customer", token=t, params={"q": "par", "docstatus": "0,1"})) == ["Paris SA"]
+    assert titles(await host.http("GET", "/search/Customer", token=t, params={"q": "par", "docstatus": "1"})) == []
+    same = await host.action("doc.search", {"doctype": "Customer", "q": "par", "docstatus": [1, 2]}, token=t)
+    assert same["items"] == []
 
 
 async def test_global_search_spans_doctypes(host):

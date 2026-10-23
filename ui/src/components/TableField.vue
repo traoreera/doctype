@@ -4,6 +4,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import FieldInput from '@/components/FieldInput.vue'
 import LinkField from '@/components/LinkField.vue'
 import { t } from '@/i18n'
+import { allowedDocstatus } from '@/lib/docstatus'
 import { cellKey, cellStates, newRow, type Row, type Values } from '@/lib/form'
 import { formatCell, isNumeric } from '@/lib/format'
 import { unitLinks, unitOf } from '@/lib/units'
@@ -137,7 +138,7 @@ function remove(i: number): void {
       </li>
       <li v-if="!tags.length" class="desk-muted" data-testid="tags-empty">{{ t.table.empty }}</li>
     </ul>
-    <LinkField v-if="!readOnly" :model-value="pending" :target="tagTarget" :input-id="`${formId}-${field.fieldname}`" data-testid="tag-add" @update:model-value="addTag" />
+    <LinkField v-if="!readOnly" :model-value="pending" :target="tagTarget" :input-id="`${formId}-${field.fieldname}`" :statuses="tagField ? allowedDocstatus(tagField) : null" data-testid="tag-add" @update:model-value="addTag" />
     <span v-if="tableError" class="error" role="alert" :data-testid="`error-${field.fieldname}`">{{ tableError }}</span>
     <span v-else-if="field.description" class="hint">{{ field.description }}</span>
   </div>
