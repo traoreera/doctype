@@ -247,8 +247,10 @@ export class ApiClient {
     await this.call('DELETE', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
   }
 
-  async search(doctype: string, q: string, limit = 10): Promise<SearchItem[]> {
+  /** `docstatus` : les seuls états proposés (ceux qu'admet le lien, voir `allowedDocstatus`) ; absent ou `null` : tous. */
+  async search(doctype: string, q: string, limit = 10, docstatus: readonly number[] | null = null): Promise<SearchItem[]> {
     const params = new URLSearchParams({ q, limit: String(limit) })
+    if (docstatus?.length) params.set('docstatus', docstatus.join(','))
     const res = await this.call<{ items: SearchItem[] }>('GET', `/search/${encodeURIComponent(doctype)}`, { params })
     return res.items
   }

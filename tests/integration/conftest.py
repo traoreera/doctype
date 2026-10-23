@@ -93,12 +93,16 @@ class Host:
         return sorted(f"{m.upper()} {p}" for p, ops in paths.items() if p.startswith(self.base) for m in ops)
 
 
-def _write_plugin(dest: Path, *, permissions: bool, binding: bool, doctypes_dir: Path, doctype_config: dict | None = None) -> None:
+def _write_plugin(
+    dest: Path, *, permissions: bool, binding: bool, doctypes_dir: Path, doctype_config: dict | None = None, extra_permissions: list[dict] | None = None,
+) -> None:
     shutil.copytree(PLUGIN_DIR, dest, ignore=shutil.ignore_patterns("__pycache__"))
     manifest_path = dest / "plugin.yaml"
     manifest = yaml.safe_load(manifest_path.read_text())
     if not permissions:
         del manifest["permissions"]
+    elif extra_permissions:
+        manifest["permissions"] += extra_permissions  # ce qu'un opérateur ajoute à SA copie (une action `ops.*`)
     manifest["doctype"]["enforce_tenant_binding"] = binding
     manifest["doctype"]["doctypes_dirs"] = [str(doctypes_dir)]
     manifest["doctype"].update(doctype_config or {})
@@ -308,6 +312,7 @@ async def boot_host(
     hook_plugins: bool = False,
     extra_doctypes: tuple[dict, ...] = (),
     doctype_config: dict | None = None,
+    plugin_permissions: list[dict] | None = None,
     operator_doctypes: bool = True,
     link_plugins: dict[str, Path] | None = None,
     inline_plugins: dict[str, tuple[str, dict[str, str]]] | None = None,
@@ -315,7 +320,8 @@ async def boot_host(
     auth_members: dict[str, list[dict[str, str]]] | None = None,
     auth_callers: list[str] | None = None,
 ):
-    """`operator_doctypes=False` : le dossier de l'opérateur reste vide, seuls les plugins apportent des DocTypes.
+    """`operator_doctypes=False` : le dossier de l'opérateur reste vide, seuls les plugins apportent des DocTypes. `plugin_permissions` : des
+    entrées ajoutées au bloc `permissions` du manifeste de xcore-doctype (l'ouverture d'une action d'opérateur `ops.*`).
     `link_plugins` : plugins du dépôt (nom -> dossier) liés dans `app/`. `inline_plugins` : nom -> (main.py, fichiers annexes),
     avec un manifeste de confiance qui `requires: [xcore-doctype]`. `auth_callers` : les `allowed_callers` du plugin de test (défaut : le moteur). `auth_members` : l'annuaire que le plugin de test imite (`xauth.users.list.tenant` : organisation -> [{id, email}]). `xauth=True` : le VRAI xauth (`app/auth`) remplace le plugin de test (nommé `auth`, comme xauth : les plugins du dépôt le `requires`)
     (clés JWT et compte administrateur jetables ; voir `XAUTH_ADMIN`) : les jetons viennent de `POST /app/auth/login`. Le vrai xauth
@@ -351,7 +357,7 @@ async def boot_host(
         (doctypes / f"{extra['name'].lower().replace(' ', '_')}.yaml").write_text(yaml.safe_dump(extra))
     if with_doctype_plugin:
         _write_plugin(root / "app" / "xcore-doctype", permissions=permissions, binding=binding, doctypes_dir=doctypes,
-                      doctype_config=doctype_config)
+                      doctype_config=doctype_config, extra_permissions=plugin_permissions)
     restore_env = _write_xauth(root) if xauth else (_write_dev_auth(root / "app" / "auth", auth_members, auth_callers), None)[1]
 
     config = yaml.safe_load((ROOT / "integration.yaml").read_text())

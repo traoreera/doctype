@@ -86,6 +86,14 @@ describe('requêtes', () => {
     expect(await api.search('Country', 'fra & co', 5)).toEqual([{ name: 'n', title: 'T' }])
     expect(requests[0]!.url).toBe('/app/xcore-doctype/search/Country?q=fra+%26+co&limit=5')
   })
+
+  it('ne cherche que les états qu’admet le lien, et rien de plus sans contrainte', async () => {
+    const { api, requests } = setup([{ status: 200, json: { items: [] } }, { status: 200, json: { items: [] } }])
+    await api.search('Invoice', 'fa', 10, [0, 1])
+    await api.search('Invoice', 'fa', 10, null)
+    expect(requests[0]!.url).toBe('/app/xcore-doctype/search/Invoice?q=fa&limit=10&docstatus=0%2C1')
+    expect(requests[1]!.url).toBe('/app/xcore-doctype/search/Invoice?q=fa&limit=10')
+  })
 })
 
 describe('erreurs', () => {

@@ -6,20 +6,26 @@ existe, c'est son état qui gêne. Ce qui est défendu ici, chacun par un test q
 - chaque forme (`not_cancelled`, un état, une liste) admet exactement ses états, avec un message qui nomme l'état ;
 - un document illisible reste « introuvable » : son état ne se devine pas ;
 - une valeur inchangée n'est pas rejugée (la cible annulée depuis n'empêche pas de corriger autre chose) ;
-- les DynamicLink et les lignes de table suivent la même règle, au même chemin d'erreur que les autres contrôles ;
+- les DynamicLink et les lignes de table suivent la même règle, au même chemin d'erreur que les autres contrôles ; une seconde
+  ligne qui cite une cible déjà citée est un lien nouveau ;
+- la soumission rejuge tous les liens contraints (la cible a pu être annulée depuis), avec le périmètre de celui qui soumet ;
+  l'amendement recopie ses liens sans juger l'état de leur cible (existence et lisibilité, si) ;
+- une écriture d'un hook (`event.tx`) obéit à la même contrainte ;
 - au chargement, viser un DocType jamais soumettable avec un état qu'il n'aura jamais est une erreur de définition.
 """
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 
 import pytest
 
 from tests.conftest import make_ctx
 from xcore_doctype.document import DocumentService
-from xcore_doctype.errors import InvalidDefinition, ValidationFailed
-from xcore_doctype.query import CANCELLED, StoredDoc
+from xcore_doctype.errors import DoctypeError, DocumentInUse, InvalidDefinition, ValidationFailed
+from xcore_doctype.hooks import HookRegistry
+from xcore_doctype.query import CANCELLED, Query, StoredDoc
 from xcore_doctype.registry import DocTypeChannel, DocTypeRegistry
 from xcore_doctype.schema import parse_definition
 from xcore_doctype.sources import DocumentSources, ReadOnlySource
@@ -231,6 +237,200 @@ class TestTableRows:
         assert [r["invoice"] for r in moved["data"]["lines"]] == [ok, inv["name"]]
 
 
+    async def test_a_second_row_citing_an_already_cited_target_is_a_new_link(self, svc):
+        """Une ligne déjà là n'excuse qu'UNE ligne : ajouter une seconde ligne vers la facture annulée depuis est un lien nouveau, refusé."""
+        inv = await svc.create(ALICE, "Invoice", {"title": "F"})
+        inv = await svc.submit(ALICE, "Invoice", inv["name"], inv["version"])
+        pay = await svc.create(ALICE, "Payment", {"lines": [{"invoice": inv["name"]}]})
+        await svc.cancel(ALICE, "Invoice", inv["name"], inv["version"])
+        with pytest.raises(ValidationFailed) as e:
+            await svc.update(ALICE, "Payment", pay["name"], {"lines": [{"invoice": inv["name"]}, {"invoice": inv["name"]}]}, pay["version"])
+        assert [(d["field"], d["type"]) for d in e.value.details] == [("lines.1.invoice", "link_status")]
+        # La ligne qu'on garde, elle, ne se rejuge pas (le cas d'avant reste vrai avec le comptage).
+        kept = await svc.update(ALICE, "Payment", pay["name"], {"memo": "m", "lines": [{"invoice": inv["name"]}]}, pay["version"])
+        assert kept["data"]["memo"] == "m"
+
+    async def test_a_row_dynamic_link_changing_only_its_type_is_judged_again(self, svc):
+        """Le même nom dans une ligne, sous un autre type : c'est un autre document, donc un lien nouveau (le type entre dans la comparaison)."""
+        gone = await invoice(svc, "cancelled")
+        await note(svc, gone)  # une note homonyme de la facture annulée
+        pay = await svc.create(ALICE, "Payment", {"lines": [{"ref_type": "Note", "ref": gone}]})
+        with pytest.raises(ValidationFailed) as e:
+            await svc.update(ALICE, "Payment", pay["name"], {"lines": [{"ref_type": "Invoice", "ref": gone}]}, pay["version"])
+        assert [(d["field"], d["type"]) for d in e.value.details] == [("lines.0.ref", "link_status")]
+
+
+# ── Soumission, amendement, écritures des hooks ─────────────────────────────
+# Un document SOUMETTABLE qui cite des factures : figer, c'est écrire, ses liens contraints se rejugent. `loose` n'a pas de contrainte.
+REMITTANCE = {
+    "schema_version": 1,
+    "name": "Remittance",
+    "module": "acct",
+    "submittable": True,
+    "fields": [
+        {"fieldname": "memo", "fieldtype": "Text"},
+        {"fieldname": "invoice", "fieldtype": "Link", "options": "Invoice", "target_status": "not_cancelled"},
+        {"fieldname": "loose", "fieldtype": "Link", "options": "Invoice"},
+        {"fieldname": "ref_type", "fieldtype": "Select", "options": ["Invoice", "Note"]},
+        {"fieldname": "ref", "fieldtype": "DynamicLink", "options": "ref_type", "target_status": "not_cancelled"},
+        {"fieldname": "lines", "fieldtype": "Table", "options": "Payment Line"},
+    ],
+    "hooks": {"on_submit": ["acct.memo"]},
+}
+# Ce que le hook `on_submit` écrit par `event.tx` : un mémo qui cite une facture (contrainte `not_cancelled`).
+MEMO = {"schema_version": 1, "name": "Memo", "module": "acct", "track_changes": False,
+        "fields": [{"fieldname": "invoice", "fieldtype": "Link", "options": "Invoice", "target_status": "not_cancelled"}]}
+REMIT = ["acct:remittance:read", "acct:remittance:write", "acct:remittance:submit", "acct:remittance:cancel"]
+CLERK = make_ctx("acme", "alice", permissions=GRANTS + REMIT)
+# Soumet et amende des remises, mais ne lit que SES factures.
+OLGA_CLERK = make_ctx("acme", "olga", permissions=["acct:invoice:own", *REMIT])
+
+
+@pytest.fixture
+def remit(db, tables):
+    reg = registry(INVOICE, NOTE, LINE, REMITTANCE, MEMO)
+    reg.validate_links()
+    hooks, box = HookRegistry(), {"memo": None}
+
+    async def memo(event):
+        if box["memo"]:
+            await event.tx.create("Memo", {"invoice": box["memo"]})
+
+    hooks.register("acct.memo", memo)
+    return DocumentService(reg, db, tables, Log(), hooks=hooks), box
+
+
+async def remittance(svc, data: dict, ctx=CLERK) -> dict:
+    return await svc.create(ctx, "Remittance", data)
+
+
+async def submit_refused(svc, doc: dict, ctx=CLERK) -> list[dict]:
+    with pytest.raises(ValidationFailed) as e:
+        await svc.submit(ctx, "Remittance", doc["name"], doc["version"])
+    assert e.value.status == 422 and "corrigez-le avant de le soumettre" in e.value.message
+    assert (await svc.get(CLERK, "Remittance", doc["name"]))["docstatus"] == 0  # rien de figé
+    return e.value.details
+
+
+class TestSubmit:
+    async def test_a_target_cancelled_since_the_draft_blocks_the_submission(self, remit):
+        svc, _ = remit
+        inv = await svc.create(CLERK, "Invoice", {"title": "F"})
+        inv = await svc.submit(CLERK, "Invoice", inv["name"], inv["version"])
+        doc = await remittance(svc, {"invoice": inv["name"]})
+        await svc.cancel(CLERK, "Invoice", inv["name"], inv["version"])
+        assert await submit_refused(svc, doc) == [
+            {"field": "invoice", "msg": f"Invoice {inv['name']!r} est annulé : ce lien n'accepte pas cet état", "type": "link_status"}
+        ]
+
+    async def test_rows_and_dynamic_links_are_judged_too(self, remit):
+        svc, _ = remit
+        ok = await invoice(svc, "submitted", ctx=CLERK)
+        first = await svc.create(CLERK, "Invoice", {"title": "F"})
+        first = await svc.submit(CLERK, "Invoice", first["name"], first["version"])
+        doc = await remittance(svc, {"ref_type": "Invoice", "ref": first["name"], "lines": [{"invoice": ok}, {"invoice": first["name"]}]})
+        await svc.cancel(CLERK, "Invoice", first["name"], first["version"])
+        assert [(d["field"], d["type"]) for d in await submit_refused(svc, doc)] == [("ref", "link_status"), ("lines.1.invoice", "link_status")]
+
+    async def test_the_submitter_scope_applies_and_unconstrained_links_are_not_judged_again(self, remit):
+        """Olga ne lit que ses factures : celle de Bob, citée par le lien contraint, est « introuvable » pour elle ; citée par `loose`
+        (sans contrainte), elle ne l'empêche pas de soumettre (l'existence ne se rejuge qu'avec un état exigé)."""
+        svc, _ = remit
+        bobs = await invoice(svc, "submitted", ctx=BOB)
+        constrained = await remittance(svc, {"invoice": bobs})
+        assert [(d["field"], d["type"]) for d in await submit_refused(svc, constrained, ctx=OLGA_CLERK)] == [("invoice", "link_not_found")]
+        loose = await remittance(svc, {"loose": bobs})
+        assert (await svc.submit(OLGA_CLERK, "Remittance", loose["name"], loose["version"]))["docstatus"] == 1
+
+    async def test_a_bulk_submission_reports_the_refusal_per_document(self, remit):
+        svc, _ = remit
+        inv = await svc.create(CLERK, "Invoice", {"title": "F"})
+        inv = await svc.submit(CLERK, "Invoice", inv["name"], inv["version"])
+        stale, fine = await remittance(svc, {"invoice": inv["name"]}), await remittance(svc, {"memo": "x"})
+        await svc.cancel(CLERK, "Invoice", inv["name"], inv["version"])
+        res = await svc.bulk(CLERK, "Remittance", "submit", [stale["name"], fine["name"]])
+        assert [(r["name"], r["ok"], r.get("code")) for r in res["results"]] == [(stale["name"], False, "validation_failed"), (fine["name"], True, None)]
+        assert res["results"][0]["details"][0]["type"] == "link_status"
+
+
+class TestAmend:
+    async def test_an_amendment_copies_a_link_to_a_target_cancelled_since_and_its_submission_judges_it(self, remit):
+        svc, _ = remit
+        inv = await svc.create(CLERK, "Invoice", {"title": "F"})
+        inv = await svc.submit(CLERK, "Invoice", inv["name"], inv["version"])
+        doc = await remittance(svc, {"invoice": inv["name"], "lines": [{"invoice": await invoice(svc, "submitted", ctx=CLERK)}]})
+        doc = await svc.submit(CLERK, "Remittance", doc["name"], doc["version"])
+        doc = await svc.cancel(CLERK, "Remittance", doc["name"], doc["version"])
+        await svc.cancel(CLERK, "Invoice", inv["name"], inv["version"])  # souvent la raison même de l'amendement
+        amended = await svc.amend(CLERK, "Remittance", doc["name"])
+        assert (amended["docstatus"], amended["data"]["invoice"]) == (0, inv["name"])
+        assert [(d["field"], d["type"]) for d in await submit_refused(svc, amended)] == [("invoice", "link_status")]
+        # Corrigé, il se soumet ; un lien NOUVEAU posé à l'amendement se juge, lui, sur son état.
+        gone = await invoice(svc, "cancelled", ctx=CLERK)
+        with pytest.raises(ValidationFailed) as e:
+            await svc.update(CLERK, "Remittance", amended["name"], {"invoice": gone}, amended["version"])
+        assert [d["type"] for d in e.value.details] == ["link_status"]
+        fixed = await svc.update(CLERK, "Remittance", amended["name"], {"invoice": await invoice(svc, "submitted", ctx=CLERK)}, amended["version"])
+        assert (await svc.submit(CLERK, "Remittance", fixed["name"], fixed["version"]))["docstatus"] == 1
+
+    async def test_the_copied_links_must_still_exist_and_be_readable(self, remit):
+        """Seul l'ÉTAT est excusé : Olga, qui ne lit pas la facture de Bob, n'amende pas une remise qui la cite (« introuvable »)."""
+        svc, _ = remit
+        doc = await remittance(svc, {"invoice": await invoice(svc, "submitted", ctx=BOB)})
+        doc = await svc.submit(CLERK, "Remittance", doc["name"], doc["version"])
+        doc = await svc.cancel(CLERK, "Remittance", doc["name"], doc["version"])
+        with pytest.raises(ValidationFailed) as e:
+            await svc.amend(OLGA_CLERK, "Remittance", doc["name"])
+        assert [(d["field"], d["type"]) for d in e.value.details] == [("invoice", "link_not_found")]
+
+
+class TestHookWrites:
+    async def test_a_tx_write_from_a_hook_obeys_target_status(self, remit):
+        """Un hook `on_submit` qui écrit (`event.tx`) un mémo vers une facture annulée : défaut du hook (500), la soumission est défaite."""
+        svc, box = remit
+        box["memo"] = await invoice(svc, "cancelled", ctx=CLERK)
+        doc = await remittance(svc, {"memo": "x"})
+        with pytest.raises(DoctypeError) as e:
+            await svc.submit(CLERK, "Remittance", doc["name"], doc["version"])
+        assert (e.value.code, e.value.status) == ("hook_invalid_write", 500)
+        assert [d["type"] for d in e.value.details] == ["link_status"]
+        assert (await svc.get(CLERK, "Remittance", doc["name"]))["docstatus"] == 0
+        assert (await svc.list(make_ctx("acme", "alice", permissions=["acct:memo:read"]), "Memo"))["total"] == 0
+        box["memo"] = await invoice(svc, "submitted", ctx=CLERK)  # vers une facture soumise, le même hook passe
+        assert (await svc.submit(CLERK, "Remittance", doc["name"], doc["version"]))["docstatus"] == 1
+
+
+class TestRace:
+    async def test_a_constrained_link_locks_its_target_against_deletion(self, svc, db, monkeypatch):
+        """PostgreSQL : le contrôle d'état (`existing_docstatus`) verrouille la cible comme le contrôle d'existence (`FOR KEY SHARE`) :
+        une suppression concurrente de la facture brouillon attend le commit, puis voit le paiement qui la cite."""
+        if db.backend != "postgres":
+            pytest.skip("SQLite n'a pas de verrou de ligne : fenêtre documentée, voir doc/phase3.md")
+        draft = await invoice(svc, "draft")
+        linked, proceed = asyncio.Event(), asyncio.Event()
+        real_insert = Query.insert
+
+        async def paused_insert(self, doctype, name, data, **kw):
+            if doctype == "Payment":
+                linked.set()  # le lien vient d'être contrôlé (et verrouillé), le paiement n'est pas encore écrit
+                await proceed.wait()
+            return await real_insert(self, doctype, name, data, **kw)
+
+        monkeypatch.setattr(Query, "insert", paused_insert)
+        writer = asyncio.create_task(svc.create(ALICE, "Payment", {"invoice": draft}))
+        deleter = None
+        try:
+            await asyncio.wait_for(linked.wait(), 5)
+            deleter = asyncio.create_task(svc.delete(ALICE, "Invoice", draft))
+            await asyncio.sleep(0.5)
+            assert not deleter.done(), "la suppression aurait dû attendre le verrou pris par le contrôle d'état du lien"
+        finally:
+            proceed.set()  # même en cas d'échec : une transaction restée ouverte bloquerait le nettoyage de la base
+        await writer
+        with pytest.raises(DocumentInUse):
+            await deleter
+
+
 # Un DocType virtuel (sources.py) : ses documents vivent chez une source, sans état que le moteur pourrait juger.
 PERSON = {"schema_version": 1, "name": "Person", "module": "acct", "source": "people", "fields": [{"fieldname": "label", "fieldtype": "Text"}]}
 
@@ -265,6 +465,41 @@ class TestVirtualTargets:
         reg = registry(PERSON, {**PAYMENT, "fields": [{"fieldname": "who", "fieldtype": "Link", "options": "Person", "target_status": "submitted"}]})
         with pytest.raises(InvalidDefinition, match="jamais soumettable"):
             reg.validate_links()
+
+
+class TestSearch:
+    """L'autocomplétion peut ne proposer que les états qu'un lien admet (`docstatus`) : le Desk n'offre pas une cible que l'écriture refuserait."""
+
+    async def test_only_the_asked_states_are_offered(self, svc):
+        names = {state: await invoice(svc, state) for state in ("draft", "submitted", "cancelled")}
+
+        async def found(states):
+            return {i["name"] for i in (await svc.search(ALICE, "Invoice", "", limit=10, docstatus=states))["items"]}
+
+        assert await found(None) == set(names.values())
+        assert await found([0, 1]) == {names["draft"], names["submitted"]}  # `not_cancelled`
+        assert await found([1]) == {names["submitted"]}
+        assert await found([2, 1]) == {names["submitted"], names["cancelled"]}
+
+    async def test_the_read_scope_still_applies(self, svc):
+        await invoice(svc, "submitted", ctx=BOB)
+        mine = await invoice(svc, "submitted", ctx=make_ctx("acme", "olga", permissions=GRANTS))
+        found = await svc.search(OWN_ONLY, "Invoice", "", limit=10, docstatus=[1])
+        assert [i["name"] for i in found["items"]] == [mine]
+
+    async def test_a_virtual_target_counts_as_a_draft(self, db, tables):
+        reg = registry(PERSON)
+        sources = DocumentSources()
+        sources.register("acct", "people", People())
+        svc = DocumentService(reg, db, tables, Log(), sources=sources)
+        ctx = make_ctx("acme", "alice", permissions=["acct:person:read"])
+        assert [i["name"] for i in (await svc.search(ctx, "Person", "", docstatus=[0, 1]))["items"]] == ["ann"]
+        assert (await svc.search(ctx, "Person", "", docstatus=[1, 2]))["items"] == []  # « annulé » à la source : le moteur n'en croit rien
+
+    @pytest.mark.parametrize("states", [[], [3], [-1], [True], ["0"], "0", 1, [0.0]])
+    async def test_malformed_states_are_refused(self, svc, states):
+        with pytest.raises(ValidationFailed, match="docstatus"):
+            await svc.search(ALICE, "Invoice", "", docstatus=states)
 
 
 class TestMeta:

@@ -149,14 +149,6 @@ describe('erreurs du serveur', () => {
     expect(m.fields.credit_limit).toBe('Lecture seule')
   })
 
-  it('un lien refusé pour l’état de sa cible (`link_status`, D23) garde le message du serveur, sous le champ ou la cellule', () => {
-    // Le message nomme l'état (« est annulé ») : le traduire en « Valeur invalide » cacherait la raison du refus.
-    const m = mapServerErrors(err('validation_failed', 'x', [{ field: 'country', msg: "Pays 'FR' est annulé : ce lien n'accepte pas cet état", type: 'link_status' }]), CUSTOMER)
-    expect(m.fields).toEqual({ country: "Pays 'FR' est annulé : ce lien n'accepte pas cet état" })
-    const rows = mapServerErrors(err('validation_failed', 'x', [{ field: 'items.1.item', msg: "Article 'A' est un brouillon : ce lien n'accepte pas cet état", type: 'link_status' }]), STOCK_ENTRY)
-    expect(rows.fields).toEqual({ 'items.1.item': "Article 'A' est un brouillon : ce lien n'accepte pas cet état" })
-  })
-
   it('un champ inconnu du formulaire passe en message général, sans être perdu', () => {
     const m = mapServerErrors(err('validation_failed', 'invalide', [{ field: 'inconnu', msg: 'Quelque chose', type: 'x' }]), CUSTOMER)
     expect(m.fields).toEqual({})

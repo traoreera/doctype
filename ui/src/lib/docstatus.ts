@@ -1,6 +1,6 @@
 /** L'état d'un document soumettable, côté affichage. Sans interface : testé seul. */
 import { t } from '@/i18n'
-import { CANCELLED, DRAFT, SUBMITTED, type DocRecord, type DocTypeMeta } from './types'
+import { CANCELLED, DRAFT, SUBMITTED, type DocRecord, type DocTypeMeta, type FieldMeta } from './types'
 
 export type StatusTone = 'draft' | 'submitted' | 'cancelled'
 
@@ -33,3 +33,16 @@ export function transitionsFor(meta: DocTypeMeta | null, rec: DocRecord | null):
 
 /** Un document soumis ou annulé est figé : plus de saisie, ni d'enregistrement, ni de suppression. */
 export const isFrozen = (rec: DocRecord | null): boolean => !!rec && statusOf(rec) !== DRAFT
+
+const STATE: Record<'draft' | 'submitted' | 'cancelled', number> = { draft: DRAFT, submitted: SUBMITTED, cancelled: CANCELLED }
+
+/**
+ * Les états qu'un lien admet pour sa cible (`target_status`, miroir de `FieldDef.allowed_docstatus` côté serveur), triés ; `null` : tous.
+ * L'autocomplétion ne propose qu'eux (le serveur filtre, et rejuge de toute façon à l'écriture).
+ */
+export function allowedDocstatus(field: Pick<FieldMeta, 'target_status'>): number[] | null {
+  const ts = field.target_status
+  if (!ts) return null
+  if (ts === 'not_cancelled') return [DRAFT, SUBMITTED]
+  return [...new Set((Array.isArray(ts) ? ts : [ts]).map((s) => STATE[s]))].sort((a, b) => a - b)
+}

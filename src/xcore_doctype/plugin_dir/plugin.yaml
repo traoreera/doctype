@@ -13,6 +13,9 @@ allowed_callers: ["*"]
 permissions:
   - { resource: "doc.*", actions: ["execute"], effect: allow }
   - { resource: "meta.*", actions: ["execute"], effect: allow }
+  # Actions d'OPÉRATEUR (`ops.*`), fermées par défaut : `allowed_callers: ["*"]` les offrirait à tout plugin. Pour purger l'historique par
+  # âge (`ops.history.purge`, route IPC avec la clé du plugin ET un jeton qui porte `cross_tenant_grant`), décommentez dans VOTRE copie :
+  # - { resource: "ops.history.purge", actions: ["execute"], effect: allow }
 
 resources:
   timeout_seconds: 30

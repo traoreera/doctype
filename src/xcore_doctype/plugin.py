@@ -22,7 +22,7 @@ from .desk_extensions import DeskExtensions
 from .api.collab import build_collab_router
 from .api.files import build_files_router, build_preferences_router, build_public_files_router
 from .api.http import build_router
-from .context import ContextSettings, RequestContext
+from .context import ContextSettings, RequestContext, ipc_operator
 from .db.access import create_system_tables, ensure_async_database
 from .db.rls import ensure_rls
 from .db.tables import SystemTables, build_system_tables
@@ -47,6 +47,8 @@ GRANTS_SERVICE = "doctype_grants"  # service exporté : `self.get_service("docty
 DOCUMENTS_SERVICE = "doctype_documents"  # service exporté : lecture système, `.system(tenant, raison)` (contrôles, rapports)
 SOURCES_SERVICE = "doctype_sources"  # service exporté : `self.get_service("doctype_sources").register(nom_plugin, "ma_source", source)` (DocTypes virtuels)
 REGISTRY_SERVICE = "doctype_registry"  # service exporté : `self.get_service("doctype_registry").load_dir(nom, dossier)`
+# Les actions d'OPÉRATEUR vivent hors de `doc.*` (que le manifeste ouvre à tous les appelants) : le manifeste livré ne les ouvre pas.
+OPS_HISTORY_PURGE = "ops.history.purge"
 
 
 def _need(payload: dict, key: str) -> Any:
@@ -362,7 +364,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     async def doc_search(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:
             return await self.documents.search(
-                ctx, _need(payload, "doctype"), payload.get("q", ""), limit=payload.get("limit", 10)
+                ctx, _need(payload, "doctype"), payload.get("q", ""), limit=payload.get("limit", 10), docstatus=payload.get("docstatus")
             )
 
         return await self._run("doc.search", op)
@@ -406,13 +408,20 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return error(e.message, e.code)
         return ok(conflicts=conflicts)
 
-    @action("doc.history.purge")
-    async def doc_history_purge(self, payload: dict) -> dict:
+    @action(OPS_HISTORY_PURGE)
+    async def ops_history_purge(self, payload: dict) -> dict:
         """Purge l'historique du tenant plus vieux qu'une date (D24) : `{"tenant": …, "before": "2026-01-01T00:00:00+00:00", "doctype"?: …}`.
 
-        Appel d'opérateur (clé du plugin). La rétention par document (`max_versions`) ne purge qu'à l'écriture du document ;
-        celle-ci atteint les documents qu'on n'écrit plus et les documents supprimés. Renvoie le nombre d'entrées supprimées.
+        Action d'OPÉRATEUR, hors de `doc.*` : elle efface l'historique de n'importe quel tenant, alors que `allowed_callers: ["*"]` laisse
+        tout plugin appeler ce plugin. Deux verrous, donc. (1) La ressource `ops.history.purge` n'est pas ouverte par le manifeste livré :
+        PermissionEngine la refuse (`permission_denied`) tant que l'opérateur ne l'ajoute pas à SA copie du manifeste. (2) Le principal de
+        l'appel doit porter le grant transverse (`doctype.cross_tenant_grant`, `admin:*` avec xauth) : un appel sans jeton, ou un plugin qui
+        relaie la requête d'un utilisateur ordinaire, est refusé (`forbidden`). La rétention par document (`max_versions`) ne purge qu'à
+        l'écriture du document ; celle-ci atteint les documents qu'on n'écrit plus et les documents supprimés. Renvoie le nombre d'entrées
+        supprimées.
         """
+        if not ipc_operator(self._settings):
+            return error("Réservé à l'opérateur de la plateforme", "forbidden")
         body = payload or {}
         tenant = body.get("tenant")
         if not isinstance(tenant, str) or not tenant:

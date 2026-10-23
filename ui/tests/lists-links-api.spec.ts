@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import BulkActions from '@/components/BulkActions.vue'
 import ConnectionsPanel from '@/components/ConnectionsPanel.vue'
+import FieldInput from '@/components/FieldInput.vue'
 import LinkField from '@/components/LinkField.vue'
 import LinkPreview from '@/components/LinkPreview.vue'
 import ListSidebar from '@/components/ListSidebar.vue'
@@ -325,6 +326,45 @@ describe('champ Link : créer sans quitter le formulaire, aperçu', () => {
       expect(card.text()).not.toContain('long') // un texte long n'est pas un aperçu
       await w.find('.link-preview').trigger('mouseleave')
       expect(w.find('[data-testid="link-preview"]').exists()).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('l’autocomplétion d’un lien contraint (`target_status`) ne demande au serveur que les états admis', async () => {
+    const search = vi.fn(async () => [{ name: 'p1', title: 'Paris' }])
+    const typed = async (extra: Partial<FieldMeta>) => {
+      search.mockClear()
+      const { w } = mountWith(FieldInput, { field: field('project', 'Link', { options: 'Project', ...extra }), modelValue: null, inputId: 'x' }, { ...api(), search })
+      await flushPromises()
+      w.findComponent({ name: 'AutoComplete' }).vm.$emit('complete', { query: ' par ' })
+      await flushPromises()
+      return search.mock.calls.at(-1)
+    }
+    expect(await typed({ target_status: 'not_cancelled' })).toEqual(['Project', 'par', 10, [0, 1]])
+    expect(await typed({ target_status: ['submitted', 'cancelled'] })).toEqual(['Project', 'par', 10, [1, 2]])
+    expect(await typed({})).toEqual(['Project', 'par', 10, null]) // sans contrainte : tous les états
+  })
+
+  it('l’aperçu d’un document soumettable dit son état ; celui d’un type qui ne se soumet pas n’en dit rien', async () => {
+    vi.useFakeTimers()
+    try {
+      const INVOICE = metaOf('Invoice', [field('title', 'Text', { in_list_view: true })], { title_field: 'title', submittable: true })
+      const cancelled = { ...rec('Invoice', 'f1', { title: 'Facture 1' }), docstatus: 2 }
+      const hover = async (meta: DocTypeMeta, record: DocRecord) => {
+        const { w } = mountWith(LinkPreview, { target: meta.name, name: record.name }, { meta: async () => meta, list: vi.fn(async () => ({ items: [record], total: 1, limit: 1, offset: 0 })) })
+        await w.find('.link-preview').trigger('mouseenter')
+        await vi.advanceTimersByTimeAsync(400)
+        await flushPromises()
+        return w
+      }
+      const badge = (await hover(INVOICE, cancelled)).find('[data-testid="link-preview-status"]')
+      expect(badge.text()).toBe('Annulé')
+      expect(badge.classes()).toContain('cancelled')
+      expect((await hover(INVOICE, { ...cancelled, name: 'f2', docstatus: 1 })).find('[data-testid="link-preview-status"]').text()).toBe('Soumis')
+      const plain = await hover(TASK, { ...rec('Task', 't1', { title: 'Écrire' }), docstatus: 2 }) // un docstatus sans objet n'y change rien
+      expect(plain.find('[data-testid="link-preview"]').exists()).toBe(true)
+      expect(plain.find('[data-testid="link-preview-status"]').exists()).toBe(false)
     } finally {
       vi.useRealTimers()
     }

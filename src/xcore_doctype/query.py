@@ -195,8 +195,9 @@ class Query:
         rows = [tuple(r) for r in (await self._session.execute(stmt.limit(limit + 1))).all()]
         return rows[:limit], len(rows) > limit
 
-    async def search(self, defn: DocTypeDef, q: str, *, limit: int, scope: Scope) -> list[StoredDoc]:
-        """Documents dont le nom ou le `title_field` CONTIENT `q` (sans casse), pour l'autocomplétion d'un champ Link."""
+    async def search(self, defn: DocTypeDef, q: str, *, limit: int, scope: Scope, docstatus: Collection[int] | None = None) -> list[StoredDoc]:
+        """Documents dont le nom ou le `title_field` CONTIENT `q` (sans casse), pour l'autocomplétion d'un champ Link. `docstatus` : les
+        seuls états admis (ceux qu'accepte le `target_status` du lien)."""
         pattern = "%" + self._like_escape(q) + "%"
         match = [self._t.c.name.ilike(pattern, escape="\\")]
         order: list[Any] = []
@@ -204,9 +205,10 @@ class Query:
             title = self._json_expr(defn, defn.title_field)
             match.append(title.ilike(pattern, escape="\\"))
             order.append(title.asc().nulls_last())
+        states = [self._t.c.docstatus.in_(sorted(docstatus))] if docstatus is not None else []
         stmt = (
             select(self._t)
-            .where(self._scope(self._t.c.doctype == defn.name, or_(*match), scope=scope))
+            .where(self._scope(self._t.c.doctype == defn.name, or_(*match), *states, scope=scope))
             .order_by(*order, self._t.c.name.asc())
             .limit(limit)
         )
@@ -468,9 +470,23 @@ class Query:
             raise DocumentLocked(f"{doctype} {old!r} est {STATUS_WORDS[found.docstatus]} : il ne se renomme plus") if found.docstatus != DRAFT else NotFound("document_not_found", f"{doctype} {old!r} introuvable")
         for table in (self._comments, self._assignments, self._attachments, self._uniques):
             await self._session.execute(update(table).where(self._cscope(table, table.c.doctype == doctype, table.c.docname == old)).values(docname=new))
-        v = self._versions
-        await self._session.execute(update(v).where(self._vscope(v.c.doctype == doctype, v.c.docname == old)).values(docname=new))
+        await self._move_history(doctype, old, new)
         return await self._reload(doctype, new)
+
+    async def _move_history(self, doctype: str, old: str, new: str) -> None:
+        """L'historique suit le document renommé : sa génération VIVANTE seulement (celles des homonymes supprimés restent à l'ancien nom,
+        qui les montre comme avant). Si le nouveau nom a déjà servi, ses générations closes peuvent être plus récentes que les entrées du
+        document : celles-ci sont recopiées APRÈS elles (ids croissants, dans leur ordre), pour rester « après la dernière suppression »
+        du nom qu'elles rejoignent (`versions`)."""
+        v = self._versions
+        mine = self._vscope(v.c.doctype == doctype, v.c.docname == old, *await self._generation(doctype, old, closed=False))
+        if not await self._deletions(doctype, new):  # le nouveau nom n'a jamais servi : un simple changement de nom
+            await self._session.execute(update(v).where(mine).values(docname=new))
+            return
+        rows = (await self._session.execute(select(v).where(mine).order_by(v.c.id))).mappings().all()
+        for row in rows:  # une à une, dans l'ordre : les ids suivent (la rétention borne leur nombre)
+            await self._session.execute(insert(v).values({c.name: row[c.name] for c in v.columns if c.name != "id"} | {"docname": new}))
+        await self._session.execute(delete(v).where(mine))
 
     async def referrers_of(self, target: str, name: str, referrers: Sequence[tuple[Any, ...]]) -> list[StoredDoc]:
         """Les documents du tenant qui citent `target`/`name` par l'une des références `referrers` (même forme que `references_to`), SANS périmètre de permission."""
@@ -502,14 +518,41 @@ class Query:
             )
         )
 
-    async def versions(self, doctype: str, docname: str, *, limit: int, offset: int) -> tuple[list[dict[str, Any]], int]:
-        """Les entrées d'un document, la plus récente d'abord, et leur nombre total. Les droits se jugent AVANT, sur le document."""
+    async def versions(
+        self, doctype: str, docname: str, *, limit: int, offset: int, deleted: bool = False
+    ) -> tuple[list[dict[str, Any]], int]:
+        """Les entrées d'UNE génération du nom, la plus récente d'abord, et leur nombre total. Les droits se jugent AVANT, sur le document.
+
+        Un nom se réutilise (un document supprimé, puis un autre du même nom) : chaque suppression clôt une génération, et un document ne
+        montre jamais l'historique d'un homonyme disparu. `deleted=False` : le document qui existe, soit les entrées postérieures à la
+        dernière suppression de ce nom. `deleted=True` : le document supprimé, soit la dernière génération close (jusqu'à sa suppression).
+        """
         v = self._versions
-        where = self._vscope(v.c.doctype == doctype, v.c.docname == docname)
+        where = self._vscope(v.c.doctype == doctype, v.c.docname == docname, *await self._generation(doctype, docname, closed=deleted))
         page = select(v).where(where).order_by(v.c.id.desc()).limit(limit).offset(offset)
         total = (await self._session.execute(select(func.count()).select_from(v).where(where))).scalar_one()
         rows = (await self._session.execute(page)).mappings().all()
         return [self._version(r) for r in rows], total
+
+    async def _deletions(self, doctype: str, docname: str) -> list[int]:
+        """Les ids des deux dernières entrées de suppression du nom, la plus récente d'abord : ce qui borne ses générations."""
+        v = self._versions
+        stmt = (
+            select(v.c.id)
+            .where(self._vscope(v.c.doctype == doctype, v.c.docname == docname, v.c.action == "delete"))
+            .order_by(v.c.id.desc())
+            .limit(2)
+        )
+        return list((await self._session.execute(stmt)).scalars())
+
+    async def _generation(self, doctype: str, docname: str, *, closed: bool) -> list[Any]:
+        """Les bornes (conditions sur `id`) d'une génération du nom : la vivante (après la dernière suppression), ou `closed` la dernière
+        close (après l'avant-dernière suppression, jusqu'à la dernière comprise). Les ids croissent avec le temps : ils ordonnent les générations."""
+        v = self._versions
+        ends = await self._deletions(doctype, docname)
+        if not closed:
+            return [v.c.id > ends[0]] if ends else []
+        return ([v.c.id <= ends[0]] if ends else []) + ([v.c.id > ends[1]] if len(ends) > 1 else [])
 
     async def last_deletion(self, doctype: str, docname: str) -> dict[str, Any] | None:
         """L'entrée de suppression d'un document, si elle existe : de quoi juger si on pouvait le lire avant qu'il disparaisse."""
@@ -518,22 +561,24 @@ class Query:
         row = (await self._session.execute(stmt)).mappings().first()
         return self._version(row) if row is not None else None
 
-    async def purge_versions(self, doctype: str, docname: str, *, keep: int) -> int:
+    async def purge_versions(self, doctype: str, docname: str, *, keep: int, ended: bool = False) -> int:
         """Rétention d'historique : ne garde que les `keep` entrées les plus récentes de CE document, purge le reste (D24).
 
         Les entrées de soumission et d'annulation (`versions.KEPT_ACTIONS`) survivent à la purge, même plus vieilles : un document
         garde donc au plus `keep` + 2 entrées. À appeler DANS la transaction du document, juste après `add_version` : la
         conservation est un effet immédiat de l'écriture, pas d'un entretien de nuit. Renvoie le nombre d'entrées supprimées.
+        Seule la génération du document se compte et se purge (voir `versions`) : celle d'un homonyme supprimé n'est purgée que par
+        l'âge (`purge_versions_before`). `ended` : l'écriture était la suppression du document, sa génération est celle qu'elle clôt.
         """
         v = self._versions
-        base = self._vscope(v.c.doctype == doctype, v.c.docname == docname)
+        base = self._vscope(v.c.doctype == doctype, v.c.docname == docname, *await self._generation(doctype, docname, closed=ended))
         kept = select(v.c.id).where(base).order_by(v.c.id.desc()).limit(keep)
         return (await self._session.execute(delete(v).where(base, v.c.action.not_in(KEPT_ACTIONS), v.c.id.not_in(kept)))).rowcount
 
     async def purge_versions_before(self, before: datetime, *, doctype: str | None = None) -> int:
         """Les entrées d'historique du tenant PLUS VIEILLES que `before` (d'un seul DocType si on le nomme).
 
-        Action opérateur (`doc.history.purge`) : la rétention par document (`purge_versions`) ne voit que le document qu'on écrit,
+        Action opérateur (`ops.history.purge`) : la rétention par document (`purge_versions`) ne voit que le document qu'on écrit,
         jamais celui qu'on n'écrit plus ni celui qu'on a supprimé. Renvoie le nombre d'entrées supprimées.
         """
         v = self._versions

@@ -2,6 +2,7 @@
 
 Rétention (D24) : les `max_versions` entrées les plus récentes d'un document survivent à chacune de ses écritures, dans la même
 transaction ; qui a soumis et qui a annulé ne se purge jamais ainsi. L'opérateur purge par âge (`purge_history`) : sa date est un instant, quel que soit son décalage horaire.
+Un nom se réutilise : chaque suppression clôt une génération, un document ne montre (et la rétention ne compte) que la sienne.
 """
 
 from __future__ import annotations
@@ -354,6 +355,96 @@ class TestRetention:
         assert [(e["action"], e["user"]) for e in entries] == [("cancel", "bob"), ("submit", "alice")]
 
 
+    async def test_the_cancel_entry_survives_a_later_rewrite_of_a_cancelled_document(self, db, tables):
+        """Un document ANNULÉ reçoit encore des entrées (le renommage d'un document qu'il cite le réécrit) : la rétention garde la sienne."""
+        tag = {"schema_version": 1, "name": "Tag", "module": "sales", "allow_rename": True, "fields": [{"fieldname": "t", "fieldtype": "Text"}]}
+        deal = {"schema_version": 1, "name": "Deal", "module": "sales", "submittable": True, "max_versions": 1,
+                "fields": [{"fieldname": "tag", "fieldtype": "Link", "options": "Tag"}]}
+        s = service(db, tables, tag, deal)
+        ctx = make_ctx(permissions=[f"sales:{d}:{a}" for d in ("tag", "deal") for a in ("read", "write", "submit", "cancel")])
+        t = await s.create(ctx, "Tag", {"t": "x"})
+        doc = await s.create(ctx, "Deal", {"tag": t["name"]})
+        doc = await s.submit(ctx, "Deal", doc["name"], doc["version"])
+        doc = await s.cancel(ctx, "Deal", doc["name"], doc["version"])
+        await s.rename(ctx, "Tag", t["name"], "renomme")
+        assert [e["action"] for e in (await s.history(ctx, "Deal", doc["name"]))["items"]] == ["update", "cancel", "submit"]
+
+
+# ── Un nom réutilisé : chaque suppression clôt une génération ───────────────
+
+# `naming: prompt` (un nom se réutilise), `allow_rename`, et la lecture `if_owner` : chacun ne lit que SES notes.
+NOTE = {
+    "schema_version": 1, "name": "Note", "module": "acct", "naming": "prompt", "allow_rename": True, "max_versions": 2,
+    "fields": [{"fieldname": "text", "fieldtype": "Text"}],
+    "permissions": {"read": [{"grant": "acct:note:own", "if_owner": True}], "write": [{"grant": "acct:note:own", "if_owner": True}],
+                    "create": ["acct:note:own"], "delete": [{"grant": "acct:note:own", "if_owner": True}]},
+}
+LONG_NOTE = {k: v for k, v in NOTE.items() if k != "max_versions"}  # la rétention par défaut : rien ne part dans ces tests-là
+BOB = make_ctx("acme", "bob", permissions=["acct:note:own"])
+OLGA = make_ctx("acme", "olga", permissions=["acct:note:own"])
+
+
+async def note_history(s, ctx, name):
+    return [(e["action"], e["user"]) for e in (await s.history(ctx, "Note", name, limit=200))["items"]]
+
+
+class TestNameReuse:
+    async def test_a_new_document_never_shows_the_history_of_a_deleted_homonym(self, db, tables):
+        """Bob crée N-1 puis le supprime ; Olga crée N-1 : elle ne voit ni l'entrée de suppression de Bob ni son contenu."""
+        s = service(db, tables, LONG_NOTE)
+        await s.create(BOB, "Note", {"text": "le mémo salaire de Bob"}, name="N-1")
+        await s.delete(BOB, "Note", "N-1")
+        await s.create(OLGA, "Note", {"text": "bonjour"}, name="N-1")
+        assert await note_history(s, OLGA, "N-1") == [("create", "olga")]
+
+    async def test_the_retention_counts_and_purges_only_the_living_generation(self, db, tables):
+        """`max_versions: 2` : les écritures d'Olga ne purgent pas la génération de Bob (l'âge seul la purge), qui ne compte pas dans les siennes."""
+        s = service(db, tables, NOTE)
+        bob = await s.create(BOB, "Note", {"text": "a"}, name="N-1")
+        await s.update(BOB, "Note", "N-1", {"text": "b"}, bob["version"])
+        await s.delete(BOB, "Note", "N-1")  # sa génération close : les 2 plus récentes, la suppression et la modification
+        mine = await s.create(OLGA, "Note", {"text": "c"}, name="N-1")
+        assert await note_history(s, OLGA, "N-1") == [("create", "olga")]  # pas de place prise par celles de Bob
+        mine = await s.update(OLGA, "Note", "N-1", {"text": "d"}, mine["version"])
+        await s.update(OLGA, "Note", "N-1", {"text": "e"}, mine["version"])
+        assert await note_history(s, OLGA, "N-1") == [("update", "olga"), ("update", "olga")]
+        # Bob ne lit pas la note d'Olga : seule SA génération (supprimée) peut lui revenir, intacte, jamais celle d'Olga.
+        assert await note_history(s, BOB, "N-1") == [("delete", "bob"), ("update", "bob")]
+        assert await s.purge_history("acme", datetime.now(UTC) + timedelta(minutes=1)) == 4  # l'âge, lui, purge toutes les générations
+
+    async def test_a_deleted_name_shows_its_last_generation_judged_on_its_snapshot(self, db, tables):
+        s = service(db, tables, LONG_NOTE)
+        for who in (BOB, OLGA):
+            await s.create(who, "Note", {"text": who.user_id}, name="N-1")
+            await s.delete(who, "Note", "N-1")
+        assert await note_history(s, OLGA, "N-1") == [("delete", "olga"), ("create", "olga")]
+        with pytest.raises(NotFound):  # la dernière génération est celle d'Olga : Bob ne la lit pas, et la sienne, plus vieille, ne revient pas
+            await s.history(BOB, "Note", "N-1")
+
+    async def test_a_renamed_document_takes_its_own_generation_only(self, db, tables):
+        """Le renommage emporte la génération vivante : celle de Bob reste au nom qu'il a supprimé."""
+        s = service(db, tables, LONG_NOTE)
+        await s.create(BOB, "Note", {"text": "a"}, name="X")
+        await s.delete(BOB, "Note", "X")
+        await s.create(OLGA, "Note", {"text": "b"}, name="X")
+        await s.rename(OLGA, "Note", "X", "Y")
+        assert await note_history(s, OLGA, "Y") == [("rename", "olga"), ("create", "olga")]
+        assert await note_history(s, BOB, "X") == [("delete", "bob"), ("create", "bob")]
+
+    async def test_a_document_renamed_to_a_reused_name_keeps_its_whole_history(self, db, tables):
+        """Y a servi (créé puis supprimé APRÈS la création de X) : X renommé Y garde toutes ses entrées, sans celles de l'ancien Y."""
+        s = service(db, tables, LONG_NOTE)
+        x = await s.create(OLGA, "Note", {"text": "a"}, name="X")
+        await s.create(BOB, "Note", {"text": "b"}, name="Y")
+        await s.delete(BOB, "Note", "Y")
+        await s.update(OLGA, "Note", "X", {"text": "c"}, x["version"])
+        await s.rename(OLGA, "Note", "X", "Y")
+        assert await note_history(s, OLGA, "Y") == [("rename", "olga"), ("update", "olga"), ("create", "olga")]
+        assert await note_history(s, BOB, "Y") == [("delete", "bob"), ("create", "bob")]  # sa génération supprimée, toujours à lui
+        with pytest.raises(NotFound):
+            await s.history(OLGA, "Note", "X")  # X n'a jamais été supprimé : plus rien à ce nom
+
+
 class TestRetentionDefinition:
     @pytest.mark.parametrize("value", [0, 1001, -1, True, "5", 2.0])
     def test_bounds_and_strict_int(self, value):
@@ -373,7 +464,7 @@ class TestRetentionDefinition:
             parse_definition({**PLAIN, "source": "people", "max_versions": 5})
 
 
-# ── Purge par âge (`purge_history`, action opérateur `doc.history.purge`) ───
+# ── Purge par âge (`purge_history`, action opérateur `ops.history.purge`) ───
 
 async def age(db, tables, ctx, doctype, name, *, days):
     """Vieillit les entrées d'un document de `days` jours (l'horloge des entrées est celle de la base : on la recule à la main)."""
