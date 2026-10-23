@@ -1458,8 +1458,9 @@ class DocumentService:
     async def purge_history(self, tenant: str, before: datetime, doctype: str | None = None) -> int:
         """L'historique du tenant plus vieux que `before` disparaît (action opérateur `doc.history.purge`, D24).
 
-        La rétention par document (`max_versions`) purge à chaque écriture ; celle-ci rattrape le trop-plein d'avant
-        une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        La rétention par document (`max_versions`) ne purge qu'à l'écriture du document ; celle-ci atteint ce qu'aucune écriture ne
+        revoit (un document qu'on n'écrit plus après une baisse de `max_versions`, un document supprimé), entrées de soumission et
+        d'annulation comprises : c'est la décision de l'opérateur. `before` est un instant (naïf = UTC). Renvoie le nombre d'entrées supprimées.
         """
         ctx = RequestContext.system(tenant, "history purge")
         async with self._query(ctx) as q:

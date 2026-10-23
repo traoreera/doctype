@@ -410,8 +410,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     async def doc_history_purge(self, payload: dict) -> dict:
         """Purge l'historique du tenant plus vieux qu'une date (D24) : `{"tenant": …, "before": "2026-01-01T00:00:00+00:00", "doctype"?: …}`.
 
-        Appel d'opérateur (clé du plugin). La rétention par document (`max_versions`) purge à chaque écriture ;
-        celle-ci rattrape le trop-plein d'avant une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        Appel d'opérateur (clé du plugin). La rétention par document (`max_versions`) ne purge qu'à l'écriture du document ;
+        celle-ci atteint les documents qu'on n'écrit plus et les documents supprimés. Renvoie le nombre d'entrées supprimées.
         """
         body = payload or {}
         tenant = body.get("tenant")

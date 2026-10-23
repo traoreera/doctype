@@ -1,15 +1,21 @@
-"""Historique (versions) : écrit avec le document, lu avec le droit de lire le document."""
+"""Historique (versions) : écrit avec le document, lu avec le droit de lire le document.
+
+Rétention (D24) : les `max_versions` entrées les plus récentes d'un document survivent à chacune de ses écritures, dans la même
+transaction ; qui a soumis et qui a annulé ne se purge jamais ainsi. L'opérateur purge par âge (`purge_history`) : sa date est un instant, quel que soit son décalage horaire.
+"""
 
 from __future__ import annotations
 
 import asyncio
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
+from sqlalchemy import update
 
 from tests.conftest import CUSTOMER, CUSTOMER_GRANTS, make_ctx
 from xcore_doctype.context import RequestContext
 from xcore_doctype.document import DocumentService
-from xcore_doctype.errors import NotFound, PermissionDenied, ValidationFailed, VersionConflict
+from xcore_doctype.errors import InvalidDefinition, NotFound, PermissionDenied, ValidationFailed, VersionConflict
 from xcore_doctype.query import Query
 from xcore_doctype.registry import DocTypeRegistry
 from xcore_doctype.schema import parse_definition
@@ -243,3 +249,184 @@ class TestReading:
         s = DocumentService(reg, db, tables, Log())
         with pytest.raises(NotFound):
             await s.history(ALICE, "Line", "x")
+
+
+# ── Rétention (`max_versions`, D24) ─────────────────────────────────────────
+
+PLAIN = {**CUSTOMER, "fields": [f for f in CUSTOMER["fields"] if f["fieldtype"] != "Link"]}
+
+
+def service(db, tables, *defs) -> DocumentService:
+    reg = DocTypeRegistry()
+    for d in defs or (PLAIN,):
+        reg.register(parse_definition(d))
+    return DocumentService(reg, db, tables, Log())
+
+
+async def updates(s, doc, count, ctx=ALICE):
+    """`count` modifications réelles (chacune laisse une entrée) ; renvoie le document à jour."""
+    for _ in range(count):
+        doc = await s.update(ctx, "Customer", doc["name"], {"customer_name": "ACME", "credit_limit": doc["version"] * 10}, doc["version"])
+    return doc
+
+
+async def all_entries(s, doc, ctx=ALICE):
+    return (await s.history(ctx, "Customer", doc["name"], limit=200))["items"]
+
+
+class TestRetention:
+    async def test_only_the_most_recent_entries_survive(self, db, tables):
+        s = service(db, tables, {**PLAIN, "max_versions": 3})
+        doc = await updates(s, await create(s), 5)  # 6 entrées écrites : create puis 5 updates
+        assert [e["version"] for e in await all_entries(s, doc)] == [6, 5, 4]  # les plus récentes, la création est partie
+
+    async def test_the_default_keeps_twenty_five(self, db, tables):
+        s = service(db, tables)
+        doc = await updates(s, await create(s), 29)
+        entries = await all_entries(s, doc)
+        assert len(entries) == 25 and (entries[0]["version"], entries[-1]["version"]) == (30, 6)
+
+    async def test_each_document_keeps_its_own_entries(self, db, tables):
+        s = service(db, tables, {**PLAIN, "max_versions": 2})
+        quiet = await create(s, customer_name="Calme")
+        busy = await updates(s, await create(s), 4)
+        assert [e["version"] for e in await all_entries(s, busy)] == [5, 4]
+        assert [e["action"] for e in await all_entries(s, quiet)] == ["create"]  # la purge de l'un ne touche pas l'autre
+
+    async def test_another_tenant_keeps_the_entries_of_its_homonym(self, db, tables):
+        """Le même nom chez globex et chez acme : les écritures d'acme ne purgent que l'historique d'acme."""
+        s = service(db, tables, {**PLAIN, "naming": "prompt", "max_versions": 1})
+        globex = make_ctx("globex", "gina")
+        theirs = await s.create(globex, "Customer", {"customer_name": "Globex"}, name="C-1")
+        mine = await updates(s, await s.create(ALICE, "Customer", {"customer_name": "ACME"}, name="C-1"), 2)
+        assert [e["version"] for e in await all_entries(s, mine)] == [3]
+        assert [e["action"] for e in await all_entries(s, theirs, ctx=globex)] == ["create"]
+
+    async def test_a_lowered_limit_applies_at_the_next_write(self, db, tables):
+        """La purge est un effet de l'écriture : baisser `max_versions` ne purge rien au chargement, la prochaine écriture rattrape."""
+        before = service(db, tables)  # le défaut : 25 entrées
+        doc = await updates(before, await create(before), 5)
+        s = service(db, tables, {**PLAIN, "max_versions": 2})
+        assert len(await all_entries(s, doc)) == 6
+        doc = await s.update(ALICE, "Customer", doc["name"], dict(doc["data"]), doc["version"])  # mêmes valeurs : version 7, sans entrée
+        assert len(await all_entries(s, doc)) == 6  # une écriture sans changement n'écrit (ni ne purge) rien
+        doc = await updates(s, doc, 1)
+        assert [e["version"] for e in await all_entries(s, doc)] == [8, 6]
+
+    async def test_the_deletion_entry_survives_and_keeps_the_content(self, db, tables):
+        s = service(db, tables, {**PLAIN, "max_versions": 2})
+        doc = await updates(s, await create(s, credit_limit=1), 3)
+        await s.delete(ALICE, "Customer", doc["name"])
+        newest, older = await all_entries(s, doc)
+        assert (newest["action"], older["action"]) == ("delete", "update")
+        assert snapshot(newest["changes"]) == {"customer_name": "ACME", "credit_limit": 30}  # la création est purgée, le contenu reste
+
+    async def test_the_purge_is_undone_with_the_write(self, db, tables, monkeypatch):
+        """Dans la transaction du document : une écriture qui échoue après la purge ne perd aucune entrée."""
+        s = service(db, tables, {**PLAIN, "max_versions": 2})
+        doc = await updates(s, await create(s), 1)
+        purge = Query.purge_versions
+
+        async def purge_then_fail(self, *a, **k):
+            assert await purge(self, *a, **k) == 1  # la plus vieille entrée est bien supprimée…
+            raise RuntimeError("panne après la purge")
+
+        monkeypatch.setattr(Query, "purge_versions", purge_then_fail)
+        with pytest.raises(RuntimeError):
+            await updates(s, doc, 1)
+        monkeypatch.undo()
+        assert [e["version"] for e in await all_entries(s, doc)] == [2, 1]  # … mais rien n'est perdu : la transaction est défaite
+        assert (await s.get(ALICE, "Customer", doc["name"]))["version"] == 2
+
+    async def test_who_submitted_and_cancelled_survives_the_retention(self, db, tables):
+        """Un DocType soumettable garde son historique pour dire QUI a soumis et annulé : la rétention ne purge jamais ces deux entrées."""
+        deal = {"schema_version": 1, "name": "Deal", "module": "sales", "submittable": True, "max_versions": 1,
+                "fields": [{"fieldname": "title", "fieldtype": "Text"}, {"fieldname": "note", "fieldtype": "Text", "allow_on_submit": True}]}
+        s = service(db, tables, deal)
+        ctx = make_ctx(permissions=["sales:deal:read", "sales:deal:write", "sales:deal:submit", "sales:deal:cancel"])
+        bob = make_ctx("acme", "bob", permissions=["sales:deal:read", "sales:deal:cancel"])
+        doc = await s.create(ctx, "Deal", {"title": "D"})
+        doc = await s.submit(ctx, "Deal", doc["name"], doc["version"])
+        for n in range(3):  # des modifications après soumission (`allow_on_submit`) ne chassent pas l'entrée de soumission
+            doc = await s.update(ctx, "Deal", doc["name"], {"title": "D", "note": f"suivi {n}"}, doc["version"])
+        await s.cancel(bob, "Deal", doc["name"], doc["version"])
+        entries = (await s.history(ctx, "Deal", doc["name"]))["items"]
+        assert [(e["action"], e["user"]) for e in entries] == [("cancel", "bob"), ("submit", "alice")]
+
+
+class TestRetentionDefinition:
+    @pytest.mark.parametrize("value", [0, 1001, -1, True, "5", 2.0])
+    def test_bounds_and_strict_int(self, value):
+        with pytest.raises(InvalidDefinition):
+            parse_definition({**PLAIN, "max_versions": value})
+
+    @pytest.mark.parametrize("value", [1, 1000])
+    def test_the_bounds_are_included(self, value):
+        assert parse_definition({**PLAIN, "max_versions": value}).max_versions == value
+
+    def test_it_needs_track_changes(self):
+        with pytest.raises(InvalidDefinition, match="max_versions: exige `track_changes: true`"):
+            parse_definition({**PLAIN, "track_changes": False, "max_versions": 5})
+
+    def test_a_virtual_doctype_refuses_it(self):
+        with pytest.raises(InvalidDefinition, match="max_versions"):
+            parse_definition({**PLAIN, "source": "people", "max_versions": 5})
+
+
+# ── Purge par âge (`purge_history`, action opérateur `doc.history.purge`) ───
+
+async def age(db, tables, ctx, doctype, name, *, days):
+    """Vieillit les entrées d'un document de `days` jours (l'horloge des entrées est celle de la base : on la recule à la main)."""
+    v = tables.versions
+    async with db.session() as session:
+        await session.execute(
+            update(v).where(v.c.tenant_id == ctx.tenant_id, v.c.doctype == doctype, v.c.docname == name)
+            .values(creation=datetime.now(UTC) - timedelta(days=days))
+        )
+        await session.commit()
+
+
+class TestPurgeByAge:
+    async def test_entries_older_than_the_date_go_and_the_newer_stay(self, db, tables):
+        s = service(db, tables)
+        old, recent = await create(s, customer_name="Ancien"), await create(s, customer_name="Récent")
+        await age(db, tables, ALICE, "Customer", old["name"], days=40)
+        assert await s.purge_history("acme", datetime.now(UTC) - timedelta(days=30)) == 1
+        assert await all_entries(s, old) == []
+        assert [e["action"] for e in await all_entries(s, recent)] == ["create"]
+
+    async def test_one_doctype_and_one_tenant_only(self, db, tables):
+        country = {"schema_version": 1, "name": "Country", "module": "sales", "fields": [{"fieldname": "n", "fieldtype": "Text"}]}
+        s = service(db, tables, PLAIN, country)
+        globex = make_ctx("globex", "gina")
+        mine, theirs = await create(s), await create(s, ctx=globex)
+        fr = await s.create(make_ctx(permissions=["sales:country:read", "sales:country:write"]), "Country", {"n": "France"})
+        for ctx, doctype, name in ((ALICE, "Customer", mine["name"]), (globex, "Customer", theirs["name"]), (ALICE, "Country", fr["name"])):
+            await age(db, tables, ctx, doctype, name, days=10)
+        cutoff = datetime.now(UTC) - timedelta(days=1)
+        assert await s.purge_history("acme", cutoff, doctype="Country") == 1  # seul le pays d'acme
+        assert len(await all_entries(s, mine)) == 1
+        assert await s.purge_history("acme", cutoff) == 1  # puis le client d'acme ; celui de globex reste
+        assert len(await all_entries(s, theirs, ctx=globex)) == 1
+
+    async def test_the_date_is_an_instant_whatever_its_offset(self, db, tables):
+        """Une date écrite avec un autre décalage horaire désigne le même instant : la base compare des instants, pas des heures d'horloge.
+
+        (SQLite range les dates sans fuseau : une date en +05:00 comparée telle quelle purgeait des entrées PLUS RÉCENTES qu'elle.)
+        """
+        s = service(db, tables)
+        doc = await create(s)
+        east, west = timezone(timedelta(hours=5)), timezone(timedelta(hours=-5))
+        an_hour_ago = (datetime.now(UTC) - timedelta(hours=1)).astimezone(east)  # 5 h de plus à l'horloge, mais une heure AVANT l'entrée
+        assert await s.purge_history("acme", an_hour_ago) == 0
+        assert len(await all_entries(s, doc)) == 1
+        in_a_minute = (datetime.now(UTC) + timedelta(minutes=1)).astimezone(west)  # 5 h de moins à l'horloge, mais APRÈS l'entrée
+        assert await s.purge_history("acme", in_a_minute) == 1
+
+    async def test_a_purged_deleted_document_is_gone_for_good(self, db, tables):
+        s = service(db, tables)
+        doc = await create(s)
+        await s.delete(ALICE, "Customer", doc["name"])
+        assert await s.purge_history("acme", datetime.now(UTC) + timedelta(minutes=1)) == 2
+        with pytest.raises(NotFound):  # plus de trace : introuvable, comme un document qui n'a jamais existé
+            await s.history(ALICE, "Customer", doc["name"])

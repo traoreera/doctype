@@ -33,6 +33,7 @@ from .db.tables import SystemTables
 from .errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, ValidationFailed, VersionConflict
 from .permissions import Scope
 from .schema import DECIMAL_TYPES, DocTypeDef
+from .versions import KEPT_ACTIONS
 
 # Colonnes système triables. Les champs d'un DocType s'y ajoutent, jamais l'inverse
 # (leurs noms réservés interdisent toute collision, voir schema.RESERVED_FIELDNAMES).
@@ -520,22 +521,25 @@ class Query:
     async def purge_versions(self, doctype: str, docname: str, *, keep: int) -> int:
         """Rétention d'historique : ne garde que les `keep` entrées les plus récentes de CE document, purge le reste (D24).
 
-        À appeler DANS la transaction du document, juste après `add_version` : la conservation est un effet immédiat de
-        l'écriture, pas d'un entretien de nuit. Renvoie le nombre d'entrées supprimées.
+        Les entrées de soumission et d'annulation (`versions.KEPT_ACTIONS`) survivent à la purge, même plus vieilles : un document
+        garde donc au plus `keep` + 2 entrées. À appeler DANS la transaction du document, juste après `add_version` : la
+        conservation est un effet immédiat de l'écriture, pas d'un entretien de nuit. Renvoie le nombre d'entrées supprimées.
         """
         v = self._versions
         base = self._vscope(v.c.doctype == doctype, v.c.docname == docname)
         kept = select(v.c.id).where(base).order_by(v.c.id.desc()).limit(keep)
-        return (await self._session.execute(delete(v).where(base, v.c.id.not_in(kept)))).rowcount
+        return (await self._session.execute(delete(v).where(base, v.c.action.not_in(KEPT_ACTIONS), v.c.id.not_in(kept)))).rowcount
 
     async def purge_versions_before(self, before: datetime, *, doctype: str | None = None) -> int:
         """Les entrées d'historique du tenant PLUS VIEILLES que `before` (d'un seul DocType si on le nomme).
 
-        Action opérateur (`doc.history.purge`) : la rétention par document (`purge_versions`) ne rattrape pas le trop-plein
-        d'avant une augmentation de `max_versions`. Renvoie le nombre d'entrées supprimées.
+        Action opérateur (`doc.history.purge`) : la rétention par document (`purge_versions`) ne voit que le document qu'on écrit,
+        jamais celui qu'on n'écrit plus ni celui qu'on a supprimé. Renvoie le nombre d'entrées supprimées.
         """
         v = self._versions
-        conds: list[Any] = [v.c.creation < before]
+        # SQLite range les dates SANS fuseau (l'heure UTC de l'entrée) et lie une date en ignorant le sien : une date en +05:00 comparée
+        # telle quelle purgerait des entrées plus récentes qu'elle. On compare donc l'instant ramené en UTC (une date naïve en est déjà).
+        conds: list[Any] = [v.c.creation < _utc(before).astimezone(UTC)]
         if doctype is not None:
             conds.append(v.c.doctype == doctype)
         return (await self._session.execute(delete(v).where(self._vscope(*conds)))).rowcount
