@@ -119,7 +119,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Webhooks sortants | E |
 | Règles d'assignation automatique | K |
 | Documents récurrents (auto-répétition) | K |
-| Notifications (système, e-mail) sur événement | ◐ la cloche (assignation, mention) ; ni e-mail ni règles par DocType |
+| Notifications (système, e-mail) sur événement | ✔ (C4 : règles par DocType, cloche et e-mail, conditions, modèles fermés ; ni destinataires par rôle, ni règles par date, qui attendent les rôles dans l'annuaire et les tâches planifiées) |
 | Rapports envoyés par e-mail | K |
 | Import CSV avec rapport d'erreurs | E |
 | Export de données | ✔ (C : CSV) |
@@ -131,7 +131,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Fonctionnalité | État |
 |---|---|
 | Champs personnalisés (ajout par site sur un DocType existant) | ◐ (D26 : ajoutés par un PLUGIN, `doc/extensions.md` ; pas encore par un administrateur, sans code) |
-| Propriétés modifiées par site (« property setter ») | ◐ habillage de formulaire par organisation (libellé, description, masqué, disposition) |
+| Propriétés modifiées par site (« property setter ») | ✔ (C4 : libellé, description, masqué, disposition ; obligatoire, lecture seule et défaut APPLIQUÉS par le serveur, réservés à qui écrit tout le type ; pas les options d'un Select ni les propriétés de liste) |
 | Formulaire personnalisable (écran) | ◐ (« Habiller » ; recompte du 22 oct. : le chemin de la fiche n'a aucun test dans le Desk) |
 | Éditeur de DocType dans le Desk | L |
 | Formats d'impression et papier à en-tête | F / L |
@@ -147,7 +147,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Plugins métier qui apportent leurs DocTypes | ✔ |
 | Corbeille (documents supprimés, restaurables) | M |
 | Journal d'accès et d'audit | ◐ (historique par document ; journal d'audit d'xauth, hors dépôt ; pas de journal des lectures) |
-| Gestionnaire de fichiers | ◐ stockage, liens signés, pièces jointes ; pas d'écran de gestion |
+| Gestionnaire de fichiers | ✔ (C4 : écran « Fichiers », ce que l'appelant peut lire, filtre, tri, téléchargement signé, « Détacher » par l'écriture ordinaire ; pas de dossiers, un fichier vit par un document) |
 | E-mail entrant (IMAP) et file d'envoi | ✖ |
 | Site web, blog, portail, formulaires web | ✖ |
 | Connexions sociales, LDAP, SAML | ✖ (c'est le rôle d'xauth) |
@@ -163,10 +163,14 @@ que « DocType virtuel » (bonus). Dénominateur : **87**.
 
 | État | éléments | part de 87 |
 |---|---:|---:|
-| ✔ fait en entier | 56 | 64 % |
-| ◐ fait en partie | 11 | 13 % |
+| ✔ fait en entier | 59 | 68 % |
+| ◐ fait en partie | 8 | 9 % |
 | non fait | 20 | 23 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **61,5** | **71 %** |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **63** | **72 %** |
+
+**23 octobre (consolidation, phase C4 de `.plan/plan.md`)** : trois lignes ◐ passent à ✔ (notifications par DocType et e-mail, propriétés
+modifiées par organisation appliquées par le serveur, gestionnaire de fichiers), chacune après une relecture adversariale dont les constats
+ont été corrigés avec leur test (`doc/consolidation.md`). Le 22 octobre : 56 ✔, 11 ◐, 61,5 lignes, 71 %.
 
 Le 20 octobre le décompte (non vérifié) disait 62 lignes en entier (71 %, 74 % avec les demi-lignes). Six lignes comptées faites ne sont
 prouvées qu'en partie (conditions dans les lignes, sections repliables, DocType arborescent, journal d'activité, écran « Habiller »,
@@ -191,7 +195,7 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Personnaliser un espace / tableau de bord dans le Desk (organisation + personnel) | ◐ on ne crée pas d'espace nouveau |
 | Comptes et sécurité de connexion (MFA, sessions, invitations, politique de mot de passe) | ◐ Desk prouvé, serveur = xauth hors dépôt, politique figée |
 | API serveur des documents pour le code d'une app (get_doc, insert, get_list) | ◐ `event.tx` et `doctype_documents` (lecture) |
-| Rétention et purge des journaux | ◐ `max_versions` et purge d'historique, sans test de service |
+| Rétention et purge des journaux | ✔ (C2 : `max_versions` par génération d'un nom, purge par âge par l'action d'opérateur `ops.history.purge`, prouvées sur les deux bases) |
 | Réglages régionaux et de marque | ◐ fuseau, format de date, nom, logo, couleur |
 | Sources de graphiques / cartes de nombres fournies par une app | ◐ blocs `extension` (D28), pas de source de données déclarée |
 | Profil utilisateur | ◐ |
@@ -200,7 +204,7 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Filtres sur les choix d'un Lien (link_filters / set_query) | non fait |
 | Onglets de formulaire (Tab Break) | non fait |
 | Types de champ restants (code-barres, signature, autocomplétion, HTML, bouton) | non fait |
-| Intégrité liens/états (lien vers un annulé, annulation d'un document cité) | non fait (`target_status` est dans le code, sans test) |
+| Intégrité liens/états (lien vers un annulé, annulation d'un document cité) | ◐ (C2 : `target_status` refusé à l'écriture, à la soumission et aux écritures `tx`, autocomplétion filtrée ; l'annulation d'un document CITÉ n'est pas refusée) |
 | Tables dédiées, index par champ, synchronisation du schéma | non fait (phase B) |
 | Fixtures livrées par une app | non fait |
 | Règles de permission écrites par une app (has_permission, permission_query_conditions) | non fait |
@@ -216,8 +220,8 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Fournisseur OAuth 2 | non fait |
 | Outils de diagnostic (Recorder, inspecteur de permissions) | non fait |
 
-**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 60 faites, 21 partielles, 38 non faites, soit **50 % en entier, 59 % avec les
-demi-lignes**. Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
+**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 64 faites, 18 partielles, 37 non faites, soit **54 % en entier, 61 % avec les
+demi-lignes** (le 22 octobre : 60, 21, 38 ; 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
 
 ## 3. Ce qu'on retient pour 70 %
 
