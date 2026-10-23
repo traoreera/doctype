@@ -209,7 +209,7 @@ export const fetchDependents = (fields: readonly FieldMeta[], linkName: string):
 export const fetchSource = (f: FieldMeta): string => f.fetch_from?.split('.')[1] ?? ''
 
 /** Le champ qui NOMME le document (`naming: {field: code}`) : il ne change plus une fois le document créé. */
-const namingField = (meta: DocTypeMeta): string | null => (typeof meta.naming === 'object' && 'field' in meta.naming ? meta.naming.field : null)
+export const namingField = (meta: DocTypeMeta): string | null => (typeof meta.naming === 'object' && 'field' in meta.naming ? meta.naming.field : null)
 
 /**
  * `status` : l'état du document (`docstatus`). Soumis, il est figé SAUF ses champs `allow_on_submit` ; le serveur le revérifie.
@@ -225,7 +225,10 @@ export function fieldStates(meta: DocTypeMeta, values: Values, saved: Values | n
     const frozenField = status === SUBMITTED && f.allow_on_submit !== true
     // Un document existant : le serveur évalue la lecture seule sur l'état d'AVANT. Un nouveau : l'interface suit les valeurs.
     const readOnly = f.read_only === true || !!f.fetch_from || lockedOnce || frozenField || (f.read_only_depends_on ? evaluate(f.read_only_depends_on, saved ?? values) : false)
-    out[f.fieldname] = { visible: !f.hidden && conditionVisible, required: (f.required && conditionVisible) || mandatory, readOnly }
+    // Figé (soumis, hors `allow_on_submit`), un champ ne se remplit plus : l'exiger bloquerait toute modification du document. Le serveur
+    // n'exige d'ailleurs l'obligation d'un habillage, rendue après la soumission, que des champs encore modifiables.
+    const required = !frozenField && ((f.required && conditionVisible) || mandatory)
+    out[f.fieldname] = { visible: !f.hidden && conditionVisible, required, readOnly }
   }
   return out
 }

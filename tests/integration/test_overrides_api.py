@@ -71,6 +71,26 @@ async def test_a_form_override_replaces_the_yaml_layout_and_can_be_removed(tmp_p
         assert (await h.http("GET", "/meta/Order", token=t)).json()["layout"][0]["section"] is None
 
 
+async def test_a_form_override_binds_writes_of_its_organisation_through_the_route(tmp_path):
+    async with boot_host(tmp_path, inline_plugins=shop_plugin()) as h:
+        t = h.token(permissions=GRANTS)
+        body = {"fields": {"note": {"mandatory": True}}}
+        assert (await h.http("PUT", "/override/form/Order", token=t, json={"config": body})).status_code == 200
+        meta = (await h.http("GET", "/meta/Order", token=t)).json()
+        assert next(f for f in meta["fields"] if f["fieldname"] == "note")["required"] is True
+        # L'éditeur lit ce que le YAML impose, à part : `/meta` ne distingue plus `note` (habillage) de `title` (définition).
+        assert (await h.http("GET", "/override/form/Order", token=t)).json()["definition"] == {"title": {"required": True}}
+        r = await h.http("POST", "/doc/Order", token=t, json={"data": {"title": "Sans remarque"}})
+        assert r.status_code == 422 and r.json()["detail"]["details"][0]["field"] == "note", r.text
+        assert (await h.http("POST", "/doc/Order", token=t, json={"data": {"title": "T", "note": "n"}})).status_code == 201
+        # Une autre organisation n'est pas tenue par cet habillage.
+        globex = h.token(sub="bob", tenant="globex", permissions=GRANTS)
+        assert (await h.http("POST", "/doc/Order", token=globex, tenant="globex", json={"data": {"title": "Ailleurs"}})).status_code == 201
+        # Un habillage qui rendrait facultatif ce que le YAML exige est refusé.
+        loose = await h.http("PUT", "/override/form/Order", token=t, json={"config": {"fields": {"title": {"mandatory": False}}}})
+        assert loose.status_code == 422 and "resserrer" in loose.text
+
+
 async def test_a_workspace_override_replaces_the_plugin_page(tmp_path):
     async with boot_host(tmp_path, inline_plugins=shop_plugin()) as h:
         t = h.token(permissions=GRANTS)

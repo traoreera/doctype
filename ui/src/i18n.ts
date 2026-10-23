@@ -915,4 +915,27 @@ export const t = {
   rights: {
     readOnlyBadge: 'Lecture seule',
   },
+  // C4.3 : les propriétés d'écriture d'un champ, réglées par l'habillage de l'organisation et appliquées par le serveur.
+  overrideProps: {
+    title: 'Propriétés des champs',
+    hint: 'Pour votre organisation. Obligatoire, lecture seule et valeur par défaut (à la création) : le serveur les applique à chaque enregistrement ; Masqué ne change que l’affichage. Une case grisée et cochée vient de la définition : un habillage ne peut que resserrer.',
+    fixJson: 'Corrigez d’abord le JSON ci-dessous : le tableau écrit dedans.',
+    field: 'Champ',
+    mandatory: 'Obligatoire',
+    readOnly: 'Lecture seule',
+    hidden: 'Masqué',
+    default: 'Valeur par défaut',
+    json: 'Disposition et retouches (JSON)',
+    fromDefinition: 'Imposé par la définition du type',
+    opaque: 'Le serveur écrit ce champ à sa façon (table, secret, fichier ou copie d’un document lié) : un habillage n’y touche pas',
+    noDefault: 'Pas de valeur par défaut pour ce champ',
+    definitionDefault: 'Définition :',
+    today: 'Aujourd’hui',
+    now: 'Maintenant',
+    mandatoryOf: (label: string) => `Obligatoire : ${label}`,
+    readOnlyOf: (label: string) => `Lecture seule : ${label}`,
+    hiddenOf: (label: string) => `Masqué : ${label}`,
+    defaultOf: (label: string) => `Valeur par défaut : ${label}`,
+    clearDefault: (label: string) => `Retirer la valeur par défaut de ${label}`,
+  },
 }

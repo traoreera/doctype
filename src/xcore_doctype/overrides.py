@@ -4,7 +4,8 @@ Le YAML reste la source de vérité : un habillage s'y ajoute, par tenant, et se
 `(tenant_id, kind, target)`). Trois genres (`kind`) :
 
 - `workspace` : le corps d'un espace de travail (`workspaces.WorkspaceDef` moins `schema_version`/`name`, qui viennent de la cible) ;
-- `form` : la disposition d'un formulaire (`layout`) et des retouches de champ (`fields` : `label`, `hidden`, `description`) ;
+- `form` : la disposition d'un formulaire (`layout`) et des retouches de champ (`fields` : `label`, `hidden`, `description`, qui ne changent que
+  l'affichage, et `read_only`, `mandatory`, `default`, que le SERVEUR applique à l'écriture pour l'organisation : `form_rules`) ;
 - `workspace_user`, `dashboard_user` : la disposition PERSONNELLE d'un utilisateur (même corps), qui passe avant celle de l'organisation ;
 - `dashboard` : le tableau de bord d'un DocType (`blocks`, comme `views.dashboard` de sa définition ; `doctype` y est implicite).
 
@@ -20,8 +21,12 @@ from typing import Any, Mapping, Sequence
 
 from pydantic import TypeAdapter, ValidationError
 
+from . import fieldtypes
+from .builder import NO_RULES, FormRules
 from .dashboards import MAX_BLOCKS, DashboardBlock, check_measured
+from .decimals import canonical
 from .errors import ValidationFailed
+from .schema import DECIMAL_TYPES, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField
 from .workspaces import WorkspaceDef, parse_workspace
 
 __all__ = [
@@ -38,6 +43,8 @@ __all__ = [
     "workspace_from_override",
     "validate_form_override",
     "apply_form_override",
+    "form_rules",
+    "form_base",
 ]
 
 KIND_WORKSPACE = "workspace"
@@ -47,7 +54,11 @@ KIND_DASHBOARD = "dashboard"
 KIND_WORKSPACE_USER = "workspace_user"
 KIND_DASHBOARD_USER = "dashboard_user"
 
-_FIELD_KEYS = ("label", "hidden", "description")
+# Ce qu'un habillage retouche sur un champ : l'AFFICHAGE (`/meta` seulement)...
+_DISPLAY_KEYS = ("label", "hidden", "description")
+# ... et l'ÉCRITURE (le serveur l'applique pour l'organisation, voir `form_rules`) : il ne fait que RESSERRER le YAML.
+_WRITE_KEYS = ("read_only", "mandatory", "default")
+_FIELD_KEYS = _DISPLAY_KEYS + _WRITE_KEYS
 
 
 def user_target(name: str, owner: str) -> str:
@@ -104,7 +115,8 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
     """Valide un habillage de formulaire et rend sa forme canonique (`{"layout": [...], "fields": {...}}`).
 
     `layout` : mêmes règles que la clé `layout` d'une définition (champ connu, non caché, placé une seule fois, ≤ 4 colonnes).
-    `fields` : des retouches (`label`, `hidden`, `description`) sur des champs connus.
+    `fields` : des retouches sur des champs connus, d'affichage (`label`, `hidden`, `description`) ou d'écriture (`read_only`, `mandatory`,
+    `default` : voir `_tightening`, qui dit ce qu'un habillage ne peut pas faire).
     """
     if not isinstance(config, dict):
         raise ValidationFailed("habillage de formulaire : le corps doit être un objet")
@@ -176,7 +188,7 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
                 problems.append(f"fields.{name}: clés inconnues {sorted(bad)}")
                 continue
             entry: dict[str, Any] = {}
-            for key in _FIELD_KEYS:
+            for key in _DISPLAY_KEYS:
                 if key not in spec:
                     continue
                 value = spec[key]
@@ -188,6 +200,9 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
                     problems.append(f"fields.{name}.{key}: du texte non vide")
                     continue
                 entry[key] = value
+            tightened, refused = _tightening(compiled, fields[name], spec)
+            entry.update(tightened)
+            problems += refused
             if entry:
                 clean[name] = entry
         if problems:
@@ -196,8 +211,143 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
     return out
 
 
-def apply_form_override(meta: dict[str, Any], config: Any) -> None:
-    """Applique un habillage de formulaire au méta rendu, en place. Silencieux si l'habillage ne concerne plus de champ connu."""
+def _opaque(f: FieldDef) -> str | None:
+    """Pourquoi ce champ échappe aux retouches d'écriture d'un habillage, ou `None`. Le serveur l'écrit ou le garde à sa façon : une table se
+    valide ligne à ligne, un secret se relit masqué (scellé), un fichier se dépose puis se cite, un `fetch_from` se recopie du document lié.
+    Ni obligatoire, ni lecture seule, ni valeur par défaut : ce que le YAML en dit reste la seule règle (les mêmes que `/bulk` écarte)."""
+    if f.fieldtype == "Table":
+        return "une table se valide ligne à ligne"
+    if f.fieldtype == "Password":
+        return "un secret se relit masqué"
+    if f.fieldtype in FILE_TYPES:
+        return "un fichier se dépose, il ne se saisit pas"
+    if f.fetch_from is not None:
+        return "un champ `fetch_from` est recopié du document lié par le serveur"
+    return None
+
+
+def _no_default(compiled: Any, f: FieldDef) -> str | None:
+    """Pourquoi ce champ ne peut pas recevoir de valeur par défaut d'un habillage (les règles du YAML : `schema.FieldDef._check`, et plus), ou `None`."""
+    if (why := _opaque(f)) is not None:
+        return why
+    if f.fieldtype in NO_DEFAULT_TYPES:
+        return f"un champ {f.fieldtype} n'a pas de valeur par défaut"
+    naming = compiled.definition.naming
+    if f.unique or (isinstance(naming, NamingField) and naming.field == f.fieldname):
+        # Chaque création sans valeur recevrait la même : la seconde serait refusée (doublon, ou nom déjà pris).
+        return "une valeur unique (ou qui nomme le document) ne se devine pas"
+    return None
+
+
+def _default_value(compiled: Any, f: FieldDef, value: Any) -> Any:
+    """La valeur par défaut sous sa forme ÉCRITE : validée par le type du champ comme une écriture (stricte : `"12"` n'est pas 12, un flottant
+    n'est pas un Decimal), canonique (`"12.5"` -> `"12.500"`). `today` (Date) et `now` (Datetime) se résolvent à chaque création, comme dans le YAML."""
+    if (f.fieldtype == "Date" and value == TODAY) or (f.fieldtype == "Datetime" and value == fieldtypes.NOW):
+        return value
+    return compiled.adapters[f.fieldname].validate_python(value)
+
+
+def _tightening(compiled: Any, f: FieldDef, spec: Mapping[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Les retouches d'ÉCRITURE d'un champ (`read_only`, `mandatory`, `default`) : leur forme canonique, et ce qui est refusé.
+
+    Un habillage ne fait que RESSERRER : il ne rend ni facultatif un champ obligatoire du YAML, ni modifiable un champ en lecture seule.
+    Aucune retouche d'écriture sur une table, un secret, un fichier ni un `fetch_from` (`_opaque`). Un champ rendu obligatoire doit pouvoir
+    être rempli : ni caché (YAML ou habillage), ni en lecture seule ; et un champ obligatoire du YAML ne se verrouille que s'il a une valeur
+    par défaut (le Desk ne saisit pas un champ en lecture seule, même à la création). Une valeur par défaut est validée par le type du champ,
+    comme une écriture, jamais sur une valeur unique ni sur le champ qui nomme le document. Ce qui est refusé manque à la forme canonique :
+    `form_rules` s'en sert aussi pour relire, tolérante, un habillage devenu invalide.
+    """
+    name = f.fieldname
+    opaque = _opaque(f)
+    out: dict[str, Any] = {}
+    problems: list[str] = []
+    if spec.get("default") is not None:  # `default: null` : pas de défaut d'habillage (celui du YAML s'applique)
+        reason = _no_default(compiled, f)
+        if reason is not None:
+            problems.append(f"fields.{name}.default: pas de valeur par défaut ici ({reason})")
+        else:
+            try:
+                out["default"] = _default_value(compiled, f, spec["default"])
+            except (ValidationError, ValueError, TypeError):
+                problems.append(f"fields.{name}.default: ce n'est pas une valeur de {f.fieldtype} (écriture stricte)")
+    if "read_only" in spec:
+        value = spec["read_only"]
+        if not isinstance(value, bool):
+            problems.append(f"fields.{name}.read_only: doit être un booléen")
+        elif not value and f.read_only:
+            problems.append(f"fields.{name}.read_only: le champ est en lecture seule dans la définition (un habillage ne fait que resserrer)")
+        elif value and not f.read_only and opaque is not None:
+            problems.append(f"fields.{name}.read_only: un habillage ne le verrouille pas ({opaque})")
+        elif value and not f.read_only and f.required and f.default is None and "default" not in out:
+            problems.append(f"fields.{name}.read_only: un champ obligatoire sans valeur par défaut ne se verrouille pas (personne ne pourrait le remplir)")
+        else:
+            out["read_only"] = value
+    if "mandatory" in spec:
+        value = spec["mandatory"]
+        locked = f.read_only or out.get("read_only") is True
+        if not isinstance(value, bool):
+            problems.append(f"fields.{name}.mandatory: doit être un booléen")
+        elif not value and f.required:
+            problems.append(f"fields.{name}.mandatory: le champ est obligatoire dans la définition (un habillage ne fait que resserrer)")
+        elif value and not f.required and opaque is not None:
+            problems.append(f"fields.{name}.mandatory: un habillage ne le rend pas obligatoire ({opaque})")
+        elif value and not f.required and (f.hidden or spec.get("hidden") is True):
+            problems.append(f"fields.{name}.mandatory: un champ caché ne peut pas être obligatoire (personne ne pourrait le remplir)")
+        elif value and not f.required and locked:
+            problems.append(f"fields.{name}.mandatory: un champ en lecture seule ne peut pas être obligatoire (personne ne pourrait le remplir)")
+        else:
+            out["mandatory"] = value
+    return out, problems
+
+
+def form_base(compiled: Any) -> dict[str, dict[str, Any]]:
+    """Ce que la DÉFINITION impose à chaque champ, habillage à part (`required`, `read_only`, `hidden`, `default`), pour les seuls champs qui en
+    ont. `/meta` ne le dit plus une fois l'habillage appliqué ; l'éditeur du Desk en a besoin pour griser ce qu'un habillage ne desserre pas."""
+    out: dict[str, dict[str, Any]] = {}
+    for f in compiled.definition.fields:
+        entry: dict[str, Any] = {key: True for key in ("required", "read_only", "hidden") if getattr(f, key)}
+        if f.default is not None:
+            entry["default"] = canonical(f.default, f.decimals) if f.fieldtype in DECIMAL_TYPES else f.default
+        if entry:
+            out[f.fieldname] = entry
+    return out
+
+
+def form_rules(compiled: Any, config: Any) -> FormRules:
+    """Ce que l'habillage de formulaire stocké (`config`) resserre à l'ÉCRITURE, contre la définition ACTUELLE (`builder.FormRules`).
+
+    Tolérante comme toute lecture d'habillage : une retouche devenue invalide (champ disparu, devenu caché ou `fetch_from` dans le YAML) est
+    ignorée, les autres s'appliquent. `/meta` montre exactement ces règles (`apply_form_override`) : le Desk et le serveur voient les mêmes.
+    """
+    tweaks = config.get("fields") if isinstance(config, dict) else None
+    if not isinstance(tweaks, dict) or not tweaks:
+        return NO_RULES
+    fields = compiled.definition.field_map
+    mandatory: set[str] = set()
+    read_only: set[str] = set()
+    defaults: dict[str, Any] = {}
+    for name, spec in tweaks.items():
+        f = fields.get(name)
+        if f is None or not isinstance(spec, dict):
+            continue
+        kept, _ = _tightening(compiled, f, spec)
+        if kept.get("mandatory") is True:
+            mandatory.add(name)
+        if kept.get("read_only") is True:
+            read_only.add(name)
+        if "default" in kept:
+            defaults[name] = kept["default"]
+    if not (mandatory or read_only or defaults):
+        return NO_RULES
+    return FormRules(frozenset(mandatory), frozenset(read_only), defaults)
+
+
+def apply_form_override(meta: dict[str, Any], config: Any, rules: FormRules | None = None) -> None:
+    """Applique un habillage de formulaire au méta rendu, en place. Silencieux si l'habillage ne concerne plus de champ connu.
+
+    `rules` (`form_rules`) : ce que le serveur applique à l'écriture, montré tel quel (`required`, `read_only`, `default`) pour que le Desk
+    demande ce que le serveur exigera.
+    """
     if not isinstance(config, dict):
         return
     layout = config.get("layout")
@@ -215,6 +365,14 @@ def apply_form_override(meta: dict[str, Any], config: Any) -> None:
                 field["description"] = spec["description"]
             if spec.get("hidden") is True:
                 field["hidden"] = True
+    for field in meta.get("fields", []) if rules is not None else ():
+        name = field.get("fieldname")
+        if name in rules.mandatory:
+            field["required"] = True
+        if name in rules.read_only:
+            field["read_only"] = True
+        if name in rules.defaults:
+            field["default"] = rules.defaults[name]
 
 
 _DASHBOARD = TypeAdapter(list[DashboardBlock])

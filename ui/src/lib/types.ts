@@ -297,10 +297,31 @@ export interface LayoutSection {
 /** Pour qui on enregistre une disposition : `user` (la mienne seulement) ou `org` (toute l'organisation). */
 export type LayoutScope = 'user' | 'org'
 
+/**
+ * Les retouches d'un champ par l'habillage d'un formulaire. `label`, `hidden`, `description` ne changent que l'affichage ; `read_only`, `mandatory`
+ * et `default` (création seulement) sont APPLIQUÉS par le serveur à l'écriture pour l'organisation, et ne font que resserrer le YAML.
+ */
+export interface FieldTweak {
+  label?: string
+  hidden?: boolean
+  description?: string
+  read_only?: boolean
+  mandatory?: boolean
+  default?: unknown
+}
+
+/** Ce que la DÉFINITION (le YAML) impose à un champ, habillage à part (`GET /override/form`, clé `definition` : seuls les champs qui en ont). */
+export interface FieldBase {
+  required?: boolean
+  read_only?: boolean
+  hidden?: boolean
+  default?: unknown
+}
+
 /** Habillage d'un formulaire (`xdt_layout_override`, genre `form`) : disposition et retouches de champ, par-dessus le YAML. */
 export interface FormOverride {
   layout?: LayoutSection[]
-  fields?: Record<string, { label?: string; hidden?: boolean; description?: string }>
+  fields?: Record<string, FieldTweak>
 }
 
 /** Habillage d'un espace de travail (genre `workspace`) : le corps d'un espace, sans `name`/`schema_version` (ils viennent de la cible). */
