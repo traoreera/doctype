@@ -53,7 +53,15 @@ quel : un plugin de confiance peut déclarer, ou désactiver, les grants d'un au
 **Proposition (deux petits changements, dans deux dépôts).** xcore force `source` au nom du plugin émetteur dans `_ScopedEvents.emit` ;
 xauth ignore un `rbac.declare` dont `event.source != data["plugin"]`. Comparer `source` seul, sans le changement d'xcore, ne protège rien.
 
-## 7. Documentation
+## 7. Le backend de l'ordonnanceur n'est pas lisible publiquement
+
+`SchedulerService` (`xcore/services/scheduler/service.py`) garde sa configuration dans `self._config` et n'expose que
+`health_check()` (tourne / ne tourne pas). Un plugin qui veut REFUSER de planifier quand le backend est `memory` — sans verrou
+distribué, chaque processus exécuterait le job — doit lire `svc._config.backend`, un attribut privé. `WorkerService`, lui, a un
+`status()` public qui rend son broker et ses files. Proposition : le même `status()` sur `SchedulerService` (backend, url
+masquée, nombre de jobs, état), ou au minimum une propriété `backend`.
+
+## 8. Documentation
 
 `EventBus.emit` n'annule rien et avale les erreurs de ses abonnés ; `call_plugin` est absent en sandbox ; les routes d'un plugin
 contournent le pipeline (ni `PermissionEngine`, ni rate limit, ni ContextVar) ; `permissions` absent d'un manifeste signifie `deny_all` ;
