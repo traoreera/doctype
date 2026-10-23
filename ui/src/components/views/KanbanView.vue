@@ -9,6 +9,7 @@ import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone } from '@/lib/docstatus'
 import { layerFilters, matchesFilter, passesLater } from '@/lib/filters'
+import { savedFieldLocked } from '@/lib/form'
 import { formatCell } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import type { DocRecord, DocTypeMeta, FieldMeta, Filters } from '@/lib/types'
@@ -44,7 +45,9 @@ const cardFields = computed<FieldMeta[]>(() =>
 const board = reactive<Record<string, Column>>({})
 const canWrite = computed(() => props.meta.rights.write !== 'none')
 const canCreate = computed(() => props.meta.rights.create !== 'none')
-const draggable = (r: DocRecord): boolean => canWrite.value && (!props.meta.submittable || r.docstatus === 0)
+// Le champ des colonnes verrouillé (lecture seule du YAML ou de l'organisation, condition…) : le serveur refuserait le déplacement.
+const draggable = (r: DocRecord): boolean =>
+  canWrite.value && (!props.meta.submittable || r.docstatus === 0) && !(field.value && savedFieldLocked(props.meta, field.value.fieldname, r))
 
 const tickets: Record<string, number> = {}
 

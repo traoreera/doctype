@@ -349,6 +349,23 @@ class TestDetachingAField:
                 await env.lib.detach(HR, doctype="Card", name=card["name"], field=field, file_id=fid, version=card["version"])
             assert e.value.details[0]["type"] == refusal
 
+    async def test_a_rule_of_the_organisation_counts_like_one_of_the_definition(self, env):
+        """C4.3 × C4.2 : vider une photo est une modification ; si l'organisation a rendu obligatoire un AUTRE champ que ce document n'a pas
+        encore, le serveur refusera la modification : l'écran ne la propose donc pas."""
+        env.docs._registry.register(parse_definition({
+            "schema_version": 1, "name": "Badge", "module": "hr",
+            "fields": [{"fieldname": "label", "fieldtype": "Text"}, {"fieldname": "photo", "fieldtype": "Image"}],
+            "permissions": {"read": ["hr:employee:read"], "write": ["hr:employee:write"], "create": ["hr:employee:write"]},
+        }))
+        photo = await up(env, doctype="Badge")
+        badge = await env.docs.create(HR, "Badge", {"photo": photo})
+        assert [i["can_detach"] for i in (await env.lib.list(HR, doctype="Badge"))["items"]] == [True]
+        await env.docs.save_form_override(HR, "Badge", {"fields": {"label": {"mandatory": True}}})
+        assert [i["can_detach"] for i in (await env.lib.list(HR, doctype="Badge"))["items"]] == [False]
+        with pytest.raises(ValidationFailed) as e:
+            await env.lib.detach(HR, doctype="Badge", name=badge["name"], field="photo", file_id=photo, version=badge["version"])
+        assert e.value.details[0] == {"field": "label", "msg": "Champ obligatoire", "type": "missing"}
+
     async def test_a_secret_beside_it_goes_back_masked_and_stays_what_it_was(self, env):
         """Un document qui porte un secret : toute lecture le rend `********`. Le renvoyer ainsi veut dire « inchangé », même quand le secret est figé (posé
         une fois, lecture seule) ou le document soumis (seul le justificatif `allow_on_submit` change) : la liste l'offre, le serveur l'accepte."""

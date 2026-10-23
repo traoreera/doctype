@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -300,7 +300,8 @@ export class ApiClient {
 
   // ── Habillages (overrides) ─────────────────────────────────
   /** L'habillage de formulaire du tenant pour ce type (vide s'il n'y en a pas). */
-  formOverride(doctype: string): Promise<{ doctype: string; config: FormOverride }> {
+  /** `definition` : ce que le YAML impose à chaque champ (l'éditeur grise d'après lui ce qu'un habillage ne desserre pas). */
+  formOverride(doctype: string): Promise<{ doctype: string; config: FormOverride; definition?: Record<string, FieldBase> }> {
     return this.call('GET', `/override/form/${encodeURIComponent(doctype)}`)
   }
 

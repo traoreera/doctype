@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .builder import CompiledDocType
+from .builder import NO_RULES, CompiledDocType, FormRules
 from .collaboration import CollaborationService
 from .context import RequestContext
 from .document import DEFAULT_PAGE, MAX_PAGE, DocumentService
@@ -69,8 +69,10 @@ class FileLibrary:
             rows, total, counts = await query.cited_files(
                 citers, doctype=doctype, search=search or None, order_by=order_by, descending=descending, limit=limit, offset=offset
             )
+        # Les règles de formulaire de l'ORGANISATION (C4.3) comptent aussi : un champ qu'elle rend obligatoire ou en lecture seule ne se vide pas.
+        rules = {dt: await self._docs._form_rules(ctx, self._docs._registry.get(dt)) for dt in sorted({r["doctype"] for r in rows if r["attachment_id"] is None})}
         return {
-            "items": [self._item(ctx, r) for r in rows],
+            "items": [self._item(ctx, r, rules.get(r["doctype"], NO_RULES)) for r in rows],
             "total": total,
             "limit": limit,
             "offset": offset,
@@ -116,7 +118,7 @@ class FileLibrary:
     def _label(self, doctype: str) -> str:
         return self._docs._registry.get(doctype).definition.label or doctype
 
-    def _item(self, ctx: RequestContext, row: dict[str, Any]) -> dict[str, Any]:
+    def _item(self, ctx: RequestContext, row: dict[str, Any], rules: FormRules = NO_RULES) -> dict[str, Any]:
         compiled = self._docs._registry.get(row["doctype"])
         d = compiled.definition
         attachment = row["attachment_id"]
@@ -128,7 +130,7 @@ class FileLibrary:
             field_label = f.label or f.fieldname
             # Vider le champ est une modification : il faut pouvoir écrire CE document, qu'il soit encore modifiable et que le champ puisse être vide.
             editable = row["docstatus"] == DRAFT or (row["docstatus"] == SUBMITTED and f.fieldname in d.editable_after_submit)
-            can_detach = row["writable"] and editable and self._may_empty(compiled, f.fieldname, row["data"] or {})
+            can_detach = row["writable"] and editable and self._may_empty(compiled, f.fieldname, row["data"] or {}, rules)
         return {
             "file_id": row["file_id"],
             "filename": row["filename"],
@@ -149,12 +151,12 @@ class FileLibrary:
         }
 
     @staticmethod
-    def _may_empty(compiled: CompiledDocType, field: str, stored: dict[str, Any]) -> bool:
+    def _may_empty(compiled: CompiledDocType, field: str, stored: dict[str, Any], rules: FormRules = NO_RULES) -> bool:
         """Le document enregistré, sans ce champ, passerait-il les contrôles d'une écriture de client ? Ceux mêmes de `validate_data` (`required` quand le
         champ est visible, `mandatory_depends_on`, `read_only` / `read_only_depends_on` jugés sur l'état enregistré, `set_only_once` et le champ qui nomme le
         document), évalués sur les données STOCKÉES : ne pas proposer ce que le serveur refusera, ne pas taire ce qu'il accepterait."""
         after = {k: v for k, v in stored.items() if k != field}
-        return not compiled.rule_errors(after, stored)
+        return not compiled.rule_errors(after, stored, rules)
 
     # ── Détacher ──────────────────────────────────────────────
     async def detach(

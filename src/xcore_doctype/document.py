@@ -36,12 +36,13 @@ import json
 import re
 import secrets
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from datetime import UTC, date, datetime, tzinfo
 from types import MappingProxyType
 from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, Sequence
 
 from . import aggregation, fieldtypes, integrity, memory
-from .builder import CompiledDocType
+from .builder import NO_RULES, CompiledDocType, FormRules
 from .decimals import canonical
 from .context import RequestContext
 from .db.rls import bind_tenant
@@ -75,6 +76,9 @@ from .overrides import (
     KIND_WORKSPACE_USER,
     apply_dashboard_override,
     apply_form_override,
+    changed_rules,
+    form_base,
+    form_rules,
     keep_hidden,
     validate_dashboard_override,
     validate_form_override,
@@ -142,7 +146,8 @@ class _Logger(Protocol):
 
 
 # Revalide une valeur (schéma strict, puis périmètre d'écriture) et retourne les données à stocker. `old` n'est fourni
-# que pour l'entrée d'un CLIENT : il active `read_only_depends_on`, qu'un hook a le droit de contourner.
+# que pour l'entrée d'un CLIENT : il active `read_only_depends_on`, qu'un hook a le droit de contourner. `rules` (l'habillage
+# de l'organisation : obligatoire, lecture seule) aussi, pour l'entrée d'un client seulement.
 Finalize = Callable[..., dict[str, Any]]
 
 
@@ -405,7 +410,8 @@ class DocumentService:
                         if kind in mine:
                             cfield[kind] = mine[kind]
         if override:
-            apply_form_override(meta, override)
+            # Les retouches d'écriture (obligatoire, lecture seule, défaut) sont montrées telles que le serveur les appliquera : `form_rules`, tolérante.
+            apply_form_override(meta, override, form_rules(compiled, override))
         if dashboard and apply_dashboard_override(meta, dashboard, d.name):
             meta["views"]["dashboard_layer"] = dashboard_layer  # d'où vient ce tableau de bord : `user` (le sien) ou `org`
         meta["views"]["dashboard_shareable"] = rights["write"] != "none"  # il peut l'enregistrer pour toute l'organisation
@@ -421,25 +427,30 @@ class DocumentService:
             if found is None:
                 raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
             return self._present(found)
+        virtual = compiled.definition.single and name == doctype
+        override = None
         async with self._query(ctx) as q:
             doc = await q.get(doctype, name, scope=scope)
-        if doc is None and compiled.definition.single and name == doctype:
-            return self._virtual_single(compiled)  # jamais enregistré : ses défauts, version 0
+            if doc is None and virtual:
+                override = await q.get_override(KIND_FORM, doctype)  # ses défauts sont aussi ceux de l'habillage de l'organisation
+        if doc is None and virtual:
+            return self._virtual_single(compiled, form_rules(compiled, (override or {}).get("config")))  # jamais enregistré : ses défauts, version 0
         if doc is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         return self._present(doc)
 
-    def _virtual_single(self, compiled: CompiledDocType) -> dict[str, Any]:
+    def _virtual_single(self, compiled: CompiledDocType, rules: FormRules = NO_RULES) -> dict[str, Any]:
         """Un document unique qu'on n'a pas encore enregistré : une page de réglages doit s'ouvrir, pleine de ses valeurs par défaut. `version: 0`
-        dit qu'il n'existe pas encore ; le premier enregistrement (`update` avec la version 0) le crée."""
+        dit qu'il n'existe pas encore ; le premier enregistrement (`update` avec la version 0) le crée. `rules` : l'habillage de l'organisation,
+        dont les défauts passent avant ceux du YAML (comme à la création)."""
         d = compiled.definition
         now = self._clock().isoformat()
         defaults = {
             f.fieldname: (canonical(f.default, f.decimals) if f.fieldtype in ("Decimal", "Currency") else f.default)
             for f in d.fields
-            if f.default is not None and f.default not in (TODAY, fieldtypes.NOW) and f.fieldtype != "Table"
+            if f.default is not None and f.default not in (TODAY, fieldtypes.NOW) and f.fieldtype != "Table" and f.fieldname not in rules.defaults
         }
-        data = self._with_today(compiled, defaults)
+        data = self._with_today(compiled, self._with_defaults(compiled, defaults, rules, prefill=True))
         return {"doctype": d.name, "name": d.name, "owner": "", "creation": now, "modified": now, "version": 0, "docstatus": 0, "amended_from": None, "data": data}
 
     async def list(
@@ -727,30 +738,58 @@ class DocumentService:
         return self.get_meta(ctx, doctype, override=(found or {}).get("config"), dashboard=(board or {}).get("config"), dashboard_layer=layer)
 
     async def form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
-        """L'habillage de formulaire de ce type pour ce tenant (vide s'il n'y en a pas). Il faut pouvoir LIRE le type."""
+        """L'habillage de formulaire de ce type pour ce tenant (vide s'il n'y en a pas). Il faut pouvoir LIRE le type. `definition` : ce que le YAML
+        impose à chaque champ (obligatoire, lecture seule, masqué, défaut), que `/meta` ne distingue plus de l'habillage (`overrides.form_base`)."""
         self._enter(ctx, "doc.override.form.get", doctype)
-        self._scope(ctx, self._doctype(doctype), "read")
+        compiled = self._doctype(doctype)
+        self._scope(ctx, compiled, "read")
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
-        return {"doctype": doctype, "config": (found or {}).get("config", {})}
+        return {"doctype": doctype, "config": (found or {}).get("config", {}), "definition": form_base(compiled)}
 
     async def save_form_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
-        """Enregistre l'habillage d'un formulaire. Il faut pouvoir ÉCRIRE le type : cela change sa présentation pour tous."""
+        """Enregistre l'habillage d'un formulaire. Il faut pouvoir ÉCRIRE le type : cela change sa présentation pour tous. Ses règles d'écriture
+        (obligatoire, lecture seule, défaut) lient tout le monde : les poser, les changer ou les retirer exige de pouvoir écrire TOUS les documents
+        du type (`_check_rule_author`)."""
         self._enter(ctx, "doc.override.form.save", doctype)
         compiled = self._doctype(doctype)
-        self._scope(ctx, compiled, "write")
+        write = self._scope(ctx, compiled, "write")
         cleaned = validate_form_override(compiled, config)
         async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, doctype)
+            self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned)
             made = await q.put_override(KIND_FORM, doctype, owner=ctx.owner_id, config=cleaned)
         return {"doctype": doctype, "config": made["config"]}
 
     async def delete_form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
-        """Retire l'habillage d'un formulaire (le YAML reprend la main). Il faut pouvoir ÉCRIRE le type."""
+        """Retire l'habillage d'un formulaire (le YAML reprend la main). Il faut pouvoir ÉCRIRE le type, et TOUS ses documents s'il porte des
+        règles d'écriture (les retirer délie tout le monde)."""
         self._enter(ctx, "doc.override.form.delete", doctype)
-        self._scope(ctx, self._doctype(doctype), "write")
+        compiled = self._doctype(doctype)
+        write = self._scope(ctx, compiled, "write")
         async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, doctype)
+            self._check_rule_author(write, compiled, (found or {}).get("config"), {})
             await q.delete_override(KIND_FORM, doctype)
         return {"doctype": doctype}
+
+    @staticmethod
+    def _check_rule_author(write: Scope, compiled: CompiledDocType, stored: Any, wanted: Any) -> None:
+        """Les règles d'écriture d'un habillage tiennent ceux qui n'écrivent qu'une PARTIE des documents (`if_owner`) : ils ne les posent, ne
+        les changent ni ne les retirent, sinon chacun lèverait la règle qui le lie (ou en imposerait une aux documents des autres). Il faut un
+        périmètre d'écriture total (`level == "all"`, comme l'auteur d'une règle de notification lit tout). Libellés, masquage et disposition
+        gardent la règle commune : un habillage qui les change en laissant les règles telles quelles passe."""
+        if write.level == "all":
+            return
+        changed = changed_rules(compiled, stored, wanted)
+        if changed:
+            name = compiled.definition.name
+            raise ValidationFailed(
+                f"Obligatoire, lecture seule et valeur par défaut s'imposent à tous : seul qui peut modifier TOUS les documents de {name} les règle"
+                f" (champs : {', '.join(changed)})",
+                code="form_rules_reserved",
+                details=[{"field": f"fields.{n}", "msg": "Réservé à qui peut modifier tous les documents du type", "type": "form_rules_reserved"} for n in changed],
+            )
 
     @staticmethod
     def _layer(scope: str | None) -> str:
@@ -897,7 +936,12 @@ class DocumentService:
         if name is None:
             name = self._requested_name(compiled, requested)
         finalize = self._finalizer(compiled, scope, ctx.owner_id)
-        clean = finalize(self._with_today(compiled, data))
+        rules = await self._form_rules(ctx, compiled)
+        if amended_from is not None:
+            # Un amendement est la copie qu'on va CORRIGER : ce que l'organisation exige depuis s'y saisira (la mise à jour et la soumission
+            # l'exigent). L'exiger ici rendrait l'amendement impossible, la copie se faisant sans saisie. Ses défauts, eux, s'appliquent.
+            rules = replace(rules, mandatory=frozenset())
+        clean = finalize(self._with_today(compiled, self._with_defaults(compiled, data, rules)), rules=rules)
         series = None if name else compiled.definition.series
         by_field = naming if isinstance(naming, NamingField) and not name else None
         # `hash` : le nom existe d'emblée. `owner` : l'identifiant de celui qui crée (un document par utilisateur ; le second est refusé, 409).
@@ -960,7 +1004,12 @@ class DocumentService:
             return await self._update_virtual(ctx, compiled, write, current, data, version, source)
         self._require_hooks(compiled)
         finalize = self._finalizer(compiled, write, current.owner)
-        clean = finalize(data, old=current.data)
+        rules = await self._form_rules(ctx, compiled)
+        if after_submit:
+            # Soumis, seuls ses champs `allow_on_submit` se changent encore : l'obligation de l'habillage ne vaut que pour eux. Un champ figé
+            # qu'on a rendu obligatoire après la soumission ne se remplira plus, le document resterait sinon immodifiable.
+            rules = replace(rules, mandatory=rules.mandatory & frozenset(compiled.definition.editable_after_submit))
+        clean = finalize(data, old=current.data, rules=rules)
         if after_submit:
             self._check_frozen(compiled, clean, current.data)
         clean = await self._action_phase(ctx, compiled, name, clean, current.data, finalize)
@@ -1046,7 +1095,7 @@ class DocumentService:
             raise ValidationFailed(f"{doctype} est un document unique : pas d'action en lot", code="single_document")
         patch: dict[str, Any] = {}
         if action == "update":
-            patch = self._bulk_patch(compiled, data)
+            patch = self._bulk_patch(compiled, data, await self._form_rules(ctx, compiled))
         results = []
         for name in dict.fromkeys(names):
             try:
@@ -1069,8 +1118,9 @@ class DocumentService:
         return {"results": results, "done": done, "failed": len(results) - done}
 
     @staticmethod
-    def _bulk_patch(compiled: CompiledDocType, data: Any) -> dict[str, Any]:
-        """Les valeurs à poser : des champs SIMPLES et connus (ni tableau, ni secret, ni fichier, ni champ copié d'un autre document)."""
+    def _bulk_patch(compiled: CompiledDocType, data: Any, rules: FormRules = NO_RULES) -> dict[str, Any]:
+        """Les valeurs à poser : des champs SIMPLES et connus (ni tableau, ni secret, ni fichier, ni champ copié d'un autre document), modifiables
+        (ni en lecture seule dans le YAML, ni par l'habillage de l'organisation : `rules`)."""
         if not isinstance(data, dict) or not data:
             raise ValidationFailed("data : les champs à modifier, au moins un", code="bulk_data")
         by_name = compiled.definition.field_map
@@ -1079,7 +1129,7 @@ class DocumentService:
             f = by_name.get(key)
             if f is None:
                 errors.append({"field": key, "msg": "Champ inconnu", "type": "extra_forbidden"})
-            elif f.fieldtype == "Table" or f.fieldtype == "Password" or f.fieldtype in FILE_TYPES or f.fetch_from or f.read_only or f.hidden:
+            elif f.fieldtype == "Table" or f.fieldtype == "Password" or f.fieldtype in FILE_TYPES or f.fetch_from or f.read_only or f.hidden or key in rules.read_only:
                 errors.append({"field": key, "msg": "Ce champ ne se modifie pas en lot", "type": "bulk_field"})
         if errors:
             raise ValidationFailed(details=errors)
@@ -1174,8 +1224,8 @@ class DocumentService:
             raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {version})")
         self._require_hooks(compiled)
         if action == "submit":
-            try:  # la définition a pu changer depuis la saisie du brouillon : on ne fige pas ce qu'elle n'accepterait plus
-                compiled.validate_data(current.data)
+            try:  # la définition (ou l'habillage de l'organisation) a pu changer depuis la saisie du brouillon : on ne fige pas ce qu'elle n'accepterait plus
+                compiled.validate_data(current.data, rules=await self._form_rules(ctx, compiled))
             except ValidationFailed as e:
                 raise ValidationFailed("Ce brouillon ne respecte plus la définition : corrigez-le avant de le soumettre", details=e.details) from None
         async with self._query(ctx) as q:
@@ -1235,6 +1285,38 @@ class DocumentService:
         today = self._clock().astimezone(self._timezone).date().isoformat()
         now = fieldtypes.format_instant(self._clock())  # un Datetime est TOUJOURS en UTC
         return {**{k: today for k in dates if k not in data}, **{k: now for k in instants if k not in data}, **data}
+
+    def _with_defaults(self, compiled: CompiledDocType, data: Any, rules: FormRules, *, prefill: bool = False) -> Any:
+        """Pose les défauts de l'habillage de l'organisation (`rules.defaults`) dans les champs que le payload ne renseigne pas : à la CRÉATION
+        seulement, AVANT ceux du YAML (que le modèle ou `_with_today` posent ensuite, sur ce qui reste absent). `today` / `now` se résolvent ici,
+        dans le fuseau de l'organisation pour une date, comme ceux du YAML.
+
+        Jamais sur un champ obligatoire du YAML : son propre défaut n'est pas un défaut serveur (`builder.build_model`, un client d'API DOIT
+        l'envoyer), celui de l'organisation non plus, sinon il le rendrait facultatif. Il n'y est qu'un PRÉ-REMPLISSAGE du Desk (`/meta`), et du
+        document unique pas encore enregistré (`prefill`), que le Desk renvoie tel quel."""
+        if not rules.defaults or not isinstance(data, dict):
+            return data
+        fields = compiled.definition.field_map
+        out: dict[str, Any] = {}
+        for name, value in rules.defaults.items():
+            if name in data or name not in fields:
+                continue
+            if not prefill and fields[name].required and fields[name].depends_on is None:
+                continue
+            kind = fields[name].fieldtype
+            if kind == "Date" and value == TODAY:
+                value = self._clock().astimezone(self._timezone).date().isoformat()
+            elif kind == "Datetime" and value == fieldtypes.NOW:
+                value = fieldtypes.format_instant(self._clock())
+            out[name] = value
+        return {**out, **data}
+
+    async def _form_rules(self, ctx: RequestContext, compiled: CompiledDocType) -> FormRules:
+        """Ce que l'habillage de formulaire de l'ORGANISATION resserre à l'écriture (`overrides.form_rules`) : lu à chaque écriture d'un client,
+        jamais gardé en mémoire (un autre processus peut l'avoir changé). Un DocType sans habillage n'a pas de règle."""
+        async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, compiled.definition.name)
+        return form_rules(compiled, (found or {}).get("config"))
 
     def _submittable(self, name: str) -> CompiledDocType:
         compiled = self._doctype(name)
@@ -1500,8 +1582,9 @@ class DocumentService:
             return await q.purge_versions_before(before, doctype=doctype)
 
     def _finalizer(self, compiled: CompiledDocType, scope: Scope, owner: str) -> Finalize:
-        def finalize(data: Any, *, old: Mapping[str, Any] | None = None) -> dict[str, Any]:
-            clean = compiled.validate_data(data, old=old)
+        # `rules` : l'habillage de l'organisation (`_form_rules`), passé pour l'entrée d'un CLIENT seulement ; le résultat d'un hook en est exempt.
+        def finalize(data: Any, *, old: Mapping[str, Any] | None = None, rules: FormRules | None = None) -> dict[str, Any]:
+            clean = compiled.validate_data(data, old=old, rules=rules)
             self._check_written(scope, owner, clean)
             return clean
 
@@ -1952,7 +2035,8 @@ class DocumentService:
         """Création chez la source : schéma strict, périmètre d'écriture et liens vérifiés ICI, puis la source applique à sa vérité (et la revérifie).
         Aucune connexion n'est tenue pendant l'appel de la source (elle peut appeler un autre plugin, voire écrire dans la même base)."""
         finalize = self._finalizer(compiled, scope, ctx.owner_id)
-        clean = finalize(data)
+        rules = await self._form_rules(ctx, compiled)
+        clean = finalize(self._with_defaults(compiled, data, rules), rules=rules)
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, None)
         doc = self._checked(compiled, await self._call_source(compiled, source.insert(ctx, compiled.definition, clean)))
@@ -1962,7 +2046,7 @@ class DocumentService:
         self, ctx: RequestContext, compiled: CompiledDocType, write: Scope, current: StoredDoc, data: Any, version: int, source: DocumentSource
     ) -> dict[str, Any]:
         finalize = self._finalizer(compiled, write, current.owner)
-        clean = finalize(data, old=current.data)
+        clean = finalize(data, old=current.data, rules=await self._form_rules(ctx, compiled))
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, current.data)
         doc = self._checked(compiled, await self._call_source(compiled, source.update(ctx, compiled.definition, current.name, clean, version)))
