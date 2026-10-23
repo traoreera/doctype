@@ -8,25 +8,33 @@ import { computed, ref, watch } from 'vue'
 import CellValue from '@/components/CellValue.vue'
 import FieldInput from '@/components/FieldInput.vue'
 import { t } from '@/i18n'
-import { isOpaque, liveDefault, propRows, withProp, type PropKey, type PropRow } from '@/lib/overrideprops'
+import { liveDefault, propRows, withProp, type LockReason, type PropKey, type PropRow } from '@/lib/overrideprops'
 import type { FieldBase, FieldMeta, FormOverride } from '@/lib/types'
 
 /**
  * Éditeur d'habillage : du JSON validé par le SERVEUR (le Desk n'invente aucune règle de disposition). Pour un formulaire (`fields` fourni),
  * un tableau règle aussi les propriétés d'écriture de chaque champ (obligatoire, lecture seule, masqué, valeur par défaut) : il écrit dans
  * ce même JSON, qui reste la seule vérité, et grise ce que le serveur refuserait (`lib/overrideprops.ts`). `definition` : ce que le YAML
- * impose (`GET /override/form`), `naming` : le champ qui nomme le document.
+ * impose (`GET /override/form`), `naming` : le champ qui nomme le document, `rules` : `false` quand l'utilisateur n'écrit pas TOUS les
+ * documents du type (obligatoire, lecture seule et défaut lui sont alors refusés par le serveur : ils restent tels quels, grisés).
+ * `problem` : le refus du serveur au dernier enregistrement, montré dans la fenêtre, qui reste ouverte.
  */
-const props = defineProps<{
-  visible: boolean
-  title: string
-  initial: unknown
-  saving?: boolean
-  fields?: FieldMeta[]
-  definition?: Record<string, FieldBase> | null
-  naming?: string | null
-  doctype?: string
-}>()
+// `rules` vaut `true` sans indication : Vue lirait sinon une propriété booléenne absente comme `false`.
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    title: string
+    initial: unknown
+    saving?: boolean
+    fields?: FieldMeta[]
+    definition?: Record<string, FieldBase> | null
+    naming?: string | null
+    doctype?: string
+    rules?: boolean
+    problem?: string | null
+  }>(),
+  { rules: true },
+)
 const emit = defineEmits<{ (e: 'update:visible', value: boolean): void; (e: 'save', config: unknown): void; (e: 'reset'): void }>()
 
 const text = ref('{}')
@@ -56,7 +64,9 @@ const parsed = computed<FormOverride | null>(() => {
 
 // Ce que la définition impose vient du serveur (`definition`) ; sans lui, on le déduit de `/meta` (`fields`) moins l'habillage ENREGISTRÉ (`initial`).
 const rows = computed<PropRow[]>(() =>
-  props.fields ? propRows(props.fields, parsed.value, { definition: props.definition, applied: asConfig(props.initial), naming: props.naming }) : [],
+  props.fields
+    ? propRows(props.fields, parsed.value, { definition: props.definition, applied: asConfig(props.initial), naming: props.naming, rules: props.rules })
+    : [],
 )
 
 function setProp(fieldname: string, key: PropKey, value: unknown): void {
@@ -68,9 +78,18 @@ const labelOf = (row: PropRow): string => row.field.label || row.field.fieldname
 // Le champ de saisie du défaut : celui du formulaire, toujours effaçable (un défaut vidé rend la main à la définition).
 const inputFor = (f: FieldMeta): FieldMeta => ({ ...f, required: false })
 const liveLabel = (f: FieldMeta): string => (liveDefault(f) === 'today' ? t.overrideProps.today : t.overrideProps.now)
-/** Pourquoi une case est grisée sans être cochée par la définition : le serveur écrit ce champ à sa façon. */
-const lockedWhy = (row: PropRow, fromDefinition: boolean): string | undefined =>
-  fromDefinition ? t.overrideProps.fromDefinition : isOpaque(row.field) ? t.overrideProps.opaque : undefined
+const WHY: Record<LockReason, string> = {
+  definition: t.overrideProps.fromDefinition,
+  opaque: t.overrideProps.opaque,
+  condition: t.overrideProps.condition,
+  reserved: t.overrideProps.reserved,
+  unfilled: t.overrideProps.unfilled,
+}
+/** Pourquoi une case est grisée (`lib/overrideprops`, `why`), en mots, au survol de sa cellule. */
+const lockedWhy = (row: PropRow, key: PropKey): string | undefined => {
+  const reason = row.why[key]
+  return reason ? WHY[reason] : undefined
+}
 /** Le défaut du YAML, montré tant que l'habillage n'en pose pas : `today` / `now` se lisent en mots, le reste comme dans une liste. */
 const baseDefault = (row: PropRow): string | undefined =>
   row.base.default === 'today' || row.base.default === 'now' ? liveLabel(row.field) : undefined
@@ -91,10 +110,12 @@ function submit(): void {
 <template>
   <Dialog :visible="visible" modal :header="title" :style="{ width: fields?.length ? '920px' : '680px', maxWidth: '95vw' }" data-testid="override-dialog" @update:visible="emit('update:visible', $event)">
     <p class="desk-muted" style="margin-top: 0">{{ t.override.hint }}</p>
+    <Message v-if="problem" severity="error" class="banner-error" role="alert" data-testid="override-problem">{{ problem }}</Message>
 
     <section v-if="rows.length" class="props" data-testid="override-props">
       <h3 class="props-title">{{ t.overrideProps.title }}</h3>
       <p class="desk-muted props-hint">{{ t.overrideProps.hint }}</p>
+      <Message v-if="rules === false" severity="info" class="banner-error" data-testid="override-props-reserved">{{ t.overrideProps.reservedHint }}</Message>
       <Message v-if="!parsed" severity="warn" class="banner-error" data-testid="override-props-blocked">{{ t.overrideProps.fixJson }}</Message>
       <div class="props-scroll">
         <table class="props-table">
@@ -112,7 +133,7 @@ function submit(): void {
               <th scope="row" class="props-name">
                 {{ labelOf(row) }}<code class="desk-muted">{{ row.field.fieldname }}</code>
               </th>
-              <td :title="lockedWhy(row, row.base.required)">
+              <td :title="lockedWhy(row, 'mandatory')">
                 <Checkbox
                   :model-value="row.mandatory"
                   binary
@@ -122,7 +143,7 @@ function submit(): void {
                   @update:model-value="setProp(row.field.fieldname, 'mandatory', $event)"
                 />
               </td>
-              <td :title="lockedWhy(row, row.base.readOnly)">
+              <td :title="lockedWhy(row, 'read_only')">
                 <Checkbox
                   :model-value="row.readOnly"
                   binary
@@ -132,7 +153,7 @@ function submit(): void {
                   @update:model-value="setProp(row.field.fieldname, 'read_only', $event)"
                 />
               </td>
-              <td :title="row.base.hidden ? t.overrideProps.fromDefinition : undefined">
+              <td :title="lockedWhy(row, 'hidden')">
                 <Checkbox
                   :model-value="row.hidden"
                   binary
@@ -180,7 +201,11 @@ function submit(): void {
                     <CellValue :field="row.field" :value="row.base.default" :text="baseDefault(row)" />
                   </span>
                 </template>
-                <span v-else class="desk-muted" :title="t.overrideProps.noDefault">—</span>
+                <!-- Réservé : le défaut que l'organisation a posé se lit, il ne se change pas ici. -->
+                <span v-else-if="row.default !== undefined" class="props-live" :title="lockedWhy(row, 'default')" data-testid="prop-default-value">
+                  <CellValue :field="row.field" :value="row.default" :text="row.default === liveDefault(row.field) ? liveLabel(row.field) : undefined" />
+                </span>
+                <span v-else class="desk-muted" :title="lockedWhy(row, 'default') ?? t.overrideProps.noDefault">—</span>
               </td>
             </tr>
           </tbody>

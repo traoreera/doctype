@@ -19,7 +19,16 @@ from xcore_doctype.builder import NO_RULES
 from xcore_doctype.document import DocumentService
 from xcore_doctype.errors import ValidationFailed
 from xcore_doctype.hooks import HookRegistry
-from xcore_doctype.overrides import apply_form_override, form_rules, validate_form_override
+from xcore_doctype.overrides import (
+    MAX_FORM_TWEAKS,
+    MAX_OVERRIDE_BYTES,
+    apply_form_override,
+    changed_rules,
+    form_rules,
+    validate_dashboard_override,
+    validate_form_override,
+    validate_workspace_override,
+)
 from xcore_doctype.query import StoredDoc
 from xcore_doctype.registry import DocTypeRegistry
 from xcore_doctype.schema import parse_definition
@@ -58,6 +67,12 @@ TICKET = {
         {"fieldname": "code", "fieldtype": "Text", "unique": True},
         {"fieldname": "comment", "fieldtype": "Text", "allow_on_submit": True},
         {"fieldname": "urgent", "fieldtype": "Boolean"},
+        {"fieldname": "stamp", "fieldtype": "Datetime"},
+        {"fieldname": "payload", "fieldtype": "JSON"},
+        {"fieldname": "body", "fieldtype": "TextEditor"},
+        # Les conditions du YAML : obligatoire au-delà de 10 (comme `Customer.approver`), figé une fois fermé.
+        {"fieldname": "approver", "fieldtype": "Text", "mandatory_depends_on": "prio > 10"},
+        {"fieldname": "closed_by", "fieldtype": "Text", "read_only_depends_on": "status == 'Fermé'"},
     ],
 }
 SETTINGS = {
@@ -65,15 +80,30 @@ SETTINGS = {
     "name": "Crm Settings",
     "module": "crm",
     "single": True,
-    "fields": [{"fieldname": "motto", "fieldtype": "Text"}, {"fieldname": "level", "fieldtype": "Int", "default": 1}],
+    "fields": [
+        {"fieldname": "motto", "fieldtype": "Text"},
+        {"fieldname": "level", "fieldtype": "Int", "default": 1},
+        {"fieldname": "company", "fieldtype": "Text", "required": True},
+    ],
 }
 LEAD = {"schema_version": 1, "name": "Lead", "module": "crm", "source": "memory", "fields": [
     {"fieldname": "lead_name", "fieldtype": "Text"}, {"fieldname": "stage", "fieldtype": "Select", "options": ["Nouveau", "Qualifié"]},
 ]}
+# Comme `User Profile` ou `Customer` : chacun écrit les SIENS (`crm:profile:own`, `if_owner`), un gestionnaire tous (`crm:profile:write`).
+PROFILE = {"schema_version": 1, "name": "Profile", "module": "crm", "fields": [
+    {"fieldname": "full_name", "fieldtype": "Text", "required": True},
+    {"fieldname": "phone", "fieldtype": "Text"},
+    {"fieldname": "job_title", "fieldtype": "Text"},
+], "permissions": {
+    "read": ["crm:profile:read"],
+    "write": ["crm:profile:write", {"grant": "crm:profile:own", "if_owner": True}],
+    "create": ["crm:profile:write", "crm:profile:own"],
+}}
 
-GRANTS = [f"crm:{t}:{a}" for t in ("ticket", "client", "crm_settings", "lead") for a in ("read", "write", "delete", "submit", "cancel")]
+GRANTS = [f"crm:{t}:{a}" for t in ("ticket", "client", "crm_settings", "lead", "profile") for a in ("read", "write", "delete", "submit", "cancel")]
 ALICE = make_ctx("acme", "alice", permissions=GRANTS)
 GLOBEX = make_ctx("globex", "gus", permissions=GRANTS)
+OLGA = make_ctx("acme", "olga", permissions=["crm:profile:read", "crm:profile:own"])  # n'écrit que SES profils
 
 
 class Log:
@@ -96,11 +126,17 @@ class MemorySource(ReadOnlySource):
         self.docs[doc.name] = doc
         return doc
 
+    async def update(self, ctx, doctype, name, data, version):
+        old = self.docs[name]
+        doc = StoredDoc(doctype.name, name, dict(data), old.owner, old.creation, NOW, content_version(data))
+        self.docs[name] = doc
+        return doc
+
 
 class Env:
     def __init__(self, db, tables) -> None:
         reg = DocTypeRegistry()
-        for raw in (LINE, CLIENT, TICKET, SETTINGS, LEAD):
+        for raw in (LINE, CLIENT, TICKET, SETTINGS, LEAD, PROFILE):
             reg.register(parse_definition(raw))
         reg.validate_links()
         self.patch: dict = {}  # ce que le hook `t.before_save` pose (None : retire le champ)
@@ -210,12 +246,29 @@ class TestValidation:
             ({"due": {"default": "2026-1-5"}}, "écriture stricte"),
             ({"prio": {"mandatory": "oui"}}, "booléen"),
             ({"prio": {"read_only": 1}}, "booléen"),
+            # Les types sans valeur par défaut dans le YAML n'en reçoivent pas d'un habillage (`schema.NO_DEFAULT_TYPES`).
+            ({"payload": {"default": {"a": 1}}}, "un champ JSON n'a pas de valeur par défaut"),
+            ({"body": {"default": "<p>x</p>"}}, "un champ TextEditor n'a pas de valeur par défaut"),
+            # Une condition du YAML : verrouillé, `approver` ne se remplirait plus quand `prio > 10` l'exige ; exigé, `closed_by` resterait
+            # figé une fois le ticket fermé (ni rempli, ni rouvert).
+            ({"approver": {"read_only": True}}, "mandatory_depends_on"),
+            ({"approver": {"read_only": True, "default": "Zoé"}}, "mandatory_depends_on"),
+            ({"closed_by": {"mandatory": True}}, "read_only_depends_on"),
+            # Masquer un champ que le YAML exige sans défaut : le Desk ne le montre ni ne le vérifie, le serveur l'exige, plus rien ne se crée.
+            ({"title": {"hidden": True}}, "ne se masque pas"),
+            ({"title": {"hidden": True, "mandatory": True}}, "ne se masque pas"),
+            ({"approver": {"hidden": True}}, "ne se masque pas"),
         ],
     )
     def test_what_would_loosen_or_break_the_yaml_is_refused(self, tweaks, fragment):
         with pytest.raises(ValidationFailed) as e:
             validate_form_override(ticket(), {"fields": tweaks})
         assert fragment in str(e.value)
+
+    def test_a_required_field_with_a_default_may_be_hidden(self):
+        # Le défaut (de l'habillage, ou du YAML pour `status`) : le Desk pré-remplit le champ masqué et l'envoie.
+        got = validate_form_override(ticket(), {"fields": {"title": {"hidden": True, "default": "Sans titre"}, "approver": {"hidden": True, "default": "Zoé"}}})
+        assert got["fields"]["title"] == {"hidden": True, "default": "Sans titre"} and got["fields"]["approver"] == {"hidden": True, "default": "Zoé"}
 
     def test_the_field_that_names_the_document_gets_no_default(self):
         reg = DocTypeRegistry()
@@ -236,12 +289,107 @@ class TestValidation:
         assert form_rules(ticket(), {"fields": "pas un objet"}) is NO_RULES
         assert form_rules(ticket(), None) is NO_RULES
 
+    def test_a_stored_rule_that_conditions_forbid_is_not_applied(self):
+        # Enregistrée avant que le YAML n'ajoute la condition : relue, elle est ignorée (tolérante), elle ne bloque aucun état.
+        assert form_rules(ticket(), {"fields": {"approver": {"read_only": True}, "closed_by": {"mandatory": True}}}) is NO_RULES
+
+    def test_a_stored_hiding_of_a_duty_is_not_shown(self):
+        """Devenu obligatoire dans le YAML après qu'on l'a masqué : `/meta` le montre de nouveau (sinon aucune création ne passe dans le Desk)."""
+        def meta():
+            return {"fields": [{"fieldname": "title", "required": True}, {"fieldname": "approver", "mandatory_depends_on": {"t": "lit", "v": True}},
+                               {"fieldname": "prio"}, {"fieldname": "kind", "required": True, "default": "A"}]}
+        config = {"fields": {name: {"hidden": True} for name in ("title", "approver", "prio", "kind")}}
+        got = meta()
+        apply_form_override(got, config, NO_RULES)
+        assert [f.get("hidden", False) for f in got["fields"]] == [False, False, True, True]
+        dressed = {"fields": {**config["fields"], "title": {"hidden": True, "default": "Sans titre"}}}
+        got = meta()
+        apply_form_override(got, dressed, form_rules(ticket(), dressed))  # avec un défaut d'habillage, le masquage tient
+        assert got["fields"][0]["hidden"] is True and got["fields"][0]["default"] == "Sans titre"
+
     def test_meta_shows_what_the_server_will_apply(self):
         meta = {"fields": [{"fieldname": "prio", "required": False, "read_only": False}, {"fieldname": "status", "default": "Ouvert"}]}
         config = {"fields": {"prio": {"mandatory": True, "read_only": False}, "status": {"default": "Fermé"}}}
         apply_form_override(meta, config, form_rules(ticket(), config))
         assert meta["fields"][0] == {"fieldname": "prio", "required": True, "read_only": False}
         assert meta["fields"][1]["default"] == "Fermé"
+
+
+class TestSize:
+    def test_too_many_field_entries_are_refused_before_anything_else(self):
+        with pytest.raises(ValidationFailed) as e:
+            validate_form_override(ticket(), {"fields": {f"f{i}": {} for i in range(MAX_FORM_TWEAKS + 1)}})
+        assert e.value.code == "override_too_large" and str(MAX_FORM_TWEAKS) in e.value.message
+
+    @pytest.mark.parametrize("validate, config", [
+        (validate_form_override, {"fields": {"title": {"label": "x" * MAX_OVERRIDE_BYTES}}}),
+        (validate_form_override, {"layout": [{"section": "é" * (MAX_OVERRIDE_BYTES // 2), "columns": [["title"]]}]}),  # en OCTETS
+        (validate_dashboard_override, {"blocks": [{"type": "header", "text": "x" * MAX_OVERRIDE_BYTES}]}),
+        (lambda compiled, config: validate_workspace_override(DocTypeRegistry(), "crm", config), {"label": "x" * MAX_OVERRIDE_BYTES}),
+    ])
+    def test_a_configuration_heavier_than_the_bound_is_refused(self, validate, config):
+        with pytest.raises(ValidationFailed) as e:
+            validate(ticket(), config)
+        assert e.value.code == "override_too_large" and str(MAX_OVERRIDE_BYTES) in e.value.message
+
+    def test_a_configuration_under_the_bound_passes(self):
+        assert validate_form_override(ticket(), {"fields": {"title": {"label": "x" * 1000}}})["fields"]["title"] == {"label": "x" * 1000}
+
+
+# ── Qui règle les propriétés d'écriture ───────────────────────────────────────────────────────
+
+
+class TestRuleAuthor:
+    """Une règle d'écriture d'organisation lie tous les rédacteurs : seul qui peut modifier TOUS les documents du type la pose, la change ou la
+    retire (sinon chacun lèverait celle qui le lie, ou en imposerait une aux documents des autres). Libellés, masquage, disposition : `write` suffit."""
+
+    async def test_the_signal_the_desk_reads_is_the_scope_the_server_checks(self, env):
+        assert (await env.svc.fetch_meta(OLGA, "Profile"))["rights"]["write"] == "restricted"
+        assert (await env.svc.fetch_meta(ALICE, "Profile"))["rights"]["write"] == "all"
+
+    @pytest.mark.parametrize("fields", [{"phone": {"read_only": True}}, {"job_title": {"mandatory": True}}, {"phone": {"default": "+33"}}])
+    async def test_an_owner_only_writer_does_not_set_a_rule(self, env, fields):
+        with pytest.raises(ValidationFailed) as e:
+            await env.dress(fields, ctx=OLGA, doctype="Profile")
+        assert e.value.code == "form_rules_reserved" and "TOUS les documents de Profile" in e.value.message
+        assert refusal(e) == {f"fields.{name}": "form_rules_reserved" for name in fields}
+        assert (await env.svc.form_override(ALICE, "Profile"))["config"] == {}
+
+    async def test_an_owner_only_writer_keeps_the_rules_and_changes_the_rest(self, env):
+        assert (await env.dress({"phone": {"label": "Tél."}}, ctx=OLGA, doctype="Profile"))["config"] == {"fields": {"phone": {"label": "Tél."}}}
+        rules = {"phone": {"read_only": True}, "job_title": {"mandatory": True, "default": "Dev"}}
+        await env.dress(rules, ctx=ALICE, doctype="Profile")
+        # Les règles renvoyées telles quelles (le Desk renvoie tout le JSON) : un libellé change, rien d'autre.
+        kept = {"phone": {"read_only": True, "label": "Téléphone"}, "job_title": {"mandatory": True, "default": "Dev"}}
+        assert (await env.dress(kept, ctx=OLGA, doctype="Profile"))["config"]["fields"] == kept
+        for changed, names in (
+            ({"phone": {"label": "Téléphone"}, "job_title": {"mandatory": True, "default": "Dev"}}, {"phone"}),  # en retirer une
+            ({**kept, "job_title": {"mandatory": True, "default": "PDG"}}, {"job_title"}),  # en changer une
+            ({"phone": {"label": "Téléphone"}}, {"phone", "job_title"}),
+        ):
+            with pytest.raises(ValidationFailed) as e:
+                await env.dress(changed, ctx=OLGA, doctype="Profile")
+            assert set(refusal(e)) == {f"fields.{n}" for n in names}
+        with pytest.raises(ValidationFailed) as e:  # retirer l'habillage, c'est retirer ses règles
+            await env.svc.delete_form_override(OLGA, "Profile")
+        assert e.value.code == "form_rules_reserved"
+        made = await env.svc.create(OLGA, "Profile", {"full_name": "Olga", "phone": "0102"})
+        with pytest.raises(ValidationFailed) as e:  # la règle tient toujours celle qui ne pouvait pas la lever
+            await env.svc.update(OLGA, "Profile", made["name"], {**made["data"], "phone": "0999"}, made["version"])
+        assert refusal(e) == {"phone": "read_only"}
+        await env.svc.delete_form_override(ALICE, "Profile")  # le gestionnaire, lui, la retire
+
+    async def test_an_owner_only_writer_removes_an_override_without_rules(self, env):
+        await env.dress({"phone": {"label": "Tél."}}, ctx=ALICE, doctype="Profile")
+        await env.svc.delete_form_override(OLGA, "Profile")
+        assert (await env.svc.form_override(ALICE, "Profile"))["config"] == {}
+
+    def test_rules_compare_as_the_server_applies_them(self):
+        stale = {"fields": {"gone": {"mandatory": True}, "prio": {"read_only": True}}}  # `gone` n'existe plus : retirer sa retouche ne change rien
+        assert changed_rules(ticket(), stale, {"fields": {"prio": {"read_only": True, "label": "P"}}}) == []
+        assert changed_rules(ticket(), {"fields": {"prio": {"read_only": False}}}, {}) == []  # `false` n'est pas une règle
+        assert changed_rules(ticket(), {"fields": {"prio": {"default": 1}}}, {"fields": {"prio": {"default": 1.0}}}) == ["prio"]
+        assert changed_rules(ticket(), None, {"fields": {"due": {"default": "today"}, "prio": {"mandatory": True}}}) == ["due", "prio"]
 
 
 # ── Application à l'écriture ──────────────────────────────────────────────────────────────────
@@ -346,12 +494,25 @@ class TestReadOnly:
 
 class TestDefault:
     async def test_a_default_fills_what_a_creation_leaves_absent(self, env):
-        await env.dress({"status": {"default": "Fermé"}, "amount": {"default": "12.5"}, "due": {"default": "today"}, "reason": {"default": "doublon"}})
+        await env.dress({"status": {"default": "Fermé"}, "amount": {"default": "12.5"}, "due": {"default": "today"}, "reason": {"default": "doublon"},
+                         "stamp": {"default": "now"}})
         made = await env.make(title="T")
         assert made["data"]["status"] == "Fermé"  # avant le défaut du YAML (« Ouvert »)
         assert made["data"]["amount"] == "12.50" and made["data"]["due"] == "2026-10-18"  # aujourd'hui À AUCKLAND
+        assert made["data"]["stamp"] == "2026-10-17T23:30:00Z"  # maintenant, en UTC
         chosen = await env.make(title="T", status="Ouvert", amount="1.00")
         assert chosen["data"]["status"] == "Ouvert" and chosen["data"]["amount"] == "1.00"  # ce que le client envoie gagne
+
+    async def test_on_a_yaml_required_field_the_default_only_prefills_the_desk(self, env):
+        """Un champ obligatoire du YAML n'a pas de défaut serveur, même déclaré (un client d'API DOIT l'envoyer) : celui de l'organisation non
+        plus, sinon il le rendrait facultatif. `/meta` le donne au Desk, qui pré-remplit le formulaire et l'envoie."""
+        await env.dress({"title": {"default": "Sans titre"}})
+        with pytest.raises(ValidationFailed) as e:
+            await env.make(prio=1)
+        assert refusal(e) == {"title": "missing"}
+        meta = {f["fieldname"]: f for f in (await env.svc.fetch_meta(ALICE, "Ticket"))["fields"]}
+        assert meta["title"]["default"] == "Sans titre" and meta["title"]["required"] is True
+        assert (await env.make(title="Sans titre"))["data"]["title"] == "Sans titre"
 
     async def test_a_default_is_for_creation_only(self, env):
         made = await env.make(title="T")
@@ -360,11 +521,15 @@ class TestDefault:
         assert "prio" not in updated["data"]
 
     async def test_a_single_document_opens_and_saves_with_the_org_default(self, env):
-        await env.dress({"motto": {"default": "Bonjour"}, "level": {"default": 3}}, doctype="Crm Settings")
+        await env.dress({"motto": {"default": "Bonjour"}, "level": {"default": 3}, "company": {"default": "ACME"}}, doctype="Crm Settings")
         opened = await env.svc.get(ALICE, "Crm Settings", "Crm Settings")
-        assert opened["version"] == 0 and opened["data"] == {"motto": "Bonjour", "level": 3}
-        saved = await env.svc.update(ALICE, "Crm Settings", "Crm Settings", {}, 0)
-        assert saved["data"] == {"motto": "Bonjour", "level": 3}
+        # Pas encore enregistré : la page s'ouvre pré-remplie, y compris le champ obligatoire (que le Desk renverra).
+        assert opened["version"] == 0 and opened["data"] == {"motto": "Bonjour", "level": 3, "company": "ACME"}
+        with pytest.raises(ValidationFailed) as e:  # ... mais le serveur ne le pose pas lui-même
+            await env.svc.update(ALICE, "Crm Settings", "Crm Settings", {}, 0)
+        assert refusal(e) == {"company": "missing"}
+        saved = await env.svc.update(ALICE, "Crm Settings", "Crm Settings", {"company": "ACME"}, 0)
+        assert saved["data"] == {"motto": "Bonjour", "level": 3, "company": "ACME"}
         assert (await env.svc.get(GLOBEX, "Crm Settings", "Crm Settings"))["data"] == {"level": 1}
 
 
@@ -392,6 +557,18 @@ class TestHooksAndSources:
         assert refusal(e) == {"lead_name": "missing"}
         made = await env.svc.create(ALICE, "Lead", {"lead_name": "Ada"})
         assert made["data"] == {"lead_name": "Ada", "stage": "Nouveau"}
+
+    async def test_a_virtual_doctype_update_is_bound_too(self, env):
+        made = await env.svc.create(ALICE, "Lead", {"lead_name": "Ada", "stage": "Nouveau"})
+        await env.dress({"lead_name": {"mandatory": True}, "stage": {"read_only": True}}, doctype="Lead")
+        with pytest.raises(ValidationFailed) as e:
+            await env.svc.update(ALICE, "Lead", made["name"], {"lead_name": "Ada", "stage": "Qualifié"}, made["version"])
+        assert refusal(e) == {"stage": "read_only"}
+        with pytest.raises(ValidationFailed) as e:
+            await env.svc.update(ALICE, "Lead", made["name"], {"stage": "Nouveau"}, made["version"])
+        assert refusal(e) == {"lead_name": "missing"}
+        done = await env.svc.update(ALICE, "Lead", made["name"], {"lead_name": "Ada L.", "stage": "Nouveau"}, made["version"])
+        assert done["data"] == {"lead_name": "Ada L.", "stage": "Nouveau"}
 
 
 class TestExtendedDocType:

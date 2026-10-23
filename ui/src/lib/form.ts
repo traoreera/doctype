@@ -233,6 +233,14 @@ export function fieldStates(meta: DocTypeMeta, values: Values, saved: Values | n
   return out
 }
 
+/**
+ * Ce champ d'un document ENREGISTRÉ est-il verrouillé pour l'utilisateur ? Les mêmes règles que la fiche (`fieldStates` : `read_only` du YAML
+ * ou de l'habillage de l'organisation, `read_only_depends_on` sur l'état enregistré, `set_only_once`, `fetch_from`, document soumis). Le Kanban
+ * et le calendrier ne déplacent pas une carte dont le serveur refuserait la modification.
+ */
+export const savedFieldLocked = (meta: DocTypeMeta, fieldname: string, rec: DocRecord): boolean =>
+  fieldStates(meta, rec.data, rec.data, rec.docstatus)[fieldname]?.readOnly ?? false
+
 export interface CellState {
   /** La cellule existe pour cette ligne : ni `hidden`, ni écartée par sa condition `depends_on`. */
   visible: boolean

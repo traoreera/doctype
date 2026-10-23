@@ -76,6 +76,7 @@ from .overrides import (
     KIND_WORKSPACE_USER,
     apply_dashboard_override,
     apply_form_override,
+    changed_rules,
     form_base,
     form_rules,
     keep_hidden,
@@ -449,7 +450,7 @@ class DocumentService:
             for f in d.fields
             if f.default is not None and f.default not in (TODAY, fieldtypes.NOW) and f.fieldtype != "Table" and f.fieldname not in rules.defaults
         }
-        data = self._with_today(compiled, self._with_defaults(compiled, defaults, rules))
+        data = self._with_today(compiled, self._with_defaults(compiled, defaults, rules, prefill=True))
         return {"doctype": d.name, "name": d.name, "owner": "", "creation": now, "modified": now, "version": 0, "docstatus": 0, "amended_from": None, "data": data}
 
     async def list(
@@ -747,22 +748,48 @@ class DocumentService:
         return {"doctype": doctype, "config": (found or {}).get("config", {}), "definition": form_base(compiled)}
 
     async def save_form_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
-        """Enregistre l'habillage d'un formulaire. Il faut pouvoir ÉCRIRE le type : cela change sa présentation pour tous."""
+        """Enregistre l'habillage d'un formulaire. Il faut pouvoir ÉCRIRE le type : cela change sa présentation pour tous. Ses règles d'écriture
+        (obligatoire, lecture seule, défaut) lient tout le monde : les poser, les changer ou les retirer exige de pouvoir écrire TOUS les documents
+        du type (`_check_rule_author`)."""
         self._enter(ctx, "doc.override.form.save", doctype)
         compiled = self._doctype(doctype)
-        self._scope(ctx, compiled, "write")
+        write = self._scope(ctx, compiled, "write")
         cleaned = validate_form_override(compiled, config)
         async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, doctype)
+            self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned)
             made = await q.put_override(KIND_FORM, doctype, owner=ctx.owner_id, config=cleaned)
         return {"doctype": doctype, "config": made["config"]}
 
     async def delete_form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
-        """Retire l'habillage d'un formulaire (le YAML reprend la main). Il faut pouvoir ÉCRIRE le type."""
+        """Retire l'habillage d'un formulaire (le YAML reprend la main). Il faut pouvoir ÉCRIRE le type, et TOUS ses documents s'il porte des
+        règles d'écriture (les retirer délie tout le monde)."""
         self._enter(ctx, "doc.override.form.delete", doctype)
-        self._scope(ctx, self._doctype(doctype), "write")
+        compiled = self._doctype(doctype)
+        write = self._scope(ctx, compiled, "write")
         async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, doctype)
+            self._check_rule_author(write, compiled, (found or {}).get("config"), {})
             await q.delete_override(KIND_FORM, doctype)
         return {"doctype": doctype}
+
+    @staticmethod
+    def _check_rule_author(write: Scope, compiled: CompiledDocType, stored: Any, wanted: Any) -> None:
+        """Les règles d'écriture d'un habillage tiennent ceux qui n'écrivent qu'une PARTIE des documents (`if_owner`) : ils ne les posent, ne
+        les changent ni ne les retirent, sinon chacun lèverait la règle qui le lie (ou en imposerait une aux documents des autres). Il faut un
+        périmètre d'écriture total (`level == "all"`, comme l'auteur d'une règle de notification lit tout). Libellés, masquage et disposition
+        gardent la règle commune : un habillage qui les change en laissant les règles telles quelles passe."""
+        if write.level == "all":
+            return
+        changed = changed_rules(compiled, stored, wanted)
+        if changed:
+            name = compiled.definition.name
+            raise ValidationFailed(
+                f"Obligatoire, lecture seule et valeur par défaut s'imposent à tous : seul qui peut modifier TOUS les documents de {name} les règle"
+                f" (champs : {', '.join(changed)})",
+                code="form_rules_reserved",
+                details=[{"field": f"fields.{n}", "msg": "Réservé à qui peut modifier tous les documents du type", "type": "form_rules_reserved"} for n in changed],
+            )
 
     @staticmethod
     def _layer(scope: str | None) -> str:
@@ -1244,16 +1271,22 @@ class DocumentService:
         now = fieldtypes.format_instant(self._clock())  # un Datetime est TOUJOURS en UTC
         return {**{k: today for k in dates if k not in data}, **{k: now for k in instants if k not in data}, **data}
 
-    def _with_defaults(self, compiled: CompiledDocType, data: Any, rules: FormRules) -> Any:
+    def _with_defaults(self, compiled: CompiledDocType, data: Any, rules: FormRules, *, prefill: bool = False) -> Any:
         """Pose les défauts de l'habillage de l'organisation (`rules.defaults`) dans les champs que le payload ne renseigne pas : à la CRÉATION
         seulement, AVANT ceux du YAML (que le modèle ou `_with_today` posent ensuite, sur ce qui reste absent). `today` / `now` se résolvent ici,
-        dans le fuseau de l'organisation pour une date, comme ceux du YAML."""
+        dans le fuseau de l'organisation pour une date, comme ceux du YAML.
+
+        Jamais sur un champ obligatoire du YAML : son propre défaut n'est pas un défaut serveur (`builder.build_model`, un client d'API DOIT
+        l'envoyer), celui de l'organisation non plus, sinon il le rendrait facultatif. Il n'y est qu'un PRÉ-REMPLISSAGE du Desk (`/meta`), et du
+        document unique pas encore enregistré (`prefill`), que le Desk renvoie tel quel."""
         if not rules.defaults or not isinstance(data, dict):
             return data
         fields = compiled.definition.field_map
         out: dict[str, Any] = {}
         for name, value in rules.defaults.items():
             if name in data or name not in fields:
+                continue
+            if not prefill and fields[name].required and fields[name].depends_on is None:
                 continue
             kind = fields[name].fieldtype
             if kind == "Date" and value == TODAY:

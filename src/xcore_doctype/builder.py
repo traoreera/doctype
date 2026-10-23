@@ -187,8 +187,9 @@ class FormRules:
 
     Appliqué à l'entrée d'un CLIENT seulement, par `validate_data(rules=...)` : un hook n'y est pas tenu (comme pour `read_only`), ni l'écriture
     d'un hook dans une transaction (`tx.create`). `mandatory` : obligatoire (s'il est visible, comme `required`) ; `read_only` : une mise à jour ne
-    le change pas ; `defaults` : la valeur posée à la CRÉATION quand le payload ne dit rien (le service les pose, voir `DocumentService._with_defaults`).
-    Un habillage ne fait que resserrer : rien ici ne rend facultatif ni modifiable ce que le YAML verrouille.
+    le change pas ; `defaults` : la valeur posée à la CRÉATION quand le payload ne dit rien (le service les pose, voir `DocumentService._with_defaults`),
+    sauf sur un champ obligatoire du YAML, où elle ne fait que pré-remplir le Desk. Un habillage ne fait que resserrer : rien ici ne rend
+    facultatif ni modifiable ce que le YAML verrouille.
     """
 
     mandatory: frozenset[str] = frozenset()

@@ -928,6 +928,11 @@ export const t = {
     json: 'Disposition et retouches (JSON)',
     fromDefinition: 'Imposé par la définition du type',
     opaque: 'Le serveur écrit ce champ à sa façon (table, secret, fichier ou copie d’un document lié) : un habillage n’y touche pas',
+    condition: 'Une condition de la définition rend ce champ obligatoire ou le verrouille : obligatoire et lecture seule s’y contrediraient',
+    reserved: 'Réservé à qui peut modifier tous les documents de ce type',
+    reservedHint:
+      'Obligatoire, lecture seule et valeur par défaut s’imposent à toute l’organisation : seul qui peut modifier tous les documents de ce type les règle. Vous pouvez changer les libellés, le masquage et la disposition.',
+    unfilled: 'Un champ obligatoire sans valeur par défaut ne se masque pas : personne ne pourrait le remplir',
     noDefault: 'Pas de valeur par défaut pour ce champ',
     definitionDefault: 'Définition :',
     today: 'Aujourd’hui',

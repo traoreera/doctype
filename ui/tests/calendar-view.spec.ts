@@ -231,6 +231,19 @@ describe('calendrier : créer et déplacer', () => {
     expect(ro.w.find('[data-testid="cal-event-d1-2026-10-21"]').attributes('draggable')).toBe('false')
   })
 
+  it('une date de début, ou de fin quand le document en a une, en lecture seule : le document ne se déplace pas', async () => {
+    const lock = (name: string): DocTypeMeta => ({ ...TASK, fields: TASK.fields.map((f) => (f.fieldname === name ? { ...f, read_only: true } : f)) })
+    const update = vi.fn()
+    const start = await open({ list: agenda([doc('t1', { start: '2026-10-20' })]), update }, { meta: lock('start') })
+    expect(start.w.find('[data-testid="cal-event-t1-2026-10-20"]').attributes('draggable')).toBe('false')
+    await dragTo(start.w, 'cal-event-t1-2026-10-20', '2026-10-27')
+    expect(update).not.toHaveBeenCalled() // le serveur l'aurait refusé (422 read_only)
+    // La fin n'est déplacée que si le document en a une : sans fin, une fin verrouillée ne gêne pas.
+    const stop = await open({ list: agenda([doc('a1', { start: '2026-10-20', stop: '2026-10-21' }), doc('b1', { start: '2026-10-22' })]) }, { meta: lock('stop') })
+    expect(stop.w.find('[data-testid="cal-event-a1-2026-10-20"]').attributes('draggable')).toBe('false')
+    expect(stop.w.find('[data-testid="cal-event-b1-2026-10-22"]').attributes('draggable')).toBe('true')
+  })
+
   it('déposer sur le même jour ne fait rien', async () => {
     const update = vi.fn()
     const { w } = await open({ list: agenda([doc('t1', { start: '2026-10-20' })]), update })

@@ -10,6 +10,8 @@ import { defineComponent, h } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import FieldInput from '@/components/FieldInput.vue'
 import OverrideEditor from '@/components/OverrideEditor.vue'
+import { ApiError } from '@/lib/api'
+import type { ExprNode } from '@/lib/expr'
 import { fieldStates, validate } from '@/lib/form'
 import { propRows, withProp } from '@/lib/overrideprops'
 import { SERVICES } from '@/lib/services'
@@ -96,6 +98,49 @@ describe('propriétés d’écriture : la logique pure', () => {
     expect(row(propRows(FIELDS, stuck, { definition: DEFINITION }), 'title').can.read_only).toBe(true)
   })
 
+  it('obligatoire, lecture seule et défaut : réservés à qui écrit TOUS les documents ; masqué reste permis', () => {
+    const dressed = withProp(SAVED, 'due', 'default', 'today')
+    const rows = propRows(FIELDS, dressed, { definition: DEFINITION, rules: false })
+    const due = row(rows, 'due')
+    expect([due.can.mandatory, due.can.read_only, due.can.default, due.can.hidden]).toEqual([false, false, false, true])
+    expect(due.why).toEqual({ mandatory: 'reserved', read_only: 'reserved', default: 'reserved' })
+    expect(due.default).toBe('today') // le défaut de l'organisation se montre, il ne se change pas
+    // Une règle posée par l'organisation ne se retire pas non plus (le serveur refuserait : `form_rules_reserved`).
+    expect([row(rows, 'prio').mandatory, row(rows, 'prio').can.mandatory]).toEqual([true, false])
+    // Ce qui ne tient pas au droit garde sa raison : la définition, un champ que le serveur écrit à sa façon.
+    expect(row(rows, 'title').why.mandatory).toBe('definition')
+    expect(row(rows, 'photo').why.read_only).toBe('opaque')
+    expect(row(rows, 'code').why.default).toBeUndefined() // une valeur unique n'a jamais de défaut, réservé ou non
+    expect(row(propRows(FIELDS, dressed, { definition: DEFINITION, rules: true }), 'due').can.default).toBe(true)
+  })
+
+  it('une condition du YAML : pas de lecture seule sur ce qu’elle rend obligatoire, pas d’obligation sur ce qu’elle verrouille', () => {
+    const when: ExprNode = { t: 'cmp', op: '>', l: { t: 'field', name: 'prio' }, r: { t: 'lit', v: 10 } }
+    const fields = [field('approver', 'Text', { mandatory_depends_on: when }), field('closed_by', 'Text', { read_only_depends_on: when })]
+    const rows = propRows(fields, {}, { definition: {} })
+    expect([row(rows, 'approver').can.read_only, row(rows, 'approver').why.read_only]).toEqual([false, 'condition'])
+    expect([row(rows, 'closed_by').can.mandatory, row(rows, 'closed_by').why.mandatory]).toEqual([false, 'condition'])
+    expect([row(rows, 'approver').can.mandatory, row(rows, 'closed_by').can.read_only]).toEqual([true, true])
+    // Enregistrée avant la condition, la retouche se retire toujours.
+    const stale = propRows(fields, { fields: { approver: { read_only: true }, closed_by: { mandatory: true } } }, { definition: {} })
+    expect([row(stale, 'approver').can.read_only, row(stale, 'closed_by').can.mandatory]).toEqual([true, true])
+  })
+
+  it('un champ que le YAML exige ne se masque qu’avec une valeur par défaut (le Desk la pré-remplit et l’envoie)', () => {
+    const when: ExprNode = { t: 'lit', v: true }
+    const fields = [...FIELDS, field('approver', 'Text', { mandatory_depends_on: when })]
+    const rows = propRows(fields, SAVED, { definition: DEFINITION })
+    expect([row(rows, 'title').can.hidden, row(rows, 'title').why.hidden]).toEqual([false, 'unfilled'])
+    expect(row(rows, 'approver').can.hidden).toBe(false)
+    expect(row(rows, 'due').can.hidden).toBe(true) // facultatif
+    const withDefault = withProp(withProp(SAVED, 'title', 'default', 'Sans titre'), 'approver', 'default', 'Zoé')
+    expect([row(propRows(fields, withDefault, { definition: DEFINITION }), 'title').can.hidden, row(propRows(fields, withDefault, { definition: DEFINITION }), 'approver').can.hidden]).toEqual([true, true])
+    const yamlDefault = propRows([field('kind', 'Text', { default: 'A' })], {}, { definition: { kind: { required: true, default: 'A' } } })
+    expect(yamlDefault[0]!.can.hidden).toBe(true)
+    // Masqué avant que le YAML ne l'exige : la case se décoche toujours.
+    expect(row(propRows(fields, withProp(SAVED, 'title', 'hidden', true), { definition: DEFINITION }), 'title').can.hidden).toBe(true)
+  })
+
   it('change une propriété sans toucher au reste, et retire ce qui ne dit plus rien', () => {
     const one = withProp(SAVED, 'due', 'default', 'today')
     expect(one.layout).toEqual(SAVED.layout)
@@ -131,9 +176,9 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-async function open(initial: FormOverride = SAVED, definition: Record<string, FieldBase> | null = DEFINITION) {
+async function open(initial: FormOverride = SAVED, definition: Record<string, FieldBase> | null = DEFINITION, extra: { rules?: boolean; problem?: string } = {}) {
   const w = mount(OverrideEditor, {
-    props: { visible: true, title: 'Disposition', initial, fields: FIELDS, definition, naming: 'sku', doctype: 'Ticket' },
+    props: { visible: true, title: 'Disposition', initial, fields: FIELDS, definition, naming: 'sku', doctype: 'Ticket', ...extra },
     attachTo: document.body,
     global: {
       plugins: [PrimeVue, createPinia()],
@@ -207,6 +252,28 @@ describe('l’éditeur d’habillage d’un formulaire', () => {
     expect(cell('prop-default-status')?.querySelector('[data-testid="prop-base-default"]')).toBeNull()
   })
 
+  it('sans le droit d’écrire tous les documents, les règles se lisent sans se régler ; libellés et masquage restent', async () => {
+    const w = await open(withProp(SAVED, 'due', 'default', 'today'), DEFINITION, { rules: false })
+    expect(cell('override-props-reserved')?.textContent).toContain('tous les documents de ce type')
+    for (const id of ['prop-mandatory-due', 'prop-read_only-due', 'prop-mandatory-prio']) expect(box(w, id).props('disabled')).toBe(true)
+    expect(box(w, 'prop-mandatory-prio').props('modelValue')).toBe(true) // la règle de l'organisation reste visible
+    expect(box(w, 'prop-hidden-due').props('disabled')).toBe(false)
+    expect(cell('prop-mandatory-due')?.closest('td')?.getAttribute('title')).toContain('Réservé')
+    expect(document.body.querySelector('[data-testid="prop-default-due"] input')).toBeNull() // pas de saisie...
+    expect(cell('prop-default-value')?.textContent).toContain('Aujourd’hui') // ... mais le défaut posé se lit
+    expect(cell('prop-default-value')?.getAttribute('title')).toContain('Réservé')
+    box(w, 'prop-hidden-due').vm.$emit('update:modelValue', true)
+    await flushPromises()
+    expect(json(w).fields.due).toEqual({ default: 'today', hidden: true }) // le JSON garde la règle telle quelle : le serveur l'accepte
+    const allowed = await open(SAVED, DEFINITION)
+    expect(allowed.find('[data-testid="override-props-reserved"]').exists()).toBe(false)
+  })
+
+  it('le refus du serveur se lit dans la fenêtre', async () => {
+    await open(SAVED, DEFINITION, { problem: 'Obligatoire, lecture seule et valeur par défaut s’imposent à tous (champs : prio)' })
+    expect(cell('override-problem')?.textContent).toContain('champs : prio')
+  })
+
   it('un JSON illisible grise le tableau sans rien perdre de ce qu’on a tapé', async () => {
     const w = await open()
     w.findComponent(Textarea).vm.$emit('update:modelValue', '{ "fields": ')
@@ -236,6 +303,70 @@ describe('la fiche ouvre l’éditeur avec ce que le serveur dit de la définiti
     layout: [{ section: null, collapsible: false, collapsed: false, columns: [['code', 'label']] }],
     rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
   }
+
+  async function form(meta: DocTypeMeta, api: Record<string, unknown>) {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/app/:doctype/:name', name: 'form', component: FormView, props: true }],
+    })
+    const w = mount(defineComponent({ render: () => h(RouterView) }), {
+      attachTo: document.body,
+      global: {
+        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
+        provide: {
+          [SERVICES as symbol]: {
+            transport: {},
+            config: { baseUrl: '', loginUrl: null },
+            api: {
+              meta: vi.fn(async () => meta),
+              doctypes: vi.fn(async () => []),
+              get: vi.fn(async () => ({ doctype: meta.name, name: 'A', owner: 'u', creation: '', modified: '', version: 1, docstatus: 0, amended_from: null, data: { code: 'A', label: 'a' } })),
+              history: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })),
+              list: vi.fn(async () => ({ items: [], total: 0, limit: 1, offset: 0 })),
+              ...api,
+            },
+          },
+        },
+      },
+    })
+    mounted.push(w)
+    await router.push(`/app/${meta.name}/A`)
+    await flushPromises()
+    await openMore(w)
+    menuItem('form-layout-edit')!.click()
+    await flushPromises()
+    return w
+  }
+
+  it('qui n’écrit pas TOUS les documents (`rights.write` de /meta) n’a pas les règles ; le refus du serveur se lit dans la fenêtre', async () => {
+    const restricted: DocTypeMeta = { ...SKU, rights: { ...SKU.rights, write: 'restricted' } }
+    const refusal = new ApiError(422, 'form_rules_reserved', 'Obligatoire, lecture seule et valeur par défaut s’imposent à tous : seul qui peut modifier TOUS les documents de Sku les règle (champs : label)')
+    const saveFormOverride = vi.fn(async () => {
+      throw refusal
+    })
+    const removeFormOverride = vi.fn(async () => {
+      throw refusal
+    })
+    const w = await form(restricted, {
+      formOverride: vi.fn(async () => ({ doctype: 'Sku', config: {}, definition: { code: { required: true } } })),
+      saveFormOverride,
+      removeFormOverride,
+    })
+    const editor = w.findComponent(OverrideEditor)
+    expect(editor.props('rules')).toBe(false)
+    expect(box(w, 'prop-mandatory-label').props('disabled')).toBe(true)
+    ;(document.body.querySelector('[data-testid="override-save"]') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(saveFormOverride).toHaveBeenCalledTimes(1)
+    expect(editor.props('visible')).toBe(true) // la fenêtre reste ouverte...
+    expect(cell('override-problem')?.textContent).toContain('TOUS les documents de Sku') // ... avec le motif du serveur, en clair
+    ;(document.body.querySelector('[data-testid="override-reset"]') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(removeFormOverride).toHaveBeenCalledTimes(1)
+    expect(cell('override-problem')?.textContent).toContain('champs : label')
+    const full = await form(SKU, { formOverride: vi.fn(async () => ({ doctype: 'Sku', config: {}, definition: {} })) })
+    expect(full.findComponent(OverrideEditor).props('rules')).toBe(true)
+  })
 
   it('« Disposition » passe la définition et le champ qui nomme le document à l’éditeur', async () => {
     const config: FormOverride = { fields: { label: { mandatory: true } } }

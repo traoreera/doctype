@@ -190,6 +190,24 @@ describe('Kanban : déplacer une carte', () => {
     expect(ro.w.find('[data-testid="kanban-card-d1"]').attributes('draggable')).toBe('false')
   })
 
+  it('un champ de colonnes en lecture seule (YAML ou habillage de l’organisation) ou verrouillé par sa condition : la carte ne se glisse pas', async () => {
+    const lock = (extra: Partial<DocTypeMeta['fields'][number]>): DocTypeMeta => ({
+      ...TASK,
+      fields: TASK.fields.map((f) => (f.fieldname === 'state' ? { ...f, ...extra } : f)),
+    })
+    const update = vi.fn()
+    const ro = await open({ list: board({ 'À faire': [doc('t1', {})] }), update }, { meta: lock({ read_only: true }) })
+    expect(ro.w.find('[data-testid="kanban-card-t1"]').attributes('draggable')).toBe('false')
+    expect(ro.w.find('[data-testid="kanban-menu-t1"]').exists()).toBe(false)
+    await drag(ro.w, 't1', 'Fait')
+    expect(update).not.toHaveBeenCalled() // le serveur l'aurait refusé (422 read_only)
+    // `read_only_depends_on` se juge sur le document ENREGISTRÉ, comme le serveur : une tâche close est figée, les autres non.
+    const closed = lock({ read_only_depends_on: { t: 'cmp', op: '==', l: { t: 'field', name: 'hours' }, r: { t: 'lit', v: 0 } } })
+    const cond = await open({ list: board({ 'À faire': [doc('t2', { hours: 0 }), doc('t3', { hours: 2 })] }) }, { meta: closed })
+    expect(cond.w.find('[data-testid="kanban-card-t2"]').attributes('draggable')).toBe('false')
+    expect(cond.w.find('[data-testid="kanban-card-t3"]').attributes('draggable')).toBe('true')
+  })
+
   it('le menu « Déplacer vers » offre les autres colonnes (clavier et toucher)', async () => {
     const update = vi.fn(async (_d: string, name: string, v: number, data: Record<string, unknown>) => doc(name, data, { version: v + 1 }))
     const { w } = await open({ list: board({ 'À faire': [doc('t1', {})] }), update })
