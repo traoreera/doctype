@@ -59,6 +59,7 @@ async function shell(start = '/', content = '<p>contenu</p>') {
     routes: [
       { path: '/', name: 'home', component: { render: () => null } },
       { path: '/tasks', name: 'tasks', component: { render: () => null } },
+      { path: '/files', name: 'files', component: { render: () => null } },
       { path: '/w/:name', name: 'workspace', component: { render: () => null } },
       { path: '/app/:doctype', name: 'list', component: { render: () => null } },
       { path: '/app/:doctype/new', name: 'new', component: { render: () => null } },
@@ -226,6 +227,16 @@ describe('en-tête', () => {
     await flushPromises()
     const labels = [...document.body.querySelectorAll('.p-menu-item-label')].map((e) => e.textContent)
     expect(labels).toEqual(expect.arrayContaining(['alice.martin@example.com', 'Clair', 'Sombre', 'Automatique', 'Se déconnecter']))
+  })
+
+  it('« Fichiers » est dans le menu de l’utilisateur et mène à la page des fichiers', async () => {
+    const s = await shell()
+    await s.w.find('[data-testid="user-menu"]').trigger('click')
+    await flushPromises()
+    const files = [...document.body.querySelectorAll('.p-menu-item')].find((e) => e.textContent?.trim() === 'Fichiers')!
+    ;(files.querySelector('a, .p-menu-item-link') as HTMLElement).click()
+    await flushPromises()
+    expect(s.router.currentRoute.value.name).toBe('files')
   })
 
   it('choisir « Sombre » dans le menu change le thème', async () => {

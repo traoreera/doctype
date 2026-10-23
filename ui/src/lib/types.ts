@@ -498,6 +498,53 @@ export interface FileMeta {
   size: number
 }
 
+/**
+ * Une ligne de l'écran « Fichiers » (`GET /file-library`) : un fichier ET le document qui le cite (un fichier que deux documents citent donne
+ * deux lignes). `attachment` : l'identifiant de la pièce jointe, `null` pour un fichier de champ (`field` est alors le champ, `version` celle du document).
+ */
+export interface FileLibraryItem {
+  file_id: string
+  filename: string
+  content_type: string
+  size: number
+  owner: string
+  creation: string
+  doctype: string
+  doctype_label: string
+  docname: string
+  field: string
+  field_label: string | null
+  attachment: string | null
+  version: number | null
+  docstatus: number
+  /** Le type garde-t-il un historique (`track_changes`) : détacher un champ y laisse alors une trace. */
+  track_changes: boolean
+  can_detach: boolean
+}
+
+export interface FileLibraryResult {
+  items: FileLibraryItem[]
+  total: number
+  limit: number
+  offset: number
+  /** Les types qui citent des fichiers lisibles (selon la recherche, pas selon le filtre de type) : de quoi proposer le filtre. */
+  doctypes: { name: string; label: string; count: number }[]
+  /** Des types dont la source ne répond pas : leurs pièces jointes manquent à la liste (on le dit, par leur libellé). */
+  unavailable: { name: string; label: string }[]
+}
+
+export interface FileLibraryQuery {
+  doctype?: string | null
+  q?: string
+  order_by?: 'creation' | 'filename' | 'size'
+  order?: 'asc' | 'desc'
+  limit?: number
+  offset?: number
+}
+
+/** Détacher : une pièce jointe par son identifiant, un fichier de champ par le document qui le cite et la version qu'on en a lue. */
+export type DetachTarget = { attachment: string } | { doctype: string; name: string; field: string; file_id: string; version: number }
+
 /** Un lien signé de courte durée vers un fichier : `path` est relatif à la racine de l'API. */
 export interface FileLink {
   path: string

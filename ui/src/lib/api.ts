@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -187,6 +187,23 @@ export class ApiClient {
   /** Des liens signés (courte durée) pour afficher ou télécharger des fichiers. Un fichier qu'on ne peut pas lire est absent de la réponse. */
   fileLinks(ids: string[]): Promise<Record<string, FileLink>> {
     return this.call('POST', '/file-links', { body: { ids } })
+  }
+
+  /** L'écran « Fichiers » : les fichiers que des documents lisibles citent, une ligne par document citant. */
+  fileLibrary(q: FileLibraryQuery = {}): Promise<FileLibraryResult> {
+    const params = new URLSearchParams()
+    if (q.doctype) params.set('doctype', q.doctype)
+    if (q.q) params.set('q', q.q)
+    if (q.order_by) params.set('order_by', q.order_by)
+    if (q.order) params.set('order', q.order)
+    if (q.limit !== undefined) params.set('limit', String(q.limit))
+    if (q.offset !== undefined) params.set('offset', String(q.offset))
+    return this.call('GET', '/file-library', { params })
+  }
+
+  /** Retirer un fichier de ce qui le cite, par l'écriture ordinaire (le document est modifié, ou la pièce jointe retirée) : ses refus sont ceux de cette écriture. */
+  detachFile(target: DetachTarget): Promise<{ detached: 'field' | 'attachment'; version: number | null }> {
+    return this.call('POST', '/file-library/detach', { body: target })
   }
 
   history(doctype: string, name: string, page: { limit?: number; offset?: number } = {}): Promise<HistoryResult> {
