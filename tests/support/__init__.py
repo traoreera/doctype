@@ -12,7 +12,7 @@ from pathlib import Path
 
 DEV_AUTH_DIR = Path(__file__).resolve().parent / "dev-auth"
 
-# Les plugins de démonstration/test versionnés (`sales`, `stock`, `hr`, `iam`) vivent ICI, pas dans `app/` :
+# Les plugins de démonstration/test versionnés (`geo`, `sales`, `stock`, `hr`, `iam`, `crm`) vivent ICI, pas dans `app/` :
 # `app/` n'est plus du dépôt (gitignoré, hôte de développement local). Les tests ne dépendent que de ce dossier.
 FIXTURES = Path(__file__).resolve().parent / "plugins"
 

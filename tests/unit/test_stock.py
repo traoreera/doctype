@@ -27,7 +27,7 @@ from xcore_doctype.errors import DoctypeError, InvalidDocStatus, PermissionDenie
 from xcore_doctype.hooks import HookRegistry
 from xcore_doctype.registry import DocTypeRegistry
 
-STOCK = FIXTURES / "stock"
+STOCK, GEO = FIXTURES / "stock", FIXTURES / "geo"
 
 
 def _load_ledger():
@@ -61,6 +61,7 @@ class Log:
 class Env:
     def __init__(self, db, tables):
         reg = DocTypeRegistry()
+        reg.load_dir(GEO / "doctypes", owner="geo")  # le référentiel d'abord : `Warehouse.pays` le cite (plugin que `stock` requires)
         reg.load_dir(STOCK / "doctypes", owner="stock")
         reg.validate_links()
         hooks = HookRegistry()

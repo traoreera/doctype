@@ -546,6 +546,24 @@ button {
   margin-bottom: 1.5rem;
 }
 
+/* Les cartes d'espaces de l'accueil ne servent que si le menu ne les montre pas : elles disparaissent quand la barre latérale les liste
+   à côté (les répéter occupait 224 px des 720 de l'écran), et reviennent dès qu'elle ne le fait pas — escamotée sous 900 px (le seuil
+   du tiroir d'`AppShell`) ou repliée par l'utilisateur (`.desk-shell.collapsed`). `HomeView` ne pose la classe que si l'accueil a
+   autre chose à montrer : sur un compte neuf, les espaces sont le seul contenu, ils restent partout. */
+.home-spaces {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .home-spaces {
+    display: block;
+  }
+}
+
+.desk-shell.collapsed .home-spaces {
+  display: block;
+}
+
 .home-title {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
@@ -670,11 +688,15 @@ kbd {
   white-space: nowrap;
 }
 
+/* Même gabarit que la cloche (`.desk-bell`) : deux ronds voisins de diamètres différents se lisent comme mal alignés, même quand leurs
+   centres coïncident. `overflow: hidden` garantit qu'une photo d'avatar ne déborde pas du cercle d'un pixel. */
 .desk-avatar {
   display: grid;
+  flex: none; /* jamais écrasé par ses voisins : un rond aplati se lit comme un défaut d'alignement */
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
   border: 0;
   border-radius: 50%;
   background: var(--desk-line-strong);
@@ -694,6 +716,7 @@ kbd {
 .desk-bell {
   position: relative;
   display: grid;
+  flex: none; /* même gabarit que `.desk-avatar`, et comme lui jamais écrasé */
   place-items: center;
   width: 28px;
   height: 28px;

@@ -10,9 +10,10 @@ import yaml
 from tests.integration.conftest import boot_host
 from tests.support import FIXTURES
 
-SALES, STOCK = FIXTURES / "sales", FIXTURES / "stock"
-# `sales` exige `stock` (requires) : l'article, cible des lignes de facture, est un DocType du module stock.
-PLUGINS = {"sales": SALES, "stock": STOCK}
+SALES, STOCK, GEO, CRM = FIXTURES / "sales", FIXTURES / "stock", FIXTURES / "geo", FIXTURES / "crm"
+# La chaîne des dépendances : `sales` exige `stock` (l'article, cible des lignes de facture, est un DocType du module
+# stock), qui exige `geo` (le pays de l'entrepôt vient du référentiel partagé).
+PLUGINS = {"geo": GEO, "sales": SALES, "stock": STOCK}
 GRANTS = [f"sales:{t}:{a}" for t in ("customer", "country", "invoice") for a in ("read", "write", "delete")] + [
     f"stock:item:{a}" for a in ("read", "write", "delete")
 ]
@@ -28,7 +29,8 @@ async def test_the_sales_plugin_brings_its_doctypes_its_hook_and_its_grants(tmp_
         t = h.token(permissions=GRANTS)
         # Aucun DocType n'est dans le dossier de l'opérateur : tout vient des plugins `sales` et `stock`.
         meta = (await h.http("GET", "/meta", token=t)).json()
-        assert [m["name"] for m in meta] == ["Country", "Customer", "Invoice", "Item"]
+        # `Devise` et `Pays` appartiennent à `geo` : ce jeton n'a aucun grant `geo` et les lit quand même (`@authenticated`).
+        assert [m["name"] for m in meta] == ["Country", "Customer", "Devise", "Invoice", "Item", "Pays"]
 
         customer = (await h.http("POST", "/doc/Customer", token=t, json={"data": {"customer_name": "Acme"}})).json()
         item = (await h.http("POST", "/doc/Item", token=t, json={"data": {"item_name": "Vis", "uom": "pcs"}})).json()
@@ -46,6 +48,38 @@ async def test_the_sales_plugin_brings_its_doctypes_its_hook_and_its_grants(tmp_
         assert not any(n.startswith("stock:") for n in names)  # les grants de l'article sont déclarés par SON plugin
         (stock,) = [e for e in h.rbac_declared if e["plugin"] == "stock"]
         assert {"stock:item:read", "stock:stock_entry:submit", "stock:stock_entry:cancel"} <= {g["name"] for g in stock["grants"]}
+
+
+async def test_a_plugin_reuses_another_plugins_referential(tmp_path):
+    """`crm` cite les pays de `geo` : un champ Link et deux `fetch_from` vers les DocTypes d'un autre plugin.
+
+    Le point du test est le DROIT : le jeton du commercial ne porte QUE des grants `crm`, et il lit pourtant le
+    référentiel (sa lecture est ouverte à tout utilisateur identifié), sans jamais pouvoir y écrire. Les règles fines
+    sont dans tests/unit/test_geo.py ; ici on vérifie que les deux plugins se chargent et s'articulent sur un vrai hôte.
+    """
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"geo": GEO, "crm": CRM}) as h:
+        assert (await state_of(h, "geo"), await state_of(h, "crm")) == ("ready", "ready")
+        seller = h.token(permissions=["crm:lead:read", "crm:lead:write"])
+        librarian = h.token(permissions=["geo:pays:write", "geo:pays:delete", "geo:devise:write"])
+
+        assert (await h.http("POST", "/doc/Devise", token=librarian, json={"data": {"code": "XOF", "nom": "Franc CFA", "decimales": 0}})).status_code == 201
+        pays = {"code": "CI", "nom": "Côte d'Ivoire", "devise": "XOF", "indicatif": "+225", "langue": "fr"}
+        assert (await h.http("POST", "/doc/Pays", token=librarian, json={"data": pays})).json()["name"] == "CI"
+        # Le commercial ne peut pas écrire dans le référentiel…
+        assert (await h.http("POST", "/doc/Pays", token=seller, json={"data": {"code": "ML", "nom": "Mali"}})).status_code == 403
+        # … mais il le lit, et son autocomplétion fonctionne.
+        assert [i["name"] for i in (await h.http("GET", "/search/Pays?q=Ivoire", token=seller)).json()["items"]] == ["CI"]
+
+        r = await h.http("POST", "/doc/Lead", token=seller, json={"data": {"lead_name": "Soco", "pays": "CI", "indicatif": "+1"}})
+        assert r.status_code == 201, r.text
+        # Ce que `crm` a demandé au pays est recopié par le serveur ; ce que le client avait envoyé est écrasé.
+        assert (r.json()["data"]["indicatif"], r.json()["data"]["langue"]) == ("+225", "fr")
+        # Et le pays cité ne peut plus partir, même pour celui qui tient le référentiel et ne voit aucun prospect.
+        gone = await h.http("DELETE", "/doc/Pays/CI", token=librarian)
+        assert (gone.status_code, gone.json()["detail"]["code"]) == (409, "document_in_use")
+
+        spaces = (await h.http("GET", "/workspaces", token=seller)).json()
+        assert [w["name"] for w in spaces] == ["crm", "geo"]  # order 40 puis 80
 
 
 async def test_a_plugin_cannot_put_doctypes_in_another_modules_namespace(tmp_path):
@@ -113,7 +147,7 @@ async def test_a_plugin_extends_another_plugins_doctype_with_a_field_and_a_hook(
     manifest = {"name": "crm", "version": "0.1.0", "framework_version": ">=2.9", "execution_mode": "trusted",
                 "entry_point": "src/main.py", "requires": ["xcore-doctype", "stock"]}
     crm = (CRM_MAIN, {"plugin.yaml": yaml.safe_dump(manifest), "extends/item.yaml": yaml.safe_dump(extension, allow_unicode=True)})
-    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"stock": STOCK}, inline_plugins={"crm": crm}) as h:
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"geo": GEO, "stock": STOCK}, inline_plugins={"crm": crm}) as h:
         assert await state_of(h, "crm") == "ready"
         t = h.token(permissions=GRANTS)
         meta = (await h.http("GET", "/meta/Item", token=t)).json()

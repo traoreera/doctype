@@ -85,3 +85,20 @@ def test_authenticated_is_never_declared_to_auth_and_is_the_only_special_grant()
 def test_owner_naming_has_no_meaning_for_a_child_or_a_single_document(patch):
     with pytest.raises(InvalidDefinition):
         parse_definition({**PROFILE, **patch})
+
+
+def test_the_meta_summary_says_a_profile_is_one_document_per_user(db, tables):
+    """`per_user` : le Desk ne doit pas offrir « Créer un profil » dans l'accueil (il n'y en a qu'un, et c'est sa page qui le crée)."""
+    reg = DocTypeRegistry()
+    reg.register(parse_definition(PROFILE))
+    reg.register(parse_definition({"schema_version": 1, "name": "Order", "module": "shop", "fields": [{"fieldname": "ref", "fieldtype": "Text"}]}))
+
+    class Log:
+        def info(self, *a, **k): ...
+        def error(self, *a, **k): ...
+
+    # Un grant sur la commande : `list_meta` ne liste que les types sur lesquels l'appelant a au moins un droit (le profil, lui, est `@authenticated`).
+    who = make_ctx("acme", "alice", permissions=["shop:order:read", "shop:order:write"])
+    summaries = {d["name"]: d for d in DocumentService(reg, db, tables, Log()).list_meta(who)}
+    assert summaries["Profile"]["per_user"] is True and summaries["Profile"]["create"] is True  # créable, mais une seule fois
+    assert "per_user" not in summaries["Order"]  # un document ordinaire ne porte pas le drapeau

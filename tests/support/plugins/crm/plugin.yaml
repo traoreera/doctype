@@ -1,0 +1,8 @@
+name: crm
+version: 0.1.0
+author: traoreera
+description: "Plugin PROPRIÉTAIRE du module crm (exemple) : des prospects qui RÉUTILISENT le référentiel de `geo` (pays, devises) sans le recopier. `requires: geo` suffit : le moteur n'a rien de plus à savoir."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype, auth, geo]  # `geo` : les pays et devises que `Lead` cite par un champ Link

@@ -1,0 +1,24 @@
+# Le pays : la cible que `stock` (où est l'entrepôt) et `crm` (d'où vient le prospect) citent par un champ Link.
+# Nommé par son code ISO, comme `Devise` : un lien vers « CI » reste lisible, et le code ne peut pas être dupliqué.
+schema_version: 1
+name: Pays
+label: Pays
+module: geo
+icon: globe
+naming: { field: code }
+title_field: nom
+fields:
+  - { fieldname: code, label: Code ISO, fieldtype: Text, required: true, in_list_view: true, description: "Deux lettres (ISO 3166), ex. FR, CI" }
+  - { fieldname: nom, label: Nom, fieldtype: Text, required: true, in_list_view: true }
+  # Pas obligatoire : tous les pays n'ont pas de devise propre, et un pays doit pouvoir se créer en vol depuis un champ
+  # Link d'un autre plugin (la saisie rapide du Desk ne demande que les champs obligatoires et le titre).
+  - { fieldname: devise, label: Devise, fieldtype: Link, options: Devise, in_list_view: true }
+  - { fieldname: indicatif, label: Indicatif, fieldtype: Text, in_list_view: true, description: "Indicatif téléphonique, ex. +225" }
+  - { fieldname: langue, label: Langue, fieldtype: Select, options: [fr, en, pt, ar, es], default: fr, in_list_view: true }
+
+layout:
+  - { section: Pays, columns: [[code, nom], [devise, indicatif, langue]] }
+
+# Voir `devise.yaml` : lecture ouverte à tout utilisateur identifié, écriture par convention (`geo:pays:write|delete`).
+permissions:
+  read: ["@authenticated"]

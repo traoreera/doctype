@@ -199,6 +199,9 @@ class DocumentService:
                 out.append({"name": d.name, "label": d.label or d.name, "module": d.module, "icon": d.icon, "single": d.single,
                             **({"settings_group": d.settings_group} if d.settings_group else {}),
                             **({"virtual": True} if d.source else {}),
+                            # `naming: owner` : UN document par utilisateur (son profil). Il se crée, mais une fois, et c'est sa propre
+                            # page qui le fait : il n'a rien à faire dans une liste de « Créer ». Le Desk a besoin de le savoir.
+                            **({"per_user": True} if d.naming == "owner" else {}),
                             "create": scope_for(d, ctx, "create").granted and not d.single})
         return out
 

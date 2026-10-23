@@ -287,7 +287,7 @@ const items = computed(() => [
       <div class="desk-spacer" />
       <NotificationsMenu v-if="services.auth" />
       <button type="button" class="desk-avatar" data-testid="user-menu" :aria-label="profile.label" :title="profile.label" @click="userMenu.toggle($event)">
-        <FileThumb v-if="profile.photo" :id="profile.photo" :size="24" round :alt="profile.label" />
+        <FileThumb v-if="profile.photo" :id="profile.photo" :size="28" round :alt="profile.label" />
         <template v-else>{{ initials(profile.label) }}</template>
       </button>
       <Menu ref="userMenu" :model="items" popup />
