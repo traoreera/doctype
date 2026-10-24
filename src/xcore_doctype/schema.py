@@ -61,7 +61,12 @@ TODAY = "today"
 # Lignes d'un champ Table : bornées, car elles voyagent avec le document (stockage, réponse, hooks sandboxés à 64 Kio).
 MAX_TABLE_ROWS = 500
 
-_Fieldname = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}$")]
+_FIELDNAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
+_Fieldname = Annotated[str, StringConstraints(pattern=_FIELDNAME_RE.pattern)]
+
+# `link_filters` (D29) : au plus ce nombre de champs filtrés, et le préfixe qui désigne un champ du document au lieu d'une valeur.
+MAX_LINK_FILTERS = 10
+LINK_FILTER_REF = "$"
 # Même forme que les grants d'auth (`plugin:ressource:action`, voir xauth `_GRANT_NAME_RE`). Les NOMS DE RÔLE sont des
 # données d'auth, libres et propres à chaque tenant : un fichier de DocType ne peut pas les connaître. Un grant, si.
 # Le grant spécial `@authenticated` : tout utilisateur IDENTIFIÉ, sans rien lui déclarer. Pour ce que chacun fait de soi-même (son profil) : aucun rôle n'est
@@ -154,6 +159,11 @@ class FieldDef(BaseModel):
     # Link et DynamicLink seulement : l'état exigé du document visé. `not_cancelled` = « pas annulé » (brouillon ou soumis).
     # Sans cela, un lien ne regarde que l'existence : la cible soumise par erreur reste citée (D23).
     target_status: Literal["draft", "submitted", "cancelled", "not_cancelled"] | list[Literal["draft", "submitted", "cancelled"]] | None = None
+    # Link seulement (D29) : restreint les documents qu'on peut choisir, par des filtres sur la CIBLE — `{actif: true}` (une valeur
+    # littérale) ou `{pays: "$pays"}` (la valeur d'un autre champ du même document, ou de la même ligne). Le Desk s'en sert pour
+    # l'autocomplétion ET le serveur le vérifie à l'écriture (`link_filtered`) : c'est une contrainte, pas une aide d'interface.
+    # Un DynamicLink en est exclu : sa cible change d'un document à l'autre, les champs filtrés ne seraient pas contrôlables au chargement.
+    link_filters: dict[_Fieldname, Any] | None = None
 
     @property
     def allowed_docstatus(self) -> frozenset[int] | None:
@@ -236,6 +246,23 @@ class FieldDef(BaseModel):
                     raise ValueError(f"{name}: `target_status` répète un état")
                 if "not_cancelled" in self.target_status:
                     raise ValueError(f"{name}: `not_cancelled` se dit seul, à côté des états nommés (draft, submitted, cancelled)")
+
+        if self.link_filters is not None:
+            if ftype != "Link":
+                raise ValueError(f"{name}: `link_filters` n'a de sens que pour un Link")
+            if not self.link_filters:
+                raise ValueError(f"{name}: `link_filters` vide ne restreint rien : retirez-le")
+            if len(self.link_filters) > MAX_LINK_FILTERS:
+                raise ValueError(f"{name}: `link_filters` est limité à {MAX_LINK_FILTERS} champs")
+            for key, value in self.link_filters.items():
+                if isinstance(value, str) and value.startswith(LINK_FILTER_REF):
+                    source = value[len(LINK_FILTER_REF):]
+                    if not _FIELDNAME_RE.match(source):
+                        raise ValueError(f"{name}: `link_filters.{key}` : {value!r} doit nommer un champ (`$nom_de_champ`)")
+                    if source == name:
+                        raise ValueError(f"{name}: `link_filters.{key}` ne peut pas lire le champ Link lui-même")
+                elif value is None or not isinstance(value, (str, int, float, bool)):
+                    raise ValueError(f"{name}: `link_filters.{key}` : une valeur simple, ou `$champ` pour lire un champ de ce document")
 
         if ftype in DECIMAL_TYPES:
             if self.decimals is None:
@@ -678,6 +705,16 @@ class DocTypeDef(BaseModel):
                 holder = by_name.get(str(f.options))
                 if holder is None or holder.fieldtype not in ("Text", "Select"):
                     raise ValueError(f"{f.fieldname}: DynamicLink `options` {f.options!r} doit nommer un champ Text ou Select de ce DocType (le nom du DocType visé)")
+            # `link_filters: {champ: "$autre"}` : `$autre` est un champ de CE document (ou de cette ligne). Les champs de la CIBLE,
+            # eux, sont vérifiés au chargement du registre (`registry._check_link_filters`), qui seul connaît les autres DocTypes.
+            for key, value in (f.link_filters or {}).items():
+                if not (isinstance(value, str) and value.startswith(LINK_FILTER_REF)):
+                    continue
+                source = by_name.get(value[len(LINK_FILTER_REF):])
+                if source is None:
+                    raise ValueError(f"{f.fieldname}: `link_filters.{key}` : {value!r} ne nomme aucun champ de ce DocType")
+                if source.fieldtype in ("Table", "Password", *FILE_TYPES):
+                    raise ValueError(f"{f.fieldname}: `link_filters.{key}` : un champ {source.fieldtype} ne peut pas servir de valeur de filtre")
         if "max_versions" in self.model_fields_set and not self.track_changes:
             raise ValueError("max_versions: exige `track_changes: true` (sans historique, rien à purger)")
         naming = self.naming

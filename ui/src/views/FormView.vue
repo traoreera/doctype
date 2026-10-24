@@ -22,7 +22,7 @@ import type { FormAction, FormContext } from '@/extensions/types'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
-import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
+import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isAutoSection, isDirty, mapServerErrors, recordValues, resolveLinkFilters, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
@@ -755,6 +755,7 @@ onBeforeUnmount(() => {
                   :error="errors[n]"
                   :unit="unitFor(fieldOf(n)!)"
                   :dynamic-target="dynamicTarget(fieldOf(n)!)"
+                  :link-filters="resolveLinkFilters(fieldOf(n)!, values)"
                   :form-id="formId"
                   :doctype="doctype"
                   @update:model-value="edit(n, $event)"

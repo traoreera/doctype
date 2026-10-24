@@ -11,13 +11,13 @@ from typing import Any, Awaitable, Callable
 
 import yaml
 
-from .builder import CompiledDocType
+from .builder import SYSTEM_FILTERS, CompiledDocType
 from .dashboards import MAX_BLOCKS, MAX_COMPOSED_BLOCKS, check_measured
 from .desk_extensions import DeskExtensions
-from .errors import InvalidDefinition, NotFound
+from .errors import InvalidDefinition, NotFound, ValidationFailed
 from .expr import ExprError
 from .extensions import Extension, merge, parse_extension, target_problem
-from .schema import DocTypeDef, parse_definition
+from .schema import LINK_FILTER_REF, DocTypeDef, parse_definition
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
 
 _SUFFIXES = {".yaml", ".yml", ".json"}
@@ -48,6 +48,25 @@ FETCHABLE_TYPES = (
     "Text", "LongText", "Select", "Number", "Int", "Percent", "Rating", "Decimal", "Currency", "Date", "Datetime", "Time", "Duration",
     "Boolean", "Color", "Code", "TextEditor",
 )
+
+
+def _filter_incompatible(filtered: Any, source: Any, key: str) -> str | None:
+    """Pourquoi la valeur du champ `source` ne peut pas filtrer le champ `filtered` de la cible, ou `None`.
+
+    `filtered` vaut `None` pour un filtre système (`name`, `docstatus`, `owner`…), qui attend alors un texte, un entier ou un booléen.
+    """
+    if filtered is None:
+        expected = SYSTEM_FILTERS.get(key)  # `name` (Text), `docstatus` (Number) : les seuls champs filtrables qui ne sont pas déclarés
+        return None if expected is None or source.fieldtype == expected else f"{key} attend un {expected}, pas un {source.fieldtype}"
+    if source.fieldtype != filtered.fieldtype:
+        return f"{key} est un {filtered.fieldtype} chez la cible, le champ qui le filtre est un {source.fieldtype}"
+    if filtered.fieldtype == "Link" and source.options != filtered.options:
+        return f"{key} vise {filtered.options!r}, le champ qui le filtre vise {source.options!r}"
+    if filtered.fieldtype == "Select" and not set(source.options or []) <= set(filtered.options or []):
+        return f"{key} ne propose pas toutes les valeurs du champ qui le filtre"
+    if filtered.fieldtype in ("Decimal", "Currency") and filtered.decimals != source.decimals:
+        return f"{key} a {filtered.decimals} décimales, le champ qui le filtre en a {source.decimals}"
+    return None
 
 
 def fetch_incompatible(dest: Any, source: Any) -> str | None:
@@ -376,6 +395,7 @@ class DocTypeRegistry:
         for name in (self.names() if only is None else sorted(only)):
             self._check_units(name, problems)
             self._check_fetch(name, problems)
+            self._check_link_filters(name, problems)
             self._check_dynamic(name, problems)
             for f in self._items[name].definition.fields:
                 if f.fieldtype != "Link":
@@ -410,6 +430,36 @@ class DocTypeRegistry:
                 continue
             if (why := fetch_incompatible(f, source)) is not None:
                 problems.append(f"{where} : {why}")
+
+    def _check_link_filters(self, name: str, problems: list[str]) -> None:
+        """`link_filters` (D29) : les champs filtrés existent chez la CIBLE, s'y filtrent, et la valeur donnée leur convient.
+
+        Une valeur littérale passe par le `coerce_filter` de la cible : exactement le contrôle qu'un filtre de liste subirait, donc
+        une faute de définition échoue au chargement et jamais à la première saisie. Une valeur `$champ` est comparée en TYPE au
+        champ filtré (un Link se filtre par un Link vers le même DocType, un Select par les mêmes valeurs).
+        """
+        d = self._items[name].definition
+        for f in d.fields:
+            if not f.link_filters:
+                continue
+            target = self._items.get(str(f.options))
+            if target is None:
+                continue  # cible inconnue : signalée avec les autres Link
+            for key, value in f.link_filters.items():
+                where = f"{name}.{f.fieldname}: link_filters.{key}"
+                filtered = target.definition.field_map.get(key)
+                if filtered is None and key not in SYSTEM_FILTERS:
+                    problems.append(f"{where} : le DocType {f.options!r} n'a pas de champ {key!r}")
+                    continue
+                if isinstance(value, str) and value.startswith(LINK_FILTER_REF):
+                    source = d.field_map[value[len(LINK_FILTER_REF):]]  # présence vérifiée par le schéma
+                    if (why := _filter_incompatible(filtered, source, key)) is not None:
+                        problems.append(f"{where} : {why}")
+                    continue
+                try:
+                    target.coerce_filter(key, value)
+                except ValidationFailed as e:
+                    problems.append(f"{where} : {e.message or 'valeur refusée par le champ filtré'}")
 
     def _check_dynamic(self, name: str, problems: list[str]) -> None:
         """Un DynamicLink dont le champ de type est un Select ne peut désigner que des DocTypes chargés (les options le disent d'avance)."""

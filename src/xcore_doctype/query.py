@@ -218,9 +218,12 @@ class Query:
         rows = [tuple(r) for r in (await self._session.execute(stmt.limit(limit + 1))).all()]
         return rows[:limit], len(rows) > limit
 
-    async def search(self, defn: DocTypeDef, q: str, *, limit: int, scope: Scope, docstatus: Collection[int] | None = None) -> list[StoredDoc]:
-        """Documents dont le nom ou le `title_field` CONTIENT `q` (sans casse), pour l'autocomplétion d'un champ Link. `docstatus` : les
-        seuls états admis (ceux qu'accepte le `target_status` du lien)."""
+    async def search(self, defn: DocTypeDef, q: str, *, limit: int, scope: Scope, docstatus: Collection[int] | None = None, filters: Mapping[str, Any] | None = None) -> list[StoredDoc]:
+        """Documents dont le nom ou le `title_field` CONTIENT `q` (sans casse), pour l'autocomplétion d'un champ Link.
+
+        `filters` : déjà validés par type (comme pour `list`), par exemple les `link_filters` du champ qu'on complète (D29).
+        `filters` are validated Link filters; `docstatus` limits the target states accepted by the Link.
+        """
         pattern = "%" + self._like_escape(q) + "%"
         match = [self._t.c.name.ilike(pattern, escape="\\")]
         order: list[Any] = []
@@ -231,7 +234,7 @@ class Query:
         states = [self._t.c.docstatus.in_(sorted(docstatus))] if docstatus is not None else []
         stmt = (
             select(self._t)
-            .where(self._scope(self._t.c.doctype == defn.name, or_(*match), *states, scope=scope))
+            .where(self._scope(self._t.c.doctype == defn.name, or_(*match), *states, *self._filter_conds(defn, filters or {}), scope=scope))
             .order_by(*order, self._t.c.name.asc())
             .limit(limit)
         )

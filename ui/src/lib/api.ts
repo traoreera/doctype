@@ -265,9 +265,11 @@ export class ApiClient {
   }
 
   /** `docstatus` : les seuls états proposés (ceux qu'admet le lien, voir `allowedDocstatus`) ; absent ou `null` : tous. */
-  async search(doctype: string, q: string, limit = 10, docstatus: readonly number[] | null = null): Promise<SearchItem[]> {
+  async search(doctype: string, q: string, limit = 10, docstatus: readonly number[] | null = null, filters?: Record<string, unknown> | null): Promise<SearchItem[]> {
     const params = new URLSearchParams({ q, limit: String(limit) })
     if (docstatus?.length) params.set('docstatus', docstatus.join(','))
+    // Les filtres du champ (`link_filters`) : ne proposer que ce que l'écriture acceptera. Le serveur les revérifie de toute façon.
+    if (filters && Object.keys(filters).length) params.set('filters', JSON.stringify(filters))
     const res = await this.call<{ items: SearchItem[] }>('GET', `/search/${encodeURIComponent(doctype)}`, { params })
     return res.items
   }

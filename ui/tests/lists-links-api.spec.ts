@@ -1,5 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
+import AutoComplete from 'primevue/autocomplete'
 import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
@@ -244,6 +245,23 @@ describe('champ Link : créer sans quitter le formulaire, aperçu', () => {
     expect(quickEntryFields(metaOf('Y', [field('f', 'Attach', { required: true })]))).toBeNull()
     expect(quickEntryFields(metaOf('Z', [field('a', 'Text'), field('b', 'Text', { mandatory_depends_on: { op: 'eq' } as never })]))).toBeNull()
     expect(quickEntryFields(metaOf('W', [field('a', 'Text', { required: true, depends_on: { op: 'eq' } as never })]))).toBeNull()
+  })
+
+  it('les filtres du champ (link_filters) accompagnent l’autocomplétion, et la relancent quand ils changent', async () => {
+    // D29 : le Desk ne propose que ce que l'écriture accepterait ; le serveur revérifie de toute façon.
+    const search = vi.fn(async () => [{ name: 'p1', title: 'Abidjan' }])
+    const { w } = mountWith(LinkField, { modelValue: null, target: 'Project', filters: { pays: 'CI', actif: true } }, { ...api(), search })
+    await flushPromises()
+    // L'autocomplétion de PrimeVue émet `complete` quand l'utilisateur tape : on exerce le gestionnaire, pas son minuteur.
+    w.findComponent(AutoComplete).vm.$emit('complete', { query: 'Abi' })
+    await flushPromises()
+    expect(search).toHaveBeenCalledWith('Project', 'Abi', 10, { pays: 'CI', actif: true })
+    expect(w.findComponent(AutoComplete).props('suggestions')).toEqual([{ name: 'p1', label: 'Abidjan' }])
+
+    // Le pays du document change : ce qui était proposé ne vaut plus.
+    await w.setProps({ filters: { pays: 'FR', actif: true } } as never)
+    await flushPromises()
+    expect(w.findComponent(AutoComplete).props('suggestions')).toEqual([])
   })
 
   it('« + » à côté du champ ouvre la saisie rapide et choisit le document créé', async () => {

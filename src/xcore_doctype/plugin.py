@@ -368,7 +368,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     async def doc_search(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:
             return await self.documents.search(
-                ctx, _need(payload, "doctype"), payload.get("q", ""), limit=payload.get("limit", 10), docstatus=payload.get("docstatus")
+                ctx, _need(payload, "doctype"), payload.get("q", ""), limit=payload.get("limit", 10),
+                docstatus=payload.get("docstatus"), filters=payload.get("filters")
             )
 
         return await self._run("doc.search", op)

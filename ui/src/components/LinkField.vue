@@ -11,7 +11,7 @@ import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
 
 /** `statuses` : les seuls états de la cible que le lien admet (`target_status`, voir `allowedDocstatus`) ; l'autocomplétion ne propose qu'eux. */
-const props = defineProps<{ modelValue: unknown; target: string; inputId?: string; invalid?: boolean; readonly?: boolean; statuses?: number[] | null }>()
+const props = defineProps<{ modelValue: unknown; target: string; inputId?: string; invalid?: boolean; readonly?: boolean; statuses?: number[] | null; filters?: Record<string, unknown> | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string | null] }>()
 
 interface Option {
@@ -74,12 +74,15 @@ function created(rec: DocRecord): void {
 
 async function complete(e: { query: string }): Promise<void> {
   try {
-    const found = await api.search(props.target, e.query.trim(), 10, props.statuses ?? null)
+    const found = await api.search(props.target, e.query.trim(), 10, props.statuses ?? null, props.filters)
     options.value = found.map((i) => ({ name: i.name, label: i.title || i.name }))
   } catch {
     options.value = []
   }
 }
+
+// Les filtres du champ ont changé (le pays du document, par exemple) : ce qui était proposé ne vaut plus.
+watch(() => JSON.stringify(props.filters ?? null), () => { options.value = [] })
 
 function select(e: { value: Option }): void {
   typed.value = ''

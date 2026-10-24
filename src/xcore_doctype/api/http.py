@@ -157,12 +157,16 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
         doctype: str,
         q: str = "",
         limit: int = 10,
-        docstatus: str | None = Query(None, description="les seuls états proposés, séparés par des virgules : 0 brouillon, 1 soumis, 2 annulé"),
+        docstatus: str | None = Query(None, description="états admis, séparés par des virgules"),
+        filters: str | None = Query(None, description="filtres JSON appliqués à la recherche"),
         ctx: RequestContext = Depends(ctx_dep),
     ):
-        # « 0,1 » -> [0, 1] ; ce qui n'est pas un entier reste tel quel, et le service le refuse avec son message.
         states = None if docstatus is None else [int(s) if s.strip().isdigit() else s for s in docstatus.split(",")]
-        return await _guard(documents.search(ctx, doctype, q, limit=limit, docstatus=states))
+        try:
+            parsed = json.loads(filters) if filters else None
+        except ValueError:
+            raise HTTPException(status_code=422, detail={"code": "validation_failed", "msg": "filters n'est pas du JSON valide"}) from None
+        return await _guard(documents.search(ctx, doctype, q, limit=limit, docstatus=states, filters=parsed))
 
     @router.get("/history/{doctype}/{name}")
     async def doc_history(

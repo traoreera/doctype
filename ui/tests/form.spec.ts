@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError, type ApiErrorDetail } from '@/lib/api'
-import { fieldStates, isDirty, isEmpty, isValidIsoDate, mapServerErrors, newValues, recordValues, toPayload, validate } from '@/lib/form'
+import { fieldStates, isDirty, isEmpty, isValidIsoDate, mapServerErrors, newValues, recordValues, resolveLinkFilters, toPayload, validate } from '@/lib/form'
 import type { DocRecord } from '@/lib/types'
 import { CUSTOMER, STOCK_ENTRY } from './fixtures'
 
@@ -210,5 +210,24 @@ describe('refus d’un hook sur une ligne', () => {
     const mapped = mapServerErrors(err, STOCK_ENTRY)
     expect(mapped.fields).toEqual({ 'items.1.qty': 'Stock disponible : 10.000' })
     expect(mapped.general).toContain('Stock insuffisant')
+  })
+})
+
+describe('filtres d’un champ Link (D29)', () => {
+  const link = (link_filters?: Record<string, unknown>) =>
+    ({ fieldname: 'entrepot', fieldtype: 'Link', options: 'Entrepot', required: false, hidden: false, in_list_view: false, ...(link_filters ? { link_filters } : {}) }) as never
+
+  it('une valeur littérale passe telle quelle, `$champ` prend la valeur du conteneur', () => {
+    expect(resolveLinkFilters(link({ actif: true, pays: '$pays' }), { pays: 'CI' })).toEqual({ actif: true, pays: 'CI' })
+  })
+
+  it('un champ source vide ne restreint rien (comme le serveur à l’écriture)', () => {
+    expect(resolveLinkFilters(link({ pays: '$pays' }), {})).toBeNull()
+    expect(resolveLinkFilters(link({ pays: '$pays' }), { pays: '' })).toBeNull()
+    expect(resolveLinkFilters(link({ actif: true, pays: '$pays' }), { pays: null })).toEqual({ actif: true })
+  })
+
+  it('un champ sans filtres n’en a pas', () => {
+    expect(resolveLinkFilters(link(), { pays: 'CI' })).toBeNull()
   })
 })
