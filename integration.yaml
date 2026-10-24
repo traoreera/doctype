@@ -46,10 +46,11 @@ services:
       # `sqlite+aio` = adaptateur asynchrone (D11). `sqlite` seul est l'adaptateur synchrone.
       type: sqlite+aio
       url: sqlite+aiosqlite:///./xcore.db
-      echo: true
+      echo: false
 
   cache:
-    backend: memory
+    backend: redis
+    url: redis://localhost:6379/0
     ttl: 300
     max_size: 1000
 
@@ -72,7 +73,8 @@ services:
 
   scheduler:
     enabled: true
-    backend: memory
+    backend: redis
+    url: redis://localhost:6379/0
     timezone: UTC
 
 observability:

@@ -31,29 +31,25 @@ function mountView(component: unknown, reply: { status: number; json: unknown })
 }
 const posts = (sent: HttpRequest[], suffix: string) => sent.filter((r) => r.method === 'POST' && r.url.endsWith(suffix))
 
-describe('Connexion par nom d’utilisateur', () => {
-  it('le champ accepte un nom (il n’est plus de type e-mail, que le navigateur refuserait) et le dit', async () => {
+describe('Connexion par e-mail', () => {
+  it('demande une adresse e-mail', async () => {
     const { w } = mountView(LoginView, { status: 401, json: {} })
     await flushPromises()
     const field = w.find('#login-email')
-    expect(field.attributes('type')).toBe('text')
-    expect(field.attributes('autocomplete')).toBe('username')
-    expect(w.find('label[for="login-email"]').text()).toBe('Nom d’utilisateur ou adresse e-mail')
+    expect(field.attributes('type')).toBe('email')
+    expect(field.attributes('autocomplete')).toBe('email')
+    expect(w.find('label[for="login-email"]').text()).toBe('Adresse e-mail')
   })
 
-  it('un nom part en `username`, une adresse en `email`', async () => {
+  it('envoie l’adresse et le mot de passe à xauth', async () => {
     const { w, sent } = mountView(LoginView, { status: 401, json: {} })
     await flushPromises()
-    await w.find('#login-email').setValue('Alice.M')
+    await w.find('#login-email').setValue('alice@acme.test')
     await w.find('#login-password').setValue('Secret-Passw0rd1')
     await w.find('form').trigger('submit')
     await flushPromises()
-    expect(posts(sent, '/login')[0]!.body).toEqual({ username: 'Alice.M', password: 'Secret-Passw0rd1' })
+    expect(posts(sent, '/login')[0]!.body).toEqual({ email: 'alice@acme.test', password: 'Secret-Passw0rd1' })
     expect(w.find('[data-testid="login-error"]').text()).toBe('Identifiant ou mot de passe incorrect')
-    await w.find('#login-email').setValue('alice@acme.test')
-    await w.find('form').trigger('submit')
-    await flushPromises()
-    expect(posts(sent, '/login')[1]!.body).toEqual({ email: 'alice@acme.test', password: 'Secret-Passw0rd1' })
   })
 })
 
