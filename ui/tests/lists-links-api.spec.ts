@@ -255,7 +255,7 @@ describe('champ Link : créer sans quitter le formulaire, aperçu', () => {
     // L'autocomplétion de PrimeVue émet `complete` quand l'utilisateur tape : on exerce le gestionnaire, pas son minuteur.
     w.findComponent(AutoComplete).vm.$emit('complete', { query: 'Abi' })
     await flushPromises()
-    expect(search).toHaveBeenCalledWith('Project', 'Abi', 10, { pays: 'CI', actif: true })
+    expect(search).toHaveBeenCalledWith('Project', 'Abi', 10, null, { pays: 'CI', actif: true }) // états admis (aucun), puis les filtres
     expect(w.findComponent(AutoComplete).props('suggestions')).toEqual([{ name: 'p1', label: 'Abidjan' }])
 
     // Le pays du document change : ce qui était proposé ne vaut plus.
@@ -359,9 +359,9 @@ describe('champ Link : créer sans quitter le formulaire, aperçu', () => {
       await flushPromises()
       return search.mock.calls.at(-1)
     }
-    expect(await typed({ target_status: 'not_cancelled' })).toEqual(['Project', 'par', 10, [0, 1]])
-    expect(await typed({ target_status: ['submitted', 'cancelled'] })).toEqual(['Project', 'par', 10, [1, 2]])
-    expect(await typed({})).toEqual(['Project', 'par', 10, null]) // sans contrainte : tous les états
+    expect((await typed({ target_status: 'not_cancelled' }))?.slice(0, 4)).toEqual(['Project', 'par', 10, [0, 1]]) // le 5e : les filtres du champ
+    expect((await typed({ target_status: ['submitted', 'cancelled'] }))?.slice(0, 4)).toEqual(['Project', 'par', 10, [1, 2]])
+    expect((await typed({}))?.slice(0, 4)).toEqual(['Project', 'par', 10, null]) // sans contrainte : tous les états
   })
 
   it('l’aperçu d’un document soumettable dit son état ; celui d’un type qui ne se soumet pas n’en dit rien', async () => {

@@ -297,6 +297,8 @@ export interface FieldMeta {
 }
 
 export interface LayoutSection {
+  /** L'onglet de la section, sur une fiche à onglets (absent sinon) : les sections d'un onglet se suivent. */
+  tab?: string | null
   section: string | null
   collapsible: boolean
   collapsed: boolean

@@ -204,6 +204,33 @@ export const isWide = (f: FieldMeta): boolean => WIDE_TYPES.includes(f.fieldtype
 export const isAutoSection = (s: { section: string | null; collapsible: boolean; columns: readonly unknown[] }): boolean => s.section === null && !s.collapsible && s.columns.length === 1
 
 /**
+ * Les onglets d'une fiche, dans l'ordre, d'après le `tab` de ses sections (le serveur garantit que les sections d'un onglet se suivent).
+ * On ne passe que les sections qui se VOIENT : un onglet dont tous les champs sont masqués par leurs conditions disparaît, comme une section.
+ * Vide : une fiche sans onglets, rendue comme avant.
+ */
+export function formTabs(sections: readonly { readonly tab?: string | null }[]): string[] {
+  const out: string[] = []
+  for (const s of sections) if (s.tab && !out.includes(s.tab)) out.push(s.tab)
+  return out
+}
+
+/** L'onglet de la section qui place ce champ (`null` : fiche sans onglets, ou champ placé nulle part). Une erreur `items.0.qty` est celle du champ `items`. */
+export function tabOfField(layout: readonly { readonly tab?: string | null; readonly columns: readonly (readonly string[])[] }[], key: string): string | null {
+  const field = key.split('.')[0] ?? key
+  return layout.find((s) => s.columns.some((c) => c.includes(field)))?.tab ?? null
+}
+
+/** Combien d'erreurs chaque onglet contient (une pastille sur l'onglet : on voit où corriger sans les ouvrir un à un). */
+export function errorsByTab(layout: Parameters<typeof tabOfField>[0], keys: readonly string[]): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const key of keys) {
+    const tab = tabOfField(layout, key)
+    if (tab) out[tab] = (out[tab] ?? 0) + 1
+  }
+  return out
+}
+
+/**
  * Les filtres d'un champ Link (D29), prêts pour `/search` : `$champ` devient la valeur de ce champ dans le CONTENEUR (le document,
  * ou la ligne pour un champ de table). Un champ source vide ne restreint rien — il disparaît des filtres, exactement comme le serveur
  * l'entend à l'écriture. `null` quand il ne reste rien à filtrer.

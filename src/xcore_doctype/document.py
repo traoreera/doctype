@@ -532,8 +532,13 @@ class DocumentService:
             )
         return aggregation.result(compiled.definition, spec, rows, keys, truncated=truncated)
 
-    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10, docstatus: Collection[int] | None = None, filters: Mapping[str, Any] | None = None) -> dict[str, Any]:
-        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6)."""
+    async def search(self, ctx: RequestContext, doctype: str, q: str = "", *, limit: int = 10, docstatus: Any = None, filters: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        """Autocomplétion d'un champ Link : les documents lisibles dont le nom ou le titre contient `q` (D6).
+
+        `docstatus` : les seuls états proposés (`[0, 1]` pour un lien `target_status: not_cancelled`), pour que le Desk n'offre pas une
+        cible que l'écriture refuserait. `filters` : ceux du champ (`link_filters`, D29). Ce n'est qu'un confort : l'écriture rejuge l'état
+        (`_check_links`) et les filtres (`_check_link_filters`). Un document d'un DocType virtuel compte pour un brouillon, comme à l'écriture.
+        """
         self._enter(ctx, "doc.search", doctype)
         compiled = self._doctype(doctype)
         scope = self._scope(ctx, compiled, "read")
@@ -541,17 +546,15 @@ class DocumentService:
             raise ValidationFailed("q doit être un texte d'au plus 100 caractères")
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_SEARCH:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_SEARCH}")
+        states = _search_states(docstatus)
         coerced = aggregation.validate_filters(compiled, filters)
         if (source := self._source(compiled)) is not None:
             visible = memory.visible(await self._source_docs(ctx, compiled, source), scope)
             chosen = memory.select(compiled.definition, visible, coerced)
-            if docstatus is not None:
-                allowed = set(docstatus)
-                chosen = [d for d in chosen if d.docstatus in allowed]
-            docs = memory.search(compiled.definition, chosen, q, limit)
+            docs = memory.search(compiled.definition, chosen, q, limit) if states is None or DRAFT in states else []
         else:
             async with self._query(ctx) as query:
-                docs = await query.search(compiled.definition, q, limit=limit, scope=scope, docstatus=docstatus, filters=coerced)
+                docs = await query.search(compiled.definition, q, limit=limit, scope=scope, docstatus=states, filters=coerced)
         title = compiled.definition.title_field
         return {"items": [{"name": d.name, "title": d.data.get(title) if title else None} for d in docs]}
 
@@ -969,7 +972,9 @@ class DocumentService:
             if by_field is not None:
                 name = valid_name(str(clean[by_field.field]), by_field.field)
             clean = self._seal(compiled, clean, None)
-            await self._check_links(ctx, q, compiled, clean, None)
+            await self._check_links(ctx, q, compiled, clean, None, copied=copied)
+            # D29 : à la création comme à la modification ; un amendement recopie ses liens, qui ne se rejugent pas (comme leur état).
+            await self._check_link_filters(ctx, q, compiled, clean, copied)
             await self._check_files(q, compiled, clean, None)
             if series:
                 # En DERNIER dans la transaction : le verrou du compteur n'est tenu que le temps du reste de l'écriture, et
@@ -2116,6 +2121,7 @@ class DocumentService:
         clean = finalize(self._with_defaults(compiled, data, rules), rules=rules)
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, None)
+            await self._check_link_filters(ctx, q, compiled, clean, None)
         doc = self._checked(compiled, await self._call_source(compiled, source.insert(ctx, compiled.definition, clean)))
         return self._present(doc)
 
@@ -2126,6 +2132,7 @@ class DocumentService:
         clean = finalize(data, old=current.data, rules=await self._form_rules(ctx, compiled))
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, current.data)
+            await self._check_link_filters(ctx, q, compiled, clean, current.data)
         doc = self._checked(compiled, await self._call_source(compiled, source.update(ctx, compiled.definition, current.name, clean, version)))
         return self._present(doc)
 

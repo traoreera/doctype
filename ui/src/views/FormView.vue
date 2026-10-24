@@ -10,6 +10,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch 
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import FieldControl from '@/components/FieldControl.vue'
 import FileThumb from '@/components/FileThumb.vue'
+import FormTabs from '@/components/FormTabs.vue'
 import CollabPanel from '@/components/collab/CollabPanel.vue'
 import ConnectionsPanel from '@/components/ConnectionsPanel.vue'
 import HistoryPanel from '@/components/HistoryPanel.vue'
@@ -22,7 +23,7 @@ import type { FormAction, FormContext } from '@/extensions/types'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
-import { cellKey, childOf, duplicateValues, fetchDependents, fetchSource, fieldStates, isAutoSection, isDirty, mapServerErrors, recordValues, resolveLinkFilters, startValues, toPayload, validate, type Row, type Values } from '@/lib/form'
+import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchSource, fieldStates, formTabs, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, resolveLinkFilters, startValues, tabOfField, toPayload, validate, type Row, type Values } from '@/lib/form'
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
@@ -116,7 +117,13 @@ watch(values, (v) => {
 })
 const unitFor = (f: FieldMeta) => (meta.value ? unitOf(f, meta.value.fields, values.value, links.field) : null)
 
-function init(m: DocTypeMeta, rec: DocRecord | null, copy?: Values): void {
+/**
+ * `keepTab` : le document affiché revient du serveur (enregistrement, soumission, relecture) ; l'onglet ouvert reste celui de l'utilisateur.
+ * Sans lui (un autre document, un formulaire neuf, une copie), la fiche s'ouvre sur son premier onglet. Dit par l'appelant, jamais deviné :
+ * quitter un formulaire neuf pour un document existant ressemble trait pour trait à l'enregistrement de ce formulaire.
+ */
+function init(m: DocTypeMeta, rec: DocRecord | null, copy?: Values, keepTab = false): void {
+  if (!keepTab) pickedTab.value = null
   if (m.single && !props.embedded) {
     // Un réglage vit dans la page Paramètres, avec tous les autres : on n'a pas deux endroits où le trouver.
     void router.replace(m.settings_group ? { name: 'settings' } : { name: 'settings', params: { doctype: m.name } })
@@ -207,6 +214,14 @@ const sections = computed(() =>
 )
 const fieldOf = (name: string) => meta.value?.fields.find((f) => f.fieldname === name)
 
+// ── Onglets : une fiche dont les sections nomment un `tab` ; les autres s'affichent comme avant ─────────────────────────
+const tabs = computed(() => formTabs(sections.value.map((x) => x.s)))
+const pickedTab = ref<string | null>(null)
+/** L'onglet ouvert : celui qu'on a choisi s'il se voit encore (une condition peut l'avoir vidé), sinon le premier. */
+const currentTab = computed(() => (pickedTab.value && tabs.value.includes(pickedTab.value) ? pickedTab.value : (tabs.value[0] ?? null)))
+const tabErrors = computed(() => (tabs.value.length ? errorsByTab(meta.value?.layout ?? [], Object.keys(errors.value)) : {}))
+const panelId = `${formId}-panel`
+
 // ── Erreurs : on amène l'utilisateur AU premier champ à corriger, et le bandeau les liste ──────────────────────────────
 /** Le libellé d'une erreur : « Objet » pour un champ, « Lignes › Quantité (ligne 2) » pour une cellule. */
 function errorLabel(key: string): string {
@@ -226,7 +241,13 @@ const errorLines = computed(() => {
     .map(([key, message]) => ({ key, label: key === 'name' ? t.form.nameLabel : errorLabel(key), message }))
 })
 /** Pose le focus sur le champ en erreur (ou sa cellule) et l'amène à l'écran. */
-function focusField(key: string): void {
+async function focusField(key: string): Promise<void> {
+  // Le champ vit peut-être dans un autre onglet : on l'ouvre d'abord (les champs restent montés, il suffit de le montrer).
+  const tab = tabs.value.length ? tabOfField(meta.value?.layout ?? [], key) : null
+  if (tab && tab !== currentTab.value) {
+    pickedTab.value = tab
+    await nextTick()
+  }
   const [field, row, col] = key.split('.')
   const id = row === undefined ? `${formId}-${key === 'name' ? 'name' : field}` : `${formId}-${field}-${row}-${col}`
   const target =
@@ -240,7 +261,7 @@ function focusField(key: string): void {
 async function revealFirstError(): Promise<void> {
   await nextTick()
   const first = errorLines.value[0]
-  if (first) focusField(first.key)
+  if (first) await focusField(first.key)
 }
 /** DynamicLink : le DocType que le champ de type désigne en ce moment (`null` tant qu'on ne l'a pas choisi). */
 const dynamicTarget = (f: FieldMeta): string | null => {
@@ -330,13 +351,13 @@ async function save(): Promise<void> {
       notify.success(t.form.createdToast)
       refreshProfile(target.doctype)
       if (!here()) return // enregistré, mais l'utilisateur est déjà ailleurs : on ne l'y suit pas
-      init(m, rec)
+      init(m, rec, undefined, true)
       await router.replace({ name: 'form', params: { doctype: target.doctype, name: rec.name } })
     } else {
       const rec = await api.update(target.doctype, current!.name, current!.version, data)
       notify.success(t.form.savedToast)
       refreshProfile(target.doctype)
-      if (here()) init(m, rec)
+      if (here()) init(m, rec, undefined, true)
       emit('saved', rec)
     }
   } catch (e) {
@@ -382,7 +403,7 @@ async function transition(kind: 'submit' | 'cancel'): Promise<void> {
   try {
     const next = kind === 'submit' ? await api.submit(target.doctype, current.name, current.version) : await api.cancel(target.doctype, current.name, current.version)
     notify.success(kind === 'submit' ? t.form.submittedToast : t.form.cancelledToast)
-    if (here()) init(m, next)
+    if (here()) init(m, next, undefined, true)
   } catch (e) {
     if (!here()) return void notify.error(e)
     if (e instanceof ApiError && (e.isConflict || e.isStale)) return askReload(e.isStale)
@@ -450,7 +471,7 @@ function remove(): void {
       }
       notify.success(t.form.deletedToast)
       if (props.doctype !== target.doctype || props.name !== target.name) return // déjà ailleurs
-      init(meta.value!, record.value) // plus rien à perdre : la garde de sortie ne doit pas se déclencher
+      init(meta.value!, record.value, undefined, true) // plus rien à perdre : la garde de sortie ne doit pas se déclencher
       saved.value = { ...values.value }
       await router.replace({ name: 'list', params: { doctype: target.doctype } })
     },
@@ -479,7 +500,7 @@ async function reloadRecord(): Promise<void> {
   const m = meta.value
   const rec = await api.get(doctype, record.value.name)
   if (mine !== loadTicket || props.doctype !== doctype || props.name !== rec.name) return
-  init(m, rec)
+  init(m, rec, undefined, true)
 }
 function runExtension(action: Owned<FormAction>): void {
   const ctx = extContext.value
@@ -697,7 +718,7 @@ onBeforeUnmount(() => {
         {{ banner }}
         <ul v-if="errorLines.length" class="error-list" data-testid="error-list">
           <li v-for="e in errorLines.slice(0, 6)" :key="e.key">
-            <button type="button" class="error-link" :data-testid="`error-link-${e.key}`" @click="focusField(e.key)">{{ e.label }}</button> : {{ e.message }}
+            <button type="button" class="error-link" :data-testid="`error-link-${e.key}`" @click="void focusField(e.key)">{{ e.label }}</button> : {{ e.message }}
           </li>
           <li v-if="errorLines.length > 6" class="desk-muted">{{ t.form.moreErrors(errorLines.length - 6) }}</li>
         </ul>
@@ -717,7 +738,15 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </section>
-        <section v-for="x in sections" :key="x.index" class="desk-card form-section" :data-section="x.s.section ?? ''">
+        <FormTabs v-if="tabs.length" :tabs="tabs" :current="currentTab" :errors="tabErrors" :id-prefix="formId" :panel-id="panelId" @select="pickedTab = $event" />
+        <div
+          :id="panelId"
+          :role="tabs.length ? 'tabpanel' : undefined"
+          :aria-labelledby="tabs.length && currentTab ? `${formId}-tab-${tabs.indexOf(currentTab)}` : undefined"
+          :data-tab="currentTab ?? undefined"
+        >
+        <!-- Tous les champs restent montés : l'onglet ne fait que MONTRER ses sections (la saisie, la validation et le focus n'en dépendent pas). -->
+        <section v-for="x in sections" v-show="!tabs.length || x.s.tab === currentTab" :key="x.index" class="desk-card form-section" :data-section="x.s.section ?? ''" :data-tab="x.s.tab ?? undefined">
           <header
             v-if="x.s.section"
             :class="{ collapsible: x.s.collapsible }"
@@ -764,6 +793,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </section>
+        </div>
         <button type="submit" hidden tabindex="-1" aria-hidden="true" />
       </form>
 
