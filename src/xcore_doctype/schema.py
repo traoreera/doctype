@@ -66,6 +66,8 @@ _Fieldname = Annotated[str, StringConstraints(pattern=_FIELDNAME_RE.pattern)]
 
 # `link_filters` (D29) : au plus ce nombre de champs filtrés, et le préfixe qui désigne un champ du document au lieu d'une valeur.
 MAX_LINK_FILTERS = 10
+# Onglets d'une fiche : un `tab` par section (le même pour les sections qui se suivent). Au-delà, une fiche n'est plus lisible.
+MAX_TABS = 12
 LINK_FILTER_REF = "$"
 # Même forme que les grants d'auth (`plugin:ressource:action`, voir xauth `_GRANT_NAME_RE`). Les NOMS DE RÔLE sont des
 # données d'auth, libres et propres à chaque tenant : un fichier de DocType ne peut pas les connaître. Un grant, si.
@@ -468,10 +470,12 @@ class GrantSpec:
 
 
 class LayoutSection(BaseModel):
-    """Une section du formulaire : des colonnes de champs (doc/doctype.md §12)."""
+    """Une section du formulaire : des colonnes de champs (doc/doctype.md §12), rangée dans un onglet quand la fiche en a (`tab`, voir
+    `layout_tab_problems`)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    tab: Annotated[str, StringConstraints(min_length=1, max_length=60)] | None = None
     section: Annotated[str, StringConstraints(min_length=1, max_length=140)] | None = None
     collapsible: StrictBool = False
     collapsed: StrictBool = False
@@ -484,6 +488,45 @@ class LayoutSection(BaseModel):
         if any(not col for col in self.columns):
             raise ValueError("une colonne ne peut pas être vide")
         return self
+
+
+def layout_tab_problems(tabs: list[str | None]) -> list[str]:
+    """Les onglets d'une disposition, donnés par le `tab` de chaque section dans l'ordre : soit aucune section n'en nomme, soit toutes ; les
+    sections d'un même onglet se suivent (un onglet n'apparaît pas deux fois) ; au plus `MAX_TABS`. La MÊME règle pour le YAML et pour
+    l'habillage de formulaire d'une organisation (`overrides.validate_form_override`)."""
+    named = [t for t in tabs if t is not None]
+    if not named:
+        return []
+    problems: list[str] = []
+    if len(named) != len(tabs):
+        missing = ", ".join(str(i) for i, t in enumerate(tabs) if t is None)
+        problems.append(f"une fiche à onglets range CHAQUE section dans un onglet (`tab`) : section(s) {missing} sans onglet")
+    seen: list[str] = []
+    for t in named:
+        if seen and seen[-1] == t:
+            continue
+        if t in seen:
+            problems.append(f"les sections de l'onglet {t!r} doivent se suivre")
+            continue
+        seen.append(t)
+    if len(seen) > MAX_TABS:
+        problems.append(f"au plus {MAX_TABS} onglets ({len(seen)})")
+    return problems
+
+
+def complete_layout(sections: list[dict[str, Any]], visible: list[str]) -> list[dict[str, Any]]:
+    """Ajoute à une disposition les champs `visible` qu'elle ne place pas, dans un dernier bloc sans titre : ajouter un champ ne le cache
+    jamais en silence. Sur une fiche à onglets, ce bloc ferme le PREMIER onglet, celui qui s'ouvre. Sert au YAML (`effective_layout`) ET à
+    l'habillage d'une organisation (`overrides.apply_form_override`), qui ne place pas les tables et ignore les champs ajoutés après lui."""
+    # `tab` n'apparaît que sur une fiche à onglets : une disposition sans onglet garde exactement sa forme d'avant.
+    out = [dict(sec) for sec in sections]
+    placed = {n for sec in out for col in sec.get("columns") or [] for n in col}
+    rest = [n for n in visible if n not in placed]
+    if rest:
+        first = out[0].get("tab") if out else None
+        at = next((i for i, sec in enumerate(out) if sec.get("tab") != first), len(out))  # après la dernière section du premier onglet
+        out.insert(at, {**({"tab": first} if first is not None else {}), "section": None, "collapsible": False, "collapsed": False, "columns": [rest]})
+    return out
 
 
 class HooksDef(BaseModel):
@@ -813,6 +856,8 @@ class DocTypeDef(BaseModel):
             if image.fieldtype != "Image":
                 raise ValueError(f"image_field: {image.fieldname!r} est un {image.fieldtype}, il faut une Image")
         hidden = {f.fieldname for f in self.fields if f.hidden}
+        for problem in layout_tab_problems([s.tab for s in self.layout or []]):
+            raise ValueError(f"layout: {problem}")
         placed: set[str] = set()
         for section in self.layout or []:
             for column in section.columns:
@@ -929,17 +974,14 @@ class DocTypeDef(BaseModel):
 
     def effective_layout(self) -> list[dict[str, Any]]:
         """Le formulaire tel que le Desk l'affiche : les sections déclarées, puis les champs non placés dans un dernier bloc
-        (ajouter un champ ne le cache donc jamais en silence ; pour le cacher, `hidden: true`)."""
-        visible = [f.fieldname for f in self.fields if not f.hidden]
-        out = [
-            {"section": s.section, "collapsible": s.collapsible, "collapsed": s.collapsed, "columns": [list(c) for c in s.columns]}
+        (ajouter un champ ne le cache donc jamais en silence ; pour le cacher, `hidden: true`). Sur une fiche à onglets, ce bloc ferme le
+        PREMIER onglet, celui qui s'ouvre : un champ oublié par la disposition reste sous les yeux, pas au fond d'un onglet."""
+        sections = [
+            {**({"tab": s.tab} if s.tab is not None else {}),
+             "section": s.section, "collapsible": s.collapsible, "collapsed": s.collapsed, "columns": [list(c) for c in s.columns]}
             for s in (self.layout or [])
         ]
-        placed = {n for sec in out for col in sec["columns"] for n in col}
-        rest = [n for n in visible if n not in placed]
-        if rest:
-            out.append({"section": None, "collapsible": False, "collapsed": False, "columns": [rest]})
-        return out
+        return complete_layout(sections, [f.fieldname for f in self.fields if not f.hidden])
 
     def list_columns(self) -> list[str]:
         """Colonnes de la liste : les champs `in_list_view`, sinon les quatre premiers champs visibles (jamais une table)."""

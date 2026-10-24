@@ -888,6 +888,8 @@ export const t = {
     saveShortcut: 'Enregistrer (Ctrl+S)',
     rowN: (n: number) => `ligne ${n}`,
     moreErrors: (n: number) => `et ${n} autre${n > 1 ? 's' : ''}`,
+    tabs: 'Onglets de la fiche',
+    tabErrors: (n: number) => `${n} erreur${n > 1 ? 's' : ''} dans cet onglet`,
     dynamicFirst: 'Choisissez d’abord le type de document',
     nameHint: 'Le nom du document, tel qu’il apparaîtra dans les liens',
     duplicate: 'Dupliquer',

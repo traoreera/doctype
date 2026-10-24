@@ -141,9 +141,19 @@ class TestFormOverrideValidation:
         assert fragment in str(e.value)
 
     def test_apply_is_tolerant_of_vanished_fields(self):
-        meta = {"fields": [{"fieldname": "a", "label": "A"}, {"fieldname": "b"}]}
+        meta = {"fields": [{"fieldname": "a", "label": "A"}, {"fieldname": "b", "hidden": True}]}
         apply_form_override(meta, {"layout": [{"section": None, "columns": [["a"]]}], "fields": {"a": {"label": "AA"}, "zz": {"label": "X"}}})
         assert meta["layout"] == [{"section": None, "columns": [["a"]]}] and meta["fields"][0]["label"] == "AA"
+
+    def test_what_the_organisation_layout_does_not_place_stays_on_the_form(self):
+        """Une disposition d'organisation ne place pas les tables (refusé) et ignore les champs ajoutés au YAML après elle : ils ne doivent
+        pas disparaître de la fiche (la règle du YAML : un champ ne se cache qu'avec `hidden`). Un champ que l'habillage masque, lui, reste caché."""
+        meta = {"fields": [{"fieldname": "a"}, {"fieldname": "later"}, {"fieldname": "lines", "fieldtype": "Table"}, {"fieldname": "secret"}]}
+        apply_form_override(meta, {"layout": [{"section": "Tête", "columns": [["a"]]}], "fields": {"secret": {"hidden": True}}})
+        assert meta["layout"] == [
+            {"section": "Tête", "columns": [["a"]]},
+            {"section": None, "collapsible": False, "collapsed": False, "columns": [["later", "lines"]]},
+        ]
 
     def test_a_body_with_an_unknown_key_is_refused(self):
         with pytest.raises(ValidationFailed) as e:

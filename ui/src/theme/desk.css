@@ -258,6 +258,59 @@ button {
 }
 
 /* ── Formulaire ──────────────────────────────────────────── */
+/* Onglets d'une fiche : une barre au-dessus des sections, qui défile sous la largeur d'un téléphone plutôt que de passer à la ligne. */
+.form-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--desk-line);
+  scrollbar-width: thin;
+}
+
+.form-tab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0.4rem 0.85rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--p-text-muted-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.form-tab:hover {
+  color: var(--p-text-color);
+}
+
+.form-tab.active {
+  color: var(--p-text-color);
+  font-weight: 600;
+  border-bottom-color: var(--p-text-color);
+}
+
+.form-tab:focus-visible {
+  outline: 2px solid var(--p-text-color);
+  outline-offset: -2px;
+}
+
+/* La pastille des erreurs : du texte rouge sur le fond de la page (le contraste du texte d'erreur, mesuré), jamais un fond rouge. */
+.form-tab-errors {
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--desk-danger);
+  font-size: 0.75rem;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
 .form-section {
   padding: 1rem 1.25rem 0.25rem;
   margin-bottom: 1rem;

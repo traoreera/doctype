@@ -94,6 +94,15 @@ def target_problem(target: DocTypeDef, target_owner: str | None, extension_owner
     return None
 
 
+def _extension_tab(layout: list[dict[str, Any]], label: str) -> str:
+    """L'onglet de la section qu'une extension ajoute à une fiche à onglets : un onglet à elle, nommé comme sa section. Si ce nom est déjà
+    celui d'un onglet ANTÉRIEUR (les sections d'un onglet se suivent), la section rejoint le dernier onglet : la fusion ne doit pas échouer
+    pour un libellé."""
+    tabs = [s.get("tab") for s in layout]
+    own = label[:60]  # un libellé de section va jusqu'à 140 caractères, un onglet jusqu'à 60
+    return own if own not in tabs or tabs[-1] == own else str(tabs[-1])
+
+
 def merge(origin: DocTypeDef, extensions: list[Extension]) -> DocTypeDef:
     """La définition servie : l'origine, puis chaque extension dans l'ordre (champs à la suite, une section de fiche chacune, hooks après les siens).
 
@@ -113,7 +122,11 @@ def merge(origin: DocTypeDef, extensions: list[Extension]) -> DocTypeDef:
         # Un champ caché ne se place pas dans une section (le schéma le refuse) : il est stocké, jamais affiché.
         shown = [f["fieldname"] for f in added if not f.get("hidden")]
         if layout is not None and shown:
-            layout.append({"section": d.label or module_label(ext.owner), "columns": [shown]})
+            label = d.label or module_label(ext.owner)
+            section: dict[str, Any] = {"section": label, "columns": [shown]}
+            if layout and layout[0].get("tab") is not None:
+                section["tab"] = _extension_tab(layout, label)  # une fiche à onglets range CHAQUE section dans un onglet
+            layout.append(section)
         for e in HOOK_EVENTS:
             hooks[e] += d.hooks.for_event(e)
     raw["fields"] = fields

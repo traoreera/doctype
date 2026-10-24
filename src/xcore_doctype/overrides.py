@@ -28,7 +28,7 @@ from .builder import NO_RULES, FormRules
 from .dashboards import MAX_BLOCKS, DashboardBlock, check_measured
 from .decimals import canonical
 from .errors import ValidationFailed
-from .schema import DECIMAL_TYPES, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField
+from .schema import DECIMAL_TYPES, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField, complete_layout, layout_tab_problems
 from .workspaces import WorkspaceDef, parse_workspace
 
 __all__ = [
@@ -156,16 +156,19 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
         for i, s in enumerate(layout):
             if not isinstance(s, dict):
                 raise ValidationFailed(f"habillage de formulaire : layout.{i} doit être un objet")
-            bad = set(s) - {"section", "collapsible", "collapsed", "columns"}
+            bad = set(s) - {"tab", "section", "collapsible", "collapsed", "columns"}
             if bad:
                 raise ValidationFailed(f"habillage de formulaire : layout.{i} clés inconnues {sorted(bad)}")
             columns = s.get("columns")
             if not isinstance(columns, list):
                 raise ValidationFailed(f"habillage de formulaire : layout.{i}.columns doit être une liste")
-            sections.append({"section": s.get("section"), "collapsible": bool(s.get("collapsible", False)),
-                             "collapsed": bool(s.get("collapsed", False)), "columns": columns})
+            tab = s.get("tab")
+            if tab is not None and (not isinstance(tab, str) or not 1 <= len(tab) <= 60):
+                raise ValidationFailed(f"habillage de formulaire : layout.{i}.tab : un nom d'onglet de 1 à 60 caractères")
+            sections.append({**({"tab": tab} if tab is not None else {}), "section": s.get("section"),
+                             "collapsible": bool(s.get("collapsible", False)), "collapsed": bool(s.get("collapsed", False)), "columns": columns})
         placed: set[str] = set()
-        problems = []
+        problems = [f"layout: {p}" for p in layout_tab_problems([sec.get("tab") for sec in sections])]  # les règles d'onglets du YAML
         for i, section in enumerate(sections):
             if not 1 <= len(section["columns"]) <= 4:
                 problems.append(f"layout.{i}: entre 1 et 4 colonnes")
@@ -391,8 +394,6 @@ def apply_form_override(meta: dict[str, Any], config: Any, rules: FormRules | No
     if not isinstance(config, dict):
         return
     layout = config.get("layout")
-    if isinstance(layout, list) and layout:
-        meta["layout"] = layout
     tweaks = config.get("fields")
     if isinstance(tweaks, dict):
         for field in meta.get("fields", []):
@@ -405,6 +406,10 @@ def apply_form_override(meta: dict[str, Any], config: Any, rules: FormRules | No
                 field["description"] = spec["description"]
             if spec.get("hidden") is True and not _hides_a_duty(field, rules):
                 field["hidden"] = True
+    if isinstance(layout, list) and layout:
+        # La disposition de l'organisation, complétée de ce qu'elle ne place pas (les tables, les champs ajoutés au YAML depuis) : sinon ils
+        # disparaîtraient de la fiche. Après les retouches : un champ que l'habillage masque n'est pas ajouté.
+        meta["layout"] = complete_layout(layout, [f["fieldname"] for f in meta.get("fields", []) if not f.get("hidden")])
     for field in meta.get("fields", []) if rules is not None else ():
         name = field.get("fieldname")
         if name in rules.mandatory:
