@@ -117,10 +117,13 @@ watch(values, (v) => {
 })
 const unitFor = (f: FieldMeta) => (meta.value ? unitOf(f, meta.value.fields, values.value, links.field) : null)
 
-function init(m: DocTypeMeta, rec: DocRecord | null, copy?: Values): void {
-  // L'onglet ouvert reste celui de l'utilisateur quand il ENREGISTRE (le même document revient) ; un autre document s'ouvre sur le premier.
-  const sameDocument = meta.value?.name === m.name && rec !== null && (record.value === null || record.value.name === rec.name)
-  if (!sameDocument) pickedTab.value = null
+/**
+ * `keepTab` : le document affiché revient du serveur (enregistrement, soumission, relecture) ; l'onglet ouvert reste celui de l'utilisateur.
+ * Sans lui (un autre document, un formulaire neuf, une copie), la fiche s'ouvre sur son premier onglet. Dit par l'appelant, jamais deviné :
+ * quitter un formulaire neuf pour un document existant ressemble trait pour trait à l'enregistrement de ce formulaire.
+ */
+function init(m: DocTypeMeta, rec: DocRecord | null, copy?: Values, keepTab = false): void {
+  if (!keepTab) pickedTab.value = null
   if (m.single && !props.embedded) {
     // Un réglage vit dans la page Paramètres, avec tous les autres : on n'a pas deux endroits où le trouver.
     void router.replace(m.settings_group ? { name: 'settings' } : { name: 'settings', params: { doctype: m.name } })
@@ -348,13 +351,13 @@ async function save(): Promise<void> {
       notify.success(t.form.createdToast)
       refreshProfile(target.doctype)
       if (!here()) return // enregistré, mais l'utilisateur est déjà ailleurs : on ne l'y suit pas
-      init(m, rec)
+      init(m, rec, undefined, true)
       await router.replace({ name: 'form', params: { doctype: target.doctype, name: rec.name } })
     } else {
       const rec = await api.update(target.doctype, current!.name, current!.version, data)
       notify.success(t.form.savedToast)
       refreshProfile(target.doctype)
-      if (here()) init(m, rec)
+      if (here()) init(m, rec, undefined, true)
       emit('saved', rec)
     }
   } catch (e) {
@@ -400,7 +403,7 @@ async function transition(kind: 'submit' | 'cancel'): Promise<void> {
   try {
     const next = kind === 'submit' ? await api.submit(target.doctype, current.name, current.version) : await api.cancel(target.doctype, current.name, current.version)
     notify.success(kind === 'submit' ? t.form.submittedToast : t.form.cancelledToast)
-    if (here()) init(m, next)
+    if (here()) init(m, next, undefined, true)
   } catch (e) {
     if (!here()) return void notify.error(e)
     if (e instanceof ApiError && (e.isConflict || e.isStale)) return askReload(e.isStale)
@@ -468,7 +471,7 @@ function remove(): void {
       }
       notify.success(t.form.deletedToast)
       if (props.doctype !== target.doctype || props.name !== target.name) return // déjà ailleurs
-      init(meta.value!, record.value) // plus rien à perdre : la garde de sortie ne doit pas se déclencher
+      init(meta.value!, record.value, undefined, true) // plus rien à perdre : la garde de sortie ne doit pas se déclencher
       saved.value = { ...values.value }
       await router.replace({ name: 'list', params: { doctype: target.doctype } })
     },
@@ -497,7 +500,7 @@ async function reloadRecord(): Promise<void> {
   const m = meta.value
   const rec = await api.get(doctype, record.value.name)
   if (mine !== loadTicket || props.doctype !== doctype || props.name !== rec.name) return
-  init(m, rec)
+  init(m, rec, undefined, true)
 }
 function runExtension(action: Owned<FormAction>): void {
   const ctx = extContext.value

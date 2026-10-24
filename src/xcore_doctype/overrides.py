@@ -163,8 +163,10 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
             if not isinstance(columns, list):
                 raise ValidationFailed(f"habillage de formulaire : layout.{i}.columns doit être une liste")
             tab = s.get("tab")
-            if tab is not None and (not isinstance(tab, str) or not 1 <= len(tab) <= 60):
-                raise ValidationFailed(f"habillage de formulaire : layout.{i}.tab : un nom d'onglet de 1 à 60 caractères")
+            if tab is not None:
+                tab = tab.strip() if isinstance(tab, str) else tab
+                if not isinstance(tab, str) or not 1 <= len(tab) <= 60:  # comme le YAML : sans les blancs autour, de 1 à 60 caractères
+                    raise ValidationFailed(f"habillage de formulaire : layout.{i}.tab : un nom d'onglet de 1 à 60 caractères")
             sections.append({**({"tab": tab} if tab is not None else {}), "section": s.get("section"),
                              "collapsible": bool(s.get("collapsible", False)), "collapsed": bool(s.get("collapsed", False)), "columns": columns})
         placed: set[str] = set()
@@ -181,8 +183,6 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
                 for name in col:
                     if not isinstance(name, str) or name not in fields:
                         problems.append(f"layout.{i}: champ inconnu {name!r}")
-                    elif fields[name].fieldtype == "Table":
-                        problems.append(f"layout.{i}: {name!r} est une table (elle a sa propre disposition)")
                     elif name in hidden:
                         problems.append(f"layout.{i}: le champ caché {name!r} ne peut pas être placé")
                     elif name in placed:
@@ -191,7 +191,10 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
                         placed.add(name)
         if problems:
             raise ValidationFailed("habillage de formulaire invalide : " + "; ".join(problems))
-        out["layout"] = sections
+        # Une disposition IDENTIQUE à celle du YAML n'est pas un habillage : la garder la figerait (des onglets que le plugin ajoute ensuite
+        # ne paraîtraient jamais pour cette organisation). Le Desk propose la disposition courante quand on n'en a pas encore enregistré.
+        if sections != definition.effective_layout():
+            out["layout"] = sections
 
     tweaks = config.get("fields")
     if tweaks is not None:

@@ -85,6 +85,10 @@ describe('les fonctions des onglets', () => {
     expect(tabOfField(TABBED.layout, 'credit_limit')).toBe('Crédit')
     expect(tabOfField(TABBED.layout, 'lines.0.qty')).toBeNull() // une table que la disposition ne place pas
     expect(errorsByTab(TABBED.layout, ['credit_limit', 'approver', 'customer_name', 'nope'])).toEqual({ Crédit: 2, Identité: 1 })
+    // Une erreur de CELLULE (`items.0.qty`) est celle de la table qui la porte, rangée dans son onglet.
+    const withTable = [...TABBED.layout, { tab: 'Lignes', section: null, collapsible: false, collapsed: false, columns: [['items']] }]
+    expect(tabOfField(withTable, 'items.0.qty')).toBe('Lignes')
+    expect(errorsByTab(withTable, ['items.0.qty', 'items.2.item'])).toEqual({ Lignes: 2 })
   })
 })
 
@@ -96,6 +100,7 @@ describe('FormView : une fiche à onglets', () => {
     expect(shown(w)).toEqual(['Identité'])
     expect(w.find('[data-field="credit_limit"]').exists()).toBe(true) // monté, seulement caché
     expect(w.find('[role="tabpanel"]').attributes('aria-labelledby')).toBe(w.find('[role="tab"][aria-selected="true"]').attributes('id'))
+    for (const tab of w.findAll('[role="tab"]')) expect(document.getElementById(tab.attributes('aria-controls')!)?.getAttribute('role')).toBe('tabpanel')
   })
 
   it('un clic ouvre un onglet ; les flèches, Début et Fin se déplacent d’onglet en onglet', async () => {
@@ -144,6 +149,27 @@ describe('FormView : une fiche à onglets', () => {
     await router.push('/app/Customer/c2')
     await flushPromises()
     expect(shown(w)).toEqual(['Identité'])
+  })
+
+  it('quitter un formulaire NEUF pour un document existant ouvre celui-ci sur son premier onglet', async () => {
+    const { w, router } = await open('/app/Customer/new')
+    await w.find('[data-testid="form-tab-Crédit"]').trigger('click')
+    expect(shown(w)).toEqual(['Crédit'])
+    await router.push('/app/Customer/c2') // même composant, autre document : rien ne doit rester de l'onglet choisi
+    await flushPromises()
+    expect(shown(w)).toEqual(['Identité'])
+  })
+
+  it('créer un document garde l’onglet où l’on était', async () => {
+    const { w, router } = await open('/app/Customer/new', TABBED, {
+      create: vi.fn(async (_d: string, data: Record<string, unknown>) => rec('c9', data)),
+    })
+    await w.find('[data-field="customer_name"] input').setValue('Neuf')
+    await w.find('[data-testid="form-tab-Crédit"]').trigger('click')
+    await w.find('[data-testid="save"]').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.fullPath).toBe('/app/Customer/c9')
+    expect(shown(w)).toEqual(['Crédit'])
   })
 
   it('une fiche sans onglets s’affiche comme avant', async () => {

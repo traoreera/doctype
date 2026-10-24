@@ -201,8 +201,8 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Profil utilisateur | ◐ |
 | Champ titre et champ image | ◐ |
 | Raccourcis clavier du Desk | ◐ |
-| Filtres sur les choix d'un Lien (link_filters / set_query) | non fait |
-| Onglets de formulaire (Tab Break) | non fait |
+| Filtres sur les choix d'un Lien (link_filters / set_query) | ✔ (D29 : littéraux et `$champ`, vérifiés à l'écriture, autocomplétion filtrée ; pas de requête de plugin, `set_query`) |
+| Onglets de formulaire (Tab Break) | ✔ (24 oct. : `tab` par section, YAML et habillage d'organisation, erreurs par onglet ; pas d'onglets dans les lignes de table) |
 | Types de champ restants (code-barres, signature, autocomplétion, HTML, bouton) | non fait |
 | Intégrité liens/états (lien vers un annulé, annulation d'un document cité) | ◐ (C2 : `target_status` refusé à l'écriture, à la soumission et aux écritures `tx`, autocomplétion filtrée ; l'annulation d'un document CITÉ n'est pas refusée) |
 | Tables dédiées, index par champ, synchronisation du schéma | non fait (phase B) |
@@ -220,8 +220,8 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Fournisseur OAuth 2 | non fait |
 | Outils de diagnostic (Recorder, inspecteur de permissions) | non fait |
 
-**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 64 faites, 18 partielles, 37 non faites, soit **54 % en entier, 61 % avec les
-demi-lignes** (le 22 octobre : 60, 21, 38 ; 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
+**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 66 faites, 18 partielles, 35 non faites, soit **55 % en entier, 63 % avec les
+demi-lignes** (24 octobre : filtres d'un Lien D29 et onglets de fiche ; le 23 : 64, 18, 37, 54 % et 61 % ; le 22 : 60, 21, 38, 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
 
 ## 3. Ce qu'on retient pour 70 %
 

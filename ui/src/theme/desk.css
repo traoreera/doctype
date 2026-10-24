@@ -264,6 +264,7 @@ button {
   gap: 0.25rem;
   margin-bottom: 1rem;
   overflow-x: auto;
+  overflow-y: hidden; /* `overflow-x: auto` rendrait l'axe vertical défilant : le trait de l'onglet actif (-1px) y ajoutait une barre */
   border-bottom: 1px solid var(--desk-line);
   scrollbar-width: thin;
 }

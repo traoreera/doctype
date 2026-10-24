@@ -475,7 +475,7 @@ class LayoutSection(BaseModel):
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    tab: Annotated[str, StringConstraints(min_length=1, max_length=60)] | None = None
+    tab: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)] | None = None  # « » seul n'est pas un nom
     section: Annotated[str, StringConstraints(min_length=1, max_length=140)] | None = None
     collapsible: StrictBool = False
     collapsed: StrictBool = False

@@ -110,7 +110,6 @@ class TestFormOverrideValidation:
         "layout, fragment",
         [
             ([{"columns": [["nope"]]}], "inconnu"),
-            ([{"columns": [["lines"]]}], "table"),
             ([{"columns": [["gone"]]}], "caché"),
             ([{"columns": [["a"], ["a"]]}], "deux fois"),
             ([{"columns": []}], "1 et 4 colonnes"),

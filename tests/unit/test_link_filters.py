@@ -137,6 +137,26 @@ class TestTheServerEnforcesThem:
         assert {d["type"] for d in e.value.details} <= {"link_not_found", "link_filtered"}
 
 
+class TestAmendment:
+    async def test_an_amendment_carries_its_links_without_re_judging_them_but_a_new_choice_is_judged(self, db, tables, registry):
+        """Comme pour l'état d'une cible (`target_status`) : un amendement RECOPIE les liens du document annulé ; un entrepôt fermé depuis
+        n'empêche pas de l'amender. Ce que l'utilisateur change ensuite dans l'amendement, lui, se juge."""
+        registry.register(parse_definition({**LIVRAISON, "name": "Expedition", "submittable": True, "fields": LIVRAISON["fields"][:3]}))
+        svc = DocumentService(registry, db, tables, Log())
+        who = make_ctx("acme", "alice", permissions=ALL + [f"stock:expedition:{a}" for a in ("read", "write", "delete", "submit", "cancel")])
+        w = await world(svc)
+        doc = await svc.create(who, "Expedition", {"reference": "EX-1", "pays": "CI", "entrepot": w["Abidjan"]})
+        doc = await svc.submit(who, "Expedition", doc["name"], doc["version"])
+        await svc.cancel(who, "Expedition", doc["name"], doc["version"])
+        depot = await svc.get(who, "Entrepot", w["Abidjan"])
+        await svc.update(who, "Entrepot", w["Abidjan"], {**depot["data"], "actif": False}, depot["version"])  # fermé depuis
+        amended = await svc.amend(who, "Expedition", doc["name"])
+        assert amended["data"]["entrepot"] == w["Abidjan"]
+        with pytest.raises(ValidationFailed) as e:
+            await svc.update(who, "Expedition", amended["name"], {**amended["data"], "entrepot": w["Vieux dépôt"]}, amended["version"])
+        assert [(d["field"], d["type"]) for d in e.value.details] == [("entrepot", "link_filtered")]
+
+
 class TestTheDeskGetsTheSameAnswer:
     async def test_search_applies_the_filters(self, svc):
         """L'autocomplétion passe les mêmes filtres : le Desk ne propose que ce que l'écriture accepterait."""

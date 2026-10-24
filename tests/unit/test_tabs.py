@@ -29,7 +29,7 @@ TABBED = [
 
 
 def invoice(layout=TABBED, **extra):
-    return {"schema_version": 1, "name": "Invoice", "module": "sales", "fields": FIELDS, "layout": layout, **extra}
+    return {"schema_version": 1, "name": "Invoice", "module": "sales", "fields": FIELDS, "layout": layout} | extra
 
 
 class TestDefinition:
@@ -55,6 +55,7 @@ class TestDefinition:
             ([{"tab": "A", "columns": [["title"]]}, {"tab": "B", "columns": [["amount"]]}, {"tab": "A", "columns": [["account"]]}], "doivent se suivre"),
             ([{"tab": "Seul", "columns": [["title"]]}], None),
             ([{"tab": "", "columns": [["title"]]}], "at least 1"),
+            ([{"tab": "   ", "columns": [["title"]]}], "at least 1"),  # des blancs ne nomment pas un onglet
             ([{"tab": "x" * 61, "columns": [["title"]]}], "at most 60"),
         ],
     )
@@ -115,6 +116,7 @@ class TestOrganisationLayout:
             ([{"tab": "A", "columns": [["title"]]}, {"tab": "B", "columns": [["amount"]]}, {"tab": "A", "columns": [["note"]]}], "doivent se suivre"),
             ([{"tab": 3, "columns": [["title"]]}], "nom d'onglet"),
             ([{"tab": "", "columns": [["title"]]}], "nom d'onglet"),
+            ([{"tab": "  ", "columns": [["title"]]}], "nom d'onglet"),
             ([{"tab": "y" * 61, "columns": [["title"]]}], "nom d'onglet"),
         ],
     )
@@ -122,6 +124,30 @@ class TestOrganisationLayout:
         with pytest.raises(ValidationFailed) as e:
             validate_form_override(compiled, {"layout": layout})
         assert fragment in str(e.value)
+
+    def test_an_organisation_may_place_a_table_too(self):
+        """Placer est de l'affichage : une table peut aller dans l'onglet « Lignes » de l'organisation, une seule fois, comme tout champ."""
+        reg = DocTypeRegistry()
+        reg.register(parse_definition({"schema_version": 1, "name": "Line", "istable": True, "fields": [{"fieldname": "qty", "fieldtype": "Number"}]}))
+        reg.register(parse_definition(invoice(fields=FIELDS + [{"fieldname": "items", "fieldtype": "Table", "options": "Line"}])))
+        got = validate_form_override(reg.get("Invoice"), {"layout": [{"tab": "Tête", "columns": [["title"]]}, {"tab": "Lignes", "columns": [["items"]]}]})
+        assert got["layout"][1]["columns"] == [["items"]]
+        with pytest.raises(ValidationFailed, match="placé deux fois"):
+            validate_form_override(reg.get("Invoice"), {"layout": [{"tab": "A", "columns": [["items"]]}, {"tab": "B", "columns": [["items"]]}]})
+
+    def test_saving_the_definition_s_own_layout_stores_none_so_later_tabs_still_show(self):
+        """Le Desk propose la disposition courante quand l'organisation n'en a pas : l'enregistrer telle quelle (pour changer un libellé) ne
+        doit pas la FIGER, sinon les onglets que le plugin ajoute ensuite n'apparaîtraient jamais pour elle."""
+        reg = DocTypeRegistry()
+        reg.register(parse_definition(invoice([{"section": "Client", "columns": [["title"]]}])))
+        current = reg.get("Invoice").definition.effective_layout()
+        got = validate_form_override(reg.get("Invoice"), {"layout": current, "fields": {"title": {"label": "Objet"}}})
+        assert "layout" not in got and got["fields"] == {"title": {"label": "Objet"}}
+        later = DocTypeRegistry()
+        later.register(parse_definition(invoice()))  # la version suivante du plugin range la fiche en onglets
+        meta = {"fields": [{"fieldname": f["fieldname"], "hidden": f.get("hidden", False)} for f in FIELDS], "layout": later.get("Invoice").definition.effective_layout()}
+        apply_form_override(meta, got)
+        assert {s.get("tab") for s in meta["layout"]} == {"Détails", "Comptabilité"}
 
     def test_an_untabbed_organisation_layout_on_a_tabbed_form_drops_the_tabs(self):
         reg = DocTypeRegistry()
@@ -178,6 +204,25 @@ class TestExtensions:
     def test_a_long_label_is_cut_to_a_tab_name(self, tmp_path):
         out = self.load(tmp_path, TABBED, label="L" * 100)
         assert out[-1].get("tab") == "L" * 60 and out[-1]["section"] == "L" * 100
+
+    def test_a_form_that_already_has_the_most_tabs_takes_the_extension_in_its_last_tab(self, tmp_path):
+        """Douze onglets déjà : un treizième ferait échouer la fusion, donc le chargement du plugin PROPRIÉTAIRE. La section rejoint le dernier."""
+        fields = [{"fieldname": f"f{i}", "fieldtype": "Text"} for i in range(MAX_TABS)]
+        layout = [{"tab": f"Onglet {i}", "columns": [[f"f{i}"]]} for i in range(MAX_TABS)]
+        reg = DocTypeRegistry()
+        d = tmp_path / "sales"
+        d.mkdir()
+        (d / "invoice.yaml").write_text(yaml.safe_dump({"schema_version": 1, "name": "Invoice", "module": "sales", "fields": fields, "layout": layout}, allow_unicode=True))
+        reg.load_dir(d, owner="sales")
+        e = tmp_path / "crm"
+        e.mkdir()
+        (e / "invoice.yaml").write_text(yaml.safe_dump({"schema_version": 1, "doctype": "Invoice", "label": "CRM", "fields": [{"fieldname": "crm_lead", "fieldtype": "Text"}]}))
+        reg.load_extensions(e, owner="crm")
+        out = reg.get("Invoice").definition.effective_layout()
+        assert out[-1].get("tab") == f"Onglet {MAX_TABS - 1}" and out[-1]["columns"] == [["crm_lead"]]
+        reg.unregister_owner("sales")
+        reg.load_dir(d, owner="sales")  # le propriétaire se recharge : l'extension se réapplique, la fusion tient toujours
+        assert reg.get("Invoice").definition.effective_layout()[-1]["columns"] == [["crm_lead"]]
 
     def test_an_untabbed_form_stays_untabbed(self, tmp_path):
         out = self.load(tmp_path, [{"section": "Client", "columns": [["title"]]}], label="CRM")

@@ -23,7 +23,7 @@ Dans cet ordre : chacune est indépendante des autres, la première est la plus 
 | # | Élément | Décision à prendre | Ligne d'inventaire |
 |---|---|---|---|
 | 1 | ~~**Filtres sur les choix d'un Lien**~~ **FAIT le 22 oct. (D29, voir §1.1)** | tranché : dynamiques ET vérifiés à l'écriture | angle mort → faite |
-| 2 | **Onglets de formulaire** (Tab Break) | Un `layout` à deux niveaux (onglet > section > colonnes) sans casser les `layout` existants (à un niveau), ni l'habillage de fiche (`overrides` kind `form`, `BlockEditor`). Les onglets sont-ils habillables comme le reste ? | angle mort (non faite) |
+| 2 | ~~**Onglets de formulaire**~~ **FAIT le 24 oct. (voir CLAUDE.md « Form tabs »)** | tranché : un `tab` par section, les mêmes règles pour le YAML et l'habillage, qui peut lui aussi ranger en onglets ; ce qu'une disposition ne place pas ferme le premier onglet | angle mort → faite |
 | 3 | **Étiquettes** | Table dédiée jugée sur le document, comme la collaboration (`xdt_comment`…) : lire le document suffit-il pour voir ses étiquettes, et faut-il l'ÉCRIRE pour en poser une ? Filtrables dans la liste (donc dans `Query`, pas après coup). | une des 20 |
 
 ### 1.1 D29 — les filtres d'un champ Link (fait le 22 octobre 2026)

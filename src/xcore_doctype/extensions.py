@@ -22,7 +22,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 
 from .errors import InvalidDefinition
-from .schema import HOOK_EVENTS, DocTypeDef, FieldDef, HooksDef, parse_definition
+from .schema import HOOK_EVENTS, MAX_TABS, DocTypeDef, FieldDef, HooksDef, parse_definition
 from .workspaces import module_label
 
 # Ce qu'une extension ne peut pas poser sur un champ : les documents existants et le code du propriétaire (ses `tx.create`) l'ignorent.
@@ -97,10 +97,13 @@ def target_problem(target: DocTypeDef, target_owner: str | None, extension_owner
 def _extension_tab(layout: list[dict[str, Any]], label: str) -> str:
     """L'onglet de la section qu'une extension ajoute à une fiche à onglets : un onglet à elle, nommé comme sa section. Si ce nom est déjà
     celui d'un onglet ANTÉRIEUR (les sections d'un onglet se suivent), la section rejoint le dernier onglet : la fusion ne doit pas échouer
-    pour un libellé."""
+    pour un libellé, ni pour le nombre d'onglets."""
     tabs = [s.get("tab") for s in layout]
     own = label[:60]  # un libellé de section va jusqu'à 140 caractères, un onglet jusqu'à 60
-    return own if own not in tabs or tabs[-1] == own else str(tabs[-1])
+    if own in tabs:
+        return own if tabs[-1] == own else str(tabs[-1])
+    # Une fiche qui a déjà le nombre maximal d'onglets : la section rejoint le dernier (sinon la fusion, et le chargement du propriétaire, échoueraient).
+    return own if len(dict.fromkeys(tabs)) < MAX_TABS else str(tabs[-1])
 
 
 def merge(origin: DocTypeDef, extensions: list[Extension]) -> DocTypeDef:
