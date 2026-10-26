@@ -355,3 +355,54 @@ describe('les composants des extensions dans le Desk', () => {
     w.unmount()
   })
 })
+
+describe('diagnostic d’un module introuvable (loader.diagnoseImport)', () => {
+  const MAP = { imports: { vue: '/shared/vue.js', '@xcore-doctype/desk': '/shared/sdk.js' } }
+  const withMap = () => {
+    const tag = document.createElement('script')
+    tag.type = 'importmap'
+    tag.textContent = JSON.stringify(MAP)
+    document.head.appendChild(tag)
+    return () => tag.remove()
+  }
+  const js = { ok: true, status: 200, contentType: 'text/javascript; charset=utf-8' }
+
+  it('dit quel module partagé n’est pas un module (une page HTML à sa place, comme un serveur de dev)', async () => {
+    const done = withMap()
+    try {
+      const probe = async (url: string) => (url.endsWith('/shared/vue.js') ? { ok: true, status: 200, contentType: 'text/html' } : js)
+      const host = new ExtensionHost()
+      await loadExtensions(host, [{ name: 'lab', url: 'http://localhost/ext/lab/index.js' }], {
+        importer: async () => {
+          throw new TypeError('Failed to fetch dynamically imported module: http://localhost/ext/lab/index.js')
+        },
+        probe,
+      })
+      expect(host.failures[0]!.reason).toMatch(/import « vue » : text\/html au lieu d'un module JavaScript \(http:\/\/.*\/shared\/vue\.js\)/)
+    } finally {
+      done()
+    }
+  })
+
+  it('dit quand c’est le point d’entrée lui-même qui manque', async () => {
+    const host = new ExtensionHost()
+    await loadExtensions(host, [{ name: 'lab', url: 'http://localhost/ext/lab/index.js' }], {
+      importer: async () => {
+        throw new TypeError('Failed to fetch dynamically imported module: http://localhost/ext/lab/index.js')
+      },
+      probe: async () => ({ ok: false, status: 404, contentType: 'application/json' }),
+    })
+    expect(host.failures[0]!.reason).toBe("point d'entrée : HTTP 404 (http://localhost/ext/lab/index.js)")
+  })
+
+  it('une autre erreur garde son message (pas de lecture réseau inutile)', async () => {
+    const host = new ExtensionHost()
+    let probed = false
+    await loadExtensions(host, [{ name: 'lab', url: 'u' }], {
+      importer: async () => ({ default: { name: 'other', apiVersion: 1, setup() {} } }),
+      probe: async () => ((probed = true), js),
+    })
+    expect(host.failures[0]!.reason).toMatch(/se nomme "other"/)
+    expect(probed).toBe(false)
+  })
+})
