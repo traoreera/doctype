@@ -1,0 +1,15 @@
+# La page d'accueil du module dans le Desk : des chiffres, un graphique, des raccourcis. Rien d'exécutable, filtré par les droits de chacun.
+schema_version: 1
+name: biblio
+label: Bibliothèque
+icon: book
+description: Le fonds et les emprunts.
+order: 30
+blocks:
+  - { type: number_card, label: Livres, doctype: Livre, color: blue }
+  - { type: number_card, label: Emprunts en cours, doctype: Emprunt, filters: { statut: En cours }, color: orange }
+  - { type: chart, label: Emprunts par mois, doctype: Emprunt, kind: bar, group_by: sortie, bucket: month, periods: 6, cols: 8 }
+  - { type: chart, label: Livres par genre, doctype: Livre, kind: donut, group_by: genre, cols: 4 }
+  - { type: header, text: Accès }
+  - { type: shortcut, doctype: Emprunt, new: true }
+  - { type: shortcut, doctype: Livre, new: true }
