@@ -194,3 +194,20 @@ async def test_without_a_directory_there_is_nobody_to_mention(tmp_path):
         ada = h.token(sub="ada", permissions=GRANTS)
         place = (await make(h, ada, "Place", {"label": "Paris"}))["name"]
         assert (await h.http("GET", f"/mentionable/Place/{place}", token=ada)).json() == {"items": [], "directory": False}
+
+
+async def test_csv_import_by_http_and_ipc(tmp_path):
+    async with boot_host(tmp_path, inline_plugins=plugins(), auth_members=MEMBERS) as h:
+        ada, rita = h.token(sub=ADA, permissions=GRANTS), h.token(sub=RITA, permissions=READER)
+        r = await h.http("POST", "/import/Place", token=ada, json={"content": "﻿label\nParis\nLyon\n"})
+        assert r.status_code == 200 and r.json()["done"] == 2, r.text
+        names = [x["name"] for x in r.json()["results"]]
+        upd = await h.http("POST", "/import/Place", token=ada, json={"content": f"name;label\n{names[0]};Paris 1er\nabsent;x\n", "mode": "update"})
+        assert [x["ok"] for x in upd.json()["results"]] == [True, False]
+        assert (await h.http("GET", f"/doc/Place/{names[0]}", token=ada)).json()["data"]["label"] == "Paris 1er"
+        assert (await h.http("POST", "/import/Place", token=rita, json={"content": "label\nX\n"})).status_code == 403
+        bad = await h.http("POST", "/import/Place", token=ada, json={"content": "label;oops\nX;1\n"})
+        assert bad.status_code == 422 and bad.json()["detail"]["code"] == "csv_columns"
+        assert (await h.http("POST", "/import/Place", token=ada, json={"content": "label\nX\n", "extra": 1})).status_code == 422
+        via_action = await h.action("doc.import", {"doctype": "Tag", "content": "name,color\nurgent,red\n"}, token=ada)
+        assert via_action["results"] == [{"row": 2, "ok": True, "name": "urgent"}]

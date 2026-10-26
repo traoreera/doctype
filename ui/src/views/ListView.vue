@@ -22,6 +22,7 @@ import { useExtensions } from '@/extensions/host'
 import CellValue from '@/components/CellValue.vue'
 import FileThumb from '@/components/FileThumb.vue'
 import FilterBar from '@/components/FilterBar.vue'
+import ImportDialog from '@/components/ImportDialog.vue'
 import RecordCards from '@/components/RecordCards.vue'
 import ListSidebar from '@/components/ListSidebar.vue'
 import RowTags from '@/components/tags/RowTags.vue'
@@ -528,10 +529,14 @@ function onRowClick(e: DataTableRowClickEvent): void {
   if (window.getSelection()?.toString()) return // on était en train de sélectionner du texte
   openRow(e.data as DocRecord)
 }
+/** Importer : créer (droit de créer) ou mettre à jour (droit d'écrire) ; un document unique n'a pas de liste. */
+const canImport = computed(() => !!meta.value && !meta.value.single && (meta.value.rights.create !== 'none' || meta.value.rights.write !== 'none'))
+const importing = ref(false)
 const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
 const moreItems = computed<MenuItem[]>(() => [
   { label: t.list.refresh, icon: 'pi pi-refresh', command: () => void fetchPage(), disabled: current.value !== 'list' },
   { label: t.sidebar.toggle, icon: 'pi pi-align-left', command: toggleSidebar, disabled: current.value !== 'list' },
+  { label: t.importCsv.menu, icon: 'pi pi-upload', testid: 'import-csv', command: () => (importing.value = true), visible: canImport.value },
   { separator: true },
   { label: t.apiDocs.title, icon: 'pi pi-code', command: () => void router.push(`/api/${encodeURIComponent(props.doctype)}`) },
 ])
@@ -580,7 +585,15 @@ function title(r: DocRecord): string {
       <ViewSwitcher v-if="meta && views.length > 1" :views="views" :model-value="current" @update:model-value="choose" />
       <span class="desk-spacer" />
       <Button v-if="meta" icon="pi pi-ellipsis-h" text severity="secondary" size="small" :aria-label="t.list.more" :title="t.list.more" aria-haspopup="menu" data-testid="more-actions" @click="moreMenu?.toggle($event)" />
-      <Menu ref="moreMenu" :model="moreItems" popup />
+      <Menu ref="moreMenu" :model="moreItems" popup>
+        <template #item="{ item, props: slot }">
+          <a v-bind="slot.action" :data-testid="item.testid">
+            <span :class="item.icon" aria-hidden="true" />
+            <span class="p-menu-item-label">{{ item.label }}</span>
+          </a>
+        </template>
+      </Menu>
+      <ImportDialog v-if="meta && canImport" v-model:visible="importing" :doctype="doctype" :meta="meta" @imported="fetchPage" />
       <Button v-if="canCreate && meta" :as="RouterLink" :to="{ name: 'new', params: { doctype } }" :label="t.new" icon="pi pi-plus" size="small" data-testid="new-doc" />
     </div>
 
