@@ -1,0 +1,25 @@
+# Un emprunt : un livre, une personne, une sortie, un retour. Deux hooks Python (src/main.py) le gardent cohérent.
+schema_version: 1
+name: Emprunt
+label: Emprunt
+module: biblio
+icon: arrow-right-arrow-left
+naming: { series: "EMP-{YYYY}-{####}" }   # EMP-2026-0001, sans trou ni doublon
+fields:
+  - { fieldname: livre, label: Livre, fieldtype: Link, options: Livre, required: true, in_list_view: true }
+  - { fieldname: emprunteur, label: Emprunteur, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: sortie, label: Sorti le, fieldtype: Date, default: today, in_list_view: true }
+  - { fieldname: retour_prevu, label: Retour prévu, fieldtype: Date }
+  - { fieldname: statut, label: Statut, fieldtype: Select, options: [En cours, Rendu, Perdu], default: En cours, in_list_view: true }
+  - { fieldname: rendu_le, label: Rendu le, fieldtype: Date, depends_on: "statut == 'Rendu'", mandatory_depends_on: "statut == 'Rendu'" }
+  # Calculé par le hook `biblio.duree` : le client peut l'envoyer, le serveur l'écrase.
+  - { fieldname: jours, label: Durée (jours), fieldtype: Int, read_only_depends_on: "true" }
+layout:
+  - { section: Emprunt, columns: [[livre, emprunteur], [sortie, retour_prevu]] }
+  - { section: Retour, columns: [[statut, rendu_le], [jours]] }
+hooks:
+  validate: [biblio.verifie_dates]   # refuse (422) un retour avant la sortie
+  before_save: [biblio.duree]        # calcule `jours`
+views:
+  kanban: { field: statut, card_fields: [livre, emprunteur] }   # glisser une carte change le statut
+  calendar: { start: sortie, end: retour_prevu, title: emprunteur }

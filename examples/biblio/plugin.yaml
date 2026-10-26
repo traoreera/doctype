@@ -1,0 +1,17 @@
+# Plugin d'exemple « biblio » : un plugin métier complet pour xcore-doctype, en trois langages.
+#   YAML   : doctypes/ (les données), workspaces/ (la page d'accueil du module)
+#   Python : src/main.py (charge le tout, déclare les grants, fournit les hooks de confiance)
+#   JS     : desk/index.js (ce que le plugin ajoute à l'interface du Desk)
+name: biblio
+version: 0.1.0
+description: "Exemple : des livres et leurs emprunts (YAML + Python + JavaScript)."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+# xcore-doctype doit être chargé avant (il fournit les services), auth aussi (il reçoit `rbac.declare`).
+requires: [xcore-doctype, auth]
+
+# Sans ce bloc, le PermissionEngine d'xcore refuse toute action (deny_all). `biblio.en_retard` est un appel d'OPÉRATEUR (route IPC, clé du
+# plugin) ; aucun `allowed_callers` : aucun autre plugin ne peut l'appeler (il lit les emprunts du tenant qu'on lui nomme).
+permissions:
+  - { resource: "biblio.*", actions: ["execute"], effect: allow }

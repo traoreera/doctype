@@ -1,0 +1,16 @@
+# Un livre du fonds. Pas de bloc `permissions` : par convention, les grants sont biblio:livre:read | write | delete.
+schema_version: 1
+name: Livre
+label: Livre
+module: biblio            # = le nom du plugin : obligatoire, c'est l'espace de noms de ses grants
+icon: book
+title_field: titre
+fields:
+  - { fieldname: titre, label: Titre, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: auteur, label: Auteur, fieldtype: Text, in_list_view: true }
+  - { fieldname: genre, label: Genre, fieldtype: Select, options: [Roman, Essai, BD, Jeunesse], default: Roman, in_list_view: true }
+  - { fieldname: isbn, label: ISBN, fieldtype: Text, unique: true }
+  - { fieldname: resume, label: Résumé, fieldtype: LongText }
+layout:
+  - { section: Le livre, columns: [[titre, auteur], [genre, isbn]] }
+  - { section: Résumé, collapsible: true, columns: [[resume]] }
