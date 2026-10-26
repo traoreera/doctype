@@ -48,8 +48,8 @@ const Retards = defineComponent({
       lignes.value = (await api.list('Emprunt', { filters: { statut: 'En cours', retour_prevu: ['<', today()] }, order_by: 'retour_prevu', order: 'asc', limit: 50 })).items
     })
     return () =>
+      // Pas de `h1` ici : le Desk le pose lui-même avec le `title` de la route (`desk.routes.add`).
       h('section', { class: 'desk-card', style: 'padding:1rem' }, [
-        h('h1', 'Emprunts en retard'),
         lignes.value === null ? h('p', 'Chargement…')
           : !lignes.value.length ? h('p', 'Aucun retard.')
           : h('ul', lignes.value.map((e) =>

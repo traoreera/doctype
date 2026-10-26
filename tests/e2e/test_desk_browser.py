@@ -37,6 +37,7 @@ GRANTS = (
     [f"sales:{t}:{a}" for t in ("customer", "country", "invoice") for a in ("read", "write", "delete")]
     + [f"stock:{t}:{a}" for t in ("item", "warehouse", "stock_entry") for a in ("read", "write", "delete")]
     + ["stock:stock_entry:submit", "stock:stock_entry:cancel", "stock:stock_ledger_entry:read", "stock:bin:read"]
+    + [f"biblio:{t}:{a}" for t in ("livre", "emprunt") for a in ("read", "write", "delete")]
 )
 
 
@@ -94,6 +95,7 @@ def host(tmp_path, request):
     (tmp_path / "app" / "geo").symlink_to(FIXTURES / "geo")  # le référentiel partagé (pays, devises) que `stock` requires
     (tmp_path / "app" / "stock").symlink_to(FIXTURES / "stock")  # le stock : articles, entrepôts, mouvements soumettables
     (tmp_path / "app" / "sales").symlink_to(FIXTURES / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
+    (tmp_path / "app" / "biblio").symlink_to(ROOT / "examples" / "biblio")  # le plugin d'exemple de la documentation
 
     port = _free_port()
     log = (tmp_path / "host.log").open("w")
@@ -159,3 +161,11 @@ def test_a_plugins_desk_extension_runs_in_the_browser_under_the_csp(host):
     """D28 : l'extension de `sales` (autorisée par l'opérateur) se charge par l'import map, sous la CSP stricte, et étend le Desk."""
     run = _scenario(host, "e2e/extensions.e2e.mjs")
     assert run.returncode == 0, f"scénario des extensions en échec :\n{run.stdout}\n{run.stderr}"
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"extensions": ["biblio"]}], indirect=True)
+def test_the_example_plugins_desk_extension_runs_in_the_browser(host):
+    """`examples/biblio` : commande, page, lien, panneau et action de son extension, dans Chromium, sous la vraie CSP."""
+    run = _scenario(host, "e2e/biblio.e2e.mjs")
+    assert run.returncode == 0, f"scénario biblio en échec :\n{run.stdout}\n{run.stderr}"
