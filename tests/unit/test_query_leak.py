@@ -20,9 +20,11 @@ from sqlalchemy import event, text
 from tests.conftest import make_ctx
 from xcore_doctype.aggregation import Group, Metric
 from xcore_doctype.db.tables import (
-    ASSIGNMENT_TABLE, ATTACHMENT_TABLE, COMMENT_TABLE, DOCUMENT_TABLE, FILE_TABLE, NAMING_TABLE, OVERRIDE_TABLE, SAVED_VIEW_TABLE, UNIQUE_TABLE, VERSION_TABLE,
+    ASSIGNMENT_TABLE, ATTACHMENT_TABLE, COMMENT_TABLE, DOCUMENT_TABLE, FILE_TABLE, NAMING_TABLE, OVERRIDE_TABLE, SAVED_VIEW_TABLE, TAG_TABLE, UNIQUE_TABLE,
+    VERSION_TABLE,
 )
 from xcore_doctype.errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, VersionConflict
+from xcore_doctype.builder import Filter
 from xcore_doctype.permissions import Scope
 from xcore_doctype.query import FileCiters, Query, UniqueViolation
 
@@ -40,7 +42,7 @@ class Env:
         event.listen(db.engine.sync_engine, "before_cursor_execute", self._capture)
 
     def _capture(self, conn, cursor, statement, parameters, context, executemany):
-        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE, UNIQUE_TABLE, FILE_TABLE)):
+        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE, UNIQUE_TABLE, FILE_TABLE, TAG_TABLE)):
             self.captured.append((statement, parameters))
 
     def close(self):
@@ -86,10 +88,14 @@ class Env:
             uniques = await s.execute(
                 text(f"SELECT doctype, fieldname, value, docname FROM {UNIQUE_TABLE} WHERE tenant_id = :t ORDER BY doctype, fieldname, value"), {"t": tenant}
             )
+            tags = await s.execute(
+                text(f"SELECT doctype, docname, folded, tag, owner FROM {TAG_TABLE} WHERE tenant_id = :t ORDER BY doctype, docname, folded"), {"t": tenant}
+            )
             return (
                 [tuple(x) for x in docs.all()]
                 + collab
                 + [tuple(x) for x in uniques.all()]
+                + [tuple(x) for x in tags.all()]
                 + [tuple(x) for x in counters.all()]
                 + [tuple(x) for x in history.all()]
                 + [tuple(x) for x in views.all()]
@@ -118,6 +124,12 @@ class Env:
                 await q.add_file(file_id, doctype="Customer", fieldname="_attachment", filename=f"{tenant}.pdf", content_type="application/pdf", size=1, namespace="n", blob_id="b", stored_name="b")
                 att = await q.add_attachment("Customer", "shared", file_id)
                 self.ids[tenant] = {"comment": comment["id"], "assignment": task["id"], "attachment": att["id"], "file": file_id}
+                # Étiquettes : « Urgent » sur « shared » chez les deux ; A seul a « Secret » (sur « shared » et « needle ») et l'écrit « URGENT » ailleurs.
+                await q.add_tag("Customer", "shared", "Urgent")
+                if tenant == A:
+                    await q.add_tag("Customer", "shared", "Secret")
+                    await q.add_tag("Customer", "needle", "Secret")
+                    await q.add_tag("Customer", "only-a", "URGENT")
         async with self.q(A) as q:
             # L'historique de A : une création de « shared » (même nom que chez B) et la suppression d'un document disparu.
             hist = dict(version=1, user="user-acme", doc_owner="user-acme")
@@ -171,6 +183,13 @@ async def scenario_list(env: Env):
         # Pagination : l'offset ne « déborde » pas sur les lignes de A.
         docs, total = await q.list(defn, filters={}, **{**page, "offset": 2})
         assert docs == [] and total == 2
+        # Le filtre `_tag` ne regarde que les étiquettes de B : « Secret » (posée chez A sur un « shared » homonyme) ne retient rien.
+        docs, total = await q.list(defn, filters={"_tag": "Secret"}, **page)
+        assert docs == [] and total == 0
+        docs, _ = await q.list(defn, filters={"_tag": Filter("!=", "Secret")}, **page)
+        assert [d.name for d in docs] == ["only-b", "shared"]
+        docs, _ = await q.list(defn, filters={"_tag": Filter("in", ["Secret", "Urgent"])}, **page)
+        assert [d.name for d in docs] == ["shared"]
 
 
 async def scenario_aggregate(env: Env):
@@ -455,6 +474,7 @@ async def scenario_rename(env: Env):
         assert await q.get("Customer", "shared", scope=ALL) is None
         assert (await q.get("Customer", "renamed", scope=ALL)).data["customer_name"] == f"{B}:shared"
         assert [c["content"] for c in (await q.comments("Customer", "renamed", limit=10))] == [f"note-{B}"]  # ses commentaires l'ont suivi
+        assert await q.tags_of("Customer", ["renamed", "shared"]) == {"renamed": ["Urgent"], "shared": []}  # ses étiquettes aussi
         with pytest.raises(AlreadyExists):  # « only-b » existe chez B
             await q.rename("Customer", "renamed", "only-b", scope=ALL)
     async with env.q(B) as q:
@@ -649,6 +669,39 @@ async def scenario_remove_collaboration(env: Env):
     async with env.q(B) as q:
         assert await q.remove_collaboration("Customer", "shared") == [env.ids[B]["file"]]
         assert await q.comments("Customer", "shared", limit=50) == [] and await q.assignments("Customer", "shared") == []
+        assert await q.tags_of("Customer", ["shared"]) == {"shared": []}
+
+
+async def scenario_tags(env: Env):
+    """Les étiquettes de « shared » chez B sont celles de B : « Secret » (que seul A pose, même nom de document) n'apparaît jamais, et poser
+    une étiquette que A porte déjà ne heurte rien chez A."""
+    async with env.q(B) as q:
+        assert await q.tags_of("Customer", ["shared", "only-a", "needle"]) == {"shared": ["Urgent"], "only-a": [], "needle": []}
+        assert await q.add_tag("Customer", "shared", "Secret") is True  # libre chez B, bien que A l'ait sur son « shared »
+        assert await q.add_tag("Customer", "shared", "secret") is False  # même étiquette, autre casse : déjà là
+        assert (await q.tags_of("Customer", ["shared"]))["shared"] == ["Urgent", "Secret"]
+
+
+async def scenario_remove_tag(env: Env):
+    async with env.q(B) as q:
+        assert await q.remove_tag("Customer", "needle", "Secret") is False  # « needle » n'est étiqueté que chez A
+        assert await q.remove_tag("Customer", "shared", "URGENT") is True  # la casse écrite ne compte pas
+
+
+async def scenario_tag_spelling(env: Env):
+    """L'écriture d'une étiquette ne vient jamais de A : « Secret » n'existe pas chez B, « urgent » s'y écrit comme B l'a posée."""
+    async with env.q(B) as q:
+        assert await q.tag_spelling(env.customer.definition, "secret", scope=ALL) is None
+        assert await q.tag_spelling(env.customer.definition, "URGENT", scope=ALL) == "Urgent"  # pas « URGENT » (celle de A)
+
+
+async def scenario_tag_counts(env: Env):
+    """Les comptes de B ne comptent que ses documents : « Urgent » 1 (A en a 2), « Secret » absent ; le filtre `_tag` aussi ne voit que B."""
+    defn = env.customer.definition
+    async with env.q(B) as q:
+        assert await q.tag_counts(defn, filters={}, scope=ALL, limit=20) == [{"tag": "Urgent", "count": 1}]
+        assert await q.tag_counts(defn, filters={}, scope=ALL, q="sec", limit=20) == []
+        assert await q.tag_counts(defn, filters={"_tag": "Urgent"}, scope=ALL, limit=20) == [{"tag": "Urgent", "count": 1}]
 
 
 async def scenario_people(env: Env):
@@ -677,6 +730,11 @@ SCENARIOS = {
     "delete_attachment": scenario_delete_attachment,
     "remove_collaboration": scenario_remove_collaboration,
     "people": scenario_people,
+    "tags_of": scenario_tags,
+    "add_tag": scenario_tags,
+    "remove_tag": scenario_remove_tag,
+    "tag_spelling": scenario_tag_spelling,
+    "tag_counts": scenario_tag_counts,
     "saved_views": scenario_saved_views,
     "get_saved_view": scenario_get_saved_view,
     "put_saved_view": scenario_put_saved_view,

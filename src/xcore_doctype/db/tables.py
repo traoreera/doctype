@@ -36,6 +36,7 @@ COMMENT_TABLE = "xdt_comment"
 ASSIGNMENT_TABLE = "xdt_assignment"
 ATTACHMENT_TABLE = "xdt_attachment"
 UNIQUE_TABLE = "xdt_unique"
+TAG_TABLE = "xdt_tag"
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +52,7 @@ class SystemTables:
     assignments: Table
     attachments: Table
     uniques: Table
+    tags: Table
 
 
 def build_system_tables() -> SystemTables:
@@ -217,4 +219,21 @@ def build_system_tables() -> SystemTables:
         PrimaryKeyConstraint("tenant_id", "doctype", "fieldname", "value", name="pk_xdt_unique"),
         Index("ix_xdt_unique_doc", "tenant_id", "doctype", "docname"),
     )
-    return SystemTables(md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques)
+    # Étiquettes : comme la collaboration, autour du document (lire le document = voir ses étiquettes, l'écrire = en poser), supprimées avec lui.
+    # `tag` est l'écriture affichée, `folded` sa forme repliée (`str.casefold`, calculée en Python : le `lower()` de SQLite ne connaît que
+    # l'ASCII) : la clé primaire interdit « Urgent » et « urgent » sur un même document, l'index sert le filtre `_tag` de la liste. Un repli
+    # peut allonger le texte (« ß » → « ss », 3 caractères au plus pour un) : 150 pour une étiquette de 50.
+    tags = Table(
+        TAG_TABLE,
+        md,
+        Column("tenant_id", String(63), nullable=False),
+        Column("doctype", String(140), nullable=False),
+        Column("docname", String(140), nullable=False),
+        Column("folded", String(200), nullable=False),
+        Column("tag", String(50), nullable=False),
+        Column("owner", String(255), nullable=False),
+        Column("creation", DateTime(timezone=True), nullable=False),
+        PrimaryKeyConstraint("tenant_id", "doctype", "docname", "folded", name="pk_xdt_tag"),
+        Index("ix_xdt_tag_folded", "tenant_id", "doctype", "folded"),
+    )
+    return SystemTables(md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags)

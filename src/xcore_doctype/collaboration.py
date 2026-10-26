@@ -2,12 +2,14 @@
 
 - des **commentaires** (un fil de discussion par document) ;
 - des **assignations** (« À faire » : ce document est confié à quelqu'un, avec une échéance, jusqu'à ce qu'il soit fait) ;
-- des **pièces jointes** (des fichiers rattachés au document, pas à un de ses champs).
+- des **pièces jointes** (des fichiers rattachés au document, pas à un de ses champs) ;
+- des **étiquettes** (des mots pour classer : « Urgent », « Salon 2026 » ; le filtre `_tag` de la liste les cherche, voir `tags.py`).
 
 Une règle domine : **tout se juge sur le document**. On ne lit les commentaires, assignations et pièces jointes d'un document que si on peut LE
 lire (le périmètre `if_owner` s'applique, un document hors périmètre est « introuvable »). Commenter ne demande que de le lire (un relecteur
 doit pouvoir répondre) ; assigner et joindre demandent de pouvoir l'ÉCRIRE ; un document soumis ou annulé reste commentable (ce n'est pas le
-modifier). Un commentaire ne se modifie que par son auteur. Tout disparaît avec le document.
+modifier). Un commentaire ne se modifie que par son auteur. Poser ou retirer une étiquette demande aussi d'ÉCRIRE le document (elle change ce
+que d'autres trouvent en filtrant), un document soumis compris. Tout disparaît avec le document et le suit quand il est renommé.
 
 L'assigné est une identité (celle que l'authentification donne : `sub`). Avec xauth, c'est un membre de l'organisation (annuaire : `directory.py`),
 proposé par son e-mail et vérifié à l'assignation ; sans annuaire, une identité déjà vue dans l'organisation, ou n'importe laquelle.
@@ -20,6 +22,7 @@ from datetime import date
 from typing import Any
 from urllib.parse import quote
 
+from . import aggregation
 from . import files as F
 from .context import RequestContext
 from .directory import Directory, NoDirectory, Person
@@ -30,6 +33,7 @@ from .files import ATTACHMENT_FIELD
 from .notifier import NoNotifier, Notifier
 from .permissions import scope_for
 from .query import StoredDoc
+from .tags import MAX_TAG, MAX_TAGS_PER_DOC, normalize_tag, supports_tags
 
 MAX_COMMENT = 4000
 MAX_COMMENTS_PER_DOC = 1000
@@ -69,6 +73,22 @@ def _due(value: Any) -> str | None:
     return value
 
 
+def _tag_list(value: Any, what: str) -> list[str]:
+    """Les étiquettes d'une demande : une liste (au plus `MAX_TAGS_PER_DOC`) de noms valides (`tags.normalize_tag`), sans doublon de casse."""
+    if value is None:
+        return []
+    if not isinstance(value, list) or len(value) > MAX_TAGS_PER_DOC:
+        raise ValidationFailed(f"{what} : une liste d'au plus {MAX_TAGS_PER_DOC} étiquettes", code="invalid_tag")
+    try:
+        tags = [normalize_tag(v) for v in value]
+    except ValueError as e:
+        raise ValidationFailed(f"{what} : {e}", code="invalid_tag") from None
+    seen: dict[str, str] = {}
+    for tag in tags:
+        seen.setdefault(tag.casefold(), tag)
+    return list(seen.values())
+
+
 def _check_id(value: Any, what: str) -> str:
     if not isinstance(value, str) or not _ID.match(value):
         raise NotFound("not_found", f"{what} introuvable")
@@ -79,6 +99,9 @@ MAX_RESOLVE = 100
 MAX_MENTIONS = 10
 MAX_MENTION_SUGGESTIONS = 8
 MAX_BULK_ASSIGN = 100
+MAX_BULK_TAG = 100
+MAX_TAG_NAMES = 200  # documents d'une page de liste
+MAX_TAG_SUGGESTIONS = 100
 # Une mention s'écrit @adresse@exemple.fr : seul un membre de l'organisation, désigné par son e-mail, est prévenu.
 _MENTION = re.compile(r"(?<![\w.+-])@([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})")
 
@@ -208,6 +231,104 @@ class CollaborationService:
             if who != ctx.owner_id:  # UNE notification pour le lot, pas une par document
                 n = f"{done} documents" if done > 1 else "1 document"
                 await self._notifier.notify(ctx.tenant_id, [who], title=f"{await self._author(ctx)} vous a assigné {n} ({self._label(doctype)})", message=_text(description, "description", limit=500, required=False), link="#/tasks", kind="ASSIGNMENT")
+        return {"results": results, "done": done, "failed": len(results) - done}
+
+    # ── Étiquettes ────────────────────────────────────────────
+    def _taggable(self, ctx: RequestContext, doctype: str) -> Any:
+        """Le type, si l'appelant peut en lire et s'il porte des étiquettes (ni document unique, ni type virtuel : `tags.supports_tags`).
+        Les droits d'abord : sans eux, on n'apprend rien du type."""
+        compiled = self._docs._doctype(doctype)
+        self._docs._scope(ctx, compiled, "read")
+        if not supports_tags(compiled.definition):
+            raise ValidationFailed(f"{doctype} ne porte pas d'étiquettes (document unique ou type virtuel)", code="tags_not_supported")
+        return compiled
+
+    async def tags(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
+        """Les étiquettes du document, dans l'ordre où elles ont été posées. Il faut pouvoir LE LIRE ; `can_tag` : peut-il en poser ou en retirer."""
+        self._docs._enter(ctx, "tags.get", doctype, name)
+        self._taggable(ctx, doctype)
+        async with self._docs._query(ctx) as q:
+            compiled, doc = await self._document(ctx, q, doctype, name)
+            found = await q.tags_of(doctype, [name])
+        return {"tags": found[name], "can_tag": self._can_write(ctx, compiled, doc)}
+
+    async def tag(self, ctx: RequestContext, doctype: str, name: str, *, add: Any = None, remove: Any = None) -> dict[str, Any]:
+        """Pose et/ou retire des étiquettes, en une transaction. Il faut pouvoir ÉCRIRE le document (un document soumis s'étiquette encore : ce
+        n'est pas le modifier). Une étiquette déjà en usage dans ce type garde son écriture (« urgent » devient « Urgent ») ; poser une étiquette
+        présente ou retirer une absente ne fait rien."""
+        self._docs._enter(ctx, "tags.change", doctype, name)
+        compiled = self._taggable(ctx, doctype)
+        adds, removes = _tag_list(add, "add"), _tag_list(remove, "remove")
+        if not adds and not removes:
+            raise ValidationFailed("rien à changer : add ou remove doit nommer une étiquette", code="invalid_tag")
+        return {"tags": await self._change_tags(ctx, compiled, name, adds, removes)}
+
+    async def _change_tags(self, ctx: RequestContext, compiled: Any, name: str, adds: list[str], removes: list[str]) -> list[str]:
+        doctype = compiled.definition.name
+        read = self._docs._scope(ctx, compiled, "read")
+        async with self._docs._query(ctx) as q:
+            compiled, doc = await self._document(ctx, q, doctype, name)
+            if not self._can_write(ctx, compiled, doc):
+                raise PermissionDenied()
+            # Le plafond se compte APRÈS les poses, sous verrou : `FOR UPDATE` sur le document (PostgreSQL) sérialise ceux qui l'étiquettent
+            # ensemble ; SQLite n'a qu'un écrivain à la fois, et la première pose prend ce verrou avant le compte.
+            await q.get(doctype, name, scope=read, lock=True)
+            for tag in removes:
+                await q.remove_tag(doctype, name, tag)
+            added = False
+            for tag in adds:
+                added |= await q.add_tag(doctype, name, await q.tag_spelling(compiled.definition, tag, scope=read) or tag)
+            tags = (await q.tags_of(doctype, [name]))[name]
+            if added and len(tags) > MAX_TAGS_PER_DOC:
+                raise ValidationFailed(f"{MAX_TAGS_PER_DOC} étiquettes au plus par document", code="too_many_tags")  # tout est défait
+        return tags
+
+    async def tags_of(self, ctx: RequestContext, doctype: str, names: Any) -> dict[str, Any]:
+        """Les étiquettes de plusieurs documents (une page de liste). Un document que l'appelant ne lit pas est absent de la réponse, comme un
+        document qui n'existe pas."""
+        self._docs._enter(ctx, "tags.of", doctype)
+        compiled = self._taggable(ctx, doctype)
+        if not isinstance(names, list) or len(names) > MAX_TAG_NAMES or not all(isinstance(n, str) and n for n in names):
+            raise ValidationFailed(f"names : une liste d'au plus {MAX_TAG_NAMES} noms", code="bulk_names")
+        read = self._docs._scope(ctx, compiled, "read")
+        async with self._docs._query(ctx) as q:
+            readable = await self._docs.existing_documents(ctx, q, doctype, names, read)
+            found = await q.tags_of(doctype, sorted(readable))
+        return {"items": found}
+
+    async def tag_counts(self, ctx: RequestContext, doctype: str, *, q: Any = "", filters: Any = None, limit: Any = 20) -> dict[str, Any]:
+        """Les étiquettes en usage dans ce type, chacune avec son nombre de documents, comptées sur ceux que l'appelant LIT et que `filters`
+        retient (les filtres de la liste, `_tag` compris) : la barre latérale d'une liste, et les propositions de la saisie (`q`)."""
+        self._docs._enter(ctx, "tags.counts", doctype)
+        compiled = self._taggable(ctx, doctype)
+        text = (_text(q, "q", limit=MAX_TAG, required=False) or "").strip()
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_TAG_SUGGESTIONS:
+            raise ValidationFailed(f"limit doit être entre 1 et {MAX_TAG_SUGGESTIONS}")
+        read = self._docs._scope(ctx, compiled, "read")
+        coerced = aggregation.validate_filters(compiled, filters)
+        async with self._docs._query(ctx) as query:
+            items = await query.tag_counts(compiled.definition, filters=coerced, scope=read, q=text, limit=limit)
+        return {"items": items}
+
+    async def tag_many(self, ctx: RequestContext, doctype: str, names: Any, *, add: Any = None, remove: Any = None) -> dict[str, Any]:
+        """Étiquette plusieurs documents (liste « Actions ») : chacun est jugé SEUL, comme `tag` (une transaction par document) ; un refus
+        (droit, plafond) n'arrête pas les autres. Le droit d'écrire le type est exigé une fois, d'abord."""
+        self._docs._enter(ctx, "tags.many", doctype)
+        compiled = self._taggable(ctx, doctype)
+        self._docs._scope(ctx, compiled, "write")
+        if not isinstance(names, list) or not names or len(names) > MAX_BULK_TAG or not all(isinstance(n, str) and n for n in names):
+            raise ValidationFailed(f"names : une liste de 1 à {MAX_BULK_TAG} noms", code="bulk_names")
+        adds, removes = _tag_list(add, "add"), _tag_list(remove, "remove")
+        if not adds and not removes:
+            raise ValidationFailed("rien à changer : add ou remove doit nommer une étiquette", code="invalid_tag")
+        results = []
+        for name in dict.fromkeys(names):
+            try:
+                await self._change_tags(ctx, compiled, name, adds, removes)
+                results.append({"name": name, "ok": True})
+            except DoctypeError as e:
+                results.append({"name": name, "ok": False, "code": e.code, "message": e.message})
+        done = sum(1 for r in results if r["ok"])
         return {"results": results, "done": done, "failed": len(results) - done}
 
     # ── Prévenir ──────────────────────────────────────────────
