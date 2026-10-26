@@ -648,6 +648,12 @@ export interface BulkItem {
   details?: { field?: string; msg?: string }[]
 }
 
+/** Une étiquette en usage et son nombre de documents (lisibles, dans les filtres demandés). */
+export interface TagCount {
+  tag: string
+  count: number
+}
+
 export interface BulkResult {
   results: BulkItem[]
   done: number

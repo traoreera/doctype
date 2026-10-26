@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Filters, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -230,6 +230,35 @@ export class ApiClient {
   /** Assigne plusieurs documents à la même personne. */
   assignMany(doctype: string, names: readonly string[], body: { assignee: string; description?: string | null; due_date?: string | null }): Promise<BulkResult> {
     return this.call('POST', `/assign-many/${encodeURIComponent(doctype)}`, { body: { names, ...body } })
+  }
+
+  /** Les étiquettes d'un document (il faut le lire) ; `can_tag` : l'appelant peut-il en poser ou en retirer (l'écrire). */
+  tags(doctype: string, name: string): Promise<{ tags: string[]; can_tag: boolean }> {
+    return this.call('GET', `/tags/${this.doc(doctype, name)}`)
+  }
+
+  /** Pose et/ou retire des étiquettes en une fois ; répond les étiquettes du document après. */
+  async changeTags(doctype: string, name: string, change: { add?: string[]; remove?: string[] }): Promise<string[]> {
+    return (await this.call<{ tags: string[] }>('POST', `/tags/${this.doc(doctype, name)}`, { body: change })).tags
+  }
+
+  /** Les étiquettes d'une page de liste : un document illisible est absent de la réponse. */
+  async tagsOf(doctype: string, names: readonly string[]): Promise<Record<string, string[]>> {
+    return (await this.call<{ items: Record<string, string[]> }>('POST', `/tags-of/${encodeURIComponent(doctype)}`, { body: { names } })).items
+  }
+
+  /** Les étiquettes en usage et leur nombre de documents, dans les filtres donnés (barre latérale) ou contenant `q` (propositions de saisie). */
+  async tagCounts(doctype: string, query: { q?: string; filters?: Filters; limit?: number } = {}): Promise<TagCount[]> {
+    const params = new URLSearchParams()
+    if (query.q) params.set('q', query.q)
+    if (query.filters && Object.keys(query.filters).length) params.set('filters', JSON.stringify(query.filters))
+    if (query.limit !== undefined) params.set('limit', String(query.limit))
+    return (await this.call<{ items: TagCount[] }>('GET', `/tag-counts/${encodeURIComponent(doctype)}`, { params })).items
+  }
+
+  /** Étiqueter une sélection : chaque document est jugé seul. */
+  tagMany(doctype: string, names: readonly string[], change: { add?: string[]; remove?: string[] }): Promise<BulkResult> {
+    return this.call('POST', `/tag-many/${encodeURIComponent(doctype)}`, { body: { names, ...change } })
   }
 
   /** Les documents qui citent celui-ci (par type et par champ), avec leur nombre. */

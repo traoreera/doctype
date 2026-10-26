@@ -13,6 +13,8 @@ import FileThumb from '@/components/FileThumb.vue'
 import FormTabs from '@/components/FormTabs.vue'
 import CollabPanel from '@/components/collab/CollabPanel.vue'
 import ConnectionsPanel from '@/components/ConnectionsPanel.vue'
+import TagBar from '@/components/tags/TagBar.vue'
+import { supportsTags } from '@/lib/tags'
 import HistoryPanel from '@/components/HistoryPanel.vue'
 import OverrideEditor from '@/components/OverrideEditor.vue'
 import TableField from '@/components/TableField.vue'
@@ -713,6 +715,8 @@ onBeforeUnmount(() => {
         </Menu>
         <Button v-if="writable" :label="t.save" icon="pi pi-check" size="small" :loading="saving" :disabled="!isNew && !touched" :title="t.form.saveShortcut" data-testid="save" @click="save" />
       </div>
+      <!-- Les étiquettes d'un document enregistré (ni réglage, ni type virtuel) : elles se posent tout de suite, sans « Enregistrer ». -->
+      <TagBar v-if="record && record.doctype === doctype && record.version > 0 && supportsTags(meta) && !embedded" :doctype="doctype" :name="record.name" />
 
       <Message v-if="banner" severity="error" class="banner-error" data-testid="form-banner" role="alert">
         {{ banner }}

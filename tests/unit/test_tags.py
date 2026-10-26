@@ -11,6 +11,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from tests.conftest import make_ctx
@@ -20,6 +22,7 @@ from xcore_doctype.collaboration import CollaborationService
 from xcore_doctype.document import DocumentService
 from xcore_doctype.errors import NotFound, PermissionDenied, ValidationFailed
 from xcore_doctype.file_service import FileService
+from xcore_doctype.query import Query
 from xcore_doctype.registry import DocTypeRegistry
 from xcore_doctype.schema import parse_definition
 from xcore_doctype.tags import MAX_TAGS_PER_DOC, normalize_tag
@@ -163,6 +166,40 @@ async def test_at_most_twenty_tags_and_a_refused_request_keeps_nothing(env):
     with pytest.raises(ValidationFailed):  # le retrait de la même demande est défait aussi
         await env.collab.tag(HANA, "Note", "n1", add=["a", "b"], remove=["t1"])
     assert "t1" in await tags(env, "n1")
+
+
+async def test_two_taggers_at_the_cap_never_make_twenty_one(env, db, monkeypatch):
+    """Le plafond se compte après la pose, sous le verrou du document (`FOR UPDATE`) : à 19, deux poses simultanées ne passent pas toutes les deux.
+    SQLite n'a pas de verrou de ligne (un seul écrivain à la fois) : l'entrelacement précis n'est exigé que sur PostgreSQL."""
+    if db.backend != "postgres":
+        pytest.skip("SQLite n'a pas de verrou de ligne : un seul écrivain à la fois")
+    await note(env, "n1")
+    await env.collab.tag(HANA, "Note", "n1", add=[f"t{i}" for i in range(MAX_TAGS_PER_DOC - 1)])
+    posed, proceed = asyncio.Event(), asyncio.Event()
+    real_add = Query.add_tag
+
+    async def paused_add(self, doctype, docname, tag):
+        added = await real_add(self, doctype, docname, tag)
+        if tag == "premier":
+            posed.set()  # posée, pas encore comptée ni validée
+            await proceed.wait()
+        return added
+
+    monkeypatch.setattr(Query, "add_tag", paused_add)
+    first = asyncio.create_task(env.collab.tag(HANA, "Note", "n1", add=["premier"]))
+    second = None
+    try:
+        await asyncio.wait_for(posed.wait(), 5)
+        second = asyncio.create_task(env.collab.tag(HANA, "Note", "n1", add=["second"]))
+        await asyncio.sleep(0.5)
+        assert not second.done(), "la seconde pose aurait dû attendre le verrou du document"
+    finally:
+        proceed.set()  # même en cas d'échec : une transaction restée ouverte bloquerait le nettoyage de la base
+    assert len((await first)["tags"]) == MAX_TAGS_PER_DOC
+    with pytest.raises(ValidationFailed) as e:
+        await second
+    assert e.value.code == "too_many_tags"
+    assert len(await tags(env, "n1")) == MAX_TAGS_PER_DOC
 
 
 # ── Le filtre `_tag` de la liste ───────────────────────────────
