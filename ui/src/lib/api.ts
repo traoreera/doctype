@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -220,6 +220,11 @@ export class ApiClient {
   /** `name` : le nom choisi, pour un DocType dont les noms se saisissent (`naming: prompt`). */
   create(doctype: string, data: DocData, name?: string): Promise<DocRecord> {
     return this.call('POST', `/doc/${encodeURIComponent(doctype)}`, { body: name === undefined ? { data } : { data, name } })
+  }
+
+  /** Import CSV : un document par ligne (`insert` crée, `update` met à jour par la colonne `name`), compte rendu ligne à ligne. */
+  importCsv(doctype: string, content: string, mode: 'insert' | 'update'): Promise<ImportResult> {
+    return this.call('POST', `/import/${encodeURIComponent(doctype)}`, { body: { content, mode } })
   }
 
   /** Une même action sur plusieurs documents (`update` avec `data`, `delete`, `submit`, `cancel`) : le compte rendu dit, pour chacun, s'il est passé. */
