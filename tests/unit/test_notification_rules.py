@@ -584,3 +584,21 @@ async def test_close_drops_the_evaluation_in_progress(env):
     gate.set()
     await asyncio.sleep(0)
     assert not e.rules._pending and e.bell.sent == []
+
+
+async def test_an_author_bounded_by_a_user_permission_cannot_broadcast_the_type(db, tables):
+    """Rita a le rôle Ticket SANS condition mais une permission utilisateur la limite à un ticket : elle ne lit pas TOUT le type, sa règle
+    aurait diffusé (« {{ doc.title }} ») ce qu'elle ne voit pas. Refusée comme celle d'un auteur `if_owner` (constat de la relecture)."""
+    from xcore_doctype.user_permissions import make_user_permission_hooks
+
+    e = Env(db, tables)
+    for n, h in make_user_permission_hooks(e.svc, People(MEMBERS)).items():
+        e.hooks.register(n, h, owner="xcore-doctype")
+    admin = make_ctx("acme", "u-ada", permissions=TICKET + RULES + ["system:user_permission:read", "system:user_permission:write"])
+    t0 = await e.ticket(title="le sien")
+    await e.svc.create(admin, "User Permission", {"member": "rita@acme.test", "allow": "Ticket", "for_value": t0["name"]})
+    rita = make_ctx("acme", RITA, permissions=TICKET + RULES)
+    with pytest.raises(DocumentValidationError) as refused:
+        await e.svc.create(rita, "Notification Rule", {"rule_name": "espion", "document_type": "Ticket", "event": "Création",
+                                                       "subject": "{{ name }} {{ doc.title }}", "recipients": [{"email": "rita@acme.test"}]})
+    assert refused.value.code == "invalid_rule"

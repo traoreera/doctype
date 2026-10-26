@@ -183,7 +183,8 @@ async def test_mention_suggestions_need_only_the_right_to_read_the_document(tmp_
         stranger = h.token(sub="gus", tenant="globex", permissions=GRANTS)
         assert (await h.http("GET", f"/mentionable/Place/{place}", token=stranger, tenant="globex")).status_code == 404
         blind = h.token(sub=CARL, permissions=["shop:visit:read"])
-        assert (await h.http("GET", f"/mentionable/Place/{place}", token=blind)).status_code == 403
+        # Sans droit de lire le type : un partage pourrait ouvrir CE document, donc « introuvable » comme ailleurs (permissions.py).
+        assert (await h.http("GET", f"/mentionable/Place/{place}", token=blind)).status_code == 404
         via_action = await h.action("doc.mentionable", {"doctype": "Place", "name": place, "q": "ad"}, token=rita)
         assert [p["email"] for p in via_action["items"]] == ["ada@acme.test"]
 

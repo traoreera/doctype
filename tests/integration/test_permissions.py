@@ -60,11 +60,14 @@ async def test_grants_add_up_across_rules(host):
 
 
 async def test_forbidden_and_not_found_are_distinguishable_only_when_it_is_safe(host):
-    """403 : aucune règle n'accorde l'action. 404 : le document est hors du périmètre de lecture."""
+    """403 : aucune règle n'accorde l'action sur le TYPE (liste, création, suppression). 404 : le document visé par son nom n'est pas lisible
+    — hors du périmètre, inexistant, ou non partagé avec qui n'a aucun rôle (un partage l'ouvrirait : permissions.py)."""
     doc = await make(host, manager(host))
     nobody = host.token(sub="nobody", permissions=[])
-    r = await host.http("GET", f"/doc/Customer/{doc['name']}", token=nobody)
+    r = await host.http("GET", "/list/Customer", token=nobody)
     assert r.status_code == 403 and r.json()["detail"] == {"code": "permission_denied", "msg": "Accès refusé"}
+    assert (await host.http("GET", f"/doc/Customer/{doc['name']}", token=nobody)).status_code == 404
+    assert (await host.http("GET", "/doc/Customer/does-not-exist", token=nobody)).status_code == 404
     # Un nom inexistant et un document hors périmètre répondent pareil.
     other = own_only(host, "alice")
     assert (await host.http("GET", f"/doc/Customer/{doc['name']}", token=other)).status_code == 404
@@ -83,11 +86,14 @@ async def test_reader_sees_everything_but_cannot_write(host):
 
 
 async def test_write_without_read_is_forbidden(host):
-    """Un utilisateur qui n'a que `write` ne peut ni lire ni (donc) modifier : c'est le groupe de grants d'auth qui les assemble."""
+    """Un utilisateur qui n'a que `write` ne peut ni lire ni (donc) modifier : c'est le groupe de grants d'auth qui les assemble. Le document
+    visé lui est « introuvable » (404), comme un nom qui n'existe pas : rien n'est révélé."""
     doc = await make(host, manager(host))
     write_only = host.token(sub="w", permissions=["sales:customer:write"])
     r = await host.http("PUT", f"/doc/Customer/{doc['name']}", token=write_only, json={"version": 1, "data": {"customer_name": "x"}})
-    assert r.status_code == 403
+    assert r.status_code == 404
+    ghost = await host.http("PUT", "/doc/Customer/ghost", token=write_only, json={"version": 1, "data": {"customer_name": "x"}})
+    assert ghost.status_code == 404
 
 
 async def test_grants_of_other_plugins_and_platform_admin_open_nothing(host):

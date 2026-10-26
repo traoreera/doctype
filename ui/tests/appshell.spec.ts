@@ -61,6 +61,7 @@ async function shell(start = '/', content = '<p>contenu</p>', extensions?: Exten
     routes: [
       { path: '/', name: 'home', component: { render: () => null } },
       { path: '/tasks', name: 'tasks', component: { render: () => null } },
+      { path: '/shared', name: 'shared', component: { render: () => null } },
       { path: '/files', name: 'files', component: { render: () => null } },
       { path: '/w/:name', name: 'workspace', component: { render: () => null } },
       { path: '/app/:doctype', name: 'list', component: { render: () => null } },

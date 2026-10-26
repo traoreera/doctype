@@ -35,6 +35,7 @@ from .collaboration import CollaborationService
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
+from .user_permissions import make_user_permission_hooks
 from .notification_rules import RULE_HOOK, ExtensionMailer, Mailer, NoMailer, NotificationRules, make_rule_hook
 from .preferences import Preferences
 from .hooks import ActionHooks, HookRegistry, HookSettings
@@ -195,6 +196,9 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         rules = NotificationRules(self.documents, directory=directory, notifier=notifier, logger=self.logger, **self._rule_delivery(block.get("notifications")))
         self.documents.notifications = rules
         hook_registry.register(RULE_HOOK, make_rule_hook(self.documents), owner=self.ctx.name)
+        # Les permissions utilisateur (DocType `User Permission` du plugin `system`) : cohérentes, et le membre traduit par l'annuaire.
+        for hook_name, hook in make_user_permission_hooks(self.documents, directory).items():
+            hook_registry.register(hook_name, hook, owner=self.ctx.name)
         self.collaboration = collab
         root.include_router(build_collab_router(collab, self._settings))  # commentaires, assignations, pièces jointes
         self.file_library = FileLibrary(self.documents, collab)
@@ -574,6 +578,37 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             )
 
         return await self._run("doc.assign.many", op)
+
+    @action("doc.shares.get")
+    async def doc_shares_get(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.shares(ctx, _need(payload, "doctype"), _need(payload, "name"))
+
+        return await self._run("doc.shares.get", op)
+
+    @action("doc.shares.add")
+    async def doc_shares_add(self, payload: dict) -> dict:
+        """`{doctype, name, member, write?}` : partager un document (il faut pouvoir l'écrire)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.share(ctx, _need(payload, "doctype"), _need(payload, "name"), member=payload.get("member"), write=payload.get("write", False))
+
+        return await self._run("doc.shares.add", op)
+
+    @action("doc.shares.remove")
+    async def doc_shares_remove(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            await self.collaboration.unshare(ctx, _need(payload, "doctype"), _need(payload, "name"), member=payload.get("member"))
+            return {}
+
+        return await self._run("doc.shares.remove", op)
+
+    @action("doc.shares.mine")
+    async def doc_shares_mine(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.shared_with_me(ctx, limit=payload.get("limit", 100))
+
+        return await self._run("doc.shares.mine", op)
 
     @action("doc.tags.get")
     async def doc_tags_get(self, payload: dict) -> dict:

@@ -32,7 +32,7 @@ from .context import RequestContext
 from .db.tables import SystemTables
 from .errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, ValidationFailed, VersionConflict
 from .files import ATTACHMENT_FIELD
-from .permissions import Scope
+from .permissions import USER_PERMISSION, Facts, Scope
 from .schema import DECIMAL_TYPES, DocTypeDef
 from .tags import TAG_FILTER
 from .versions import KEPT_ACTIONS
@@ -135,6 +135,7 @@ class Query:
         self._attachments = tables.attachments
         self._uniques = tables.uniques
         self._tags = tables.tags
+        self._shares = tables.shares
 
     # ── Lecture ───────────────────────────────────────────────
     async def get(self, doctype: str, name: str, *, scope: Scope, lock: bool = False) -> StoredDoc | None:
@@ -496,7 +497,7 @@ class Query:
             if found is None:
                 raise NotFound("document_not_found", f"{doctype} {old!r} introuvable")
             raise DocumentLocked(f"{doctype} {old!r} est {STATUS_WORDS[found.docstatus]} : il ne se renomme plus") if found.docstatus != DRAFT else NotFound("document_not_found", f"{doctype} {old!r} introuvable")
-        for table in (self._comments, self._assignments, self._attachments, self._uniques, self._tags):
+        for table in (self._comments, self._assignments, self._attachments, self._uniques, self._tags, self._shares):
             await self._session.execute(update(table).where(self._cscope(table, table.c.doctype == doctype, table.c.docname == old)).values(docname=new))
         await self._move_history(doctype, old, new)
         return await self._reload(doctype, new)
@@ -958,7 +959,7 @@ class Query:
         """Le document disparaît : ses commentaires, ses assignations, ses pièces jointes et ses étiquettes aussi. Retourne les fichiers à libérer."""
         t = self._attachments
         files = [r["file_id"] for r in (await self._session.execute(select(t.c.file_id).where(self._cscope(t, t.c.doctype == doctype, t.c.docname == docname)))).mappings().all()]
-        for table in (self._attachments, self._comments, self._assignments, self._tags):
+        for table in (self._attachments, self._comments, self._assignments, self._tags, self._shares):
             await self._session.execute(delete(table).where(self._cscope(table, table.c.doctype == doctype, table.c.docname == docname)))
         return files
 
@@ -974,6 +975,98 @@ class Query:
         union = sources[0].union(*sources[1:]).subquery()
         stmt = select(union.c.who).order_by(union.c.who.asc()).limit(limit)
         return [r[0] for r in (await self._session.execute(stmt)).all()]
+
+    # ── Permissions utilisateur et partages (permissions.py) ──
+    async def permission_facts(self, scope: Scope, name: str | None) -> Facts:
+        """Ce que l'interprète Python de `scope` doit savoir pour juger UNE valeur : les restrictions de l'utilisateur qui valent pour ce type,
+        et si le document `name` lui est partagé au niveau de l'action. Deux lectures sous le tenant ; rien si le périmètre n'en a pas besoin."""
+        if scope.user is None or not (scope.restrict or scope.share):
+            return Facts()
+        restrictions: dict[str, set[str]] = {}
+        if scope.restrict:
+            up = self._t
+            applies = up.c.data["applies_to"].as_string()
+            targets = sorted({t for t, _ in scope.restrict})
+            stmt = select(up.c.data["allow"].as_string().label("allow"), up.c.data["for_value"].as_string().label("value")).where(
+                self._scope(
+                    up.c.doctype == USER_PERMISSION,
+                    up.c.data["user"].as_string() == scope.user,
+                    up.c.data["allow"].as_string().in_(targets),
+                    or_(applies.is_(None), applies == "", applies == scope.doctype),
+                )
+            )
+            for row in (await self._session.execute(stmt)).mappings():
+                if row["allow"] is not None and row["value"] is not None:
+                    restrictions.setdefault(row["allow"], set()).add(row["value"])
+        shared = False
+        if scope.share and name is not None and scope.doctype is not None:
+            sh = self._shares
+            conds = [sh.c.doctype == scope.doctype, sh.c.docname == name, sh.c.member == scope.user]
+            if scope.action == "write":
+                conds.append(sh.c.write == true())
+            shared = (await self._session.execute(select(sh.c.member).where(self._cscope(sh, *conds)).limit(1))).first() is not None
+        return Facts({k: frozenset(v) for k, v in restrictions.items()}, shared)
+
+    async def restricted(self, scope: Scope) -> bool:
+        """Une permission utilisateur vise-t-elle ce type pour `scope.user` (le type lui-même ou une cible de ses Liens) ? Alors son périmètre
+        n'est pas « tout » même si un rôle le donne sans condition : `level == "all"` ne suffit plus à le dire (`/meta`, règles d'organisation)."""
+        if scope.user is None or not scope.restrict:
+            return False
+        up = self._t
+        applies = up.c.data["applies_to"].as_string()
+        stmt = select(up.c.name).where(
+            self._scope(
+                up.c.doctype == USER_PERMISSION,
+                up.c.data["user"].as_string() == scope.user,
+                up.c.data["allow"].as_string().in_(sorted({t for t, _ in scope.restrict})),
+                or_(applies.is_(None), applies == "", applies == scope.doctype),
+            )
+        ).limit(1)
+        return (await self._session.execute(stmt)).first() is not None
+
+    async def share_level(self, doctype: str, member: str) -> str | None:
+        """Le plus haut niveau de partage de ce type avec ce membre : « write », « read », ou `None` (aucun document partagé)."""
+        sh = self._shares
+        stmt = select(func.max(case((sh.c.write == true(), 1), else_=0))).where(self._cscope(sh, sh.c.doctype == doctype, sh.c.member == member))
+        found = (await self._session.execute(stmt)).scalar_one_or_none()
+        return None if found is None else "write" if found else "read"
+
+    async def shares(self, doctype: str, docname: str) -> list[dict[str, Any]]:
+        """Les partages d'un document (le service a jugé que l'appelant peut l'ÉCRIRE)."""
+        sh = self._shares
+        stmt = select(sh).where(self._cscope(sh, sh.c.doctype == doctype, sh.c.docname == docname)).order_by(sh.c.creation.asc(), sh.c.member.asc())
+        return [self._collab_row(r) for r in (await self._session.execute(stmt)).mappings()]
+
+    async def put_share(self, doctype: str, docname: str, member: str, *, write: bool) -> None:
+        """Partage (ou change le niveau d'un partage existant) en une instruction : sûr sous concurrence."""
+        sh = self._shares
+        insert_for = postgresql.insert if self._session.get_bind().dialect.name == "postgresql" else sqlite.insert
+        row = {"tenant_id": self._tenant, "doctype": doctype, "docname": docname, "member": member, "write": write,
+               "owner": self._owner, "creation": datetime.now(UTC)}
+        stmt = insert_for(sh).values(**row)
+        stmt = stmt.on_conflict_do_update(index_elements=[sh.c.tenant_id, sh.c.doctype, sh.c.docname, sh.c.member], set_={"write": stmt.excluded.write})
+        await self._session.execute(stmt)
+
+    async def remove_share(self, doctype: str, docname: str, member: str) -> bool:
+        sh = self._shares
+        stmt = delete(sh).where(self._cscope(sh, sh.c.doctype == doctype, sh.c.docname == docname, sh.c.member == member))
+        return (await self._session.execute(stmt)).rowcount > 0
+
+    async def shared_with(self, member: str, *, limit: int) -> list[dict[str, Any]]:
+        """« Partagés avec moi » : les documents qu'on a partagés avec ce membre, les plus récents d'abord (seulement ceux qui existent)."""
+        sh, d = self._shares, self._t
+        stmt = (
+            select(sh.c.doctype, sh.c.docname, sh.c.write, sh.c.owner, sh.c.creation, d.c.data)
+            .select_from(sh.join(d, and_(d.c.tenant_id == sh.c.tenant_id, d.c.doctype == sh.c.doctype, d.c.name == sh.c.docname)))
+            .where(self._cscope(sh, sh.c.member == member))
+            .order_by(sh.c.creation.desc(), sh.c.doctype.asc(), sh.c.docname.asc())
+            .limit(limit)
+        )
+        out = []
+        for r in (await self._session.execute(stmt)).mappings():
+            out.append({"doctype": r["doctype"], "name": r["docname"], "write": bool(r["write"]), "owner": r["owner"],
+                        "creation": r["creation"].isoformat() if isinstance(r["creation"], datetime) else r["creation"], "data": r["data"]})
+        return out
 
     # ── Étiquettes (`tags.py` ; qui les voit et qui les pose : `collaboration.py`) ──
     # Comme la collaboration, ces méthodes n'imposent que le tenant : le service a lu le document avec le périmètre de l'appelant avant.
@@ -1149,20 +1242,57 @@ class Query:
         }
 
     def _permission_clause(self, scope: Scope) -> Any:
+        """Le périmètre en SQL : (rôles ET restrictions de l'utilisateur) OU documents partagés avec lui. L'équivalent Python est
+        `Scope.allows` ; `test_permissions_matrix.py` compare les deux à un oracle."""
         if scope.unrestricted:
-            return true()
-        if not scope.clauses:
-            return false()
-        ors = []
-        for clause in scope.clauses:
-            parts = []
-            if clause.owner is not None:
-                parts.append(self._t.c.owner == clause.owner)
-            if clause.match is not None:
-                # Les champs de `match` sont validés (schema.MATCHABLE_TYPES) : tous textuels.
-                parts.append(self._t.c.data[clause.match[0]].as_string() == clause.match[1])
-            ors.append(and_(*parts))
-        return or_(*ors)
+            role: Any = true()
+        elif scope.clauses:
+            ors = []
+            for clause in scope.clauses:
+                parts = []
+                if clause.owner is not None:
+                    parts.append(self._t.c.owner == clause.owner)
+                if clause.match is not None:
+                    # Les champs de `match` sont validés (schema.MATCHABLE_TYPES) : tous textuels.
+                    parts.append(self._t.c.data[clause.match[0]].as_string() == clause.match[1])
+                ors.append(and_(*parts))
+            role = or_(*ors)
+        else:
+            role = false()
+        if scope.restrict and scope.granted:
+            role = and_(role, *self._restriction_conds(scope))
+        if scope.share and scope.user is not None:
+            return or_(role, self._shared_cond(scope))
+        return role
+
+    def _user_permission_rows(self, scope: Scope, target: str) -> Any:
+        """Les valeurs permises de `target` pour l'utilisateur, sur ce type : les documents `User Permission` qui le visent (sans `applies_to`,
+        ou avec celui de ce type). Lus en sous-requête, sous le tenant, jamais dans le périmètre de l'appelant (c'est la règle, pas une donnée)."""
+        up = self._t.alias("user_permission")
+        applies = up.c.data["applies_to"].as_string()
+        return select(up.c.data["for_value"].as_string()).where(
+            up.c.tenant_id == self._tenant,
+            up.c.doctype == USER_PERMISSION,
+            up.c.data["user"].as_string() == scope.user,
+            up.c.data["allow"].as_string() == target,
+            or_(applies.is_(None), applies == "", applies == scope.doctype),
+        )
+
+    def _restriction_conds(self, scope: Scope) -> list[Any]:
+        """Pour chaque champ qu'une restriction peut viser : aucune restriction sur sa cible, ou une valeur vide, ou une valeur permise."""
+        conds = []
+        for target, fieldname in scope.restrict:
+            rows = self._user_permission_rows(scope, target)
+            value = self._t.c.name if fieldname is None else self._t.c.data[fieldname].as_string()
+            conds.append(or_(~exists(rows), value.is_(None), value == "", value.in_(rows)))
+        return conds
+
+    def _shared_cond(self, scope: Scope) -> Any:
+        sh = self._shares
+        wanted = [sh.c.write == true()] if scope.action == "write" else []
+        return exists().where(
+            sh.c.tenant_id == self._tenant, sh.c.doctype == self._t.c.doctype, sh.c.docname == self._t.c.name, sh.c.member == scope.user, *wanted
+        )
 
     def _filter_conds(self, defn: DocTypeDef, filters: Mapping[str, Any]) -> list[Any]:
         """Les conditions du DocType et de ses filtres (déjà validés par type). Partagées par la liste et les agrégats."""

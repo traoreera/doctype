@@ -39,6 +39,12 @@ class AssignManyBody(BaseModel):
     due_date: str | None = None
 
 
+class ShareBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    member: str
+    write: bool = False
+
+
 class TagBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     add: list[Any] | None = None
@@ -122,6 +128,25 @@ def build_collab_router(collab: CollaborationService, settings: ContextSettings)
     @router.get("/people/{doctype}")
     async def people(doctype: str, q: str = Query(""), ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(collab.people(ctx, doctype, q=q))
+
+    @router.get("/shares/{doctype}/{name}")
+    async def shares(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):
+        """Avec qui ce document est partagé (la liste complète pour qui peut l'écrire, son propre partage pour les autres)."""
+        return await _guard(collab.shares(ctx, doctype, name))
+
+    @router.post("/shares/{doctype}/{name}")
+    async def share(doctype: str, name: str, body: ShareBody, ctx: RequestContext = Depends(ctx_dep)):
+        """`{member, write}` : partager avec un membre (son e-mail ou son identifiant), en lecture ou en écriture. Il faut écrire le document."""
+        return await _guard(collab.share(ctx, doctype, name, member=body.member, write=body.write))
+
+    @router.delete("/shares/{doctype}/{name}", status_code=204)
+    async def unshare(doctype: str, name: str, member: str = Query(...), ctx: RequestContext = Depends(ctx_dep)):
+        await _guard(collab.unshare(ctx, doctype, name, member=member))
+        return Response(status_code=204)
+
+    @router.get("/shared-with-me")
+    async def shared_with_me(limit: int = Query(100), ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(collab.shared_with_me(ctx, limit=limit))
 
     @router.get("/tags/{doctype}/{name}")
     async def tags(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):

@@ -63,7 +63,7 @@ from .errors import (
 from .hooks import ActionHooks, HookEvent, HookRegistry, HookSettings
 from .notification_rules import DocEvent
 from .files import ATTACHMENT_FIELD
-from .permissions import ACTIONS, Action, Scope, require, scope_for
+from .permissions import ACTIONS, Action, Facts, Scope, require, scope_for, stored_kind, within_restrictions
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .schema import FILE_TYPES, LINK_FILTER_REF, TODAY, DocTypeDef, FieldDef, NamingField
@@ -362,7 +362,7 @@ class DocumentService:
 
     def get_meta(
         self, ctx: RequestContext, doctype: str, *, override: Mapping[str, Any] | None = None, dashboard: Mapping[str, Any] | None = None,
-        dashboard_layer: str | None = None,
+        dashboard_layer: str | None = None, shared: str | None = None, restricted: bool = False,
     ) -> dict[str, Any]:
         """Définition + droits effectifs (`all` | `restricted` | `none` par action). Les règles ne sont jamais exposées.
 
@@ -374,7 +374,14 @@ class DocumentService:
         d = compiled.definition
         rights = {a: scope_for(d, ctx, a).level for a in ACTIONS}
         if all(level == "none" for level in rights.values()):
-            raise PermissionDenied()
+            if shared is None:
+                raise PermissionDenied()
+            # Aucun rôle, mais des documents de ce type partagés avec lui (`shared` : « read » ou « write ») : de quoi ouvrir CES fiches.
+            rights["read"] = "restricted"
+            if shared == "write":
+                rights["write"] = "restricted"
+        if restricted:  # une permission utilisateur borne ce que ses rôles donnent : « tout » serait faux (le Desk griserait à tort)
+            rights = {a: "restricted" if level == "all" else level for a, level in rights.items()}
         if d.single:
             rights["delete"] = "none"  # un document unique ne se crée ni ne se supprime : on le modifie
         meta = d.model_dump(mode="json", exclude_none=True, exclude={"permissions", "hooks"})
@@ -425,7 +432,7 @@ class DocumentService:
     async def get(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
         self._enter(ctx, "doc.get", doctype, name)
         compiled = self._doctype(doctype)  # DocType inconnu : 404 distinct de « document absent »
-        scope = self._scope(ctx, compiled, "read")
+        scope = self._scope(ctx, compiled, "read", single=True)
         if (source := self._source(compiled)) is not None:
             found = await self._peek(ctx, compiled, None, name, scope, source)
             if found is None:
@@ -668,7 +675,7 @@ class DocumentService:
         """
         self._enter(ctx, "doc.history", doctype, name)
         compiled = self._doctype(doctype)
-        read = self._scope(ctx, compiled, "read")
+        read = self._scope(ctx, compiled, "read", single=True)
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_HISTORY:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_HISTORY}")
         if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
@@ -682,7 +689,7 @@ class DocumentService:
             deleted = await q.get(doctype, name, scope=read) is None
             if deleted:  # supprimé, ou hors de portée (alors seule la génération supprimée de ce nom peut être la sienne)
                 gone = await q.last_deletion(doctype, name)
-                if gone is None or not read.allows(gone["owner"], snapshot(gone["changes"])):
+                if gone is None or not read.allows(gone["owner"], snapshot(gone["changes"]), name=name, facts=await q.permission_facts(read, name)):
                     raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
             items, total = await q.versions(doctype, name, limit=limit, offset=offset, deleted=deleted)
         return {"items": items, "total": total, "limit": limit, "offset": offset}
@@ -746,12 +753,19 @@ class DocumentService:
     async def fetch_meta(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
         """Comme `get_meta`, mais applique d'abord l'habillage de formulaire du tenant et le tableau de bord personnalisé (le sien, sinon celui de
         l'organisation) : chemin des routes et de l'action."""
+        compiled = self._doctype(doctype)
+        no_role = all(scope_for(compiled.definition, ctx, a).level == "none" for a in ACTIONS)
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
             board_org = await q.get_override(KIND_DASHBOARD, doctype)
             board_mine = await q.get_override(KIND_DASHBOARD_USER, user_target(doctype, ctx.owner_id))
+            # Sans rôle sur le type, un document partagé avec lui doit encore pouvoir s'ouvrir : sa fiche a besoin de la définition.
+            shared = await q.share_level(doctype, ctx.user_id) if no_role and ctx.user_id is not None and stored_kind(compiled.definition) else None
+            restricted = await q.restricted(scope_for(compiled.definition, ctx, "read"))
         board, layer = (board_mine, "user") if board_mine else (board_org, "org") if board_org else (None, None)
-        return self.get_meta(ctx, doctype, override=(found or {}).get("config"), dashboard=(board or {}).get("config"), dashboard_layer=layer)
+        return self.get_meta(
+            ctx, doctype, override=(found or {}).get("config"), dashboard=(board or {}).get("config"), dashboard_layer=layer, shared=shared, restricted=restricted
+        )
 
     async def form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
         """L'habillage de formulaire de ce type pour ce tenant (vide s'il n'y en a pas). Il faut pouvoir LIRE le type. `definition` : ce que le YAML
@@ -773,7 +787,7 @@ class DocumentService:
         cleaned = validate_form_override(compiled, config)
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
-            self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned)
+            self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned, restricted=await q.restricted(write))
             made = await q.put_override(KIND_FORM, doctype, owner=ctx.owner_id, config=cleaned)
         return {"doctype": doctype, "config": made["config"]}
 
@@ -785,17 +799,17 @@ class DocumentService:
         write = self._scope(ctx, compiled, "write")
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
-            self._check_rule_author(write, compiled, (found or {}).get("config"), {})
+            self._check_rule_author(write, compiled, (found or {}).get("config"), {}, restricted=await q.restricted(write))
             await q.delete_override(KIND_FORM, doctype)
         return {"doctype": doctype}
 
     @staticmethod
-    def _check_rule_author(write: Scope, compiled: CompiledDocType, stored: Any, wanted: Any) -> None:
+    def _check_rule_author(write: Scope, compiled: CompiledDocType, stored: Any, wanted: Any, *, restricted: bool = False) -> None:
         """Les règles d'écriture d'un habillage tiennent ceux qui n'écrivent qu'une PARTIE des documents (`if_owner`) : ils ne les posent, ne
         les changent ni ne les retirent, sinon chacun lèverait la règle qui le lie (ou en imposerait une aux documents des autres). Il faut un
         périmètre d'écriture total (`level == "all"`, comme l'auteur d'une règle de notification lit tout). Libellés, masquage et disposition
         gardent la règle commune : un habillage qui les change en laissant les règles telles quelles passe."""
-        if write.level == "all":
+        if write.level == "all" and not restricted:  # une permission utilisateur le borne : il n'écrit pas TOUT (`Query.restricted`)
             return
         changed = changed_rules(compiled, stored, wanted)
         if changed:
@@ -952,7 +966,9 @@ class DocumentService:
         naming = compiled.definition.naming
         if name is None:
             name = self._requested_name(compiled, requested)
-        finalize = self._finalizer(compiled, scope, ctx.owner_id)
+        facts = await self._facts(ctx, scope, None)
+        finalize = self._finalizer(compiled, scope, ctx.owner_id, facts)
+        chosen = name is not None and amended_from is None  # un nom que le CLIENT choisit (`naming: prompt`) ; un nom tiré d'un champ l'est aussi
         rules = await self._form_rules(ctx, compiled)
         if amended_from is not None:
             # Un amendement est la copie qu'on va CORRIGER : ce que l'organisation exige depuis s'y saisira (la mise à jour et la soumission
@@ -971,6 +987,12 @@ class DocumentService:
             clean = await self._fetched(ctx, q, compiled, clean, None, finalize)  # un hook a pu changer un lien
             if by_field is not None:
                 name = valid_name(str(clean[by_field.field]), by_field.field)
+                chosen = True
+            # Une permission utilisateur sur CE type vaut aussi pour le nom qu'on choisit : ni créer hors de ce qu'on voit, ni sonder par le
+            # 409 d'un nom déjà pris quels documents cachés existent. Avant l'insertion, donc avant toute réponse « existe déjà ». Un nom
+            # engendré (aléatoire, série, propriétaire) ne se choisit pas : il ne sonde rien.
+            if chosen and scope.restrict and not within_restrictions(scope.restrict, facts.restrictions, clean, name):
+                raise PermissionDenied()
             clean = self._seal(compiled, clean, None)
             await self._check_links(ctx, q, compiled, clean, None, copied=copied)
             # D29 : à la création comme à la modification ; un amendement recopie ses liens, qui ne se rejugent pas (comme leur état).
@@ -1022,7 +1044,7 @@ class DocumentService:
         if (source := self._source(compiled)) is not None:
             return await self._update_virtual(ctx, compiled, write, current, data, version, source)
         self._require_hooks(compiled)
-        finalize = self._finalizer(compiled, write, current.owner)
+        finalize = self._finalizer(compiled, write, current.owner, await self._facts(ctx, write, name), name)
         rules = await self._form_rules(ctx, compiled)
         if after_submit:
             # Soumis, seuls ses champs `allow_on_submit` se changent encore : l'obligation de l'habillage ne vaut que pour eux. Un champ figé
@@ -1170,6 +1192,9 @@ class DocumentService:
             raise ValidationFailed(f"{doctype} ne se renomme pas (`allow_rename` n'est pas activé)", code="rename_not_allowed")
         new = valid_name(new_name, "new_name")
         current, write = await self._load_for_change(ctx, compiled, name, "write")
+        if not write.granted:
+            # Un partage en écriture laisse modifier CE document, pas le renommer : le renommage réécrit tous ceux qui le citent.
+            raise PermissionDenied()
         if new == name:
             raise ValidationFailed("Le nouveau nom est le nom actuel", code="rename_same")
         if current.docstatus != DRAFT:
@@ -1611,11 +1636,12 @@ class DocumentService:
         async with self._query(ctx) as q:
             return await q.purge_versions_before(before, doctype=doctype)
 
-    def _finalizer(self, compiled: CompiledDocType, scope: Scope, owner: str) -> Finalize:
+    def _finalizer(self, compiled: CompiledDocType, scope: Scope, owner: str, facts: Facts | None = None, name: str | None = None) -> Finalize:
         # `rules` : l'habillage de l'organisation (`_form_rules`), passé pour l'entrée d'un CLIENT seulement ; le résultat d'un hook en est exempt.
+        # `facts` : restrictions et partage de l'appelant (`_facts`), chargés une fois avant l'écriture.
         def finalize(data: Any, *, old: Mapping[str, Any] | None = None, rules: FormRules | None = None) -> dict[str, Any]:
             clean = compiled.validate_data(data, old=old, rules=rules)
-            self._check_written(scope, owner, clean)
+            self._check_written(scope, owner, clean, facts, name)
             return clean
 
         return finalize
@@ -2018,13 +2044,21 @@ class DocumentService:
         except Exception as e:  # noqa: BLE001 - une notification ne défait rien
             self._log.error("event failed", topic=topic, name=payload.get("name"), error=repr(e))
 
-    def _scope(self, ctx: RequestContext, compiled: Any, action: Action) -> Scope:
-        return require(scope_for(compiled.definition, ctx, action))
+    def _scope(self, ctx: RequestContext, compiled: Any, action: Action, *, single: bool = False) -> Scope:
+        """`single` : l'opération vise UN document nommé (le lire, le modifier) : un partage peut l'ouvrir sans rôle sur le type (`require`)."""
+        return require(scope_for(compiled.definition, ctx, action), single=single)
+
+    async def _facts(self, ctx: RequestContext, scope: Scope, name: str | None) -> Facts:
+        """Restrictions et partage que l'interprète Python de `scope` doit connaître pour juger une valeur ÉCRITE (`Scope.allows`)."""
+        if not (scope.restrict or scope.share):
+            return Facts()
+        async with self._query(ctx) as q:
+            return await q.permission_facts(scope, name)
 
     @staticmethod
-    def _check_written(scope: Scope, owner: str, data: Mapping[str, Any]) -> None:
-        """La valeur écrite doit rester dans le périmètre (D6) : on ne crée ni ne déplace hors de son périmètre."""
-        if not scope.allows(owner, data):
+    def _check_written(scope: Scope, owner: str, data: Mapping[str, Any], facts: Facts | None = None, name: str | None = None) -> None:
+        """La valeur écrite doit rester dans le périmètre (D6) : on ne crée ni ne déplace hors de son périmètre (restrictions comprises)."""
+        if not scope.allows(owner, data, name=name, facts=facts):
             raise PermissionDenied()
 
     async def _load_for_change(
@@ -2032,16 +2066,21 @@ class DocumentService:
     ) -> tuple[Any, Scope]:
         """Charge le document à modifier/supprimer. 404 s'il n'est pas lisible, 403 s'il n'est pas modifiable."""
         doctype = compiled.definition.name
-        read, scope = self._scope(ctx, compiled, "read"), self._scope(ctx, compiled, action)
+        # Modifier un document partagé en écriture se fait sans rôle sur le type ; supprimer, soumettre, annuler, jamais (le partage ne les ouvre pas).
+        single = action == "write"
+        read, scope = self._scope(ctx, compiled, "read", single=single), self._scope(ctx, compiled, action, single=single)
         if (source := self._source(compiled)) is not None:
             current = await self._peek(ctx, compiled, None, name, read, source)
+            if current is not None and not scope.allows(current.owner, current.data):
+                raise PermissionDenied()
         else:
             async with self._query(ctx) as q:
                 current = await q.get(doctype, name, scope=read)
+                # L'action sur la valeur ACTUELLE, jugée par le même SQL que la lecture (rôles, restrictions, partage).
+                if current is not None and await q.get(doctype, name, scope=scope) is None:
+                    raise PermissionDenied()
         if current is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
-        if not scope.allows(current.owner, current.data):
-            raise PermissionDenied()
         return current, scope
 
     # ── DocTypes virtuels (sources.py) ────────────────────────

@@ -133,7 +133,7 @@ describe('barre du haut', () => {
   })
 
   async function shell(prefs: OrgPreferences) {
-    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', name: 'home', component: { render: () => null } }, { path: '/tasks', name: 'tasks', component: { render: () => null } }, { path: '/settings/:doctype?', name: 'settings', component: { render: () => null } }] })
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', name: 'home', component: { render: () => null } }, { path: '/tasks', name: 'tasks', component: { render: () => null } }, { path: '/shared', name: 'shared', component: { render: () => null } }, { path: '/settings/:doctype?', name: 'settings', component: { render: () => null } }] })
     await router.push('/')
     const w = mount(AppShell, {
       slots: { default: '<p>contenu</p>' },
@@ -163,7 +163,7 @@ describe('barre du haut', () => {
 
   it('un logo qui ne charge pas est redemandé une fois (lien expiré), puis abandonné pour l’icône', async () => {
     const preferences = vi.fn(async () => ({ organization_name: 'ACME', logo: { path: 'files/acme/x?exp=1&sig=2', filename: 'l.png', content_type: 'image/png', size: 1, expires: 9e9 } }))
-    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', name: 'home', component: { render: () => null } }, { path: '/tasks', name: 'tasks', component: { render: () => null } }, { path: '/settings/:doctype?', name: 'settings', component: { render: () => null } }] })
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', name: 'home', component: { render: () => null } }, { path: '/tasks', name: 'tasks', component: { render: () => null } }, { path: '/shared', name: 'shared', component: { render: () => null } }, { path: '/settings/:doctype?', name: 'settings', component: { render: () => null } }] })
     await router.push('/')
     const w = mount(AppShell, {
       slots: { default: '<p>contenu</p>' },

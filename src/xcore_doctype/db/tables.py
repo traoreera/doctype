@@ -37,6 +37,7 @@ ASSIGNMENT_TABLE = "xdt_assignment"
 ATTACHMENT_TABLE = "xdt_attachment"
 UNIQUE_TABLE = "xdt_unique"
 TAG_TABLE = "xdt_tag"
+SHARE_TABLE = "xdt_share"
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,6 +54,7 @@ class SystemTables:
     attachments: Table
     uniques: Table
     tags: Table
+    shares: Table
 
 
 def build_system_tables() -> SystemTables:
@@ -236,4 +238,19 @@ def build_system_tables() -> SystemTables:
         PrimaryKeyConstraint("tenant_id", "doctype", "docname", "folded", name="pk_xdt_tag"),
         Index("ix_xdt_tag_folded", "tenant_id", "doctype", "folded"),
     )
-    return SystemTables(md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags)
+    # Partages (permissions.py) : un document ouvert à UN membre, en lecture ou en écriture, même sans rôle sur le type. La clé primaire en
+    # fait un seul par (document, membre) ; l'index sert « Partagés avec moi ». Supprimés avec le document, déplacés quand il est renommé.
+    shares = Table(
+        SHARE_TABLE,
+        md,
+        Column("tenant_id", String(63), nullable=False),
+        Column("doctype", String(140), nullable=False),
+        Column("docname", String(140), nullable=False),
+        Column("member", String(255), nullable=False),  # pas `user` : mot réservé de PostgreSQL
+        Column("write", Boolean, nullable=False, default=False),
+        Column("owner", String(255), nullable=False),
+        Column("creation", DateTime(timezone=True), nullable=False),
+        PrimaryKeyConstraint("tenant_id", "doctype", "docname", "member", name="pk_xdt_share"),
+        Index("ix_xdt_share_member", "tenant_id", "member"),
+    )
+    return SystemTables(md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags, shares)

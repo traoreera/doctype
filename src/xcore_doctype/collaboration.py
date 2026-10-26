@@ -31,7 +31,7 @@ from .errors import DoctypeError, NotFound, PermissionDenied, ValidationFailed
 from .file_service import FileService
 from .files import ATTACHMENT_FIELD
 from .notifier import NoNotifier, Notifier
-from .permissions import scope_for
+from .permissions import Scope, scope_for, stored_kind
 from .query import StoredDoc
 from .tags import MAX_TAG, MAX_TAGS_PER_DOC, normalize_tag, supports_tags
 
@@ -100,6 +100,8 @@ MAX_MENTIONS = 10
 MAX_MENTION_SUGGESTIONS = 8
 MAX_BULK_ASSIGN = 100
 MAX_BULK_TAG = 100
+MAX_SHARES_PER_DOC = 100
+MAX_SHARED_WITH_ME = 200
 MAX_TAG_NAMES = 200  # documents d'une page de liste
 MAX_TAG_SUGGESTIONS = 100
 # Une mention s'écrit @adresse@exemple.fr : seul un membre de l'organisation, désigné par son e-mail, est prévenu.
@@ -118,16 +120,22 @@ class CollaborationService:
         compiled = self._docs._doctype(doctype)
         if compiled.definition.single:
             raise ValidationFailed(f"{doctype} est un document unique : il n'a ni commentaires, ni assignations, ni pièces jointes", code="single_document")
-        read = self._docs._scope(ctx, compiled, "read")
+        read = self._docs._scope(ctx, compiled, "read", single=True)  # un document partagé avec lui s'ouvre sans rôle sur le type
         doc = await self._docs.read_document(ctx, q, doctype, name, read) if isinstance(name, str) else None
         if doc is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         return compiled, doc
 
-    def _can_write(self, ctx: RequestContext, compiled: Any, doc: StoredDoc) -> bool:
-        """Peut-il écrire CE document ? Le périmètre d'écriture jugé sur le document (`if_owner` compris), comme `DocumentService.update` : avoir le
-        droit d'écrire le type ne suffit pas pour joindre, retirer, assigner ou modérer sur le document d'un autre."""
-        return scope_for(compiled.definition, ctx, "write").allows(doc.owner, doc.data)
+    async def _can_write(self, ctx: RequestContext, q: Any, compiled: Any, doc: StoredDoc) -> bool:
+        """Peut-il écrire CE document ? Le périmètre d'écriture jugé sur le document (`if_owner`, restrictions et partage compris) par le même SQL
+        que `DocumentService.update` : avoir le droit d'écrire le type ne suffit pas pour joindre, retirer, assigner ou modérer sur le document
+        d'un autre. Un DocType virtuel (sans restriction ni partage) se juge en Python."""
+        scope = scope_for(compiled.definition, ctx, "write")
+        if not (scope.granted or scope.share):
+            return False
+        if compiled.definition.source is not None:
+            return scope.allows(doc.owner, doc.data)
+        return await q.get(compiled.definition.name, doc.name, scope=scope) is not None
 
     # ── Tout ce qui entoure un document ───────────────────────
     async def get(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
@@ -139,11 +147,11 @@ class CollaborationService:
             assignments = await q.assignments(doctype, name)
             attached = await q.attachments(doctype, name)
             meta = await q.get_files({a["file_id"] for a in attached})
+            writable = await self._can_write(ctx, q, compiled, doc)
         files = [
             {"id": a["id"], "file_id": a["file_id"], "owner": a["owner"], "creation": a["creation"], **{k: meta[a["file_id"]][k] for k in ("filename", "content_type", "size")}}
             for a in attached if a["file_id"] in meta
         ]
-        writable = self._can_write(ctx, compiled, doc)
         return {"comments": comments, "assignments": assignments, "attachments": files, "can_assign": writable, "can_attach": writable, "me": ctx.owner_id}
 
     # ── Commentaires ──────────────────────────────────────────
@@ -181,7 +189,7 @@ class CollaborationService:
             if found is None:
                 raise NotFound("comment_not_found", "commentaire introuvable")
             compiled, doc = await self._document(ctx, q, found["doctype"], found["docname"])
-            if found["owner"] != ctx.owner_id and not self._can_write(ctx, compiled, doc):
+            if found["owner"] != ctx.owner_id and not await self._can_write(ctx, q, compiled, doc):
                 raise PermissionDenied()
             await q.delete_comment(cid)
 
@@ -192,12 +200,12 @@ class CollaborationService:
         note, due = _text(description, "description", limit=500, required=False), _due(due_date)
         async with self._docs._query(ctx) as q:  # les droits d'abord : on ne sonde pas l'annuaire pour qui n'a pas le droit d'assigner
             compiled, doc = await self._document(ctx, q, doctype, name)
-            if not self._can_write(ctx, compiled, doc):
+            if not await self._can_write(ctx, q, compiled, doc):
                 raise PermissionDenied()
         who = await self._assignee(ctx, assignee)
         async with self._docs._query(ctx) as q:
             compiled, doc = await self._document(ctx, q, doctype, name)  # relu : le document a pu disparaître (ou changer) pendant l'appel à l'annuaire
-            if not self._can_write(ctx, compiled, doc):
+            if not await self._can_write(ctx, q, compiled, doc):
                 raise PermissionDenied()
             current = [a for a in await q.assignments(doctype, name) if a["status"] == "open"]
             if any(a["assignee"] == who for a in current):
@@ -234,11 +242,11 @@ class CollaborationService:
         return {"results": results, "done": done, "failed": len(results) - done}
 
     # ── Étiquettes ────────────────────────────────────────────
-    def _taggable(self, ctx: RequestContext, doctype: str) -> Any:
+    def _taggable(self, ctx: RequestContext, doctype: str, *, single: bool = False) -> Any:
         """Le type, si l'appelant peut en lire et s'il porte des étiquettes (ni document unique, ni type virtuel : `tags.supports_tags`).
-        Les droits d'abord : sans eux, on n'apprend rien du type."""
+        Les droits d'abord : sans eux, on n'apprend rien du type. `single` : UN document nommé, qu'un partage peut ouvrir sans rôle."""
         compiled = self._docs._doctype(doctype)
-        self._docs._scope(ctx, compiled, "read")
+        self._docs._scope(ctx, compiled, "read", single=single)
         if not supports_tags(compiled.definition):
             raise ValidationFailed(f"{doctype} ne porte pas d'étiquettes (document unique ou type virtuel)", code="tags_not_supported")
         return compiled
@@ -246,18 +254,19 @@ class CollaborationService:
     async def tags(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
         """Les étiquettes du document, dans l'ordre où elles ont été posées. Il faut pouvoir LE LIRE ; `can_tag` : peut-il en poser ou en retirer."""
         self._docs._enter(ctx, "tags.get", doctype, name)
-        self._taggable(ctx, doctype)
+        self._taggable(ctx, doctype, single=True)
         async with self._docs._query(ctx) as q:
             compiled, doc = await self._document(ctx, q, doctype, name)
             found = await q.tags_of(doctype, [name])
-        return {"tags": found[name], "can_tag": self._can_write(ctx, compiled, doc)}
+            can_tag = await self._can_write(ctx, q, compiled, doc)
+        return {"tags": found[name], "can_tag": can_tag}
 
     async def tag(self, ctx: RequestContext, doctype: str, name: str, *, add: Any = None, remove: Any = None) -> dict[str, Any]:
         """Pose et/ou retire des étiquettes, en une transaction. Il faut pouvoir ÉCRIRE le document (un document soumis s'étiquette encore : ce
         n'est pas le modifier). Une étiquette déjà en usage dans ce type garde son écriture (« urgent » devient « Urgent ») ; poser une étiquette
         présente ou retirer une absente ne fait rien."""
         self._docs._enter(ctx, "tags.change", doctype, name)
-        compiled = self._taggable(ctx, doctype)
+        compiled = self._taggable(ctx, doctype, single=True)
         adds, removes = _tag_list(add, "add"), _tag_list(remove, "remove")
         if not adds and not removes:
             raise ValidationFailed("rien à changer : add ou remove doit nommer une étiquette", code="invalid_tag")
@@ -265,7 +274,7 @@ class CollaborationService:
 
     async def _change_tags(self, ctx: RequestContext, compiled: Any, name: str, adds: list[str], removes: list[str]) -> list[str]:
         doctype = compiled.definition.name
-        read = self._docs._scope(ctx, compiled, "read")
+        read = self._docs._scope(ctx, compiled, "read", single=True)
         gone = NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         async with self._docs._query(ctx) as q:
             compiled, _ = await self._document(ctx, q, doctype, name)
@@ -275,7 +284,7 @@ class CollaborationService:
             doc = await q.get(doctype, name, scope=read, lock=True)
             if doc is None:
                 raise gone
-            if not self._can_write(ctx, compiled, doc):
+            if not await self._can_write(ctx, q, compiled, doc):
                 raise PermissionDenied()
             for tag in removes:
                 await q.remove_tag(doctype, name, tag)
@@ -348,6 +357,99 @@ class CollaborationService:
         done = sum(1 for r in results if r["ok"])
         return {"results": results, "done": done, "failed": len(results) - done}
 
+    # ── Partage (permissions.py) ──────────────────────────────
+    def _shareable(self, ctx: RequestContext, doctype: str) -> Any:
+        compiled = self._docs._doctype(doctype)
+        self._docs._scope(ctx, compiled, "read", single=True)
+        if not stored_kind(compiled.definition):
+            raise ValidationFailed(f"{doctype} ne se partage pas (document unique ou type virtuel)", code="share_not_supported")
+        return compiled
+
+    async def shares(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
+        """Avec qui ce document est partagé. Il faut pouvoir LE LIRE ; la liste complète n'est montrée qu'à qui peut l'ÉCRIRE (il gère les
+        partages) : un autre ne voit que le sien. `can_share` : peut-il partager ou retirer un partage."""
+        self._docs._enter(ctx, "share.get", doctype, name)
+        self._shareable(ctx, doctype)
+        async with self._docs._query(ctx) as q:
+            compiled, doc = await self._document(ctx, q, doctype, name)
+            writer = await self._may_share(ctx, q, compiled, doc)
+            items = await q.shares(doctype, name)
+        if not writer:
+            items = [i for i in items if i["member"] == ctx.owner_id]
+        return {"items": [{k: i[k] for k in ("member", "write", "owner", "creation")} for i in items], "can_share": writer, "me": ctx.owner_id}
+
+    async def _may_share(self, ctx: RequestContext, q: Any, compiled: Any, doc: StoredDoc) -> bool:
+        """Partager (ou retirer le partage d'un autre) : pouvoir ÉCRIRE ce document PAR UN RÔLE. Un partage en écriture laisse modifier le
+        document, pas l'ouvrir à d'autres : sans cela, un document partagé une fois le serait de proche en proche, hors de toute règle."""
+        return scope_for(compiled.definition, ctx, "write").granted and await self._can_write(ctx, q, compiled, doc)
+
+    async def share(self, ctx: RequestContext, doctype: str, name: str, *, member: Any, write: Any = False) -> dict[str, Any]:
+        """Partage le document avec un membre, en lecture ou en lecture + écriture (`write`). Il faut pouvoir L'ÉCRIRE par un rôle (`_may_share`).
+        Partager à nouveau avec la même personne change le niveau. Le membre est prévenu (cloche) ; on ne se partage rien à soi-même."""
+        self._docs._enter(ctx, "share.add", doctype, name)
+        if not isinstance(write, bool):
+            raise ValidationFailed("write : vrai ou faux", code="invalid_share")
+        self._shareable(ctx, doctype)
+        async with self._docs._query(ctx) as q:  # les droits d'abord : on ne sonde pas l'annuaire pour qui ne peut pas partager
+            compiled, doc = await self._document(ctx, q, doctype, name)
+            if not await self._may_share(ctx, q, compiled, doc):
+                raise PermissionDenied()
+        who = await self._assignee(ctx, member)
+        if who == ctx.owner_id:
+            raise ValidationFailed("Inutile de partager un document avec soi-même", code="share_self")
+        gone = NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+        async with self._docs._query(ctx) as q:
+            compiled, doc = await self._document(ctx, q, doctype, name)  # relu : il a pu disparaître pendant l'appel à l'annuaire
+            # Verrouillé (`FOR UPDATE`, PostgreSQL) : une suppression ou un renommage concurrent attend notre commit, puis emporte ou déplace
+            # le partage ; validé avant nous, il ne laisse rien à verrouiller.
+            if await q.get(doctype, name, scope=Scope.everything("read"), lock=True) is None:
+                raise gone
+            if not await self._may_share(ctx, q, compiled, doc):
+                raise PermissionDenied()
+            current = await q.shares(doctype, name)
+            if len(current) >= MAX_SHARES_PER_DOC and all(c["member"] != who for c in current):
+                raise ValidationFailed(f"{MAX_SHARES_PER_DOC} partages au plus par document", code="too_many_shares")
+            await q.put_share(doctype, name, who, write=write)
+            # SQLite n'a pas de verrou de ligne : relu APRÈS l'écriture (qui a pris le verrou de la base), le document existe encore, sinon
+            # rien n'est gardé. Un partage orphelin ouvrirait le PROCHAIN document de ce nom à ce membre.
+            if await q.get(doctype, name, scope=Scope.everything("read")) is None:
+                raise gone
+        level = "en écriture" if write else "en lecture"
+        await self._notifier.notify(
+            ctx.tenant_id, [who], title=f"{await self._author(ctx)} a partagé avec vous {self._label(doctype)} {name} ({level})", message=None,
+            link=self._link(doctype, name), kind="SHARE",
+        )
+        return {"member": who, "write": write}
+
+    async def unshare(self, ctx: RequestContext, doctype: str, name: str, *, member: Any) -> None:
+        """Retire un partage. Qui peut ÉCRIRE le document retire n'importe lequel ; le membre peut toujours renoncer au sien."""
+        self._docs._enter(ctx, "share.remove", doctype, name)
+        who = _text(member, "member", limit=255) or ""
+        self._shareable(ctx, doctype)
+        async with self._docs._query(ctx) as q:
+            compiled, doc = await self._document(ctx, q, doctype, name)
+            if who != ctx.owner_id and not await self._may_share(ctx, q, compiled, doc):
+                raise PermissionDenied()
+            await q.remove_share(doctype, name, who)
+
+    async def shared_with_me(self, ctx: RequestContext, *, limit: Any = 100) -> dict[str, Any]:
+        """« Partagés avec moi » : les documents qu'on a partagés avec l'appelant, les plus récents d'abord, avec leur titre. Un type qui n'est
+        plus chargé est omis (ses documents ne s'ouvriraient pas)."""
+        self._docs._enter(ctx, "share.mine")
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_SHARED_WITH_ME:
+            raise ValidationFailed(f"limit doit être entre 1 et {MAX_SHARED_WITH_ME}")
+        async with self._docs._query(ctx) as q:
+            found = await q.shared_with(ctx.owner_id, limit=limit)
+        items = []
+        for row in found:
+            if not self._docs._registry.has(row["doctype"]):
+                continue
+            definition = self._docs._registry.get(row["doctype"]).definition
+            title = row["data"].get(definition.title_field) if definition.title_field else None
+            items.append({"doctype": row["doctype"], "label": definition.label or row["doctype"], "name": row["name"], "title": title if isinstance(title, str) else None,
+                          "write": row["write"], "owner": row["owner"], "creation": row["creation"]})
+        return {"items": items}
+
     # ── Prévenir ──────────────────────────────────────────────
     def _label(self, doctype: str) -> str:
         return self._docs._doctype(doctype).definition.label or doctype
@@ -400,7 +502,7 @@ class CollaborationService:
             writer = False
             try:
                 compiled, doc = await self._document(ctx, q, found["doctype"], found["docname"])
-                writer = self._can_write(ctx, compiled, doc)
+                writer = await self._can_write(ctx, q, compiled, doc)
             except NotFound:
                 pass  # le document n'est pas lisible par l'appelant : il ne reste que ses droits d'assigné
             me = ctx.owner_id
@@ -504,7 +606,7 @@ class CollaborationService:
         self._docs._enter(ctx, "collab.attach", doctype, name)
         async with self._docs._query(ctx) as q:
             compiled, doc = await self._document(ctx, q, doctype, name)
-            if not self._can_write(ctx, compiled, doc):
+            if not await self._can_write(ctx, q, compiled, doc):
                 raise PermissionDenied()
             if len(await q.attachments(doctype, name)) >= MAX_ATTACHMENTS_PER_DOC:
                 raise ValidationFailed(f"{MAX_ATTACHMENTS_PER_DOC} pièces jointes au plus par document", code="too_many_attachments")
@@ -519,7 +621,7 @@ class CollaborationService:
             if found is None:
                 raise NotFound("attachment_not_found", "pièce jointe introuvable")
             compiled, doc = await self._document(ctx, q, found["doctype"], found["docname"])
-            if found["owner"] != ctx.owner_id and not self._can_write(ctx, compiled, doc):
+            if found["owner"] != ctx.owner_id and not await self._can_write(ctx, q, compiled, doc):
                 raise PermissionDenied()
             await q.delete_attachment(aid)
         await self._files.release(ctx, {found["file_id"]: (found["doctype"], ATTACHMENT_FIELD)})  # le fichier ne sert plus : on le libère
