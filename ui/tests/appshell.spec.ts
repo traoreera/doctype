@@ -9,6 +9,8 @@ import { NAV_KEY, readNav } from '@/lib/navstate'
 import { SERVICES } from '@/lib/services'
 import type { Workspace } from '@/lib/types'
 import { useTheme } from '@/stores/theme'
+import ToastEventBus from 'primevue/toasteventbus'
+import { EXTENSIONS, ExtensionHost } from '@/extensions/host'
 
 const WORKSPACES: Workspace[] = [
   {
@@ -51,7 +53,7 @@ beforeEach(() => {
   )
 })
 
-async function shell(start = '/', content = '<p>contenu</p>') {
+async function shell(start = '/', content = '<p>contenu</p>', extensions?: ExtensionHost) {
   const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/=+$/, '')
   sessionStorage.setItem('xdt.desk.token', `${b64({ sub: 'alice.martin', user: { email: 'alice.martin@example.com' }, tenant_id: 'acme', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`)
   const router = createRouter({
@@ -86,6 +88,7 @@ async function shell(start = '/', content = '<p>contenu</p>') {
             workspaces: async () => WORKSPACES,
           },
         },
+        ...(extensions ? { [EXTENSIONS as symbol]: extensions } : {}),
       },
     },
   })
@@ -347,5 +350,24 @@ describe('tiroir : clavier et lecteur d’écran (C3.2)', () => {
     const s = await shell()
     expect(sidebar(s).attributes('inert')).toBeUndefined()
     expect(sidebar(s).attributes('role')).toBeUndefined()
+  })
+})
+
+describe('une extension écartée au démarrage', () => {
+  it('la notification dit laquelle ET pourquoi (sans ouvrir la console), une seule fois', async () => {
+    const seen: string[] = []
+    const on = (m: { summary: string }) => seen.push(m.summary)
+    ToastEventBus.on('add', on as never)
+    try {
+      const host = new ExtensionHost()
+      host.failures.push({ name: 'biblio', reason: 'Failed to fetch dynamically imported module: /app/x/ext/biblio/index.js' })
+      host.failures.push({ name: 'long', reason: 'x'.repeat(400) })
+      await shell('/', '<p>contenu</p>', host)
+      expect(seen).toHaveLength(1)
+      expect(seen[0]).toContain('biblio (Failed to fetch dynamically imported module: /app/x/ext/biblio/index.js)')
+      expect(seen[0]).toContain(`long (${'x'.repeat(159)}…)`) // une raison bornée : une pile entière n'a rien à faire dans une notification
+    } finally {
+      ToastEventBus.off('add', on as never)
+    }
   })
 })

@@ -55,8 +55,10 @@ function onLogoError(): void {
 watch(() => prefs.logoUrl, () => (logoFailed.value = false))
 
 onMounted(() => {
-  // Une extension écartée au démarrage : une seule notification, le Desk fonctionne sans elle (le détail est dans la console).
-  if (extensions.failures.length) notify.warn(t.extensions.failed(extensions.failures.map((f) => f.name).join(', ')))
+  // Une extension écartée au démarrage : une seule notification, le Desk fonctionne sans elle. Elle dit POURQUOI (module introuvable, contrat,
+  // `setup` qui lève, délai dépassé) : sans la raison, l'opérateur doit ouvrir la console pour savoir quoi corriger (la pile y reste).
+  const why = (reason: string) => (reason.length > 160 ? `${reason.slice(0, 159)}…` : reason)
+  if (extensions.failures.length) notify.warn(t.extensions.failed(extensions.failures.map((f) => `${f.name} (${why(f.reason)})`).join(', ')))
 })
 onMounted(async () => {
   recents.load()
