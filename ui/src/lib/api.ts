@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Filters, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, BulkResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -230,6 +230,25 @@ export class ApiClient {
   /** Assigne plusieurs documents à la même personne. */
   assignMany(doctype: string, names: readonly string[], body: { assignee: string; description?: string | null; due_date?: string | null }): Promise<BulkResult> {
     return this.call('POST', `/assign-many/${encodeURIComponent(doctype)}`, { body: { names, ...body } })
+  }
+
+  /** Avec qui ce document est partagé (la liste complète pour qui peut l'écrire, son propre partage sinon). */
+  shares(doctype: string, name: string): Promise<SharesResult> {
+    return this.call('GET', `/shares/${this.doc(doctype, name)}`)
+  }
+
+  /** Partager avec un membre (e-mail ou identifiant), en lecture ou en écriture. Partager à nouveau change le niveau. */
+  share(doctype: string, name: string, member: string, write: boolean): Promise<{ member: string; write: boolean }> {
+    return this.call('POST', `/shares/${this.doc(doctype, name)}`, { body: { member, write } })
+  }
+
+  async unshare(doctype: string, name: string, member: string): Promise<void> {
+    await this.call('DELETE', `/shares/${this.doc(doctype, name)}`, { params: new URLSearchParams({ member }) })
+  }
+
+  /** Les documents qu'on a partagés avec moi, les plus récents d'abord. */
+  async sharedWithMe(): Promise<SharedDoc[]> {
+    return (await this.call<{ items: SharedDoc[] }>('GET', '/shared-with-me')).items
   }
 
   /** Les étiquettes d'un document (il faut le lire) ; `can_tag` : l'appelant peut-il en poser ou en retirer (l'écrire). */

@@ -39,7 +39,12 @@ class FileService:
         compiled, field = self._file_field(doctype, fieldname)
         definition = compiled.definition
         if not (scope_for(definition, ctx, "create").granted or scope_for(definition, ctx, "write").granted):
-            raise PermissionDenied()
+            # Sans rôle, un document de ce type partagé avec lui en écriture : il peut en remplir les champs fichier.
+            write = scope_for(definition, ctx, "write")
+            async with self._docs._query(ctx) as q:
+                level = await q.share_level(definition.name, ctx.user_id) if write.share and ctx.user_id is not None else None
+            if level != "write":
+                raise PermissionDenied()
         limit = field.max_mb or F.DEFAULT_MAX_MB
         mime, name = F.check_upload(kind=field.fieldtype, content=content, filename=filename or "", declared_type=content_type, limit_mb=limit)
         namespace = _namespace(ctx.tenant_id, definition.name)
@@ -127,14 +132,14 @@ class FileService:
                 scope = scope_for(self._docs._doctype(att["doctype"]).definition, ctx, "read")
             except NotFound:
                 return False
-            return scope.granted and await self._docs.read_document(ctx, q, att["doctype"], att["docname"], scope) is not None
+            return (scope.granted or scope.share) and await self._docs.read_document(ctx, q, att["doctype"], att["docname"], scope) is not None
         if doctype not in scopes:
             try:
                 scopes[doctype] = scope_for(self._docs._doctype(doctype).definition, ctx, "read")
             except NotFound:
                 scopes[doctype] = Scope("read")  # le type a disparu : plus personne ne lit ce fichier (sauf celui qui l'a déposé, plus haut)
         scope = scopes[doctype]
-        return scope.granted and await q.file_cited(doctype, row["fieldname"], row["id"], scope=scope)
+        return (scope.granted or scope.share) and await q.file_cited(doctype, row["fieldname"], row["id"], scope=scope)  # un partage ouvre ses fichiers
 
     # ── Servir ────────────────────────────────────────────────
     async def serve(self, tenant: str, file_id: str, exp: int, sig: str) -> tuple[bytes, str, str, bool]:

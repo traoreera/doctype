@@ -312,6 +312,7 @@ const items = computed(() => [
         <i class="pi pi-check-square" />{{ t.collab.tasks.title }}
         <span v-if="tasks.openCount" class="nav-badge" data-testid="tasks-count" :aria-label="`${tasks.openCount}`">{{ tasks.openCount }}</span>
       </RouterLink>
+      <RouterLink class="desk-link" :to="{ name: 'shared' }" data-testid="nav-shared"><i class="pi pi-share-alt" />{{ t.share.withMe }}</RouterLink>
       <h6>{{ t.workspace.spaces }}</h6>
       <div v-for="w in workspaces.items ?? []" :key="w.name" class="ws-item" :data-testid="`ws-${w.name}`">
         <div class="desk-link ws-row" :class="{ 'router-link-active': currentSpace === w.name }">

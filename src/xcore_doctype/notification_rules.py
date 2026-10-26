@@ -235,7 +235,10 @@ def make_rule_hook(documents: "DocumentService") -> Callable[["HookEvent"], Awai
         problems = rule_problems(registry, event.data)
         if not problems and not event.ctx.is_system:
             target = registry.get(event.data["document_type"]).definition
-            if scope_for(target, event.ctx, "read").level != "all":
+            read = scope_for(target, event.ctx, "read")
+            async with documents._query(event.ctx) as q:  # une permission utilisateur le borne : il ne lit pas TOUT (`Query.restricted`)
+                restricted = await q.restricted(read)
+            if read.level != "all" or restricted:
                 problems.append({
                     "field": "document_type", "type": "invalid_rule",
                     "msg": "Il faut pouvoir lire TOUS les documents de ce type pour en diffuser le contenu",

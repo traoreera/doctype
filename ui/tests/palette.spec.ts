@@ -32,6 +32,7 @@ async function palette() {
       { path: '/', name: 'home', component: { render: () => null } },
       { path: '/w/:name', name: 'workspace', component: { render: () => null } },
       { path: '/tasks', name: 'tasks', component: { render: () => null } },
+      { path: '/shared', name: 'shared', component: { render: () => null } },
       { path: '/app/:doctype', name: 'list', component: { render: () => null } },
       { path: '/app/:doctype/new', name: 'new', component: { render: () => null } },
       { path: '/app/:doctype/:name', name: 'form', component: { render: () => null } },

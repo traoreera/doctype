@@ -648,6 +648,32 @@ export interface BulkItem {
   details?: { field?: string; msg?: string }[]
 }
 
+/** Un partage d'un document avec un membre (`write` : il peut aussi le modifier). */
+export interface ShareItem {
+  member: string
+  write: boolean
+  owner: string
+  creation: string
+}
+
+export interface SharesResult {
+  items: ShareItem[]
+  /** L'appelant peut-il partager ou retirer un partage (il peut ÉCRIRE le document) ? Sinon il ne voit que le sien. */
+  can_share: boolean
+  me: string
+}
+
+/** Un document partagé avec moi (« Partagés avec moi »). */
+export interface SharedDoc {
+  doctype: string
+  label: string
+  name: string
+  title: string | null
+  write: boolean
+  owner: string
+  creation: string
+}
+
 /** Une étiquette en usage et son nombre de documents (lisibles, dans les filtres demandés). */
 export interface TagCount {
   tag: string

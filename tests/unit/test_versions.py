@@ -209,10 +209,12 @@ class TestReading:
             await hist(svc, doc, **kw)
 
     async def test_it_needs_the_right_to_read(self, svc):
+        """L'historique d'UN document nommé : un partage pourrait l'ouvrir sans rôle (permissions.py) ; sans lecture ni partage, il est
+        « introuvable », comme un document qui n'existe pas."""
         doc = await create(svc)
-        with pytest.raises(PermissionDenied):
+        with pytest.raises(NotFound):
             await hist(svc, doc, ctx=make_ctx(permissions=["sales:customer:write"]))
-        with pytest.raises(PermissionDenied):
+        with pytest.raises(NotFound):
             await hist(svc, doc, ctx=make_ctx(permissions=[]))
 
     async def test_other_tenants_and_missing_documents_are_not_found(self, svc):

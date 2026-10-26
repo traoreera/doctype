@@ -55,8 +55,8 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 |---|---|
 | Droits par grant, `if_owner`, refus par défaut | ✔ |
 | Soumettre / annuler distincts de écrire | ✔ (A) |
-| Permissions utilisateur (restreindre à certaines valeurs d'un lien) | K |
-| Partage d'un document avec un utilisateur | K |
+| Permissions utilisateur (restreindre à certaines valeurs d'un lien) | ✔ (26 oct., `doc/programme.md` §2.1 : documents `User Permission`, SQL et Python contre l'oracle de la matrice ; pas les liens des lignes de table ni les DynamicLink) |
+| Partage d'un document avec un utilisateur | ✔ (26 oct., §2.1 : lecture ou écriture, même sans rôle, « Partagés avec moi », relecture adversariale corrigée) |
 | Écran du gestionnaire de permissions | ✔ (plugin `iam` : rôles, permissions, membres) |
 | Droits d'export, d'import, d'impression, d'e-mail par DocType | K |
 
@@ -163,12 +163,12 @@ que « DocType virtuel » (bonus). Dénominateur : **87**.
 
 | État | éléments | part de 87 |
 |---|---:|---:|
-| ✔ fait en entier | 60 | 69 % |
+| ✔ fait en entier | 62 | 71 % |
 | ◐ fait en partie | 8 | 9 % |
-| non fait | 19 | 22 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **64** | **74 %** |
+| non fait | 17 | 20 % |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **66** | **76 %** |
 
-**26 octobre** : les étiquettes passent à ✔ (programme groupe 1, élément 3), après relecture adversariale. Le 23 : 59 ✔, 8 ◐, 63 lignes, 72 %.
+**26 octobre** : les étiquettes passent à ✔ (programme groupe 1, élément 3), puis les permissions utilisateur et le partage (groupe 2, élément 4), chacun après relecture adversariale. Le 23 : 59 ✔, 8 ◐, 63 lignes, 72 %.
 
 **23 octobre (consolidation, phase C4 de `.plan/plan.md`)** : trois lignes ◐ passent à ✔ (notifications par DocType et e-mail, propriétés
 modifiées par organisation appliquées par le serveur, gestionnaire de fichiers), chacune après une relecture adversariale dont les constats
@@ -222,8 +222,8 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Fournisseur OAuth 2 | non fait |
 | Outils de diagnostic (Recorder, inspecteur de permissions) | non fait |
 
-**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 67 faites, 18 partielles, 34 non faites, soit **56 % en entier, 64 % avec les
-demi-lignes** (26 octobre : étiquettes ; 24 octobre : filtres d'un Lien D29 et onglets de fiche, 66, 18, 35, 55 % et 63 % ; le 23 : 64, 18, 37, 54 % et 61 % ; le 22 : 60, 21, 38, 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
+**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 69 faites, 18 partielles, 32 non faites, soit **58 % en entier, 66 % avec les
+demi-lignes** (26 octobre : étiquettes, permissions utilisateur, partage ; 24 octobre : filtres d'un Lien D29 et onglets de fiche, 66, 18, 35, 55 % et 63 % ; le 23 : 64, 18, 37, 54 % et 61 % ; le 22 : 60, 21, 38, 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
 
 ## 3. Ce qu'on retient pour 70 %
 

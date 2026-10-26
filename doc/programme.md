@@ -96,10 +96,51 @@ porter les trois formes, la liste qu'il ouvre les applique), groupe « Étiquett
 
 | # | Élément | Décision à prendre | Ligne |
 |---|---|---|---|
-| 4 | **Permissions utilisateur + Partage d'un document** | Le cœur, et les deux vont ensemble : ce sont **deux clauses de plus dans `Scope`** (`permissions.py`), donc dans les DEUX interprètes qui doivent rester équivalents (SQL dans `Query`, Python dans `Scope.allows`) et dans l'oracle indépendant de `test_permissions_matrix.py`. À décider : où vivent les restrictions (table par utilisateur × DocType × champ × valeur), comment elles se composent avec `if_owner`, et le coût SQL (une jointure de plus par requête, ou un `IN` ?). | 2 des 20 |
+| 4 | ~~**Permissions utilisateur + Partage d'un document**~~ **FAIT le 26 oct. (voir §2.1)** | tranché le 26 oct. : comme Frappe pour les restrictions, « qui écrit partage » pour le partage | 2 des 20 → faites |
 | 5 | **Import CSV** | Le même validateur que l'API (jamais un chemin d'écriture parallèle : droits, hooks, liens, unicité), par lots bornés, avec un rapport ligne à ligne. Transaction par ligne ou par lot ? | 1 des 20 (reste de E) |
 | 6 | **Clés d'API** | **Dépend d'xauth**, qui est hors du dépôt : la clé est-elle un jeton xauth à longue vie (c'est xauth qui la crée et la révoque) ou une clé propre au moteur ? Je ne touche pas à `app/auth` sans accord. | 1 des 20 |
 | 7 | **Corbeille** (déplacée ici, voir §0) | Suppression douce : colonne d'état, exclusion dans `Query._scope()` (le seul goulet), restauration, purge, et les réponses aux questions du §0 (liens, unicité, historique). | 1 des 20 |
+
+### 2.1 Permissions utilisateur et partage (fait le 26 octobre 2026)
+
+Décisions de l'utilisateur, 26 octobre : « comme Frappe » pour les restrictions, « qui écrit partage » pour le partage, clés d'API par un
+jeton xauth longue vie (à faire là où le code d'xauth est disponible), permissions et partage d'abord.
+
+```
+périmètre(utilisateur, action) = (rôles ET permissions utilisateur) OU documents partagés avec lui
+```
+
+- **Deux clauses de plus dans `Scope`** (`permissions.py`), et les deux interprètes qui restent équivalents : le SQL de `Query`
+  (`_restriction_conds`, `_shared_cond`, sous-requêtes, aucun cache : une restriction ajoutée vaut à la requête suivante) et le Python de
+  `Scope.allows`, qui juge une valeur pas encore en base avec les faits chargés par l'appelant (`Facts`, `Query.permission_facts`) et
+  REFUSE de répondre sans eux. L'oracle indépendant de `test_permissions_matrix.py` les compare sur 4 variantes × 42 cas (rôles seuls,
+  restrictions, partages, les deux), sur SQLite et PostgreSQL.
+- **Une permission utilisateur** est un document `User Permission` (plugin `system`, espace Administration ; grants `system:user_permission:*`) :
+  membre (e-mail, traduit en identifiant par l'annuaire : un hook), type, valeur permise, et `applies_to` facultatif. Elle RESSERRE ce que les
+  rôles donnent (`if_owner` compris) sur le type lui-même (par le nom) et sur tout champ Lien de premier niveau vers lui ; un lien vide passe ;
+  plusieurs lignes = plusieurs valeurs permises. Elle vaut à la lecture (liste, recherche, agrégats, contrôle des liens : on ne lie pas ce
+  qu'on ne voit pas) comme à l'écriture (on ne crée ni ne déplace hors de ce qu'on voit). Un hook refuse un type inconnu ou non stocké, une
+  valeur qui n'existe pas, un `applies_to` qui ne cite pas le type.
+- **Un partage** (`xdt_share`) ouvre UN document à un membre, en lecture ou en lecture + écriture, **même sans rôle sur le type et malgré
+  ses restrictions** ; jamais la suppression, la soumission ni l'annulation. Seul qui peut ÉCRIRE le document partage (et retire) ; le membre
+  peut renoncer au sien ; il est prévenu (cloche). Il suit le renommage, disparaît avec le document.
+- **Conséquence voulue sur les réponses** : lire, modifier, l'historique ou ce qui entoure UN document nommé ne répond plus 403 faute de
+  rôle (un partage pourrait l'ouvrir) : sans partage, c'est « introuvable » (404), comme un nom qui n'existe pas. La liste, la création, la
+  suppression gardent le 403. Sans rôle mais avec un partage, `/meta` donne de quoi ouvrir la fiche (`read`/`write` « restricted ») et la page
+  « Partagés avec moi » en est l'entrée (la liste du type reste fermée).
+- **Relecture adversariale** (cinq trous reproduits, tous corrigés avec leur test, chacun vérifié par mutation) : un partage écrit pendant
+  une suppression survivait et ouvrait le PROCHAIN document de ce nom (verrou + relecture après l'écriture, comme les étiquettes) ; un
+  utilisateur borné par une permission passait pour « tout lire » (`level == "all"`) et pouvait écrire une règle de notification diffusant
+  ce qu'il ne voit pas, ou poser les règles de formulaire de l'organisation (`Query.restricted` dans les trois portes, et `/meta` dit
+  « restricted ») ; il créait un document du type restreint sous un nom interdit et sondait les noms cachés par le 409 (le nom CHOISI est
+  jugé avant l'insertion) ; un annuaire indisponible gardait une adresse comme identité, qui ne restreignait personne (refusée) ; un partage
+  en écriture laissait renommer (ce qui réécrit les documents qui citent) et repartager de proche en proche (il faut un RÔLE d'écriture pour
+  renommer, partager ou retirer le partage d'un autre). Les fichiers d'un document partagé s'ouvrent à son membre.
+- **Pas couvert** (choix ou limite) : les liens dans les lignes de table enfant et les `DynamicLink` ne sont pas restreints ; un DocType
+  virtuel, unique ou enfant n'a ni restrictions ni partages ; les faits d'une écriture sont lus juste avant elle (une restriction ajoutée
+  entre les deux ne vaut que pour la suivante) ; le grant `system:user_permission:write` est un droit d'administrateur (il retire aussi ses
+  propres restrictions, et la vérification de `for_value` dit si un nom existe) ; chaque lecture paie deux sous-requêtes par champ Lien,
+  sans index sur `data->>'user'` (sans effet mesurable à l'échelle d'aujourd'hui).
 
 ## 3. Groupe 3 — l'étude avant le code
 

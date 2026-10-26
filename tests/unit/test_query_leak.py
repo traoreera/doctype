@@ -20,12 +20,12 @@ from sqlalchemy import event, text
 from tests.conftest import make_ctx
 from xcore_doctype.aggregation import Group, Metric
 from xcore_doctype.db.tables import (
-    ASSIGNMENT_TABLE, ATTACHMENT_TABLE, COMMENT_TABLE, DOCUMENT_TABLE, FILE_TABLE, NAMING_TABLE, OVERRIDE_TABLE, SAVED_VIEW_TABLE, TAG_TABLE, UNIQUE_TABLE,
+    ASSIGNMENT_TABLE, ATTACHMENT_TABLE, COMMENT_TABLE, DOCUMENT_TABLE, FILE_TABLE, NAMING_TABLE, OVERRIDE_TABLE, SAVED_VIEW_TABLE, SHARE_TABLE, TAG_TABLE, UNIQUE_TABLE,
     VERSION_TABLE,
 )
 from xcore_doctype.errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, VersionConflict
 from xcore_doctype.builder import Filter
-from xcore_doctype.permissions import Scope
+from xcore_doctype.permissions import USER_PERMISSION, Facts, Scope
 from xcore_doctype.query import FileCiters, Query, UniqueViolation
 
 A, B = "acme", "globex"
@@ -42,7 +42,7 @@ class Env:
         event.listen(db.engine.sync_engine, "before_cursor_execute", self._capture)
 
     def _capture(self, conn, cursor, statement, parameters, context, executemany):
-        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE, UNIQUE_TABLE, FILE_TABLE, TAG_TABLE)):
+        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE, UNIQUE_TABLE, FILE_TABLE, TAG_TABLE, SHARE_TABLE)):
             self.captured.append((statement, parameters))
 
     def close(self):
@@ -88,6 +88,9 @@ class Env:
             uniques = await s.execute(
                 text(f"SELECT doctype, fieldname, value, docname FROM {UNIQUE_TABLE} WHERE tenant_id = :t ORDER BY doctype, fieldname, value"), {"t": tenant}
             )
+            shares = await s.execute(
+                text(f"SELECT doctype, docname, member, write, owner FROM {SHARE_TABLE} WHERE tenant_id = :t ORDER BY doctype, docname, member"), {"t": tenant}
+            )
             tags = await s.execute(
                 text(f"SELECT doctype, docname, folded, tag, owner FROM {TAG_TABLE} WHERE tenant_id = :t ORDER BY doctype, docname, folded"), {"t": tenant}
             )
@@ -96,6 +99,7 @@ class Env:
                 + collab
                 + [tuple(x) for x in uniques.all()]
                 + [tuple(x) for x in tags.all()]
+                + [tuple(x) for x in shares.all()]
                 + [tuple(x) for x in counters.all()]
                 + [tuple(x) for x in history.all()]
                 + [tuple(x) for x in views.all()]
@@ -126,6 +130,10 @@ class Env:
                 self.ids[tenant] = {"comment": comment["id"], "assignment": task["id"], "attachment": att["id"], "file": file_id}
                 # Étiquettes : « Urgent » sur « shared » chez les deux ; A seul a « Secret » (sur « shared » et « needle ») et l'écrit « URGENT » ailleurs.
                 await q.add_tag("Customer", "shared", "Urgent")
+                # Partages : « shared » ouvert à « friend » chez les deux (en écriture chez A seulement) ; A seul ouvre « needle ».
+                await q.put_share("Customer", "shared", "friend", write=tenant == A)
+                if tenant == A:
+                    await q.put_share("Customer", "needle", "friend", write=True)
                 if tenant == A:
                     await q.add_tag("Customer", "shared", "Secret")
                     await q.add_tag("Customer", "needle", "Secret")
@@ -139,6 +147,8 @@ class Env:
             # Les valeurs uniques de A : B peut porter les mêmes sans conflit, et ne les voit ni ne les libère.
             await q.sync_unique("Customer", "shared", {"code": "X1"})
             await q.sync_unique("Customer", "only-a", {"code": "A2"})
+            # Une permission utilisateur chez A pour un identifiant qui existe aussi chez B : elle ne doit jamais restreindre B.
+            await q.insert(USER_PERMISSION, "up-a", {"user": "friend", "allow": "Customer", "for_value": "only-a"})
             for _ in range(3):  # A en est à 3 : si B partageait ce compteur, son premier numéro serait 4
                 await q.next_number("Customer", "C-{#}")
 
@@ -189,6 +199,13 @@ async def scenario_list(env: Env):
         docs, _ = await q.list(defn, filters={"_tag": Filter("!=", "Secret")}, **page)
         assert [d.name for d in docs] == ["only-b", "shared"]
         docs, _ = await q.list(defn, filters={"_tag": Filter("in", ["Secret", "Urgent"])}, **page)
+        assert [d.name for d in docs] == ["shared"]
+        # Restrictions et partages en sous-requêtes : la restriction de « friend » posée chez A (« only-a ») ne restreint rien chez B,
+        # et ses partages chez A n'ouvrent rien ; le contrôle du SQL émis (plus bas) vérifie que ces sous-requêtes ne lient que B.
+        docs, total = await q.list(defn, filters={}, **{**page, "scope": _friend_scope()})
+        assert [d.name for d in docs] == ["only-b", "shared"] and total == 2
+        none = Scope("read", (), doctype="Customer", user="friend", restrict=(("Customer", None),), share=True)  # aucun rôle : les partages seuls
+        docs, _ = await q.list(defn, filters={}, **{**page, "scope": none})
         assert [d.name for d in docs] == ["shared"]
 
 
@@ -712,6 +729,56 @@ async def scenario_has_tags(env: Env):
         assert await q.has_tags(env.customer.definition, scope=ALL) is False  # A en a trois, B plus aucune
 
 
+def _friend_scope(action="read"):
+    return Scope(action, unrestricted=True, doctype="Customer", user="friend", restrict=(("Customer", None),), share=action in ("read", "write"))
+
+
+async def scenario_permission_facts(env: Env):
+    """Les restrictions et partages de « friend » vus de B : ceux de B seulement. La restriction de A (« only-a ») et le partage en
+    écriture de A n'existent pas pour B."""
+    async with env.q(B) as q:
+        assert await q.permission_facts(_friend_scope("read"), "shared") == Facts({}, True)
+        assert await q.permission_facts(_friend_scope("write"), "shared") == Facts({}, False)  # chez B, le partage est en lecture
+        assert await q.permission_facts(_friend_scope("read"), "needle") == Facts({}, False)  # partagé chez A seulement
+
+
+async def scenario_shares(env: Env):
+    async with env.q(B) as q:
+        assert [(r["docname"], r["member"], r["write"]) for r in await q.shares("Customer", "shared")] == [("shared", "friend", False)]
+        assert await q.shares("Customer", "needle") == []
+        await q.put_share("Customer", "shared", "friend", write=True)  # change le niveau chez B, jamais chez A
+        await q.put_share("Customer", "only-b", "other", write=False)
+        assert [r["write"] for r in await q.shares("Customer", "shared")] == [True]
+
+
+async def scenario_restricted(env: Env):
+    """La permission utilisateur de « friend » posée chez A (« only-a ») ne le borne pas chez B."""
+    async with env.q(B) as q:
+        assert await q.restricted(_friend_scope()) is False
+        await q.insert(USER_PERMISSION, "up-b", {"user": "friend", "allow": "Customer", "for_value": "shared"})
+        assert await q.restricted(_friend_scope()) is True
+
+
+async def scenario_share_level(env: Env):
+    """Chez B, « friend » n'a que des partages en lecture sur Customer : le partage en écriture de A ne compte pas."""
+    async with env.q(B) as q:
+        assert await q.share_level("Customer", "friend") == "read"
+        assert await q.share_level("Customer", "nobody") is None
+
+
+async def scenario_remove_share(env: Env):
+    async with env.q(B) as q:
+        assert await q.remove_share("Customer", "needle", "friend") is False  # n'existe que chez A
+        assert await q.remove_share("Customer", "shared", "friend") is True
+
+
+async def scenario_shared_with(env: Env):
+    """« Partagés avec moi » pour « friend » chez B : le « shared » de B, pas les deux partages de A (même membre, même nom de document)."""
+    async with env.q(B) as q:
+        found = await q.shared_with("friend", limit=50)
+        assert [(r["name"], r["write"], r["data"]["customer_name"]) for r in found] == [("shared", False, f"{B}:shared")]
+
+
 async def scenario_people(env: Env):
     """Les identités proposées sont celles du tenant : « user-acme » n'est pas proposé à globex."""
     async with env.q(B) as q:
@@ -744,6 +811,13 @@ SCENARIOS = {
     "tag_spelling": scenario_tag_spelling,
     "tag_counts": scenario_tag_counts,
     "has_tags": scenario_has_tags,
+    "permission_facts": scenario_permission_facts,
+    "shares": scenario_shares,
+    "put_share": scenario_shares,
+    "remove_share": scenario_remove_share,
+    "share_level": scenario_share_level,
+    "restricted": scenario_restricted,
+    "shared_with": scenario_shared_with,
     "saved_views": scenario_saved_views,
     "get_saved_view": scenario_get_saved_view,
     "put_saved_view": scenario_put_saved_view,

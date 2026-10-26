@@ -1,0 +1,23 @@
+# Une permission utilisateur : « ce membre ne voit, de tel type, que telle valeur » (doc/programme.md §2.1). Elle RESSERRE ce que ses rôles
+# lui donnent : sur le type lui-même (les documents de ce nom) et sur tout document dont un champ Lien vers ce type vaut autre chose (un
+# lien vide passe). Plusieurs lignes pour un même membre et un même type = plusieurs valeurs permises. `applies_to` la borne à un seul type.
+# Le moteur les lit à chaque requête ; les hooks `doctype.user_permission*` (enregistrés par xcore-doctype) les gardent cohérentes.
+schema_version: 1
+name: User Permission
+label: Permission utilisateur
+module: system
+icon: lock
+fields:
+  - { fieldname: member, label: Membre, fieldtype: Text, required: true, in_list_view: true, description: "L'e-mail du membre (ou son identifiant)" }
+  - { fieldname: allow, label: Type de document, fieldtype: Text, required: true, in_list_view: true, description: "Ex. : Warehouse. Le nom du type, tel que l'affiche l'adresse de sa liste" }
+  - { fieldname: for_value, label: Valeur permise, fieldtype: Text, required: true, in_list_view: true, description: "Le nom d'un document de ce type" }
+  - { fieldname: applies_to, label: Seulement pour le type, fieldtype: Text, in_list_view: true, description: "Facultatif : la restriction ne vaut que pour ce type (le type lui-même, ou un type qui le cite)" }
+  # Rempli par le hook à partir de `member` : c'est lui que le moteur compare à l'utilisateur qui demande.
+  - { fieldname: user, label: Identifiant, fieldtype: Text, read_only_depends_on: "true" }
+layout:
+  - section: Restriction
+    columns: [[member, allow], [for_value, applies_to]]
+  - columns: [[user]]
+hooks:
+  validate: [doctype.user_permission]
+  before_save: [doctype.user_permission_member]

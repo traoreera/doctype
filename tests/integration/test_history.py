@@ -54,8 +54,8 @@ async def test_history_answers_like_the_document_does(host):
     manager = host.token(sub="boss")
     doc = await make(host, manager, customer_name="Secret")
 
-    # Sans droit de lecture : 403. Hors de son périmètre (`if_owner`) : 404, comme le document lui-même.
-    assert (await host.http("GET", f"/history/Customer/{doc['name']}", token=host.token(sub="x", permissions=[]))).status_code == 403
+    # Sans droit de lecture, ou hors de son périmètre (`if_owner`) : 404, comme le document lui-même (un partage pourrait l'ouvrir).
+    assert (await host.http("GET", f"/history/Customer/{doc['name']}", token=host.token(sub="x", permissions=[]))).status_code == 404
     mine = host.token(sub="alice", permissions=["sales:customer:own"])
     assert (await host.http("GET", f"/history/Customer/{doc['name']}", token=mine)).status_code == 404
     assert (await host.http("GET", f"/doc/Customer/{doc['name']}", token=mine)).status_code == 404
