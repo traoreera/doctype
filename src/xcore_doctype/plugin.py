@@ -607,6 +607,13 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.tags.counts", op)
 
+    @action("doc.tags.used")
+    async def doc_tags_used(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.tags_used(ctx, _need(payload, "doctype"))
+
+        return await self._run("doc.tags.used", op)
+
     @action("doc.tags.many")
     async def doc_tags_many(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:

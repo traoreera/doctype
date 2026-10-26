@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { t } from '@/i18n'
-import { withoutTag } from '@/lib/tags'
+import { sameTag, withoutTag } from '@/lib/tags'
 import { useServices } from '@/lib/services'
 import type { Filters, TagCount } from '@/lib/types'
 
@@ -32,6 +32,7 @@ watch(
   { immediate: true },
 )
 const shown = computed(() => counts.value.slice(0, LIMIT))
+const isActive = (tag: string) => props.active !== null && sameTag(props.active, tag)
 </script>
 
 <template>
@@ -39,7 +40,7 @@ const shown = computed(() => counts.value.slice(0, LIMIT))
     <h3>{{ t.tags.title }}</h3>
     <ul>
       <li v-for="c in shown" :key="c.tag">
-        <button type="button" :class="{ on: active === c.tag }" :aria-pressed="active === c.tag" :data-testid="`sidebar-tag-${c.tag}`" @click="emit('pick', c.tag)">
+        <button type="button" :class="{ on: isActive(c.tag) }" :aria-pressed="isActive(c.tag)" :data-testid="`sidebar-tag-${c.tag}`" @click="emit('pick', c.tag)">
           <span class="name"><span class="pi pi-tag" aria-hidden="true" /> {{ c.tag }}</span>
           <span class="n">{{ c.count }}</span>
         </button>

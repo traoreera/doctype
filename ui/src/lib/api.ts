@@ -256,6 +256,11 @@ export class ApiClient {
     return (await this.call<{ items: TagCount[] }>('GET', `/tag-counts/${encodeURIComponent(doctype)}`, { params })).items
   }
 
+  /** Une étiquette existe-t-elle sur un document lisible de ce type ? (Sans elle, la liste n'a pas de groupe « Étiquettes ».) */
+  async tagsUsed(doctype: string): Promise<boolean> {
+    return (await this.call<{ used: boolean }>('GET', `/tags-used/${encodeURIComponent(doctype)}`)).used
+  }
+
   /** Étiqueter une sélection : chaque document est jugé seul. */
   tagMany(doctype: string, names: readonly string[], change: { add?: string[]; remove?: string[] }): Promise<BulkResult> {
     return this.call('POST', `/tag-many/${encodeURIComponent(doctype)}`, { body: { names, ...change } })

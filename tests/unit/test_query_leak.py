@@ -704,6 +704,14 @@ async def scenario_tag_counts(env: Env):
         assert await q.tag_counts(defn, filters={"_tag": "Urgent"}, scope=ALL, limit=20) == [{"tag": "Urgent", "count": 1}]
 
 
+async def scenario_has_tags(env: Env):
+    """Seul A a une étiquette sur « needle » : vu de B, un type où B n'a rien étiqueté n'en a aucune, quoi que A ait posé."""
+    async with env.q(B) as q:
+        assert await q.has_tags(env.customer.definition, scope=ALL) is True  # « Urgent » sur le « shared » de B
+        await q.remove_tag("Customer", "shared", "Urgent")
+        assert await q.has_tags(env.customer.definition, scope=ALL) is False  # A en a trois, B plus aucune
+
+
 async def scenario_people(env: Env):
     """Les identités proposées sont celles du tenant : « user-acme » n'est pas proposé à globex."""
     async with env.q(B) as q:
@@ -735,6 +743,7 @@ SCENARIOS = {
     "remove_tag": scenario_remove_tag,
     "tag_spelling": scenario_tag_spelling,
     "tag_counts": scenario_tag_counts,
+    "has_tags": scenario_has_tags,
     "saved_views": scenario_saved_views,
     "get_saved_view": scenario_get_saved_view,
     "put_saved_view": scenario_put_saved_view,

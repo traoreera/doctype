@@ -3406,6 +3406,8 @@ button.link-open {
   all: unset;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 24px; /* une étiquette d'un caractère reste une cible de 24 px, à côté du × (WCAG 2.5.8) */
   min-height: 24px;
   cursor: pointer;
   color: inherit;

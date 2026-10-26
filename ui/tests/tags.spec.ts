@@ -13,11 +13,12 @@ import BulkActions from '@/components/BulkActions.vue'
 import TagBar from '@/components/tags/TagBar.vue'
 import { rowsFromFilters } from '@/lib/filters'
 import { SERVICES } from '@/lib/services'
-import { normalizeTag, supportsTags, withoutTag } from '@/lib/tags'
+import { normalizeTag, parseTagFilter, supportsTags, tagFilterLabel, withoutTag } from '@/lib/tags'
 import type { SavedView } from '@/lib/types'
 import { listProps } from '@/router'
 import ListView from '@/views/ListView.vue'
 import { TASK, captureToasts, doc, mountWith, page, unmountAll } from './views-fixtures'
+import vectors from '../../tests/vectors/tag_cases.json'
 
 const toasts = captureToasts()
 beforeEach(() => localStorage.clear())
@@ -27,10 +28,18 @@ afterEach(() => {
 })
 
 describe('les règles d’un nom (lib/tags)', () => {
-  it('normalise comme le serveur et refuse ce qu’il refuserait', () => {
-    expect(normalizeTag('  Salon \t 2026  ')).toBe('Salon 2026')
-    expect(normalizeTag('É'.repeat(50))).toBe('É'.repeat(50))
-    for (const bad of ['', '   ', 'x'.repeat(51), 'a,b', 'a\u0000b', 'a\u007fb']) expect(normalizeTag(bad)).toBeNull()
+  // Les vecteurs du serveur (`tests/unit/test_tags.py` lit le même fichier) : un nom accepté ici l'est là-bas, et pareil écrit.
+  it.each(vectors.cases.map((c) => [c.why, c] as const))('%s', (_why, c) => {
+    expect(normalizeTag(c.input)).toBe(c.output)
+  })
+
+  it('le filtre `_tag` d’une vue ou d’un bloc : égalité, « sauf », « l’une de »', () => {
+    expect(parseTagFilter(' Urgent ')).toBe('Urgent')
+    expect(parseTagFilter(['=', 'Urgent'])).toBe('Urgent')
+    expect(parseTagFilter(['!=', 'Archivé'])).toEqual(['!=', 'Archivé'])
+    expect(parseTagFilter(['in', ['A', ' B ']])).toEqual(['in', ['A', 'B']])
+    for (const bad of [['in', []], ['in', ['a,b']], ['like', 'U'], ['!=', 3], 3, null]) expect(parseTagFilter(bad)).toBeNull()
+    expect([tagFilterLabel('Urgent'), tagFilterLabel(['!=', 'Archivé']), tagFilterLabel(['in', ['A', 'B']])]).toEqual(['Urgent', 'sauf Archivé', 'A ou B'])
   })
 
   it('un réglage ou un type virtuel ne porte pas d’étiquettes', () => {
@@ -44,7 +53,7 @@ describe('les règles d’un nom (lib/tags)', () => {
     const start = rowsFromFilters({ _tag: ' Urgent ', state: 'Fait' }, TASK.fields, () => 1)
     expect(start.tag).toBe('Urgent')
     expect(start.rows.map((r) => r.field)).toEqual(['state'])
-    expect(rowsFromFilters({ _tag: ['in', ['a']] }, TASK.fields, () => 1).tag).toBeNull() // la liste ne montre qu'une égalité
+    expect(rowsFromFilters({ _tag: ['in', ['a']] }, TASK.fields, () => 1).tag).toEqual(['in', ['a']])
     expect(rowsFromFilters({ _tag: 'a,b' }, TASK.fields, () => 1).tag).toBeNull()
     expect(withoutTag({ _tag: 'x', state: 'Fait' })).toEqual({ state: 'Fait' })
   })
@@ -104,6 +113,32 @@ describe('la barre d’étiquettes d’une fiche (TagBar)', () => {
     expect(w.find('[data-testid="tag-Client"]').exists()).toBe(true)
   })
 
+  it('retirer une étiquette garde le clavier : le focus passe à la suivante, puis au « + »', async () => {
+    const { w } = setup(true, ['A', 'B'])
+    await flushPromises()
+    await w.find('[data-testid="tag-remove-A"]').trigger('click')
+    await flushPromises()
+    expect(document.activeElement).toBe(w.find('[data-testid="tag-remove-B"]').element)
+  })
+
+  it('un changement à la fois : deux Entrée rapides ne partent pas ensemble', async () => {
+    const { w, api } = setup()
+    await flushPromises()
+    let release: () => void = () => {}
+    api.changeTags.mockImplementationOnce(() => new Promise((r) => (release = () => r(['Urgent', 'Un']))))
+    await w.find('[data-testid="tag-add"]').trigger('click')
+    await flushPromises()
+    const input = w.find('[data-testid="tag-input"]')
+    await input.setValue('Un')
+    await input.trigger('keydown', { key: 'Enter' })
+    await input.setValue('Deux')
+    await input.trigger('keydown', { key: 'Enter' })
+    expect(api.changeTags).toHaveBeenCalledTimes(1)
+    release()
+    await flushPromises()
+    expect(w.findAll('[data-testid^="tag-remove-"]').map((b) => b.attributes('data-tag'))).toEqual(['Urgent', 'Un'])
+  })
+
   it('un nom refusé est signalé sans appel au serveur', async () => {
     const { w, api } = setup()
     await flushPromises()
@@ -148,15 +183,14 @@ describe('la liste : filtre, pastilles, barre latérale', () => {
       ],
     })
     const list = vi.fn(async () => page([doc('t1', { title: 'Poser' }), doc('t2', { title: 'Peindre' })], 2))
-    const tagCounts = vi.fn(async (_d: string, q: { filters?: Record<string, unknown>; limit?: number }) =>
-      q.limit === 1 ? [{ tag: 'Urgent', count: 1 }] : [{ tag: 'Urgent', count: 1 }, { tag: 'Client', count: 2 }],
-    )
+    const tagCounts = vi.fn(async (_d: string, _q: { filters?: Record<string, unknown>; limit?: number }) => [{ tag: 'Urgent', count: 1 }, { tag: 'Client', count: 2 }])
+    const tagsUsed = vi.fn(async () => true)
     const tagsOf = vi.fn(async () => ({ t1: ['Urgent', 'Client'], t2: ['Client'] }))
     const aggregate = vi.fn(async () => ({ group: null, metrics: [], rows: [], truncated: false }))
     const services = {
       transport: {},
       config: { baseUrl: '', loginUrl: null },
-      api: { meta: async () => TASK, list, aggregate, tagCounts, tagsOf, listViews: vi.fn(async () => [] as SavedView[]), ...api },
+      api: { meta: async () => TASK, list, aggregate, tagCounts, tagsUsed, tagsOf, listViews: vi.fn(async () => [] as SavedView[]), ...api },
     }
     await real.push(path)
     await real.isReady()
@@ -194,9 +228,27 @@ describe('la liste : filtre, pastilles, barre latérale', () => {
     expect(lastFilters(list)).toEqual({ state: 'Fait' })
   })
 
+  it('un filtre « sauf » venu d’un bloc ou d’une vue est appliqué ET montré (pas perdu en route)', async () => {
+    const { w, list } = await open('/app/Task?filters=' + encodeURIComponent(JSON.stringify({ _tag: ['!=', 'Archivé'] })))
+    expect(lastFilters(list)).toEqual({ _tag: ['!=', 'Archivé'] })
+    expect(w.find('[data-testid="tag-filter"]').text()).toContain('sauf Archivé')
+    await w.find('[data-testid="sidebar-tag-Urgent"]').trigger('click') // une étiquette choisie remplace le filtre
+    await flushPromises()
+    expect(lastFilters(list)).toEqual({ _tag: 'Urgent' })
+  })
+
+  it('l’étiquette filtrée est en évidence quelle que soit la casse de l’adresse ; la cliquer retire le filtre', async () => {
+    const { w, list } = await open('/app/Task?filters=' + encodeURIComponent(JSON.stringify({ _tag: 'urgent' })))
+    expect(w.find('[data-testid="sidebar-tag-Urgent"]').classes()).toContain('on')
+    expect(w.find('[data-testid="row-tag-Urgent"]').attributes('aria-pressed')).toBe('true')
+    await w.find('[data-testid="sidebar-tag-Urgent"]').trigger('click')
+    await flushPromises()
+    expect(lastFilters(list)).toEqual({})
+  })
+
   it('un type sans étiquette en usage : ni pastilles demandées, ni groupe « Étiquettes »', async () => {
     const tagsOf = vi.fn(async () => ({}))
-    const { w } = await open('/app/Task', { tagCounts: vi.fn(async () => []), tagsOf })
+    const { w } = await open('/app/Task', { tagsUsed: vi.fn(async () => false), tagsOf })
     expect(tagsOf).not.toHaveBeenCalled()
     expect(w.find('[data-testid="sidebar-tags"]').exists()).toBe(false)
   })

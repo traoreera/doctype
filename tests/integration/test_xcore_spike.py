@@ -59,6 +59,7 @@ EXPECTED_ROUTES = sorted(
         ("POST", "/tags/{doctype}/{name}"),
         ("POST", "/tags-of/{doctype}"),
         ("GET", "/tag-counts/{doctype}"),
+        ("GET", "/tags-used/{doctype}"),
         ("POST", "/tag-many/{doctype}"),
         ("POST", "/attachments/{doctype}/{name}"),
         ("DELETE", "/attachments/{attachment_id}"),

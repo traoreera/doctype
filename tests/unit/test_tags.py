@@ -12,6 +12,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+from pathlib import Path
 
 import pytest
 
@@ -72,12 +74,33 @@ async def names(env, ctx=HANA, **filters):
 # ── Ce qu'est une étiquette ───────────────────────────────────
 
 
-def test_a_tag_is_a_short_line_of_text():
-    assert normalize_tag("  Salon \t 2026  ") == "Salon 2026"  # bords retirés, blancs intérieurs réduits
-    assert normalize_tag("É" * 50) == "É" * 50
-    for bad in ("", "   ", "x" * 51, "a,b", "a\x00b", "a\x7fb", 12, None, ["a"]):
+VECTORS = json.loads((Path(__file__).resolve().parent.parent / "vectors" / "tag_cases.json").read_text())["cases"]
+
+
+@pytest.mark.parametrize("case", VECTORS, ids=[c["why"] for c in VECTORS])
+def test_shared_vectors_with_the_desk(case):
+    """Les mêmes noms, acceptés ou refusés pareil, par le serveur et par le Desk (`ui/tests/tags.spec.ts`)."""
+    if case["output"] is None:
+        with pytest.raises(ValueError):
+            normalize_tag(case["input"])
+    else:
+        assert normalize_tag(case["input"]) == case["output"]
+
+
+def test_a_tag_is_a_text():
+    for bad in (12, None, ["a"]):
         with pytest.raises(ValueError):
             normalize_tag(bad)
+
+
+async def test_look_alike_tags_are_one_tag(env):
+    """« été » composé et décomposé sont la même étiquette (NFC) ; un invisible ne fabrique pas un sosie."""
+    await note(env, "n1")
+    await env.collab.tag(HANA, "Note", "n1", add=["\u00e9t\u00e9"])
+    assert (await env.collab.tag(HANA, "Note", "n1", add=["e\u0301t\u00e9"]))["tags"] == ["\u00e9t\u00e9"]
+    with pytest.raises(ValidationFailed):
+        await env.collab.tag(HANA, "Note", "n1", add=["\u00e9t\u00e9\u200b"])
+    assert await names(env, _tag="e\u0301t\u00e9") == ["n1"]
 
 
 async def test_a_request_is_checked_before_anything_is_written(env):
@@ -202,6 +225,74 @@ async def test_two_taggers_at_the_cap_never_make_twenty_one(env, db, monkeypatch
     assert len(await tags(env, "n1")) == MAX_TAGS_PER_DOC
 
 
+# ── Une pose qui croise une suppression ou un renommage ─────────
+
+
+def _pause(monkeypatch, method: str, *, lock_only: bool = False):
+    """Suspend la pose d'étiquette à l'appel de `Query.<method>` (le `get` VERROUILLÉ si `lock_only`) : `reached` dit qu'elle y est, `proceed` la relâche."""
+    reached, proceed = asyncio.Event(), asyncio.Event()
+    real = getattr(Query, method)
+
+    async def paused(self, *args, **kw):
+        if (not lock_only or kw.get("lock")) and not proceed.is_set():
+            reached.set()
+            await proceed.wait()
+        return await real(self, *args, **kw)
+
+    monkeypatch.setattr(Query, method, paused)
+    return reached, proceed
+
+
+async def _no_orphan(env, name: str, carriers: list[str]) -> None:
+    """Le nom repris par un nouveau document n'hérite d'aucune étiquette ; le filtre ne trouve que les documents qui la portent vraiment."""
+    await note(env, name)
+    assert await tags(env, name) == [] and await names(env, _tag="Fantôme") == carriers
+
+
+@pytest.mark.parametrize("where", ["before_lock", "after_lock"])
+async def test_a_tag_racing_a_deletion_never_outlives_the_document(env, db, monkeypatch, where):
+    """Avant le verrou : la suppression est validée d'abord, la pose ne trouve plus rien à verrouiller (introuvable). Après le verrou : sur
+    PostgreSQL la suppression attend notre commit puis emporte l'étiquette ; sur SQLite (pas de verrou de ligne) elle passe, et la pose,
+    relue après sa première écriture, est défaite. Jamais d'étiquette orpheline pour le prochain document du même nom."""
+    await note(env, "n1")
+    reached, proceed = _pause(monkeypatch, "get", lock_only=True) if where == "before_lock" else _pause(monkeypatch, "add_tag")
+    tagging = asyncio.create_task(env.collab.tag(HANA, "Note", "n1", add=["Fantôme"]))
+    deleting = None
+    try:
+        await asyncio.wait_for(reached.wait(), 5)
+        deleting = asyncio.create_task(env.docs.delete(HANA, "Note", "n1"))
+        await asyncio.sleep(0.3)  # PostgreSQL, après le verrou : la suppression attend ; ailleurs elle est validée
+    finally:
+        proceed.set()
+    outcome = await asyncio.gather(tagging, return_exceptions=True)
+    await deleting
+    if isinstance(outcome[0], BaseException):
+        assert isinstance(outcome[0], NotFound)
+    await _no_orphan(env, "n1", [])
+
+
+async def test_a_tag_racing_a_rename_follows_the_document_or_is_refused(env, db, monkeypatch):
+    await note(env, "old")
+    reached, proceed = _pause(monkeypatch, "add_tag")
+    tagging = asyncio.create_task(env.collab.tag(HANA, "Note", "old", add=["Fantôme"]))
+    renaming = None
+    try:
+        await asyncio.wait_for(reached.wait(), 5)
+        renaming = asyncio.create_task(env.docs.rename(HANA, "Note", "old", "moved"))
+        await asyncio.sleep(0.3)
+    finally:
+        proceed.set()
+    outcome = (await asyncio.gather(tagging, return_exceptions=True))[0]
+    await renaming
+    if isinstance(outcome, BaseException):  # SQLite : le renommage est passé avant, la pose est défaite
+        assert isinstance(outcome, NotFound) and await tags(env, "moved") == []
+        carriers = []
+    else:  # PostgreSQL : le renommage a attendu notre commit, puis a emporté l'étiquette avec le document
+        assert await tags(env, "moved") == ["Fantôme"]
+        carriers = ["moved"]
+    await _no_orphan(env, "old", carriers)
+
+
 # ── Le filtre `_tag` de la liste ───────────────────────────────
 
 
@@ -230,6 +321,9 @@ async def test_the_tag_filter_stays_inside_the_read_scope(env):
     assert await names(env, PAUL, _tag="Commun") == ["pauls"]
     assert await names(env, PAUL, _tag=["!=", "Commun"]) == []
     assert (await env.collab.tag_counts(PAUL, "Note"))["items"] == [{"tag": "Commun", "count": 1}]
+    await env.collab.tag(HANA, "Note", "pauls", remove=["Commun"])
+    assert (await env.collab.tags_used(PAUL, "Note"))["used"] is False  # celle de Hana ne compte pas pour lui
+    assert (await env.collab.tags_used(HANA, "Note"))["used"] is True
 
 
 # ── Les comptes (barre latérale, propositions) ─────────────────

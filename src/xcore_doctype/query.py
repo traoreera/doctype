@@ -1040,6 +1040,18 @@ class Query:
         )
         return [{"tag": r["tag"], "count": r["count"]} for r in (await self._session.execute(stmt)).mappings()]
 
+    async def has_tags(self, defn: DocTypeDef, *, scope: Scope) -> bool:
+        """Un document que l'appelant LIT porte-t-il au moins une étiquette ? (`EXISTS … LIMIT 1` : la liste le demande à chaque ouverture, le
+        compte complet de `tag_counts` n'y sert à rien.)"""
+        t, d = self._tags, self._t
+        stmt = (
+            select(t.c.docname)
+            .select_from(t.join(d, and_(d.c.tenant_id == t.c.tenant_id, d.c.doctype == t.c.doctype, d.c.name == t.c.docname)))
+            .where(self._cscope(t, t.c.doctype == defn.name), self._scope(d.c.doctype == defn.name, scope=scope))
+            .limit(1)
+        )
+        return (await self._session.execute(stmt)).first() is not None
+
     def _tag_cond(self, value: Any) -> Any:
         """Le filtre `_tag` (validé par `builder._tag_filter`) : `EXISTS` d'une étiquette du document, `NOT EXISTS` pour `!=`. La table est
         aliasée : `tag_counts` joint déjà `xdt_tag`, et la sous-requête doit se corréler au DOCUMENT, jamais à cette jointure."""

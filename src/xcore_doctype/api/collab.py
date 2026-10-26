@@ -153,6 +153,11 @@ def build_collab_router(collab: CollaborationService, settings: ContextSettings)
             raise HTTPException(status_code=422, detail={"code": "validation_failed", "msg": "filters n'est pas du JSON valide"}) from None
         return await _guard(collab.tag_counts(ctx, doctype, q=q, filters=parsed, limit=limit))
 
+    @router.get("/tags-used/{doctype}")
+    async def tags_used(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
+        """`{used: bool}` : une étiquette existe-t-elle sur un document lisible de ce type ?"""
+        return await _guard(collab.tags_used(ctx, doctype))
+
     @router.post("/tag-many/{doctype}")
     async def tag_many(doctype: str, body: TagManyBody, ctx: RequestContext = Depends(ctx_dep)):
         """Étiqueter une sélection : chaque document est jugé seul, la réponse donne `ok`/code/message par document."""

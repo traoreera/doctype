@@ -31,6 +31,7 @@ async def test_tags_over_http(tmp_path):
         counts = await h.http("GET", "/tag-counts/Order", token=rita, params={"filters": json.dumps({"_tag": "Client"})})
         assert counts.json() == {"items": [{"tag": "Client", "count": 2}, {"tag": "Urgent", "count": 1}]}
         assert (await h.http("GET", "/tag-counts/Order", token=rita, params={"filters": "{"})).status_code == 422
+        assert (await h.http("GET", "/tags-used/Order", token=rita)).json() == {"used": True}
         page = await h.http("POST", "/tags-of/Order", token=rita, json={"names": [o1, o2, "nope"]})
         assert page.json() == {"items": {o1: ["Urgent", "Client"], o2: ["Client"]}}
 
@@ -67,5 +68,6 @@ async def test_the_ipc_actions(tmp_path):
         assert (await h.action("doc.tags.of", {"doctype": "Order", "names": [name]}, token=ada))["items"] == {name: ["Via IPC"]}
         counts = await h.action("doc.tags.counts", {"doctype": "Order", "q": "ipc", "filters": {"title": "o1"}}, token=ada)
         assert counts["items"] == [{"tag": "Via IPC", "count": 1}]
+        assert (await h.action("doc.tags.used", {"doctype": "Order"}, token=ada))["used"] is True
         many = await h.action("doc.tags.many", {"doctype": "Order", "names": [name], "remove": ["via ipc"]}, token=ada)
         assert many["done"] == 1 and (await h.action("doc.tags.get", {"doctype": "Order", "name": name}, token=ada))["tags"] == []

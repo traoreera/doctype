@@ -39,7 +39,7 @@ import { buildFilters, parseFiltersParam, rowsFromFilters, type FilterRow } from
 import { formatCell, hasReadableName, isNumeric, relativeTime } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import { sidebarFields } from '@/lib/sidebar'
-import { TAG_FILTER, supportsTags } from '@/lib/tags'
+import { TAG_FILTER, sameTag, supportsTags, tagFilterLabel, type TagFilter } from '@/lib/tags'
 import { unitLinks, unitOf } from '@/lib/units'
 import type { DocRecord, DocTypeMeta, FieldMeta, Filters, LayoutScope, SavedView, ViewName } from '@/lib/types'
 import { pickView, readView, writeView } from '@/lib/viewprefs'
@@ -88,7 +88,9 @@ const status = ref<number | null>(null)
 /** Les filtres EN VIGUEUR (ce que les vues demandent au serveur) : ce que l'utilisateur a validé, pas ce qu'il est en train de taper. */
 const applied = ref<Filters>({})
 /** L'étiquette filtrée (`_tag`), hors de la barre de filtres : une pastille dans la barre d'outils la montre et la retire. */
-const tagFilter = ref<string | null>(null)
+const tagFilter = ref<TagFilter | null>(null)
+/** L'étiquette filtrée par égalité : celle que la barre latérale et les pastilles mettent en évidence. */
+const activeTag = computed(() => (typeof tagFilter.value === 'string' ? tagFilter.value : null))
 /** Le type a-t-il des étiquettes en usage (dans ce que l'utilisateur lit) ? Sans elles, pas de groupe « Étiquettes » ni de barre latérale pour lui. */
 const hasTags = ref(false)
 /** Les étiquettes des lignes de la page, lues en une requête après elles. */
@@ -355,16 +357,23 @@ async function loadHasTags(m: DocTypeMeta): Promise<void> {
     hasTags.value = false
     return
   }
+  const asked = m.name // une réponse tardive pour un autre type ne doit rien régler ici
+  let used = false
   try {
-    hasTags.value = (await api.tagCounts(props.doctype, { limit: 1 })).length > 0
+    used = await api.tagsUsed(asked)
   } catch {
-    hasTags.value = false
+    used = false
   }
+  if (meta.value?.name === asked) hasTags.value = used
 }
 
 /** Une étiquette cliquée (barre latérale, pastille d'une ligne) filtre la liste ; la même, cliquée à nouveau, retire le filtre. */
 function pickTag(tag: string): void {
-  tagFilter.value = tagFilter.value === tag ? null : tag
+  tagFilter.value = activeTag.value !== null && sameTag(activeTag.value, tag) ? null : tag
+  commit()
+}
+function clearTag(): void {
+  tagFilter.value = null
   commit()
 }
 
@@ -632,8 +641,8 @@ function title(r: DocRecord): string {
             @click="toggleSidebar"
           />
           <span v-if="tagFilter" class="tag-chip on" data-testid="tag-filter">
-            <span class="pi pi-tag" aria-hidden="true" style="margin-right: 0.3rem" />{{ t.tags.filtered(tagFilter) }}
-            <button type="button" class="tag-remove" :aria-label="t.tags.clearFilter" :title="t.tags.clearFilter" data-testid="tag-filter-clear" @click="pickTag(tagFilter)">
+            <span class="pi pi-tag" aria-hidden="true" style="margin-right: 0.3rem" />{{ t.tags.filtered(tagFilterLabel(tagFilter)) }}
+            <button type="button" class="tag-remove" :aria-label="t.tags.clearFilter" :title="t.tags.clearFilter" data-testid="tag-filter-clear" @click="clearTag">
               <span class="pi pi-times" aria-hidden="true" />
             </button>
           </span>
@@ -690,7 +699,7 @@ function title(r: DocRecord): string {
           <Column v-if="selectable" selection-mode="multiple" header-style="width: 2.5rem" />
           <Column v-if="numbered" field="name" sort-field="name" :header="t.list.number" sortable>
             <template #body="{ data }">
-              <span class="avatar-cell"><FileThumb v-if="meta.image_field" :id="data.data[meta.image_field]" :size="28" round /><RouterLink :to="{ name: 'form', params: { doctype, name: data.name } }" :data-testid="`open-${data.name}`" style="font-weight: 500; white-space: nowrap">{{ data.name }}</RouterLink><RowTags :tags="rowTags[data.name]" :active="tagFilter" @pick="pickTag" /></span>
+              <span class="avatar-cell"><FileThumb v-if="meta.image_field" :id="data.data[meta.image_field]" :size="28" round /><RouterLink :to="{ name: 'form', params: { doctype, name: data.name } }" :data-testid="`open-${data.name}`" style="font-weight: 500; white-space: nowrap">{{ data.name }}</RouterLink><RowTags :tags="rowTags[data.name]" :active="activeTag" @pick="pickTag" /></span>
             </template>
           </Column>
           <Column
@@ -709,7 +718,7 @@ function title(r: DocRecord): string {
                 <RouterLink :to="{ name: 'form', params: { doctype, name: data.name } }" :data-testid="`open-${data.name}`" style="font-weight: 500">
                   {{ cell(f, data) || title(data) }}
                 </RouterLink>
-                <RowTags :tags="rowTags[data.name]" :active="tagFilter" @pick="pickTag" />
+                <RowTags :tags="rowTags[data.name]" :active="activeTag" @pick="pickTag" />
               </span>
               <CellValue v-else :field="f" :value="data.data[f.fieldname]" :text="cell(f, data)" />
             </template>

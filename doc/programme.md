@@ -65,19 +65,31 @@ Ce qui a été décidé :
   ce que les autres trouvent en filtrant. Aucun grant nouveau.
 - **Une étiquette, quelle que soit la casse.** La clé est la forme repliée (`str.casefold`, calculée en Python : le `lower()` de SQLite ne
   connaît que l'ASCII), l'écriture affichée est celle déjà en usage dans le type — mais prise **seulement sur un document que l'appelant lit**
-  (sinon l'écriture trahirait l'étiquette d'un document invisible). Un nom : 1 à 50 caractères, blancs réduits, ni virgule ni contrôle.
+  (sinon l'écriture trahirait l'étiquette d'un document invisible). Un nom : forme composée NFC (« é » composé ou décomposé : une seule
+  étiquette), 1 à 50 caractères, blancs réduits (classe écrite un à un : `\s` n'a pas le même sens en Python et en JavaScript), ni virgule,
+  ni contrôle, ni invisible (catégories Cc, Cf, Cs : « Urgent » suivi d'une espace sans chasse serait un sosie qui partagerait les filtres
+  en deux). Vecteurs communs au serveur et au Desk : `tests/vectors/tag_cases.json`.
 - **20 au plus par document**, comptées APRÈS la pose, sous le verrou du document (`FOR UPDATE` sur PostgreSQL, prouvé par un test de
   concurrence ; SQLite n'a qu'un écrivain) : une demande refusée ne garde rien, retraits compris.
+- **Jamais d'étiquette orpheline** (constat de la relecture) : une pose qui croise une suppression ou un renommage relit le document
+  APRÈS sa première écriture (sur SQLite, c'est elle qui prend le verrou de la base ; sur PostgreSQL, le verrou de ligne fait attendre la
+  suppression, qui emporte alors l'étiquette) ; disparu, la pose est défaite (introuvable). Sans cela, le prochain document du même nom
+  héritait de l'étiquette posée sur l'ancien.
 - **Filtrables dans `Query`**, jamais après coup : `{"_tag": "Urgent"}`, `["!=", …]` (ne l'a pas, y compris sans aucune), `["in", […]]`,
   un `EXISTS` corrélé au document, donc valable partout où passent les filtres de la liste (liste, agrégats, recherche, vues enregistrées,
   blocs d'un espace) et toujours dans le périmètre de lecture. Le soulignement le sépare des champs. Refusé sur un document unique ou un
   type virtuel (ses documents ne sont pas dans la table), et dans `link_filters` (le contrôle à l'écriture se fait en mémoire).
 - **Comptes** : `GET /tag-counts/{type}` donne les étiquettes en usage parmi les documents lisibles que les filtres retiennent (barre
-  latérale, propositions de saisie).
+  latérale, propositions de saisie) ; `GET /tags-used/{type}` (un `EXISTS`) dit seulement s'il y en a, ce que la liste demande à chaque
+  ouverture.
+- **Ce qu'elles ne font pas, exprès** : poser ou retirer une étiquette n'écrit ni historique ni événement (aucune règle de notification ne
+  la voit, un retrait ne laisse pas de trace) ; `amend` ne recopie pas les étiquettes du document annulé, qui les garde (il compte encore
+  dans les filtres et les comptes, comme tout document annulé que la liste montre).
 
-Desk : barre d'étiquettes sous le titre d'une fiche (posée tout de suite, sans « Enregistrer »), pastilles des lignes de liste (une requête
-par page) qui filtrent au clic, filtre tenu hors de la barre de filtres (une pastille retirable ; l'adresse et les vues enregistrées le
-gardent), groupe « Étiquettes » de la barre latérale, « Étiqueter… » en lot. Pas fait : couleurs d'étiquette, renommer ou fusionner une
+Desk : barre d'étiquettes sous le titre d'une fiche (posée tout de suite, sans « Enregistrer » ; un changement à la fois, le focus passe à
+l'étiquette suivante après un retrait), pastilles des lignes de liste (une requête par page) qui filtrent au clic, filtre tenu hors de la
+barre de filtres (une pastille retirable qui dit « Urgent », « sauf Archivé » ou « A ou B » : un bloc d'espace ou une vue enregistrée peut
+porter les trois formes, la liste qu'il ouvre les applique), groupe « Étiquettes » de la barre latérale, « Étiqueter… » en lot. Pas fait : couleurs d'étiquette, renommer ou fusionner une
 étiquette dans tout un type, étiquettes dans les cartes de la liste sur téléphone.
 
 ## 2. Groupe 2 — ce qui rend le produit utilisable par quelqu'un qui n'est pas développeur

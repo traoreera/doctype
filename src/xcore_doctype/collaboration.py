@@ -266,18 +266,27 @@ class CollaborationService:
     async def _change_tags(self, ctx: RequestContext, compiled: Any, name: str, adds: list[str], removes: list[str]) -> list[str]:
         doctype = compiled.definition.name
         read = self._docs._scope(ctx, compiled, "read")
+        gone = NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         async with self._docs._query(ctx) as q:
-            compiled, doc = await self._document(ctx, q, doctype, name)
+            compiled, _ = await self._document(ctx, q, doctype, name)
+            # Le document VERROUILLÉ fait foi (`FOR UPDATE`, PostgreSQL) : une suppression ou un renommage concurrent attend notre commit, puis
+            # emporte ou déplace nos étiquettes ; validé avant nous, il ne laisse rien à verrouiller (introuvable). Le verrou sérialise aussi
+            # ceux qui étiquettent ensemble : le plafond se compte APRÈS les poses.
+            doc = await q.get(doctype, name, scope=read, lock=True)
+            if doc is None:
+                raise gone
             if not self._can_write(ctx, compiled, doc):
                 raise PermissionDenied()
-            # Le plafond se compte APRÈS les poses, sous verrou : `FOR UPDATE` sur le document (PostgreSQL) sérialise ceux qui l'étiquettent
-            # ensemble ; SQLite n'a qu'un écrivain à la fois, et la première pose prend ce verrou avant le compte.
-            await q.get(doctype, name, scope=read, lock=True)
             for tag in removes:
                 await q.remove_tag(doctype, name, tag)
             added = False
             for tag in adds:
                 added |= await q.add_tag(doctype, name, await q.tag_spelling(compiled.definition, tag, scope=read) or tag)
+            # SQLite n'a pas de verrou de ligne : c'est la première écriture ci-dessus qui prend celui de la base. Relu APRÈS elle, le document
+            # existe encore (plus personne ne peut le supprimer ni le renommer avant notre commit) ; sinon rien n'est gardé, aucune étiquette
+            # orpheline n'attend le prochain document de ce nom.
+            if await q.get(doctype, name, scope=read) is None:
+                raise gone
             tags = (await q.tags_of(doctype, [name]))[name]
             if added and len(tags) > MAX_TAGS_PER_DOC:
                 raise ValidationFailed(f"{MAX_TAGS_PER_DOC} étiquettes au plus par document", code="too_many_tags")  # tout est défait
@@ -309,6 +318,14 @@ class CollaborationService:
         async with self._docs._query(ctx) as query:
             items = await query.tag_counts(compiled.definition, filters=coerced, scope=read, q=text, limit=limit)
         return {"items": items}
+
+    async def tags_used(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
+        """Le type a-t-il une étiquette sur un document que l'appelant lit ? (La liste n'affiche le groupe « Étiquettes » que dans ce cas.)"""
+        self._docs._enter(ctx, "tags.used", doctype)
+        compiled = self._taggable(ctx, doctype)
+        read = self._docs._scope(ctx, compiled, "read")
+        async with self._docs._query(ctx) as query:
+            return {"used": await query.has_tags(compiled.definition, scope=read)}
 
     async def tag_many(self, ctx: RequestContext, doctype: str, names: Any, *, add: Any = None, remove: Any = None) -> dict[str, Any]:
         """Étiquette plusieurs documents (liste « Actions ») : chacun est jugé SEUL, comme `tag` (une transaction par document) ; un refus

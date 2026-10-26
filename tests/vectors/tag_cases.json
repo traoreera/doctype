@@ -1,0 +1,115 @@
+{
+ "_doc": "Noms d'\u00e9tiquette : tags.normalize_tag (Python) et lib/tags.normalizeTag (Desk) doivent donner la m\u00eame chose. `output: null` = refus\u00e9.",
+ "cases": [
+  {
+   "why": "blancs de bord retir\u00e9s, blancs int\u00e9rieurs r\u00e9duits",
+   "input": "  Salon \t 2026  ",
+   "output": "Salon 2026"
+  },
+  {
+   "why": "casse gard\u00e9e telle qu'\u00e9crite",
+   "input": "URGENT",
+   "output": "URGENT"
+  },
+  {
+   "why": "50 caract\u00e8res (points de code) : accept\u00e9",
+   "input": "\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9",
+   "output": "\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9\u00c9"
+  },
+  {
+   "why": "51 caract\u00e8res : refus\u00e9",
+   "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+   "output": null
+  },
+  {
+   "why": "vide",
+   "input": "",
+   "output": null
+  },
+  {
+   "why": "que des blancs",
+   "input": " \u00a0\u3000 ",
+   "output": null
+  },
+  {
+   "why": "virgule : le s\u00e9parateur d'une saisie",
+   "input": "a,b",
+   "output": null
+  },
+  {
+   "why": "NFC : une lettre d\u00e9compos\u00e9e devient compos\u00e9e (une seule \u00e9tiquette)",
+   "input": "e\u0301t\u00e9",
+   "output": "\u00e9t\u00e9"
+  },
+  {
+   "why": "NFC avant le compte : 50 lettres d\u00e9compos\u00e9es tiennent",
+   "input": "e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301",
+   "output": "\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9\u00e9"
+  },
+  {
+   "why": "espace ins\u00e9cable et espaces Unicode r\u00e9duits \u00e0 un espace",
+   "input": "a\u00a0\u2003\u202fb",
+   "output": "a b"
+  },
+  {
+   "why": "sauts de ligne et de paragraphe Unicode : des blancs",
+   "input": "a\u2028b\u2029c",
+   "output": "a b c"
+  },
+  {
+   "why": "contr\u00f4le C0 : refus\u00e9",
+   "input": "a\u0000b",
+   "output": null
+  },
+  {
+   "why": "s\u00e9parateurs C0 (\\x1c-\\x1f) : des contr\u00f4les, pas des blancs",
+   "input": "a\u001fb",
+   "output": null
+  },
+  {
+   "why": "DEL",
+   "input": "a\u007fb",
+   "output": null
+  },
+  {
+   "why": "NEL (\\x85) : un contr\u00f4le C1, pas un blanc",
+   "input": "a\u0085b",
+   "output": null
+  },
+  {
+   "why": "CSI (\\x9b) : contr\u00f4le C1",
+   "input": "a\u009bb",
+   "output": null
+  },
+  {
+   "why": "espace sans chasse : invisible, refus\u00e9",
+   "input": "Urgent\u200b",
+   "output": null
+  },
+  {
+   "why": "inversion bidirectionnelle : refus\u00e9e",
+   "input": "\u202eUrgent",
+   "output": null
+  },
+  {
+   "why": "BOM : invisible, refus\u00e9 (ni blanc, ni gard\u00e9)",
+   "input": "\ufeffUrgent",
+   "output": null
+  },
+  {
+   "why": "trait d'union conditionnel : invisible, refus\u00e9",
+   "input": "Ur\u00adgent",
+   "output": null
+  },
+  {
+   "why": "\u00e9moji : accept\u00e9",
+   "input": "Prioritaire \ud83d\udd25",
+   "output": "Prioritaire \ud83d\udd25"
+  },
+  {
+   "why": "\u00e9moji hors BMP compt\u00e9 pour un",
+   "input": "\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25",
+   "output": "\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25\ud83d\udd25"
+  }
+ ]
+}

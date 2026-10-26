@@ -789,6 +789,8 @@ export const t = {
     remove: (tag: string) => `Retirer l’étiquette « ${tag} »`,
     filterBy: (tag: string) => `Lister les documents étiquetés « ${tag} »`,
     filtered: (tag: string) => `Étiquette : ${tag}`,
+    except: (tag: string) => `sauf ${tag}`,
+    anyOf: (tags: readonly string[]) => tags.join(' ou '),
     clearFilter: 'Retirer le filtre d’étiquette',
     invalid: 'Une étiquette fait de 1 à 50 caractères, sans virgule.',
     tooMany: (n: number) => `${n} étiquettes au plus par document.`,

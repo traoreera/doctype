@@ -10,7 +10,7 @@ import { useServices } from '@/lib/services'
  * que l'utilisateur lit) sont proposées par une `datalist` native, lue une fois au premier focus : le navigateur filtre pendant la frappe.
  * Un nom refusé par les règles (`lib/tags.normalizeTag`, jumelles du serveur) est signalé sans aller-retour.
  */
-const props = defineProps<{ doctype: string; inputId: string; exclude?: readonly string[]; autofocus?: boolean }>()
+const props = defineProps<{ doctype: string; inputId: string; exclude?: readonly string[]; autofocus?: boolean; disabled?: boolean }>()
 const emit = defineEmits<{ commit: [tag: string]; cancel: [] }>()
 const { api } = useServices()
 
@@ -30,7 +30,7 @@ async function load(): Promise<void> {
 }
 
 function commit(): void {
-  if (!text.value.trim()) return
+  if (props.disabled || !text.value.trim()) return
   const tag = normalizeTag(text.value)
   if (tag === null) {
     invalid.value = true
@@ -66,6 +66,7 @@ function onKey(e: KeyboardEvent): void {
       :aria-describedby="invalid ? `${inputId}-error` : undefined"
       :invalid="invalid"
       :autofocus="autofocus"
+      :aria-busy="disabled || undefined"
       maxlength="80"
       autocomplete="off"
       data-testid="tag-input"
