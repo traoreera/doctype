@@ -1,10 +1,11 @@
-"""Routes de la collaboration : commentaires, assignations, pièces jointes d'un document (voir `collaboration.py`).
+"""Routes de la collaboration : commentaires, assignations, pièces jointes et étiquettes d'un document (voir `collaboration.py`).
 
 Toutes exigent une identité ; le droit de lire le DOCUMENT est jugé par le service à chaque appel (un document hors périmètre est « introuvable »).
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
@@ -36,6 +37,21 @@ class AssignManyBody(BaseModel):
     assignee: str
     description: str | None = None
     due_date: str | None = None
+
+
+class TagBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    add: list[Any] | None = None
+    remove: list[Any] | None = None
+
+
+class TagManyBody(TagBody):
+    names: list[str]
+
+
+class NamesBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    names: list[str]
 
 
 class AssignmentPatch(BaseModel):
@@ -106,6 +122,46 @@ def build_collab_router(collab: CollaborationService, settings: ContextSettings)
     @router.get("/people/{doctype}")
     async def people(doctype: str, q: str = Query(""), ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(collab.people(ctx, doctype, q=q))
+
+    @router.get("/tags/{doctype}/{name}")
+    async def tags(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):
+        """Les étiquettes du document (il faut le lire) et `can_tag` (peut-il en poser : l'écrire)."""
+        return await _guard(collab.tags(ctx, doctype, name))
+
+    @router.post("/tags/{doctype}/{name}")
+    async def tag(doctype: str, name: str, body: TagBody, ctx: RequestContext = Depends(ctx_dep)):
+        """`{add: [...], remove: [...]}` en une transaction ; répond les étiquettes du document après."""
+        return await _guard(collab.tag(ctx, doctype, name, add=body.add, remove=body.remove))
+
+    @router.post("/tags-of/{doctype}")
+    async def tags_of(doctype: str, body: NamesBody, ctx: RequestContext = Depends(ctx_dep)):
+        """Les étiquettes d'une page de liste : `{items: {nom: [étiquettes]}}`, les documents lisibles seulement."""
+        return await _guard(collab.tags_of(ctx, doctype, body.names))
+
+    @router.get("/tag-counts/{doctype}")
+    async def tag_counts(
+        doctype: str,
+        q: str = Query(""),
+        filters: str | None = Query(None, description="les filtres de /list"),
+        limit: int = Query(20),
+        ctx: RequestContext = Depends(ctx_dep),
+    ):
+        """Les étiquettes en usage, avec leur nombre de documents lisibles que `filters` retient (barre latérale, propositions de saisie)."""
+        try:
+            parsed = json.loads(filters) if filters else None
+        except ValueError:
+            raise HTTPException(status_code=422, detail={"code": "validation_failed", "msg": "filters n'est pas du JSON valide"}) from None
+        return await _guard(collab.tag_counts(ctx, doctype, q=q, filters=parsed, limit=limit))
+
+    @router.get("/tags-used/{doctype}")
+    async def tags_used(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
+        """`{used: bool}` : une étiquette existe-t-elle sur un document lisible de ce type ?"""
+        return await _guard(collab.tags_used(ctx, doctype))
+
+    @router.post("/tag-many/{doctype}")
+    async def tag_many(doctype: str, body: TagManyBody, ctx: RequestContext = Depends(ctx_dep)):
+        """Étiqueter une sélection : chaque document est jugé seul, la réponse donne `ok`/code/message par document."""
+        return await _guard(collab.tag_many(ctx, doctype, body.names, add=body.add, remove=body.remove))
 
     @router.post("/attachments/{doctype}/{name}", status_code=201)
     async def attach(doctype: str, name: str, file: UploadFile = File(...), ctx: RequestContext = Depends(ctx_dep)):

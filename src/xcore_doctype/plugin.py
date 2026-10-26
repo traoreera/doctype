@@ -575,6 +575,52 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.assign.many", op)
 
+    @action("doc.tags.get")
+    async def doc_tags_get(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.tags(ctx, _need(payload, "doctype"), _need(payload, "name"))
+
+        return await self._run("doc.tags.get", op)
+
+    @action("doc.tags.change")
+    async def doc_tags_change(self, payload: dict) -> dict:
+        """`{doctype, name, add?, remove?}` : pose et/ou retire des étiquettes (il faut pouvoir écrire le document)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.tag(ctx, _need(payload, "doctype"), _need(payload, "name"), add=payload.get("add"), remove=payload.get("remove"))
+
+        return await self._run("doc.tags.change", op)
+
+    @action("doc.tags.of")
+    async def doc_tags_of(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.tags_of(ctx, _need(payload, "doctype"), payload.get("names"))
+
+        return await self._run("doc.tags.of", op)
+
+    @action("doc.tags.counts")
+    async def doc_tags_counts(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.tag_counts(
+                ctx, _need(payload, "doctype"), q=payload.get("q", ""), filters=payload.get("filters"), limit=payload.get("limit", 20)
+            )
+
+        return await self._run("doc.tags.counts", op)
+
+    @action("doc.tags.used")
+    async def doc_tags_used(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.tags_used(ctx, _need(payload, "doctype"))
+
+        return await self._run("doc.tags.used", op)
+
+    @action("doc.tags.many")
+    async def doc_tags_many(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.collaboration.tag_many(ctx, _need(payload, "doctype"), payload.get("names"), add=payload.get("add"), remove=payload.get("remove"))
+
+        return await self._run("doc.tags.many", op)
+
     @action("doc.assignment.update")
     async def doc_assignment_update(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:

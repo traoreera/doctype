@@ -34,6 +34,7 @@ from .errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, V
 from .files import ATTACHMENT_FIELD
 from .permissions import Scope
 from .schema import DECIMAL_TYPES, DocTypeDef
+from .tags import TAG_FILTER
 from .versions import KEPT_ACTIONS
 
 # Colonnes système triables. Les champs d'un DocType s'y ajoutent, jamais l'inverse
@@ -133,6 +134,7 @@ class Query:
         self._assignments = tables.assignments
         self._attachments = tables.attachments
         self._uniques = tables.uniques
+        self._tags = tables.tags
 
     # ── Lecture ───────────────────────────────────────────────
     async def get(self, doctype: str, name: str, *, scope: Scope, lock: bool = False) -> StoredDoc | None:
@@ -494,7 +496,7 @@ class Query:
             if found is None:
                 raise NotFound("document_not_found", f"{doctype} {old!r} introuvable")
             raise DocumentLocked(f"{doctype} {old!r} est {STATUS_WORDS[found.docstatus]} : il ne se renomme plus") if found.docstatus != DRAFT else NotFound("document_not_found", f"{doctype} {old!r} introuvable")
-        for table in (self._comments, self._assignments, self._attachments, self._uniques):
+        for table in (self._comments, self._assignments, self._attachments, self._uniques, self._tags):
             await self._session.execute(update(table).where(self._cscope(table, table.c.doctype == doctype, table.c.docname == old)).values(docname=new))
         await self._move_history(doctype, old, new)
         return await self._reload(doctype, new)
@@ -953,10 +955,10 @@ class Query:
         return (await self._session.execute(delete(t).where(self._cscope(t, t.c.id == attachment_id)))).rowcount > 0
 
     async def remove_collaboration(self, doctype: str, docname: str) -> list[str]:
-        """Le document disparaît : ses commentaires, ses assignations et ses pièces jointes aussi. Retourne les fichiers à libérer."""
+        """Le document disparaît : ses commentaires, ses assignations, ses pièces jointes et ses étiquettes aussi. Retourne les fichiers à libérer."""
         t = self._attachments
         files = [r["file_id"] for r in (await self._session.execute(select(t.c.file_id).where(self._cscope(t, t.c.doctype == doctype, t.c.docname == docname)))).mappings().all()]
-        for table in (self._attachments, self._comments, self._assignments):
+        for table in (self._attachments, self._comments, self._assignments, self._tags):
             await self._session.execute(delete(table).where(self._cscope(table, table.c.doctype == doctype, table.c.docname == docname)))
         return files
 
@@ -972,6 +974,94 @@ class Query:
         union = sources[0].union(*sources[1:]).subquery()
         stmt = select(union.c.who).order_by(union.c.who.asc()).limit(limit)
         return [r[0] for r in (await self._session.execute(stmt)).all()]
+
+    # ── Étiquettes (`tags.py` ; qui les voit et qui les pose : `collaboration.py`) ──
+    # Comme la collaboration, ces méthodes n'imposent que le tenant : le service a lu le document avec le périmètre de l'appelant avant.
+    # Celles qui parcourent PLUSIEURS documents (`tag_spelling`, `tag_counts`) joignent `xdt_document` sous le périmètre de lecture.
+    async def tags_of(self, doctype: str, names: Sequence[str]) -> dict[str, list[str]]:
+        """Les étiquettes de chacun de ces documents, dans l'ordre où elles ont été posées."""
+        t = self._tags
+        out: dict[str, list[str]] = {n: [] for n in names}
+        wanted = list(out)
+        for i in range(0, len(wanted), UNION_CHUNK):
+            stmt = (
+                select(t.c.docname, t.c.tag)
+                .where(self._cscope(t, t.c.doctype == doctype, t.c.docname.in_(wanted[i : i + UNION_CHUNK])))
+                .order_by(t.c.creation.asc(), t.c.folded.asc())
+            )
+            for row in (await self._session.execute(stmt)).mappings():
+                out[row["docname"]].append(row["tag"])
+        return out
+
+    async def add_tag(self, doctype: str, docname: str, tag: str) -> bool:
+        """Pose l'étiquette (`ON CONFLICT DO NOTHING` sur la forme repliée : une seule instruction, sûre sous concurrence). Dit si elle était absente."""
+        t = self._tags
+        insert_for = postgresql.insert if self._session.get_bind().dialect.name == "postgresql" else sqlite.insert
+        row = {"tenant_id": self._tenant, "doctype": doctype, "docname": docname, "folded": tag.casefold(), "tag": tag,
+               "owner": self._owner, "creation": datetime.now(UTC)}
+        stmt = insert_for(t).values(**row).on_conflict_do_nothing(index_elements=[t.c.tenant_id, t.c.doctype, t.c.docname, t.c.folded])
+        return (await self._session.execute(stmt)).rowcount > 0
+
+    async def remove_tag(self, doctype: str, docname: str, tag: str) -> bool:
+        """Retire l'étiquette, quelle que soit la casse écrite. Dit si le document la portait."""
+        t = self._tags
+        stmt = delete(t).where(self._cscope(t, t.c.doctype == doctype, t.c.docname == docname, t.c.folded == tag.casefold()))
+        return (await self._session.execute(stmt)).rowcount > 0
+
+    async def tag_spelling(self, defn: DocTypeDef, tag: str, *, scope: Scope) -> str | None:
+        """L'écriture déjà en usage de cette étiquette dans ce type (« Urgent » quand on tape « urgent »), parmi les documents que
+        l'appelant LIT : l'écriture prise sur un document invisible trahirait qu'il porte l'étiquette."""
+        t, d = self._tags, self._t
+        stmt = (
+            select(t.c.tag)
+            .select_from(t.join(d, and_(d.c.tenant_id == t.c.tenant_id, d.c.doctype == t.c.doctype, d.c.name == t.c.docname)))
+            .where(self._cscope(t, t.c.doctype == defn.name, t.c.folded == tag.casefold()), self._scope(d.c.doctype == defn.name, scope=scope))
+            .order_by(t.c.creation.asc(), t.c.docname.asc())
+            .limit(1)
+        )
+        return (await self._session.execute(stmt)).scalar_one_or_none()
+
+    async def tag_counts(self, defn: DocTypeDef, *, filters: Mapping[str, Any], scope: Scope, q: str = "", limit: int) -> list[dict[str, Any]]:
+        """Les étiquettes des documents que l'appelant LIT et que `filters` retient, chacune avec son nombre de documents, les plus
+        fréquentes d'abord. `q` : celles dont la forme repliée contient ce texte (la saisie d'une étiquette, la barre latérale d'une liste)."""
+        t, d = self._tags, self._t
+        n = func.count().label("count")
+        where = [self._cscope(t), self._scope(*self._filter_conds(defn, filters), scope=scope)]
+        if q:
+            where.append(t.c.folded.like("%" + self._like_escape(q.casefold()) + "%", escape="\\"))
+        stmt = (
+            # Deux écritures d'une même étiquette ne coexistent que par une pose concurrente ou hors du périmètre de l'un : une seule est montrée.
+            select(func.min(t.c.tag).label("tag"), n)
+            .select_from(t.join(d, and_(d.c.tenant_id == t.c.tenant_id, d.c.doctype == t.c.doctype, d.c.name == t.c.docname)))
+            .where(*where)
+            .group_by(t.c.folded)
+            .order_by(n.desc(), t.c.folded.asc())
+            .limit(limit)
+        )
+        return [{"tag": r["tag"], "count": r["count"]} for r in (await self._session.execute(stmt)).mappings()]
+
+    async def has_tags(self, defn: DocTypeDef, *, scope: Scope) -> bool:
+        """Un document que l'appelant LIT porte-t-il au moins une étiquette ? (`EXISTS … LIMIT 1` : la liste le demande à chaque ouverture, le
+        compte complet de `tag_counts` n'y sert à rien.)"""
+        t, d = self._tags, self._t
+        stmt = (
+            select(t.c.docname)
+            .select_from(t.join(d, and_(d.c.tenant_id == t.c.tenant_id, d.c.doctype == t.c.doctype, d.c.name == t.c.docname)))
+            .where(self._cscope(t, t.c.doctype == defn.name), self._scope(d.c.doctype == defn.name, scope=scope))
+            .limit(1)
+        )
+        return (await self._session.execute(stmt)).first() is not None
+
+    def _tag_cond(self, value: Any) -> Any:
+        """Le filtre `_tag` (validé par `builder._tag_filter`) : `EXISTS` d'une étiquette du document, `NOT EXISTS` pour `!=`. La table est
+        aliasée : `tag_counts` joint déjà `xdt_tag`, et la sous-requête doit se corréler au DOCUMENT, jamais à cette jointure."""
+        t = self._tags.alias("tag_filter")
+        if isinstance(value, Filter):
+            wanted = t.c.folded.in_([v.casefold() for v in value.value]) if value.op == "in" else t.c.folded == value.value.casefold()
+        else:
+            wanted = t.c.folded == value.casefold()
+        found = exists().where(t.c.tenant_id == self._tenant, t.c.doctype == self._t.c.doctype, t.c.docname == self._t.c.name, wanted)
+        return ~found if isinstance(value, Filter) and value.op == "!=" else found
 
     @staticmethod
     def _collab_row(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -1079,6 +1169,9 @@ class Query:
         conds = [self._t.c.doctype == defn.name]
         fields = defn.field_map
         for fieldname, value in filters.items():
+            if fieldname == TAG_FILTER:
+                conds.append(self._tag_cond(value))
+                continue
             if fieldname not in SYSTEM_FILTERS and fieldname not in fields:
                 raise ValidationFailed(f"filtre sur un champ inconnu : {fieldname!r}")
             # Les colonnes système (`name`, `docstatus`) se filtrent comme un champ du type indiqué (SYSTEM_FILTERS).

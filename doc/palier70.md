@@ -104,7 +104,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Commentaires | ✔ (D) |
 | Assignation (À faire) | ✔ (D) |
 | Pièces jointes | ✔ (D) |
-| Étiquettes (tags) | K |
+| Étiquettes (tags) | ✔ (26 oct., `doc/programme.md` §1.2 : table `xdt_tag` jugée sur le document — lire pour voir, écrire pour poser —, filtre `_tag` en SQL dans la liste, les agrégats et la recherche, barre latérale, fiche, lot ; 20 par document) |
 | « J'aime » | ✖ |
 | Mentions (@utilisateur) | ✔ (H2 : `@` propose les membres dans la zone de commentaire, la mention prévient le membre par la cloche) |
 | Recherche globale | ✔ (E) |
@@ -163,10 +163,12 @@ que « DocType virtuel » (bonus). Dénominateur : **87**.
 
 | État | éléments | part de 87 |
 |---|---:|---:|
-| ✔ fait en entier | 59 | 68 % |
+| ✔ fait en entier | 60 | 69 % |
 | ◐ fait en partie | 8 | 9 % |
-| non fait | 20 | 23 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **63** | **72 %** |
+| non fait | 19 | 22 % |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **64** | **74 %** |
+
+**26 octobre** : les étiquettes passent à ✔ (programme groupe 1, élément 3), après relecture adversariale. Le 23 : 59 ✔, 8 ◐, 63 lignes, 72 %.
 
 **23 octobre (consolidation, phase C4 de `.plan/plan.md`)** : trois lignes ◐ passent à ✔ (notifications par DocType et e-mail, propriétés
 modifiées par organisation appliquées par le serveur, gestionnaire de fichiers), chacune après une relecture adversariale dont les constats
@@ -175,7 +177,7 @@ ont été corrigés avec leur test (`doc/consolidation.md`). Le 22 octobre : 56 
 Le 20 octobre le décompte (non vérifié) disait 62 lignes en entier (71 %, 74 % avec les demi-lignes). Six lignes comptées faites ne sont
 prouvées qu'en partie (conditions dans les lignes, sections repliables, DocType arborescent, journal d'activité, écran « Habiller »,
 journal d'accès et d'audit) ; une monte (champs personnalisés, par les extensions de DocType D26). Les 20 lignes non faites : permlevel,
-permissions utilisateur, partage, droits d'export/impression/e-mail, vue Galerie, rapports requête de plugin, étiquettes, Workflow, tâches
+permissions utilisateur, partage, droits d'export/impression/e-mail, vue Galerie, rapports requête de plugin, étiquettes (faites le 26), Workflow, tâches
 planifiées, webhooks, assignation automatique, documents récurrents, rapports par e-mail, import CSV, clés d'API, éditeur de DocType,
 formats d'impression, PDF, traductions, corbeille.
 
@@ -220,8 +222,8 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Fournisseur OAuth 2 | non fait |
 | Outils de diagnostic (Recorder, inspecteur de permissions) | non fait |
 
-**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 66 faites, 18 partielles, 35 non faites, soit **55 % en entier, 63 % avec les
-demi-lignes** (24 octobre : filtres d'un Lien D29 et onglets de fiche ; le 23 : 64, 18, 37, 54 % et 61 % ; le 22 : 60, 21, 38, 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
+**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 67 faites, 18 partielles, 34 non faites, soit **56 % en entier, 64 % avec les
+demi-lignes** (26 octobre : étiquettes ; 24 octobre : filtres d'un Lien D29 et onglets de fiche, 66, 18, 35, 55 % et 63 % ; le 23 : 64, 18, 37, 54 % et 61 % ; le 22 : 60, 21, 38, 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
 
 ## 3. Ce qu'on retient pour 70 %
 

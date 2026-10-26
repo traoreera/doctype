@@ -32,6 +32,7 @@ from .errors import ValidationFailed
 from .expr import Node, compile_expr, evaluate
 from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef, NamingField
 from .sealing import kept
+from .tags import TAG_FILTER, TAG_OPS, normalize_tag
 
 
 def _iso_date(value: str) -> str:
@@ -338,6 +339,8 @@ class CompiledDocType:
 
         `value` est une valeur (égalité) ou `[opérateur, valeur]`. Retourne la valeur validée, ou un `Filter`.
         """
+        if fieldname == TAG_FILTER:
+            return _tag_filter(value)
         # `name` (l'identifiant du document) se filtre comme un texte : le Desk s'en sert pour retrouver le titre d'un lien.
         adapter = _SYSTEM_ADAPTERS[fieldname] if fieldname in SYSTEM_FILTERS else self.adapters[fieldname]
         ftype = SYSTEM_FILTERS[fieldname] if fieldname in SYSTEM_FILTERS else self.definition.field_map[fieldname].fieldtype
@@ -366,6 +369,26 @@ class CompiledDocType:
             raise ValidationFailed(f"filtre invalide sur {fieldname!r}", details=_errors(e)) from e
         except ValueError as e:
             raise ValidationFailed(f"filtre invalide sur {fieldname!r} : {e}") from None
+
+
+def _tag_filter(value: Any) -> Any:
+    """Le filtre `_tag` : un nom d'étiquette (a l'étiquette), `["!=", nom]` (ne l'a pas) ou `["in", [noms]]` (en a au moins une), chaque nom
+    validé comme à la pose (`tags.normalize_tag`)."""
+    try:
+        if not isinstance(value, list):
+            return normalize_tag(value)
+        if len(value) != 2 or not isinstance(value[0], str):
+            raise ValueError("un filtre à opérateur s'écrit [opérateur, valeur]")
+        op, operand = value
+        if op not in TAG_OPS:
+            raise ValueError(f"opérateur {op!r} impossible sur une étiquette (permis : {', '.join(sorted(TAG_OPS))})")
+        if op == "in":
+            if not isinstance(operand, list) or not operand or len(operand) > MAX_IN:
+                raise ValueError(f"`in` exige une liste de 1 à {MAX_IN} étiquettes")
+            return Filter("in", [normalize_tag(v) for v in operand])
+        return normalize_tag(operand) if op == "=" else Filter("!=", normalize_tag(operand))
+    except ValueError as e:
+        raise ValidationFailed(f"filtre invalide sur {TAG_FILTER!r} : {e}") from None
 
 
 def _errors(e: ValidationError) -> list[dict[str, str]]:

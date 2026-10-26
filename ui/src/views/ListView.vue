@@ -24,6 +24,7 @@ import FileThumb from '@/components/FileThumb.vue'
 import FilterBar from '@/components/FilterBar.vue'
 import RecordCards from '@/components/RecordCards.vue'
 import ListSidebar from '@/components/ListSidebar.vue'
+import RowTags from '@/components/tags/RowTags.vue'
 import ViewSwitcher from '@/components/ViewSwitcher.vue'
 import CalendarView from '@/components/views/CalendarView.vue'
 import GanttView from '@/components/views/GanttView.vue'
@@ -38,6 +39,7 @@ import { buildFilters, parseFiltersParam, rowsFromFilters, type FilterRow } from
 import { formatCell, hasReadableName, isNumeric, relativeTime } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import { sidebarFields } from '@/lib/sidebar'
+import { TAG_FILTER, sameTag, supportsTags, tagFilterLabel, type TagFilter } from '@/lib/tags'
 import { unitLinks, unitOf } from '@/lib/units'
 import type { DocRecord, DocTypeMeta, FieldMeta, Filters, LayoutScope, SavedView, ViewName } from '@/lib/types'
 import { pickView, readView, writeView } from '@/lib/viewprefs'
@@ -85,6 +87,16 @@ const selection = ref<DocRecord[]>([])
 const status = ref<number | null>(null)
 /** Les filtres EN VIGUEUR (ce que les vues demandent au serveur) : ce que l'utilisateur a validé, pas ce qu'il est en train de taper. */
 const applied = ref<Filters>({})
+/** L'étiquette filtrée (`_tag`), hors de la barre de filtres : une pastille dans la barre d'outils la montre et la retire. */
+const tagFilter = ref<TagFilter | null>(null)
+/** L'étiquette filtrée par égalité : celle que la barre latérale et les pastilles mettent en évidence. */
+const activeTag = computed(() => (typeof tagFilter.value === 'string' ? tagFilter.value : null))
+/** Le type a-t-il des étiquettes en usage (dans ce que l'utilisateur lit) ? Sans elles, pas de groupe « Étiquettes » ni de barre latérale pour lui. */
+const hasTags = ref(false)
+/** Les étiquettes des lignes de la page, lues en une requête après elles. */
+const rowTags = ref<Record<string, string[]>>({})
+/** Change quand des étiquettes ont été posées depuis la liste : la barre latérale recompte. */
+const tagStamp = ref(0)
 const statusChoices = computed(() => [
   { label: t.list.allStatuses, value: null },
   ...[0, 1, 2].map((v) => ({ label: statusLabel(v), value: v })),
@@ -140,7 +152,8 @@ function readSidebar(): boolean {
 }
 const showSidebar = ref(readSidebar())
 /** La colonne de la barre latérale n'existe que si le type a de quoi la remplir : sans cela, le tableau se retrouverait dans sa colonne étroite. */
-const hasSidebar = computed(() => showSidebar.value && !!meta.value && sidebarFields(meta.value).length > 0)
+const sidebarFilled = computed(() => !!meta.value && (sidebarFields(meta.value).length > 0 || hasTags.value))
+const hasSidebar = computed(() => showSidebar.value && sidebarFilled.value)
 function toggleSidebar(): void {
   showSidebar.value = !showSidebar.value
   try {
@@ -168,6 +181,7 @@ function applyView(v: SavedView): void {
   const start = rowsFromFilters(v.config.filters ?? {}, m.fields, () => ++seq)
   filterRows.value = start.rows
   status.value = m.submittable ? start.status : null
+  tagFilter.value = supportsTags(m) ? start.tag : null
   quick.value = ''
   showFilters.value = start.rows.length > 0
   if (typeof v.config.order_by === 'string') sortField.value = v.config.order_by
@@ -278,6 +292,7 @@ function built(): Filters {
   if (!m) return {}
   const filters = buildFilters(filterRows.value, m.fields, { field: quickField.value, text: quick.value })
   if (m.submittable && status.value !== null) filters.docstatus = status.value
+  if (tagFilter.value !== null) filters[TAG_FILTER] = tagFilter.value
   return filters
 }
 
@@ -308,6 +323,7 @@ async function fetchPage(): Promise<void> {
     for (const f of columns.value.filter((c) => c.fieldtype === 'Link' && typeof c.options === 'string')) {
       void links.resolve(f.options as string, res.items.map((r) => r.data[f.fieldname]).filter((v): v is string => typeof v === 'string'))
     }
+    void loadRowTags(m, res.items, mine)
   } catch (e) {
     if (mine !== ticket) return
     rows.value = []
@@ -316,6 +332,56 @@ async function fetchPage(): Promise<void> {
   } finally {
     if (mine === ticket) loading.value = false
   }
+}
+
+/** Les étiquettes des lignes affichées : une requête pour la page, jamais une par ligne. Une erreur laisse la liste sans pastilles. */
+async function loadRowTags(m: DocTypeMeta, items: readonly DocRecord[], mine: number): Promise<void> {
+  await tagsReady
+  if (mine !== ticket) return
+  if (!supportsTags(m) || !hasTags.value || !items.length) {
+    rowTags.value = {}
+    return
+  }
+  try {
+    const found = await api.tagsOf(props.doctype, items.map((r) => r.name))
+    if (mine === ticket) rowTags.value = found
+  } catch {
+    if (mine === ticket) rowTags.value = {}
+  }
+}
+
+let tagsReady: Promise<void> = Promise.resolve()
+/** Existe-t-il au moins une étiquette lisible dans ce type ? (Une seule ligne de compte suffit.) */
+async function loadHasTags(m: DocTypeMeta): Promise<void> {
+  if (!supportsTags(m)) {
+    hasTags.value = false
+    return
+  }
+  const asked = m.name // une réponse tardive pour un autre type ne doit rien régler ici
+  let used = false
+  try {
+    used = await api.tagsUsed(asked)
+  } catch {
+    used = false
+  }
+  if (meta.value?.name === asked) hasTags.value = used
+}
+
+/** Une étiquette cliquée (barre latérale, pastille d'une ligne) filtre la liste ; la même, cliquée à nouveau, retire le filtre. */
+function pickTag(tag: string): void {
+  tagFilter.value = activeTag.value !== null && sameTag(activeTag.value, tag) ? null : tag
+  commit()
+}
+function clearTag(): void {
+  tagFilter.value = null
+  commit()
+}
+
+/** Une action en lot a abouti : la page se relit, et des étiquettes ont pu apparaître (la barre latérale recompte). */
+async function afterBulk(): Promise<void> {
+  tagStamp.value++
+  if (meta.value && !hasTags.value) await (tagsReady = loadHasTags(meta.value))
+  await fetchPage()
 }
 
 /** Met en vigueur ce que l'utilisateur a saisi (recherche, filtres, état) : la liste se relit, les autres vues se rechargent d'elles-mêmes. */
@@ -338,6 +404,9 @@ async function open(): Promise<void> {
   filterRows.value = []
   status.value = null
   applied.value = {}
+  tagFilter.value = null
+  hasTags.value = false
+  rowTags.value = {}
   showFilters.value = false
   resetSort() // meta est vide ici : le tri par défaut ; il se corrige dès que le type est lu
   savedViews.value = []
@@ -363,8 +432,10 @@ async function open(): Promise<void> {
   const start = rowsFromFilters(parseFiltersParam(props.filters), meta.value.fields, () => ++seq)
   filterRows.value = start.rows
   status.value = meta.value.submittable ? start.status : null
+  tagFilter.value = supportsTags(meta.value) ? start.tag : null
   showFilters.value = start.rows.length > 0
   applied.value = built()
+  tagsReady = loadHasTags(meta.value) // en même temps que la première page, pas avant elle
   // Une vue par défaut s'ouvre d'elle-même, SAUF si l'adresse impose déjà une vue ou des filtres (l'adresse est explicite).
   await loadViews()
   const preferred = savedViews.value.find((v) => v.is_default)
@@ -557,7 +628,7 @@ function title(r: DocRecord): string {
           />
           <Menu ref="viewsMenu" :model="viewsMenuItems" :popup="true" />
           <Button
-            v-if="current === 'list' && meta && sidebarFields(meta).length"
+            v-if="current === 'list' && sidebarFilled"
             icon="pi pi-align-left"
             size="small"
             :severity="showSidebar ? 'primary' : 'secondary'"
@@ -569,6 +640,12 @@ function title(r: DocRecord): string {
             data-testid="sidebar-toggle"
             @click="toggleSidebar"
           />
+          <span v-if="tagFilter" class="tag-chip on" data-testid="tag-filter">
+            <span class="pi pi-tag" aria-hidden="true" style="margin-right: 0.3rem" />{{ t.tags.filtered(tagFilterLabel(tagFilter)) }}
+            <button type="button" class="tag-remove" :aria-label="t.tags.clearFilter" :title="t.tags.clearFilter" data-testid="tag-filter-clear" @click="clearTag">
+              <span class="pi pi-times" aria-hidden="true" />
+            </button>
+          </span>
           <span class="desk-spacer" />
           <span v-if="current === 'list'" class="desk-muted" data-testid="list-count">{{ t.list.count(rows.length, total) }}</span>
         </div>
@@ -577,11 +654,11 @@ function title(r: DocRecord): string {
       </template>
 
       <div v-if="current === 'list'" :class="['list-layout', { 'with-sidebar': hasSidebar }]">
-        <ListSidebar v-if="hasSidebar" :meta="meta" :filters="applied" @pick="pickValue" />
+        <ListSidebar v-if="hasSidebar" :key="tagStamp" :meta="meta" :filters="applied" :tags="hasTags" @pick="pickValue" @pick-tag="pickTag" />
         <div class="desk-card list-main">
         <div v-if="selection.length && selectable" class="selection-bar" role="region" :aria-label="t.list.selectionBar" data-testid="selection-bar">
           <strong>{{ t.list.selected(selection.length) }}</strong>
-          <BulkActions :doctype="doctype" :meta="meta" :selection="selection" @done="void fetchPage()" />
+          <BulkActions :doctype="doctype" :meta="meta" :selection="selection" @done="void afterBulk()" />
           <span class="desk-spacer" />
           <Button :label="t.list.clearSelection" text severity="secondary" size="small" data-testid="clear-selection" @click="selection = []" />
         </div>
@@ -592,7 +669,7 @@ function title(r: DocRecord): string {
         <template v-else-if="compact">
           <RecordCards v-if="rows.length" v-model:selection="selection" :doctype="doctype" :meta="meta" :rows="rows" :columns="columns" :selectable="selectable" :cell="cell" :title="title" @open="openRow" />
           <div v-else class="empty-state" data-testid="list-empty">
-            <p class="desk-muted">{{ quick || activeFilters || status !== null ? t.list.emptyFiltered : t.list.empty(label) }}</p>
+            <p class="desk-muted">{{ quick || activeFilters || status !== null || tagFilter ? t.list.emptyFiltered : t.list.empty(label) }}</p>
             <Button v-if="trulyEmpty && canCreate" :as="RouterLink" :to="{ name: 'new', params: { doctype } }" :label="t.list.createFirst(label)" icon="pi pi-plus" size="small" data-testid="create-first" />
           </div>
           <Paginator v-if="total > pageSize || first > 0" :rows="pageSize" :first="first" :total-records="total" :rows-per-page-options="[20, 50, 100]" @page="onPage" />
@@ -622,7 +699,7 @@ function title(r: DocRecord): string {
           <Column v-if="selectable" selection-mode="multiple" header-style="width: 2.5rem" />
           <Column v-if="numbered" field="name" sort-field="name" :header="t.list.number" sortable>
             <template #body="{ data }">
-              <span class="avatar-cell"><FileThumb v-if="meta.image_field" :id="data.data[meta.image_field]" :size="28" round /><RouterLink :to="{ name: 'form', params: { doctype, name: data.name } }" :data-testid="`open-${data.name}`" style="font-weight: 500; white-space: nowrap">{{ data.name }}</RouterLink></span>
+              <span class="avatar-cell"><FileThumb v-if="meta.image_field" :id="data.data[meta.image_field]" :size="28" round /><RouterLink :to="{ name: 'form', params: { doctype, name: data.name } }" :data-testid="`open-${data.name}`" style="font-weight: 500; white-space: nowrap">{{ data.name }}</RouterLink><RowTags :tags="rowTags[data.name]" :active="activeTag" @pick="pickTag" /></span>
             </template>
           </Column>
           <Column
@@ -641,6 +718,7 @@ function title(r: DocRecord): string {
                 <RouterLink :to="{ name: 'form', params: { doctype, name: data.name } }" :data-testid="`open-${data.name}`" style="font-weight: 500">
                   {{ cell(f, data) || title(data) }}
                 </RouterLink>
+                <RowTags :tags="rowTags[data.name]" :active="activeTag" @pick="pickTag" />
               </span>
               <CellValue v-else :field="f" :value="data.data[f.fieldname]" :text="cell(f, data)" />
             </template>
@@ -655,7 +733,7 @@ function title(r: DocRecord): string {
           </Column>
           <template #empty>
             <div class="empty-state" data-testid="list-empty">
-              <p class="desk-muted">{{ quick || activeFilters || status !== null ? t.list.emptyFiltered : t.list.empty(label) }}</p>
+              <p class="desk-muted">{{ quick || activeFilters || status !== null || tagFilter ? t.list.emptyFiltered : t.list.empty(label) }}</p>
               <Button v-if="trulyEmpty && canCreate" :as="RouterLink" :to="{ name: 'new', params: { doctype } }" :label="t.list.createFirst(label)" icon="pi pi-plus" size="small" data-testid="create-first" />
             </div>
           </template>

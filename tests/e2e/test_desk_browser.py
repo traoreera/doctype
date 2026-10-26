@@ -25,7 +25,7 @@ import pytest
 import yaml
 
 import xcore_doctype
-from tests.support import FIXTURES, install_dev_auth, mint_token
+from tests.support import FIXTURES, hermetic_services, install_dev_auth, mint_token
 
 ROOT = Path(__file__).resolve().parents[2]
 UI = ROOT / "ui"
@@ -68,7 +68,7 @@ def host(tmp_path, request):
 
     Paramètre indirect `{"extensions": [...]}` : les plugins dont l'opérateur laisse servir l'extension du Desk (D28)."""
     extensions = getattr(request, "param", {}).get("extensions")
-    config = yaml.safe_load((ROOT / "integration.yaml").read_text())
+    config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["services"]["databases"]["default"]["url"] = f"sqlite+aiosqlite:///{tmp_path / 'e2e.db'}"
     config["tenancy"] = {"enabled": True, "isolate_db": False}
     config["app"]["server"]["reload"] = False

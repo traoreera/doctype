@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, Mapping, Sequence
 
 from .decimals import canonical
 from .errors import ValidationFailed
+from .tags import TAG_FILTER, supports_tags
 
 if TYPE_CHECKING:  # pragma: no cover - schema importe dashboards, qui importe ce module
     from .schema import DocTypeDef
@@ -256,7 +257,9 @@ def validate_filters(compiled: Any, filters: Mapping[str, Any] | None) -> dict[s
     tables = {f.fieldname for f in defn.fields if f.fieldtype == "Table"}
     if tables & set(filters):
         raise ValidationFailed(f"filtre impossible sur un champ Table : {sorted(tables & set(filters))}")
-    unknown = sorted(set(filters) - set(compiled.adapters) - set(SYSTEM_FILTERS))
+    # `_tag` : les étiquettes du document (`tags.py`), là seulement où un document peut en porter.
+    tagged = {TAG_FILTER} if supports_tags(defn) else set()
+    unknown = sorted(set(filters) - set(compiled.adapters) - set(SYSTEM_FILTERS) - tagged)
     if unknown:
         raise ValidationFailed(f"filtre sur des champs inconnus : {unknown}")
     return {k: compiled.coerce_filter(k, v) for k, v in filters.items()}

@@ -2,6 +2,7 @@ import { canonicalDecimal, normalizeDecimal } from './decimal'
 import { parseDuration } from './duration'
 import { isValidTime, normalizeTime } from './fieldrules'
 import { isDecimalType, FILTER_OPS, type FieldMeta, type FilterValue, type Filters, type FieldType } from './types'
+import { TAG_FILTER, parseTagFilter, type TagFilter } from './tags'
 
 /** Une ligne de la barre de filtres. Un seul filtre par champ : le serveur n'en accepte pas deux sur le même. */
 export interface FilterRow {
@@ -100,15 +101,21 @@ export function parseFiltersParam(raw: unknown): Filters {
 
 /**
  * Les filtres de l'API → les lignes de la barre de filtres, pour que l'utilisateur VOIE ce qui filtre la liste que sa carte a ouverte.
- * `docstatus` n'est pas un champ : c'est le sélecteur d'état (`status`). Un filtre que la barre ne sait pas montrer est écarté.
+ * `docstatus` n'est pas un champ : c'est le sélecteur d'état (`status`) ; `_tag` non plus : c'est le filtre d'étiquette (`tag`, voir
+ * `lib/tags.TagFilter`). Un filtre que la barre ne sait pas montrer est écarté.
  */
-export function rowsFromFilters(filters: Filters, fields: readonly FieldMeta[], nextId: () => number): { rows: FilterRow[]; status: number | null } {
+export function rowsFromFilters(filters: Filters, fields: readonly FieldMeta[], nextId: () => number): { rows: FilterRow[]; status: number | null; tag: TagFilter | null } {
   const byName = new Map(fields.map((f) => [f.fieldname, f]))
   const rows: FilterRow[] = []
   let status: number | null = null
+  let tag: TagFilter | null = null
   for (const [name, spec] of Object.entries(filters)) {
     if (name === 'docstatus') {
       if (typeof spec === 'number' && [0, 1, 2].includes(spec)) status = spec
+      continue
+    }
+    if (name === TAG_FILTER) {
+      tag = parseTagFilter(spec)
       continue
     }
     const field = byName.get(name)
@@ -118,7 +125,7 @@ export function rowsFromFilters(filters: Filters, fields: readonly FieldMeta[], 
     const shown = op === 'in' && Array.isArray(value) ? value.join(isDecimalType(field.fieldtype) ? ';' : ',') : value
     rows.push({ id: nextId(), field: name, op, value: shown })
   }
-  return { rows, status }
+  return { rows, status, tag }
 }
 
 /**

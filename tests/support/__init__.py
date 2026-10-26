@@ -26,6 +26,19 @@ _spec.loader.exec_module(devauth)
 mint_token = devauth.mint_token
 
 
+def hermetic_services(config: dict) -> dict:
+    """Ce qu'un hôte de TEST garde de l'`integration.yaml` du dépôt : tout, sauf les services extérieurs. L'hôte de développement met le cache
+    et l'ordonnanceur sur Redis (D30, `doc/programme.md` §3.1) ; un test ne dépend jamais d'un serveur Redis qui tourne (un clone neuf doit
+    passer `make check`), il les remet en mémoire. Modifie `config` en place et le rend."""
+    services = config.get("services", {})
+    for key in ("cache", "scheduler"):
+        block = services.get(key)
+        if isinstance(block, dict) and block.get("backend") == "redis":
+            block["backend"] = "memory"
+            block.pop("url", None)
+    return config
+
+
 def install_dev_auth(dest: Path, *, link: bool = False) -> None:
     """Pose le plugin de test `dev-auth` dans `dest` (une copie, ou un lien symbolique)."""
     if link:

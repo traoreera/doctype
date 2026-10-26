@@ -24,7 +24,7 @@ Dans cet ordre : chacune est indépendante des autres, la première est la plus 
 |---|---|---|---|
 | 1 | ~~**Filtres sur les choix d'un Lien**~~ **FAIT le 22 oct. (D29, voir §1.1)** | tranché : dynamiques ET vérifiés à l'écriture | angle mort → faite |
 | 2 | ~~**Onglets de formulaire**~~ **FAIT le 24 oct. (voir CLAUDE.md « Form tabs »)** | tranché : un `tab` par section, les mêmes règles pour le YAML et l'habillage, qui peut lui aussi ranger en onglets ; ce qu'une disposition ne place pas ferme le premier onglet | angle mort → faite |
-| 3 | **Étiquettes** | Table dédiée jugée sur le document, comme la collaboration (`xdt_comment`…) : lire le document suffit-il pour voir ses étiquettes, et faut-il l'ÉCRIRE pour en poser une ? Filtrables dans la liste (donc dans `Query`, pas après coup). | une des 20 |
+| 3 | ~~**Étiquettes**~~ **FAIT le 26 oct. (voir §1.2)** | tranché : lire le document suffit pour voir ses étiquettes, il faut l'ÉCRIRE pour en poser ou en retirer ; filtre `_tag` dans `Query` | une des 20 → faite |
 
 ### 1.1 D29 — les filtres d'un champ Link (fait le 22 octobre 2026)
 
@@ -51,6 +51,46 @@ Ce qui a été décidé, et qui vaut pour la suite :
 - `DynamicLink` en est exclu : sa cible change d'un document à l'autre, rien ne serait contrôlable au chargement.
 
 Preuves : `tests/unit/test_link_filters.py` (18 cas), `ui/tests/form.spec.ts` et `ui/tests/lists-links-api.spec.ts`.
+
+### 1.2 Les étiquettes (fait le 26 octobre 2026)
+
+Ce qui a été décidé :
+
+- **Autour du document, comme la collaboration.** Table `xdt_tag` (tenant, type, document, forme repliée, écriture, auteur, date), jamais une
+  clé de `data` : poser une étiquette ne modifie pas le document (ni version, ni historique, ni règle de notification), un document **soumis
+  ou annulé s'étiquette encore**. Elles **suivent un renommage** et **disparaissent avec le document** (un document qui reprend le nom
+  n'hérite de rien).
+- **Lire pour voir, écrire pour poser.** Voir les étiquettes d'un document demande de le LIRE (hors périmètre `if_owner` : « introuvable ») ;
+  en poser ou en retirer demande le périmètre d'ÉCRITURE de CE document (`_can_write`, comme joindre ou assigner) : une étiquette change
+  ce que les autres trouvent en filtrant. Aucun grant nouveau.
+- **Une étiquette, quelle que soit la casse.** La clé est la forme repliée (`str.casefold`, calculée en Python : le `lower()` de SQLite ne
+  connaît que l'ASCII), l'écriture affichée est celle déjà en usage dans le type — mais prise **seulement sur un document que l'appelant lit**
+  (sinon l'écriture trahirait l'étiquette d'un document invisible). Un nom : forme composée NFC (« é » composé ou décomposé : une seule
+  étiquette), 1 à 50 caractères, blancs réduits (classe écrite un à un : `\s` n'a pas le même sens en Python et en JavaScript), ni virgule,
+  ni contrôle, ni invisible (catégories Cc, Cf, Cs : « Urgent » suivi d'une espace sans chasse serait un sosie qui partagerait les filtres
+  en deux). Vecteurs communs au serveur et au Desk : `tests/vectors/tag_cases.json`.
+- **20 au plus par document**, comptées APRÈS la pose, sous le verrou du document (`FOR UPDATE` sur PostgreSQL, prouvé par un test de
+  concurrence ; SQLite n'a qu'un écrivain) : une demande refusée ne garde rien, retraits compris.
+- **Jamais d'étiquette orpheline** (constat de la relecture) : une pose qui croise une suppression ou un renommage relit le document
+  APRÈS sa première écriture (sur SQLite, c'est elle qui prend le verrou de la base ; sur PostgreSQL, le verrou de ligne fait attendre la
+  suppression, qui emporte alors l'étiquette) ; disparu, la pose est défaite (introuvable). Sans cela, le prochain document du même nom
+  héritait de l'étiquette posée sur l'ancien.
+- **Filtrables dans `Query`**, jamais après coup : `{"_tag": "Urgent"}`, `["!=", …]` (ne l'a pas, y compris sans aucune), `["in", […]]`,
+  un `EXISTS` corrélé au document, donc valable partout où passent les filtres de la liste (liste, agrégats, recherche, vues enregistrées,
+  blocs d'un espace) et toujours dans le périmètre de lecture. Le soulignement le sépare des champs. Refusé sur un document unique ou un
+  type virtuel (ses documents ne sont pas dans la table), et dans `link_filters` (le contrôle à l'écriture se fait en mémoire).
+- **Comptes** : `GET /tag-counts/{type}` donne les étiquettes en usage parmi les documents lisibles que les filtres retiennent (barre
+  latérale, propositions de saisie) ; `GET /tags-used/{type}` (un `EXISTS`) dit seulement s'il y en a, ce que la liste demande à chaque
+  ouverture.
+- **Ce qu'elles ne font pas, exprès** : poser ou retirer une étiquette n'écrit ni historique ni événement (aucune règle de notification ne
+  la voit, un retrait ne laisse pas de trace) ; `amend` ne recopie pas les étiquettes du document annulé, qui les garde (il compte encore
+  dans les filtres et les comptes, comme tout document annulé que la liste montre).
+
+Desk : barre d'étiquettes sous le titre d'une fiche (posée tout de suite, sans « Enregistrer » ; un changement à la fois, le focus passe à
+l'étiquette suivante après un retrait), pastilles des lignes de liste (une requête par page) qui filtrent au clic, filtre tenu hors de la
+barre de filtres (une pastille retirable qui dit « Urgent », « sauf Archivé » ou « A ou B » : un bloc d'espace ou une vue enregistrée peut
+porter les trois formes, la liste qu'il ouvre les applique), groupe « Étiquettes » de la barre latérale, « Étiqueter… » en lot. Pas fait : couleurs d'étiquette, renommer ou fusionner une
+étiquette dans tout un type, étiquettes dans les cartes de la liste sur téléphone.
 
 ## 2. Groupe 2 — ce qui rend le produit utilisable par quelqu'un qui n'est pas développeur
 

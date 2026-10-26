@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from xcore import Xcore
 
 import xcore_doctype
-from tests.support import FIXTURES, XAUTH_DIR, install_dev_auth, mint_token
+from tests.support import FIXTURES, XAUTH_DIR, hermetic_services, install_dev_auth, mint_token
 
 ROOT = Path(__file__).resolve().parents[2]
 PLUGIN_DIR = Path(xcore_doctype.__file__).parent / "plugin_dir"
@@ -360,7 +360,7 @@ async def boot_host(
                       doctype_config=doctype_config, extra_permissions=plugin_permissions)
     restore_env = _write_xauth(root) if xauth else (_write_dev_auth(root / "app" / "auth", auth_members, auth_callers), None)[1]
 
-    config = yaml.safe_load((ROOT / "integration.yaml").read_text())
+    config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["plugins"]["directory"] = str(root / "app")
     config["app"].pop("dotenv", None)  # le `.env` du développeur n'entre jamais dans un test
     config["plugins"]["strict_trusted"] = strict_trusted
