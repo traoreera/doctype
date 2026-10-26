@@ -147,6 +147,13 @@ class TestWorkspaceLoading:
         block = {k: v for k, v in {**CARD, "function": "count", "filters": {"docstatus": 0}}.items() if k != "field"}
         assert load(reg, tmp_path, ws(block)) == ["shop"]
 
+    def test_a_block_may_count_the_documents_of_a_tag(self, tmp_path):
+        """`_tag` (les étiquettes, `tags.py`) passe par le même validateur que la liste : un nom d'étiquette invalide est une erreur de chargement."""
+        block = {k: v for k, v in {**CARD, "function": "count", "filters": {"_tag": "Urgent"}}.items() if k != "field"}
+        assert load(reg_with(dt()), tmp_path, ws(block)) == ["shop"]
+        with pytest.raises(InvalidDefinition, match="_tag"):
+            load(reg_with(dt()), tmp_path, ws({**block, "filters": {"_tag": "a,b"}}))
+
     def test_bars_and_lines_may_average_but_a_pie_must_add_up(self, tmp_path):
         reg = reg_with(dt())
         ok = {**CHART, "kind": "bar", "function": "avg", "field": "hours"}
