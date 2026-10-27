@@ -33,6 +33,8 @@ DIST = Path(xcore_doctype.__file__).parent / "ui" / "dist"
 PLUGIN_DIR = Path(xcore_doctype.__file__).parent / "plugin_dir"
 SECRET = "e2e-browser-secret"
 PREFIX = "/app/xcore-doctype"
+XFLOW_DIR = ROOT / "app" / "xflows"  # l'orchestrateur, hors dépôt (poste du développeur) : sans lui, le scénario des automatisations saute
+XFLOW_GRANTS = ["xflow:workflows:read", "xflow:workflows:write", "xflow:runs:read", "xflow:runs:write"]
 GRANTS = (
     [f"sales:{t}:{a}" for t in ("customer", "country", "invoice") for a in ("read", "write", "delete")]
     + [f"stock:{t}:{a}" for t in ("item", "warehouse", "stock_entry") for a in ("read", "write", "delete")]
@@ -71,6 +73,14 @@ def host(tmp_path, request):
     Paramètre indirect `{"extensions": [...]}` : les plugins dont l'opérateur laisse servir l'extension du Desk (D28)."""
     extensions = getattr(request, "param", {}).get("extensions")
     developer = getattr(request, "param", {}).get("developer", False)
+    xflow = getattr(request, "param", {}).get("xflow", False)
+    if xflow:
+        import importlib.util
+
+        if not XFLOW_DIR.is_dir():
+            pytest.skip("xflow (app/xflows) est absent de ce poste : scénario des automatisations sans objet")
+        if importlib.util.find_spec("jmespath") is None:
+            pytest.skip("jmespath (dépendance de xflow) n'est pas installé dans cet environnement")
     config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["services"]["databases"]["default"]["url"] = f"sqlite+aiosqlite:///{tmp_path / 'e2e.db'}"
     config["tenancy"] = {"enabled": True, "isolate_db": False}
@@ -97,7 +107,20 @@ def host(tmp_path, request):
         data = yaml.safe_load(manifest.read_text())
         data.setdefault("doctype", {}).setdefault("desk", {})["extensions"] = extensions
         manifest.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
-    install_dev_auth(tmp_path / "app" / "auth", link=True)  # le plugin de TEST, nommé `auth` : les plugins du dépôt le `requires`
+    if xflow:
+        # Le plugin de test `auth` imite aussi `xauth.user.permissions` : xflow y relit, à chaque exécution, les grants de qui il représente.
+        install_dev_auth(tmp_path / "app" / "auth")
+        auth = yaml.safe_load((tmp_path / "app" / "auth" / "plugin.yaml").read_text())
+        auth["allowed_callers"] = ["xcore-doctype", "xflow"]
+        auth["permissions"] = [{"resource": "xauth.*", "actions": ["*"], "effect": "allow"}]
+        auth["grants"] = {"*": {"alice": GRANTS + XFLOW_GRANTS}}
+        (tmp_path / "app" / "auth" / "plugin.yaml").write_text(yaml.safe_dump(auth, allow_unicode=True))
+        shutil.copytree(XFLOW_DIR, tmp_path / "app" / "xflow", ignore=shutil.ignore_patterns("__pycache__", "tests"))
+        flow = yaml.safe_load((tmp_path / "app" / "xflow" / "plugin.yaml").read_text())
+        flow["requires"] = ["auth"]  # le plugin de test `auth` n'a pas la version d'xauth (1.0.0) que xflow exige
+        (tmp_path / "app" / "xflow" / "plugin.yaml").write_text(yaml.safe_dump(flow, allow_unicode=True, sort_keys=False))
+    else:
+        install_dev_auth(tmp_path / "app" / "auth", link=True)  # le plugin de TEST, nommé `auth` : les plugins du dépôt le `requires`
     (tmp_path / "app" / "geo").symlink_to(FIXTURES / "geo")  # le référentiel partagé (pays, devises) que `stock` requires
     (tmp_path / "app" / "stock").symlink_to(FIXTURES / "stock")  # le stock : articles, entrepôts, mouvements soumettables
     (tmp_path / "app" / "sales").symlink_to(FIXTURES / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
@@ -135,14 +158,14 @@ def host(tmp_path, request):
         log.close()
 
 
-def _scenario(host: str, script: str, **extra_env: str) -> subprocess.CompletedProcess:
+def _scenario(host: str, script: str, *, grants: list[str] = GRANTS, **extra_env: str) -> subprocess.CompletedProcess:
     missing = _chromium_missing()
     if missing:
         pytest.skip(missing)
     tenant = f"e2e-{uuid.uuid4().hex[:8]}"  # un tenant neuf : le scénario part d'une liste vide quoi qu'il arrive
     token = mint_token(
         SECRET,
-        {"sub": "alice", "tenant_id": tenant, "permissions": GRANTS, "user": {"email": "alice@example.com", "tenant_id": tenant}},
+        {"sub": "alice", "tenant_id": tenant, "permissions": grants, "user": {"email": "alice@example.com", "tenant_id": tenant}},
         ttl=3600,
     )
     env = {
@@ -206,3 +229,13 @@ def test_the_developer_builder_makes_a_yaml_that_a_plugin_loads(host, tmp_path):
     assert run.returncode == 0, f"scénario du constructeur en échec :\n{run.stdout}\n{run.stderr}"
     _, findings = check([plugin], owner="support", needs=[FIXTURES / "geo" / "doctypes", FIXTURES / "stock" / "doctypes", FIXTURES / "sales" / "doctypes"])
     assert not [f for f in findings if f.level == "error"], findings
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"xflow": True}], indirect=True)
+def test_an_automation_is_built_on_the_canvas_and_runs_on_a_document_event(host):
+    """xflow (hors dépôt, saute sans lui) piloté depuis le Desk : une automatisation construite au canevas (déclencheur « Demande change
+    d'état », lire, condition, commenter), enregistrée, déclenchée par un vrai événement du moteur, exécutée AU NOM de qui l'a enregistrée,
+    et ses étapes allumées sur le canevas."""
+    run = _scenario(host, "e2e/automations.e2e.mjs", grants=GRANTS + XFLOW_GRANTS)
+    assert run.returncode == 0, f"scénario des automatisations en échec :\n{run.stdout}\n{run.stderr}"

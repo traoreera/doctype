@@ -18,6 +18,7 @@ import { useRecents } from '@/stores/recents'
 import NotificationsMenu from '@/components/NotificationsMenu.vue'
 import FileThumb from '@/components/FileThumb.vue'
 import { useProfile } from '@/stores/profile'
+import { useAutomations } from '@/stores/automations'
 import { useTasks } from '@/stores/tasks'
 import { useSession } from '@/stores/session'
 import { useTheme } from '@/stores/theme'
@@ -29,6 +30,7 @@ const workspaces = useWorkspaces()
 const recents = useRecents()
 const prefs = usePreferences()
 const tasks = useTasks()
+const automations = useAutomations()
 const profile = useProfile()
 const theme = useTheme()
 const router = useRouter()
@@ -63,6 +65,7 @@ onMounted(() => {
 onMounted(async () => {
   recents.load()
   void tasks.refresh() // la pastille de « Mes tâches »
+  void automations.probe() // le lien « Automatisations », seulement si xflow est là et que je peux le lire
   void prefs.load() // nom, logo, couleur et format de date de l'organisation : sans bloquer le reste
   try {
     // Les espaces donnent la barre latérale ; les types servent la barre de commande et l'accueil.
@@ -313,6 +316,9 @@ const items = computed(() => [
         <span v-if="tasks.openCount" class="nav-badge" data-testid="tasks-count" :aria-label="`${tasks.openCount}`">{{ tasks.openCount }}</span>
       </RouterLink>
       <RouterLink class="desk-link" :to="{ name: 'shared' }" data-testid="nav-shared"><i class="pi pi-share-alt" />{{ t.share.withMe }}</RouterLink>
+      <RouterLink v-if="automations.availability === 'yes'" class="desk-link" :to="{ name: 'automations' }" data-testid="nav-automations">
+        <i class="pi pi-bolt" />{{ t.automations.title }}
+      </RouterLink>
       <h6>{{ t.workspace.spaces }}</h6>
       <div v-for="w in workspaces.items ?? []" :key="w.name" class="ws-item" :data-testid="`ws-${w.name}`">
         <div class="desk-link ws-row" :class="{ 'router-link-active': currentSpace === w.name }">

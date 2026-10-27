@@ -739,6 +739,15 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.save", op)
 
+    @action("doc.patch")
+    async def doc_patch(self, payload: dict) -> dict:
+        """Modifier QUELQUES champs (`data`), les autres restent ce qu'ils sont ; `version` facultative (celle lue, sinon la courante)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return {"doc": await self.documents.patch(ctx, _need(payload, "doctype"), _need(payload, "name"), _need(payload, "data"), payload.get("version"))}
+
+        return await self._run("doc.patch", op)
+
     @action("doc.submit")
     async def doc_submit(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:

@@ -93,6 +93,13 @@ class Plugin(TrustedBase):
         # L'annuaire d'xauth, imité pour les tests du moteur : `members` (manifeste, par organisation) -> `xauth.users.list.tenant`.
         if action == "xauth.users.list.tenant" and isinstance((self.ctx.config or {}).get("members"), dict):
             return ok(users=(self.ctx.config["members"].get(payload.get("tenant_id")) or []))
+        # Les grants d'une personne dans une organisation, imités (`xauth.user.permissions`) : ce que xflow redemande à chaque exécution d'un
+        # run pour agir au nom de qui l'a déclenché ou déployé. `grants` (manifeste) : organisation (ou `*`) -> personne -> grants.
+        if action == "xauth.user.permissions" and isinstance((self.ctx.config or {}).get("grants"), dict):
+            table = self.ctx.config["grants"]
+            per_tenant = table.get(payload.get("tenant_id")) or table.get("*") or {}
+            found = per_tenant.get(payload.get("user_id"))
+            return ok(permissions=list(found)) if isinstance(found, list) else error("utilisateur inconnu", "not_found")
         # Les notifications d'xauth (`xauth.notify`), imitées : chaque demande est ajoutée à `notifications.jsonl`, dans le dossier du plugin (les tests la relisent).
         if action == "xauth.notify":
             if not isinstance(payload, dict) or not isinstance(payload.get("user_ids"), list):

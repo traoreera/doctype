@@ -18,9 +18,11 @@ import { useMeta } from '@/stores/meta'
 import { useSession } from '@/stores/session'
 import { useTheme } from '@/stores/theme'
 import { usePreferences } from '@/stores/preferences'
+import { useAutomations } from '@/stores/automations'
 import { useTasks } from '@/stores/tasks'
 import { useUsers } from '@/stores/users'
 import { authBase, XauthClient } from '@/lib/xauth'
+import { XflowClient, xflowBase } from '@/lib/xflow'
 import { useWorkspaces } from '@/stores/workspaces'
 import { primeVueOptions } from '@/theme/frappe'
 import { frLocale } from '@/theme/locale'
@@ -70,7 +72,21 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
         },
       )
     : null
-  const services: Services = { transport, config, api, auth }
+  // xflow : même session ; sa racine est à côté de celle de xcore-doctype (`/app/xflow`). Installé ou non, on le saura en le lisant.
+  const flows = new XflowClient(
+    transport,
+    () => {
+      const s = useSession(pinia)
+      return { baseUrl: xflowBase(config.baseUrl), token: s.token, tenant: s.tenant }
+    },
+    async () => {
+      const s = useSession(pinia)
+      if ((await s.refresh()) === 'ok') return true
+      s.expire()
+      return false
+    },
+  )
+  const services: Services = { transport, config, api, auth, flows }
 
   const router = createDeskRouter(pinia)
   const app = createApp(App)
@@ -125,6 +141,7 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
       usePreferences(pinia).reset()
       useTasks(pinia).reset()
       useUsers(pinia).reset()
+      useAutomations(pinia).reset()
       const here = router.currentRoute.value
       if (!here.meta.public) void router.replace({ name: 'login', query: here.fullPath !== '/' ? { next: here.fullPath } : {} })
     },
