@@ -14,7 +14,7 @@ from xcore.kernel.api import get_current_user
 from xcore.kernel.api.auth import get_current_principal
 from xcore.kernel.tenancy import _current_tenant_id
 
-# Import privé : à exposer publiquement côté xcore (doc/doctype.md §14, point 3).
+# Import privé : à exposer publiquement côté xcore (process/doctype.md §14, point 3).
 from xcore.kernel.tenancy.services import _validate_tenant
 
 from .errors import ConfigurationError, ContextError

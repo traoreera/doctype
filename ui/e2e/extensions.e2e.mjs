@@ -1,5 +1,5 @@
 /**
- * Les extensions JavaScript des plugins (D28, doc/extensions.md), dans un vrai navigateur, face à un vrai serveur : l'import map et
+ * Les extensions JavaScript des plugins (D28, process/extensions.md), dans un vrai navigateur, face à un vrai serveur : l'import map et
  * la CSP laissent charger l'extension de `sales` (même origine, empreinte de l'import map), qui ajoute à la fiche Client un panneau et
  * une action, une page `#/x/sales/overview` (lien direct compris), un lien de barre latérale et une commande. Aucune violation CSP.
  */

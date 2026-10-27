@@ -1,5 +1,5 @@
 /**
- * Le constructeur de DocTypes du mode développeur (doc/programme.md §3.5) : une définition ENTIÈRE qu'on bâtit à l'écran, puis qu'on
+ * Le constructeur de DocTypes du mode développeur (process/programme.md §3.5) : une définition ENTIÈRE qu'on bâtit à l'écran, puis qu'on
  * télécharge en YAML pour la poser dans le dossier `doctypes/` d'un plugin. Rien n'est enregistré : le serveur juge (`POST /devtools/check`)
  * et rend le YAML ; c'est tout.
  *

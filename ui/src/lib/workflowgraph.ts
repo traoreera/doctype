@@ -3,7 +3,7 @@
  *
  * Tout est pur ici, testé à part (`tests/workflowgraph.spec.ts`) : la page ne fait que donner ces nœuds et ces flèches à Vue Flow.
  * Le graphe montre l'automate du YAML (`definition`) habillé de ce que l'organisation RESSERRE (`flowRows` de `lib/workflowedit`) :
- * il n'invente ni état ni transition (doc/programme.md §3.6), il dit seulement lesquelles sont fermées, conditionnées ou interdites
+ * il n'invente ni état ni transition (process/programme.md §3.6), il dit seulement lesquelles sont fermées, conditionnées ou interdites
  * à l'auteur.
  *
  * Placement : de gauche à droite, chaque état dans la colonne de sa distance au PREMIER état (celui d'un document neuf) ; dans une

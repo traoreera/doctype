@@ -1,5 +1,5 @@
 /**
- * Le contrat des extensions JavaScript du Desk, version 1 (D28, `doc/extensions.md`). C'est la SEULE surface publique : une extension
+ * Le contrat des extensions JavaScript du Desk, version 1 (D28, `process/extensions.md`). C'est la SEULE surface publique : une extension
  * reçoit un `DeskHandle` dans `setup` et n'importe rien d'autre du Desk que `@xcore-doctype/desk` (le SDK, `src/shared/sdk.ts`).
  */
 import type { Component } from 'vue'

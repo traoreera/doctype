@@ -1,4 +1,4 @@
-"""Définition d'un DocType (doc/doctype.md §9) : le contrat dont tout le reste dérive.
+"""Définition d'un DocType (process/doctype.md §9) : le contrat dont tout le reste dérive.
 
 On ne rejette pas en silence ce qu'on n'applique pas : une clé inconnue est refusée (`extra="forbid"`) plutôt
 qu'ignorée, sinon la définition donnerait l'impression d'être validée alors qu'elle ne l'est pas. Les blocs
@@ -66,16 +66,16 @@ _Fieldname = Annotated[str, StringConstraints(pattern=_FIELDNAME_RE.pattern)]
 
 # `link_filters` (D29) : au plus ce nombre de champs filtrés, et le préfixe qui désigne un champ du document au lieu d'une valeur.
 MAX_LINK_FILTERS = 10
-# Un workflow (doc/programme.md §3.2) reste lisible d'un coup d'œil : au-delà, c'est un moteur de processus, pas un document.
+# Un workflow (process/programme.md §3.2) reste lisible d'un coup d'œil : au-delà, c'est un moteur de processus, pas un document.
 MAX_WORKFLOW_STATES = 20
 MAX_WORKFLOW_TRANSITIONS = 50
 # Onglets d'une fiche : un `tab` par section (le même pour les sections qui se suivent). Au-delà, une fiche n'est plus lisible.
 MAX_TABS = 12
-# « Créer depuis » (doc/mapper.md) : le nombre de sources depuis lesquelles un type se préremplit. Au-delà, le menu « Créer > »
+# « Créer depuis » (process/mapper.md) : le nombre de sources depuis lesquelles un type se préremplit. Au-delà, le menu « Créer > »
 # de la source n'est plus un geste mais un annuaire.
 MAX_MAPPINGS = 10
 # Combien de documents déjà émis pour UNE source le moteur accepte de lire pour calculer le reste à faire. Au-delà, il refuse
-# de prétendre le connaître plutôt que d'annoncer un reste faux (doc/mapper.md §5).
+# de prétendre le connaître plutôt que d'annoncer un reste faux (process/mapper.md §5).
 MAX_MAPPING_SOURCES = 200
 LINK_FILTER_REF = "$"
 # Même forme que les grants d'auth (`plugin:ressource:action`, voir xauth `_GRANT_NAME_RE`). Les NOMS DE RÔLE sont des
@@ -122,7 +122,7 @@ MATCHABLE_TYPES = ("Text", "Select", "Link")
 
 # `match` est GELÉ. Il lit `principal["user"][attr]`, or xauth ne met que `email` et `tenant_id` dans `user`. Le bon
 # mécanisme chez nous est le scope d'auth (`scope_type`/`scope_id`), qui exige une action listant les scope_id d'un
-# utilisateur pour un grant (voir doc/phase1.md §7). Le code reste en place et testé ; ce drapeau empêche seulement
+# utilisateur pour un grant (voir process/phase1.md §7). Le code reste en place et testé ; ce drapeau empêche seulement
 # une définition de s'en servir tant qu'aucun backend ne peut l'alimenter. Les tests le lèvent explicitement.
 MATCH_ENABLED = False
 _DocTypeName = Annotated[str, StringConstraints(pattern=r"^[A-Za-z][A-Za-z0-9 _-]{0,62}$")]
@@ -163,7 +163,7 @@ class FieldDef(BaseModel):
     # confiance et la source d'un DocType virtuel l'écrivent, eux. Sans condition, contrairement à `read_only_depends_on`.
     read_only: StrictBool = False
     in_list_view: StrictBool = False
-    # Conditions (doc/doctype.md D22), voir expr.py. Compilées et vérifiées par DocTypeDef (noms de champs connus).
+    # Conditions (process/doctype.md D22), voir expr.py. Compilées et vérifiées par DocTypeDef (noms de champs connus).
     # Une quantité s'affiche avec son unité : `unit_from: uom` (un champ texte du même document ou de la même ligne) ou
     # `unit_from: item.uom` (le champ `uom` du document que le champ Link `item` désigne). Affichage seulement : rien n'est stocké.
     unit_from: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}(\.[a-z][a-z0-9_]{0,62})?$")] | None = None
@@ -443,7 +443,7 @@ class PermissionsDef(BaseModel):
         if isinstance(data, list):
             raise ValueError(
                 "`permissions` est un objet {read, write, create, delete, submit, cancel} dont chaque clé liste des grants ; "
-                "l'ancienne liste de lignes {grant, read, write…} n'existe plus (doc/phase1.md §7)"
+                "l'ancienne liste de lignes {grant, read, write…} n'existe plus (process/phase1.md §7)"
             )
         return data
 
@@ -496,7 +496,7 @@ class GrantSpec:
 class WorkflowState(BaseModel):
     """Un état du workflow, et l'état de document (`docstatus`) qu'il porte.
 
-    C'est la décision centrale (doc/programme.md §3.2) : un document a UN automate, pas deux. Un état déclare donc dans quel
+    C'est la décision centrale (process/programme.md §3.2) : un document a UN automate, pas deux. Un état déclare donc dans quel
     `docstatus` il met le document, et c'est la transition qui fait passer les deux ensemble — plutôt qu'un champ d'état
     parallèle à `docstatus`, qui autoriserait « Approuvé » sur un document annulé.
     """
@@ -576,7 +576,7 @@ class WorkflowDef(BaseModel):
 
 
 class LayoutSection(BaseModel):
-    """Une section du formulaire : des colonnes de champs (doc/doctype.md §12), rangée dans un onglet quand la fiche en a (`tab`, voir
+    """Une section du formulaire : des colonnes de champs (process/doctype.md §12), rangée dans un onglet quand la fiche en a (`tab`, voir
     `layout_tab_problems`)."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -713,7 +713,7 @@ class MappingQuantity(BaseModel):
     """Le couple de quantités qui fait le « reste à faire » : le champ de la ligne SOURCE, celui de la ligne CIBLE.
 
     Sans lui, le mapper recopie des quantités pleines et rien n'empêche de transférer deux fois. Avec lui,
-    `restant = quantité source − somme des quantités déjà citées` (doc/mapper.md §5).
+    `restant = quantité source − somme des quantités déjà citées` (process/mapper.md §5).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -727,7 +727,7 @@ class MappingLines(BaseModel):
 
     `reference` et `document` nomment les deux champs de la ligne CIBLE qui gardent la trace de son origine (l'indice
     de la ligne source, et le document source). Ils sont normalement `read_only` — l'utilisateur ne doit pas les
-    retoucher — et le moteur les écrit lui-même, puis les VÉRIFIE à l'écriture (doc/mapper.md §4).
+    retoucher — et le moteur les écrit lui-même, puis les VÉRIFIE à l'écriture (process/mapper.md §4).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
@@ -758,7 +758,7 @@ class MappingLines(BaseModel):
 
 
 class CreatedFrom(BaseModel):
-    """« Ce type se crée depuis celui-là » : de quoi préremplir un brouillon (doc/mapper.md).
+    """« Ce type se crée depuis celui-là » : de quoi préremplir un brouillon (process/mapper.md).
 
     Déclaré sur la CIBLE : son plugin possède ses champs et sait les remplir, un module nouveau se branche sans
     toucher au YAML de la source, et le droit en jeu est son propre `create`. Le bouton, lui, s'affiche sur la source.
@@ -796,7 +796,7 @@ class DocTypeDef(BaseModel):
     naming: Literal["hash", "owner", "prompt"] | NamingField | NamingSeries = "hash"
     # Renommer un document (`POST …/rename`) : son nom change et tous les Link qui le citent le suivent. Pas pour un nom qui n'est pas libre (`owner`, `field`, série).
     allow_rename: StrictBool = False
-    # L'automate métier du document (doc/programme.md §3.2) : des états, des transitions, et qui a le droit de les faire.
+    # L'automate métier du document (process/programme.md §3.2) : des états, des transitions, et qui a le droit de les faire.
     # Il PILOTE `docstatus` au lieu de s'y ajouter : un document a un seul état. `/submit` et `/cancel` lui cèdent la place.
     workflow: WorkflowDef | None = None
     # DocType « enfant » : ses documents sont les LIGNES d'un champ Table d'un autre DocType (tableau JSON dans le parent).
@@ -833,7 +833,7 @@ class DocTypeDef(BaseModel):
     # Les vues du type dans le Desk : la liste et le rapport existent toujours, le tableau de bord est généré ; on déclare ici le Kanban,
     # le Calendrier, le Gantt (ils exigent des champs précis) ou un tableau de bord à soi. Voir `dashboards.py`.
     views: ViewsDef | None = None
-    # « Créer depuis » (doc/mapper.md) : les types depuis lesquels CE type se préremplit. Le bouton s'affiche sur la source,
+    # « Créer depuis » (process/mapper.md) : les types depuis lesquels CE type se préremplit. Le bouton s'affiche sur la source,
     # mais la déclaration vit ici. Une seule par source. Vérifié au CHARGEMENT (`registry._check_mappings`).
     created_from: Annotated[list[CreatedFrom], PydanticField(max_length=MAX_MAPPINGS)] | None = None
 
@@ -1189,7 +1189,7 @@ class DocTypeDef(BaseModel):
                 if not MATCH_ENABLED:
                     raise ValueError(
                         "permissions: `match` est gelé (aucun backend d'auth ne fournit d'attribut ou de scope par "
-                        "utilisateur) ; utilisez `if_owner`, voir doc/phase1.md §7"
+                        "utilisateur) ; utilisez `if_owner`, voir process/phase1.md §7"
                     )
                 target = by_name.get(entry.match.field)
                 if target is None:

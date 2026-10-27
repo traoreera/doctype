@@ -119,4 +119,4 @@ Ordre de grandeur total : 21 à 32 semaines, soit plusieurs mois. Le rythme rée
 4. Impression : moteur propre (modèles HTML vers PDF) ou délégué à un service externe ?
 5. Ordre des phases D à F : à ajuster selon le premier utilisateur réel du module Stock.
 
-> Les décisions 1 et 2 sont tranchées pour la phase A dans `doc/phase-a.md` ; les trois autres ne concernent pas cette phase.
+> Les décisions 1 et 2 sont tranchées pour la phase A dans `process/phase-a.md` ; les trois autres ne concernent pas cette phase.

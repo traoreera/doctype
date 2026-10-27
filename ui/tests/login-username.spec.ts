@@ -35,7 +35,7 @@ const posts = (sent: HttpRequest[], suffix: string) => sent.filter((r) => r.meth
 describe('Connexion par identifiant', () => {
   it('demande un identifiant libre : nom d’utilisateur OU adresse', async () => {
     // Le champ n'est PAS un `type="email"` : depuis la connexion par nom d'utilisateur, il accepte les deux formes et c'est
-    // `session.login` qui envoie `{username}` ou `{email}` selon la présence d'un `@` (doc/xauth.md § « Se connecter »).
+    // `session.login` qui envoie `{username}` ou `{email}` selon la présence d'un `@` (process/xauth.md § « Se connecter »).
     const { w } = mountView(LoginView, { status: 401, json: {} })
     await flushPromises()
     const field = w.find('#login-email')

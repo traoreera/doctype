@@ -4,7 +4,7 @@ Demande de l'utilisateur (21 oct. 2026) : permettre aux plugins d'**étendre le 
 bloc déclaratif), et améliorer l'**intégration entre plugins** : réagir aux événements des DocTypes d'un autre plugin (B1), contribuer à
 l'espace d'un autre module (B2), ajouter des champs au DocType d'un autre plugin (B3).
 
-Trois décisions nouvelles, numérotées à la suite de `doc/doctype.md` : D26 (extensions de DocType : B1 + B3), D27 (contributions
+Trois décisions nouvelles, numérotées à la suite de `process/doctype.md` : D26 (extensions de DocType : B1 + B3), D27 (contributions
 d'espace : B2), D28 (extensions JavaScript du Desk).
 
 ---

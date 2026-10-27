@@ -1,4 +1,4 @@
-"""Définition et validation d'écriture (doc/doctype.md §9, §7.1)."""
+"""Définition et validation d'écriture (process/doctype.md §9, §7.1)."""
 
 from __future__ import annotations
 
@@ -198,7 +198,7 @@ class TestGrantSpecs:
 
 
 class TestFrozenMatch:
-    """`match` est gelé tant qu'aucun backend ne fournit d'attribut ou de scope par utilisateur (doc/phase1.md §7)."""
+    """`match` est gelé tant qu'aucun backend ne fournit d'attribut ou de scope par utilisateur (process/phase1.md §7)."""
 
     def test_rejected_by_default_with_an_explanation(self):
         with pytest.raises(InvalidDefinition, match="gelé"):

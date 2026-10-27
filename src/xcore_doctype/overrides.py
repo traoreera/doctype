@@ -10,7 +10,7 @@ Le YAML reste la source de vérité : un habillage s'y ajoute, par tenant, et se
 - `workspace_user`, `dashboard_user` : la disposition PERSONNELLE d'un utilisateur (même corps), qui passe avant celle de l'organisation ;
 - `dashboard` : le tableau de bord d'un DocType (`blocks`, comme `views.dashboard` de sa définition ; `doctype` y est implicite) ;
 - `workflow` : ce que l'organisation RESSERRE sur l'automate du YAML (`transitions` : fermer une transition, lui ajouter une condition,
-  imposer `not_owner`) — jamais un état ni une transition de plus (doc/programme.md §3.6).
+  imposer `not_owner`) — jamais un état ni une transition de plus (process/programme.md §3.6).
 
 Un habillage se VALIDE à l'écriture avec les mêmes règles que le chargement d'un fichier (cibles connues, champs placés une fois,
 etc.). À la LECTURE on reste tolérant : un habillage devenu invalide (un DocType a disparu) est ignoré au profit de la définition
@@ -260,7 +260,7 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
     return out
 
 
-# ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ────────────────────────────────────────────────
+# ── Champs ajoutés par l'organisation (process/programme.md §3.5) ────────────────────────────────────────────────
 # Le préfixe réservé : un champ ajouté par une organisation ne peut jamais entrer en collision avec un champ que le plugin
 # ajoutera plus tard à son YAML, et on voit d'où il vient en le lisant. Même raison que le `<plugin>_` des extensions (D26).
 CUSTOM_PREFIX = "custom_"
@@ -542,7 +542,7 @@ def _condition_problem(compiled: Any, source: str) -> str | None:
 def validate_workflow_override(compiled: Any, config: object) -> dict[str, Any]:
     """Valide un habillage d'automate et rend sa forme canonique (`{"transitions": {"<action>": {...}}}`).
 
-    Une organisation ne fait que RESSERRER ce que le YAML déclare (doc/programme.md §3.6) : fermer une transition (`closed: true`),
+    Une organisation ne fait que RESSERRER ce que le YAML déclare (process/programme.md §3.6) : fermer une transition (`closed: true`),
     lui ajouter une condition (`condition`, ET avec celle du YAML) ou imposer la séparation des pouvoirs (`not_owner: true`). Tout le
     reste est refusé : une action inconnue, un desserrage (`closed: false`, `not_owner: false` sur une transition qui le porte déjà,
     une condition vide), et surtout un CUL-DE-SAC — fermer la dernière sortie d'un état y échouerait des documents sans recours.
@@ -607,7 +607,7 @@ def validate_workflow_override(compiled: Any, config: object) -> dict[str, Any]:
 
 def _dead_ends(wf: Any, closed: set[str]) -> list[str]:
     """Les états qui avaient une sortie et n'en auraient plus. Une CONDITION peut bloquer de la même façon, mais cela ne se vérifie
-    pas sans évaluer des données : c'est une règle métier, pas une erreur de configuration (doc/programme.md §3.6)."""
+    pas sans évaluer des données : c'est une règle métier, pas une erreur de configuration (process/programme.md §3.6)."""
     out = []
     for state in {t.from_ for t in wf.transitions}:
         if all(t.action in closed for t in wf.transitions if t.from_ == state):

@@ -203,7 +203,7 @@ async function load(): Promise<void> {
     const m = await metaStore.get(doctype)
     if (mine !== loadTicket) return
     if (name === null) {
-      // « Créer depuis » (doc/mapper.md) : `?from=<Type>/<nom>`. Les valeurs viennent du SERVEUR (il seul connaît le
+      // « Créer depuis » (process/mapper.md) : `?from=<Type>/<nom>`. Les valeurs viennent du SERVEUR (il seul connaît le
       // reste à faire), pas de l'URL : un rechargement les retrouve.
       const mapFrom = typeof route.query.from === 'string' ? route.query.from : ''
       if (mapFrom) {

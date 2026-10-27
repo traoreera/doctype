@@ -1,4 +1,4 @@
-"""Import CSV (groupe 2 du programme, élément 5, `doc/programme.md` §2.2).
+"""Import CSV (groupe 2 du programme, élément 5, `process/programme.md` §2.2).
 
 Le principe : JAMAIS un chemin d'écriture parallèle. Ce module ne fait que LIRE un fichier (colonnes, cellules) et traduire chaque cellule de
 texte dans la valeur que l'API attend pour son champ ; chaque ligne passe ensuite SEULE par `DocumentService.create` ou `.update`, la même

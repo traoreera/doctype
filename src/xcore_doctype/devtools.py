@@ -1,4 +1,4 @@
-"""Mode développeur : le constructeur de DocTypes du Desk (doc/programme.md §3.5, « le Desk : le mode développeur »).
+"""Mode développeur : le constructeur de DocTypes du Desk (process/programme.md §3.5, « le Desk : le mode développeur »).
 
 Créer un type entier, ou en modifier un, À L'ÉCRAN — et en sortir le YAML à poser dans le dossier `doctypes/` d'un plugin. Rien n'est
 jamais enregistré ici : une définition vit dans un plugin, chargée au démarrage, avec ses grants déclarés à auth (§3.5 : le registre

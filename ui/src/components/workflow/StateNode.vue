@@ -9,7 +9,7 @@ import type { StateData } from '@/lib/workflowgraph'
  * annulé) et ce qu'il est dans le circuit (départ, fin, cul-de-sac). Le nœud est un BOUTON : on le choisit au clavier comme à la
  * souris, et le panneau de droite montre ses transitions.
  *
- * Quatre poignées, jamais reliables à la main (le circuit ne s'invente pas ici, doc/programme.md §3.6) : entrée à gauche, sortie à
+ * Quatre poignées, jamais reliables à la main (le circuit ne s'invente pas ici, process/programme.md §3.6) : entrée à gauche, sortie à
  * droite, et deux en bas pour les retours en arrière, qui passent sous le graphe au lieu de le traverser.
  */
 const props = defineProps<{ id: string; data: StateData; selected?: boolean }>()

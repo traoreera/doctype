@@ -1,4 +1,4 @@
-"""Tables système (doc/doctype.md §7.2, §7.3).
+"""Tables système (process/doctype.md §7.2, §7.3).
 
 La table générique `Document` (colonne JSON) et, depuis la phase 3, le compteur des séries de numérotation. Les
 `MetaData` sont construites au `on_load` et jetées au `on_unload` (D8) : jamais de table au niveau du module.
@@ -75,7 +75,7 @@ def build_system_tables() -> SystemTables:
         # `server_default` : les lignes d'une base antérieure à cette colonne sont des brouillons (db/access.py l'ajoute).
         Column("docstatus", SmallInteger, nullable=False, server_default="0"),
         Column("amended_from", String(140), nullable=True),  # le document annulé dont celui-ci est l'amendement
-        # L'état du workflow (doc/programme.md §3.2), quand le DocType en a un. Une COLONNE, et pas un champ de `data` :
+        # L'état du workflow (process/programme.md §3.2), quand le DocType en a un. Une COLONNE, et pas un champ de `data` :
         # la transition est un UPDATE conditionnel sur cet état, ce qui fait que deux approbations simultanées n'en passent
         # qu'une. Nullable : les types sans workflow n'en ont pas, et les bases antérieures s'en accommodent.
         Column("workflow_state", String(60), nullable=True),

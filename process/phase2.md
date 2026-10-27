@@ -1,6 +1,6 @@
 # Phase 2 : le Desk
 
-17 octobre 2026. Contre xcore 2.9.1, SQLite et PostgreSQL 18, Chromium piloté par playwright-core 1.64. Suite de `doc/phase1.md` ; `doc/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4.
+17 octobre 2026. Contre xcore 2.9.1, SQLite et PostgreSQL 18, Chromium piloté par playwright-core 1.64. Suite de `process/phase1.md` ; `process/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4.
 
 ## 1. Résultat
 
@@ -36,7 +36,7 @@ Choix de l'utilisateur : une **chaîne** dans le YAML, **compilée côté serveu
 - **Le serveur revérifie** (`CompiledDocType._condition_errors`) : un champ `required` portant un `depends_on` n'est obligatoire que s'il est visible ; `mandatory_depends_on` est évalué sur les valeurs soumises ; `read_only_depends_on` est évalué sur le document **enregistré** et seulement pour une entrée client (la sortie d'un hook peut poser un champ que l'interface verrouille). Une valeur que `depends_on` masque est conservée, pas effacée.
 - **Conséquence pour le Desk** : sur un document existant, `read_only_depends_on` s'évalue sur les valeurs enregistrées, comme le serveur. Cocher « Compte bloqué » ne verrouille donc pas le plafond avant l'enregistrement ; sur un nouveau document, l'interface suit les valeurs saisies.
 
-Écart avec `doc/doctype.md` : D22 laissait ouverte « chaîne ou JSON structuré ». La chaîne l'emporte, avec l'arbre comme format de transport.
+Écart avec `process/doctype.md` : D22 laissait ouverte « chaîne ou JSON structuré ». La chaîne l'emporte, avec l'arbre comme format de transport.
 
 ## 3. API : filtres typés, recherche, métadonnées
 

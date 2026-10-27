@@ -42,7 +42,7 @@ contenir `@` : la connexion n'a donc aucune ambiguïté). Le Desk envoie `{"user
 - **Ce qui n'accepte QUE l'adresse** : « mot de passe oublié » et les invitations (elles se font par e-mail).
 - **Limitation de débit** : 5 connexions et 3 inscriptions par minute et par adresse IP par défaut ; un script qui enchaîne les appels reçoit 429. Le bloc `rate_limit:` du manifeste la règle
   (`enabled: false` la coupe en développement et dans les tests ; `routes: {login: [10, 60]}` change les bornes d'une route : `utils/rate_limit.py`, `RateLimitPolicy`).
-- **Gestion des accès par le Desk** : les actions `xauth.iam.*` (`services/iam.py`) servent les DocTypes du plugin `iam` (Permission, Role, Member) : voir `doc/iam.md`.
+- **Gestion des accès par le Desk** : les actions `xauth.iam.*` (`services/iam.py`) servent les DocTypes du plugin `iam` (Permission, Role, Member) : voir `process/iam.md`.
 
 ## Comment les grants arrivent
 
@@ -67,7 +67,7 @@ que si xauth est déjà chargé : les plugins du dépôt déclarent `requires: [
   ligne xcore répond `ipc_denied` et le moteur retombe sur les identités observées (sans e-mail).
 - `ext.google` (Gmail, Calendar, Drive pour le compte de l'utilisateur) est facultatif : absent, `xauth.google.*` n'est pas disponible, la connexion OAuth marche.
 - Dépendances ajoutées au groupe `host` (le wheel xcore-doctype n'en dépend pas) ; `app/auth/pyproject.toml`, `makefile` et `example.env` ne sont pas repris.
-- **Notifications du moteur : `xauth.notify`** (IPC, même `allowed_callers`) : `{tenant_id, user_ids ≤ 50, title, message?, link?, type?}` crée une notification de la cloche pour chaque identifiant qui est MEMBRE de `tenant_id` (les autres sont ignorés en silence), avec un lien `#/…` ou `https://` seulement. Le moteur l'appelle à l'assignation d'un document et à une mention `@adresse` dans un commentaire (`doc/phase-h2.md`) ; un échec ne fait jamais échouer l'opération qui l'a provoquée. La route `POST /notifications` (REST) accepte toujours n'importe quel `user_id` : à fermer, non traité.
+- **Notifications du moteur : `xauth.notify`** (IPC, même `allowed_callers`) : `{tenant_id, user_ids ≤ 50, title, message?, link?, type?}` crée une notification de la cloche pour chaque identifiant qui est MEMBRE de `tenant_id` (les autres sont ignorés en silence), avec un lien `#/…` ou `https://` seulement. Le moteur l'appelle à l'assignation d'un document et à une mention `@adresse` dans un commentaire (`process/phase-h2.md`) ; un échec ne fait jamais échouer l'opération qui l'a provoquée. La route `POST /notifications` (REST) accepte toujours n'importe quel `user_id` : à fermer, non traité.
 
 ## Desk : la connexion
 

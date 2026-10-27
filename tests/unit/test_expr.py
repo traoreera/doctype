@@ -1,4 +1,4 @@
-"""Conditions `depends_on` : analyse, évaluation et vecteurs partagés avec le navigateur (doc/doctype.md D22).
+"""Conditions `depends_on` : analyse, évaluation et vecteurs partagés avec le navigateur (process/doctype.md D22).
 
 `tests/vectors/expr_cases.json` est écrit À LA MAIN : le résultat attendu n'est jamais calculé par le code testé.
 `ui/tests/expr.spec.ts` exécute les mêmes cas, sur les mêmes arbres, dans le navigateur (`expr_asts.json` est généré

@@ -205,7 +205,7 @@ async def test_the_workspace_is_served_filtered_by_the_callers_rights(tmp_path):
 
 
 async def test_the_verify_action_recomputes_the_balances_from_the_ledger(tmp_path):
-    """La commande de recalcul (doc/palier40.md §4.5) : appel d'opérateur par la route IPC d'xcore, lecture en contexte système."""
+    """La commande de recalcul (process/palier40.md §4.5) : appel d'opérateur par la route IPC d'xcore, lecture en contexte système."""
     import sqlite3
 
     async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:

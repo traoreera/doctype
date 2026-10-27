@@ -1,4 +1,4 @@
-"""« Créer depuis » : la logique pure du préremplissage (doc/mapper.md).
+"""« Créer depuis » : la logique pure du préremplissage (process/mapper.md).
 
 Aucune base, aucun droit : `mapping.py` reçoit un document source et ce qui a déjà été fait, il rend des
 valeurs. C'est ce découpage qui rend la recopie testable sur des dictionnaires.

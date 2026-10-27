@@ -1,4 +1,4 @@
-"""Règles du stock, en QUANTITÉS seulement (palier 40 % phase A, doc/palier40.md §4).
+"""Règles du stock, en QUANTITÉS seulement (palier 40 % phase A, process/palier40.md §4).
 
 Le stock d'un article dans un entrepôt n'est jamais un champ qu'on édite : c'est la somme des écritures immuables du journal
 (`Stock Ledger Entry`). Le solde (`Bin`) est MAINTENU à chaque écriture, dans la même transaction que la soumission du mouvement,
@@ -9,9 +9,9 @@ jamais recalculé à la lecture ; `verify_balances` le recalcule pour le vérifi
 
 Tout se passe dans `event.tx`, la transaction du mouvement : un refus (stock insuffisant, antidatage…) défait l'état du mouvement,
 les écritures et les soldes ensemble. Aucun SQL ici : le moteur fournit le verrou de ligne (`tx.get(..., lock=True)`), la création
-atomique (`tx.ensure`) et le contrôle de version (`tx.update`), sur PostgreSQL comme sur SQLite (doc/phase-a.md).
+atomique (`tx.ensure`) et le contrôle de version (`tx.update`), sur PostgreSQL comme sur SQLite (process/phase-a.md).
 
-DÉCISIONS (doc/palier40.md §8) :
+DÉCISIONS (process/palier40.md §8) :
 - pas de valorisation : des quantités, rien d'autre ;
 - PAS D'ANTIDATAGE : un mouvement ne peut être daté ni dans le futur, ni avant le dernier mouvement déjà passé sur un de ses
   couples (article, entrepôt). Les soldes à une date passée restent ainsi la somme du journal jusqu'à cette date. L'annulation est

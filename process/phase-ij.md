@@ -1,6 +1,6 @@
 # Phases I et J : vues d'un type, tableaux de bord et graphiques
 
-Palier 70 % (`doc/palier70.md`). Demande de départ : un Desk qui RESSEMBLE à Frappe, avec la facilité d'xcore (un plugin déclare, rien à coder). La phase G n'avait livré que des raccourcis ; ici, ouvrir un module montre un vrai tableau de bord, et chaque type a ses vues.
+Palier 70 % (`process/palier70.md`). Demande de départ : un Desk qui RESSEMBLE à Frappe, avec la facilité d'xcore (un plugin déclare, rien à coder). La phase G n'avait livré que des raccourcis ; ici, ouvrir un module montre un vrai tableau de bord, et chaque type a ses vues.
 
 ## 1. Ce qui est livré
 

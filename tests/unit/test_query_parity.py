@@ -1,4 +1,4 @@
-"""Parité SQLite / PostgreSQL des filtres, tris et pagination sur la colonne JSON (doc/doctype.md §7.3, §16).
+"""Parité SQLite / PostgreSQL des filtres, tris et pagination sur la colonne JSON (process/doctype.md §7.3, §16).
 
 Les mêmes attentes s'appliquent aux deux backends ; les cas PostgreSQL sont SKIPPED sans
 `XCORE_DOCTYPE_TEST_PG_URL`. Valeurs de tri en ASCII minuscule : la collation de texte diffère

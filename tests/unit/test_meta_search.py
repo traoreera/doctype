@@ -1,4 +1,4 @@
-"""`/meta/{doctype}` tel que le Desk le consomme, et la recherche des champs Link (doc/doctype.md §12)."""
+"""`/meta/{doctype}` tel que le Desk le consomme, et la recherche des champs Link (process/doctype.md §12)."""
 
 from __future__ import annotations
 

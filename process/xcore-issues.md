@@ -1,6 +1,6 @@
 # Issues à ouvrir côté xcore
 
-Brouillons, issus des phases 0 à 4 (`doc/doctype.md` §14, `doc/phase4.md`). **Rien n'a été modifié dans xcore ni dans orchestra-backend** :
+Brouillons, issus des phases 0 à 4 (`process/doctype.md` §14, `process/phase4.md`). **Rien n'a été modifié dans xcore ni dans orchestra-backend** :
 xcore-doctype contourne chacun de ces points de son côté, et dit comment. Versions vérifiées : xcore 2.9.1, xcorecli 2.3.0.
 
 ## 1. Découverte des plugins par entry point (`xcore.plugins`)

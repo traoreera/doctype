@@ -1,4 +1,4 @@
-"""Mode développeur : le constructeur de DocTypes (devtools.py, doc/programme.md §3.5).
+"""Mode développeur : le constructeur de DocTypes (devtools.py, process/programme.md §3.5).
 
 Ce que ces tests défendent, chacun par une mutation qui le casse :
 - fermé par défaut : sans `developer_mode`, les deux portes répondent comme une route qui n'existe pas ;

@@ -1,6 +1,6 @@
 # Revue d'expérience utilisateur du Desk (20 octobre 2026)
 
-Demande : « on va améliorer le UI pour l'expérience utilisateur au max de la max ». Ce document dit comment on a mesuré, ce qui a été constaté, ce qui a été corrigé, comment c'est vérifié, et ce qui reste. Il prolonge `doc/desk-revue.md` (mobile, mode sombre, session) sans le répéter.
+Demande : « on va améliorer le UI pour l'expérience utilisateur au max de la max ». Ce document dit comment on a mesuré, ce qui a été constaté, ce qui a été corrigé, comment c'est vérifié, et ce qui reste. Il prolonge `process/desk-revue.md` (mobile, mode sombre, session) sans le répéter.
 
 ## 1. Comment on a constaté
 
@@ -42,7 +42,7 @@ Chromium seulement (pas Firefox ni Safari), aucun lecteur d'écran réel : voir 
 
 ## 4. Les « erreurs non gérées » de vitest : cause établie
 
-Les deux rejets `insertBefore` / `nextSibling` d'un nœud nul, signalés depuis `doc/phase-h2.md`, venaient des tests : `afterEach(() => document.body.innerHTML = '')` effaçait la page pendant que les composants vivaient encore ; une boîte PrimeVue téléportée dans `<body>` était ensuite corrigée sur un nœud sans parent. Les tests démontent maintenant leurs composants **avant** de vider la page (`unmountAll()` dans `tests/views-fixtures.ts`). Les autres fichiers qui vident `document.body` sans démonter ne produisent pas l'erreur aujourd'hui, mais le même piège les attend : un nouveau test qui monte une boîte doit démonter.
+Les deux rejets `insertBefore` / `nextSibling` d'un nœud nul, signalés depuis `process/phase-h2.md`, venaient des tests : `afterEach(() => document.body.innerHTML = '')` effaçait la page pendant que les composants vivaient encore ; une boîte PrimeVue téléportée dans `<body>` était ensuite corrigée sur un nœud sans parent. Les tests démontent maintenant leurs composants **avant** de vider la page (`unmountAll()` dans `tests/views-fixtures.ts`). Les autres fichiers qui vident `document.body` sans démonter ne produisent pas l'erreur aujourd'hui, mais le même piège les attend : un nouveau test qui monte une boîte doit démonter.
 
 ## 5. Conventions à garder
 

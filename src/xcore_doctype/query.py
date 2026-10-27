@@ -1,6 +1,6 @@
 """Couche de requêtes unique (D3, annexe A). Aucune requête ne se construit ailleurs.
 
-Règles (doc/doctype.md, annexe A) :
+Règles (process/doctype.md, annexe A) :
 - le seul constructeur est `Query(session, ctx, tables)` ; le tenant vient de `ctx`, jamais d'un argument ;
 - toute instruction passe par `_scope()`, qui impose `tenant_id` et le périmètre de permission (`Scope`) ;
 - `scope` est un paramètre OBLIGATOIRE des lectures, mises à jour et suppressions : l'oublier est une
@@ -320,7 +320,7 @@ class Query:
         expected_version: int,
         scope: Scope,
     ) -> StoredDoc:
-        """Fait passer le document d'un état de workflow à l'autre, `data` inchangé (doc/programme.md §3.2).
+        """Fait passer le document d'un état de workflow à l'autre, `data` inchangé (process/programme.md §3.2).
 
         Même principe que `transition` pour la soumission : UN `UPDATE` conditionnel sur l'ÉTAT et la version. C'est lui qui rend
         la transition unique — deux personnes qui approuvent en même temps, une seule passe, l'autre voit le document déjà
@@ -467,7 +467,7 @@ class Query:
     async def cited_rows(self, doctype: str, table: str, field: str, name: str, *, limit: int) -> list[list[Any]]:
         """Les LIGNES de `table` des documents de `doctype` dont au moins une ligne a `field == name`, les annulées exclues.
 
-        C'est la matière du « reste à faire » du mapper (doc/mapper.md §5) : ce qui a déjà été émis pour une source. La somme
+        C'est la matière du « reste à faire » du mapper (process/mapper.md §5) : ce qui a déjà été émis pour une source. La somme
         se fait en Python, avec `Decimal`, parce qu'elle doit rester EXACTE : PostgreSQL ne sait tester la contenance d'un
         tableau JSONB que par `@>` (une existence, pas une somme), et côté SQLite une somme de `Decimal` passerait par des
         doubles. Les documents qui citent UNE source étant peu nombreux, on les lit et on somme soi-même.

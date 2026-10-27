@@ -4,7 +4,7 @@
 pour être réellement chargeables par le moteur. Les 5 espaces de travail vivent à côté, dans `workspaces/`.
 
 Ce fichier dit **comment ce jeu se charge**, **ce qui a été changé et pourquoi**, et **ce qui reste à faire**.
-Il ne remplace pas `doc/doctype.md` (le contrat de conception) : il décrit un jeu de définitions, pas le moteur.
+Il ne remplace pas `process/doctype.md` (le contrat de conception) : il décrit un jeu de définitions, pas le moteur.
 
 ## 1. Ce que vaut la migration
 
@@ -105,7 +105,7 @@ Dans l'ordre de valeur :
 3. **`target_status` sur les liens entre pièces.** Rien n'empêche aujourd'hui une facture de citer une commande
    annulée.
 4. **Les workflows.** Zéro `workflow:` : aucun circuit d'approbation. Le constructeur existe
-   (`doc/programme.md` §3.6).
+   (`process/programme.md` §3.6).
 5. **17 espaces de travail manquants** (5 modules sur 22 en ont un ; le moteur en fabrique un à défaut).
 6. **`depends_on` et `fetch_from`** : absents partout. ERPNext s'en sert beaucoup pour alléger les formulaires.
 7. **17 enfants orphelins** (`istable` qu'aucun champ `Table` ne cite) : `Budget Account`,

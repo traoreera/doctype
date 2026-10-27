@@ -1,4 +1,4 @@
-"""Critère de sortie de la phase 1 : matrice grant × action × `if_owner` × `match` (doc/doctype.md §15).
+"""Critère de sortie de la phase 1 : matrice grant × action × `if_owner` × `match` (process/doctype.md §15).
 
 Test à modèle : un oracle en mémoire, écrit sans réutiliser `permissions.py`, prédit pour chaque utilisateur,
 document et opération le résultat attendu (succès, 403 ou 404) en suivant l'état du document. Le service réel
@@ -7,13 +7,13 @@ document et opération le résultat attendu (succès, 403 ou 404) en suivant l'�
 Les règles citent des GRANTS (`tickets:ticket:admin`…), vérifiés dans `principal["permissions"]`. `match` est gelé
 en production (`schema.MATCH_ENABLED`) : ce module le lève, pour que la machinerie reste testée tant qu'elle existe.
 
-Ordre des contrôles, tel que décidé (doc/phase1.md) :
+Ordre des contrôles, tel que décidé (process/phase1.md) :
 1. aucune règle n'accorde la lecture ni l'action -> 403 (indépendant du document) ;
 2. document hors du périmètre de LECTURE -> 404 (on ne révèle pas son existence) ;
 3. action refusée sur la valeur actuelle -> 403 ;
 4. action refusée sur la valeur ÉCRITE (création ou déplacement) -> 403.
 
-Groupe 2 (`doc/programme.md` §2.1) : les PERMISSIONS UTILISATEUR resserrent les rôles (ET ; un lien vide passe), le PARTAGE élargit (OU) en
+Groupe 2 (`process/programme.md` §2.1) : les PERMISSIONS UTILISATEUR resserrent les rôles (ET ; un lien vide passe), le PARTAGE élargit (OU) en
 lecture et, s'il le dit, en écriture, même sans rôle. Lire ou modifier UN document nommé ne répond donc plus 403 faute de rôle (un partage
 pourrait l'ouvrir) : un document non partagé y est « introuvable » (404), comme un nom qui n'existe pas. La liste, la création et la
 suppression gardent la règle 1. Chaque cas de la matrice tourne aussi avec des restrictions, des partages, et les deux.

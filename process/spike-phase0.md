@@ -2,13 +2,13 @@
 
 17 octobre 2026. Réalisé contre xcore 2.9.1 (installé dans le venv) et PostgreSQL 18.6 (`fr_FR.UTF-8`), Python 3.14.7.
 
-Ce document consigne ce que le spike a vérifié, ce qu'il a infirmé ou précisé, et ce qu'il laisse ouvert. `doc/doctype.md` n'est pas modifié : les écarts sont proposés ici, à reporter dans la v4.
+Ce document consigne ce que le spike a vérifié, ce qu'il a infirmé ou précisé, et ce qu'il laisse ouvert. `process/doctype.md` n'est pas modifié : les écarts sont proposés ici, à reporter dans la v4.
 
 ## 1. Ce qui a été construit
 
 Le strict nécessaire pour exécuter les critères de 14 bis.8, dans `src/xcore_doctype/` : `schema.py`, `builder.py`, `registry.py`, `context.py` (annexe A), `query.py`, `document.py`, `db/`, `api/http.py`, `plugin.py`, le dossier plugin embarqué (`plugin_dir/`) et `devauth.py` (backend d'auth de développement, non enregistré par le plugin).
 
-**Hors périmètre, volontairement.** Aucun contrôle de rôle (`permissions`), `hooks`, `layout`, `depends_on`, numérotation par série, Link vérifié, tables enfants ni UI. *(Mise à jour : les permissions et les hooks sont faits en phase 1, voir `doc/phase1.md`. Le reste est toujours ouvert, et cette section décrit l'état à la fin de la phase 0.)* Un identifiant authentifié lit et écrit tous les DocTypes de son tenant. Le schéma **refuse** les blocs non appliqués (`permissions`, `hooks`, `layout`, `depends_on`, `naming` en série) au lieu de les ignorer : une définition ne doit pas donner l'impression d'être protégée alors qu'elle ne l'est pas.
+**Hors périmètre, volontairement.** Aucun contrôle de rôle (`permissions`), `hooks`, `layout`, `depends_on`, numérotation par série, Link vérifié, tables enfants ni UI. *(Mise à jour : les permissions et les hooks sont faits en phase 1, voir `process/phase1.md`. Le reste est toujours ouvert, et cette section décrit l'état à la fin de la phase 0.)* Un identifiant authentifié lit et écrit tous les DocTypes de son tenant. Le schéma **refuse** les blocs non appliqués (`permissions`, `hooks`, `layout`, `depends_on`, `naming` en série) au lieu de les ignorer : une définition ne doit pas donner l'impression d'être protégée alors qu'elle ne l'est pas.
 
 ## 2. Critères d'acceptation (14 bis.8)
 

@@ -1,6 +1,6 @@
 # Phase H : types de champ, fichiers, documents uniques, module RH
 
-Palier 70 % (`doc/palier70.md`). Réponse aux manques relevés : pas de champs image ni fichier, pas d'onglet Paramètres, des liens qui ne se cliquent pas, et aucun module « profil / ressources humaines » pour prouver que le moteur tient.
+Palier 70 % (`process/palier70.md`). Réponse aux manques relevés : pas de champs image ni fichier, pas d'onglet Paramètres, des liens qui ne se cliquent pas, et aucun module « profil / ressources humaines » pour prouver que le moteur tient.
 
 ## 1. Livré
 

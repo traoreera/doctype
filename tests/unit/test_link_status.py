@@ -405,7 +405,7 @@ class TestRace:
         """PostgreSQL : le contrôle d'état (`existing_docstatus`) verrouille la cible comme le contrôle d'existence (`FOR KEY SHARE`) :
         une suppression concurrente de la facture brouillon attend le commit, puis voit le paiement qui la cite."""
         if db.backend != "postgres":
-            pytest.skip("SQLite n'a pas de verrou de ligne : fenêtre documentée, voir doc/phase3.md")
+            pytest.skip("SQLite n'a pas de verrou de ligne : fenêtre documentée, voir process/phase3.md")
         draft = await invoice(svc, "draft")
         linked, proceed = asyncio.Event(), asyncio.Event()
         real_insert = Query.insert

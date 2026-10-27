@@ -1,4 +1,4 @@
-"""Permissions par rôle et par ligne (doc/doctype.md D6).
+"""Permissions par rôle et par ligne (process/doctype.md D6).
 
 Un `Scope` est le prédicat « quels documents cet utilisateur peut-il viser pour cette action », compilé
 UNE fois depuis les règles du DocType et le contexte. Il a deux interprètes :
@@ -15,7 +15,7 @@ peut pas être évaluée (utilisateur sans l'attribut de `match`, `if_owner` san
 devient jamais « tout ». Les noms de RÔLE ne comptent pas : chez auth ils sont libres et propres à chaque tenant ;
 la composition rôle -> grants est faite par auth, c'est le grant qui est le contrat stable.
 
-Deux clauses de plus (groupe 2 du programme, `doc/programme.md` §2.1), pour un document STOCKÉ (ni unique, ni virtuel, ni table enfant) :
+Deux clauses de plus (groupe 2 du programme, `process/programme.md` §2.1), pour un document STOCKÉ (ni unique, ni virtuel, ni table enfant) :
 
 - les **permissions utilisateur** RESSERRENT ce que les rôles donnent (ET) : une restriction « Awa → Entrepôt = Abidjan » (un document
   `User Permission`) limite les Entrepôts qu'Awa voit à Abidjan, et les documents de TOUT type dont un champ Lien vers Entrepôt vaut autre

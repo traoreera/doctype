@@ -105,7 +105,7 @@ def test_no_field_duplicates_a_system_column(registry: DocTypeRegistry) -> None:
 
 
 def test_the_declared_mapping_carries_what_it_needs_to_know_the_remainder(registry: DocTypeRegistry) -> None:
-    """`Material Request -> Stock Entry` (doc/mapper.md) : la chaîne complète, pas une recopie.
+    """`Material Request -> Stock Entry` (process/mapper.md) : la chaîne complète, pas une recopie.
 
     Le chargement a déjà validé la déclaration (`registry._check_mappings`). Ce qui est affirmé ici, c'est
     qu'elle garde les trois pièces sans lesquelles le mapper reprendrait des quantités PLEINES : la référence de

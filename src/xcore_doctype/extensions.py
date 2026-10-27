@@ -1,4 +1,4 @@
-"""Extensions de DocType (D26, `doc/extensions.md`) : un plugin ajoute des hooks et des champs au DocType d'un AUTRE plugin.
+"""Extensions de DocType (D26, `process/extensions.md`) : un plugin ajoute des hooks et des champs au DocType d'un AUTRE plugin.
 
 Un plugin les décrit dans son dossier (`<plugin>/extends/*.yaml`), chargé par `doctype_registry.load_extensions` :
 

@@ -9,7 +9,7 @@ Règle transverse : **aucune ligne de consolidation dans `app/sales`, `app/stock
 ## Phase C0 — Fondation (hygiène)
 
 1. **Figer la base verte** : `make check` puis `make install-check` (et `make e2e` si Chromium dispo) ; noter les chiffres exacts.
-2. **Rejets de promesse vitest** (`doc/phase-h2.md` §3) : isoler `ui/tests/collab.spec.ts`, établir la cause (montage d'une carte de pièces jointe affichée après la fin du test), corriger. Une suite qui crie dans le vide masque les régressions.
+2. **Rejets de promesse vitest** (`process/phase-h2.md` §3) : isoler `ui/tests/collab.spec.ts`, établir la cause (montage d'une carte de pièces jointe affichée après la fin du test), corriger. Une suite qui crie dans le vide masque les régressions.
 3. **Remettre `CLAUDE.md` à jour** : la liste « Not implemented today » est fausse (C, D, Single/tree/search faits). Réécrire l'état exact ; ajouter la règle « `app/sales|stock|hr` sont des fixtures amenées à disparaître ».
 
 **Critère** : suite verte sans bruit ; `CLAUDE.md` décrit le dépôt tel qu'il est.
@@ -28,20 +28,20 @@ Règle transverse : **aucune ligne de consolidation dans `app/sales`, `app/stock
 
 ## Phase C2 — Intégrité du moteur (données)
 
-1. **Règles d'état sur les liens** : un Link (ou DynamicLink) vers un document annulé est aujourd'hui accepté. Property de champ `target_status` (absente = comportement actuel) : `not_cancelled` ou liste d'états exigés ; vérifiée dans `DocumentService._check_links` (existence + lisibilité + état) ; le Desk l'affiche (aperçu de lien, badge d'état). Nouvelle décision dans `doc/doctype.md`, `schema.FieldDef`.
-2. **`unique` rétroactif** (`doc/phase-h2.md` §3) : contrôle au chargement (`GROUP BY … HAVING count(*) > 1` par champ unique, par type, sans détail de tenant dans l'erreur) ; conflit = erreur de chargement explicite. Plus une action opérateur `xcore-doctype check-unique`.
+1. **Règles d'état sur les liens** : un Link (ou DynamicLink) vers un document annulé est aujourd'hui accepté. Property de champ `target_status` (absente = comportement actuel) : `not_cancelled` ou liste d'états exigés ; vérifiée dans `DocumentService._check_links` (existence + lisibilité + état) ; le Desk l'affiche (aperçu de lien, badge d'état). Nouvelle décision dans `process/doctype.md`, `schema.FieldDef`.
+2. **`unique` rétroactif** (`process/phase-h2.md` §3) : contrôle au chargement (`GROUP BY … HAVING count(*) > 1` par champ unique, par type, sans détail de tenant dans l'erreur) ; conflit = erreur de chargement explicite. Plus une action opérateur `xcore-doctype check-unique`.
 3. **Rétention d'historique** (`versions.py`) : `doctype.max_versions` (défaut 25), purge des versions au-delà dans LA transaction du document ; action opérateur `doc.history.purge` (contexte système nommé) pour l'âge. SQLite + PostgreSQL.
 
 **Critère** : tests unitaires pour chaque point ; `tests/unit/test_query_leak.py` étendu si méthode publique ajoutée.
 
-## Phase C3 — Bugs Desk connus (`doc/desk-revue.md` §5)
+## Phase C3 — Bugs Desk connus (`process/desk-revue.md` §5)
 
 1. **Deux onglets qui se disputent le jeton de renouvellement** : jeton de renouvellement partagé en `localStorage` (l'accès reste en mémoire/sessionStorage), `BroadcastChannel` pour que l'onglet perdant réadopte le jeton rafraîchi ; single-flight par onglet conservé ; si le serveur répond « déjà usé », relecture du token partagé puis une seule reprise. Tests dans `ui/tests/session.spec.ts`.
 2. **Accessibilité du tiroir mobile** (`AppShell.vue`) : piège de focus, retour du focus au bouton à la fermeture, `aria` de base ; contraste des pastilles (`--pill-*`) mesuré et corrigé si < 4.5:1.
 
 **Critère** : typecheck + vitest ; scénario e2e téléphone au clavier ; deux onglets : renouvellement sans déconnexion.
 
-## Phase C4 — Lignes ◐ → ✔ (`doc/palier70.md` §2)
+## Phase C4 — Lignes ◐ → ✔ (`process/palier70.md` §2)
 
 1. **Notifications par DocType + e-mail** : règles = DocType du plugin `system` (embarqué, jamais dans `app/`), événements (`after_create`, `after_update`, `on_submit`…), cible (rôle ou membres), message ; évaluation dans `notifier.py`, politique fail-soft inchangée. E-mail : nouvel IPC `xauth.mail.send` dans `app/auth/src/ipc.py` (produit, reste ici) via l'extension `ext.email` en mode simulé, mêmes garde-fous que `xauth.notify`. `doctype.notifications.provider` inchangé.
 2. **Écran de gestion des fichiers** : page Desk listant les `xdt_file` dont les documents citants sont lisibles par l'appelant ; suppression = détacher via l'écriture ordinaire (droits + hooks), jamais un `DELETE` sur `xdt_file`.
@@ -51,7 +51,7 @@ Règle transverse : **aucune ligne de consolidation dans `app/sales`, `app/stock
 
 ## Phase C5 — Preuves et décompte
 
-`make check` complet, `make install-check`, `make e2e` ; recompter `doc/palier70.md` §2 par script ; compte rendu `doc/consolidation.md` (constats, décisions, limites, chiffres).
+`make check` complet, `make install-check`, `make e2e` ; recompter `process/palier70.md` §2 par script ; compte rendu `process/consolidation.md` (constats, décisions, limites, chiffres).
 
 ---
 

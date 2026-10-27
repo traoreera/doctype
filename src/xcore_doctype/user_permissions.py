@@ -1,4 +1,4 @@
-"""Les permissions utilisateur (groupe 2 du programme, `doc/programme.md` §2.1) : les documents `User Permission` du plugin `system`.
+"""Les permissions utilisateur (groupe 2 du programme, `process/programme.md` §2.1) : les documents `User Permission` du plugin `system`.
 
 Un document dit « ce membre ne voit, du type `allow`, que la valeur `for_value` » (plusieurs documents = plusieurs valeurs permises). Le
 moteur les lit lui-même, en SQL, à chaque requête (`Query._restriction_conds`) et en Python pour une valeur écrite (`Query.permission_facts`) :

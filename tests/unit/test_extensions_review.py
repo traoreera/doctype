@@ -1,4 +1,4 @@
-"""Ce que la revue adversariale de D26-D28 a trouvé (doc/extensions.md) : chaque test reproduit un défaut confirmé, puis prouve sa correction."""
+"""Ce que la revue adversariale de D26-D28 a trouvé (process/extensions.md) : chaque test reproduit un défaut confirmé, puis prouve sa correction."""
 
 from __future__ import annotations
 

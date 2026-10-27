@@ -195,7 +195,7 @@ class TestWorkspaceOverrideService:
             await svc.save_workspace_override(READER, "shop", WS_BODY)
 
 
-# ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ──────────────────────────────────────────────
+# ── Champs ajoutés par l'organisation (process/programme.md §3.5) ──────────────────────────────────────────────
 
 SEGMENT = {"fieldname": "custom_segment", "fieldtype": "Select", "label": "Segment", "options": ["PME", "Grand compte"]}
 

@@ -3,7 +3,7 @@
 xcore ne découvre aujourd'hui que des DOSSIERS de plugins (`plugins.directory`) : un `pip install` seul ne suffit donc pas, il faut
 poser le dossier du plugin (manifeste + shim) dans l'instance. C'est ce que fait `install`, en lisant au passage la configuration
 de l'instance pour signaler ce qui empêcherait le plugin de répondre (adaptateur SQLite synchrone, `xcore.setup(app)` absent,
-tenancy désactivée). Voir doc/phase4.md.
+tenancy désactivée). Voir process/phase4.md.
 
     xcore-doctype install ./app            # dépose ./app/xcore-doctype/ et vérifie ./integration.yaml
     xcore-doctype doctor                   # revérifie une instance déjà installée
@@ -116,7 +116,7 @@ def diagnose(config_path: Path, plugins_dir: Path | None = None) -> list[Finding
         if configured and (here / str(configured)).resolve() != plugins_dir.resolve():
             out.append(Finding("warn", f"plugins.directory est « {configured} » mais le plugin est installé dans {plugins_dir} : xcore ne le verra pas"))
 
-    # Le manifeste installé doit s'accorder avec la tenancy de l'instance (doc/doctype.md D17).
+    # Le manifeste installé doit s'accorder avec la tenancy de l'instance (process/doctype.md D17).
     app_dir = plugins_dir or here / str((config.get("plugins") or {}).get("directory") or "./app")
     manifest = app_dir / PLUGIN_NAME / "plugin.yaml"
     desk_login: str | None = None
@@ -237,7 +237,7 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
     vérifié (le plugin `sales` cite l'article du plugin `stock`), aux extensions (`extends/`) et aux contributions d'espace, sans être
     eux-mêmes contrôlés ni listés.
 
-    Avec `--owner`, les dossiers FRÈRES de celui des DocTypes sont validés comme le plugin les chargerait (doc/extensions.md) :
+    Avec `--owner`, les dossiers FRÈRES de celui des DocTypes sont validés comme le plugin les chargerait (process/extensions.md) :
     `workspaces/` (espace et contributions `contributes_to`), `extends/` (champs et hooks ajoutés aux DocTypes d'un autre plugin, D26)
     et `desk/` (extension JavaScript du Desk, D28 : point d'entrée, taille).
     """
@@ -331,7 +331,7 @@ def _plugin_name(plugin_home: Path) -> str:
 
 
 def new_desk_extension(plugin_home: Path, name: str | None = None, *, label: str | None = None, force: bool = False) -> list[Finding]:
-    """Pose `<plugin>/desk/` (index.js + README.md) à partir du modèle : une extension du Desk qui se charge telle quelle (doc/extensions.md)."""
+    """Pose `<plugin>/desk/` (index.js + README.md) à partir du modèle : une extension du Desk qui se charge telle quelle (process/extensions.md)."""
     name = name or _plugin_name(plugin_home)
     if not re.fullmatch(r"[a-z0-9_]+", name):
         return [Finding("error", f"nom de plugin {name!r} : une extension du Desk se nomme comme son plugin, en minuscules, chiffres et `_` (--name)")]
@@ -383,7 +383,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     p.add_argument("--with", dest="needs", type=Path, action="append", default=[], metavar="DIR",
                    help="dossier de DocTypes d'un plugin dont celui-ci dépend (cibles des champs Link), répétable ; non contrôlé")
 
-    p = sub.add_parser("new-desk-extension", help="poser <plugin>/desk/ : une extension du Desk prête à charger (doc/extensions.md)")
+    p = sub.add_parser("new-desk-extension", help="poser <plugin>/desk/ : une extension du Desk prête à charger (process/extensions.md)")
     p.add_argument("plugin_home", type=Path, help="dossier du plugin (celui de son plugin.yaml)")
     p.add_argument("--name", help="nom du plugin (défaut : le nom du dossier)")
     p.add_argument("--label", help="libellé de sa page et de son lien (défaut : déduit du nom)")

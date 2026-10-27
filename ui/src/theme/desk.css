@@ -3691,7 +3691,7 @@ a.p-button:hover {
   color: var(--desk-danger);
 }
 
-/* « Personnaliser » > champs ajoutés par l'organisation (doc/programme.md §3.5). */
+/* « Personnaliser » > champs ajoutés par l'organisation (process/programme.md §3.5). */
 .added-list {
   margin: 0 0 0.75rem;
   padding: 0;

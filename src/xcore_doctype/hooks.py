@@ -1,4 +1,4 @@
-"""Hooks (doc/doctype.md D2, D4, D16, D21).
+"""Hooks (process/doctype.md D2, D4, D16, D21).
 
 Deux familles, avec des garanties différentes :
 

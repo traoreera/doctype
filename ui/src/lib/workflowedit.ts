@@ -1,5 +1,5 @@
 /**
- * L'habillage d'automate d'une organisation, côté Desk (doc/programme.md §3.6).
+ * L'habillage d'automate d'une organisation, côté Desk (process/programme.md §3.6).
  *
  * Le Desk n'invente aucune règle : il montre l'automate du YAML (`definition`, rendu par `GET /override/workflow`) et écrit dans le
  * JSON que le serveur validera. Tout est pur ici — une ligne par transition, et des fonctions qui rendent un NOUVEAU JSON — pour que

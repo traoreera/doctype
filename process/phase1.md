@@ -1,6 +1,6 @@
 # Phase 1 : permissions et hooks
 
-17 octobre 2026. Contre xcore 2.9.1 et PostgreSQL 18.6. Suite de `doc/spike-phase0.md` ; `doc/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4.
+17 octobre 2026. Contre xcore 2.9.1 et PostgreSQL 18.6. Suite de `process/spike-phase0.md` ; `process/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4.
 
 ## 1. Résultat
 

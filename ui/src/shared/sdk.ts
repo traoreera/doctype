@@ -1,5 +1,5 @@
 /**
- * `@xcore-doctype/desk` : ce qu'une extension du Desk importe (D28, `doc/extensions.md`). Servi sous un nom FIXE (`shared/sdk.js`) que
+ * `@xcore-doctype/desk` : ce qu'une extension du Desk importe (D28, `process/extensions.md`). Servi sous un nom FIXE (`shared/sdk.js`) que
  * l'import map d'`index.html` désigne. Tout ce qui n'est pas exporté ici est privé : il peut changer sans prévenir.
  */
 import { inject } from 'vue'

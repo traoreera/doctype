@@ -1,6 +1,6 @@
 # Extension du Desk de `__PLUGIN__`
 
-`index.js` est le point d'entrée que le Desk charge (contrat : `doc/extensions.md` d'xcore-doctype, D28). Il fonctionne tel quel.
+`index.js` est le point d'entrée que le Desk charge (contrat : `process/extensions.md` d'xcore-doctype, D28). Il fonctionne tel quel.
 
 Pour écrire des composants `.vue` (ou en TypeScript), construisez l'extension en bibliothèque ES, avec `vue` et `@xcore-doctype/desk`
 laissés **externes** (le Desk les fournit par son import map : une seule copie de Vue dans la page) :

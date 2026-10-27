@@ -1,4 +1,4 @@
-"""Champs `Decimal` : des quantités et des montants EXACTS (palier 40 %, phase A, doc/palier40.md §4.3).
+"""Champs `Decimal` : des quantités et des montants EXACTS (palier 40 %, phase A, process/palier40.md §4.3).
 
 Un `Number` est un flottant : `0.1 + 0.2` ne vaut pas `0.3`, et un stock qui additionne des dixièmes dérive. Un `Decimal` est stocké dans
 le document comme une CHAÎNE canonique à `decimals` chiffres après la virgule (`"12.500"`), jamais comme un nombre JSON que n'importe quel

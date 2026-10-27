@@ -1,4 +1,4 @@
-"""« Créer depuis » contre une vraie base : le reste à faire, les droits, l'état de la source (doc/mapper.md §3/§5).
+"""« Créer depuis » contre une vraie base : le reste à faire, les droits, l'état de la source (process/mapper.md §3/§5).
 
 La logique de recopie est testée à part, sur des dictionnaires (`test_mapping.py`). Ce qui se joue ICI, et qui
 exige la base : retrouver ce qui a déjà été émis pour une source, et ne jamais l'ignorer.

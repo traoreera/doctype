@@ -1,5 +1,5 @@
 /**
- * Évaluateur des conditions `depends_on` (doc/doctype.md D22). Miroir EXACT de `src/xcore_doctype/expr.py`.
+ * Évaluateur des conditions `depends_on` (process/doctype.md D22). Miroir EXACT de `src/xcore_doctype/expr.py`.
  *
  * Il n'y a pas de parseur ici : le serveur compile la chaîne du YAML en arbre JSON (`/meta`), et ce module n'évalue
  * que cet arbre. Les deux implémentations sont vérifiées par les mêmes vecteurs (`tests/vectors/`), y compris les

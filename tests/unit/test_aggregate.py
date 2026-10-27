@@ -105,7 +105,7 @@ class TestCountsAndMetrics:
 
     async def test_a_decimal_sum_stays_exact_beyond_what_a_double_holds(self, svc, db):
         if db.backend == "sqlite":
-            pytest.skip("SQLite n'a pas de décimal : il additionne en double, exact jusqu'à ~15 chiffres (documenté dans doc/phase-ij.md)")
+            pytest.skip("SQLite n'a pas de décimal : il additionne en double, exact jusqu'à ~15 chiffres (documenté dans process/phase-ij.md)")
         # 4503599627370497.01 a 18 chiffres : un double (2^52 près de 4,5e15, pas de 0,5) perdrait les centimes.
         await sale(svc, amount="4503599627370497.01")
         await sale(svc, amount="0.01")

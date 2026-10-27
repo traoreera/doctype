@@ -1,7 +1,7 @@
 # Le journal : une ligne par entrée ou sortie d'un article dans un entrepôt. Écrit par `stock.post_entry` / `stock.reverse_entry`
 # SEULEMENT (code de confiance, dans la transaction de la soumission) : fermé à tout écrivain humain. Immuable par construction,
 # son nom vient du mouvement (`MS-2026-00001.0.in`) : rejouer la même écriture est refusé par l'unicité du nom.
-# Phase A : stocké dans la table générique. La table dédiée est la phase B (doc/palier40.md).
+# Phase A : stocké dans la table générique. La table dédiée est la phase B (process/palier40.md).
 schema_version: 1
 name: Stock Ledger Entry
 label: Journal de stock

@@ -1,4 +1,4 @@
-# Une permission utilisateur : « ce membre ne voit, de tel type, que telle valeur » (doc/programme.md §2.1). Elle RESSERRE ce que ses rôles
+# Une permission utilisateur : « ce membre ne voit, de tel type, que telle valeur » (process/programme.md §2.1). Elle RESSERRE ce que ses rôles
 # lui donnent : sur le type lui-même (les documents de ce nom) et sur tout document dont un champ Lien vers ce type vaut autre chose (un
 # lien vide passe). Plusieurs lignes pour un même membre et un même type = plusieurs valeurs permises. `applies_to` la borne à un seul type.
 # Le moteur les lit à chaque requête ; les hooks `doctype.user_permission*` (enregistrés par xcore-doctype) les gardent cohérentes.

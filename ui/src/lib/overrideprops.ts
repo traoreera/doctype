@@ -139,7 +139,7 @@ export function withProp(config: FormOverride | null | undefined, fieldname: str
 }
 
 
-// ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ────────────────────────────────────────────────
+// ── Champs ajoutés par l'organisation (process/programme.md §3.5) ────────────────────────────────────────────────
 
 /** Le préfixe réservé, imposé par le serveur : un champ d'organisation ne masque jamais un champ du type. */
 export const CUSTOM_PREFIX = 'custom_'
