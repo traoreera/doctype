@@ -183,6 +183,25 @@ try {
     await page.getByTestId('list-count').filter({ hasText: '1 sur 1' }).waitFor()
   }, page)
 
+  await r.step('import CSV (fichier Excel en Windows-1252) : une ligne passe, l’autre est refusée avec sa raison', async () => {
+    await page.goto(`${cfg.desk}#/app/Customer`)
+    await page.getByTestId('list-count').filter({ hasText: '1 sur 1' }).waitFor()
+    await page.getByTestId('more-actions').focus()
+    await page.keyboard.press('Enter')
+    await page.getByTestId('import-csv').click()
+    const dialog = page.getByTestId('import-dialog')
+    const csv = 'Nom;Type;Plafond;Client depuis\r\nSociété Élan;Particulier;1 500,5;31/12/2025\r\nSans numéro;Entreprise;;\r\n'
+    await dialog.getByTestId('import-file').setInputFiles({ name: 'clients.csv', mimeType: 'text/csv', buffer: Buffer.from(csv, 'latin1') })
+    await dialog.getByTestId('import-run').click()
+    await dialog.getByTestId('import-report').filter({ hasText: '1 importé, 1 ligne refusée' }).waitFor()
+    await dialog.getByTestId('import-fail-3').filter({ hasText: 'company_id' }).waitFor()
+    await r.shot(page, 'import-csv')
+    await page.keyboard.press('Escape')
+    await page.getByTestId('list-count').filter({ hasText: '2 sur 2' }).waitFor()
+    const imported = (await api(cfg, 'GET', `/list/Customer?filters=${encodeURIComponent(JSON.stringify({ customer_name: 'Société Élan' }))}`)).json.items[0]
+    if (imported?.data.credit_limit !== 1500.5 || imported?.data.since !== '2025-12-31') throw new Error(`import mal lu : ${JSON.stringify(imported?.data)}`)
+  }, page)
+
   await r.step('articles : création de deux articles', async () => {
     for (const name of ['Vis', 'Écrou']) {
       await page.goto(`${cfg.desk}#/app/Item/new`)

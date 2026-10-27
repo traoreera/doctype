@@ -121,7 +121,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Documents récurrents (auto-répétition) | K |
 | Notifications (système, e-mail) sur événement | ✔ (C4 : règles par DocType, cloche et e-mail, conditions, modèles fermés ; ni destinataires par rôle, ni règles par date, qui attendent les rôles dans l'annuaire et les tâches planifiées) |
 | Rapports envoyés par e-mail | K |
-| Import CSV avec rapport d'erreurs | E |
+| Import CSV avec rapport d'erreurs | ✔ (programme groupe 2, élément 5 : créer ou mettre à jour, une ligne = un document par la porte ordinaire, rapport ligne à ligne ; pas en tâche de fond, 1000 lignes au plus) |
 | Export de données | ✔ (C : CSV) |
 | Clés d'API (clé + secret par utilisateur) | M |
 | API REST documentée | ✔ (I : page « Documentation de l'API », générée de la définition de chaque type) |
@@ -163,12 +163,12 @@ que « DocType virtuel » (bonus). Dénominateur : **87**.
 
 | État | éléments | part de 87 |
 |---|---:|---:|
-| ✔ fait en entier | 62 | 71 % |
+| ✔ fait en entier | 63 | 72 % |
 | ◐ fait en partie | 8 | 9 % |
-| non fait | 17 | 20 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **66** | **76 %** |
+| non fait | 16 | 18 % |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **67** | **77 %** |
 
-**26 octobre** : les étiquettes passent à ✔ (programme groupe 1, élément 3), puis les permissions utilisateur et le partage (groupe 2, élément 4), chacun après relecture adversariale. Le 23 : 59 ✔, 8 ◐, 63 lignes, 72 %.
+**26 octobre** : les étiquettes passent à ✔ (programme groupe 1, élément 3), puis les permissions utilisateur et le partage (groupe 2, élément 4), puis l'import CSV (élément 5), chacun après relecture adversariale. Le 23 : 59 ✔, 8 ◐, 63 lignes, 72 %.
 
 **23 octobre (consolidation, phase C4 de `.plan/plan.md`)** : trois lignes ◐ passent à ✔ (notifications par DocType et e-mail, propriétés
 modifiées par organisation appliquées par le serveur, gestionnaire de fichiers), chacune après une relecture adversariale dont les constats
@@ -178,7 +178,7 @@ Le 20 octobre le décompte (non vérifié) disait 62 lignes en entier (71 %, 74 
 prouvées qu'en partie (conditions dans les lignes, sections repliables, DocType arborescent, journal d'activité, écran « Habiller »,
 journal d'accès et d'audit) ; une monte (champs personnalisés, par les extensions de DocType D26). Les 20 lignes non faites : permlevel,
 permissions utilisateur, partage, droits d'export/impression/e-mail, vue Galerie, rapports requête de plugin, étiquettes (faites le 26), Workflow, tâches
-planifiées, webhooks, assignation automatique, documents récurrents, rapports par e-mail, import CSV, clés d'API, éditeur de DocType,
+planifiées, webhooks, assignation automatique, documents récurrents, rapports par e-mail, import CSV (fait le 26), clés d'API, éditeur de DocType,
 formats d'impression, PDF, traductions, corbeille.
 
 ### Angles morts de l'inventaire (22 octobre 2026)
@@ -222,8 +222,8 @@ L'inventaire du §2 est le mien (§1) : deux agents ont cherché les fonctionnal
 | Fournisseur OAuth 2 | non fait |
 | Outils de diagnostic (Recorder, inspecteur de permissions) | non fait |
 
-**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 69 faites, 18 partielles, 32 non faites, soit **58 % en entier, 66 % avec les
-demi-lignes** (26 octobre : étiquettes, permissions utilisateur, partage ; 24 octobre : filtres d'un Lien D29 et onglets de fiche, 66, 18, 35, 55 % et 63 % ; le 23 : 64, 18, 37, 54 % et 61 % ; le 22 : 60, 21, 38, 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
+**Sur l'inventaire élargi (87 + 32 = 119 lignes)** : 70 faites, 18 partielles, 31 non faites, soit **59 % en entier, 66 % avec les
+demi-lignes** (26 octobre : étiquettes, permissions utilisateur, partage, import CSV ; 24 octobre : filtres d'un Lien D29 et onglets de fiche, 66, 18, 35, 55 % et 63 % ; le 23 : 64, 18, 37, 54 % et 61 % ; le 22 : 60, 21, 38, 50 % et 59 %). Mêmes réserves qu'au §1 : la liste reste subjective et chaque ligne compte pour 1.
 
 ## 3. Ce qu'on retient pour 70 %
 

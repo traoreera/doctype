@@ -11,6 +11,7 @@ import { SERVICES } from '@/lib/services'
 import type { DocTypeMeta, SavedView } from '@/lib/types'
 import { CUSTOMER } from './fixtures'
 import { TASK, doc, page } from './views-fixtures'
+import { menuItem, openMore } from './menu'
 
 beforeEach(() => {
   localStorage.clear()
@@ -246,5 +247,27 @@ describe('un DocType virtuel (source externe : xauth…)', () => {
     const { w, list } = await open('/app/Plain', { Plain: PLAIN })
     expect(list).toHaveBeenCalledWith('Plain', expect.objectContaining({ order_by: 'modified', order: 'desc' }))
     expect(w.findAll('.p-datatable-thead th').map((h) => h.text())).toContain('Modifié')
+  })
+})
+
+describe('la page d’un type : importer un CSV', () => {
+  it('« Importer… » est offert à qui peut créer ou modifier, ouvre la boîte d’import ; un lecteur ne le voit pas', async () => {
+    const { w } = await open('/app/Task')
+    await openMore(w)
+    expect(menuItem('import-csv')).not.toBeNull()
+    menuItem('import-csv')!.click()
+    await flushPromises()
+    expect(document.body.querySelector('[data-testid="import-dialog"]')).not.toBeNull()
+    w.unmount()
+    document.body.innerHTML = ''
+    const editor = await open('/app/Task', { Task: { ...TASK, rights: { ...TASK.rights, create: 'none' } } })
+    await openMore(editor.w)
+    expect(menuItem('import-csv')).not.toBeNull()
+    editor.w.unmount()
+    document.body.innerHTML = ''
+    const reader = await open('/app/Task', { Task: { ...TASK, rights: { ...TASK.rights, create: 'none', write: 'none' } } })
+    await openMore(reader.w)
+    expect(menuItem('import-csv')).toBeNull()
+    expect(document.body.querySelector('[data-testid="import-dialog"]')).toBeNull()
   })
 })

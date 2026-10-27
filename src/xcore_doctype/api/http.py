@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict
 
 from ..context import ContextSettings, RequestContext, http_context
+from ..csv_import import import_csv
 from ..document import DEFAULT_PAGE, DocumentService
 from ..errors import DoctypeError
 
@@ -23,6 +24,12 @@ class CreateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     data: dict[str, Any]
     name: Any = None  # le nom choisi, pour un DocType `naming: prompt` (refusé pour tout autre nommage)
+
+
+class ImportBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    content: Any
+    mode: Any = "insert"
 
 
 class BulkBody(BaseModel):
@@ -254,6 +261,10 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
     @router.post("/bulk/{doctype}")
     async def doc_bulk(doctype: str, body: BulkBody, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.bulk(ctx, doctype, body.action, body.names, data=body.data))
+
+    @router.post("/import/{doctype}")
+    async def doc_import(doctype: str, body: ImportBody, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(import_csv(documents, ctx, doctype, body.content, body.mode))
 
     @router.post("/doc/{doctype}/{name}/rename")
     async def doc_rename(doctype: str, name: str, body: RenameBody, ctx: RequestContext = Depends(ctx_dep)):

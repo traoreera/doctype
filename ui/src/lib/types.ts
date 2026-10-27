@@ -674,6 +674,22 @@ export interface SharedDoc {
   creation: string
 }
 
+/** Une ligne d'un import CSV : `row` est son numéro dans le fichier (l'en-tête est la ligne 1). */
+export interface ImportItem {
+  row: number
+  ok: boolean
+  name?: string
+  code?: string
+  message?: string
+  details?: { field?: string; msg?: string }[]
+}
+
+export interface ImportResult {
+  results: ImportItem[]
+  done: number
+  failed: number
+}
+
 /** Une étiquette en usage et son nombre de documents (lisibles, dans les filtres demandés). */
 export interface TagCount {
   tag: string

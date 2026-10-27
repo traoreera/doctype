@@ -97,7 +97,7 @@ porter les trois formes, la liste qu'il ouvre les applique), groupe « Étiquett
 | # | Élément | Décision à prendre | Ligne |
 |---|---|---|---|
 | 4 | ~~**Permissions utilisateur + Partage d'un document**~~ **FAIT le 26 oct. (voir §2.1)** | tranché le 26 oct. : comme Frappe pour les restrictions, « qui écrit partage » pour le partage | 2 des 20 → faites |
-| 5 | **Import CSV** | Le même validateur que l'API (jamais un chemin d'écriture parallèle : droits, hooks, liens, unicité), par lots bornés, avec un rapport ligne à ligne. Transaction par ligne ou par lot ? | 1 des 20 (reste de E) |
+| 5 | ~~**Import CSV**~~ **FAIT le 26 oct. (voir §2.2)** | tranché : une transaction PAR LIGNE (comme l'action en lot), 1000 lignes au plus par import | 1 des 20 → faite |
 | 6 | **Clés d'API** | **Dépend d'xauth**, qui est hors du dépôt : la clé est-elle un jeton xauth à longue vie (c'est xauth qui la crée et la révoque) ou une clé propre au moteur ? Je ne touche pas à `app/auth` sans accord. | 1 des 20 |
 | 7 | **Corbeille** (déplacée ici, voir §0) | Suppression douce : colonne d'état, exclusion dans `Query._scope()` (le seul goulet), restauration, purge, et les réponses aux questions du §0 (liens, unicité, historique). | 1 des 20 |
 
@@ -141,6 +141,40 @@ périmètre(utilisateur, action) = (rôles ET permissions utilisateur) OU docume
   entre les deux ne vaut que pour la suivante) ; le grant `system:user_permission:write` est un droit d'administrateur (il retire aussi ses
   propres restrictions, et la vérification de `for_value` dit si un nom existe) ; chaque lecture paie deux sous-requêtes par champ Lien,
   sans index sur `data->>'user'` (sans effet mesurable à l'échelle d'aujourd'hui).
+
+### 2.2 Import CSV (fait le 26 octobre 2026)
+
+`POST /import/<Type>` `{content, mode: insert|update}` (action `doc.import`), `csv_import.py`, et « Importer… » dans le menu « ⋯ » d'une liste.
+
+- **Jamais un chemin d'écriture parallèle.** Le module ne fait que LIRE le fichier et traduire chaque cellule ; chaque ligne passe ensuite
+  SEULE par `DocumentService.create` (ou `get` puis `update` avec les données enregistrées fusionnées) : droits, permissions utilisateur,
+  schéma strict, conditions, règles de formulaire de l'organisation, liens et leurs filtres, unicité, numérotation, hooks, historique, règles
+  de notification — exactement ce que subit le formulaire. **Une transaction par ligne** : une ligne refusée ne retient pas les autres, et la
+  réponse dit, ligne par ligne (numéro dans le fichier, en-tête = 1), ce qui est passé et pourquoi le reste a été refusé. Le droit de créer
+  (ou d'écrire, pour mettre à jour) est exigé une fois d'abord, comme pour l'action en lot.
+- **L'en-tête est compris en entier ou refusé en entier**, avant la première ligne (422 `csv_columns`, colonne par colonne) : une colonne
+  est le nom d'un champ ou son libellé (casse ignorée ; un libellé porté par deux champs doit s'écrire par le nom) ; une colonne inconnue,
+  en double, ou d'un champ qui ne s'importe pas (table, mot de passe, fichier, `fetch_from`) refuse tout. `name` (ou « Nom ») désigne le
+  document : obligatoire pour mettre à jour, permis à la création d'un type `naming: prompt` seulement. Un champ passe avant le nom ; deux
+  « Nom » (le nom du document puis un champ libellé « Nom », comme l'export l'écrit) : le premier est le nom. Les colonnes système de
+  l'export (propriétaire, dates, statut) sont ignorées : **un fichier exporté se réimporte tel quel en mise à jour.**
+- **Les cellules** : vide = non envoyée (le défaut s'applique à la création, la valeur enregistrée reste à la mise à jour). Nombres et
+  dates à la française acceptés (`1 234,5`, `31/12/2026`, `oui`/`non`, durée `1:30:00`) ; jamais d'arrondi ni de devinette (virgule ET point :
+  refusé ; un décimal de trop : refusé ; une date-heure sans fuseau : refusée ; un nombre infini : refusé). L'apostrophe que l'export pose
+  devant une formule est retirée au retour. Séparateur `;`, `,` ou tabulation lu sur l'en-tête ; BOM retiré. Le Desk lit le fichier en
+  UTF-8, à défaut en Windows-1252 (ce qu'Excel écrit en « CSV » simple), et propose un modèle (les libellés des champs importables).
+- **Bornes** : 1000 lignes, 300 colonnes, 2 millions de caractères par import ; un import ne part PAS en tâche de fond (il attend
+  l'ordonnanceur et ses travaux identifiés, §3.1 et §3.4) : au-delà, on découpe le fichier. Après 120 s de traitement, les lignes restantes
+  ne sont pas écrites et le rapport les marque `not_processed` (des hooks `action:` lents ne font pas durer une requête des heures).
+- **Relecture adversariale** (cinq défauts reproduits, tous corrigés avec leur test, chacun vérifié par mutation) : une date-heure hors
+  bornes une fois en UTC ou un JSON trop profond faisait tomber TOUT l'import en erreur interne (c'est maintenant l'erreur de sa ligne) ;
+  la mise à jour renvoyait les clés d'un champ retiré du YAML ou d'une extension disparue et TOUTES les lignes étaient refusées (seuls les
+  champs déclarés aujourd'hui sont renvoyés, comme le fait le formulaire) ; un en-tête de centaines de milliers de colonnes bloquait le
+  serveur (temps quadratique ; compté une fois, borné à 300) ; les libellés donnés par l'habillage de l'organisation, ceux que le Desk
+  montre et exporte, n'étaient pas compris (ils le sont, en plus de ceux du YAML). Aussi : chiffres ASCII seulement (`١٢` n'est plus 12),
+  une date-heure à microsecondes refusée au lieu d'être tronquée, les numéros du rapport sont ceux des lignes du FICHIER (lignes vides
+  et cellules sur plusieurs lignes comprises), une cellule de plus de 131 072 caractères est lue, et le modèle du Desk écrit le nom du
+  champ quand son libellé serait compris autrement par le serveur.
 
 ## 3. Groupe 3 — l'étude avant le code
 
