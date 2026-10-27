@@ -618,6 +618,31 @@ quelqu'un d'autre que le demandeur, et seulement s'il porte un motif »).
 - **Lecture tolérante**, comme tout habillage : une retouche qui vise une transition disparue du YAML, ou dont la condition ne
   compile plus, est ignorée — le YAML reprend la main pour celle-là, jamais une page cassée ni un type inutilisable.
 
+#### Le Desk : l'éditeur en graphe (27 octobre 2026)
+
+Décision de l'utilisateur : « à la manière de Frappe », graphe + resserrement seulement (pas d'état ni de transition inventés par une
+organisation), dessiné avec Vue Flow (`@vue-flow/core`, MIT, la bibliothèque du Workflow Builder de Frappe).
+
+- **Une page, plus une boîte** : `#/workflow/<Type>` (`WorkflowBuilderView.vue`), ouverte depuis le menu « ⋯ » de la liste et de la
+  fiche, et depuis « Personnaliser ». Les états sont des cartes (`components/workflow/StateNode.vue` : nom, état de document par une
+  bordure colorée, « Départ », « Fin », « Bloqué »), les transitions des flèches dont l'étiquette dit l'action et ce qui la resserre
+  (filtre = condition, cadenas = pas par l'auteur, barrée et en pointillés = fermée). À droite, les propriétés de ce qu'on a choisi :
+  pour une transition, ce que l'APPLICATION exige (le droit — `grants` de `GET /override/workflow`, celui du YAML sinon la convention —,
+  sa condition, `not_owner`) puis ce que l'ORGANISATION y ajoute ; pour un état, ses transitions entrantes et sortantes, cliquables.
+- **Tout lecteur du type voit le circuit** ; seul qui modifie tous ses documents (`rights.write === 'all'`) y change quelque chose.
+  Un cul-de-sac se signale sur la carte et dans un bandeau, et l'enregistrement est grisé (la règle de `lib/workflowedit.deadEnds`,
+  la même que le serveur). Rouvrir tout ce qui était fermé RETIRE l'habillage au lieu d'enregistrer un habillage vide.
+- **Placement** (`lib/workflowgraph.ts`, pur, testé) : de gauche à droite, chaque état dans la colonne de sa distance au premier ; une
+  flèche qui revient en arrière passe par-dessous. Les cartes se déplacent pour lire (position gardée dans CE navigateur,
+  « Réorganiser » la rend), jamais ne se relient ni ne se suppriment (`nodes-connectable` faux, `delete-key-code` nul). Le graphe est
+  recadré quand le canevas change de taille.
+- **Clavier** : chaque carte et chaque étiquette est UN bouton ; les enveloppes focalisables de Vue Flow sont coupées (sinon deux
+  arrêts de tabulation par élément, et un texte d'aide en anglais qui promettait « delete to remove it »). Le panneau liste aussi
+  toutes les transitions : le graphe se parcourt sans souris.
+- **Preuves** : `tests/workflowgraph.spec.ts`, `tests/workflowbuilder.spec.ts` (chaque règle vérifiée par mutation), et
+  `ui/e2e/workflow.e2e.mjs` dans Chromium avec la fixture `flux` (fermer « Reprendre », la seule sortie offerte à l'auteur : offerte
+  avant, plus après ; téléphone sans débordement ; recadrage ; thème sombre).
+
 #### Ce qui reste hors de cette tranche
 
 Ajouter un état ou une transition (point 1 ci-dessus : il faudrait qu'xauth sache déclarer un grant après le chargement), et

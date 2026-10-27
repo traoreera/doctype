@@ -1,0 +1,8 @@
+name: flux
+version: 0.1.0
+author: traoreera
+description: "Fixture de test : un seul type à circuit d'approbation, pour voir l'éditeur du circuit dans un vrai navigateur (ui/e2e/workflow.e2e.mjs)."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype, auth]

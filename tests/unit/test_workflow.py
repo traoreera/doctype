@@ -431,6 +431,12 @@ class TestTheOrganisationLayer:
     une transition inventée par un tenant porterait un grant que personne ne peut détenir — elle serait morte à la naissance.
     """
 
+    async def test_the_editor_reads_who_opens_each_transition(self, svc):
+        # L'éditeur du Desk dit QUI peut faire chaque transition (comme Frappe dit le rôle) : le grant du YAML, sinon la convention.
+        got = await svc.workflow_override(who(), "Leave Request")
+        assert got["grants"]["Soumettre"] == SOUMETTRE and got["grants"]["Approuver"] == APPROUVER
+        assert set(got["grants"]) == {t["action"] for t in got["definition"]["transitions"]}
+
     async def test_an_organisation_closes_a_transition(self, svc):
         doc = await demande(svc)
         await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Refuser": {"closed": True}}})

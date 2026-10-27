@@ -827,6 +827,9 @@ class DocumentService:
             "doctype": doctype,
             "config": (found or {}).get("config", {}),
             "definition": wf.model_dump(mode="json", exclude_none=True, by_alias=True),
+            # Le grant qui ouvre chaque transition (celui du YAML, sinon la convention) : l'éditeur dit QUI peut la faire, comme Frappe dit le
+            # rôle. Ce n'est pas un secret : `/meta` publie déjà les grants que le type attend, et le grant seul n'ouvre rien sans xauth.
+            "grants": {t.action: compiled.definition.transition_grant(t) for t in wf.transitions},
         }
 
     async def save_workflow_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:

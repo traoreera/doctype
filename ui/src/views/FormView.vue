@@ -17,7 +17,6 @@ import TagBar from '@/components/tags/TagBar.vue'
 import { supportsTags } from '@/lib/tags'
 import HistoryPanel from '@/components/HistoryPanel.vue'
 import OverrideEditor from '@/components/OverrideEditor.vue'
-import WorkflowEditor from '@/components/WorkflowEditor.vue'
 import TableField from '@/components/TableField.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import ExtensionSlot from '@/extensions/ExtensionSlot.vue'
@@ -30,7 +29,7 @@ import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchS
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
-import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection, type WorkflowDef, type WorkflowOverride } from '@/lib/types'
+import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -571,9 +570,10 @@ const moreItems = computed<MoreItem[]>(() => {
   if (canRename.value) out.push({ label: t.form.rename, icon: 'pi pi-pencil', testid: 'rename', command: openRename })
   if (canDuplicate.value) out.push({ label: t.form.duplicate, icon: 'pi pi-clone', testid: 'duplicate', command: duplicate })
   if (writable.value) out.push({ label: t.override.edit, icon: 'pi pi-table', testid: 'form-layout-edit', command: () => void openLayout() })
-  // Le circuit d'approbation de l'organisation (§3.6) : il vaut pour TOUS les documents du type, d'où le périmètre d'écriture total.
-  if (meta.value?.workflow && meta.value.rights.write === 'all') {
-    out.push({ label: t.flowOverride.open, icon: 'pi pi-sitemap', testid: 'flow-edit', command: () => void openFlowOverride() })
+  // Le circuit d'approbation (§3.2, §3.6) : son éditeur est une page (le graphe), que tout lecteur du type ouvre ; seul qui modifie
+  // TOUS ses documents y adapte quelque chose (la page le dit et grise le reste).
+  if (meta.value?.workflow) {
+    out.push({ label: t.workflowBuilder.menu, icon: 'pi pi-sitemap', testid: 'flow-edit', command: () => void router.push({ name: 'workflow', params: { doctype: props.doctype } }) })
   }
   if (canDelete.value && !props.embedded) {
     if (out.length) out.push({ separator: true } as MoreItem)
@@ -680,61 +680,6 @@ async function resetLayout(): Promise<void> {
   } finally {
     savingLayout.value = false
   }
-}
-
-// ── Circuit d'approbation de l'organisation (doc/programme.md §3.6) ──
-const editingFlow = ref(false)
-const flowDefinition = ref<WorkflowDef | null>(null)
-const flowDraft = ref<WorkflowOverride>({})
-const flowProblem = ref<string | null>(null)
-const savingFlow = ref(false)
-
-async function openFlowOverride(): Promise<void> {
-  flowProblem.value = null
-  try {
-    // L'automate du YAML, pas celui de `/meta` : une étape que l'organisation a fermée n'y figure plus, on ne pourrait plus la rouvrir.
-    const current = await api.workflowOverride(props.doctype)
-    flowDefinition.value = current.definition
-    flowDraft.value = current.config ?? {}
-    editingFlow.value = true
-  } catch (e) {
-    notify.error(e)
-  }
-}
-
-async function saveFlowOverride(): Promise<void> {
-  savingFlow.value = true
-  flowProblem.value = null
-  try {
-    await api.saveWorkflowOverride(props.doctype, flowDraft.value)
-    await afterFlowChange()
-    notify.success(t.flowOverride.savedToast)
-  } catch (e) {
-    flowProblem.value = describeError(e) // le refus du serveur (cul-de-sac, condition fautive…), la fenêtre reste ouverte
-  } finally {
-    savingFlow.value = false
-  }
-}
-
-async function resetFlowOverride(): Promise<void> {
-  savingFlow.value = true
-  flowProblem.value = null
-  try {
-    await api.removeWorkflowOverride(props.doctype)
-    await afterFlowChange()
-    notify.success(t.flowOverride.resetToast)
-  } catch (e) {
-    flowProblem.value = describeError(e)
-  } finally {
-    savingFlow.value = false
-  }
-}
-
-/** Le circuit a changé : `/meta` ne dit plus la même chose, et les boutons de CE document non plus. */
-async function afterFlowChange(): Promise<void> {
-  editingFlow.value = false
-  await reloadMeta()
-  await loadFlow()
 }
 
 // ── Garde des modifications ────────────────────────────────
@@ -975,20 +920,8 @@ onBeforeUnmount(() => {
         :doctype="doctype"
         :saving="savingLayout"
         :workflow="!!meta?.workflow"
-        :can-edit-workflow="meta?.rights.write === 'all'"
         @save="saveLayout"
         @reset="resetLayout"
-      />
-
-      <WorkflowEditor
-        v-model:visible="editingFlow"
-        v-model:config="flowDraft"
-        :definition="flowDefinition"
-        :allowed="meta?.rights.write === 'all'"
-        :problem="flowProblem"
-        :saving="savingFlow"
-        @save="saveFlowOverride"
-        @reset="resetFlowOverride"
       />
 
       <p v-if="record" class="desk-muted" style="font-size: 0.8rem" data-testid="form-footer">
