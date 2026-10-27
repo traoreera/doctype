@@ -1,0 +1,287 @@
+# Impression et PDF : spécification
+
+**Spécification, 27 oct. 2026.** Rien n'est implémenté : ce fichier est le contrat à tenir.
+
+Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
+obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos
+listes (ni les 7 points d'`erp-doctypes.md`, ni le chemin d'`etat.md`), seulement à l'état de projet dans
+`palier70.md` (« Formats d'impression », « Impression PDF », phases F/L). C'était un trou de cadrage.
+
+## 0. Ce qui a été vérifié avant de concevoir
+
+Mesuré, pas supposé — et deux de ces points corrigent ce que je croyais :
+
+| Fait | Source |
+|---|---|
+| `frappe/frappe` est **MIT**, `frappe-ui` est **MIT** | API GitHub (`repos/…/license`) |
+| `erpnext` est **GPL-3.0** : rien à en reprendre | idem |
+| wkhtmltopdf **n'est plus une option** chez Frappe | `frappe/utils/pdf.py` |
+| Chromium est le défaut (`pdf_generator="chrome"`), **PlutoPrint** l'alternative | idem + `print_settings.json` |
+| **PlutoPrint** : MIT, wheels binaires précompilés, `pip install`, Python ≥3.10 | PyPI |
+| PlutoPrint ne sait pas : **CSS grid**, **JavaScript**, codes-barres | `frappe/utils/pdf_generator/pluto.py` (`plutoprint_blockers`) |
+| Notre schéma n'a **aucune** propriété d'impression par champ, ni papier à en-tête | le dépôt |
+| `pypdf` : **BSD-3**, **Python pur**, superpose des pages | PyPI |
+
+**Et PlutoPrint a été ÉPROUVÉ**, le 27 oct., sur une facture écrite comme notre générateur l'écrirait (flux et
+tableaux, aucun CSS grid) — pas seulement lu dans la documentation de Frappe :
+
+| Question | Résultat mesuré |
+|---|---|
+| Installation sur notre Python | wheel **`cp314`** manylinux, `pip install` sans build — **20,5 Mo** (moteur embarqué), `pypdf` 409 Ko |
+| Répétition de l'en-tête de tableau | **oui** : 300 lignes, 11 pages, en-tête présent sur les 10 pages de tableau et sur elles seules |
+| Saut de page explicite (`page-break-before`) | **oui** |
+| Interdiction du réseau | **oui**, par `Book.custom_resource_fetcher` : notre `fetch_url` lève, PlutoPrint avertit et **continue le rendu sans la ressource** |
+| Superposition d'un fond PDF (`pypdf`) | **oui** : fond sous le contenu, sur toutes les pages, pied du fond conservé |
+
+Le code du framework étant MIT, en reprendre est permis en conservant la notice de copyright dans les portions
+reprises. Ce n'est pourtant pas ce qui est proposé ici : voir §9.
+
+## 1. Décision — le moteur est PlutoPrint, en dépendance OPTIONNELLE
+
+`pip install plutoprint` : MIT, wheels précompilés, aucun binaire système, pas de Chromium dans l'image. C'est
+ce qui rend l'arbitrage léger, alors qu'il paraissait lourd.
+
+Ses limites tombent juste :
+
+- **pas de JavaScript** — c'est déjà notre position partout (vocabulaire fermé, code confiné aux plugins) ;
+- **pas de CSS grid** — contrainte d'écriture, et c'est NOUS qui produisons la feuille de style à partir des
+  blocs : on écrit en flux et en tableaux, point ;
+- **pas de codes-barres** — hors périmètre v1 (§8).
+
+Optionnelle, et déclarée comme telle : absente, les routes d'impression répondent `503 pdf_engine_missing`
+nommant le paquet, et l'APERÇU HTML continue de fonctionner. Un repli Chromium reste possible plus tard, comme
+chez Frappe, mais **n'est pas livré** : une seule voie à tenir.
+
+**Seconde dépendance optionnelle : `pypdf`** (BSD-3, **Python pur**, vérifié sur PyPI), pour le fond PDF de §5.
+Elle ne sert qu'à superposer des pages ; absente, un gabarit à fond PDF répond `503 pdf_engine_missing` et les
+autres impriment normalement.
+
+Réserve assumée : PlutoPrint est en **0.23.0**, un projet jeune. La dépendance optionnelle et la séparation
+HTML/PDF (§3) sont la précaution — pas un accident.
+
+## 2. Décision — un gabarit vit sur DEUX niveaux, comme un formulaire
+
+Exactement la séparation déjà en place pour les formulaires et les espaces (§3.5) :
+
+- **livré par un plugin** : `<plugin>/print/*.yaml`, chargé par
+  `doctype_registry.load_print_templates(self.ctx.name, dir)` APRÈS `load_dir` (les blocs visent ses champs).
+  Non modifiable à l'écran, versionné avec le plugin.
+- **celui de l'organisation** : un habillage en base, nouveau `kind` `print` de `xdt_layout_override`, cible
+  `<DocType>` (ou `<DocType>:<nom du gabarit>` pour en avoir plusieurs). Il PRIME sur celui du plugin.
+
+Et **à défaut, un gabarit est FABRIQUÉ** à partir du `layout` du DocType, comme le moteur fabrique déjà un
+espace de travail ou un tableau de bord : aucun document n'est jamais inimprimable.
+
+Pourquoi en base pour l'organisation : un gabarit de facture est propre à l'entreprise (ses mentions, son
+ordre, son en-tête), pas au plugin ; et le registre est global au processus, donc un fichier déposé par un
+tenant servirait à tous (le raisonnement de §3.5).
+
+## 3. Décision — la génération du HTML est PURE, le PDF est une étape mince
+
+`printing.py` reçoit un DocType compilé, les données d'un document, un gabarit et un papier à en-tête ; il rend
+une **chaîne HTML**. Il ne touche ni la base, ni les droits, ni PlutoPrint.
+
+C'est le découpage de `mapping.py` (la logique pure) contre `document.py` (ce qui exige la base), et il se
+justifie pareil : l'HTML se teste sur des dictionnaires, à la ligne près, sans binaire ni instance. Le PDF
+devient une fonction d'une ligne utile, testée par un seul test fumigène qui s'ignore si le paquet est absent.
+
+## 4. Le vocabulaire des blocs — FERMÉ, et sans code
+
+Sept blocs, qui couvrent une facture, un reçu, un bon de livraison. Aucun n'exécute quoi que ce soit.
+
+```yaml
+# doctypes/accounts/print/sales_invoice.yaml   (ou habillage d'organisation)
+schema_version: 1
+doctype: Sales Invoice
+name: standard                 # plusieurs gabarits par type : « standard », « duplicata »…
+label: Facture
+letterhead: default            # un `Letter Head`, ou `none`
+page: {size: A4, orientation: portrait, margins: {top: 20, bottom: 20, left: 15, right: 15}}
+blocks:
+  - {type: title, text: "Facture {{ doc.name }}"}
+  - {type: fields, columns: 2, fields: [customer, posting_date, due_date, company]}
+  - type: table
+    field: items
+    style: bordered          # bordered | ruled | plain
+    density: normal          # compact | normal
+    repeat_header: true      # l'en-tête se répète à chaque page
+    group_by: warehouse      # facultatif : regroupe les lignes
+    subtotal: [qty, amount]  # facultatif : un sous-total par groupe, sur ces colonnes
+    columns:
+      - {field: item_code, width: 40}
+      - {field: qty, align: right, width: 15}
+      - {field: rate, align: right, width: 20}
+      - {field: amount, align: right, width: 25, label: Montant}
+  - {type: totals, fields: [total, total_taxes_and_charges, grand_total]}
+  - {type: text, text: "{{ doc.printing_terms }}"}
+  - {type: spacer}
+  - {type: page_break}
+```
+
+**La substitution est celle qui existe déjà**, celle des règles de notification : vocabulaire clos
+(`{{ doc.<champ> }}`, `{{ doctype }}`, `{{ name }}`), motif linéaire, valeurs rendues en **texte échappé**,
+bornées, et **jamais** un champ Password, Table, JSON, TextEditor ni un fichier. On réutilise le code testé ;
+on n'ouvre pas Jinja. C'est la même décision que pour `compute:` (§3.7) : le besoin est un gabarit, pas un
+langage.
+
+**Les sous-totaux sont un calcul FERMÉ, pas une expression.** `group_by` nomme un champ de la LIGNE et
+`subtotal` des colonnes numériques : le rendu somme en `decimal.Decimal`, donc exactement, et rend la valeur à
+l'échelle du champ (la règle de `compute:`, §3.7 du programme — on ne fait pas entrer un flottant dans un
+montant). Aucune autre agrégation, aucune expression : ni moyenne libre, ni condition. `group_by` sur un champ
+Decimal, Table ou fichier est refusé au chargement.
+
+**La répétition de l'en-tête vient du CSS paginé** (`thead` en `table-header-group`), pas de notre code, et
+elle est **vérifiée** (§0 : 11 pages, en-tête partout où le tableau passe). Le cumul reporté (« à reporter » en pied de page, « report »
+en tête de la suivante) est un autre problème : il exige de savoir OÙ le moteur coupe, ce qu'un HTML généré
+ignore. Il demanderait un rendu en deux passes ou un moteur qui rappelle à chaque saut — donc une étude, pas
+une option (§9).
+
+**Pas de nouvelles propriétés de champ.** Frappe a besoin de `print_hide` parce qu'il génère tout
+automatiquement ; nos blocs **nomment** ce qu'ils impriment, donc la question ne se pose pas. Seul le gabarit
+FABRIQUÉ (§2) doit choisir, et il le fait par TYPE : il saute les Password, Image, Attach, JSON, TextEditor et
+les champs `hidden`. Aucun ajout au schéma.
+
+## 5. Le papier à en-tête
+
+Un DocType `Letter Head` du plugin `system` (comme `Notification Rule`) : `name`, `image` (un fichier
+`xdt_file`), `footer_text`, `is_default`, `disabled`. C'est de la donnée par organisation, donc un DocType et
+pas un fichier. Un gabarit le désigne par son nom ; `default` prend celui marqué par défaut.
+
+**Et il peut être un PDF** — c'est le « template importé en PDF » : l'entreprise fournit le PDF de son papier à
+en-tête ou d'un formulaire préimprimé, et nos blocs s'impriment PAR-DESSUS.
+
+```yaml
+letterhead:
+  pdf: lettre_entete.pdf       # un fichier xdt_file du tenant, jamais une URL
+  pages: first                 # first | all : le fond sur la 1re page, ou sur toutes
+  offset: {top: 45, bottom: 25}  # les zones (en mm) que le fond occupe : le contenu s'y interdit
+```
+
+Mécanique : on rend notre HTML en PDF (PlutoPrint) avec des marges qui réservent `offset`, puis on superpose le
+fond avec `pypdf` (page fusionnée). Le fond est LU comme un fichier du tenant par le service de fichiers — pas
+une URL, pas un chemin (§6). Un PDF de fond à plusieurs pages avec `pages: all` se répète ou s'aligne page à
+page : à préciser à l'implémentation (le cas d'usage réel est une page unique répétée).
+
+Ce qui est écarté : **déduire un gabarit depuis un PDF** (lire sa mise en page et en reconstruire les blocs).
+L'analyse de mise en page n'est pas fiable par nature, et rendrait un gabarit approximatif à refaire
+entièrement à la main (§9).
+
+## 6. Droits, et ce que l'impression ne doit pas devenir
+
+**Imprimer, c'est lire.** La route exige le droit de LIRE le document, avec le périmètre de l'appelant — aucun
+grant nouveau. Un droit d'impression par DocType est une autre affaire (`palier70.md`, ligne K) et reste dehors.
+
+**Le rendu n'accède pas au réseau.** C'est le point de sécurité central : un moteur HTML qui suit les URL d'un
+gabarit est une faille SSRF, et le gabarit vient de l'organisation.
+
+Deux verrous, et le second est meilleur que ce que j'avais prévu :
+
+1. toute URL externe est refusée au CHARGEMENT du gabarit (§8), et une image est résolue par NOUS — seulement
+   un fichier `xdt_file` du même tenant, lu par le service de fichiers ;
+2. et à l'exécution, `Book.custom_resource_fetcher` donne la main sur CHAQUE résolution : notre `fetch_url`
+   refuse tout ce qui n'est pas déjà incorporé. **Vérifié** (§0) : la ressource n'est pas récupérée, et le
+   document se rend quand même sans elle. C'est une ceinture en plus de la bretelle — on ne dépend pas de
+   l'exhaustivité du contrôle au chargement.
+
+**Rien n'est écrit.** `GET` ne stocke pas. L'archivage du PDF (obligation légale sur une facture) est un geste
+distinct, explicite, et reste dehors en v1 (§8).
+
+## 7. Les routes
+
+- `GET /print/{doctype}/{name}?template=&letterhead=` → `{html}`. L'aperçu : fonctionne sans PlutoPrint.
+- `GET /print/{doctype}/{name}/pdf?template=&letterhead=` → le PDF (`application/pdf`, en pièce jointe).
+  Sans le paquet : `503 pdf_engine_missing`.
+- `GET /print-templates/{doctype}` → les gabarits disponibles pour ce type (livrés + organisation + fabriqué),
+  filtrés par les droits, pour que le Desk peuple son menu « Imprimer ».
+- Actions IPC jumelles : `doc.print`, `doc.print.pdf`, `doc.print.templates`.
+
+## 8. Refus au CHARGEMENT
+
+Comme partout : une faute de gabarit échoue au chargement, jamais à la première impression.
+
+- `doctype` inconnu, enfant, virtuel ;
+- un champ cité absent du type, ou de genre interdit (Password, Table hors bloc `table`, fichier dans une
+  substitution) ;
+- `table.field` qui n'est pas un champ Table ; une colonne absente du DocType de lignes ;
+- deux gabarits de même `name` pour le même type et le même propriétaire ;
+- une URL externe (image, feuille, police) ;
+- `page.size` hors liste, marges négatives ;
+- plus de `MAX_PRINT_BLOCKS` blocs (100), plus de `MAX_PRINT_COLUMNS` colonnes de tableau (12) ;
+- `style`, `density` ou `pages` hors liste fermée ; une largeur de colonne hors 1-100, ou une somme de largeurs
+  qui dépasse 100 ;
+- `group_by` qui n'est pas un champ de la ligne, ou qui est Decimal, Table ou fichier ; `subtotal` sur une
+  colonne non numérique, ou absente des `columns` ;
+- `letterhead.pdf` qui n'est pas un fichier du tenant, ou un `offset` négatif.
+
+## 9. Ce que la v1 ne fait PAS
+
+- **Reprendre le constructeur de Frappe.** Son éditeur produit du JSON pour SON moteur (Jinja + Chromium) : pris
+  seul, il rend un document que rien n'imprime ; pris avec son moteur, il importe Jinja côté serveur, ce que le
+  projet a refusé deux fois. Et il attend l'API de Frappe, `frappe-ui` et Tailwind, dans un Desk PrimeVue : ce
+  serait un portage, pas une intégration. On reprend la CONCEPTION — deux niveaux, blocs sans code, en-tête
+  séparé — comme on l'a fait pour le Form Builder et le constructeur de workflow. La licence le permettrait ;
+  l'architecture ne le conseille pas.
+- **Le cumul reporté** d'un tableau sur plusieurs pages (« report » / « à reporter ») : il exige de connaître
+  les coupures de pages, qu'un HTML généré ignore. Étude séparée (deux passes, ou un moteur qui rappelle).
+- **Déduire un gabarit depuis un PDF** : analyse de mise en page, non fiable par nature.
+- Codes-barres et QR (PlutoPrint ne les fait pas), impression brute ESC/POS pour tickets.
+- Archivage du PDF dans `xdt_file`, signature électronique, filigrane.
+- Droit d'impression par DocType, traduction du gabarit, plusieurs langues.
+- Un gabarit PERSONNEL (par utilisateur) : imprimer est institutionnel, pas personnel. Seule la couche de
+  l'organisation existe — contrairement aux espaces et aux tableaux de bord, qui ont les deux (§3.5).
+- Repli Chromium.
+
+## 10. L'éditeur de gabarits
+
+Dans le périmètre, et pas en JSON : un éditeur visuel, de la même forme que le Form Builder — qui est le
+précédent qui a marché (`FormBuilderView.vue`, modèle pur dans `lib/formbuilder.ts`).
+
+**Quatre volets** : la palette des types de blocs | le gabarit comme pile de blocs | le panneau de propriétés du
+bloc choisi | **l'aperçu**, rendu par le serveur. L'aperçu est ce qui distingue cet éditeur des autres : on
+n'édite pas une disposition abstraite, on regarde la facture.
+
+**Le modèle est PUR** (`ui/src/lib/printedit.ts`), comme `lib/formbuilder.ts` et `lib/blocksedit.ts` :
+`addBlock`, `moveBlock`, `removeBlock`, `setProp`, `addColumn`, `moveColumn`, `templateProblems`. Aucune
+requête, donc testable au vitest sans monter de composant. Et il tient les règles du serveur AVANT
+l'enregistrement (§8) : un gabarit invalide est refusé par l'éditeur avec le même message, plutôt que par un 422
+après coup.
+
+**L'aperçu exige une route de plus** : `POST /print-preview/{doctype}/{name}` qui reçoit le gabarit en BROUILLON
+(non enregistré) et rend l'HTML. Elle applique exactement les mêmes contrôles que §6 et §8 — y compris le
+refus du réseau et la résolution des images par le service de fichiers. Un gabarit non enregistré ne doit pas
+être un chemin d'écriture ni une porte : elle n'écrit rien, et exige le droit de LIRE le document d'exemple.
+
+**Qui peut éditer : un périmètre d'écriture TOTAL** (`rights.write === 'all'`), comme les règles de formulaire
+(§3.5) et non comme une simple disposition. La raison n'est pas technique : un gabarit de facture engage
+l'entreprise — mentions obligatoires, numéro, conditions. Il lie tous ceux qui impriment, et une erreur a des
+conséquences légales. Un lecteur voit l'éditeur en lecture seule. (À valider : c'est le point de la spéc le plus
+discutable, parce qu'il réserve l'édition aux administrateurs.)
+
+**Le document d'exemple** : l'éditeur a besoin d'un document réel pour l'aperçu. Il prend le dernier que
+l'utilisateur peut lire (un `list` à `limit=1`), et dit clairement quand il n'y en a aucun — un gabarit s'édite
+alors sans aperçu, plutôt que pas du tout.
+
+**Ce que l'éditeur ne fait pas** : placer des blocs librement en deux dimensions (le gabarit est une PILE, pas
+une toile — c'est ce qui permet de garantir le rendu sans CSS grid), ni écrire du CSS, ni du HTML.
+
+Page `#/print/<Type>` , entrée par le menu « ⋯ » de la fiche et de la liste, à côté de « Personnaliser le
+formulaire ». Preuve en Chromium (`ui/e2e/`) comme pour le Form Builder et le constructeur de workflow : un
+bloc déplacé, une colonne ajoutée, un aperçu qui suit, un retour à l'origine.
+
+## 11. Ordre de réalisation
+
+1. `printing.py` : les blocs, le rendu HTML pur, ses refus. Testable seul, sans base ni paquet.
+2. Le chargement des gabarits livrés + l'habillage d'organisation, et le gabarit fabriqué à défaut.
+3. Les routes et les actions, avec le droit de lecture et la résolution des images en `data:`.
+4. `plutoprint` et `pypdf` en extras optionnels, et le test fumigène qui s'ignore sans eux (le banc d'essai du
+   27 oct. en est le point de départ : il vérifie déjà les quatre comportements de §0).
+5. Desk : bouton « Imprimer », aperçu, choix du gabarit.
+6. `Letter Head` dans le plugin `system`.
+7. L'éditeur (§10) : le modèle pur d'abord et ses tests, puis la page, puis la route d'aperçu.
+
+**L'ordre 1-3 avant 7 n'est pas négociable** : un éditeur édite un format qui doit exister, et il n'est
+utilisable qu'avec l'aperçu. Le construire d'abord donnerait un éditeur produisant un gabarit que rien ne valide
+et que personne ne peut voir.
+
+Les étapes 1 à 3 ne dépendent d'aucune décision ouverte. L'étape 4 est le seul engagement de paquet, et il est
+réversible : rien d'autre ne dépend de PlutoPrint.
