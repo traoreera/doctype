@@ -6,8 +6,9 @@ import type { Port } from '@/lib/automation'
 import { statusTone } from '@/lib/xflow'
 
 /**
- * Une carte du canevas, comme un nœud de n8n : une icône, un titre, ce qu'elle fait, et ses SORTIES nommées à droite (ensuite / en cas
- * d'erreur, vrai / faux, les cas d'un aiguillage…), chacune avec sa poignée. On relie en tirant d'une poignée de sortie vers une carte.
+ * Une carte du canevas, comme un nœud de n8n : une icône, un titre, ce qu'elle fait, et ses SORTIES nommées en bas (ensuite / en cas
+ * d'erreur, vrai / faux, les cas d'un aiguillage…), côte à côte, chacune avec sa poignée ; l'entrée est en haut (le flux se lit de haut
+ * en bas). On relie en tirant d'une poignée de sortie vers une carte.
  * Le titre est un bouton : on choisit la carte au clavier comme à la souris. En lecture d'une exécution, la carte porte son statut.
  */
 const props = defineProps<{
@@ -26,7 +27,7 @@ const tone = computed(() => (props.data.status ? statusTone(props.data.status) :
     :data-tone="tone ?? undefined"
     :data-testid="`af-node-${id}`"
   >
-    <Handle v-if="!data.trigger" id="in" type="target" :position="Position.Left" :connectable="data.canEdit" class="af-handle-in" />
+    <Handle v-if="!data.trigger" id="in" type="target" :position="Position.Top" :connectable="data.canEdit" class="af-handle-in" />
     <button type="button" class="af-node-head" :aria-pressed="selected ? 'true' : 'false'" :data-testid="`af-choose-${id}`" @click.stop="emit('choose', id)">
       <span :class="data.icon" class="af-node-icon" aria-hidden="true" />
       <span class="af-node-text">
@@ -40,7 +41,7 @@ const tone = computed(() => (props.data.status ? statusTone(props.data.status) :
     <ul class="af-ports">
       <li v-for="p in data.ports" :key="p.id" class="af-port" :data-tone="p.tone">
         <span class="af-port-label">{{ p.label }}</span>
-        <Handle :id="p.id" type="source" :position="Position.Right" :connectable="data.canEdit" class="af-handle-out" :data-testid="`af-port-${id}-${p.id}`" />
+        <Handle :id="p.id" type="source" :position="Position.Bottom" :connectable="data.canEdit" class="af-handle-out" :data-testid="`af-port-${id}-${p.id}`" />
       </li>
     </ul>
   </div>

@@ -7,7 +7,7 @@ import Message from 'primevue/message'
 import Textarea from 'primevue/textarea'
 import { Background } from '@vue-flow/background'
 import { MarkerType, VueFlow, useVueFlow, type Connection, type NodeDragEvent } from '@vue-flow/core'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import FlowEdge from '@/components/automation/FlowEdge.vue'
 import FlowNode from '@/components/automation/FlowNode.vue'
@@ -19,7 +19,7 @@ import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import {
-  DOC_ACTIONS, TRIGGER_ID, addStep, arrange, blankStep, connect, disconnect, docActionOf, docStep, edgesOf, emptyFlow, forDeploy, moveNode,
+  DOC_ACTIONS, ROW, TRIGGER_ID, addStep, arrange, blankStep, connect, disconnect, docActionOf, docStep, edgesOf, emptyFlow, forDeploy, freeSpot, moveNode,
   parseDocEvent, patchPayload, patchStep, payloadOf, portsOf, positions, problems, removeStep, renameStep, setCase, stepIcon, triggerIcon,
   variablesFor, type DocAction, type FlowDefinition, type FlowStep, type NewStep, type Problem, type StepType,
 } from '@/lib/automation'
@@ -50,7 +50,7 @@ const session = useSession()
 const users = useUsers()
 const automations = useAutomations()
 const FLOW_ID = 'automation'
-const { project, vueFlowRef, fitView } = useVueFlow(FLOW_ID)
+const { project, vueFlowRef, fitView, findNode, getViewport, setCenter } = useVueFlow(FLOW_ID)
 
 const def = ref<FlowDefinition | null>(null)
 const savedJson = ref('')
@@ -127,7 +127,8 @@ const nodes = computed(() => {
   const d = def.value
   if (!d) return []
   const at = positions(d)
-  const status = (id: string) => (viewing.value ? viewing.value.steps[id]?.status ?? 'skipped' : null)
+  // Une étape absente de l'exécution n'a pas de statut affiché : xflow ne trace pas tout (une condition évaluée n'a pas de ligne).
+  const status = (id: string) => viewing.value?.steps[id]?.status ?? null
   return [
     {
       id: TRIGGER_ID, type: 'step', position: at[TRIGGER_ID]!, selected: selected.value === TRIGGER_ID,
@@ -195,7 +196,9 @@ function place(item: PaletteItem, at?: { x: number; y: number }): void {
   if (!def.value || !canEdit.value) return
   const from = selected.value
   const origin = from ? positions(def.value)[from] : null
-  const where = at ?? (origin ? { x: origin.x + 280, y: origin.y } : { x: 280, y: 40 + def.value.steps.length * 40 })
+  // Sous l'étape choisie ; sans étape choisie, sous la carte la plus basse (le flux se lit de haut en bas).
+  const all = Object.values(positions(def.value))
+  const where = at ?? freeSpot(def.value, origin ? { x: origin.x, y: origin.y + ROW } : { x: 0, y: Math.max(0, ...all.map((p) => p.y)) + ROW })
   const added = addStep(def.value, item.make(), where)
   let next = added.def
   // Cliqué avec une étape choisie : la nouvelle s'y accroche (sa première sortie libre), comme le « + » d'un nœud n8n.
@@ -207,6 +210,7 @@ function place(item: PaletteItem, at?: { x: number; y: number }): void {
       if (free) next = connect(next, src.id, free.id, added.id)
     }
   }
+  focusNext = added.id
   set(next)
   choose(added.id)
 }
@@ -402,8 +406,35 @@ async function cancelRun(id: string): Promise<void> {
 }
 const viewedStep = computed(() => (viewing.value && selected.value && selected.value !== TRIGGER_ID ? viewing.value.steps[selected.value] ?? null : null))
 
+// Le cadrage, comme n8n : au premier affichage tout le flux, mais jamais au-delà de 100 % (un déclencheur seul remplirait le canevas) ni
+// en deçà de 55 % (des cartes illisibles) ; ensuite la vue ne bouge que pour montrer la carte qu'on vient d'ajouter, une fois que Vue Flow
+// l'a MESURÉE (`nodes-initialized`) — recadrer avant la mesure la laissait hors de la vue.
+const FIT = { padding: 0.25, maxZoom: 1, minZoom: 0.55 }
+let framed = false
+let focusNext: string | null = null
+function onNodesReady(): void {
+  if (!framed) {
+    framed = true
+    void fitView(FIT)
+    return
+  }
+  const id = focusNext
+  focusNext = null
+  const node = id ? findNode(id) : null
+  const box = vueFlowRef.value?.getBoundingClientRect()
+  if (!node || !box) return
+  const { x, y, zoom } = getViewport()
+  const w = node.dimensions.width
+  const h = node.dimensions.height
+  const left = node.position.x * zoom + x
+  const top = node.position.y * zoom + y
+  const inside = left >= 0 && top >= 0 && left + w * zoom <= box.width && top + h * zoom <= box.height
+  if (!inside) void setCenter(node.position.x + w / 2, node.position.y + h / 2, { zoom })
+}
+
 onBeforeRouteLeave(() => !dirty.value || window.confirm(t.automations.leave))
 watch(() => props.flow, () => {
+  framed = false
   choose(null)
   void show(null)
   void load()
@@ -464,6 +495,7 @@ onBeforeUnmount(() => {
             :nodes="nodes"
             :edges="edges"
             :nodes-connectable="canEdit"
+            :connection-radius="60"
             :nodes-draggable="canEdit"
             :edges-updatable="false"
             :delete-key-code="null"
@@ -472,8 +504,8 @@ onBeforeUnmount(() => {
             disable-keyboard-a11y
             :min-zoom="0.25"
             :max-zoom="2"
-            fit-view-on-init
             :aria-label="t.automations.canvas"
+            @nodes-initialized="onNodesReady"
             @connect="onConnect"
             @node-drag-stop="onDragStop"
             @edge-click="(e) => ((selectedEdge = e.edge.id), (selected = null))"
@@ -486,7 +518,7 @@ onBeforeUnmount(() => {
               <FlowEdge v-bind="edge" @unlink="unlink" />
             </template>
             <Background :gap="18" :size="1.2" pattern-color="var(--desk-grid-dot)" />
-            <CanvasControls @arrange="def && set(arrange(def)), fitView({ padding: 0.2 })" />
+            <CanvasControls :max-zoom="1" @arrange="def && set(arrange(def)), nextTick(() => fitView(FIT))" />
           </VueFlow>
         </div>
 

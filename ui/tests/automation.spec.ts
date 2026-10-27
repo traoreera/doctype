@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   TRIGGER_ID, addStep, arrange, blankStep, connect, disconnect, docActionOf, docEventName, docStep, edgesOf, emptyFlow, firstStep, forDeploy,
-  moveNode, parseDocEvent, patchPayload, portsOf, positions, problems, removeStep, renameStep, setCase, targetOf, triggerFields, uniqueId,
+  freeSpot, moveNode, parseDocEvent, patchPayload, portsOf, positions, problems, removeStep, renameStep, setCase, targetOf, triggerFields, uniqueId,
   variablesFor, type FlowDefinition,
 } from '@/lib/automation'
 
@@ -102,15 +102,16 @@ describe('le modèle d’une automatisation xflow', () => {
     expect(vars.some((v) => v.group === 'approuver')).toBe(false) // jamais son propre résultat
   })
 
-  it('les positions : celles de la définition, sinon une colonne par distance au déclencheur ; « Réorganiser » les oublie', () => {
+  it('les positions : celles de la définition, sinon une rangée par distance au déclencheur (de haut en bas) ; « Réorganiser » les oublie', () => {
     const at = positions(FLOW)
-    expect([at[TRIGGER_ID]!.x, at.lire!.x, at.petite!.x, at.approuver!.x]).toEqual([0, 280, 560, 840])
-    expect(at.approuver!.y).not.toBe(at.prevenir!.y)
+    expect([at[TRIGGER_ID]!.y, at.lire!.y, at.petite!.y, at.approuver!.y]).toEqual([0, 170, 340, 510])
+    expect(at.approuver!.y).toBe(at.prevenir!.y) // les deux branches d'une condition, côte à côte
+    expect(at.approuver!.x).not.toBe(at.prevenir!.x)
     const moved = moveNode(FLOW, 'lire', 12.4, 30.6)
     expect(positions(moved).lire).toEqual({ x: 12, y: 31 })
     expect(positions(arrange(moved)).lire).toEqual(at.lire)
     const lost = addStep(FLOW, blankStep('wait', 'wait')).def // injoignable : la dernière colonne, pour qu'on le voie
-    expect(positions(lost).wait!.x).toBe(1120)
+    expect(positions(lost).wait!.y).toBe(680)
   })
 
   it('ce qui empêche d’enregistrer est dit avant le serveur', () => {
@@ -127,6 +128,12 @@ describe('le modèle d’une automatisation xflow', () => {
     ])
     expect(problems(emptyFlow('x'))).toContainEqual({ code: 'no_steps' })
     expect(problems({ ...emptyFlow('x'), trigger: { type: 'schedule' }, steps: [blankStep('wait', 'w')] })).toEqual([{ code: 'schedule' }])
+  })
+
+  it('une carte ajoutée ne tombe jamais sur une autre : elle se décale d’une colonne', () => {
+    const at = positions(FLOW)
+    expect(freeSpot(FLOW, at.lire!)).toEqual({ x: at.lire!.x + 260, y: at.lire!.y })
+    expect(freeSpot(FLOW, { x: 0, y: 2000 })).toEqual({ x: 0, y: 2000 })
   })
 
   it('un identifiant se tire d’un libellé ; qui a déployé n’est jamais renvoyé par le client', () => {

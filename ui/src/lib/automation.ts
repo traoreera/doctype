@@ -280,12 +280,14 @@ export function setCase(def: FlowDefinition, id: string, from: string | null, to
 
 // ── Disposition ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-const COL = 280
-const ROW = 150
+/** Le flux se lit de HAUT en BAS : une rangée par distance au déclencheur, les branches côte à côte. Le canevas, entre la palette et le
+ * panneau, est plus haut que large : de gauche à droite, quatre étapes ne tenaient qu'à un zoom illisible. */
+export const COL = 260
+export const ROW = 170
 
 /**
- * La position de chaque carte : celle que la définition porte (`_x`, `_y`), sinon une colonne par distance au déclencheur et une
- * ligne par ordre d'arrivée dans la colonne. Un step injoignable va dans une dernière colonne, pour qu'on le voie et le relie.
+ * La position de chaque carte : celle que la définition porte (`_x`, `_y`), sinon une rangée par distance au déclencheur et, dans la
+ * rangée, une colonne par ordre d'arrivée. Un step injoignable va dans une dernière rangée, pour qu'on le voie et le relie.
  */
 export function positions(def: FlowDefinition): Record<string, { x: number; y: number }> {
   const depth = new Map<string, number>()
@@ -310,7 +312,7 @@ export function positions(def: FlowDefinition): Record<string, { x: number; y: n
   const place = (col: number) => {
     const r = rows.get(col) ?? 0
     rows.set(col, r + 1)
-    return { x: col * COL, y: r * ROW }
+    return { x: r * COL, y: col * ROW }
   }
   const out: Record<string, { x: number; y: number }> = {}
   const t = def.trigger
@@ -552,4 +554,12 @@ export function typedValue(fieldtype: string, text: string): unknown {
 export function shownValue(value: unknown): string {
   if (value === null || value === undefined) return ''
   return typeof value === 'string' ? value : JSON.stringify(value)
+}
+
+/** Une place libre près de `want` : on se décale d'une colonne tant qu'une carte occupe déjà l'endroit (jamais deux cartes l'une sur l'autre). */
+export function freeSpot(def: FlowDefinition, want: { x: number; y: number }): { x: number; y: number } {
+  const taken = Object.values(positions(def))
+  const spot = { x: Math.round(want.x), y: Math.round(want.y) }
+  while (taken.some((p) => Math.abs(p.x - spot.x) < COL - 30 && Math.abs(p.y - spot.y) < ROW - 30)) spot.x += COL
+  return spot
 }

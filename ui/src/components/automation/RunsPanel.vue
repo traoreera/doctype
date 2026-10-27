@@ -20,8 +20,7 @@ const when = (iso: string | null): string => {
 
 <template>
   <div class="af-panel-body" data-testid="af-runs">
-    <div class="af-inline">
-      <h2 class="wf-panel-title">{{ t.automations.runs }}</h2>
+    <div class="af-inline af-runs-head">
       <span class="desk-spacer" />
       <Button icon="pi pi-refresh" text rounded severity="secondary" size="small" :loading="loading" :aria-label="t.automations.refresh" :title="t.automations.refresh" data-testid="af-runs-refresh" @click="emit('refresh')" />
     </div>
