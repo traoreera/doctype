@@ -753,6 +753,22 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.transitions", op)
 
+    @action("doc.mappings")
+    async def doc_mappings(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.documents.available_mappings(ctx, _need(payload, "doctype"), _need(payload, "name"))
+
+        return await self._run("doc.mappings", op)
+
+    @action("doc.map")
+    async def doc_map(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.documents.mapped_values(
+                ctx, _need(payload, "doctype"), _need(payload, "source"), _need(payload, "name")
+            )
+
+        return await self._run("doc.map", op)
+
     @action("doc.transition")
     async def doc_workflow_transition(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:

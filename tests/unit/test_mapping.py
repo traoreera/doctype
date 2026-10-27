@@ -11,6 +11,7 @@ from decimal import Decimal
 import pytest
 
 from xcore_doctype.mapping import (
+    already_done,
     copied_fields,
     copied_row_fields,
     map_document,
@@ -175,6 +176,40 @@ class TestTheRowsOfTheDraft:
         lines = MappingLines(**{"from": "items", "reference": "src_row"})
         rows = map_rows(MOVE_LINE, ORDER_LINE, lines, [{"item": "A", "qty": 9.0}], source_name="SO-1", done={0: Decimal(9)})
         assert rows == [{"item": "A", "qty": 9.0, "src_row": "0"}]
+
+
+class TestWhatWasAlreadyDone:
+    """`already_done` reste pur : le service apporte les lignes lues en base, la somme se fait ici, exacte."""
+
+    def test_it_sums_per_source_row(self):
+        docs = [
+            [{"src_row": "0", "src_doc": "SO-1", "qty": 30.0}, {"src_row": "1", "src_doc": "SO-1", "qty": 5.0}],
+            [{"src_row": "0", "src_doc": "SO-1", "qty": 10.0}],
+        ]
+        assert already_done(docs, LINES, "SO-1") == {0: Decimal(40), 1: Decimal(5)}
+
+    def test_a_row_citing_another_source_does_not_count(self):
+        """Un document peut servir deux commandes : seules les lignes de CELLE-CI comptent."""
+        docs = [[{"src_row": "0", "src_doc": "SO-1", "qty": 7.0}, {"src_row": "0", "src_doc": "SO-2", "qty": 99.0}]]
+        assert already_done(docs, LINES, "SO-1") == {0: Decimal(7)}
+
+    def test_a_decimal_quantity_stays_exact(self):
+        child_lines = MappingLines(**{"from": "items", "reference": "src_row", "document": "src_doc", "quantity": {"source": "q", "target": "q"}})
+        docs = [[{"src_row": "0", "src_doc": "S", "q": "0.100"}], [{"src_row": "0", "src_doc": "S", "q": "0.200"}]]
+        assert already_done(docs, child_lines, "S") == {0: Decimal("0.300")}
+
+    @pytest.mark.parametrize("bad", ["", "abc", "-1", "1.5", None, 3])
+    def test_a_forged_reference_is_ignored_not_fatal(self, bad):
+        """Elle est refusée à l'ÉCRITURE ; ici, elle ne doit pas empêcher de servir un brouillon."""
+        docs = [[{"src_row": bad, "src_doc": "SO-1", "qty": 5.0}]]
+        assert already_done(docs, LINES, "SO-1") == {}
+
+    def test_an_unreadable_quantity_is_not_counted(self):
+        docs = [[{"src_row": "0", "src_doc": "SO-1", "qty": "pas un nombre"}]]
+        assert already_done(docs, LINES, "SO-1") == {}
+
+    def test_without_a_quantity_pair_nothing_is_counted(self):
+        assert already_done([[{"src_row": "0"}]], MappingLines(**{"from": "items"}), "SO-1") == {}
 
 
 class TestTheWholeDraft:

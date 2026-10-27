@@ -446,6 +446,21 @@ async def scenario_lock_for_delete(env: Env):
         await q.lock_for_delete("Customer", "shared")
 
 
+async def scenario_cited_rows(env: Env):
+    """Le « déjà émis » d'un tenant ne compte jamais dans le reste à faire d'un autre.
+
+    `cited_rows` ignore DÉLIBÉRÉMENT le périmètre de lecture (un document invisible a tout de même consommé la
+    quantité, cf. `references_to`), mais le tenant reste imposé : sans quoi la commande d'une organisation
+    paraîtrait servie par la livraison d'une autre.
+    """
+    async with env.q(B) as q:
+        assert await q.cited_rows("Order", "lines", "item", "X", limit=10) == []  # une ligne de A cite X
+        await q.insert("Order", "b-order", {"lines": [{"item": "Y"}, {"item": "Z"}]})
+    async with env.q(B) as q:
+        assert await q.cited_rows("Order", "lines", "item", "Z", limit=10) == [[{"item": "Y"}, {"item": "Z"}]]
+        assert await q.cited_rows("Order", "lines", "item", "X", limit=10) == []  # celle de A reste hors de vue
+
+
 async def scenario_references_to(env: Env):
     """Seul A cite le pays « FR » et l'article « X » : pour B, rien ne les référence, et ce que B cite n'est vu que de B."""
     direct, rows = [("Customer", "country", None)], [("Order", "item", "lines")]
@@ -847,6 +862,7 @@ SCENARIOS = {
     "purge_versions": scenario_purge_versions,
     "purge_versions_before": scenario_purge_versions_before,
     "lock_for_delete": scenario_lock_for_delete,
+    "cited_rows": scenario_cited_rows,
     "references_to": scenario_references_to,
     "connections": scenario_connections,
     "referrers_of": scenario_referrers_of,

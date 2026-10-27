@@ -3,14 +3,27 @@
 **Conception, 27 oct. 2026.** Ce fichier est le contrat à tenir.
 
 **Fait à ce jour :** le schéma (`schema.CreatedFrom`, `MappingLines`, `MappingQuantity`), ses refus au
-chargement (`registry._check_mappings`, §6), la logique PURE du préremplissage (`mapping.py`, §2/§5) et la
-déclaration réelle sur `Stock Entry` (§8). Tests : `tests/unit/test_mapping.py`, plus un invariant dans
-`tests/unit/test_erp_doctypes.py`.
+chargement (`registry._check_mappings`, §6), la logique PURE du préremplissage et de la somme du déjà-fait
+(`mapping.py`, §2/§5), la lecture en base (`Query.cited_rows`), le service complet
+(`DocumentService.available_mappings` et `mapped_values`, §3/§5) et la déclaration réelle sur `Stock Entry` (§8).
+Tests : `tests/unit/test_mapping.py` (logique pure), `tests/unit/test_mapper_service.py` (contre une vraie base :
+reste à faire, brouillons, droits, états, cloisonnement des tenants), un scénario de fuite dans
+`test_query_leak.py`, un invariant dans `test_erp_doctypes.py`.
 
-**Pas encore fait :** le calcul du reste contre la base (§5 : retrouver les documents cibles qui citent la
-source et sommer), les routes `/mappings` et `/map` avec leurs droits (§3), la vérification de la référence à
-l'écriture (§4), et le Desk (le menu « Créer > » et `?from=`). `mapping.py` reçoit déjà `done` en paramètre :
-c'est exactement la jointure qui reste à écrire.
+Exposé : `GET /mappings/{doctype}/{name}` et `GET /map/{doctype}/{source}/{name}`, actions `doc.mappings` et
+`doc.map` (le manifeste ouvre déjà `doc.*`). La provenance est vérifiée à l'écriture
+(`DocumentService._check_mapping_rows`, §4).
+
+**Pas encore fait : le Desk** (le menu « Créer > » et `?from=`). Et le mapper ne fait pas bouger le stock : un
+`Stock Entry` soumis n'écrit toujours rien au grand livre, l'ERP n'ayant aucun hook (voir doc/erp-doctypes.md §4).
+
+**Correction à la conception (§4).** L'exemption `read_only` prévue est INUTILE, et pour une raison qu'il faut
+connaître : `read_only` n'est pas appliqué à la création (rien de stocké à comparer) et **ne l'est jamais sur un
+champ de LIGNE**, même en modification — `builder._row_errors` ne gère que `required` et
+`mandatory_depends_on`. Dans une table, `read_only` est donc une indication d'interface, pas une garantie du
+serveur. C'est exactement pourquoi la vérification de la provenance n'est pas une finition : sans elle,
+n'importe quel client peut écrire ou réécrire une référence et faire baisser la quantité restante d'une source.
+(Ce trou de `read_only` dans les lignes dépasse le mapper et reste à traiter.)
 
 Le geste central d'un ERP, celui qu'aucune de nos briques ne couvre : *Demande de matériel → Mouvement de
 stock*, *Commande client → Bon de livraison → Facture*. Un bouton « Créer > » sur un document soumis ouvre un

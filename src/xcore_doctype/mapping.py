@@ -110,6 +110,31 @@ def remaining_quantity(ordered: Any, done: Decimal, field: FieldDef) -> Any:
     return float(left)
 
 
+def already_done(rows_per_document: list[list[Any]], lines: MappingLines, source_name: str) -> dict[int, Decimal]:
+    """Ce qui a déjà été fait pour chaque ligne source, par INDICE : la somme des quantités cibles qui la citent.
+
+    Reste pur : le service apporte les lignes lues en base (`Query.cited_rows`), la somme se fait ici, en `Decimal`,
+    donc exacte sur toutes les bases. Une ligne dont la référence n'est pas un indice entier est ignorée plutôt que
+    de faire échouer le calcul : une référence forgée ne doit pas empêcher de servir un brouillon (elle est refusée
+    à l'écriture, c'est là sa place).
+    """
+    done: dict[int, Decimal] = {}
+    if lines.quantity is None or lines.reference is None:
+        return done
+    for rows in rows_per_document:
+        for row in rows:
+            if not isinstance(row, Mapping) or (lines.document and row.get(lines.document) != source_name):
+                continue
+            raw = row.get(lines.reference)
+            if not isinstance(raw, str) or not raw.isdigit():
+                continue
+            try:
+                done[int(raw)] = done.get(int(raw), Decimal(0)) + to_decimal(row.get(lines.quantity.target) or 0)
+            except (ArithmeticError, ValueError, TypeError):
+                continue  # une quantité illisible dans une ligne déjà écrite : on ne la compte pas, on ne casse pas
+    return done
+
+
 def map_rows(
     target_child: DocTypeDef,
     source_child: DocTypeDef,

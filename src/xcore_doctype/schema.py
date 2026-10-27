@@ -74,6 +74,9 @@ MAX_TABS = 12
 # « Créer depuis » (doc/mapper.md) : le nombre de sources depuis lesquelles un type se préremplit. Au-delà, le menu « Créer > »
 # de la source n'est plus un geste mais un annuaire.
 MAX_MAPPINGS = 10
+# Combien de documents déjà émis pour UNE source le moteur accepte de lire pour calculer le reste à faire. Au-delà, il refuse
+# de prétendre le connaître plutôt que d'annoncer un reste faux (doc/mapper.md §5).
+MAX_MAPPING_SOURCES = 200
 LINK_FILTER_REF = "$"
 # Même forme que les grants d'auth (`plugin:ressource:action`, voir xauth `_GRANT_NAME_RE`). Les NOMS DE RÔLE sont des
 # données d'auth, libres et propres à chaque tenant : un fichier de DocType ne peut pas les connaître. Un grant, si.
@@ -741,6 +744,11 @@ class MappingLines(BaseModel):
     def _check(self) -> "MappingLines":
         if self.quantity is not None and self.reference is None:
             raise ValueError("quantity: exige `reference` (sans elle, on ne sait pas quelle ligne source a déjà été servie)")
+        if self.quantity is not None and self.document is None:
+            raise ValueError(
+                "quantity: exige `document` (c'est par ce champ que le moteur retrouve les documents déjà émis pour cette source ; "
+                "sans lui il faudrait parcourir tout le type)"
+            )
         if self.document is not None and self.document == self.reference:
             raise ValueError("`document` et `reference` ne peuvent pas être le même champ")
         for target_field in self.fields:
