@@ -220,3 +220,14 @@ def test_a_waiting_parent_is_still_judged_on_its_module_at_load(env, tmp_path):
     with pytest.raises(InvalidDefinition, match="`module` doit être 'x'"):
         channel.load_dir("x", d, peers=True)
     assert reg.waiting() == {}
+
+
+async def test_only_a_peer_loaded_type_can_be_incomplete(env):
+    """Un type enregistré SANS `peers` (code, outil, test) qui cite un type absent s'écrit comme avant : seul le chargement en frère
+    rend une cible absente bloquante pour l'écriture."""
+    from xcore_doctype.schema import parse_definition
+
+    reg, _, _, svc = env
+    reg.register(parse_definition(dt("Order", "sell", {"fieldname": "account", "fieldtype": "Link", "options": "Account"})))
+    assert reg.incomplete("Order") == []
+    await svc.create(ALICE, "Order", {"title": "C-1"})

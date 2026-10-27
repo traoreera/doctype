@@ -110,6 +110,7 @@ class DocTypeRegistry:
         # et s'enregistre à l'arrivée de cet enfant ; une définition dont un contrôle échoue à l'arrivée d'un frère est BRISÉE (écritures refusées).
         self._waiting: dict[str, tuple[DocTypeDef, str, str | None]] = {}  # DocType -> (définition d'origine, source, propriétaire)
         self._broken: dict[str, list[str]] = {}
+        self._peered: set[str] = set()  # chargés avec `peers=True` : eux seuls peuvent être incomplets (une cible absente ailleurs est une erreur de chargement)
 
     def register(self, defn: DocTypeDef, *, source: str = "<code>", owner: str | None = None) -> CompiledDocType:
         """Enregistre un DocType. Les DocTypes enfants qu'il cite (champs Table) doivent l'être AVANT lui.
@@ -235,6 +236,8 @@ class DocTypeRegistry:
             for name in parked:
                 self._waiting.pop(name, None)
             raise
+        if peers:
+            self._peered.update(loaded + parked)
         return loaded
 
     # ── Modules frères (un plugin par module, liens en cycle) ─────────────
@@ -318,7 +321,7 @@ class DocTypeRegistry:
         if name in self._broken:
             return list(self._broken[name])
         compiled = self._items.get(name)
-        if compiled is None:
+        if compiled is None or name not in self._peered:
             return []
         missing = {t for t in self._cited_targets(compiled) if t not in self._items}
         for child in compiled.children.values():
@@ -334,13 +337,16 @@ class DocTypeRegistry:
             self._remove(name)
         for name in [n for n, (_, _, who) in self._waiting.items() if who == owner]:
             del self._waiting[name]
+            self._peered.discard(name)
         # Un parent d'un AUTRE plugin qui avait une table de celui-ci retourne en attente : il revient quand le plugin revient.
         for name, compiled in list(self._items.items()):
             if any(str(f.options) not in self._items for f in compiled.definition.fields if f.fieldtype == "Table"):
                 defn, source = self._origins[name]
-                who = self._owners.get(name)
+                who, peered = self._owners.get(name), name in self._peered
                 self._remove(name)
                 self._waiting[name] = (defn, source, who)
+                if peered:
+                    self._peered.add(name)
         self._broken = {n: why for n, why in self._broken.items() if n in self._items}
         self._drop_extensions(owner)
         for name in [n for n, who in self._workspace_owners.items() if who == owner]:
@@ -455,6 +461,7 @@ class DocTypeRegistry:
         self._owners.pop(name, None)
         self._origins.pop(name, None)
         self._broken.pop(name, None)
+        self._peered.discard(name)
 
     # ── Extensions de DocType (D26) ───────────────────────────
     def load_extensions(self, directory: Path, *, owner: str) -> list[str]:
@@ -788,6 +795,7 @@ class DocTypeRegistry:
         return sorted(self._items)
 
     def clear(self) -> None:
+        self._peered.clear()
         self._waiting.clear()
         self._broken.clear()
         self._items.clear()
