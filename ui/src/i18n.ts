@@ -73,12 +73,8 @@ export const t = {
     invalidJson: 'Ce n’est pas du JSON valide.',
   },
   flowOverride: {
-    open: 'Adapter le circuit d’approbation',
-    title: 'Circuit d’approbation de l’organisation',
     hint: 'Vous pouvez RESSERRER le circuit prévu par l’application : fermer une étape, y ajouter une condition, exiger que l’auteur ne la fasse pas lui-même. Ajouter une étape demande une modification de l’application.',
     reserved: 'Le circuit vaut pour tous les documents de ce type : seules les personnes qui peuvent les modifier tous l’adaptent.',
-    action: 'Étape',
-    path: 'De → vers',
     closed: 'Fermée',
     closedHint: 'Cette étape n’existe pas dans cette organisation.',
     condition: 'Condition',
