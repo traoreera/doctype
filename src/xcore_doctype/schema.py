@@ -515,6 +515,9 @@ class WorkflowTransition(BaseModel):
     from_: Annotated[str, StringConstraints(min_length=1, max_length=60, strip_whitespace=True)] = PydanticField(alias="from")
     to: Annotated[str, StringConstraints(min_length=1, max_length=60, strip_whitespace=True)]
     grant: _Grant | None = None
+    # Une condition du langage `expr.py` jugée sur le document STOCKÉ : la transition n'est ouverte que si elle est vraie. C'est une
+    # règle métier (« on n'approuve pas un congé sans motif »), pas un droit : qui a le grant sans la condition ne voit pas l'action.
+    condition: str | None = None
     # Séparation des pouvoirs : celui qui a créé le document ne peut pas faire cette transition (approuver sa propre demande).
     not_owner: StrictBool = False
     description: Annotated[str, StringConstraints(min_length=1, max_length=500)] | None = None
@@ -959,6 +962,20 @@ class DocTypeDef(BaseModel):
                 if used & decimals:
                     # Une chaîne décimale ne se compare pas à un nombre sans perdre l'exactitude, et la grammaire est typée strictement.
                     raise ValueError(f"{f.fieldname}.{kind}: un champ Decimal ({', '.join(sorted(used & decimals))}) ne peut pas servir dans une condition")
+        if (wf := self.workflow) is not None:
+            opaque = {x.fieldname for x in self.fields if x.fieldtype in ("Password", "JSON")}
+            for t in wf.transitions:
+                if t.condition is None:
+                    continue
+                try:
+                    used = referenced_fields(compile_expr(t.condition, names))
+                except ExprError as e:
+                    raise ValueError(f"workflow.transitions[{t.action}].condition: {e}") from None
+                if bad := used & (tables | opaque | decimals):
+                    raise ValueError(
+                        f"workflow.transitions[{t.action}].condition: {', '.join(sorted(bad))} n'a pas de valeur comparable "
+                        "(table, secret, JSON ou décimal)"
+                    )
         if self.title_field is not None:
             target = next((f for f in self.fields if f.fieldname == self.title_field), None)
             if target is None:

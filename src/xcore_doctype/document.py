@@ -44,6 +44,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, S
 
 from . import aggregation, fieldtypes, integrity, memory
 from .builder import NO_RULES, CompiledDocType, FormRules
+from .expr import evaluate
 from .decimals import canonical
 from .context import RequestContext
 from .db.rls import bind_tenant
@@ -1280,6 +1281,12 @@ class DocumentService:
         # la soumission de l'amendement, elle, les rejugera.
         return await self._create(ctx, compiled, create, carried, name=new_name, amended_from=source.name, copied=carried)
 
+    @staticmethod
+    def _transition_open(compiled: CompiledDocType, action: str, data: Mapping[str, Any]) -> bool:
+        """La condition de cette transition est-elle vraie sur le document STOCKÉ ? (sans condition : toujours)."""
+        tree = compiled.transition_conditions.get(action)
+        return True if tree is None else evaluate(tree, data)
+
     async def available_transitions(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
         """Les transitions que CET appelant peut faire sur CE document, maintenant (pour les boutons de la fiche).
 
@@ -1304,6 +1311,8 @@ class DocumentService:
             if grant is None or grant not in ctx.permissions:
                 continue
             if t.not_owner and doc.owner == ctx.owner_id:
+                continue
+            if not self._transition_open(compiled, t.action, doc.data):
                 continue
             out.append({"action": t.action, "to": t.to, "docstatus": wf.docstatus_of(t.to),
                         **({"description": t.description} if t.description else {})})
@@ -1348,6 +1357,12 @@ class DocumentService:
             # Séparation des pouvoirs. Le dire n'apprend rien de secret (l'appelant détient le grant, il voit le document) et
             # évite de laisser croire à un droit manquant : c'est la règle du workflow, pas une permission à demander.
             raise DoctypeError("not_owner", "Vous ne pouvez pas faire cette transition sur un document dont vous êtes l'auteur", status=403)
+        # La condition se juge sur le document LU ; l'écriture conditionnelle plus bas porte sur (version, état), donc une donnée
+        # modifiée entre-temps rend un conflit de version — jamais une transition passée sur un contenu qu'on n'a pas évalué.
+        if not self._transition_open(compiled, transition.action, current.data):
+            raise ValidationFailed(
+                f"{doctype} {name!r} ne remplit pas la condition de {transition.action!r}", code="transition_condition",
+            )
         if current.version != version:
             raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {version})")
 

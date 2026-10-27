@@ -217,6 +217,8 @@ class CompiledDocType:
     # Conditions des champs de LIGNE : DocType enfant -> fieldname -> {"depends_on" | "mandatory_depends_on" -> arbre}. Elles lisent la
     # ligne et le parent (`parent_<champ>`), d'où leur compilation ICI, avec les champs de CE parent : le même enfant peut servir ailleurs.
     row_conditions: Mapping[str, Mapping[str, Mapping[str, Node]]] = dataclass_field(default_factory=dict)
+    # Conditions des transitions du workflow : action -> arbre, jugé sur le document STOCKÉ (`DocumentService.transition_open`).
+    transition_conditions: Mapping[str, Node] = dataclass_field(default_factory=dict)
 
     @classmethod
     def compile(cls, defn: DocTypeDef, children: Mapping[str, DocTypeDef] | None = None) -> "CompiledDocType":
@@ -249,6 +251,10 @@ class CompiledDocType:
                     per_field[cf.fieldname] = mine
             if per_field:
                 row_conditions[cname] = per_field
+        wf = defn.workflow
+        transition_conditions = (
+            {t.action: compile_expr(t.condition, names) for t in wf.transitions if t.condition is not None} if wf is not None else {}
+        )
         return cls(
             defn,
             build_model(defn, row_models),
@@ -256,6 +262,7 @@ class CompiledDocType:
             conditions,
             children,
             row_conditions,
+            transition_conditions,
         )
 
     def validate_data(self, payload: Any, *, old: Mapping[str, Any] | None = None, rules: FormRules | None = None) -> dict[str, Any]:

@@ -327,6 +327,22 @@ limites écrites noir sur blanc. Les deux voies existent donc dans le dépôt, e
 5. **Ce qui arrive aux documents en vol** quand le workflow change (un état disparaît) : le même problème qu'une règle de
    notification devenue invalide. Au minimum : ne jamais bloquer un document dans un état inconnu, le dire au chargement.
 
+#### Ce qui a été fait (27 octobre 2026)
+
+A, avec les points 1, 2 et 3 tranchés comme ci-dessus. S'y ajoutent, le 27 octobre :
+
+- **l'état est une colonne comme `docstatus`** : filtrable (`builder.SYSTEM_FILTERS`), triable (`query.SYSTEM_SORTABLE`),
+  groupable dans un agrégat ; un type sans workflow le refuse (`no_workflow`). Le Desk montre l'état métier dans la colonne
+  d'état et son sélecteur offre les ÉTATS du workflow au lieu de « Brouillon / Soumis / Annulé » — jamais les deux à la fois.
+- **une condition par transition** (`condition:`, le langage `expr.py`) : une règle MÉTIER, pas un droit. Elle est compilée une
+  fois (`CompiledDocType.transition_conditions`), jugée sur le document STOCKÉ par un seul interprète
+  (`DocumentService._transition_open`) aux DEUX portes : `/transitions` n'offre pas l'action (sinon l'utilisateur apprendrait la
+  règle par un échec) et l'écriture la refuse (422 `transition_condition`). L'écriture conditionnelle sur (version, état) ferme
+  la course : un document modifié entre la lecture et l'écriture rend un conflit de version, jamais une transition jugée sur un
+  contenu que personne n'a lu. Mêmes refus au chargement que `depends_on` (champ inconnu, Table, Password/JSON, Decimal).
+
+Reste le point 4 : la couche par organisation, toujours en attente de la même décision.
+
 #### Ce que je ne ferai pas sans décision
 
 Rien. Les points 1 et 4 changent la nature de ce qu'on écrit ; les autres sont des détails d'implémentation que je peux trancher

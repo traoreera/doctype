@@ -67,6 +67,8 @@ export interface WorkflowTransition {
   from: string
   to: string
   not_owner?: boolean
+  /** Condition métier jugée par le SERVEUR sur le document stocké : le Desk ne l'évalue pas, il lit `api.transitions`. */
+  condition?: string
   description?: string
 }
 

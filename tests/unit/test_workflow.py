@@ -118,6 +118,40 @@ class TestMistakesFailAtLoad:
             workflow(states=[{"name": "Brouillon"}], transitions=[{"action": "x", "from": "Brouillon", "to": "Brouillon"}])
 
 
+class TestTransitionConditionsFailAtLoad:
+    """Une condition est du langage `expr.py`, comme `depends_on` : les mêmes refus, aux mêmes raisons."""
+
+    def test_an_unknown_field_is_refused(self):
+        with pytest.raises(InvalidDefinition, match="condition"):
+            doctype(workflow={"states": STATES, "transitions": [
+                {"action": "Soumettre", "from": "Brouillon", "to": "À approuver", "condition": "fantome == 1"},
+                *TRANSITIONS[1:],
+            ]})
+
+    def test_a_decimal_cannot_be_compared(self):
+        """Une chaîne décimale ne se compare pas à un nombre sans perdre l'exactitude (même règle que `depends_on`)."""
+        with pytest.raises(InvalidDefinition, match="décimal"):
+            doctype(
+                fields=[{"fieldname": "objet", "fieldtype": "Text", "required": True},
+                        {"fieldname": "montant", "fieldtype": "Decimal", "decimals": 2}],
+                workflow={"states": STATES, "transitions": [
+                    {"action": "Soumettre", "from": "Brouillon", "to": "À approuver", "condition": "montant > 0"},
+                    *TRANSITIONS[1:],
+                ]},
+            )
+
+    def test_a_table_has_no_comparable_value(self):
+        with pytest.raises(InvalidDefinition, match="comparable"):
+            doctype(
+                fields=[{"fieldname": "objet", "fieldtype": "Text", "required": True},
+                        {"fieldname": "lignes", "fieldtype": "Table", "options": "Leave Day"}],
+                workflow={"states": STATES, "transitions": [
+                    {"action": "Soumettre", "from": "Brouillon", "to": "À approuver", "condition": "lignes"},
+                    *TRANSITIONS[1:],
+                ]},
+            )
+
+
 class TestWhatAWorkflowRequiresOfItsDocType:
     def test_submitting_states_require_a_submittable_doctype(self):
         """C'est le workflow qui soumet : sans `submittable`, `docstatus` n'existe pas pour ce type."""
@@ -325,3 +359,66 @@ class TestListsSeeTheState:
             await svc.list(make_ctx("acme", "alice", permissions=["hr:note:read"]), "Note", filters={"workflow_state": "x"})
         assert e.value.code == "no_workflow"
 
+
+CONDITIONNELLES = [
+    {"action": "Soumettre", "from": "Brouillon", "to": "À approuver", "condition": "motif"},
+    {"action": "Approuver", "from": "À approuver", "to": "Approuvé", "not_owner": True, "condition": "jours <= 10"},
+    {"action": "Refuser", "from": "À approuver", "to": "Refusé", "not_owner": True},  # refuser n'a pas de condition
+]
+
+
+@pytest.fixture
+def svc_cond(db, tables):
+    reg = DocTypeRegistry()
+    reg.register(doctype(
+        fields=[{"fieldname": "objet", "fieldtype": "Text", "required": True},
+                {"fieldname": "motif", "fieldtype": "Text"},
+                {"fieldname": "jours", "fieldtype": "Number"}],
+        workflow={"states": STATES, "transitions": CONDITIONNELLES},
+    ))
+    return DocumentService(reg, db, tables, Log())
+
+
+class TestTransitionConditions:
+    """Une condition est une règle MÉTIER, pas un droit : qui détient le grant mais ne remplit pas la condition ne voit pas l'action."""
+
+    async def test_a_transition_whose_condition_is_false_is_refused(self, svc_cond):
+        doc = await svc_cond.create(who(), "Leave Request", {"objet": "Août", "jours": 3})  # sans motif
+        with pytest.raises(ValidationFailed) as e:
+            await svc_cond.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        assert e.value.code == "transition_condition"
+
+    async def test_the_same_transition_passes_once_the_condition_is_met(self, svc_cond):
+        doc = await svc_cond.create(who(), "Leave Request", {"objet": "Août", "jours": 3})
+        filled = await svc_cond.update(who(), "Leave Request", doc["name"], {"objet": "Août", "jours": 3, "motif": "Mariage"}, doc["version"])
+        moved = await svc_cond.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", filled["version"])
+        assert moved["workflow_state"] == "À approuver"
+
+    async def test_the_condition_is_judged_on_the_STORED_document(self, svc_cond):
+        """Elle ne se juge pas sur ce que l'appelant envoie : une transition ne porte que `action` et `version`."""
+        doc = await svc_cond.create(who(), "Leave Request", {"objet": "Août", "motif": "Mariage", "jours": 30})
+        moved = await svc_cond.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        with pytest.raises(ValidationFailed) as e:  # 30 jours : au-dessus de la limite d'approbation
+            await svc_cond.workflow_transition(who(APPROUVER, user="bob"), "Leave Request", doc["name"], "Approuver", moved["version"])
+        assert e.value.code == "transition_condition"
+        # ... mais refuser reste possible : une transition sans condition n'est pas touchée.
+        refused = await svc_cond.workflow_transition(who(REFUSER, user="bob"), "Leave Request", doc["name"], "Refuser", moved["version"])
+        assert refused["workflow_state"] == "Refusé"
+
+    async def test_the_desk_is_not_offered_a_transition_whose_condition_is_false(self, svc_cond):
+        """Sinon le bouton existe et l'écriture le refuse : l'utilisateur apprend la règle par un échec."""
+        doc = await svc_cond.create(who(), "Leave Request", {"objet": "Août", "jours": 3})
+        closed = await svc_cond.available_transitions(who(SOUMETTRE), "Leave Request", doc["name"])
+        assert [t["action"] for t in closed["transitions"]] == []
+
+        filled = await svc_cond.update(who(), "Leave Request", doc["name"], {"objet": "Août", "jours": 3, "motif": "Mariage"}, doc["version"])
+        open_now = await svc_cond.available_transitions(who(SOUMETTRE), "Leave Request", doc["name"])
+        assert [t["action"] for t in open_now["transitions"]] == ["Soumettre"]
+        assert open_now["version"] == filled["version"]
+
+    async def test_a_transition_without_condition_is_unaffected(self, svc_cond):
+        doc = await svc_cond.create(who(), "Leave Request", {"objet": "Août", "motif": "Mariage", "jours": 30})
+        moved = await svc_cond.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        boss = await svc_cond.available_transitions(who(APPROUVER, REFUSER, user="bob"), "Leave Request", doc["name"])
+        assert [t["action"] for t in boss["transitions"]] == ["Refuser"]
+        assert moved["workflow_state"] == "À approuver"

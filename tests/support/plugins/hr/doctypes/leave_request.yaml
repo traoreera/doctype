@@ -33,7 +33,10 @@ workflow:
     # `not_owner` : on n'approuve pas sa propre demande. C'est la séparation des pouvoirs, vérifiée par le serveur.
     - { action: Approuver, from: À approuver, to: Approuvée, not_owner: true }
     - { action: Refuser, from: À approuver, to: Refusée, not_owner: true }
-    - { action: Reprendre, from: À approuver, to: Brouillon, description: "Rendre la demande à son auteur pour correction" }
+    # `condition` : une règle MÉTIER, pas un droit. Rendre une demande sans dire pourquoi n'aide personne, donc l'action n'est
+    # même pas proposée tant que le commentaire est vide — le serveur juge la condition sur le document ENREGISTRÉ, aux deux
+    # portes (ce que `/transitions` offre, et ce que l'écriture accepte).
+    - { action: Reprendre, from: À approuver, to: Brouillon, condition: comment, description: "Rendre la demande à son auteur pour correction (il faut un commentaire)" }
 
 views:
   calendar: { start: from_date, end: to_date, title: employee, color: leave_type }
