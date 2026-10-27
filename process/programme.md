@@ -254,7 +254,7 @@ aujourd'hui le moteur n'en planifie aucun). Quand ils sont activés, `on_load` e
 PAS `memory` ; sinon il lève une `ConfigurationError` et **le plugin refuse de se charger**, comme `ensure_rls` refuse de démarrer
 sur une base qui n'est pas PostgreSQL. Dans le doute aussi : xcore n'expose pas publiquement son backend (seul `_config.backend`
 existe, attribut privé ; `WorkerService`, lui, a un `status()`), donc **si on ne peut pas le lire, on refuse**. Demande déposée à
-xcore : `doc/xcore-issues.md` §7.
+xcore : `process/xcore-issues.md` §7.
 
 Ce que ça achète : il devient impossible de créer une facture récurrente en double parce qu'un opérateur a lancé deux workers
 uvicorn avec la configuration par défaut. Ce que ça coûte : Redis devient obligatoire pour qui veut des tâches planifiées, et

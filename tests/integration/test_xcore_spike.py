@@ -1,4 +1,4 @@
-"""Spike d'intégration xcore : critères d'acceptation de doc/doctype.md §14 bis.8, sur un vrai `Xcore`.
+"""Spike d'intégration xcore : critères d'acceptation de process/doctype.md §14 bis.8, sur un vrai `Xcore`.
 
 Chaque test cite son critère. Les écarts avec la doc sont documentés dans les tests eux-mêmes.
 """
@@ -149,7 +149,7 @@ async def test_c2_http_routes_bypass_the_manifest_permissions(tmp_path):
     """Fait d'xcore à ne pas oublier : les routes du plugin ne passent pas par PermissionEngine.
 
     Même avec `deny_all`, l'API HTTP répond. Toute restriction en HTTP doit donc vivre dans le
-    service Document (doc/doctype.md §10), jamais dans le manifeste.
+    service Document (process/doctype.md §10), jamais dans le manifeste.
     """
     async with boot_host(tmp_path, permissions=False) as h:
         r = await h.http("GET", "/meta", token=h.token())

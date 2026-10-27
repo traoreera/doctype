@@ -23,7 +23,7 @@ import { useMeta } from '@/stores/meta'
  * L'éditeur du circuit d'approbation d'un type, à la manière du Workflow Builder de Frappe : le circuit en graphe (états en cartes,
  * transitions en flèches) et, à droite, les propriétés de ce qu'on a choisi.
  *
- * Ce qu'on peut y faire est ce que le serveur permet, rien de plus (doc/programme.md §3.6) : l'automate vient de l'APPLICATION (le
+ * Ce qu'on peut y faire est ce que le serveur permet, rien de plus (process/programme.md §3.6) : l'automate vient de l'APPLICATION (le
  * YAML du plugin), une organisation le RESSERRE — fermer une transition, lui ajouter une condition, interdire à l'auteur de la faire.
  * Pas d'état ni de transition à ajouter : une transition inventée ici porterait un droit qu'xauth n'a jamais entendu, personne ne
  * pourrait la faire. Les cartes se déplacent (pour lire), jamais ne se relient.

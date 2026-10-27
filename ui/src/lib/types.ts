@@ -1,4 +1,4 @@
-/** Formes des réponses de l'API de xcore-doctype (voir doc/doctype.md §10 et src/xcore_doctype/document.py). */
+/** Formes des réponses de l'API de xcore-doctype (voir process/doctype.md §10 et src/xcore_doctype/document.py). */
 import type { ExprNode } from './expr'
 
 export type FieldType =
@@ -92,7 +92,7 @@ export interface AvailableTransitions {
   transitions: AvailableTransition[]
 }
 
-/** Un type que l'on peut créer DEPUIS le document ouvert (doc/mapper.md). Le Desk ne juge rien : une source
+/** Un type que l'on peut créer DEPUIS le document ouvert (process/mapper.md). Le Desk ne juge rien : une source
  *  entièrement servie n'est simplement pas dans la réponse du serveur, donc le bouton n'existe pas. */
 export interface AvailableMapping {
   doctype: string
@@ -390,7 +390,7 @@ export interface FormOverride {
   fields?: Record<string, FieldTweak>
 }
 
-/** Ce qu'une organisation RESSERRE sur une transition (genre `workflow`, doc/programme.md §3.6) : jamais un desserrage. */
+/** Ce qu'une organisation RESSERRE sur une transition (genre `workflow`, process/programme.md §3.6) : jamais un desserrage. */
 export interface TransitionTweak {
   closed?: boolean
   condition?: string

@@ -1,4 +1,4 @@
-"""Définition -> modèle Pydantic de validation d'écriture (doc/doctype.md §7.1).
+"""Définition -> modèle Pydantic de validation d'écriture (process/doctype.md §7.1).
 
 Écriture stricte : `extra="forbid"`, types non coercés. La lecture ne repasse jamais par ici
 (un ancien document qui ne respecte plus la définition ne doit pas faire échouer une liste).
@@ -207,7 +207,7 @@ NO_RULES = FormRules()
 
 @dataclass(frozen=True, slots=True)
 class WorkflowRules:
-    """Ce que l'habillage de workflow d'une ORGANISATION resserre sur l'automate du YAML (`overrides.workflow_rules`, doc/programme.md §3.6).
+    """Ce que l'habillage de workflow d'une ORGANISATION resserre sur l'automate du YAML (`overrides.workflow_rules`, process/programme.md §3.6).
 
     Même doctrine que `FormRules` : on ne fait que RESSERRER. `closed` : des transitions qui n'existent pas dans cette organisation ;
     `conditions` : une condition EN PLUS de celle du YAML (ET, jamais OU) ; `not_owner` : des transitions que l'auteur du document ne

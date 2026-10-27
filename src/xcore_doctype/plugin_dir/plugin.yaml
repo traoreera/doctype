@@ -6,7 +6,7 @@ framework_version: ">=2.9"
 execution_mode: trusted
 entry_point: src/main.py
 
-# L'autorisation réelle est faite par le service Document (doc/doctype.md D18).
+# L'autorisation réelle est faite par le service Document (process/doctype.md D18).
 allowed_callers: ["*"]
 
 # Sans ce bloc, PermissionEngine refuse tout (deny_all).
@@ -35,11 +35,11 @@ doctype:
   # Fuseau (nom IANA) dans lequel se lisent les parties de date d'une série de numérotation : {YYYY}, {MM}…
   timezone: UTC
   # PostgreSQL seulement : Row Level Security en plus de la couche de requêtes (D14). Exige un rôle de connexion ordinaire (ni
-  # superutilisateur ni BYPASSRLS), propriétaire des tables xdt_* ; le plugin refuse de démarrer sinon. Voir doc/phase4.md.
+  # superutilisateur ni BYPASSRLS), propriétaire des tables xdt_* ; le plugin refuse de démarrer sinon. Voir process/phase4.md.
   rls: false
   # Annuaire des utilisateurs (assigner un document, afficher un e-mail à la place d'un UUID). Par défaut xauth : l'action `xauth.users.list.tenant` du
   # plugin `auth`, qui doit nommer `xcore-doctype` dans son `allowed_callers` (sinon xcore refuse l'appel : `ipc_denied`, journalisé, et on retombe
-  # sur les identités vues dans l'organisation). `provider: none` : jamais d'annuaire. Voir doc/phase-d.md.
+  # sur les identités vues dans l'organisation). `provider: none` : jamais d'annuaire. Voir process/phase-d.md.
   directory:
     provider: xauth # xauth | none
     plugin: auth
@@ -56,7 +56,7 @@ doctype:
   desk:
     enabled: true
     login_url: auth # « auth » : xauth sur le MÊME préfixe que le plugin (`<préfixe>/auth/login`), quel qu'il soit. Un chemin ou une URL absolue force une autre adresse ; null : jeton collé.
-    # Les plugins dont l'extension JavaScript du Desk est chargée (doc/extensions.md, D28) : du code de CONFIANCE dans la page de chaque
+    # Les plugins dont l'extension JavaScript du Desk est chargée (process/extensions.md, D28) : du code de CONFIANCE dans la page de chaque
     # utilisateur. Des noms de plugins, ou ["*"] pour tous ; vide : aucune.
     extensions: ["*"]
     # Le constructeur de DocTypes (mode développeur, devtools.py) : bâtir un type à l'écran et le télécharger en YAML pour un plugin.

@@ -23,7 +23,7 @@ import type { FieldType } from '@/lib/types'
 import { useMeta } from '@/stores/meta'
 
 /**
- * Le constructeur de DocTypes du MODE DÉVELOPPEUR (doc/programme.md §3.5), à la manière du DocType de Frappe en developer mode : créer un
+ * Le constructeur de DocTypes du MODE DÉVELOPPEUR (process/programme.md §3.5), à la manière du DocType de Frappe en developer mode : créer un
  * type entier — ou en modifier un existant, à partir de son YAML d'origine — puis le TÉLÉCHARGER en YAML, à poser dans le dossier
  * `doctypes/` d'un plugin. Rien n'est enregistré : un type vit dans un plugin, chargé au démarrage, avec ses grants déclarés à auth.
  *

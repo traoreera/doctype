@@ -1,6 +1,6 @@
 # Phase 3 : documents riches
 
-17 octobre 2026. Contre xcore 2.9.1, SQLite et PostgreSQL 18, Chromium piloté par playwright-core 1.64. Suite de `doc/phase2.md` ; `doc/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4.
+17 octobre 2026. Contre xcore 2.9.1, SQLite et PostgreSQL 18, Chromium piloté par playwright-core 1.64. Suite de `process/phase2.md` ; `process/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4.
 
 ## 1. Résultat
 

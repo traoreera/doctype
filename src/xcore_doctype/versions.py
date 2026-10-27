@@ -1,4 +1,4 @@
-"""Historique des modifications (doc/doctype.md §7.1, §11) : une entrée par création, modification utile et suppression.
+"""Historique des modifications (process/doctype.md §7.1, §11) : une entrée par création, modification utile et suppression.
 
 Une entrée ne garde que la DIFFÉRENCE : `{champ: {"old": ancienne valeur, "new": nouvelle valeur}}`, sans les champs qui n'ont
 pas bougé. Une création est une différence avec « rien » (`old` nul partout), une suppression avec « plus rien » (`new` nul

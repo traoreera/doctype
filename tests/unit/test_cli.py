@@ -319,7 +319,7 @@ class TestCheck:
 
 
 class TestCheckPluginExtensions:
-    """`check --owner` valide aussi ce que le plugin apporte À CÔTÉ de ses DocTypes (doc/extensions.md, D26-D28)."""
+    """`check --owner` valide aussi ce que le plugin apporte À CÔTÉ de ses DocTypes (process/extensions.md, D26-D28)."""
 
     def plugin(self, tmp_path, *, extends=None, spaces=None, desk=None):
         home = tmp_path / "crm"
@@ -390,7 +390,7 @@ class TestNewDeskExtension:
 
 
 class TestReviewOfTheTools:
-    """Ce que la revue a trouvé dans `check` et `new-desk-extension` (doc/extensions.md)."""
+    """Ce que la revue a trouvé dans `check` et `new-desk-extension` (process/extensions.md)."""
 
     def test_a_label_with_quotes_backslashes_or_newlines_stays_valid_javascript(self, tmp_path):
         import json

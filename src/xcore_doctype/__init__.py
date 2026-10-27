@@ -1,6 +1,6 @@
 """xcore-doctype : moteur de DocTypes pour xcore.
 
-API publique pour les auteurs de hooks (doc/doctype.md D2, D16) :
+API publique pour les auteurs de hooks (process/doctype.md D2, D16) :
 
     from xcore_doctype import DocumentValidationError, HookEvent
 
@@ -36,8 +36,8 @@ except metadata.PackageNotFoundError:  # exécuté depuis des sources non instal
 def plugin_dir() -> Path:
     """Le dossier de plugin embarqué (`plugin.yaml` + `src/main.py`), dans le paquet installé.
 
-    C'est aussi la cible de l'entry point `xcore.plugins` que le paquet déclare (doc/doctype.md D1) : xcore ne le lit pas
-    encore (il ne découvre que des dossiers), `xcore-doctype install` pose donc une copie dans l'instance. Voir doc/phase4.md.
+    C'est aussi la cible de l'entry point `xcore.plugins` que le paquet déclare (process/doctype.md D1) : xcore ne le lit pas
+    encore (il ne découvre que des dossiers), `xcore-doctype install` pose donc une copie dans l'instance. Voir process/phase4.md.
     """
     return Path(str(resources.files("xcore_doctype") / "plugin_dir"))
 

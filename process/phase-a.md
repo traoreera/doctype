@@ -1,6 +1,6 @@
 # Phase A : documents soumettables et module Stock (quantités)
 
-Première phase du palier 40 % (`doc/palier40.md`). Critère de sortie du contrat :
+Première phase du palier 40 % (`process/palier40.md`). Critère de sortie du contrat :
 
 > Réception, sortie et transfert soumis, annulés par mouvement inverse ; stock négatif refusé en concurrence sur les deux bases.
 
@@ -46,7 +46,7 @@ Conséquences, toutes testées :
 - Un article ou un entrepôt déjà utilisé ne peut plus être supprimé (les liens du journal et des soldes le protègent).
 - Le solde est maintenu à chaque écriture, jamais recalculé à la lecture ; `balances.verify` le recalcule pour vérifier et **signale** l'écart (ne le corrige pas).
 
-## 3. Décisions (doc/palier40.md §8)
+## 3. Décisions (process/palier40.md §8)
 
 | Décision | Prise | Pourquoi |
 |---|---|---|

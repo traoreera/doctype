@@ -140,7 +140,7 @@ class DocTypeRegistry:
         return list(self._origins.values())
 
     def with_custom_fields(self, name: str, added: Sequence[Mapping[str, Any]]) -> CompiledDocType:
-        """Le DocType vu par UNE organisation : sa définition, plus les champs qu'elle a ajoutés (doc/programme.md §3.5).
+        """Le DocType vu par UNE organisation : sa définition, plus les champs qu'elle a ajoutés (process/programme.md §3.5).
 
         La fusion repasse par `parse_definition` puis par la compilation, comme une extension de plugin (D26) : toutes les règles
         du schéma s'appliquent au résultat, et le reste du moteur n'a pas à savoir qu'un champ vient d'une organisation. Une
@@ -447,7 +447,7 @@ class DocTypeRegistry:
     # Les deux prédicats de type vivent dans `mapping.py`, avec la logique qu'ils gouvernent (import local : `mapping`
     # importe `schema`, et le registre n'a besoin d'eux qu'ici).
     def _check_mappings(self, name: str, problems: list[str]) -> None:
-        """`created_from` (doc/mapper.md §6) : tout ce qui rendrait un préremplissage impossible échoue ICI, au chargement.
+        """`created_from` (process/mapper.md §6) : tout ce qui rendrait un préremplissage impossible échoue ICI, au chargement.
 
         Rien n'est vérifié à la première saisie : une source inconnue, un champ absent d'un côté, deux quantités de genres
         différents sont des fautes de DÉFINITION, et le moteur refuse de charger plutôt que de servir un brouillon faux.

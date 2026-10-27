@@ -1,4 +1,4 @@
-"""« Créer depuis » : la logique PURE du préremplissage (doc/mapper.md).
+"""« Créer depuis » : la logique PURE du préremplissage (process/mapper.md).
 
 Rien ici ne touche à la base ni aux droits. Le service lui apporte le document source et, pour chaque ligne, ce
 qu'il reste à faire ; ce module décide des VALEURS du brouillon. Cette séparation est le point : la recopie se
@@ -64,7 +64,7 @@ def copied_fields(target: DocTypeDef, source: DocTypeDef, m: CreatedFrom) -> dic
 
     Les `read_only` sont écartés — un préremplissage est une saisie client, que le serveur refuserait au retour.
     Les champs de trace (`reference`, `document`) sont la seule exception, et ils ne passent pas par ici : le
-    service les pose lui-même sur la ligne, puis les vérifie à l'écriture (doc/mapper.md §4).
+    service les pose lui-même sur la ligne, puis les vérifie à l'écriture (process/mapper.md §4).
     """
     out: dict[str, str] = {}
     secrets = set(target.secret_fields)

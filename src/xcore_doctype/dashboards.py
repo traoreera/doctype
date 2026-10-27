@@ -1,4 +1,4 @@
-"""Blocs de tableau de bord et vues d'un DocType (palier 70 %, phases I et J, `doc/palier70.md`).
+"""Blocs de tableau de bord et vues d'un DocType (palier 70 %, phases I et J, `process/palier70.md`).
 
 Deux endroits en déclarent, avec le MÊME vocabulaire :
 

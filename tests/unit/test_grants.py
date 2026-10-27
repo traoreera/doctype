@@ -1,4 +1,4 @@
-"""Catalogue des grants : la source unique que le plugin propriétaire transmet à `rbac.declare` (doc/phase1.md §7)."""
+"""Catalogue des grants : la source unique que le plugin propriétaire transmet à `rbac.declare` (process/phase1.md §7)."""
 
 from __future__ import annotations
 

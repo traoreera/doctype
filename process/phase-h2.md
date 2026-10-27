@@ -1,6 +1,6 @@
 # Phase H2 : propriétés des champs et des DocTypes, nommage, hooks, renommer, connexions, actions en lot
 
-Palier 70 % (`doc/palier70.md`, décompte du 20 octobre 2026 : 61 lignes sur 87). Cette phase prolonge `doc/phase-h.md` (types de champ, fichiers) par ce qu'on **déclare sur** un champ ou un type, et par ce que l'utilisateur fait avec un document au-delà de l'enregistrer.
+Palier 70 % (`process/palier70.md`, décompte du 20 octobre 2026 : 61 lignes sur 87). Cette phase prolonge `process/phase-h.md` (types de champ, fichiers) par ce qu'on **déclare sur** un champ ou un type, et par ce que l'utilisateur fait avec un document au-delà de l'enregistrer.
 
 ## 1. Livré
 
@@ -57,4 +57,4 @@ Palier 70 % (`doc/palier70.md`, décompte du 20 octobre 2026 : 61 lignes sur 87)
 - Mentions : par adresse e-mail ; la liste proposée vient de l'annuaire d'xauth, gardé 60 s par le moteur (un membre tout neuf n'y est pas tout de suite) ; une personne citée est prévenue même si elle ne peut pas lire le document (elle ne voit que son type et son nom, le lien lui répond « introuvable »). Les commandes `/` sont quatre, toutes sur le document : pas de mise en forme (un commentaire est du texte brut).
 - Barre latérale : trois champs, choisis par le Desk (pas configurables) ; pas de regroupement par propriétaire ni par étiquette.
 - Documentation de l'API : pas de schéma OpenAPI par type, pas d'exécution depuis la page.
-- Deux rejets de promesse non gérés (`insertBefore` d'un nœud nul) apparaissaient en suite complète, attribués à `collab.spec.ts`. **Cause établie le 20 octobre** (`doc/ux-revue.md` § 4) : le test vidait `document.body` alors que ses composants vivaient encore (une boîte téléportée était corrigée sur un nœud sans parent). Corrigé en démontant avant de vider (`unmountAll()`, `tests/views-fixtures.ts`).
+- Deux rejets de promesse non gérés (`insertBefore` d'un nœud nul) apparaissaient en suite complète, attribués à `collab.spec.ts`. **Cause établie le 20 octobre** (`process/ux-revue.md` § 4) : le test vidait `document.body` alors que ses composants vivaient encore (une boîte téléportée était corrigée sur un nœud sans parent). Corrigé en démontant avant de vider (`unmountAll()`, `tests/views-fixtures.ts`).

@@ -313,7 +313,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     def get_router(self) -> APIRouter | None:
         return self._router
 
-    # ── Actions xcore (doc/doctype.md §10) ────────────────────
+    # ── Actions xcore (process/doctype.md §10) ────────────────────
     # Les droits sont vérifiés par le service Document, pas par @action(permissions=...).
 
     @action("meta.list")

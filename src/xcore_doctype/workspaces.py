@@ -1,4 +1,4 @@
-"""Espaces de travail (palier 70 %, phase G, `doc/palier70.md`) : la page d'accueil d'un MODULE dans le Desk.
+"""Espaces de travail (palier 70 %, phase G, `process/palier70.md`) : la page d'accueil d'un MODULE dans le Desk.
 
 Un plugin métier décrit son espace en YAML, comme il décrit ses DocTypes (`<plugin>/workspaces/*.yaml`, chargé par
 `doctype_registry.load_workspaces`) :
@@ -84,7 +84,7 @@ class WorkspaceDef(BaseModel):
 
 
 class WorkspaceContribution(BaseModel):
-    """Des blocs qu'un plugin ajoute à l'espace d'un AUTRE module (D27, `doc/extensions.md`) : un fichier de ses `workspaces/` qui porte
+    """Des blocs qu'un plugin ajoute à l'espace d'un AUTRE module (D27, `process/extensions.md`) : un fichier de ses `workspaces/` qui porte
     `contributes_to` au lieu de `name`. Les blocs suivent ceux de l'espace visé (déclaré ou fabriqué), filtrés par les mêmes droits."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)

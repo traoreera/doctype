@@ -1,4 +1,4 @@
-"""Extensions de DocType (D26, doc/extensions.md) : un plugin ajoute des champs et des hooks au DocType d'un autre plugin."""
+"""Extensions de DocType (D26, process/extensions.md) : un plugin ajoute des champs et des hooks au DocType d'un autre plugin."""
 
 from __future__ import annotations
 

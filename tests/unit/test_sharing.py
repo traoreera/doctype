@@ -1,4 +1,4 @@
-"""Permissions utilisateur et partage (groupe 2 du programme, `doc/programme.md` §2.1), de bout en bout par le service.
+"""Permissions utilisateur et partage (groupe 2 du programme, `process/programme.md` §2.1), de bout en bout par le service.
 
 - un PARTAGE ouvre UN document à un membre, en lecture ou en écriture, même sans rôle sur le type et malgré ses restrictions ; jamais la
   suppression ; seul qui ÉCRIT le document partage ; le membre peut renoncer au sien ; « Partagés avec moi » ; il suit le document ;

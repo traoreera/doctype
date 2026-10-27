@@ -1,6 +1,6 @@
 # Phase 4 : livraison
 
-17 octobre 2026. Contre xcore 2.9.1, xcorecli 2.3.0, SQLite et PostgreSQL 18. Suite de `doc/phase3.md` ; `doc/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4. Rien n'a été modifié dans xcore ni dans orchestra-backend.
+17 octobre 2026. Contre xcore 2.9.1, xcorecli 2.3.0, SQLite et PostgreSQL 18. Suite de `process/phase3.md` ; `process/doctype.md` n'est pas modifié, les écarts sont proposés ici pour la v4. Rien n'a été modifié dans xcore ni dans orchestra-backend.
 
 ## 1. Résultat
 
@@ -10,7 +10,7 @@ Critère de sortie de la feuille de route (§15) : **« `pip install xcore-docty
 | --- | --- | --- |
 | Le wheel s'installe et le plugin se charge dans une instance xcore neuve | **OK, avec une étape d'installation** : `xcore-doctype install` (xcore ne lit pas d'entry points) | `tests/delivery/` : wheel construit, installé dans un venv vierge, instance créée par `xcli init`, plugin posé par `xcore-doctype install`, instance corrigée comme la commande le demande, puis démarrée : le Desk est servi depuis le wheel, une facture à lignes est numérotée et totalisée (8 tests, ≈ 10 s) |
 | Wheel avec l'UI | **OK** | 24 fichiers du Desk dans le wheel ; **mesuré** dans un dépôt git : 0 fichier sans la ligne `include` de `pyproject.toml`, 24 avec (`.gitignore` écarte `dist/`) |
-| Entry point | **Déclaré, inerte** | `[project.entry-points."xcore.plugins"]` pointe sur `xcore_doctype:plugin_dir` ; xcore ne lit pas ce groupe : voir §2 et `doc/xcore-issues.md` |
+| Entry point | **Déclaré, inerte** | `[project.entry-points."xcore.plugins"]` pointe sur `xcore_doctype:plugin_dir` ; xcore ne lit pas ce groupe : voir §2 et `process/xcore-issues.md` |
 | Premier DocType réel | **OK** | le plugin `app/sales` apporte ses 5 DocTypes (clients, pays, articles, factures et leurs lignes) par le nouveau service `doctype_registry`, avec `module == nom du plugin` imposé (§3) |
 | RLS PostgreSQL (D14, « si validée ») | **OK, optionnelle** (`doctype.rls`, défaut `false`) | `tests/unit/test_rls.py`, `tests/integration/test_rls.py` : avec un vrai rôle ordinaire (§4) |
 | CI SQLite + PostgreSQL | **Écrite, non exécutée** | `.github/workflows/ci.yml` : je ne peux pas la lancer ici ; chaque étape est une cible du `makefile`, rejouée en local (§5) |
@@ -71,7 +71,7 @@ self.get_service("doctype_registry").unregister_owner(self.ctx.name)
 - **Au départ du plugin**, ses DocTypes quittent le registre ; ses documents restent en base (testé : après `unload` puis `load`, un article créé avant est relu).
 - Le service n'expose ni la lecture des définitions compilées ni le retrait de celles d'un autre : seulement `load_dir` et `unregister_owner`.
 - **Limites assumées** : le propriétaire est le nom que le plugin passe (comme `doctype_hooks.register(owner=…)`) : cela empêche les erreurs et les fichiers mal placés, pas un plugin de confiance hostile (qui exécute déjà du code dans le processus). L'ordre de chargement vient de `requires`. Un plugin qui oublie `unregister_owner` laisse ses DocTypes au registre. Au rechargement d'xcore-doctype, le registre repart vide et les plugins doivent se réenregistrer (même protocole manuel que les hooks).
-- **Reste reporté** (chantier n° 1, dans xcore et xauth) : `rbac.declare` ne vérifie pas son émetteur. `doc/xcore-issues.md` §6.
+- **Reste reporté** (chantier n° 1, dans xcore et xauth) : `rbac.declare` ne vérifie pas son émetteur. `process/xcore-issues.md` §6.
 - `doctypes_dirs` reste pour les DocTypes de l'**opérateur** (module libre) ; le manifeste livré n'en configure plus aucun (`[]`). L'exemple `app/sales/` a emporté `customer`, `country`, `item`, `invoice` et `invoice_line` dans `app/sales/doctypes/`.
 
 ## 4. Row Level Security PostgreSQL (D14), optionnelle
@@ -99,14 +99,14 @@ self.get_service("doctype_registry").unregister_owner(self.ctx.name)
 1. **`pyproject.toml` est invalide pour Poetry, et ce n'est pas de mon fait.** Les `authors` ont été réécrits en trois entrées (`{name}`, `{email}`, `{homepage}`) ; `homepage` n'est pas une clé permise (PEP 621 : `name` et `email`), et un auteur qui n'a ni l'un ni l'autre est rejeté (`project.authors[2] cannot be validated`). Conséquence : `poetry run`, `poetry install` et `poetry build` échouent dans le dépôt, donc aussi `make` (qui passe par Poetry). **Je n'y ai pas touché.** Correctif d'une ligne : `authors = [{name = "traoreera", email = "traoreera@gmail.com"}]` et `[project.urls] Homepage = "https://github.com/traoreera"`. J'ai vérifié le test de livraison sur une copie où seul ce bloc est corrigé (8 réussis).
 2. **Le wheel d'un dépôt git perdrait tout le Desk sans `include`** : mesuré (0 fichier / 24). Je croyais la ligne utile ; elle est nécessaire, et maintenant gardée par un test.
 3. **Un DocType enfant ne pouvait pas être apporté par un plugin** : la règle « `module == plugin` » refusait `InvoiceLine`, qui n'a pas de `module` par construction. Trouvé par le test d'intégration du plugin `sales` ; corrigé (un enfant appartient au plugin qui l'apporte).
-4. **Une instance `xcli init` ne fonctionne pas avec un plugin asynchrone** sans deux corrections à la main (§2.3) : ce n'est pas un défaut d'xcore-doctype, mais c'est la première chose qu'un utilisateur rencontre ; la commande `install` la rend explicite. `doc/xcore-issues.md` §4.
+4. **Une instance `xcli init` ne fonctionne pas avec un plugin asynchrone** sans deux corrections à la main (§2.3) : ce n'est pas un défaut d'xcore-doctype, mais c'est la première chose qu'un utilisateur rencontre ; la commande `install` la rend explicite. `process/xcore-issues.md` §4.
 5. **Un test dépendait du répertoire courant** : le repli `./integration.yaml` de `install` trouvait celui du dépôt pendant `pytest` ; le test isole maintenant le répertoire courant.
 6. **L'ordre des tests de la RLS m'a appris une chose sur PostgreSQL** : les tables créées par un autre test appartiennent au superutilisateur ; sans les supprimer d'abord, le rôle ordinaire ne peut pas les modifier. D'où le message « propriétaire des tables » (§4) et la fixture qui repart de zéro.
 
 ## 7. Non fait et non vérifié
 
 - **Rien n'a été publié** : ni PyPI, ni GitHub. Le `pip install xcore-doctype` du critère est celui d'un wheel local (`make build`).
-- **L'entry point `xcore.plugins` ne sert à rien tant qu'xcore ne le lit pas** ; `doc/xcore-issues.md` rédige les demandes (entry points, confiance, manifeste invalide, gabarit d'`xcli init`, API de tenant, `source` des événements). Aucun patch n'a été préparé : vous avez choisi de laisser xcore intact.
+- **L'entry point `xcore.plugins` ne sert à rien tant qu'xcore ne le lit pas** ; `process/xcore-issues.md` rédige les demandes (entry points, confiance, manifeste invalide, gabarit d'`xcli init`, API de tenant, `source` des événements). Aucun patch n'a été préparé : vous avez choisi de laisser xcore intact.
 - **La signature** (`strict_trusted: true`) n'est pas exercée : `install` la signale et donne la commande, mais le test ne signe rien.
 - **La CI n'a pas tourné** (§5). Le job *Wheel* avec les vraies dépendances non plus.
 - **RLS** : pas de benchmark ; pas d'essai derrière pgbouncer (le comportement transactionnel du `set_config` local est testé, pas le pooler) ; migrations de schéma avec un autre rôle non couvertes.

@@ -26,7 +26,7 @@ dependencies = [
 xcore-doctype = "xcore_doctype.cli:main"
 
 # D1 : le plugin se déclare au groupe `xcore.plugins`. INERTE tant qu'xcore ne lit pas ce groupe (il ne découvre que des
-# dossiers) : la valeur est une fonction qui rend le dossier du plugin, `xcore-doctype install` en pose une copie (doc/phase4.md).
+# dossiers) : la valeur est une fonction qui rend le dossier du plugin, `xcore-doctype install` en pose une copie (process/phase4.md).
 [project.entry-points."xcore.plugins"]
 xcore-doctype = "xcore_doctype:plugin_dir"
 

@@ -1,4 +1,4 @@
-"""Agrégats : compter, additionner, regrouper (palier 70 %, phases I et J, `doc/palier70.md`).
+"""Agrégats : compter, additionner, regrouper (palier 70 %, phases I et J, `process/palier70.md`).
 
 C'est ce qui alimente les cartes de nombres, les graphiques, la vue Rapport (regroupements, totaux) et le tableau de bord d'un type
 de document. Une requête d'agrégat se décrit par :

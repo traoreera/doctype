@@ -1,4 +1,4 @@
-# Exemple de doc/doctype.md §9, limité à ce que le moteur applique (phases 1 et 2).
+# Exemple de process/doctype.md §9, limité à ce que le moteur applique (phases 1 et 2).
 schema_version: 1
 name: Customer
 label: Client
@@ -27,7 +27,7 @@ layout:
 # auth (xauth) compose déjà rôles et grants à chaque requête : on ne redécrit pas de matrice ici. Le plugin PROPRIÉTAIRE
 # (`sales`) transmet à `rbac.declare` la liste fournie par le service `doctype_grants`, au lieu de la retaper dans `rbac.grants`.
 # Une action ne retombe sur la convention que si elle n'est pas listée ; `[]` la ferme à tout le monde.
-# Modifier ou supprimer exige aussi de pouvoir lire le document. `match` est gelé (doc/phase1.md §7).
+# Modifier ou supprimer exige aussi de pouvoir lire le document. `match` est gelé (process/phase1.md §7).
 
 permissions:
   read: [sales:customer:read, { grant: sales:customer:own, if_owner: true }]       # ses propres clients seulement

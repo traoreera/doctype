@@ -31,4 +31,4 @@ les tests les prennent directement dans `tests/support/plugins/`) ; les plugins 
 `E2E_DEBUG=1` affiche chaque réponse HTTP d'erreur avec son corps : le premier réflexe quand une étape échoue.
 `CHROME=<exécutable>` impose un Chromium précis (sinon celui de `playwright-core`).
 Le fuseau du navigateur est Pacific/Auckland (UTC+13) exprès : une date locale à minuit y tombe la veille en UTC.
-`audit.mjs` (mesures d'accessibilité et de lisibilité des écrans principaux, clair/sombre, ordinateur/téléphone) et `look-ux.mjs` (comportements : titre d'onglet, focus, lien d'évitement, sélection, Échap, erreurs, cartes) se lancent comme `look-h2.mjs`; `LOGIN=<identifiant>` (facultatif) remplace `ADMIN_EMAIL` pour la connexion de `audit.mjs`. Détail et résultats : `doc/ux-revue.md`.
+`audit.mjs` (mesures d'accessibilité et de lisibilité des écrans principaux, clair/sombre, ordinateur/téléphone) et `look-ux.mjs` (comportements : titre d'onglet, focus, lien d'évitement, sélection, Échap, erreurs, cartes) se lancent comme `look-h2.mjs`; `LOGIN=<identifiant>` (facultatif) remplace `ADMIN_EMAIL` pour la connexion de `audit.mjs`. Détail et résultats : `process/ux-revue.md`.

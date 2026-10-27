@@ -1,4 +1,4 @@
-"""Backend d'authentification de TEST (doc/doctype.md D12) : il ne sert qu'aux tests du moteur. xauth (`app/auth`) est le système d'authentification.
+"""Backend d'authentification de TEST (process/doctype.md D12) : il ne sert qu'aux tests du moteur. xauth (`app/auth`) est le système d'authentification.
 
 xcore ne stocke ni utilisateurs ni rôles : il faut un plugin d'auth. Celui-ci vérifie des jetons
 signés en HMAC-SHA256 avec un secret configuré, pour que les tests du moteur puissent fabriquer n'importe quel

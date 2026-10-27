@@ -1,4 +1,4 @@
-"""Numérotation par série (doc/doctype.md D7, D13) : `FA-{YYYY}-{#####}` -> `FA-2026-00001`.
+"""Numérotation par série (process/doctype.md D7, D13) : `FA-{YYYY}-{#####}` -> `FA-2026-00001`.
 
 Une série est un motif : du texte littéral, des parties de date (`{YYYY}`, `{YY}`, `{MM}`, `{DD}`) et UN compteur
 (`{#####}`, le nombre de `#` est la largeur minimale, complétée de zéros ; au-delà, le nombre s'allonge).

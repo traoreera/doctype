@@ -1,4 +1,4 @@
-"""Routes HTTP génériques (doc/doctype.md §10).
+"""Routes HTTP génériques (process/doctype.md §10).
 
 Ces routes contournent le pipeline xcore (rate limit, audit IPC, `ContextVar`). Toutes dépendent
 de `http_context` : une route ajoutée sans paramètre `ctx` reste couverte par la dépendance de routeur.

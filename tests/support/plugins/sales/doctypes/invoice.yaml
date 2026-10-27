@@ -1,4 +1,4 @@
-# Un DocType à lignes, sans comptabilité (doc/doctype.md §15, phase 3).
+# Un DocType à lignes, sans comptabilité (process/doctype.md §15, phase 3).
 schema_version: 1
 name: Invoice
 label: Facture

@@ -1,4 +1,4 @@
-"""Conditions `depends_on` (doc/doctype.md D22) : un langage minuscule, jamais d'`eval`.
+"""Conditions `depends_on` (process/doctype.md D22) : un langage minuscule, jamais d'`eval`.
 
 Dans le YAML, une condition s'écrit en chaîne, comme dans Frappe :
 

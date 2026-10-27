@@ -1,6 +1,6 @@
 # Phase G : le Desk « espace de travail »
 
-Première phase du palier 70 % (`doc/palier70.md`). Cible visuelle donnée par l'utilisateur : le Desk de Frappe (barre latérale d'espaces à icônes, barre de recherche et de commande, avatar, page d'espace). Critère de sortie du contrat :
+Première phase du palier 70 % (`process/palier70.md`). Cible visuelle donnée par l'utilisateur : le Desk de Frappe (barre latérale d'espaces à icônes, barre de recherche et de commande, avatar, page d'espace). Critère de sortie du contrat :
 
 > Le module Stock et le module Ventes s'ouvrent chacun sur leur espace ; un utilisateur sans droit sur un type n'en voit ni raccourci ni compteur ; la barre de commande trouve un type, un nouveau document, un récent.
 

@@ -1,4 +1,4 @@
-"""Extensions JavaScript du Desk (D28, `doc/extensions.md`) : un plugin livre un module ES que le Desk charge au démarrage.
+"""Extensions JavaScript du Desk (D28, `process/extensions.md`) : un plugin livre un module ES que le Desk charge au démarrage.
 
 C'est du code de CONFIANCE dans la page de l'utilisateur (sa session, ses droits) : l'opérateur nomme les plugins autorisés
 (`doctype.desk.extensions`, liste de noms ou `["*"]`) ; absent ou vide, rien n'est servi. Un plugin déclare son dossier par

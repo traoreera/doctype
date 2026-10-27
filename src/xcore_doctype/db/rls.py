@@ -1,4 +1,4 @@
-"""Row Level Security PostgreSQL (doc/doctype.md D14) : un filet de sécurité SOUS la couche de requêtes unique.
+"""Row Level Security PostgreSQL (process/doctype.md D14) : un filet de sécurité SOUS la couche de requêtes unique.
 
 `Query` impose déjà `tenant_id` à chaque instruction (D3) et `tests/unit/test_query_leak.py` le vérifie. La RLS ajoute la même règle
 dans la base : une requête qui oublierait un jour son filtre ne verrait quand même que les lignes de SON tenant.
@@ -12,7 +12,7 @@ Mécanisme :
 
 La RLS ne protège pas contre un rôle qui la contourne : superutilisateur et `BYPASSRLS` ne sont pas soumis aux politiques, même forcées.
 `ensure_rls` REFUSE donc de démarrer avec un tel rôle plutôt que de laisser croire à une protection qui n'existe pas.
-Réglage : `doctype.rls: true` (défaut : false) ; PostgreSQL seulement. Voir doc/phase4.md.
+Réglage : `doctype.rls: true` (défaut : false) ; PostgreSQL seulement. Voir process/phase4.md.
 """
 
 from __future__ import annotations

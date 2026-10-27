@@ -1,6 +1,6 @@
 # xcore-doctype : palier 70 % de Frappe
 
-Décision de l'utilisateur, 17 octobre 2026 : « on élève tout le système à 70 % de Frappe, et le Desk doit ressembler à celui de Frappe ». Ce document rend ce « 70 % » **mesurable** et ordonne le travail. Il prolonge `doc/palier40.md` (phases A à F), qui reste le contrat des 40 %.
+Décision de l'utilisateur, 17 octobre 2026 : « on élève tout le système à 70 % de Frappe, et le Desk doit ressembler à celui de Frappe ». Ce document rend ce « 70 % » **mesurable** et ordonne le travail. Il prolonge `process/palier40.md` (phases A à F), qui reste le contrat des 40 %.
 
 ## 1. Ce que veut dire « 70 % »
 
@@ -47,7 +47,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Dupliquer un document | ✔ (H2) |
 | Niveaux de permission par champ (permlevel), masquage de champs | F |
 | Hooks : `before_insert`, `after_insert`, `on_trash`, `after_delete`, `before_cancel`, `on_update_after_submit` | ✔ (H2, avec validate, before_save, after_save, on_submit, on_cancel) |
-| DocType virtuel (données hors base) | ✔ **hors décompte** (c'était ✖ ; fait pour xauth, `doc/iam.md`) |
+| DocType virtuel (données hors base) | ✔ **hors décompte** (c'était ✖ ; fait pour xauth, `process/iam.md`) |
 
 ### Permissions et partage
 
@@ -55,7 +55,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 |---|---|
 | Droits par grant, `if_owner`, refus par défaut | ✔ |
 | Soumettre / annuler distincts de écrire | ✔ (A) |
-| Permissions utilisateur (restreindre à certaines valeurs d'un lien) | ✔ (26 oct., `doc/programme.md` §2.1 : documents `User Permission`, SQL et Python contre l'oracle de la matrice ; pas les liens des lignes de table ni les DynamicLink) |
+| Permissions utilisateur (restreindre à certaines valeurs d'un lien) | ✔ (26 oct., `process/programme.md` §2.1 : documents `User Permission`, SQL et Python contre l'oracle de la matrice ; pas les liens des lignes de table ni les DynamicLink) |
 | Partage d'un document avec un utilisateur | ✔ (26 oct., §2.1 : lecture ou écriture, même sans rôle, « Partagés avec moi », relecture adversariale corrigée) |
 | Écran du gestionnaire de permissions | ✔ (plugin `iam` : rôles, permissions, membres) |
 | Droits d'export, d'import, d'impression, d'e-mail par DocType | K |
@@ -104,7 +104,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Commentaires | ✔ (D) |
 | Assignation (À faire) | ✔ (D) |
 | Pièces jointes | ✔ (D) |
-| Étiquettes (tags) | ✔ (26 oct., `doc/programme.md` §1.2 : table `xdt_tag` jugée sur le document — lire pour voir, écrire pour poser —, filtre `_tag` en SQL dans la liste, les agrégats et la recherche, barre latérale, fiche, lot ; 20 par document) |
+| Étiquettes (tags) | ✔ (26 oct., `process/programme.md` §1.2 : table `xdt_tag` jugée sur le document — lire pour voir, écrire pour poser —, filtre `_tag` en SQL dans la liste, les agrégats et la recherche, barre latérale, fiche, lot ; 20 par document) |
 | « J'aime » | ✖ |
 | Mentions (@utilisateur) | ✔ (H2 : `@` propose les membres dans la zone de commentaire, la mention prévient le membre par la cloche) |
 | Recherche globale | ✔ (E) |
@@ -130,7 +130,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 
 | Fonctionnalité | État |
 |---|---|
-| Champs personnalisés (ajout par site sur un DocType existant) | ◐ (D26 : ajoutés par un PLUGIN, `doc/extensions.md` ; pas encore par un administrateur, sans code) |
+| Champs personnalisés (ajout par site sur un DocType existant) | ◐ (D26 : ajoutés par un PLUGIN, `process/extensions.md` ; pas encore par un administrateur, sans code) |
 | Propriétés modifiées par site (« property setter ») | ✔ (C4 : libellé, description, masqué, disposition ; obligatoire, lecture seule et défaut APPLIQUÉS par le serveur, réservés à qui écrit tout le type ; pas les options d'un Select ni les propriétés de liste) |
 | Formulaire personnalisable (écran) | ◐ (« Habiller » ; recompte du 22 oct. : le chemin de la fiche n'a aucun test dans le Desk) |
 | Éditeur de DocType dans le Desk | L |
@@ -172,7 +172,7 @@ que « DocType virtuel » (bonus). Dénominateur : **87**.
 
 **23 octobre (consolidation, phase C4 de `.plan/plan.md`)** : trois lignes ◐ passent à ✔ (notifications par DocType et e-mail, propriétés
 modifiées par organisation appliquées par le serveur, gestionnaire de fichiers), chacune après une relecture adversariale dont les constats
-ont été corrigés avec leur test (`doc/consolidation.md`). Le 22 octobre : 56 ✔, 11 ◐, 61,5 lignes, 71 %.
+ont été corrigés avec leur test (`process/consolidation.md`). Le 22 octobre : 56 ✔, 11 ◐, 61,5 lignes, 71 %.
 
 Le 20 octobre le décompte (non vérifié) disait 62 lignes en entier (71 %, 74 % avec les demi-lignes). Six lignes comptées faites ne sont
 prouvées qu'en partie (conditions dans les lignes, sections repliables, DocType arborescent, journal d'activité, écran « Habiller »,
@@ -247,7 +247,7 @@ Les durées sont des ordres de grandeur pour un développeur, **à revoir à la 
 
 | Phase | Contenu | Cas d'usage | Critère de sortie | Estimation |
 |---|---|---|---|---|
-| **G. Desk « espace de travail »** — **FAIT** (`doc/phase-g.md`) | espaces déclaratifs (YAML par plugin), barre latérale par espaces avec icônes et sections repliables, barre de commande (Ctrl+G), page d'espace avec raccourcis et compteurs, avatar | le Desk de Frappe : une page par module | le module Stock et le module Ventes s'ouvrent chacun sur leur espace ; un utilisateur sans droit sur un type n'en voit ni raccourci ni compteur ; la barre de commande trouve un type, un nouveau document, un récent | 2 à 3 sem. |
+| **G. Desk « espace de travail »** — **FAIT** (`process/phase-g.md`) | espaces déclaratifs (YAML par plugin), barre latérale par espaces avec icônes et sections repliables, barre de commande (Ctrl+G), page d'espace avec raccourcis et compteurs, avatar | le Desk de Frappe : une page par module | le module Stock et le module Ventes s'ouvrent chacun sur leur espace ; un utilisateur sans droit sur un type n'en voit ni raccourci ni compteur ; la barre de commande trouve un type, un nouveau document, un récent | 2 à 3 sem. |
 | **H. Champs et propriétés** | les types et propriétés du §2 « DocType », renommage, duplication, hooks restants | un référentiel article complet (photo, description enrichie, code-barres, prix monétaire) | un DocType qui utilise chaque nouveau type se crée, se valide, se filtre et s'affiche sur les deux bases | 6 à 9 sem. |
 | **I. Vues** | vue Rapport, Kanban, Calendrier, Gantt, Image ; barre latérale de liste ; actions groupées ; connexions | suivi des mouvements en Kanban par statut ; calendrier des échéances | chaque vue se déclare en YAML et respecte permissions et tenant | 6 à 9 sem. |
 | **J. Analytique** | cartes de nombres, graphiques, tableaux de bord, rapports requête fournis par un plugin | tableau de bord Stock (valeur, ruptures, mouvements par semaine) | un tableau de bord se définit en YAML ; ses requêtes passent par `query.py` (parité des deux bases) | 5 à 8 sem. |
@@ -266,7 +266,7 @@ Ordre de grandeur : **H + I + J (le retenu à 70 %, G étant fait) : 17 à 26 se
 | Personnalisation par site (L) fragilise les mises à jour des plugins | champs personnalisés dans une table à part, jamais dans la définition du plugin ; test de mise à jour |
 | Types de champs (H) × deux bases × le Desk : coût multiplicatif | un type = définition, validation, stockage, filtre, tri, affichage, tests de parité, dans la même phase ; pas de type à moitié |
 | Vues et graphiques (I, J) alourdissent `query.py` | agrégats par dialecte cantonnés à cette couche, tests de parité, benchmarks avant promotion en tables dédiées (B) |
-| Le Desk grossit | un seul thème, des jetons sémantiques, un test d'écran étroit et un test de thème sombre par page (acquis de `doc/desk-revue.md`) |
+| Le Desk grossit | un seul thème, des jetons sémantiques, un test d'écran étroit et un test de thème sombre par page (acquis de `process/desk-revue.md`) |
 | Sécurité : ce que l'utilisateur configure ne doit jamais devenir du code | aucun script saisi dans le Desk (✖) ; expressions du langage D22 seulement |
 
 ## 6. Décisions à valider

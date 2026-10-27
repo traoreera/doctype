@@ -410,7 +410,7 @@ export class ApiClient {
   }
 
   /** L'habillage d'automate du tenant pour ce type. `definition` : l'automate du YAML — `/meta` ne montre que celui RESSERRÉ, donc une
-   * transition fermée n'y figure plus : l'éditeur a besoin de l'original pour pouvoir la rouvrir (doc/programme.md §3.6). */
+   * transition fermée n'y figure plus : l'éditeur a besoin de l'original pour pouvoir la rouvrir (process/programme.md §3.6). */
   /** `grants` : le droit qui ouvre chaque transition (celui du YAML, sinon la convention), pour que l'éditeur dise qui peut la faire. */
   workflowOverride(doctype: string): Promise<{ doctype: string; config: WorkflowOverride; definition: WorkflowDef; grants?: Record<string, string | null> }> {
     return this.call('GET', `/override/workflow/${encodeURIComponent(doctype)}`)

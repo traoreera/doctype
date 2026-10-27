@@ -43,7 +43,7 @@ Tout disparaît avec le document (suppression en cascade, fichiers libérés). U
   Sans xauth (jeton de développement, plugin d'authentification qui n'expose pas l'action, xauth arrêté ou qui refuse l'appel) : repli SANS erreur
   sur les identités que l'organisation a déjà fait apparaître, l'identifiant sert de nom et n'importe lequel peut être assigné ; l'absence est
   retentée après 15 s. Réglage : `doctype.directory` du manifeste (`provider: xauth|none`, `plugin`, `action`, `ttl_seconds`).
-  **Avec le xauth du dépôt (`app/auth`, `doc/xauth.md`) c'est actif** : son `plugin.yaml` déclare `allowed_callers: ["xcore-doctype"]` (l'hôte active `enforce_ipc`),
+  **Avec le xauth du dépôt (`app/auth`, `process/xauth.md`) c'est actif** : son `plugin.yaml` déclare `allowed_callers: ["xcore-doctype"]` (l'hôte active `enforce_ipc`),
   sans quoi xcore répond `ipc_denied`. Testé contre le vrai xauth (`tests/integration/test_xauth_real.py`) et contre un plugin de test qui imite l'action.
 
 ## Côté Desk

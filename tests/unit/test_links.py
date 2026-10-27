@@ -1,4 +1,4 @@
-"""Champs Link complets (doc/doctype.md §7.2) : la cible existe et est lisible à l'écriture, et reste là tant qu'on la cite."""
+"""Champs Link complets (process/doctype.md §7.2) : la cible existe et est lisible à l'écriture, et reste là tant qu'on la cite."""
 
 from __future__ import annotations
 
@@ -221,7 +221,7 @@ class TestRace:
     @staticmethod
     def _need_row_locks(db):
         if db.backend != "postgres":
-            pytest.skip("SQLite n'a pas de verrou de ligne : fenêtre documentée, voir doc/phase3.md")
+            pytest.skip("SQLite n'a pas de verrou de ligne : fenêtre documentée, voir process/phase3.md")
 
     async def test_a_deletion_waits_for_a_link_being_written_then_sees_it(self, svc, db, monkeypatch):
         self._need_row_locks(db)

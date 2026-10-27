@@ -5,7 +5,7 @@ on obtient le stockage, l'API, les permissions, les hooks, l'historique et une i
 **soumettables** (brouillon → soumis → annulé → amendé) et des quantités **exactes** (`Decimal`) permettent d'écrire un vrai métier :
 le plugin `tests/support/plugins/stock` en est la démonstration (réceptions, sorties, transferts, journal immuable, stock jamais négatif). Le Desk
 est utilisable au téléphone, a un mode sombre, renouvelle la session d'xauth tout seul et adapte ses formulaires au document (colonnes
-de lignes selon la nature, unités, date du jour) : voir `doc/desk-revue.md`.
+de lignes selon la nature, unités, date du jour) : voir `process/desk-revue.md`.
 
 ```yaml
 name: Invoice
@@ -35,7 +35,7 @@ xcore ne découvre aujourd'hui que des **dossiers** de plugins : `install` dépo
 `xcore-doctype doctor` refait la vérification à tout moment. Les réglages du plugin (fuseau des numéros de série, Desk, RLS…) sont le
 bloc `doctype:` de `app/xcore-doctype/plugin.yaml` : c'est **votre** copie, `install` ne l'écrase pas (sauf `--force`).
 
-Le paquet déclare aussi l'entry point `xcore.plugins` ; xcore ne le lit pas encore (voir `doc/xcore-issues.md`).
+Le paquet déclare aussi l'entry point `xcore.plugins` ; xcore ne le lit pas encore (voir `process/xcore-issues.md`).
 Le Desk est servi sous `<plugin_prefix>/xcore-doctype/desk/`.
 
 ## Apporter vos DocTypes (module métier)
@@ -58,7 +58,7 @@ complets sont livrés : `tests/support/plugins/sales/` (clients, factures à lig
 
 ### Étendre un autre plugin, étendre le Desk
 
-Un plugin peut aller au-delà de ses propres DocTypes (détails et règles : `doc/extensions.md`) :
+Un plugin peut aller au-delà de ses propres DocTypes (détails et règles : `process/extensions.md`) :
 
 - **ajouter des champs et des hooks au DocType d'un plugin dont il dépend**, sans toucher à son YAML : `extends/*.yaml`
   (`doctype: Stock Entry`, champs `sales_…`, `hooks: {on_submit: [sales.on_stock_entry]}`), chargé par
@@ -93,7 +93,7 @@ hooks: { on_submit: [stock.post_entry], on_cancel: [stock.reverse_entry] }
 
 `on_submit` / `on_cancel` tournent **dans la transaction** de la soumission et écrivent par `event.tx` (créer, créer-si-absent, modifier
 avec contrôle de version, lire avec verrou) : un refus défait l'état et tout ce que le hook avait écrit. Les droits `submit` et `cancel`
-sont des grants à part (`stock:stock_entry:submit`). Voir `doc/phase-a.md` et `tests/support/plugins/stock/src/ledger.py`.
+sont des grants à part (`stock:stock_entry:submit`). Voir `process/phase-a.md` et `tests/support/plugins/stock/src/ledger.py`.
 
 ## Développer
 
@@ -104,16 +104,16 @@ make check        # types, build du Desk, tests Python (SQLite), vitest, navigat
 make test-pg PG_URL=postgresql+asyncpg://postgres@127.0.0.1:5432/xdt   # + PostgreSQL
 ```
 
-`make help` liste tout. **Authentification : xauth (`app/auth` sur le poste de développement, hors dépôt, voir `doc/xauth.md`)** : utilisateurs, organisations, rôles et grants,
+`make help` liste tout. **Authentification : xauth (`app/auth` sur le poste de développement, hors dépôt, voir `process/xauth.md`)** : utilisateurs, organisations, rôles et grants,
 connexion par nom d'utilisateur ou e-mail et mot de passe (MFA, OAuth, invitations). `make env` crée `.env` (administrateur `admin@example.com`, mot de passe aléatoire) et les clés
 JWT `conf/` ; xauth crée ce compte au premier démarrage. `make token` donne un jeton d'accès pour les scripts, `make member EMAIL=… PASSWORD=…` un utilisateur de plus. Dans le Desk, **Paramètres > Système** réunit tout xauth : compte (mot de passe, MFA, sessions, comptes liés, invitations reçues), organisations, utilisateurs, rôles et
 permissions, catalogue et comptes de la plateforme (administrateur), courrier sortant (extension `ext.email`, simulée tant qu'aucun SMTP n'est configuré), journal d'audit,
-accès API ; la cloche de la barre du haut montre les notifications. Le plugin `iam` (`tests/support/plugins/iam`, `doc/iam.md`) présente les **permissions, rôles et membres d'xauth comme des DocTypes** (liste,
+accès API ; la cloche de la barre du haut montre les notifications. Le plugin `iam` (`tests/support/plugins/iam`, `process/iam.md`) présente les **permissions, rôles et membres d'xauth comme des DocTypes** (liste,
 filtres, rapport, fiches ; xauth reste l'unique source), le profil de chaque utilisateur (« Mon profil »), et la fiche d'un employé (`tests/support/plugins/hr`) pointe vers son compte : un employé qui part ferme son accès.
 
 ## Documentation
 
-`doc/doctype.md` (le contrat de conception, v3), puis un rapport par phase : `doc/spike-phase0.md`, `doc/phase1.md` (permissions, hooks),
-`doc/phase2.md` (le Desk), `doc/phase3.md` (liens, tables, numérotation, historique), `doc/phase4.md` (livraison, RLS, CI). Le second palier a
-son contrat, `doc/palier40.md` (feuille de route A à F), et sa première phase, `doc/phase-a.md` (documents soumettables, module Stock).
+`process/doctype.md` (le contrat de conception, v3), puis un rapport par phase : `process/spike-phase0.md`, `process/phase1.md` (permissions, hooks),
+`process/phase2.md` (le Desk), `process/phase3.md` (liens, tables, numérotation, historique), `process/phase4.md` (livraison, RLS, CI). Le second palier a
+son contrat, `process/palier40.md` (feuille de route A à F), et sa première phase, `process/phase-a.md` (documents soumettables, module Stock).
 `CLAUDE.md` résume l'architecture et les pièges pour qui reprend le code.

@@ -1,4 +1,4 @@
-"""Le Workflow : la DÉFINITION et ses règles (doc/programme.md §3.2).
+"""Le Workflow : la DÉFINITION et ses règles (process/programme.md §3.2).
 
 Décisions éprouvées ici :
  - **un seul automate** : un état déclare le `docstatus` qu'il impose, au lieu de vivre à côté de lui ; un état qui soumet ou
@@ -425,7 +425,7 @@ class TestTransitionConditions:
 
 
 class TestTheOrganisationLayer:
-    """Ce qu'une organisation RESSERRE sur l'automate du YAML (doc/programme.md §3.6) : jamais un état ni une transition de plus.
+    """Ce qu'une organisation RESSERRE sur l'automate du YAML (process/programme.md §3.6) : jamais un état ni une transition de plus.
 
     La raison du « jamais de plus » n'est pas le goût : un grant de transition est déclaré à auth au CHARGEMENT du plugin, donc
     une transition inventée par un tenant porterait un grant que personne ne peut détenir — elle serait morte à la naissance.

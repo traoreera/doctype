@@ -1,4 +1,4 @@
-"""Service `Document` : la seule porte vers les données (doc/doctype.md §5, D20).
+"""Service `Document` : la seule porte vers les données (process/doctype.md §5, D20).
 
 Les routes HTTP et les actions xcore ne sont que des enveloppes qui construisent un
 `RequestContext`. Ce service ne lit jamais d'état ambiant.
@@ -9,7 +9,7 @@ existence. Modifier ou supprimer exige donc de pouvoir lire le document, puis d'
 actuelle ET, pour une écriture, sur la valeur écrite (on ne crée ni ne déplace un document hors de son périmètre).
 Le contexte système n'est pas soumis aux permissions (D20) mais reste journalisé.
 
-Ordre d'une sauvegarde (doc/doctype.md §11, D2, D21) :
+Ordre d'une sauvegarde (process/doctype.md §11, D2, D21) :
 1. identité, permission de l'action, disponibilité des hooks (un hook référencé mais non enregistré REFUSE la
    sauvegarde : ne jamais l'appliquer sans validation) ;
 2. validation stricte du schéma, puis contrôle de la valeur écrite par le périmètre de permission ;
@@ -1375,7 +1375,7 @@ class DocumentService:
     def _mappings_from(self, source: str) -> list[tuple[Any, Any]]:
         """`(type cible compilé, déclaration)` pour tout type qui dit se créer depuis `source`.
 
-        La déclaration vit sur la CIBLE (doc/mapper.md §1) : on parcourt donc le registre. Il n'y a pas d'index, mais
+        La déclaration vit sur la CIBLE (process/mapper.md §1) : on parcourt donc le registre. Il n'y a pas d'index, mais
         l'appel est rare (ouverture d'une fiche) et le registre tient en mémoire.
         """
         out = []
@@ -1515,7 +1515,7 @@ class DocumentService:
         return {"state": state, "docstatus": doc.docstatus, "version": doc.version, "transitions": out}
 
     async def workflow_transition(self, ctx: RequestContext, doctype: str, name: str, action: Any, version: Any) -> dict[str, Any]:
-        """Fait passer un document d'un état de workflow à l'autre (doc/programme.md §3.2).
+        """Fait passer un document d'un état de workflow à l'autre (process/programme.md §3.2).
 
         Ce qui est vérifié, dans cet ordre : le document est LISIBLE (hors périmètre = introuvable, comme partout), la
         transition existe et part de l'état où le document se trouve, l'appelant détient le GRANT de cette transition (jamais un
@@ -2093,7 +2093,7 @@ class DocumentService:
     async def _check_mapping_rows(
         self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None
     ) -> None:
-        """La provenance qu'une ligne revendique (`reference`, `document`) doit être VRAIE (doc/mapper.md §4).
+        """La provenance qu'une ligne revendique (`reference`, `document`) doit être VRAIE (process/mapper.md §4).
 
         C'est ce qui rend le reste à faire digne de confiance. Sans ce contrôle, n'importe quel client pourrait inventer
         une référence et faire baisser la quantité restante d'une source — `read_only` ne protège rien dans une table

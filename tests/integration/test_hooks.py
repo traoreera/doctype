@@ -1,5 +1,5 @@
 """Hooks de bout en bout sur un vrai Xcore : un plugin de confiance (`sales`) et un plugin SANDBOXÉ (`sales-rules`,
-sous-processus xcore). Critères 6 et 8 de doc/doctype.md §14 bis.8, plus les propriétés de sécurité des hooks.
+sous-processus xcore). Critères 6 et 8 de process/doctype.md §14 bis.8, plus les propriétés de sécurité des hooks.
 
 DocType `Invoice` (voir conftest.INVOICE) :
     validate: sales.check_amount            (confiance : refuse un montant négatif)

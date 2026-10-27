@@ -91,5 +91,5 @@ le test échoue). Les reproductions des relecteurs ont été rejouées après co
   1625 ignorés (variantes PostgreSQL et vrai xauth absent) ; e2e et livraison : 11 sur 11, aucun ignoré.
 - Desk : 61 fichiers, 1319 tests vitest ; `vue-tsc -p tsconfig.app.json` sans erreur ; build Vite.
 - PostgreSQL 16 jetable, fichiers concernés : C4.2 475 réussis, C2 `tests/unit` 4061 réussis.
-- Inventaire Frappe (`doc/palier70.md`) : 59 ✔, 8 ◐ sur 87, soit 72 % avec les demi-lignes (71 % le 22 octobre) ; inventaire élargi
+- Inventaire Frappe (`process/palier70.md`) : 59 ✔, 8 ◐ sur 87, soit 72 % avec les demi-lignes (71 % le 22 octobre) ; inventaire élargi
   (119) : 54 % en entier, 61 % avec les demi-lignes.

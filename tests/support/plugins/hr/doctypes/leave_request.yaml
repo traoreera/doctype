@@ -18,7 +18,7 @@ layout:
   - section: Demande
     columns: [[employee, leave_type, reason], [from_date, to_date]]
   - columns: [[comment]]
-# L'automate métier vit ICI, dans le YAML du DocType, à côté des champs (doc/programme.md §3.2). Il PILOTE `docstatus` au lieu
+# L'automate métier vit ICI, dans le YAML du DocType, à côté des champs (process/programme.md §3.2). Il PILOTE `docstatus` au lieu
 # de s'y ajouter : un état dit dans quel état de document il met la demande, et c'est la transition qui fait passer les deux
 # ensemble. `/submit` et `/cancel` sont alors refusés sur ce type — on passe par une transition, sinon on contournerait
 # l'approbation. Chaque transition ouvre son grant (`hr:leave_request:workflow_approuver`…), jamais un rôle.

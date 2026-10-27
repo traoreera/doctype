@@ -1098,7 +1098,7 @@ export const t = {
     dynamicFirst: 'Choisissez d’abord le type de document',
     nameHint: 'Le nom du document, tel qu’il apparaîtra dans les liens',
     duplicate: 'Dupliquer',
-    // « Créer depuis » (doc/mapper.md) : le bouton n'apparaît que si le serveur offre au moins une cible.
+    // « Créer depuis » (process/mapper.md) : le bouton n'apparaît que si le serveur offre au moins une cible.
     createFrom: 'Créer',
     mappedFrom: (doctype: string, name: string) => `Prérempli depuis ${doctype} ${name} : vérifiez les quantités puis enregistrez`,
     duplicatedFrom: (name: string) => `Copie de ${name} : vérifiez-la puis enregistrez`,
@@ -1171,7 +1171,7 @@ export const t = {
     readOnlyBadge: 'Lecture seule',
   },
   // C4.3 : les propriétés d'écriture d'un champ, réglées par l'habillage de l'organisation et appliquées par le serveur.
-  // « Personnaliser » > champs ajoutés par l'organisation (doc/programme.md §3.5).
+  // « Personnaliser » > champs ajoutés par l'organisation (process/programme.md §3.5).
   addedFields: {
     title: 'Champs ajoutés par votre organisation',
     hint: 'Ils s’ajoutent à ce type pour votre organisation seulement. Leur nom commence par « custom_ » pour ne jamais entrer en collision avec un champ du logiciel.',
