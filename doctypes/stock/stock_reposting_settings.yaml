@@ -1,0 +1,83 @@
+schema_version: 1
+name: Stock Reposting Settings
+label: Stock Reposting Settings
+module: stock
+icon: settings
+fields:
+- fieldname: start_time
+  label: Start Time
+  fieldtype: Time
+- fieldname: end_time
+  label: End Time
+  fieldtype: Time
+- fieldname: limits_dont_apply_on
+  label: Limits don't apply on
+  fieldtype: Select
+  options:
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  - Saturday
+  - Sunday
+- fieldname: limit_reposting_timeslot
+  label: Limit timeslot for Stock Reposting
+  fieldtype: Boolean
+  default: false
+- fieldname: item_based_reposting
+  label: Use Item based reposting
+  fieldtype: Boolean
+  default: true
+- fieldname: notify_reposting_error_to_role
+  label: Notify Reposting Error to Role
+  fieldtype: Link
+  options: Role
+- fieldname: enable_parallel_reposting
+  label: Enable Parallel Reposting
+  fieldtype: Boolean
+  default: false
+- fieldname: no_of_parallel_reposting
+  label: No of Parallel Reposting (Per Item)
+  fieldtype: Int
+  default: 4
+- fieldname: enable_separate_reposting_for_gl
+  label: Enable Separate Reposting for GL
+  fieldtype: Boolean
+  default: false
+- fieldname: do_not_fetch_incoming_rate_from_serial_no
+  label: Do not fetch incoming rate from Serial No
+  fieldtype: Boolean
+  description: For legacy serial nos, do not fetch incoming rate from serial no and calculate it based on the inward
+    transaction
+  default: false
+- fieldname: repost_incorrect_valuation_entries
+  label: Auto Repost Incorrect Valuation Entries (Weekly)
+  fieldtype: Boolean
+  description: If enabled, a weekly scheduler scans the Stock Ledger Variance for item-warehouses with incorrect
+    valuation in the current financial year and auto-creates Item & Warehouse based reposts to fix them.
+  default: false
+single: true
+layout:
+- section: Scheduling
+  columns:
+  - - limit_reposting_timeslot
+    - start_time
+    - end_time
+    - limits_dont_apply_on
+    - item_based_reposting
+  - - do_not_fetch_incoming_rate_from_serial_no
+- section: Comptabilité et montants
+  columns:
+  - - enable_parallel_reposting
+    - no_of_parallel_reposting
+  - - enable_separate_reposting_for_gl
+- section: Errors Notification
+  columns:
+  - - notify_reposting_error_to_role
+- section: Auto Reposting of Incorrect Valuation
+  columns:
+  - - repost_incorrect_valuation_entries
+permissions:
+  create: []
+  delete: []

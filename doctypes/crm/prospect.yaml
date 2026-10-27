@@ -1,0 +1,94 @@
+schema_version: 1
+name: Prospect
+label: Prospect
+module: crm
+icon: user-round-search
+fields:
+- fieldname: company_name
+  label: Company Name
+  fieldtype: Text
+- fieldname: industry
+  label: Industry
+  fieldtype: Link
+  options: Industry Type
+  in_list_view: true
+- fieldname: market_segment
+  label: Market Segment
+  fieldtype: Link
+  options: Market Segment
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+  in_list_view: true
+- fieldname: no_of_employees
+  label: No. of Employees
+  fieldtype: Select
+  options:
+  - 1-10
+  - 11-50
+  - 51-200
+  - 201-500
+  - 501-1000
+  - 1000+
+- fieldname: annual_revenue
+  label: Annual Revenue
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: fax
+  label: Fax
+  fieldtype: Text
+- fieldname: website
+  label: Website
+  fieldtype: Text
+- fieldname: prospect_owner
+  label: Prospect Owner
+  fieldtype: Link
+  options: Member
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: opportunities
+  label: Opportunities
+  fieldtype: Table
+  options: Prospect Opportunity
+- fieldname: leads
+  label: leads
+  fieldtype: Table
+  options: Prospect Lead
+- fieldname: notes
+  label: Notes
+  fieldtype: Table
+  options: CRM Note
+  hidden: true
+title_field: industry
+layout:
+- tab: Overview
+  section: Références
+  columns:
+  - - company_name
+    - customer_group
+    - no_of_employees
+    - annual_revenue
+  - - market_segment
+    - industry
+    - territory
+  - - prospect_owner
+    - website
+    - fax
+    - company
+- tab: Leads
+  section: Informations complémentaires 2
+  columns:
+  - - leads
+- tab: Opportunities
+  section: Informations complémentaires 3
+  columns:
+  - - opportunities

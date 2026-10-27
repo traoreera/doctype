@@ -1,0 +1,6 @@
+schema_version: 1
+name: Assignment Rule User
+label: Agent affecté
+istable: true
+fields:
+  - { fieldname: user, label: Membre, fieldtype: Link, options: Member, required: true }

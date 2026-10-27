@@ -1,0 +1,32 @@
+schema_version: 1
+name: Asset Category Account
+label: Asset Category Account
+istable: true
+fields:
+- fieldname: company_name
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: fixed_asset_account
+  label: Fixed Asset Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: accumulated_depreciation_account
+  label: Accumulated Depreciation Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: depreciation_expense_account
+  label: Depreciation Expense Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: capital_work_in_progress_account
+  label: Capital Work In Progress Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true

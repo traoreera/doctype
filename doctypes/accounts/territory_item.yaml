@@ -1,0 +1,10 @@
+schema_version: 1
+name: Territory Item
+label: Territory Item
+istable: true
+fields:
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+  in_list_view: true

@@ -1,0 +1,41 @@
+schema_version: 1
+name: Project User
+label: Project User
+istable: true
+fields:
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true
+- fieldname: email
+  label: Email
+  fieldtype: Text
+  read_only: true
+- fieldname: image
+  label: Image
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: full_name
+  label: Full Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: welcome_email_sent
+  label: Welcome email sent
+  fieldtype: Boolean
+  default: false
+- fieldname: view_attachments
+  label: View attachments
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: hide_timesheets
+  label: Hide timesheets
+  fieldtype: Boolean
+  default: false
+- fieldname: project_status
+  label: Project Status
+  fieldtype: TextEditor

@@ -1,0 +1,230 @@
+schema_version: 1
+name: Subcontracting Receipt Item
+label: Subcontracting Receipt Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: received_qty
+  label: Qty (As per BOM)
+  fieldtype: Number
+  required: true
+  read_only: true
+- fieldname: qty
+  label: Accepted Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: rejected_qty
+  label: Rejected Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: rm_cost_per_qty
+  label: Raw Material Cost Per Qty
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: service_cost_per_qty
+  label: Service Cost Per Qty
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: additional_cost_per_qty
+  label: Additional Cost Per Qty
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: warehouse
+  label: Accepted Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: rejected_warehouse
+  label: Rejected Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: quality_inspection
+  label: Quality Inspection
+  fieldtype: Link
+  options: Quality Inspection
+- fieldname: subcontracting_order
+  label: Subcontracting Order
+  fieldtype: Link
+  options: Subcontracting Order
+  read_only: true
+- fieldname: schedule_date
+  label: Required By
+  fieldtype: Date
+  read_only: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+- fieldname: rejected_serial_no
+  label: Rejected Serial No
+  fieldtype: LongText
+- fieldname: subcontracting_order_item
+  label: Subcontracting Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: bom
+  label: BOM
+  fieldtype: Link
+  options: BOM
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+  read_only: true
+  hidden: true
+- fieldname: rm_supp_cost
+  label: Raw Materials Supplied Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: manufacturer
+  label: Manufacturer
+  fieldtype: Link
+  options: Manufacturer
+- fieldname: manufacturer_part_no
+  label: Manufacturer Part Number
+  fieldtype: Text
+- fieldname: subcontracting_receipt_item
+  label: Subcontracting Receipt Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: page_break
+  label: Page Break
+  fieldtype: Boolean
+  default: false
+- fieldname: returned_qty
+  label: Returned Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: rejected_serial_and_batch_bundle
+  label: Rejected Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: purchase_order_item
+  label: Purchase Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: purchase_order
+  label: Purchase Order
+  fieldtype: Link
+  options: Purchase Order
+  read_only: true
+  hidden: true
+- fieldname: include_exploded_items
+  label: Include Exploded Items
+  fieldtype: Boolean
+  default: false
+- fieldname: use_serial_batch_fields
+  label: Use Serial No / Batch Fields
+  fieldtype: Boolean
+  default: false
+- fieldname: job_card
+  label: Job Card
+  fieldtype: Link
+  options: Job Card
+  read_only: true
+- fieldname: landed_cost_voucher_amount
+  label: Landed Cost Voucher Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: service_expense_account
+  label: Service Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: secondary_item_type
+  label: Type
+  fieldtype: Select
+  options:
+  - Co-Product
+  - By-Product
+  - Scrap
+  - Additional Finished Good
+  read_only: true
+- fieldname: secondary_items_cost_per_qty
+  label: Secondary Items Cost Per Qty
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: valuation_type
+  label: Valuation Type
+  fieldtype: Select
+  options:
+  - Valuation Rate
+  - '% of Component Cost'
+  - Manual
+  read_only: true
+- fieldname: bom_secondary_item
+  label: BOM Secondary Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: process_loss_qty
+  label: Process Loss Qty
+  fieldtype: Number
+  default: 0.0

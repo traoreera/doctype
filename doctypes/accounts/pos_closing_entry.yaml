@@ -1,0 +1,153 @@
+schema_version: 1
+name: POS Closing Entry
+label: POS Closing Entry
+module: accounts
+submittable: true
+icon: book-lock
+fields:
+- fieldname: period_start_date
+  label: Period Start Date
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: period_end_date
+  label: Period End Date
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+- fieldname: pos_profile
+  label: POS Profile
+  fieldtype: Link
+  options: POS Profile
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: user
+  label: Cashier
+  fieldtype: Link
+  options: Member
+  required: true
+  read_only: true
+- fieldname: payment_reconciliation
+  label: Payment Reconciliation
+  fieldtype: Table
+  options: POS Closing Entry Detail
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_total
+  label: Net Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_quantity
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: taxes
+  label: Taxes
+  fieldtype: Table
+  options: POS Closing Entry Taxes
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: POS Closing Entry
+  read_only: true
+- fieldname: pos_opening_entry
+  label: POS Opening Entry
+  fieldtype: Link
+  options: POS Opening Entry
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Queued
+  - Failed
+  - Cancelled
+  default: Draft
+  read_only: true
+  hidden: true
+- fieldname: error_message
+  label: Error
+  fieldtype: LongText
+  read_only: true
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  required: true
+- fieldname: pos_invoices
+  label: POS Transactions
+  fieldtype: Table
+  options: POS Invoice Reference
+  read_only: true
+- fieldname: sales_invoices
+  label: Sales Invoice Transactions
+  fieldtype: Table
+  options: Sales Invoice Reference
+  read_only: true
+- fieldname: total_taxes_and_charges
+  label: Total Taxes and Charges
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+title_field: company
+layout:
+- section: Period Details
+  columns:
+  - - period_start_date
+    - period_end_date
+  - - posting_date
+    - posting_time
+    - pos_opening_entry
+- section: User Details
+  columns:
+  - - company
+  - - pos_profile
+    - user
+- section: Linked Invoices
+  columns:
+  - - pos_invoices
+    - sales_invoices
+- section: Taxes and Charges
+  columns:
+  - - taxes
+- section: Totals
+  columns:
+  - - total_quantity
+  - - net_total
+    - total_taxes_and_charges
+    - grand_total
+- section: Modes of Payment
+  columns:
+  - - payment_reconciliation
+- section: Failure Description
+  columns:
+  - - error_message
+- section: Dates et planification
+  columns:
+  - - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

@@ -1,0 +1,19 @@
+schema_version: 1
+name: Employee Group Table
+label: Employee Group Table
+istable: true
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+- fieldname: user_id
+  label: ERPNext User ID
+  fieldtype: Text
+  in_list_view: true
+  read_only: true

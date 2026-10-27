@@ -1,0 +1,33 @@
+schema_version: 1
+name: "Packed Item"
+label: "Packed Item"
+istable: true
+fields:
+  - { fieldname: packed_parent_item, label: "Parent Item", fieldtype: Link, options: "Item", in_list_view: true, read_only: true }
+  - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", in_list_view: true, read_only: true }
+  - { fieldname: product_bundle, label: "Product Bundle", fieldtype: Link, options: "Product Bundle", read_only: true, description: "Product Bundle version this row was packed from" }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
+  - { fieldname: description, label: "Description", fieldtype: TextEditor, in_list_view: true }
+  - { fieldname: warehouse, label: "From Warehouse", fieldtype: Link, options: "Warehouse" }
+  - { fieldname: target_warehouse, label: "To Warehouse (Optional)", fieldtype: Link, options: "Warehouse" }
+  - { fieldname: qty, label: "Qty", fieldtype: Number, in_list_view: true, read_only: true }
+  - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
+  - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }
+  - { fieldname: actual_qty, label: "Actual Qty", fieldtype: Number, read_only: true }
+  - { fieldname: projected_qty, label: "Projected Qty", fieldtype: Number, read_only: true }
+  - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", read_only: true }
+  - { fieldname: page_break, label: "Page Break", fieldtype: Boolean, read_only: true }
+  - { fieldname: prevdoc_doctype, label: "Prevdoc DocType", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: actual_batch_qty, label: "Actual Batch Quantity", fieldtype: Number, read_only: true }
+  - { fieldname: incoming_rate, label: "Incoming Rate", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: conversion_factor, label: "Conversion Factor", fieldtype: Number }
+  - { fieldname: rate, label: "Rate", fieldtype: Currency, decimals: 2, in_list_view: true, read_only: true }
+  - { fieldname: ordered_qty, label: "Ordered Qty", fieldtype: Number, read_only: true }
+  - { fieldname: picked_qty, label: "Picked Qty", fieldtype: Number, read_only: true }
+  - { fieldname: packed_qty, label: "Packed Qty", fieldtype: Number, read_only: true }
+  - { fieldname: received_qty, label: "Received Qty", fieldtype: Number, read_only: true }
+  - { fieldname: serial_and_batch_bundle, label: "Serial and Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle" }
+  - { fieldname: use_serial_batch_fields, label: "Use Serial No / Batch Fields", fieldtype: Boolean, default: false }
+  - { fieldname: delivered_by_supplier, label: "Supplier delivers to Customer", fieldtype: Boolean, read_only: true }
+  - { fieldname: requested_qty, label: "Requested Qty", fieldtype: Number, read_only: true }
+  - { fieldname: reserve_stock, label: "Reserve Stock", fieldtype: Boolean, default: false }

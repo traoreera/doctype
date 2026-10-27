@@ -1,0 +1,10 @@
+schema_version: 1
+name: Sales Partner Item
+label: Sales Partner Item
+istable: true
+fields:
+- fieldname: sales_partner
+  label: 'Sales Partner '
+  fieldtype: Link
+  options: Sales Partner
+  in_list_view: true

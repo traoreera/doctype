@@ -1,0 +1,35 @@
+schema_version: 1
+name: Supplier Scorecard Variable
+label: Supplier Scorecard Variable
+module: buying
+icon: variable
+fields:
+- fieldname: variable_label
+  label: Variable Name
+  fieldtype: Text
+  required: true
+- fieldname: is_custom
+  label: Custom?
+  fieldtype: Boolean
+  default: false
+- fieldname: param_name
+  label: Parameter Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: path
+  label: Path
+  fieldtype: Text
+  required: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+title_field: param_name
+layout:
+- section: Détails
+  columns:
+  - - variable_label
+    - is_custom
+    - param_name
+    - path
+  - - description

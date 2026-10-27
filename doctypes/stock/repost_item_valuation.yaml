@@ -1,0 +1,165 @@
+schema_version: 1
+name: Repost Item Valuation
+label: Repost Item Valuation
+module: stock
+submittable: true
+icon: refresh-cw
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Queued
+  - In Progress
+  - Completed
+  - Skipped
+  - Failed
+  - Cancelled
+  default: Queued
+  in_list_view: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Repost Item Valuation
+  read_only: true
+- fieldname: error_log
+  label: Error Log
+  fieldtype: LongText
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+  in_list_view: true
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  in_list_view: true
+  options: voucher_type
+- fieldname: based_on
+  label: Based On
+  fieldtype: Select
+  options:
+  - Transaction
+  - Item and Warehouse
+  default: Transaction
+  required: true
+- fieldname: allow_negative_stock
+  label: Allow Negative Stock
+  fieldtype: Boolean
+  default: true
+- fieldname: via_landed_cost_voucher
+  label: Via Landed Cost Voucher
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_zero_rate
+  label: Allow Zero Rate
+  fieldtype: Boolean
+  default: false
+- fieldname: items_to_be_repost
+  label: Items to Be Repost
+  fieldtype: Code
+  read_only: true
+  hidden: true
+- fieldname: current_index
+  label: Current Index
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: gl_reposting_index
+  label: GL reposting index
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: total_reposting_count
+  label: No of Items to Repost
+  fieldtype: Int
+  read_only: true
+- fieldname: recreate_stock_ledgers
+  label: Recreate Stock Ledgers
+  fieldtype: Boolean
+  default: false
+- fieldname: reposting_reference
+  label: Reposting Reference
+  fieldtype: Text
+  read_only: true
+- fieldname: repost_only_accounting_ledgers
+  label: Repost Only Accounting Ledgers
+  fieldtype: Boolean
+  description: Stock Ledgers won’t be reposted.
+  default: false
+- fieldname: total_vouchers
+  label: Total Ledgers
+  fieldtype: Int
+  read_only: true
+- fieldname: vouchers_posted
+  label: Ledgers Posted
+  fieldtype: Int
+  read_only: true
+- fieldname: reposting_data_file
+  label: Reposting Data File
+  fieldtype: Attach
+  read_only: true
+- fieldname: recalculate_valuation_rate
+  label: Recalculate Valuation Rate
+  fieldtype: Boolean
+  description: Only works for Purchase Receipt, Purchase Invoice with Update Stock and Stock Entry with no row that
+    has both a Source and Target Warehouse
+  default: false
+title_field: item_code
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - based_on
+    - voucher_type
+    - voucher_no
+    - item_code
+    - warehouse
+    - posting_date
+    - posting_time
+  - - status
+    - company
+    - reposting_reference
+    - repost_only_accounting_ledgers
+    - allow_negative_stock
+    - via_landed_cost_voucher
+    - allow_zero_rate
+    - recreate_stock_ledgers
+    - recalculate_valuation_rate
+- section: Error
+  columns:
+  - - error_log
+- section: Reposting Item and Warehouse
+  columns:
+  - - total_reposting_count
+    - reposting_data_file
+- section: Reposting Vouchers
+  columns:
+  - - amended_from
+    - total_vouchers
+  - - vouchers_posted
+views:
+  calendar:
+    start: posting_date
+    title: item_code
+  tree:
+    parent: amended_from

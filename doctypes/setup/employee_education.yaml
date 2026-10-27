@@ -1,0 +1,33 @@
+schema_version: 1
+name: Employee Education
+label: Employee Education
+istable: true
+fields:
+- fieldname: school_univ
+  label: School/University
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: qualification
+  label: Qualification
+  fieldtype: Text
+  in_list_view: true
+- fieldname: level
+  label: Level
+  fieldtype: Select
+  options:
+  - Graduate
+  - Post Graduate
+  - Under Graduate
+  in_list_view: true
+- fieldname: year_of_passing
+  label: Year of Passing
+  fieldtype: Int
+  in_list_view: true
+- fieldname: class_per
+  label: Class / Percentage
+  fieldtype: Text
+  in_list_view: true
+- fieldname: maj_opt_subj
+  label: Major/Optional Subjects
+  fieldtype: LongText
+  in_list_view: true

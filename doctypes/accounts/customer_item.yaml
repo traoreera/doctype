@@ -1,0 +1,10 @@
+schema_version: 1
+name: Customer Item
+label: Customer Item
+istable: true
+fields:
+- fieldname: customer
+  label: 'Customer '
+  fieldtype: Link
+  options: Customer
+  in_list_view: true

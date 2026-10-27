@@ -1,0 +1,10 @@
+schema_version: 1
+name: Transaction Deletion Record Item
+label: Transaction Deletion Record Item
+istable: true
+fields:
+- fieldname: doctype_name
+  label: DocType
+  fieldtype: Text
+  required: true
+  in_list_view: true

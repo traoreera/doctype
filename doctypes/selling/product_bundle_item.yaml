@@ -1,0 +1,30 @@
+schema_version: 1
+name: Product Bundle Item
+label: Product Bundle Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  in_list_view: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Number
+  hidden: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true
+  read_only: true

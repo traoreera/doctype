@@ -1,0 +1,80 @@
+schema_version: 1
+name: "Delivery Note Item"
+label: "Delivery Note Item"
+istable: true
+fields:
+  - { fieldname: barcode, label: "Barcode", fieldtype: Text }
+  - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
+  - { fieldname: is_product_bundle, label: "Is Product Bundle", fieldtype: Boolean, read_only: true, hidden: true }
+  - { fieldname: product_bundle, label: "Product Bundle", fieldtype: Link, options: "Product Bundle" }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, required: true }
+  - { fieldname: customer_item_code, label: "Customer's Item Code", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: description, label: "Description", fieldtype: TextEditor }
+  - { fieldname: qty, label: "Quantity", fieldtype: Number, required: true, in_list_view: true }
+  - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", required: true, read_only: true }
+  - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", required: true, in_list_view: true }
+  - { fieldname: conversion_factor, label: "UOM Conversion Factor", fieldtype: Number, required: true, read_only: true }
+  - { fieldname: stock_qty, label: "Qty in Stock UOM", fieldtype: Number, read_only: true }
+  - { fieldname: price_list_rate, label: "Price List Rate", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: base_price_list_rate, label: "Price List Rate (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: margin_type, label: "Margin Type", fieldtype: Select, options: ["Percentage", "Amount"] }
+  - { fieldname: margin_rate_or_amount, label: "Margin Rate or Amount", fieldtype: Number }
+  - { fieldname: rate_with_margin, label: "Rate With Margin", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: discount_percentage, label: "Discount (%) on Price List Rate with Margin", fieldtype: Number }
+  - { fieldname: discount_amount, label: "Discount Amount", fieldtype: Currency, decimals: 2 }
+  - { fieldname: base_rate_with_margin, label: "Rate With Margin (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: rate, label: "Rate", fieldtype: Currency, decimals: 2, in_list_view: true }
+  - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, in_list_view: true, read_only: true }
+  - { fieldname: base_rate, label: "Rate (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: base_amount, label: "Amount (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: pricing_rules, label: "Pricing Rules", fieldtype: LongText, read_only: true, hidden: true }
+  - { fieldname: is_free_item, label: "Is Free Item", fieldtype: Boolean, read_only: true }
+  - { fieldname: net_rate, label: "Net Rate", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: net_amount, label: "Net Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: base_net_rate, label: "Net Rate (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: base_net_amount, label: "Net Amount (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: weight_per_unit, label: "Weight Per Unit", fieldtype: Number }
+  - { fieldname: total_weight, label: "Total Weight", fieldtype: Number, read_only: true }
+  - { fieldname: weight_uom, label: "Weight UOM", fieldtype: Link, options: "UOM" }
+  - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true }
+  - { fieldname: target_warehouse, label: "Target Warehouse", fieldtype: Link, options: "Warehouse", hidden: true }
+  - { fieldname: quality_inspection, label: "Quality Inspection", fieldtype: Link, options: "Quality Inspection" }
+  - { fieldname: actual_qty, label: "Qty (Warehouse)", fieldtype: Number, read_only: true }
+  - { fieldname: actual_batch_qty, label: "Available Batch Qty at From Warehouse", fieldtype: Number, read_only: true }
+  - { fieldname: item_group, label: "Item Group", fieldtype: Link, options: "Item Group", read_only: true, hidden: true }
+  - { fieldname: brand, label: "Brand Name", fieldtype: Link, options: "Brand", read_only: true, hidden: true }
+  - { fieldname: item_tax_rate, label: "Item Tax Rate", fieldtype: LongText, read_only: true, hidden: true }
+  - { fieldname: expense_account, label: "Expense Account", fieldtype: Link, options: "Account" }
+  - { fieldname: item_tax_template, label: "Item Tax Template", fieldtype: Link, options: "Item Tax Template" }
+  - { fieldname: cost_center, label: "Cost Center", fieldtype: Link, options: "Cost Center" }
+  - { fieldname: allow_zero_valuation_rate, label: "Allow Zero Valuation Rate", fieldtype: Boolean, default: false }
+  - { fieldname: against_sales_order, label: "Against Sales Order", fieldtype: Link, options: "Sales Order", read_only: true }
+  - { fieldname: against_sales_invoice, label: "Against Sales Invoice", fieldtype: Link, options: "Sales Invoice", read_only: true }
+  - { fieldname: so_detail, label: "Against Sales Order Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: si_detail, label: "Against Sales Invoice Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: installed_qty, label: "Installed Qty", fieldtype: Number, read_only: true }
+  - { fieldname: billed_amt, label: "Billed Amt", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: closed, label: "Closed", fieldtype: Boolean, read_only: true }
+  - { fieldname: page_break, label: "Page Break", fieldtype: Boolean, default: false }
+  - { fieldname: project, label: "Project", fieldtype: Link, options: "Project" }
+  - { fieldname: dn_detail, label: "Against Delivery Note Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: returned_qty, label: "Returned Qty in Stock UOM", fieldtype: Number, read_only: true }
+  - { fieldname: incoming_rate, label: "Incoming Rate", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: stock_uom_rate, label: "Rate of Stock UOM", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: grant_commission, label: "Grant Commission", fieldtype: Boolean, read_only: true }
+  - { fieldname: pick_list_item, label: "Pick List Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: purchase_order, label: "Purchase Order", fieldtype: Link, options: "Purchase Order", read_only: true }
+  - { fieldname: purchase_order_item, label: "Purchase Order Item", fieldtype: Text, read_only: true }
+  - { fieldname: has_item_scanned, label: "Has Item Scanned", fieldtype: Boolean, read_only: true }
+  - { fieldname: material_request, label: "Material Request", fieldtype: Link, options: "Material Request" }
+  - { fieldname: material_request_item, label: "Material Request Item", fieldtype: Text }
+  - { fieldname: received_qty, label: "Received Qty", fieldtype: Number, read_only: true }
+  - { fieldname: packed_qty, label: "Packed Qty", fieldtype: Number, read_only: true }
+  - { fieldname: serial_and_batch_bundle, label: "Serial and Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle" }
+  - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
+  - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }
+  - { fieldname: use_serial_batch_fields, label: "Use Serial No / Batch Fields", fieldtype: Boolean, default: false }
+  - { fieldname: distributed_discount_amount, label: "Distributed Discount Amount", fieldtype: Currency, decimals: 2 }
+  - { fieldname: mapped_additional_discount_amount, label: "Additional Discount per Stock Unit", fieldtype: Currency, decimals: 2, read_only: true, description: "Tax-exclusive additional discount carried from a source document, per stock unit." }
+  - { fieldname: company_total_stock, label: "Qty (Company)", fieldtype: Number, read_only: true }
+  - { fieldname: against_pick_list, label: "Against Pick List", fieldtype: Link, options: "Pick List", read_only: true }

@@ -1,0 +1,20 @@
+schema_version: 1
+name: Designation
+label: Designation
+module: setup
+icon: id-card
+fields:
+- fieldname: designation_name
+  label: Designation
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+title_field: designation_name
+layout:
+- section: Description et notes
+  columns:
+  - - designation_name
+    - description

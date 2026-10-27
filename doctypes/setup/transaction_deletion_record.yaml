@@ -1,0 +1,130 @@
+schema_version: 1
+name: Transaction Deletion Record
+label: Transaction Deletion Record
+module: setup
+submittable: true
+icon: trash
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: doctypes
+  label: Summary
+  fieldtype: Table
+  options: Transaction Deletion Record Details
+  read_only: true
+- fieldname: doctypes_to_delete
+  label: DocTypes To Delete
+  fieldtype: Table
+  options: Transaction Deletion Record To Delete
+- fieldname: doctypes_to_be_ignored
+  label: Excluded DocTypes
+  fieldtype: Table
+  options: Transaction Deletion Record Item
+  description: DocTypes that will NOT be deleted.
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Transaction Deletion Record
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Queued
+  - Running
+  - Failed
+  - Completed
+  - Cancelled
+  read_only: true
+- fieldname: delete_bin_data_status
+  label: Delete Bins
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  - Skipped
+  default: Pending
+  read_only: true
+- fieldname: delete_leads_and_addresses_status
+  label: Delete Leads and Addresses
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  - Skipped
+  default: Pending
+  read_only: true
+- fieldname: reset_company_default_values_status
+  label: Reset Company Default Values
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  - Skipped
+  default: Pending
+  read_only: true
+- fieldname: clear_notifications_status
+  label: Clear Notifications
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  - Skipped
+  default: Pending
+  read_only: true
+- fieldname: initialize_doctypes_table_status
+  label: Initialize Summary Table
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  - Skipped
+  default: Pending
+  read_only: true
+- fieldname: delete_transactions_status
+  label: Delete Transactions
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  - Skipped
+  default: Pending
+  read_only: true
+- fieldname: error_log
+  label: Error Log
+  fieldtype: LongText
+- fieldname: process_in_single_transaction
+  label: Process in Single Transaction
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+title_field: status
+layout:
+- section: Références
+  columns:
+  - - company
+- section: État et options
+  columns:
+  - - status
+    - error_log
+- section: Tasks
+  columns:
+  - - delete_bin_data_status
+    - delete_leads_and_addresses_status
+  - - reset_company_default_values_status
+    - clear_notifications_status
+  - - initialize_doctypes_table_status
+    - delete_transactions_status
+- section: Dates et planification
+  columns:
+  - - doctypes
+    - doctypes_to_delete
+    - doctypes_to_be_ignored
+    - amended_from
+views:
+  tree:
+    parent: amended_from

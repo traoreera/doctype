@@ -1,0 +1,13 @@
+schema_version: 1
+name: Issue Priority
+label: Issue Priority
+module: support
+icon: flag
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+layout:
+- section: Description et notes
+  columns:
+  - - description

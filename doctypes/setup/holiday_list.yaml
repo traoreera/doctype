@@ -1,0 +1,83 @@
+schema_version: 1
+name: Holiday List
+label: Holiday List
+module: setup
+icon: calendar-off
+fields:
+- fieldname: holiday_list_name
+  label: Holiday List Name
+  fieldtype: Text
+  required: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: total_holidays
+  label: Total Holidays
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: weekly_off
+  label: Weekly Off
+  fieldtype: Select
+  options:
+  - Sunday
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  - Saturday
+- fieldname: holidays
+  label: Holidays
+  fieldtype: Table
+  options: Holiday
+- fieldname: color
+  label: Color
+  fieldtype: Color
+- fieldname: country
+  label: Country
+  fieldtype: Text
+- fieldname: subdivision
+  label: Subdivision
+  fieldtype: Text
+- fieldname: is_half_day
+  label: Is Half Day
+  fieldtype: Boolean
+  default: false
+title_field: holiday_list_name
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - holiday_list_name
+    - from_date
+    - to_date
+  - - total_holidays
+- section: Add Weekly Holidays
+  columns:
+  - - weekly_off
+  - - is_half_day
+- section: Add Local Holidays
+  columns:
+  - - country
+    - subdivision
+- section: Holidays
+  columns:
+  - - holidays
+- section: Informations complémentaires 5
+  columns:
+  - - color
+views:
+  calendar:
+    start: from_date
+    title: holiday_list_name
+  gantt:
+    start: from_date
+    end: to_date
+    title: holiday_list_name

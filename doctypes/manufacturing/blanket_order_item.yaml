@@ -1,0 +1,62 @@
+schema_version: 1
+name: Blanket Order Item
+label: Blanket Order Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+- fieldname: qty
+  label: Quantity
+  fieldtype: Number
+  in_list_view: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true
+  read_only: true
+- fieldname: price_list_rate
+  label: Price List Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_price_list_rate
+  label: Price List Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: base_rate
+  label: Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: ordered_qty
+  label: Ordered Quantity
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: closed
+  label: Closed
+  fieldtype: Boolean
+  read_only: true
+- fieldname: terms_and_conditions
+  label: Terms and Conditions
+  fieldtype: LongText
+- fieldname: party_item_code
+  label: Party Item Code
+  fieldtype: Text
+  read_only: true

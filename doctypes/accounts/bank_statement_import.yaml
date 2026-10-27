@@ -1,0 +1,114 @@
+schema_version: 1
+name: Bank Statement Import
+label: Bank Statement Import
+module: accounts
+icon: file-down
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+  required: true
+- fieldname: bank
+  label: Bank
+  fieldtype: Link
+  options: Bank
+  read_only: true
+- fieldname: import_file
+  label: Import File
+  fieldtype: Attach
+  in_list_view: true
+- fieldname: template_options
+  label: Template Options
+  fieldtype: Code
+  read_only: true
+  hidden: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Success
+  - Partial Success
+  - Error
+  default: Pending
+  read_only: true
+  hidden: true
+- fieldname: template_warnings
+  label: Template Warnings
+  fieldtype: Code
+  hidden: true
+- fieldname: show_failed_logs
+  label: Show Failed Logs
+  fieldtype: Boolean
+  default: false
+- fieldname: google_sheets_url
+  label: Import from Google Sheets
+  fieldtype: Text
+  description: Must be a publicly accessible Google Sheets URL and adding Bank Account column is necessary for importing
+    via Google Sheets
+- fieldname: reference_doctype
+  label: Document Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  hidden: true
+- fieldname: import_type
+  label: Import Type
+  fieldtype: Select
+  options:
+  - Insert New Records
+  - Update Existing Records
+  default: Insert New Records
+  required: true
+  in_list_view: true
+  hidden: true
+- fieldname: submit_after_import
+  label: Submit After Import
+  fieldtype: Boolean
+  hidden: true
+  default: true
+- fieldname: mute_emails
+  label: Don't Send Emails
+  fieldtype: Boolean
+  hidden: true
+  default: true
+- fieldname: custom_delimiters
+  label: Custom delimiters
+  fieldtype: Boolean
+  default: false
+- fieldname: delimiter_options
+  label: Delimiter options
+  fieldtype: Text
+  description: If your CSV uses a different delimiter, add that character here, ensuring no spaces or additional
+    characters are included.
+  default: ',;\t|'
+- fieldname: use_csv_sniffer
+  label: Use CSV Sniffer
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: import_mt940_fromat
+  label: Import MT940 Format
+  fieldtype: Boolean
+  default: false
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - bank_account
+    - bank
+  - - import_mt940_fromat
+    - custom_delimiters
+    - delimiter_options
+    - google_sheets_url
+    - import_file
+- section: Import Log
+  columns:
+  - - show_failed_logs

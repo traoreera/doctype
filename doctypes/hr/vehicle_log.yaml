@@ -1,0 +1,97 @@
+schema_version: 1
+name: Vehicle Log
+label: Vehicle Log
+module: hr
+submittable: true
+icon: car
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-VLOG-.YYYY.-
+  required: true
+- fieldname: license_plate
+  label: License Plate
+  fieldtype: Link
+  options: Vehicle
+  required: true
+  in_list_view: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: model
+  label: Model
+  fieldtype: Text
+  read_only: true
+- fieldname: make
+  label: Make
+  fieldtype: Text
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+- fieldname: odometer
+  label: 'Current Odometer value '
+  fieldtype: Int
+  required: true
+- fieldname: fuel_qty
+  label: Fuel Qty
+  fieldtype: Number
+- fieldname: price
+  label: Fuel Price
+  fieldtype: Currency
+  decimals: 2
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: invoice
+  label: Invoice Ref
+  fieldtype: Text
+- fieldname: service_detail
+  label: Service Detail
+  fieldtype: Table
+  options: Vehicle Service
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Vehicle Log
+  read_only: true
+- fieldname: last_odometer
+  label: 'Last Odometer Value '
+  fieldtype: Int
+  required: true
+  read_only: true
+title_field: employee
+layout:
+- section: Informations principales
+  columns:
+  - - naming_series
+    - license_plate
+    - employee
+  - - model
+    - make
+- section: Odometer Reading
+  columns:
+  - - date
+    - odometer
+  - - last_odometer
+- section: Refuelling Details
+  columns:
+  - - fuel_qty
+    - price
+  - - supplier
+    - invoice
+- section: Service Details
+  columns:
+  - - service_detail
+    - amended_from
+views:
+  calendar:
+    start: date
+    title: employee

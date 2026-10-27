@@ -1,0 +1,430 @@
+schema_version: 1
+name: Payment Entry
+label: Payment Entry
+module: accounts
+submittable: true
+icon: banknote
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-PAY-.YYYY.-
+  required: true
+- fieldname: payment_type
+  label: Payment Type
+  fieldtype: Select
+  options:
+  - Receive
+  - Pay
+  - Internal Transfer
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: party_name
+  label: Party Name
+  fieldtype: Text
+- fieldname: contact_person
+  label: Contact
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_email
+  label: Email
+  fieldtype: Text
+  read_only: true
+- fieldname: paid_from
+  label: Account Paid From
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: paid_from_account_currency
+  label: Account Currency (From)
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: paid_from_bank_account
+  label: Bank Account (From)
+  fieldtype: Link
+  options: Bank Account
+  read_only: true
+- fieldname: paid_to
+  label: Account Paid To
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: paid_to_account_currency
+  label: Account Currency (To)
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: paid_to_bank_account
+  label: Bank Account (To)
+  fieldtype: Link
+  options: Bank Account
+  read_only: true
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: source_exchange_rate
+  label: Source Exchange Rate
+  fieldtype: Number
+  required: true
+- fieldname: base_paid_amount
+  label: Paid Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: received_amount
+  label: Received Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: target_exchange_rate
+  label: Target Exchange Rate
+  fieldtype: Number
+  required: true
+- fieldname: base_received_amount
+  label: Received Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: references
+  label: Payment References
+  fieldtype: Table
+  options: Payment Entry Reference
+- fieldname: total_allocated_amount
+  label: Total Allocated Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_allocated_amount
+  label: Total Allocated Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: unallocated_amount
+  label: Unallocated Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: difference_amount
+  label: Difference Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: deductions
+  label: Payment Deductions or Loss
+  fieldtype: Table
+  options: Payment Entry Deduction
+- fieldname: reference_no
+  label: Cheque/Reference No
+  fieldtype: Text
+- fieldname: reference_date
+  label: Cheque/Reference Date
+  fieldtype: Date
+- fieldname: clearance_date
+  label: Clearance Date
+  fieldtype: Date
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: bank
+  label: Bank
+  fieldtype: Text
+  read_only: true
+- fieldname: bank_account_no
+  label: Bank Account No
+  fieldtype: Text
+  read_only: true
+- fieldname: payment_order
+  label: Payment Order
+  fieldtype: Link
+  options: Payment Order
+  read_only: true
+- fieldname: auto_repeat
+  label: Auto Repeat
+  fieldtype: Link
+  options: Auto Repeat
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Payment Entry
+  read_only: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: bank_account
+  label: Company Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: party_bank_account
+  label: Party Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: payment_order_status
+  label: Payment Order Status
+  fieldtype: Select
+  options:
+  - Initiated
+  - Payment Ordered
+  read_only: true
+  hidden: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Cancelled
+  default: Draft
+  read_only: true
+- fieldname: custom_remarks
+  label: Custom Remarks
+  fieldtype: Boolean
+  default: false
+- fieldname: tax_withholding_category
+  label: Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+- fieldname: purchase_taxes_and_charges_template
+  label: Purchase Taxes and Charges Template
+  fieldtype: Link
+  options: Purchase Taxes and Charges Template
+- fieldname: sales_taxes_and_charges_template
+  label: Sales Taxes and Charges Template
+  fieldtype: Link
+  options: Sales Taxes and Charges Template
+- fieldname: taxes
+  label: Advance Taxes and Charges
+  fieldtype: Table
+  options: Advance Taxes and Charges
+- fieldname: base_total_taxes_and_charges
+  label: Total Taxes and Charges (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_taxes_and_charges
+  label: Total Taxes and Charges
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: paid_amount_after_tax
+  label: Paid Amount After Tax
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: base_paid_amount_after_tax
+  label: Paid Amount After Tax (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: received_amount_after_tax
+  label: Received Amount After Tax
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: base_received_amount_after_tax
+  label: Received Amount After Tax (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: paid_from_account_type
+  label: Paid From Account Type
+  fieldtype: Text
+  hidden: true
+- fieldname: paid_to_account_type
+  label: Paid To Account Type
+  fieldtype: Text
+  hidden: true
+- fieldname: book_advance_payments_in_separate_party_account
+  label: Book Advance Payments in Separate Party Account
+  fieldtype: Boolean
+  read_only: true
+- fieldname: base_in_words
+  label: In Words (Company Currency)
+  fieldtype: LongText
+  read_only: true
+- fieldname: in_words
+  label: In Words
+  fieldtype: LongText
+  read_only: true
+- fieldname: reconcile_on_advance_payment_date
+  label: Reconcile on Advance Payment Date
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: is_opening
+  label: Is Opening
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+  default: 'No'
+- fieldname: apply_tds
+  label: Consider for Tax Withholding
+  fieldtype: Boolean
+  default: false
+- fieldname: tax_withholding_group
+  label: Tax Withholding Group
+  fieldtype: Link
+  options: Tax Withholding Group
+- fieldname: ignore_tax_withholding_threshold
+  label: Ignore Tax Withholding Threshold
+  fieldtype: Boolean
+  default: false
+- fieldname: tax_withholding_entries
+  label: Tax Withholding Entries
+  fieldtype: Table
+  options: Tax Withholding Entry
+- fieldname: override_tax_withholding_entries
+  label: Edit Tax Withholding Entries
+  fieldtype: Boolean
+  default: false
+title_field: company
+layout:
+- section: Type of Payment
+  columns:
+  - - naming_series
+    - payment_type
+  - - posting_date
+    - company
+    - mode_of_payment
+- section: Payment From / To
+  columns:
+  - - party_type
+    - party
+    - party_name
+    - book_advance_payments_in_separate_party_account
+    - apply_tds
+    - tax_withholding_category
+  - - bank_account
+    - party_bank_account
+    - contact_person
+    - contact_email
+- section: Accounts
+  columns:
+  - - paid_from
+    - paid_from_account_currency
+    - paid_from_bank_account
+  - - paid_to
+    - paid_to_account_currency
+    - paid_to_bank_account
+- section: Amount
+  columns:
+  - - paid_amount
+    - source_exchange_rate
+    - base_paid_amount
+  - - received_amount
+    - target_exchange_rate
+    - base_received_amount
+- section: Reference
+  columns:
+  - - references
+- section: Writeoff
+  columns:
+  - - total_allocated_amount
+    - base_total_allocated_amount
+  - - unallocated_amount
+    - difference_amount
+- section: Taxes and Charges
+  columns:
+  - - purchase_taxes_and_charges_template
+    - sales_taxes_and_charges_template
+    - taxes
+- section: Comptabilité et montants
+  columns:
+  - - base_total_taxes_and_charges
+  - - total_taxes_and_charges
+- section: Deductions or Loss
+  columns:
+  - - deductions
+- section: Tax Withholding Entry
+  columns:
+  - - tax_withholding_group
+    - ignore_tax_withholding_threshold
+    - override_tax_withholding_entries
+    - tax_withholding_entries
+- section: Transaction ID
+  columns:
+  - - reference_no
+  - - reference_date
+    - clearance_date
+- section: Accounting Dimensions
+  columns:
+  - - project
+  - - cost_center
+- section: More Information
+  columns:
+  - - status
+    - custom_remarks
+    - remarks
+    - base_in_words
+    - is_opening
+  - - letter_head
+    - print_heading
+    - bank
+    - bank_account_no
+    - payment_order
+    - in_words
+    - amended_from
+- section: Auto Repeat
+  columns:
+  - - auto_repeat
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

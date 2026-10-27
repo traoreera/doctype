@@ -1,0 +1,141 @@
+schema_version: 1
+name: Bank Statement Import Log
+label: Bank Statement Import Log
+module: accounts
+icon: file-clock
+fields:
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+  required: true
+  in_list_view: true
+- fieldname: number_of_transactions
+  label: Number of Transactions
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: closing_balance
+  label: Closing Balance
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: file
+  label: File
+  fieldtype: Attach
+  required: true
+- fieldname: detected_date_format
+  label: Detected Date Format
+  fieldtype: Text
+  read_only: true
+- fieldname: detected_amount_format
+  label: Detected Amount Format
+  fieldtype: Select
+  options:
+  - Separate columns for withdrawal and deposit
+  - Amount column has "CR"/"DR" values
+  - Amount column has positive/negative values
+  - Transaction type column has "CR"/"DR" values
+  - Transaction type column has "Deposit"/"Withdrawal" values
+  - Transaction type column has "C"/"D" values
+  read_only: true
+- fieldname: detected_header_index
+  label: Detected Header Index
+  fieldtype: Int
+  read_only: true
+- fieldname: detected_transaction_starting_index
+  label: Detected Transaction Starting Index
+  fieldtype: Int
+  read_only: true
+- fieldname: detected_transaction_ending_index
+  label: Detected Transaction Ending Index
+  fieldtype: Int
+  read_only: true
+- fieldname: column_mapping
+  label: Column Mapping
+  fieldtype: Table
+  options: Bank Statement Import Log Column Map
+- fieldname: pdf_tables
+  label: PDF Tables
+  fieldtype: JSON
+  read_only: true
+  description: Per-table extraction data for PDF statements (rows, bbox, page image, column mapping). Edited via
+    the banking app.
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Not Started
+  - Completed
+  default: Not Started
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: total_debits
+  label: Total Debits
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_credits
+  label: Total Credits
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_debit_transactions
+  label: Total Debit Transactions
+  fieldtype: Int
+  read_only: true
+- fieldname: total_credit_transactions
+  label: Total Credit Transactions
+  fieldtype: Int
+  read_only: true
+title_field: status
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - bank_account
+    - file
+    - status
+    - currency
+  - - number_of_transactions
+    - start_date
+    - end_date
+    - closing_balance
+- section: Comptabilité et montants
+  columns:
+  - - total_debits
+    - total_credits
+  - - total_debit_transactions
+    - total_credit_transactions
+- section: Statement Format
+  columns:
+  - - detected_date_format
+    - detected_amount_format
+    - detected_header_index
+    - detected_transaction_starting_index
+    - detected_transaction_ending_index
+- section: Détails
+  columns:
+  - - column_mapping
+    - pdf_tables
+views:
+  calendar:
+    start: start_date
+    title: status
+  gantt:
+    start: start_date
+    end: end_date
+    title: status

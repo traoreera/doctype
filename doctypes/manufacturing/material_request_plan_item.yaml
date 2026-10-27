@@ -1,0 +1,120 @@
+schema_version: 1
+name: Material Request Plan Item
+label: Material Request Plan Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+- fieldname: warehouse
+  label: For Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  in_list_view: true
+- fieldname: material_request_type
+  label: Type
+  fieldtype: Select
+  options:
+  - Purchase
+  - Material Transfer
+  - Material Issue
+  - Manufacture
+  - Subcontracting
+  - Customer Provided
+  in_list_view: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  in_list_view: true
+- fieldname: quantity
+  label: Required Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: projected_qty
+  label: Projected Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: actual_qty
+  label: Qty In Stock
+  fieldtype: Number
+  read_only: true
+- fieldname: min_order_qty
+  label: Minimum Order Quantity
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  read_only: true
+- fieldname: requested_qty
+  label: Requested Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: from_warehouse
+  label: From Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: safety_stock
+  label: Safety Stock
+  fieldtype: Number
+  read_only: true
+- fieldname: ordered_qty
+  label: Ordered Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: reserved_qty_for_production
+  label: Reserved Qty for Production
+  fieldtype: Number
+  read_only: true
+- fieldname: required_bom_qty
+  label: Reqd Qty (BOM)
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+- fieldname: schedule_date
+  label: Required By
+  fieldtype: Date
+  in_list_view: true
+- fieldname: stock_reserved_qty
+  label: Stock Reserved Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: from_bom
+  label: From BOM
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: sub_assembly_item_reference
+  label: Sub Assembly Item Reference
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: main_item_code
+  label: Main Item Code
+  fieldtype: Link
+  options: Item
+  read_only: true

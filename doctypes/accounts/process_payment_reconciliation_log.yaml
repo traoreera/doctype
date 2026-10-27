@@ -1,0 +1,73 @@
+schema_version: 1
+name: Process Payment Reconciliation Log
+label: Process Payment Reconciliation Log
+module: accounts
+icon: file-clock
+fields:
+- fieldname: allocations
+  label: Allocations
+  fieldtype: Table
+  options: Process Payment Reconciliation Log Allocations
+  read_only: true
+- fieldname: reconciled
+  label: Reconciled
+  fieldtype: Boolean
+  read_only: true
+  description: All allocations have been successfully reconciled
+- fieldname: total_allocations
+  label: Total Allocations
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: allocated
+  label: Allocated
+  fieldtype: Boolean
+  read_only: true
+  description: Invoices and Payments have been Fetched and Allocated
+- fieldname: reconciled_entries
+  label: Reconciled Entries
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: error_log
+  label: Reconciliation Error Log
+  fieldtype: LongText
+  read_only: true
+- fieldname: process_pr
+  label: Parent Document
+  fieldtype: Link
+  options: Process Payment Reconciliation
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Running
+  - Paused
+  - Reconciled
+  - Partially Reconciled
+  - Failed
+  - Cancelled
+  read_only: true
+title_field: status
+layout:
+- section: Informations principales
+  columns:
+  - - process_pr
+- section: Status
+  columns:
+  - - status
+- section: Tasks
+  columns:
+  - - allocated
+    - reconciled
+  - - total_allocations
+    - reconciled_entries
+- section: Informations complémentaires 4
+  columns:
+  - - error_log
+- section: Allocations
+  columns:
+  - - allocations

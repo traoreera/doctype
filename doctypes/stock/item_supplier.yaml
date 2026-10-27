@@ -1,0 +1,7 @@
+schema_version: 1
+name: "Item Supplier"
+label: "Item Supplier"
+istable: true
+fields:
+  - { fieldname: supplier, label: "Supplier", fieldtype: Link, options: "Supplier", required: true, in_list_view: true }
+  - { fieldname: supplier_part_no, label: "Supplier Part Number", fieldtype: Text, in_list_view: true }

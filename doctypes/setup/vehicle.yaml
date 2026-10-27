@@ -1,0 +1,132 @@
+schema_version: 1
+name: Vehicle
+label: Vehicle
+module: setup
+icon: car
+fields:
+- fieldname: license_plate
+  label: License Plate
+  fieldtype: Text
+  required: true
+- fieldname: make
+  label: Make
+  fieldtype: Text
+  required: true
+- fieldname: model
+  label: Model
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: last_odometer
+  label: Odometer Value (Last)
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: acquisition_date
+  label: Acquisition Date
+  fieldtype: Date
+- fieldname: location
+  label: Location
+  fieldtype: Text
+- fieldname: chassis_no
+  label: Chassis No
+  fieldtype: Text
+- fieldname: vehicle_value
+  label: Vehicle Value
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+- fieldname: insurance_company
+  label: Insurance Company
+  fieldtype: Text
+- fieldname: policy_no
+  label: Policy No
+  fieldtype: Text
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: fuel_type
+  label: Fuel Type
+  fieldtype: Select
+  options:
+  - Petrol
+  - Diesel
+  - Natural Gas
+  - Electric
+  required: true
+  in_list_view: true
+- fieldname: uom
+  label: Fuel UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: carbon_check_date
+  label: Last Carbon Check
+  fieldtype: Date
+- fieldname: color
+  label: Color
+  fieldtype: Text
+- fieldname: wheels
+  label: Wheels
+  fieldtype: Int
+- fieldname: doors
+  label: Doors
+  fieldtype: Int
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Vehicle
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+title_field: model
+layout:
+- section: Références
+  columns:
+  - - license_plate
+    - make
+  - - model
+    - company
+- section: Details
+  columns:
+  - - last_odometer
+    - acquisition_date
+    - location
+  - - chassis_no
+    - vehicle_value
+    - employee
+- section: Insurance Details
+  columns:
+  - - insurance_company
+    - policy_no
+  - - start_date
+    - end_date
+- section: Additional Details
+  columns:
+  - - fuel_type
+    - uom
+    - carbon_check_date
+  - - color
+    - wheels
+    - doors
+    - amended_from
+views:
+  calendar:
+    start: start_date
+    title: model
+  gantt:
+    start: start_date
+    end: end_date
+    title: model
+  tree:
+    parent: amended_from

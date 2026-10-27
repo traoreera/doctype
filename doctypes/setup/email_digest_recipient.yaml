@@ -1,0 +1,11 @@
+schema_version: 1
+name: Email Digest Recipient
+label: Email Digest Recipient
+istable: true
+fields:
+- fieldname: recipient
+  label: Recipient
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true

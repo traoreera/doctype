@@ -1,0 +1,30 @@
+schema_version: 1
+name: Repost Accounting Ledger Items
+label: Repost Accounting Ledger Items
+istable: true
+fields:
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  options: voucher_type
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Reposted
+  - Skipped
+  - Failed
+  default: Pending
+  in_list_view: true
+  read_only: true
+- fieldname: traceback
+  label: Traceback
+  fieldtype: Code
+  read_only: true

@@ -1,0 +1,155 @@
+schema_version: 1
+name: Attendance
+label: Attendance
+module: hr
+submittable: true
+icon: calendar-check
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-ATT-.YYYY.-
+  required: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: working_hours
+  label: Working Hours
+  fieldtype: Number
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Present
+  - Absent
+  - On Leave
+  - Half Day
+  - Work From Home
+  default: Present
+  required: true
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+- fieldname: leave_application
+  label: Leave Application
+  fieldtype: Link
+  options: Leave Application
+  read_only: true
+- fieldname: attendance_date
+  label: Attendance Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: shift
+  label: Shift
+  fieldtype: Link
+  options: Shift Type
+- fieldname: attendance_request
+  label: Attendance Request
+  fieldtype: Link
+  options: Attendance Request
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Attendance
+  read_only: true
+- fieldname: late_entry
+  label: Late Entry
+  fieldtype: Boolean
+  default: false
+- fieldname: early_exit
+  label: Early Exit
+  fieldtype: Boolean
+  default: false
+- fieldname: in_time
+  label: In Time
+  fieldtype: Datetime
+  read_only: true
+- fieldname: out_time
+  label: Out Time
+  fieldtype: Datetime
+  read_only: true
+- fieldname: half_day_status
+  label: Status for Other Half
+  fieldtype: Select
+  options:
+  - Present
+  - Absent
+- fieldname: modify_half_day_status
+  label: modify_half_day_status
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: overtime_type
+  label: Overtime Type
+  fieldtype: Link
+  options: Overtime Type
+  read_only: true
+- fieldname: standard_working_hours
+  label: Standard Working Hours
+  fieldtype: Number
+  read_only: true
+- fieldname: actual_overtime_duration
+  label: Actual Overtime Duration
+  fieldtype: Number
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - naming_series
+    - employee
+    - employee_name
+    - working_hours
+    - status
+    - leave_type
+    - leave_application
+  - - attendance_date
+    - company
+    - department
+    - attendance_request
+    - half_day_status
+- section: Details
+  columns:
+  - - shift
+    - in_time
+    - out_time
+  - - late_entry
+    - early_exit
+    - amended_from
+- section: Overtime
+  columns:
+  - - overtime_type
+    - actual_overtime_duration
+  - - standard_working_hours
+views:
+  kanban:
+    field: status
+    card_fields:
+    - employee_name
+    - employee
+  calendar:
+    start: attendance_date
+    title: employee_name
+    color: status

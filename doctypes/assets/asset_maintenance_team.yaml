@@ -1,0 +1,39 @@
+schema_version: 1
+name: Asset Maintenance Team
+label: Asset Maintenance Team
+module: assets
+icon: user-group
+fields:
+- fieldname: maintenance_team_name
+  label: Maintenance Team Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: maintenance_manager
+  label: Maintenance Manager
+  fieldtype: Link
+  options: Member
+- fieldname: maintenance_manager_name
+  label: Maintenance Manager Name
+  fieldtype: Text
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: maintenance_team_members
+  label: Maintenance Team Members
+  fieldtype: Table
+  options: Maintenance Team Member
+title_field: maintenance_team_name
+layout:
+- section: Références
+  columns:
+  - - maintenance_team_name
+    - maintenance_manager
+    - maintenance_manager_name
+  - - company
+- section: Team
+  columns:
+  - - maintenance_team_members

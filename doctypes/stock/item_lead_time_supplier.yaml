@@ -1,0 +1,9 @@
+schema_version: 1
+name: "Item Lead Time Supplier"
+label: "Item Lead Time Supplier"
+istable: true
+fields:
+  - { fieldname: supplier, label: "Supplier", fieldtype: Link, options: "Supplier", required: true, in_list_view: true }
+  - { fieldname: purchase_time, label: "Purchase Time (Days)", fieldtype: Int, in_list_view: true }
+  - { fieldname: buffer_time, label: "Buffer Time (Days)", fieldtype: Int, in_list_view: true }
+  - { fieldname: is_default, label: "Is Default", fieldtype: Boolean, in_list_view: true, default: false }

@@ -1,0 +1,41 @@
+schema_version: 1
+name: Bank Clearance Detail
+label: Bank Clearance Detail
+istable: true
+fields:
+- fieldname: payment_document
+  label: Payment Document
+  fieldtype: Text
+- fieldname: payment_entry
+  label: Payment Entry
+  fieldtype: DynamicLink
+  options: payment_document
+  in_list_view: true
+- fieldname: against_account
+  label: Against Account
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  read_only: true
+- fieldname: cheque_number
+  label: Cheque Number
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: cheque_date
+  label: Cheque Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: clearance_date
+  label: Clearance Date
+  fieldtype: Date
+  in_list_view: true

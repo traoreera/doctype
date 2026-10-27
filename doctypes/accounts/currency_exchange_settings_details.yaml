@@ -1,0 +1,15 @@
+schema_version: 1
+name: Currency Exchange Settings Details
+label: Currency Exchange Settings Details
+istable: true
+fields:
+- fieldname: key
+  label: Key
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: value
+  label: Value
+  fieldtype: Text
+  required: true
+  in_list_view: true

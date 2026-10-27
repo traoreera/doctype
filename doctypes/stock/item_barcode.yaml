@@ -1,0 +1,8 @@
+schema_version: 1
+name: "Item Barcode"
+label: "Item Barcode"
+istable: true
+fields:
+  - { fieldname: barcode, label: "Barcode", fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: barcode_type, label: "Barcode Type", fieldtype: Select, options: ["EAN", "UPC-A", "CODE-39", "EAN-13", "EAN-8", "GS1", "GTIN", "GTIN-14", "ISBN", "ISBN-10", "ISBN-13", "ISSN", "JAN", "PZN", "UPC"], in_list_view: true }
+  - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", in_list_view: true }

@@ -1,0 +1,25 @@
+schema_version: 1
+name: Payment Terms Template
+label: Payment Terms Template
+module: accounts
+icon: calendar-clock
+fields:
+- fieldname: template_name
+  label: Template Name
+  fieldtype: Text
+- fieldname: terms
+  label: Payment Terms
+  fieldtype: Table
+  options: Payment Terms Template Detail
+- fieldname: allocate_payment_based_on_payment_terms
+  label: Allocate Payment Based On Payment Terms
+  fieldtype: Boolean
+  description: If this checkbox is checked, paid amount will be splitted and allocated as per the amounts in payment
+    schedule against each payment term
+  default: false
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - template_name
+    - allocate_payment_based_on_payment_terms
+    - terms

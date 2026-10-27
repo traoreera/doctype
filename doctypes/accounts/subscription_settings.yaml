@@ -1,0 +1,29 @@
+schema_version: 1
+name: Subscription Settings
+label: Subscription Settings
+module: accounts
+single: true
+icon: settings
+fields:
+- fieldname: grace_period
+  label: Grace Period
+  fieldtype: Int
+  description: Number of days after the invoice due date before canceling the subscription or marking it as unpaid
+  default: 1
+- fieldname: cancel_after_grace
+  label: Cancel Subscription After Grace Period
+  fieldtype: Boolean
+  default: false
+- fieldname: prorate
+  label: Prorate
+  fieldtype: Boolean
+  default: true
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - grace_period
+    - cancel_after_grace
+    - prorate
+permissions:
+  create: []
+  delete: []

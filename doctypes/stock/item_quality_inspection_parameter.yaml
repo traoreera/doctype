@@ -1,0 +1,13 @@
+schema_version: 1
+name: "Item Quality Inspection Parameter"
+label: "Item Quality Inspection Parameter"
+istable: true
+fields:
+  - { fieldname: specification, label: "Parameter", fieldtype: Link, options: "Quality Inspection Parameter", required: true, in_list_view: true }
+  - { fieldname: value, label: "Acceptance Criteria Value", fieldtype: Text, in_list_view: true }
+  - { fieldname: acceptance_formula, label: "Acceptance Criteria Formula", fieldtype: Code, description: "Simple Python formula applied on Reading fields.<br> Numeric eg. 1: <b>reading_1 &gt; 0.2 and reading_1 &lt; 0.5</b><br>\nNumeric eg. 2: <b>mean &gt; 3.5</b> (mean of populated fields)<br>\nValue based eg.:  <b>reading_value in (\"A\", \"B\", \"C\")</b>" }
+  - { fieldname: formula_based_criteria, label: "Formula Based Criteria", fieldtype: Boolean, default: false }
+  - { fieldname: min_value, label: "Minimum Value", fieldtype: Number, in_list_view: true }
+  - { fieldname: max_value, label: "Maximum Value", fieldtype: Number, in_list_view: true }
+  - { fieldname: numeric, label: "Numeric", fieldtype: Boolean, in_list_view: true, default: true }
+  - { fieldname: parameter_group, label: "Parameter Group", fieldtype: Link, options: "Quality Inspection Parameter Group", read_only: true }

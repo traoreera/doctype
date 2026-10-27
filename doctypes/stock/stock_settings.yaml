@@ -1,0 +1,380 @@
+schema_version: 1
+name: Stock Settings
+label: Stock Settings
+module: stock
+icon: settings
+fields:
+- fieldname: item_naming_by
+  label: Item Naming By
+  fieldtype: Select
+  options:
+  - Item Code
+  - Naming Series
+  default: Item Code
+  in_list_view: true
+- fieldname: item_group
+  label: Default Item Group
+  fieldtype: Link
+  options: Item Group
+  in_list_view: true
+- fieldname: stock_uom
+  label: Default Stock UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true
+- fieldname: valuation_method
+  label: Default Valuation Method
+  fieldtype: Select
+  options:
+  - FIFO
+  - Moving Average
+  - LIFO
+  - Standard Cost
+- fieldname: over_delivery_receipt_allowance
+  label: Over Delivery/Receipt Allowance (%)
+  fieldtype: Number
+  description: The percentage you are allowed to receive or deliver more against the quantity ordered. For example,
+    if you have ordered 100 units, and your Allowance is 10%, then you are allowed to receive 110 units.
+- fieldname: action_if_quality_inspection_is_not_submitted
+  label: Action if Quality Inspection is not submitted
+  fieldtype: Select
+  options:
+  - Stop
+  - Warn
+  default: Stop
+- fieldname: show_barcode_field
+  label: Show barcode field in stock transactions
+  fieldtype: Boolean
+  default: true
+- fieldname: clean_description_html
+  label: Convert Item description to clean HTML in transactions
+  fieldtype: Boolean
+  default: true
+- fieldname: auto_insert_price_list_rate_if_missing
+  label: Auto insert Item Price if missing
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_negative_stock
+  label: Allow negative stock
+  fieldtype: Boolean
+  description: This can be enabled at specific Item level as well
+  default: false
+- fieldname: auto_indent
+  label: Raise Material Request when stock reaches re-order level
+  fieldtype: Boolean
+  description: This option is useful if you want to ensure a constant supply of raw materials/products and avoid
+    shortage. A Material Request will be raised automatically when stock reached the re-order level defined in the
+    Item form.
+  default: false
+- fieldname: reorder_email_notify
+  label: Notify by email on creation of automatic Material Request
+  fieldtype: Boolean
+  description: An email will be sent to notify the User with the role 'Purchase Manager' when an automatic Material
+    Request is created.
+  default: false
+- fieldname: stock_frozen_upto
+  label: Stock frozen up to
+  fieldtype: Date
+  description: No stock transactions can be created or modified before this date.
+- fieldname: stock_frozen_upto_days
+  label: Freeze stocks older than (days)
+  fieldtype: Int
+  description: Stock transactions that are older than the mentioned days cannot be modified.
+- fieldname: stock_auth_role
+  label: Role allowed to edit frozen stock
+  fieldtype: Link
+  options: Role
+  description: The users with this Role are allowed to create/modify a stock transaction, even though the transaction
+    is frozen.
+- fieldname: use_naming_series
+  label: Have default Naming Series for Batch ID?
+  fieldtype: Boolean
+  description: This will be applied if no naming series is configured in Item master
+  default: false
+- fieldname: naming_series_prefix
+  label: Naming Series Prefix
+  fieldtype: Text
+  default: BATCH-
+- fieldname: role_allowed_to_create_edit_back_dated_transactions
+  label: Role allowed to create/edit back-dated transactions
+  fieldtype: Link
+  options: Role
+  description: If mentioned, the system will allow only the users with this Role to create or modify any stock transaction
+    earlier than the latest stock transaction for a specific item and warehouse. If set as blank, it allows all
+    users to create/edit back-dated transactions.
+- fieldname: disable_serial_no_and_batch_selector
+  label: Disable Serial No and Batch selector
+  fieldtype: Boolean
+  description: If enabled, users must enter Serial No. / Batch data manually instead of using the selector dialog.
+  default: false
+- fieldname: role_allowed_to_over_deliver_receive
+  label: Role Allowed to Over Deliver/Receive
+  fieldtype: Link
+  options: Role
+  description: Users with this role are allowed to over deliver/receive against orders above the allowance percentage
+- fieldname: action_if_quality_inspection_is_rejected
+  label: Action if Quality Inspection is rejected
+  fieldtype: Select
+  options:
+  - Stop
+  - Warn
+  default: Stop
+- fieldname: mr_qty_allowance
+  label: Over Transfer Allowance (%)
+  fieldtype: Number
+  description: The percentage you are allowed to transfer more against the quantity ordered. For example, if you
+    have ordered 100 units, and your Allowance is 10%, then you are allowed transfer 110 units.
+- fieldname: update_existing_price_list_rate
+  label: Update existing Price List Rate
+  fieldtype: Boolean
+  default: false
+- fieldname: enable_stock_reservation
+  label: Enable stock reservation
+  fieldtype: Boolean
+  description: Allows to keep aside a specific quantity of inventory for a particular order.
+  default: false
+- fieldname: allow_partial_reservation
+  label: Allow partial reservation
+  fieldtype: Boolean
+  description: Partial stock can be reserved. For example, If you have a Sales Order of 100 units and the Available
+    Stock is 90 units then a Stock Reservation Entry will be created for 90 units.
+  default: true
+- fieldname: pick_serial_and_batch_based_on
+  label: Pick Serial / Batch Based On
+  fieldtype: Select
+  options:
+  - FIFO
+  - LIFO
+  - Expiry
+  default: FIFO
+- fieldname: auto_create_serial_and_batch_bundle_for_outward
+  label: Auto create Serial and Batch Bundle for outward
+  fieldtype: Boolean
+  default: true
+- fieldname: auto_reserve_serial_and_batch
+  label: Auto reserve Serial and Batch Nos
+  fieldtype: Boolean
+  description: Serial and Batch Nos will be auto-reserved based on <b>Pick Serial / Batch Based On</b>
+  default: true
+- fieldname: allow_to_edit_stock_uom_qty_for_sales
+  label: Allow to edit stock UOM qty for Sales documents
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_to_edit_stock_uom_qty_for_purchase
+  label: Allow to edit stock UOM qty for Purchase documents
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_to_edit_stock_uom_qty_for_stock_entry
+  label: Allow to edit stock UOM qty for Stock Entry
+  fieldtype: Boolean
+  default: false
+- fieldname: auto_reserve_stock_for_sales_order_on_purchase
+  label: Auto reserve Stock for Sales Order on Purchase
+  fieldtype: Boolean
+  description: Stock will be reserved on submission of <b>Purchase Receipt</b> created against Material Request
+    for Sales Order.
+  default: false
+- fieldname: use_serial_batch_fields
+  label: Use Serial / Batch fields
+  fieldtype: Boolean
+  description: On submission of the stock transaction, system will auto create the Serial and Batch Bundle based
+    on the Serial No / Batch fields.
+  default: true
+- fieldname: do_not_update_serial_batch_on_creation_of_auto_bundle
+  label: Do not update Serial / Batch on creation of auto bundle
+  fieldtype: Boolean
+  description: "If enabled, do not update serial / batch values in the stock transactions on creation of auto Serial\
+    \ \n / Batch Bundle."
+  default: true
+- fieldname: allow_internal_transfer_at_arms_length_price
+  label: Allow internal transfers at user-defined rate
+  fieldtype: Boolean
+  description: If enabled, the item rate won't adjust to the valuation rate during internal transfers, but accounting
+    will still use the valuation rate. This will allow the user to specify a different rate for printing or taxation
+    purposes.
+  default: false
+- fieldname: do_not_use_batchwise_valuation
+  label: Do not use Batch-wise Valuation
+  fieldtype: Boolean
+  description: If enabled, the system will use the moving average valuation method to calculate the valuation rate
+    for the batched items and will not consider the individual batch-wise incoming rate.
+  default: false
+- fieldname: over_picking_allowance
+  label: Over Picking Allowance (%)
+  fieldtype: Percent
+  description: The percentage you are allowed to pick more items in the pick list than the ordered quantity.
+- fieldname: allow_existing_serial_no
+  label: Allow existing Serial No to be Manufactured/Received again
+  fieldtype: Boolean
+  default: true
+- fieldname: auto_reserve_stock
+  label: Auto reserve stock
+  fieldtype: Boolean
+  description: Upon submission of the Sales Order, Work Order, or Production Plan, the system will automatically
+    reserve the stock.
+  default: false
+- fieldname: set_serial_and_batch_bundle_naming_based_on_naming_series
+  label: Set Serial and Batch Bundle Naming Based on Naming Series
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_uom_with_conversion_rate_defined_in_item
+  label: Allow UOM with conversion rate defined in Item
+  fieldtype: Boolean
+  description: If enabled, the system will allow selecting UOMs in sales and purchase transactions only if the conversion
+    rate is set in the item master.
+  default: false
+- fieldname: allow_to_make_quality_inspection_after_purchase_or_delivery
+  label: Allow to make Quality Inspection after Purchase / Delivery
+  fieldtype: Boolean
+  default: false
+- fieldname: update_price_list_based_on
+  label: Update Price List based on
+  fieldtype: Select
+  options:
+  - Rate
+  - Price List Rate
+  default: Rate
+- fieldname: validate_material_transfer_warehouses
+  label: Validate Material Transfer warehouses
+  fieldtype: Boolean
+  description: If enabled, the source and target warehouse in the Material Transfer Stock Entry must be different
+    else an error will be thrown. If inventory dimensions are present, same source and target warehouse can be allowed
+    but atleast any one of the inventory dimension fields must be different.
+  default: false
+- fieldname: allow_negative_stock_for_batch
+  label: Allow negative stock for Batch
+  fieldtype: Boolean
+  description: If enabled, the system will allow negative stock entries for the batch. But, this may lead to incorrect
+    valuation rates, so it is recommended to avoid using this option. The system will permit negative stock only
+    when it is caused by backdated entries and will validate and block negative stock in all other cases.
+  default: false
+- fieldname: enable_serial_and_batch_no_for_item
+  label: Activate Serial / Batch No for Item
+  fieldtype: Boolean
+  default: false
+- fieldname: naming_series_details
+  label: Naming Series options
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: naming_series_preview
+  label: Naming Series options
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: use_inline_serial_batch_editor
+  label: Use Inline Serial / Batch Editor
+  fieldtype: Boolean
+  description: Show an inline editable table for serial numbers / batches on the item row instead of the dialog
+  default: true
+- fieldname: auto_map_raw_materials_to_finished_goods
+  label: Auto Map Raw Materials to Finished Goods
+  fieldtype: Boolean
+  description: On submit of a Manufacture / Repack entry, map the raw material serial / batch nos that were not
+    mapped in draft to the finished goods, in order
+  default: false
+title_field: item_group
+single: true
+layout:
+- tab: Defaults
+  section: Item Defaults
+  columns:
+  - - item_naming_by
+  - - item_group
+    - valuation_method
+- tab: Defaults
+  section: Price List Defaults
+  columns:
+  - - auto_insert_price_list_rate_if_missing
+    - update_existing_price_list_rate
+    - update_price_list_based_on
+- tab: Defaults
+  section: UOM Defaults
+  columns:
+  - - stock_uom
+    - allow_to_edit_stock_uom_qty_for_sales
+    - allow_to_edit_stock_uom_qty_for_purchase
+    - allow_to_edit_stock_uom_qty_for_stock_entry
+    - allow_uom_with_conversion_rate_defined_in_item
+- tab: Stock Validations
+  section: Negative Stock
+  columns:
+  - - allow_negative_stock
+- tab: Stock Validations
+  section: Quantity Tolerance
+  columns:
+  - - over_delivery_receipt_allowance
+    - mr_qty_allowance
+    - over_picking_allowance
+  - - role_allowed_to_over_deliver_receive
+- tab: Stock Validations
+  section: Display & Data Formatting
+  columns:
+  - - show_barcode_field
+    - clean_description_html
+- tab: Stock Validations
+  section: Internal Transfer Rules
+  columns:
+  - - allow_internal_transfer_at_arms_length_price
+    - validate_material_transfer_warehouses
+- tab: Serial & Batch Item
+  section: Références
+  columns:
+  - - enable_serial_and_batch_no_for_item
+- tab: Serial & Batch Item
+  section: Serial Item settings
+  columns:
+  - - pick_serial_and_batch_based_on
+    - allow_existing_serial_no
+    - use_serial_batch_fields
+    - use_inline_serial_batch_editor
+    - disable_serial_no_and_batch_selector
+- tab: Serial & Batch Item
+  section: Batch Item settings
+  columns:
+  - - allow_negative_stock_for_batch
+    - do_not_use_batchwise_valuation
+    - use_naming_series
+    - naming_series_prefix
+- tab: Serial & Batch Item
+  section: Serial and Batch Bundle
+  columns:
+  - - auto_create_serial_and_batch_bundle_for_outward
+    - do_not_update_serial_batch_on_creation_of_auto_bundle
+    - auto_map_raw_materials_to_finished_goods
+    - set_serial_and_batch_bundle_naming_based_on_naming_series
+- tab: Stock Reservation
+  section: Options complémentaires 12
+  columns:
+  - - enable_stock_reservation
+    - auto_reserve_stock
+  - - allow_partial_reservation
+    - auto_reserve_stock_for_sales_order_on_purchase
+- tab: Stock Reservation
+  section: Serial and Batch Reservation
+  columns:
+  - - auto_reserve_serial_and_batch
+- tab: Quality
+  section: Options complémentaires 14
+  columns:
+  - - allow_to_make_quality_inspection_after_purchase_or_delivery
+    - action_if_quality_inspection_is_rejected
+    - action_if_quality_inspection_is_not_submitted
+- tab: Stock Planning
+  section: Auto Material Request
+  columns:
+  - - auto_indent
+    - reorder_email_notify
+- tab: Stock Closing
+  section: Control Historical Stock Transactions
+  columns:
+  - - stock_frozen_upto_days
+    - stock_frozen_upto
+  - - stock_auth_role
+- tab: Stock Closing
+  section: Dates et planification
+  columns:
+  - - role_allowed_to_create_edit_back_dated_transactions
+permissions:
+  create: []
+  delete: []

@@ -1,0 +1,33 @@
+schema_version: 1
+name: Work Order Additional Item
+label: Work Order Additional Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: secondary_item_type
+  label: Type
+  fieldtype: Text
+  in_list_view: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true

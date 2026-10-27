@@ -1,0 +1,37 @@
+schema_version: 1
+name: POS Invoice Reference
+label: POS Invoice Reference
+istable: true
+fields:
+- fieldname: pos_invoice
+  label: POS Invoice
+  fieldtype: Link
+  options: POS Invoice
+  required: true
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+  read_only: true
+- fieldname: posting_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: grand_total
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: is_return
+  label: Is Return
+  fieldtype: Boolean
+  read_only: true
+- fieldname: return_against
+  label: Return Against
+  fieldtype: Link
+  options: POS Invoice
+  read_only: true

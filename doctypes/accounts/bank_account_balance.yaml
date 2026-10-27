@@ -1,0 +1,40 @@
+schema_version: 1
+name: Bank Account Balance
+label: Bank Account Balance
+module: accounts
+icon: wallet
+fields:
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+  required: true
+  in_list_view: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: balance
+  label: Balance
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - bank_account
+    - date
+    - balance
+    - company
+views:
+  calendar:
+    start: date
+    title: company

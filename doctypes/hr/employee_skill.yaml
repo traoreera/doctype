@@ -1,0 +1,21 @@
+schema_version: 1
+name: Employee Skill
+label: Employee Skill
+istable: true
+fields:
+- fieldname: skill
+  label: Skill
+  fieldtype: Link
+  options: Skill
+  required: true
+  in_list_view: true
+- fieldname: proficiency
+  label: Proficiency
+  fieldtype: Rating
+  stars: 5
+  required: true
+  in_list_view: true
+- fieldname: evaluation_date
+  label: Evaluation Date
+  fieldtype: Date
+  in_list_view: true

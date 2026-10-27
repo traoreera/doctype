@@ -1,0 +1,47 @@
+schema_version: 1
+name: Financial Report Template
+label: Financial Report Template
+module: accounts
+icon: file-spreadsheet
+fields:
+- fieldname: template_name
+  label: Template Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  description: Descriptive name for your template (e.g., 'Standard P&L', 'Detailed Balance Sheet')
+- fieldname: report_type
+  label: Report Type
+  fieldtype: Select
+  options:
+  - Profit and Loss Statement
+  - Balance Sheet
+  - Cash Flow
+  - Custom Financial Statement
+  required: true
+  in_list_view: true
+  description: Type of financial statement this template generates
+- fieldname: module
+  label: Module (for Export)
+  fieldtype: Link
+  options: Module Def
+- fieldname: rows
+  label: Report Line Items
+  fieldtype: Table
+  options: Financial Report Row
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  description: Disable template to prevent use in reports
+  default: false
+title_field: template_name
+layout:
+- section: Détails
+  columns:
+  - - template_name
+    - report_type
+    - module
+  - - disabled
+- section: Références
+  columns:
+  - - rows

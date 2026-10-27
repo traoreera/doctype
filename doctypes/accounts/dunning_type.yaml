@@ -1,0 +1,59 @@
+schema_version: 1
+name: Dunning Type
+label: Dunning Type
+module: accounts
+icon: bell
+fields:
+- fieldname: dunning_type
+  label: Dunning Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: dunning_fee
+  label: Dunning Fee
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: dunning_letter_text
+  label: Dunning Letter Text
+  fieldtype: Table
+  options: Dunning Letter Text
+- fieldname: rate_of_interest
+  label: Rate of Interest (%) Yearly
+  fieldtype: Number
+  in_list_view: true
+- fieldname: is_default
+  label: Is Default
+  fieldtype: Boolean
+  default: false
+- fieldname: income_account
+  label: Income Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+title_field: company
+layout:
+- section: Références
+  columns:
+  - - dunning_type
+    - is_default
+  - - company
+- section: Comptabilité et montants
+  columns:
+  - - dunning_fee
+  - - rate_of_interest
+- section: Dunning Letter
+  columns:
+  - - dunning_letter_text
+- section: Accounting Details
+  columns:
+  - - income_account
+  - - cost_center

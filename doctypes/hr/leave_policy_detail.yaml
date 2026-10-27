@@ -1,0 +1,16 @@
+schema_version: 1
+name: Leave Policy Detail
+label: Leave Policy Detail
+istable: true
+fields:
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+  required: true
+  in_list_view: true
+- fieldname: annual_allocation
+  label: Annual Allocation
+  fieldtype: Number
+  required: true
+  in_list_view: true

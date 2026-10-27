@@ -1,0 +1,76 @@
+schema_version: 1
+name: Sales Partner
+label: Sales Partner
+module: setup
+icon: handshake
+fields:
+- fieldname: partner_name
+  label: Sales Partner Name
+  fieldtype: Text
+  required: true
+- fieldname: partner_type
+  label: Partner Type
+  fieldtype: Link
+  options: Sales Partner Type
+  in_list_view: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+  required: true
+  in_list_view: true
+- fieldname: commission_rate
+  label: Commission Rate
+  fieldtype: Number
+  required: true
+- fieldname: targets
+  label: Targets
+  fieldtype: Table
+  options: Target Detail
+- fieldname: show_in_website
+  label: Show In Website
+  fieldtype: Boolean
+  default: false
+- fieldname: referral_code
+  label: Referral Code
+  fieldtype: Text
+  description: To Track inbound purchase
+- fieldname: route
+  label: Route
+  fieldtype: Text
+- fieldname: logo
+  label: Logo
+  fieldtype: Attach
+- fieldname: partner_website
+  label: Partner website
+  fieldtype: Text
+- fieldname: introduction
+  label: Introduction
+  fieldtype: LongText
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+title_field: partner_type
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - partner_name
+    - partner_type
+    - territory
+  - - commission_rate
+- section: Sales Partner Target
+  columns:
+  - - targets
+- section: Website
+  columns:
+  - - show_in_website
+  - - referral_code
+- section: Informations complémentaires 4
+  columns:
+  - - route
+  - - logo
+    - partner_website
+- section: Description et notes
+  columns:
+  - - introduction
+    - description

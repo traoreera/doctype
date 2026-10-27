@@ -1,0 +1,160 @@
+schema_version: 1
+name: Quality Inspection
+label: Quality Inspection
+module: stock
+submittable: true
+icon: clipboard-check
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-QA-.YYYY.-
+  required: true
+- fieldname: report_date
+  label: Report Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: inspection_type
+  label: Inspection Type
+  fieldtype: Select
+  options:
+  - Incoming
+  - Outgoing
+  - In Process
+  required: true
+  in_list_view: true
+- fieldname: reference_type
+  label: Reference Type
+  fieldtype: Text
+  required: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  required: true
+  in_list_view: true
+  options: reference_type
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_serial_no
+  label: Item Serial No
+  fieldtype: Link
+  options: Serial No
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+- fieldname: sample_size
+  label: Sample Size
+  fieldtype: Number
+  required: true
+  default: 1.0
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: inspected_by
+  label: Inspected By
+  fieldtype: Link
+  options: Member
+  required: true
+- fieldname: verified_by
+  label: Verified By
+  fieldtype: Text
+- fieldname: bom_no
+  label: BOM No
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Quality Inspection
+  read_only: true
+- fieldname: quality_inspection_template
+  label: Quality Inspection Template
+  fieldtype: Link
+  options: Quality Inspection Template
+- fieldname: readings
+  label: Readings
+  fieldtype: Table
+  options: Quality Inspection Reading
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Accepted
+  - Rejected
+  - Cancelled
+  default: Accepted
+  required: true
+- fieldname: manual_inspection
+  label: Manual Inspection
+  fieldtype: Boolean
+  default: false
+- fieldname: child_row_reference
+  label: Child Row Reference
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+title_field: item_code
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+    - report_date
+    - status
+  - - inspection_type
+    - reference_type
+    - reference_name
+- section: Références
+  columns:
+  - - item_code
+    - item_serial_no
+    - batch_no
+    - sample_size
+  - - item_name
+    - description
+    - bom_no
+- section: Détails
+  columns:
+  - - quality_inspection_template
+    - manual_inspection
+    - readings
+- section: Dates et planification
+  columns:
+  - - inspected_by
+    - verified_by
+  - - remarks
+    - amended_from
+- section: Print Settings
+  columns:
+  - - letter_head
+views:
+  kanban:
+    field: status
+    card_fields:
+    - item_code
+  tree:
+    parent: amended_from

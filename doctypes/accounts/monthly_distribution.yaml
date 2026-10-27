@@ -1,0 +1,28 @@
+schema_version: 1
+name: Monthly Distribution
+label: Monthly Distribution
+module: accounts
+icon: chart-bar
+fields:
+- fieldname: distribution_id
+  label: Distribution Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  description: Name of the Monthly Distribution
+- fieldname: fiscal_year
+  label: Fiscal Year
+  fieldtype: Link
+  options: Fiscal Year
+  in_list_view: true
+- fieldname: percentages
+  label: Monthly Distribution Percentages
+  fieldtype: Table
+  options: Monthly Distribution Percentage
+title_field: distribution_id
+layout:
+- section: Informations principales
+  columns:
+  - - distribution_id
+    - fiscal_year
+    - percentages

@@ -1,0 +1,99 @@
+schema_version: 1
+name: Account Closing Balance
+label: Account Closing Balance
+module: accounts
+submittable: true
+icon: scale
+fields:
+- fieldname: closing_date
+  label: Closing Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+  in_list_view: true
+- fieldname: debit
+  label: Debit Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: credit
+  label: Credit Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: debit_in_account_currency
+  label: Debit Amount in Account Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: credit_in_account_currency
+  label: Credit Amount in Account Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: period_closing_voucher
+  label: Period Closing Voucher
+  fieldtype: Link
+  options: Period Closing Voucher
+- fieldname: is_period_closing_voucher_entry
+  label: Is Period Closing Voucher Entry
+  fieldtype: Boolean
+  default: false
+- fieldname: debit_in_reporting_currency
+  label: Debit Amount in Reporting Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: credit_in_reporting_currency
+  label: Credit Amount in Reporting Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: reporting_currency_exchange_rate
+  label: Reporting Currency Exchange Rate
+  fieldtype: Number
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - closing_date
+    - account
+    - cost_center
+    - debit
+    - credit
+    - reporting_currency_exchange_rate
+    - debit_in_reporting_currency
+    - credit_in_reporting_currency
+    - account_currency
+    - debit_in_account_currency
+    - credit_in_account_currency
+    - project
+    - company
+    - finance_book
+    - period_closing_voucher
+    - is_period_closing_voucher_entry
+permissions:
+  write: []
+  create: []
+  delete: []
+  submit: []
+  cancel: []

@@ -1,0 +1,6 @@
+schema_version: 1
+name: "Price List Country"
+label: "Price List Country"
+istable: true
+fields:
+  - { fieldname: country, label: "Country", fieldtype: Link, options: "Country", required: true, in_list_view: true }

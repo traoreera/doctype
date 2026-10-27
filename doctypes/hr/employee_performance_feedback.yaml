@@ -1,0 +1,113 @@
+schema_version: 1
+name: Employee Performance Feedback
+label: Employee Performance Feedback
+module: hr
+submittable: true
+icon: message-square-text
+fields:
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: total_score
+  label: Total Score
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: feedback
+  label: Feedback
+  fieldtype: TextEditor
+  required: true
+- fieldname: added_on
+  label: Added On
+  fieldtype: Datetime
+  required: true
+- fieldname: employee
+  label: For Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: appraisal
+  label: Appraisal
+  fieldtype: Link
+  options: Appraisal
+  required: true
+- fieldname: reviewer_designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: reviewer
+  label: Reviewer
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: reviewer_name
+  label: Reviewer Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: appraisal_cycle
+  label: Appraisal Cycle
+  fieldtype: Link
+  options: Appraisal Cycle
+  in_list_view: true
+  read_only: true
+- fieldname: feedback_ratings
+  label: Feedback Ratings
+  fieldtype: Table
+  options: Employee Feedback Rating
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Performance Feedback
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+title_field: employee_name
+layout:
+- tab: Employee Details
+  section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - designation
+    - company
+  - - reviewer
+    - reviewer_name
+    - reviewer_designation
+    - user
+  - - added_on
+    - appraisal_cycle
+- tab: Employee Details
+  section: Informations complémentaires 2
+  columns:
+  - - appraisal
+    - feedback_ratings
+    - total_score
+- tab: Feedback
+  section: Informations complémentaires 3
+  columns:
+  - - feedback
+    - amended_from

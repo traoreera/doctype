@@ -1,0 +1,53 @@
+schema_version: 1
+name: Product Bundle
+label: Product Bundle
+module: selling
+submittable: true
+icon: boxes
+fields:
+- fieldname: new_item_code
+  label: Parent Item
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: Text
+  in_list_view: true
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Product Bundle Item
+- fieldname: is_active
+  label: Is Active
+  fieldtype: Boolean
+  in_list_view: true
+  description: Only one version of a Product Bundle can be active at a time for a given Parent Item. Activating
+    a version deactivates the previously active one.
+  default: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  description: A disabled Product Bundle cannot be selected in transactions.
+  default: false
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Product Bundle
+  read_only: true
+title_field: new_item_code
+layout:
+- section: Dates et planification
+  columns:
+  - - new_item_code
+    - description
+  - - is_active
+    - disabled
+    - amended_from
+- section: Items
+  columns:
+  - - items
+views:
+  tree:
+    parent: amended_from

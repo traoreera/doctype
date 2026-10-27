@@ -1,0 +1,10 @@
+schema_version: 1
+name: Quotation Lost Reason Detail
+label: Quotation Lost Reason Detail
+istable: true
+fields:
+- fieldname: lost_reason
+  label: Quotation Lost Reason
+  fieldtype: Link
+  options: Quotation Lost Reason
+  in_list_view: true

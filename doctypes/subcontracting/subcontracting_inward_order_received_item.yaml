@@ -1,0 +1,79 @@
+schema_version: 1
+name: Subcontracting Inward Order Received Item
+label: Subcontracting Inward Order Received Item
+istable: true
+fields:
+- fieldname: main_item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: rm_item_code
+  label: Raw Material Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  read_only: true
+- fieldname: bom_detail_no
+  label: BOM Detail No
+  fieldtype: Text
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: required_qty
+  label: Required Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: received_qty
+  label: Received Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: consumed_qty
+  label: Consumed Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: returned_qty
+  label: Returned Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: work_order_qty
+  label: Work Order Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: is_customer_provided_item
+  label: Is Customer Provided Item
+  fieldtype: Boolean
+  required: true
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  read_only: true
+- fieldname: billed_qty
+  label: Billed Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: is_additional_item
+  label: Is Additional Item
+  fieldtype: Boolean
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true

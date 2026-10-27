@@ -1,0 +1,183 @@
+schema_version: 1
+name: Warranty Claim
+label: Warranty Claim
+module: support
+icon: shield-alert
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - SER-WRN-.YYYY.-
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Closed
+  - Work In Progress
+  - Cancelled
+  default: Open
+  required: true
+  in_list_view: true
+- fieldname: complaint_date
+  label: Issue Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: Link
+  options: Serial No
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+- fieldname: complaint
+  label: Issue
+  fieldtype: TextEditor
+  required: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  read_only: true
+- fieldname: warranty_amc_status
+  label: Warranty / AMC Status
+  fieldtype: Select
+  options:
+  - Under Warranty
+  - Out of Warranty
+  - Under AMC
+  - Out of AMC
+- fieldname: warranty_expiry_date
+  label: Warranty Expiry Date
+  fieldtype: Date
+- fieldname: amc_expiry_date
+  label: AMC Expiry Date
+  fieldtype: Date
+- fieldname: resolution_date
+  label: Resolution Date
+  fieldtype: Datetime
+- fieldname: resolved_by
+  label: Resolved By
+  fieldtype: Link
+  options: Member
+- fieldname: resolution_details
+  label: Resolution Details
+  fieldtype: LongText
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: Text
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+  read_only: true
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+  read_only: true
+- fieldname: customer_address
+  label: Customer Address
+  fieldtype: Link
+  options: Address
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: service_address
+  label: Service Address
+  fieldtype: LongText
+  description: If different than customer address
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: complaint_raised_by
+  label: Raised By
+  fieldtype: Text
+- fieldname: from_company
+  label: From Company
+  fieldtype: Text
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Warranty Claim
+  hidden: true
+title_field: customer_name
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - status
+    - complaint_date
+  - - customer
+    - serial_no
+- section: Informations complémentaires 2
+  columns:
+  - - complaint
+- section: Item and Warranty Details
+  columns:
+  - - item_code
+    - item_name
+    - description
+  - - warranty_amc_status
+    - warranty_expiry_date
+    - amc_expiry_date
+- section: Resolution
+  columns:
+  - - resolution_date
+    - resolved_by
+    - resolution_details
+- section: Customer Details
+  columns:
+  - - customer_name
+    - contact_person
+    - contact_display
+    - contact_mobile
+    - contact_email
+    - territory
+    - customer_group
+  - - customer_address
+    - address_display
+    - service_address
+- section: More Information
+  columns:
+  - - company
+  - - complaint_raised_by
+    - from_company
+views:
+  kanban:
+    field: status
+    card_fields:
+    - customer_name

@@ -1,0 +1,11 @@
+schema_version: 1
+name: Fiscal Year Company
+label: Fiscal Year Company
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true

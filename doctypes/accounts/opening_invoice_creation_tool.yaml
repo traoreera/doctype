@@ -1,0 +1,50 @@
+schema_version: 1
+name: Opening Invoice Creation Tool
+label: Opening Invoice Creation Tool
+module: accounts
+icon: file-plus
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: create_missing_party
+  label: Create Missing Party
+  fieldtype: Boolean
+  default: false
+- fieldname: invoice_type
+  label: Invoice Type
+  fieldtype: Select
+  options:
+  - Sales
+  - Purchase
+  required: true
+  in_list_view: true
+- fieldname: invoices
+  label: Invoices
+  fieldtype: Table
+  options: Opening Invoice Creation Tool Item
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+title_field: company
+layout:
+- section: Références
+  columns:
+  - - company
+    - create_missing_party
+  - - invoice_type
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+- section: Invoices
+  columns:
+  - - invoices

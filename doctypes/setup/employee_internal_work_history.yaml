@@ -1,0 +1,28 @@
+schema_version: 1
+name: Employee Internal Work History
+label: Employee Internal Work History
+istable: true
+fields:
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+  in_list_view: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  in_list_view: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  in_list_view: true

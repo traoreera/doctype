@@ -1,0 +1,35 @@
+schema_version: 1
+name: Payment Entry Deduction
+label: Payment Entry Deduction
+istable: true
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: is_exchange_gain_loss
+  label: System Generated
+  fieldtype: Boolean
+  read_only: true
+- fieldname: dunning
+  label: Dunning
+  fieldtype: Link
+  options: Dunning
+  read_only: true

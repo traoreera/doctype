@@ -1,0 +1,46 @@
+schema_version: 1
+name: Loan Repayment
+label: Loan Repayment
+module: accounts
+icon: file-text
+fields:
+- fieldname: loan
+  label: Loan
+  fieldtype: Link
+  options: Loan
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+- fieldname: amount_paid
+  label: Amount Paid
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: reference_number
+  label: Reference Number
+  fieldtype: Text
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Paid
+  - Unpaid
+  - Cancelled
+title_field: loan
+layout:
+- section: Informations principales
+  columns:
+  - - loan
+    - posting_date
+    - amount_paid
+    - mode_of_payment
+    - reference_number
+    - status

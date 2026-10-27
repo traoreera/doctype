@@ -1,0 +1,7 @@
+schema_version: 1
+name: "Item Attribute Value"
+label: "Item Attribute Value"
+istable: true
+fields:
+  - { fieldname: attribute_value, label: "Attribute Value", fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: abbr, label: "Abbreviation", fieldtype: Text, required: true, in_list_view: true, description: "This will be appended to the Item Code of the variant. For example, if your abbreviation is \"SM\", and the item code is \"T-SHIRT\", the item code of the variant will be \"T-SHIRT-SM\"" }

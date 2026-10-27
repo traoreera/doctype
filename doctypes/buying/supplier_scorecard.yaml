@@ -1,0 +1,102 @@
+schema_version: 1
+name: Supplier Scorecard
+label: Supplier Scorecard
+module: buying
+icon: award
+fields:
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: supplier_score
+  label: Supplier Score
+  fieldtype: Text
+  read_only: true
+- fieldname: indicator_color
+  label: Indicator Color
+  fieldtype: Text
+  hidden: true
+- fieldname: status
+  label: Status
+  fieldtype: Text
+  hidden: true
+- fieldname: period
+  label: Evaluation Period
+  fieldtype: Select
+  options:
+  - Per Week
+  - Per Month
+  - Per Year
+  default: Per Month
+  required: true
+  in_list_view: true
+- fieldname: weighting_function
+  label: Weighting Function
+  fieldtype: LongText
+  required: true
+  description: 'Scorecard variables can be used, as well as:
+
+    {total_score} (the total score from that period),
+
+    {period_number} (the number of periods to present day)'
+  default: '{total_score} * max( 0, min ( 1 , (12 - {period_number}) / 12) )'
+- fieldname: standings
+  label: Scoring Standings
+  fieldtype: Table
+  options: Supplier Scorecard Scoring Standing
+- fieldname: criteria
+  label: Scoring Criteria
+  fieldtype: Table
+  options: Supplier Scorecard Scoring Criteria
+- fieldname: warn_rfqs
+  label: Warn for new Request for Quotations
+  fieldtype: Boolean
+  read_only: true
+- fieldname: warn_pos
+  label: Warn for new Purchase Orders
+  fieldtype: Boolean
+  read_only: true
+- fieldname: prevent_rfqs
+  label: Prevent RFQs
+  fieldtype: Boolean
+  read_only: true
+- fieldname: prevent_pos
+  label: Prevent POs
+  fieldtype: Boolean
+  read_only: true
+- fieldname: notify_supplier
+  label: Notify Supplier
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: notify_employee
+  label: Notify Employee
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  read_only: true
+  hidden: true
+title_field: period
+layout:
+- section: Dates et planification
+  columns:
+  - - supplier
+    - supplier_score
+  - - period
+- section: Scoring Setup
+  columns:
+  - - weighting_function
+    - standings
+- section: Criteria Setup
+  columns:
+  - - criteria
+- section: Scorecard Actions
+  columns:
+  - - warn_rfqs
+    - warn_pos
+    - prevent_rfqs
+    - prevent_pos

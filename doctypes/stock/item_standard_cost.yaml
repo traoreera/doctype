@@ -1,0 +1,66 @@
+schema_version: 1
+name: Item Standard Cost
+label: Item Standard Cost
+module: stock
+submittable: true
+icon: coins
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ISC-.YYYY.-
+  default: ISC-.YYYY.-
+  required: true
+- fieldname: item_code
+  label: Item
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: standard_rate
+  label: Standard Valuation Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: effective_date
+  label: Effective Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: revaluation_entry
+  label: Revaluation Entry
+  fieldtype: Link
+  options: Stock Reconciliation
+  read_only: true
+  description: 'Stock Reconciliation that revalues on-hand stock to this standard rate: auto-created when the rate
+    is changed here, or the reconciliation that captured this rate (opening entry or rate change).'
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Item Standard Cost
+  read_only: true
+title_field: item_code
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - naming_series
+    - item_code
+    - company
+  - - standard_rate
+    - effective_date
+- section: Revaluation
+  columns:
+  - - revaluation_entry
+    - amended_from
+views:
+  tree:
+    parent: amended_from

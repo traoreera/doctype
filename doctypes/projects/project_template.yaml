@@ -1,0 +1,26 @@
+schema_version: 1
+name: Project Template
+label: Project Template
+module: projects
+icon: folder
+fields:
+- fieldname: project_type
+  label: Project Type
+  fieldtype: Link
+  options: Project Type
+  in_list_view: true
+- fieldname: tasks
+  label: Tasks
+  fieldtype: Table
+  options: Project Template Task
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+title_field: project_type
+layout:
+- section: Références
+  columns:
+  - - project_type
+    - disabled
+    - tasks

@@ -1,0 +1,418 @@
+schema_version: 1
+name: Pricing Rule
+label: Pricing Rule
+module: accounts
+icon: badge-percent
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+- fieldname: disable
+  label: Disable
+  fieldtype: Boolean
+  default: false
+- fieldname: apply_on
+  label: Apply On
+  fieldtype: Select
+  options:
+  - Item Code
+  - Item Group
+  - Brand
+  - Transaction
+  default: Item Code
+  required: true
+  in_list_view: true
+- fieldname: price_or_product_discount
+  label: Price or Product Discount
+  fieldtype: Select
+  options:
+  - Price
+  - Product
+  required: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: items
+  label: Apply Rule On Item Code
+  fieldtype: Table
+  options: Pricing Rule Item Code
+- fieldname: item_groups
+  label: Apply Rule On Item Group
+  fieldtype: Table
+  options: Pricing Rule Item Group
+- fieldname: brands
+  label: Apply Rule On Brand
+  fieldtype: Table
+  options: Pricing Rule Brand
+- fieldname: mixed_conditions
+  label: Mixed Conditions
+  fieldtype: Boolean
+  description: Conditions will be applied on all the selected items combined.
+  default: false
+- fieldname: is_cumulative
+  label: Is Cumulative
+  fieldtype: Boolean
+  default: false
+- fieldname: coupon_code_based
+  label: Coupon Code Based
+  fieldtype: Boolean
+  default: false
+- fieldname: apply_rule_on_other
+  label: Apply Rule On Other
+  fieldtype: Select
+  options:
+  - Item Code
+  - Item Group
+  - Brand
+- fieldname: other_item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+- fieldname: other_item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+- fieldname: other_brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+- fieldname: selling
+  label: Selling
+  fieldtype: Boolean
+  default: false
+- fieldname: buying
+  label: Buying
+  fieldtype: Boolean
+  default: false
+- fieldname: applicable_for
+  label: Applicable For
+  fieldtype: Select
+  options:
+  - Customer
+  - Customer Group
+  - Territory
+  - Sales Partner
+  - Campaign
+  - Supplier
+  - Supplier Group
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: sales_partner
+  label: Sales Partner
+  fieldtype: Link
+  options: Sales Partner
+- fieldname: campaign
+  label: Campaign
+  fieldtype: Link
+  options: UTM Campaign
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: supplier_group
+  label: Supplier Group
+  fieldtype: Link
+  options: Supplier Group
+- fieldname: min_qty
+  label: Min Qty (As Per Stock UOM)
+  fieldtype: Number
+- fieldname: max_qty
+  label: Max Qty (As Per Stock UOM)
+  fieldtype: Number
+- fieldname: min_amt
+  label: Min Amt
+  fieldtype: Currency
+  decimals: 2
+- fieldname: max_amt
+  label: Max Amt
+  fieldtype: Currency
+  decimals: 2
+- fieldname: valid_from
+  label: Valid From
+  fieldtype: Date
+  default: today
+- fieldname: valid_upto
+  label: Valid Up To
+  fieldtype: Date
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: margin_type
+  label: Margin Type
+  fieldtype: Select
+  options:
+  - Percentage
+  - Amount
+  default: Percentage
+- fieldname: margin_rate_or_amount
+  label: Margin Rate or Amount
+  fieldtype: Number
+  default: 0.0
+- fieldname: rate_or_discount
+  label: Rate or Discount
+  fieldtype: Select
+  options:
+  - Rate
+  - Discount Percentage
+  - Discount Amount
+  default: Discount Percentage
+- fieldname: apply_discount_on
+  label: Apply Discount On
+  fieldtype: Select
+  options:
+  - Grand Total
+  - Net Total
+  default: Grand Total
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discount_amount
+  label: Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discount_percentage
+  label: Discount Percentage
+  fieldtype: Number
+- fieldname: for_price_list
+  label: For Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: same_item
+  label: Same Item
+  fieldtype: Boolean
+  default: false
+- fieldname: free_item
+  label: Free Item
+  fieldtype: Link
+  options: Item
+- fieldname: free_qty
+  label: Qty
+  fieldtype: Number
+  default: 0.0
+- fieldname: free_item_uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: free_item_rate
+  label: Free Item Rate
+  fieldtype: Currency
+  decimals: 2
+  description: If rate is zero then item will be treated as "Free Item"
+- fieldname: threshold_percentage
+  label: Threshold for Suggestion (In Percentage)
+  fieldtype: Percent
+  description: System will notify to increase or decrease quantity or amount
+- fieldname: priority
+  label: Priority
+  fieldtype: Select
+  options:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+  - '6'
+  - '7'
+  - '8'
+  - '9'
+  - '10'
+  - '11'
+  - '12'
+  - '13'
+  - '14'
+  - '15'
+  - '16'
+  - '17'
+  - '18'
+  - '19'
+  - '20'
+  description: Higher the number, higher the priority
+- fieldname: apply_multiple_pricing_rules
+  label: Apply Multiple Pricing Rules
+  fieldtype: Boolean
+  default: false
+- fieldname: apply_discount_on_rate
+  label: Apply Discount on Discounted Rate
+  fieldtype: Boolean
+  default: false
+- fieldname: validate_applied_rule
+  label: Validate Applied Rule
+  fieldtype: Boolean
+  description: If enabled, then system will only validate the pricing rule and not apply automatically. User has
+    to manually set the discount percentage / margin / free items to validate the pricing rule
+  default: false
+- fieldname: rule_description
+  label: Rule Description
+  fieldtype: LongText
+- fieldname: promotional_scheme_id
+  label: Promotional Scheme Id
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: promotional_scheme
+  label: Promotional Scheme
+  fieldtype: Link
+  options: Promotional Scheme
+  read_only: true
+- fieldname: condition
+  label: Condition
+  fieldtype: Code
+  description: 'Simple Python Expression, Example: territory != ''All Territories'''
+- fieldname: is_recursive
+  label: Is Recursive
+  fieldtype: Boolean
+  description: Discounts to be applied in sequential ranges like buy 1 get 1, buy 2 get 2, buy 3 get 3 and so on
+  default: false
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - PRLE-.####
+  default: PRLE-.####
+- fieldname: round_free_qty
+  label: Round Free Qty
+  fieldtype: Boolean
+  default: false
+- fieldname: recurse_for
+  label: Recurse Every (As Per Transaction UOM)
+  fieldtype: Number
+  description: Give free item for every N quantity
+- fieldname: apply_recursion_over
+  label: Apply Recursion Over (As Per Transaction UOM)
+  fieldtype: Number
+  description: Qty for which recursion isn't applicable.
+  default: 0.0
+- fieldname: has_priority
+  label: Has Priority
+  fieldtype: Boolean
+  description: Enable this checkbox even if you want to set the zero priority
+  default: false
+- fieldname: dont_enforce_free_item_qty
+  label: Don't Enforce Free Item Qty
+  fieldtype: Boolean
+  default: false
+title_field: customer
+layout:
+- tab: General
+  section: Références
+  columns:
+  - - naming_series
+    - title
+    - disable
+    - apply_on
+    - price_or_product_discount
+    - warehouse
+  - - items
+    - item_groups
+    - brands
+    - mixed_conditions
+    - is_cumulative
+    - coupon_code_based
+- tab: General
+  section: Discount on Other Item
+  columns:
+  - - apply_rule_on_other
+  - - other_item_code
+    - other_item_group
+    - other_brand
+- tab: General
+  section: Party Information
+  columns:
+  - - selling
+    - buying
+  - - applicable_for
+    - customer
+    - customer_group
+    - territory
+    - sales_partner
+    - campaign
+    - supplier
+    - supplier_group
+- tab: General
+  section: Quantity and Amount
+  columns:
+  - - min_qty
+    - max_qty
+  - - min_amt
+    - max_amt
+- tab: General
+  section: Product Discount Scheme
+  columns:
+  - - same_item
+    - free_item
+    - free_qty
+    - free_item_rate
+  - - free_item_uom
+    - round_free_qty
+    - dont_enforce_free_item_qty
+    - is_recursive
+    - recurse_for
+    - apply_recursion_over
+- tab: General
+  section: Period Settings
+  columns:
+  - - valid_from
+    - valid_upto
+  - - company
+    - currency
+- tab: General
+  section: Margin
+  columns:
+  - - margin_type
+  - - margin_rate_or_amount
+- tab: General
+  section: Price Discount Scheme
+  columns:
+  - - rate_or_discount
+    - apply_discount_on
+  - - rate
+    - discount_amount
+    - discount_percentage
+    - for_price_list
+- tab: Dynamic Condition
+  section: Informations complémentaires 9
+  columns:
+  - - condition
+- tab: Advanced Settings
+  section: Comptabilité et montants
+  columns:
+  - - apply_multiple_pricing_rules
+    - apply_discount_on_rate
+  - - threshold_percentage
+- tab: Advanced Settings
+  section: Validate Pricing Rule
+  columns:
+  - - validate_applied_rule
+  - - rule_description
+- tab: Advanced Settings
+  section: Priority
+  columns:
+  - - has_priority
+  - - priority
+- tab: Help Article
+  section: Reference
+  columns:
+  - - promotional_scheme
+views:
+  calendar:
+    start: valid_from
+    title: customer

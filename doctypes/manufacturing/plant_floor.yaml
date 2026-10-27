@@ -1,0 +1,25 @@
+schema_version: 1
+name: Plant Floor
+label: Plant Floor
+module: manufacturing
+icon: layout-grid
+fields:
+- fieldname: floor_name
+  label: Floor Name
+  fieldtype: Text
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+title_field: company
+layout:
+- tab: Floor
+  section: Références
+  columns:
+  - - floor_name
+    - company
+    - warehouse

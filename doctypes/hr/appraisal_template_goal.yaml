@@ -1,0 +1,17 @@
+schema_version: 1
+name: Appraisal Template Goal
+label: Appraisal Template Goal
+istable: true
+fields:
+- fieldname: per_weightage
+  label: Weightage (%)
+  fieldtype: Percent
+  required: true
+  in_list_view: true
+- fieldname: key_result_area
+  label: KRA
+  fieldtype: Link
+  options: KRA
+  required: true
+  in_list_view: true
+  description: Key Result Area

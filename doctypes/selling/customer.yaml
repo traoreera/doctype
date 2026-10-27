@@ -1,0 +1,359 @@
+schema_version: 1
+name: Customer
+label: Customer
+module: selling
+icon: user-round
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - CUST-.YYYY.-
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  required: true
+- fieldname: gender
+  label: Gender
+  fieldtype: Link
+  options: Gender
+- fieldname: customer_type
+  label: Customer Type
+  fieldtype: Select
+  options:
+  - Company
+  - Individual
+  - Partnership
+  default: Company
+  required: true
+  in_list_view: true
+- fieldname: default_bank_account
+  label: Company Bank Account
+  fieldtype: Link
+  options: Bank Account
+  description: Pre-filled on payment entries for this customer. Must be a company account.
+- fieldname: lead_name
+  label: Lead
+  fieldtype: Link
+  options: Lead
+  read_only: true
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+- fieldname: account_manager
+  label: Account Manager
+  fieldtype: Link
+  options: Member
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+  in_list_view: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+  in_list_view: true
+- fieldname: tax_id
+  label: Tax ID
+  fieldtype: Text
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+  description: Controls which tax template is auto-applied when this customer is selected on a transaction.
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  description: Blocks this customer from being used on any new transaction.
+  default: false
+- fieldname: is_internal_customer
+  label: Is Internal Customer
+  fieldtype: Boolean
+  description: Mark if this customer represents an internal company. Enables inter-company transactions.
+  default: false
+- fieldname: represents_company
+  label: Represents Company
+  fieldtype: Link
+  options: Company
+  description: Select the related company that this Customer represents for inter-company transactions.
+- fieldname: companies
+  label: Allowed to transact with
+  fieldtype: Table
+  options: Allowed To Transact With
+- fieldname: default_currency
+  label: Billing Currency
+  fieldtype: Link
+  options: Devise
+  in_list_view: true
+  description: All invoices and orders for this customer will be created in this currency.
+- fieldname: default_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+  description: Fetched automatically on sales orders and invoices for this customer.
+- fieldname: language
+  label: Print Language
+  fieldtype: Link
+  options: Language
+- fieldname: website
+  label: Website
+  fieldtype: Text
+- fieldname: customer_primary_contact
+  label: Customer Primary Contact
+  fieldtype: Link
+  options: Contact
+  hidden: true
+  description: Reselect, if the chosen contact is edited after save
+- fieldname: mobile_no
+  label: Mobile No
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: email_id
+  label: Email Id
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: customer_primary_address
+  label: Customer Primary Address
+  fieldtype: Link
+  options: Address
+  hidden: true
+  description: Reselect, if the chosen address is edited after save
+- fieldname: primary_address
+  label: Primary Address
+  fieldtype: TextEditor
+  read_only: true
+  hidden: true
+- fieldname: accounts
+  label: Default Accounts
+  fieldtype: Table
+  options: Party Account
+  description: If set, accounting entries for this customer will post to these accounts instead of the company default.
+- fieldname: payment_terms
+  label: Payment Terms Template
+  fieldtype: Link
+  options: Payment Terms Template
+  description: Defines when payment is due (e.g. Net 30, 50% advance). Applied automatically on invoices for this
+    customer.
+- fieldname: customer_details
+  label: Customer Details
+  fieldtype: LongText
+  description: Internal notes about this customer. Not visible on transactions or the portal.
+- fieldname: market_segment
+  label: Market Segment
+  fieldtype: Link
+  options: Market Segment
+  description: Classify the type of market this customer belongs to, used for sales analysis and targeting.
+- fieldname: industry
+  label: Industry
+  fieldtype: Link
+  options: Industry Type
+- fieldname: is_frozen
+  label: Is Frozen
+  fieldtype: Boolean
+  description: Blocks new transactions and further accounting entries on this customer's account. Only users with
+    the role set in Company's "Roles Allowed to Set and Edit Frozen Account Entries" can transact.
+  default: false
+- fieldname: on_hold
+  label: Block Customer
+  fieldtype: Boolean
+  description: Blocks saving or submitting Sales Orders, Delivery Notes, Sales Invoices and POS Invoices for this
+    customer.
+  default: false
+- fieldname: release_date
+  label: Release Date
+  fieldtype: Date
+  description: Leave blank if the Customer is blocked indefinitely
+- fieldname: loyalty_program
+  label: Loyalty Program
+  fieldtype: Link
+  options: Loyalty Program
+  description: Loyalty scheme this customer earns points under. Auto-assigned if a matching program exists.
+- fieldname: loyalty_program_tier
+  label: Loyalty Program Tier
+  fieldtype: Text
+  read_only: true
+  description: Current tier based on accumulated points. Updated automatically on each invoice.
+- fieldname: default_sales_partner
+  label: Sales Partner
+  fieldtype: Link
+  options: Sales Partner
+- fieldname: default_commission_rate
+  label: Commission Rate
+  fieldtype: Number
+- fieldname: sales_team
+  label: Sales Team
+  fieldtype: Table
+  options: Sales Team
+  description: Split commission credit across multiple sales persons.
+- fieldname: customer_pos_id
+  label: Customer POS ID
+  fieldtype: Text
+  read_only: true
+- fieldname: credit_limits
+  label: Credit & Overdue Limits
+  fieldtype: Table
+  options: Customer Credit Limit
+  description: Transactions are blocked when the outstanding balance exceeds the credit limit. When Restrict Customer
+    Over Billing is enabled, new invoices are also blocked when the customer's overdue amount exceeds the Overdue
+    Limit.
+- fieldname: so_required
+  label: Allow sales invoice creation without sales order
+  fieldtype: Boolean
+  default: false
+- fieldname: dn_required
+  label: Allow sales invoice creation without delivery note
+  fieldtype: Boolean
+  default: false
+- fieldname: tax_withholding_category
+  label: Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+  description: TDS/TCS is calculated at the rate defined here on every payment from this customer.
+- fieldname: opportunity_name
+  label: Opportunity
+  fieldtype: Link
+  options: Opportunity
+  read_only: true
+- fieldname: restrict_to_companies
+  label: Restrict to Companies
+  fieldtype: Boolean
+  description: If checked, this Customer is only available for transactions in the companies listed below.
+  default: false
+- fieldname: allowed_companies
+  label: Allowed Companies
+  fieldtype: Table
+  options: Company Restriction
+- fieldname: portal_users
+  label: Customer Portal Users
+  fieldtype: Table
+  options: Portal User
+- fieldname: prospect_name
+  label: Prospect
+  fieldtype: Link
+  options: Prospect
+  read_only: true
+- fieldname: first_name
+  label: First Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: last_name
+  label: Last Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: supplier_numbers
+  label: Supplier Numbers
+  fieldtype: Table
+  options: Supplier Number At Customer
+  description: Numbers this customer uses to identify your company in their own system.
+- fieldname: tax_withholding_group
+  label: Tax Withholding Group
+  fieldtype: Link
+  options: Tax Withholding Group
+  description: Select the group first to filter the applicable withholding categories below.
+- fieldname: alias
+  label: Alias
+  fieldtype: Text
+title_field: customer_name
+layout:
+- tab: Details
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - customer_name
+    - alias
+    - customer_type
+    - gender
+  - - customer_group
+    - territory
+- tab: Details
+  section: Defaults
+  columns:
+  - - default_currency
+    - default_bank_account
+  - - default_price_list
+    - payment_terms
+- tab: Details
+  section: Loyalty Points
+  columns:
+  - - loyalty_program
+  - - loyalty_program_tier
+- tab: Accounting
+  section: Comptabilité et montants
+  columns:
+  - - accounts
+- tab: Accounting
+  section: Comptabilité et montants
+  columns:
+  - - credit_limits
+- tab: Accounting
+  section: Internal Customer Accounting
+  columns:
+  - - is_internal_customer
+    - represents_company
+- tab: Accounting
+  section: Informations complémentaires 7
+  columns:
+  - - companies
+- tab: Tax
+  section: Comptabilité et montants
+  columns:
+  - - tax_id
+    - tax_category
+  - - tax_withholding_group
+    - tax_withholding_category
+- tab: Settings
+  section: Company Restrictions
+  columns:
+  - - restrict_to_companies
+    - allowed_companies
+- tab: Settings
+  section: État et options
+  columns:
+  - - so_required
+    - dn_required
+  - - disabled
+    - is_frozen
+- tab: Settings
+  section: Block Customer
+  columns:
+  - - on_hold
+    - release_date
+- tab: Sales Team
+  section: Comptabilité et montants
+  columns:
+  - - account_manager
+    - sales_team
+- tab: Sales Team
+  section: Sales Partner
+  columns:
+  - - default_sales_partner
+  - - default_commission_rate
+- tab: Portal Users
+  section: Références
+  columns:
+  - - portal_users
+- tab: More Info
+  section: References
+  columns:
+  - - lead_name
+    - opportunity_name
+  - - prospect_name
+- tab: More Info
+  section: Références
+  columns:
+  - - market_segment
+    - industry
+    - website
+    - language
+    - customer_pos_id
+  - - customer_details
+- tab: More Info
+  section: Références
+  columns:
+  - - supplier_numbers

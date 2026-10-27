@@ -1,0 +1,26 @@
+schema_version: 1
+name: accounts
+label: Comptabilité
+icon: calculator
+description: Comptes, écritures, factures et paiements.
+order: 40
+
+blocks:
+  - { type: header, text: Vue d’ensemble }
+  - { type: number_card, label: Factures client en brouillon, doctype: Sales Invoice, filters: { docstatus: 0 }, color: orange }
+  - { type: number_card, label: Factures client soumises, doctype: Sales Invoice, filters: { docstatus: 1 }, color: green }
+  - { type: number_card, label: Factures fournisseur, doctype: Purchase Invoice, color: blue }
+  - { type: number_card, label: Paiements, doctype: Payment Entry, color: teal }
+  - { type: chart, label: Factures client par mois, doctype: Sales Invoice, kind: bar, group_by: posting_date, bucket: month, periods: 6, filters: { docstatus: 1 }, cols: 8 }
+  - { type: chart, label: Factures par état, doctype: Sales Invoice, kind: donut, group_by: status, filters: { docstatus: 1 }, cols: 4 }
+  - { type: quick_list, label: Factures client récentes, doctype: Sales Invoice, limit: 5, cols: 6 }
+  - { type: quick_list, label: Écritures récentes, doctype: Journal Entry, limit: 5, cols: 6 }
+  - { type: header, text: Opérations }
+  - { type: shortcut, doctype: Journal Entry, new: true }
+  - { type: shortcut, doctype: Sales Invoice, new: true }
+  - { type: shortcut, doctype: Purchase Invoice, new: true }
+  - { type: shortcut, doctype: Payment Entry, new: true }
+  - { type: header, text: Référentiel et banque }
+  - { type: shortcut, doctype: Account, new: true }
+  - { type: shortcut, doctype: Cost Center, new: true }
+  - { type: shortcut, doctype: Bank Transaction }

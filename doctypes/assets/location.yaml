@@ -1,0 +1,71 @@
+schema_version: 1
+name: Location
+label: Location
+module: assets
+icon: map-pin
+fields:
+- fieldname: location_name
+  label: Location Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: parent_location
+  label: Parent Location
+  fieldtype: Link
+  options: Location
+- fieldname: is_container
+  label: Is Container
+  fieldtype: Boolean
+  description: Check if it is a hydroponic unit
+  default: false
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: latitude
+  label: Latitude
+  fieldtype: Number
+- fieldname: longitude
+  label: Longitude
+  fieldtype: Number
+- fieldname: area
+  label: Area
+  fieldtype: Number
+  read_only: true
+- fieldname: area_uom
+  label: Area UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Text
+  read_only: true
+  hidden: true
+title_field: location_name
+layout:
+- section: Informations principales
+  columns:
+  - - location_name
+    - parent_location
+  - - is_container
+    - is_group
+- section: Location Details
+  columns:
+  - - latitude
+    - longitude
+  - - area
+    - area_uom
+views:
+  tree:
+    parent: parent_location

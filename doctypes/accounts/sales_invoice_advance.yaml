@@ -1,0 +1,49 @@
+schema_version: 1
+name: Sales Invoice Advance
+label: Sales Invoice Advance
+istable: true
+fields:
+- fieldname: reference_type
+  label: Reference Type
+  fieldtype: Text
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  options: reference_type
+  in_list_view: true
+  read_only: true
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+  in_list_view: true
+  read_only: true
+- fieldname: reference_row
+  label: Reference Row
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: advance_amount
+  label: Advance amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: allocated_amount
+  label: Allocated amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: exchange_gain_loss
+  label: Exchange Gain/Loss
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: ref_exchange_rate
+  label: Reference Exchange Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: difference_posting_date
+  label: Difference Posting Date
+  fieldtype: Date
+  in_list_view: true

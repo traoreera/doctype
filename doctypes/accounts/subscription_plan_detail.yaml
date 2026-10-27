@@ -1,0 +1,16 @@
+schema_version: 1
+name: Subscription Plan Detail
+label: Subscription Plan Detail
+istable: true
+fields:
+- fieldname: qty
+  label: Quantity
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: plan
+  label: Plan
+  fieldtype: Link
+  options: Subscription Plan
+  required: true
+  in_list_view: true

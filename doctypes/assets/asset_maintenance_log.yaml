@@ -1,0 +1,120 @@
+schema_version: 1
+name: Asset Maintenance Log
+label: Asset Maintenance Log
+module: assets
+submittable: true
+icon: file-clock
+fields:
+- fieldname: asset_maintenance
+  label: Asset Maintenance
+  fieldtype: Link
+  options: Asset Maintenance
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-AML-.YYYY.-
+  required: true
+- fieldname: asset_name
+  label: Asset Name
+  fieldtype: Text
+  read_only: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Text
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: task
+  label: Task
+  fieldtype: Link
+  options: Asset Maintenance Task
+- fieldname: maintenance_type
+  label: Maintenance Type
+  fieldtype: Text
+  read_only: true
+- fieldname: periodicity
+  label: Periodicity
+  fieldtype: Text
+  read_only: true
+- fieldname: assign_to_name
+  label: Assign To
+  fieldtype: Text
+  read_only: true
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: completion_date
+  label: Completion Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: maintenance_status
+  label: Maintenance Status
+  fieldtype: Select
+  options:
+  - Planned
+  - Completed
+  - Cancelled
+  - Overdue
+  required: true
+- fieldname: has_certificate
+  label: 'Has Certificate '
+  fieldtype: Boolean
+  default: false
+- fieldname: certificate_attachement
+  label: Certificate
+  fieldtype: Attach
+- fieldname: description
+  label: Description
+  fieldtype: Text
+  read_only: true
+- fieldname: actions_performed
+  label: Actions performed
+  fieldtype: TextEditor
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset Maintenance Log
+  read_only: true
+- fieldname: task_name
+  label: Task Name
+  fieldtype: Text
+  read_only: true
+- fieldname: task_assignee_email
+  label: Task Assignee Email
+  fieldtype: Text
+  read_only: true
+title_field: item_code
+layout:
+- section: Références
+  columns:
+  - - asset_maintenance
+    - naming_series
+    - asset_name
+  - - item_code
+    - item_name
+- section: Maintenance Details
+  columns:
+  - - task
+    - task_name
+    - maintenance_type
+    - periodicity
+    - has_certificate
+    - certificate_attachement
+  - - maintenance_status
+    - assign_to_name
+    - task_assignee_email
+    - due_date
+    - completion_date
+    - description
+- section: Dates et planification
+  columns:
+  - - actions_performed
+    - amended_from
+views:
+  tree:
+    parent: amended_from

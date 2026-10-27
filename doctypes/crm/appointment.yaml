@@ -1,0 +1,81 @@
+schema_version: 1
+name: Appointment
+label: Appointment
+module: crm
+icon: clipboard-clock
+fields:
+- fieldname: customer_name
+  label: Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: customer_phone_number
+  label: Phone Number
+  fieldtype: Text
+- fieldname: customer_skype
+  label: Skype ID
+  fieldtype: Text
+- fieldname: customer_details
+  label: Details
+  fieldtype: LongText
+- fieldname: scheduled_time
+  label: Scheduled Time
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Unverified
+  - Closed
+  required: true
+- fieldname: calendar_event
+  label: Calendar Event
+  fieldtype: Link
+  options: Event
+- fieldname: customer_email
+  label: Email
+  fieldtype: Text
+  required: true
+- fieldname: appointment_with
+  label: Appointment With
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: appointment_with
+- fieldname: created_through_portal
+  label: Created through Portal
+  fieldtype: Boolean
+  read_only: true
+- fieldname: email_verified
+  label: Email Verified
+  fieldtype: Boolean
+  read_only: true
+- fieldname: verification_token
+  label: Verification Token
+  fieldtype: Text
+  read_only: true
+  hidden: true
+title_field: customer_name
+layout:
+- section: Dates et planification
+  columns:
+  - - scheduled_time
+  - - status
+    - created_through_portal
+    - email_verified
+- section: Customer Details
+  columns:
+  - - customer_name
+    - customer_phone_number
+    - customer_skype
+    - customer_email
+  - - customer_details
+- section: Linked Documents
+  columns:
+  - - appointment_with
+    - party
+  - - calendar_event

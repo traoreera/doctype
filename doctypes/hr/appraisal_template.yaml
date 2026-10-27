@@ -1,0 +1,36 @@
+schema_version: 1
+name: Appraisal Template
+label: Appraisal Template
+module: hr
+icon: clipboard-list
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: goals
+  label: KRAs
+  fieldtype: Table
+  options: Appraisal Template Goal
+- fieldname: rating_criteria
+  label: Rating Criteria
+  fieldtype: Table
+  options: Employee Feedback Rating
+  description: Criteria based on which employee should be rated in Performance Feedback and Self Appraisal
+- fieldname: template_title
+  label: Appraisal Template Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: template_title
+layout:
+- section: Informations principales
+  columns:
+  - - template_title
+- section: Description
+  columns:
+  - - description
+- section: Informations complémentaires 3
+  columns:
+  - - goals
+    - rating_criteria

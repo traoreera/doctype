@@ -1,0 +1,13 @@
+schema_version: 1
+name: Grievance Type
+label: Grievance Type
+module: hr
+icon: tag
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+layout:
+- section: Informations principales
+  columns:
+  - - description

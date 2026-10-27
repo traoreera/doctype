@@ -1,0 +1,87 @@
+schema_version: 1
+name: Inventory Dimension
+label: Inventory Dimension
+module: stock
+icon: layers
+fields:
+- fieldname: reference_document
+  label: Reference Document
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: dimension_name
+  label: Dimension Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: document_type
+  label: Apply to Document
+  fieldtype: Text
+- fieldname: istable
+  label: ' Is Child Table'
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: condition
+  label: Conditional Rule
+  fieldtype: Code
+- fieldname: apply_to_all_doctypes
+  label: Apply to All Inventory Documents
+  fieldtype: Boolean
+  default: true
+- fieldname: target_fieldname
+  label: Target Fieldname (Stock Ledger Entry)
+  fieldtype: Text
+  read_only: true
+- fieldname: source_fieldname
+  label: Source Fieldname
+  fieldtype: Text
+  read_only: true
+- fieldname: type_of_transaction
+  label: Type of Transaction
+  fieldtype: Select
+  options:
+  - Inward
+  - Outward
+  - Both
+- fieldname: mandatory_depends_on
+  label: Mandatory Depends On
+  fieldtype: LongText
+  description: To apply condition on parent field use parent.field_name and to apply condition on child table use
+    doc.field_name. Here field_name could be based on the actual column name of the respective field.
+- fieldname: reqd
+  label: Mandatory
+  fieldtype: Boolean
+  default: false
+- fieldname: validate_negative_stock
+  label: Validate Negative Stock
+  fieldtype: Boolean
+  default: false
+title_field: reference_document
+layout:
+- tab: Dimension Details
+  section: Références
+  columns:
+  - - dimension_name
+  - - reference_document
+- tab: Dimension Details
+  section: Field Mapping
+  columns:
+  - - source_fieldname
+  - - target_fieldname
+- tab: Applicable For
+  section: Dates et planification
+  columns:
+  - - apply_to_all_doctypes
+  - - validate_negative_stock
+- tab: Applicable For
+  section: Informations complémentaires 4
+  columns:
+  - - document_type
+    - type_of_transaction
+  - - condition
+- tab: Applicable For
+  section: Mandatory Section
+  columns:
+  - - reqd
+    - mandatory_depends_on

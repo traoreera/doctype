@@ -1,0 +1,183 @@
+schema_version: 1
+name: Issue
+label: Issue
+module: support
+icon: ticket
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ISS-.YYYY.-
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  required: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: raised_by
+  label: Raised By (Email)
+  fieldtype: Text
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Replied
+  - On Hold
+  - Resolved
+  - Closed
+  default: Open
+  in_list_view: true
+- fieldname: priority
+  label: Priority
+  fieldtype: Link
+  options: Issue Priority
+  in_list_view: true
+- fieldname: issue_type
+  label: Issue Type
+  fieldtype: Link
+  options: Issue Type
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: service_level_agreement
+  label: Service Level Agreement
+  fieldtype: Link
+  options: Service Level Agreement
+- fieldname: response_by
+  label: Response By
+  fieldtype: Datetime
+  read_only: true
+- fieldname: first_responded_on
+  label: First Responded On
+  fieldtype: Datetime
+- fieldname: lead
+  label: Lead
+  fieldtype: Link
+  options: Lead
+- fieldname: contact
+  label: Contact
+  fieldtype: Link
+  options: Contact
+- fieldname: email_account
+  label: Email Account
+  fieldtype: Link
+  options: Email Account
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: resolution_details
+  label: Resolution Details
+  fieldtype: TextEditor
+- fieldname: opening_date
+  label: Opening Date
+  fieldtype: Date
+  read_only: true
+- fieldname: opening_time
+  label: Opening Time
+  fieldtype: Time
+  read_only: true
+- fieldname: content_type
+  label: Content Type
+  fieldtype: Text
+  hidden: true
+- fieldname: attachment
+  label: Attachment
+  fieldtype: Attach
+  hidden: true
+- fieldname: via_customer_portal
+  label: Via Customer Portal
+  fieldtype: Boolean
+  default: false
+- fieldname: service_level_agreement_creation
+  label: Service Level Agreement Creation
+  fieldtype: Datetime
+  read_only: true
+  hidden: true
+- fieldname: issue_split_from
+  label: Issue Split From
+  fieldtype: Link
+  options: Issue
+  read_only: true
+- fieldname: on_hold_since
+  label: On Hold Since
+  fieldtype: Datetime
+  read_only: true
+  hidden: true
+- fieldname: agreement_status
+  label: Service Level Agreement Status
+  fieldtype: Select
+  options:
+  - First Response Due
+  - Resolution Due
+  - Fulfilled
+  - Failed
+  default: First Response Due
+  read_only: true
+- fieldname: sla_resolution_by
+  label: Resolution By
+  fieldtype: Datetime
+  read_only: true
+- fieldname: sla_resolution_date
+  label: Resolution Date
+  fieldtype: Datetime
+  read_only: true
+title_field: subject
+layout:
+- section: Références
+  columns:
+  - - naming_series
+    - subject
+    - customer
+    - raised_by
+  - - status
+    - priority
+    - issue_type
+    - issue_split_from
+- section: Details
+  columns:
+  - - description
+- section: Service Level Agreement Details
+  columns:
+  - - service_level_agreement
+    - response_by
+  - - agreement_status
+    - sla_resolution_by
+- section: Response Details
+  columns:
+  - - first_responded_on
+- section: Resolution Details
+  columns:
+  - - resolution_details
+  - - opening_date
+    - opening_time
+    - sla_resolution_date
+- section: Reference
+  columns:
+  - - lead
+    - contact
+    - email_account
+  - - customer_name
+    - project
+    - company
+    - via_customer_portal
+views:
+  kanban:
+    field: status
+    card_fields:
+    - subject
+  tree:
+    parent: issue_split_from

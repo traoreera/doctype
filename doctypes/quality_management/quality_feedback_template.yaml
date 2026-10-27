@@ -1,0 +1,23 @@
+schema_version: 1
+name: Quality Feedback Template
+label: Quality Feedback Template
+module: quality_management
+icon: file-text
+fields:
+- fieldname: template
+  label: Template Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: parameters
+  label: Parameters
+  fieldtype: Table
+  options: Quality Feedback Template Parameter
+title_field: template
+layout:
+- section: Détails
+  columns:
+  - - template
+- section: Détails
+  columns:
+  - - parameters

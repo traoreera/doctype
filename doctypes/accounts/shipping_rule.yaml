@@ -1,0 +1,85 @@
+schema_version: 1
+name: Shipping Rule
+label: Shipping Rule
+module: accounts
+icon: truck
+fields:
+- fieldname: label
+  label: Shipping Rule Label
+  fieldtype: Text
+  required: true
+  description: 'example: Next Day Shipping'
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: shipping_rule_type
+  label: Shipping Rule Type
+  fieldtype: Select
+  options:
+  - Selling
+  - Buying
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: account
+  label: Shipping Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: calculate_based_on
+  label: Calculate Based On
+  fieldtype: Select
+  options:
+  - Fixed
+  - Net Total
+  - Net Weight
+  default: Fixed
+  in_list_view: true
+- fieldname: shipping_amount
+  label: Shipping Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: conditions
+  label: Shipping Rule Conditions
+  fieldtype: Table
+  options: Shipping Rule Condition
+- fieldname: countries
+  label: Valid for Countries
+  fieldtype: Table
+  options: Shipping Rule Country
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+title_field: company
+layout:
+- section: État et options
+  columns:
+  - - label
+    - disabled
+  - - shipping_rule_type
+- section: Accounting
+  columns:
+  - - company
+  - - account
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+- section: Comptabilité et montants
+  columns:
+  - - calculate_based_on
+  - - shipping_amount
+- section: Shipping Rule Conditions
+  columns:
+  - - conditions
+- section: Restrict to Countries
+  columns:
+  - - countries

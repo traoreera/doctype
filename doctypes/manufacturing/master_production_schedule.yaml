@@ -1,0 +1,101 @@
+schema_version: 1
+name: Master Production Schedule
+label: Master Production Schedule
+module: manufacturing
+icon: calendar-range
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Master Production Schedule Item
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - MPS.YY.-.######
+  default: MPS.YY.-.######
+  required: true
+- fieldname: parent_warehouse
+  label: Parent Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: For projected and forecast quantities, the system will consider all child warehouses under the selected
+    parent warehouse.
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: sales_orders
+  label: Sales Orders
+  fieldtype: Table
+  options: Production Plan Sales Order
+- fieldname: material_requests
+  label: Material Requests
+  fieldtype: Table
+  options: Production Plan Material Request
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Master Production Schedule
+  read_only: true
+- fieldname: sales_forecast
+  label: Sales Forecast
+  fieldtype: Link
+  options: Sales Forecast
+- fieldname: select_items
+  label: Select Items
+  fieldtype: Table
+  options: Master Production Schedule Item
+title_field: company
+layout:
+- tab: Planning
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+  - - posting_date
+    - from_date
+    - to_date
+- tab: Planning
+  section: Références
+  columns:
+  - - select_items
+  - - parent_warehouse
+- tab: Demand
+  section: Open Orders
+  columns:
+  - - sales_orders
+    - material_requests
+- tab: Demand
+  section: Actual Demand
+  columns:
+  - - items
+- tab: Demand
+  section: Forecast Demand
+  columns:
+  - - sales_forecast
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  gantt:
+    start: from_date
+    end: to_date
+    title: company
+  tree:
+    parent: amended_from

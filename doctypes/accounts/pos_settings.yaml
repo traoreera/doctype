@@ -1,0 +1,41 @@
+schema_version: 1
+name: POS Settings
+label: POS Settings
+module: accounts
+single: true
+icon: settings
+fields:
+- fieldname: invoice_fields
+  label: POS Additional Fields
+  fieldtype: Table
+  options: POS Field
+- fieldname: pos_search_fields
+  label: POS Search Fields
+  fieldtype: Table
+  options: POS Search Fields
+- fieldname: invoice_type
+  label: Invoice Type Created via POS Screen
+  fieldtype: Select
+  options:
+  - Sales Invoice
+  - POS Invoice
+  default: Sales Invoice
+  description: The system will create a Sales Invoice or a POS Invoice from the POS interface based on this setting.
+    For high-volume transactions, it is recommended to use POS Invoice.
+- fieldname: post_change_gl_entries
+  label: Create Ledger Entries for Change Amount
+  fieldtype: Boolean
+  description: If enabled, ledger entries will be posted for change amount in POS transactions
+  default: false
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - invoice_type
+  - - post_change_gl_entries
+- section: Options complémentaires 2
+  columns:
+  - - invoice_fields
+    - pos_search_fields
+permissions:
+  create: []
+  delete: []

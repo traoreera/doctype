@@ -1,0 +1,61 @@
+schema_version: 1
+name: Currency Exchange Settings
+label: Currency Exchange Settings
+module: accounts
+single: true
+icon: refresh-cw
+fields:
+- fieldname: api_endpoint
+  label: API Endpoint
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: url
+  label: Example URL
+  fieldtype: Text
+  read_only: true
+- fieldname: req_params
+  label: Parameters
+  fieldtype: Table
+  options: Currency Exchange Settings Details
+- fieldname: result_key
+  label: Result Key
+  fieldtype: Table
+  options: Currency Exchange Settings Result
+- fieldname: service_provider
+  label: Service Provider
+  fieldtype: Select
+  options:
+  - frankfurter.dev
+  - exchangerate.host
+  - frankfurter.dev - v2
+  - Custom
+  required: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: access_key
+  label: Access Key
+  fieldtype: Text
+- fieldname: use_http
+  label: Use HTTP Protocol
+  fieldtype: Boolean
+  default: false
+title_field: api_endpoint
+layout:
+- section: API Details
+  columns:
+  - - disabled
+    - service_provider
+    - api_endpoint
+    - use_http
+    - access_key
+    - url
+- section: Request Parameters
+  columns:
+  - - req_params
+  - - result_key
+permissions:
+  create: []
+  delete: []

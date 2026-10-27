@@ -1,0 +1,79 @@
+schema_version: 1
+name: Lower Deduction Certificate
+label: Lower Deduction Certificate
+module: regional
+icon: file-badge
+fields:
+- fieldname: certificate_no
+  label: Certificate No
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  required: true
+  in_list_view: true
+- fieldname: pan_no
+  label: PAN No
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: valid_upto
+  label: Valid Up To
+  fieldtype: Date
+  required: true
+- fieldname: rate
+  label: Rate Of TDS As Per Certificate
+  fieldtype: Percent
+  required: true
+- fieldname: certificate_limit
+  label: Certificate Limit
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: valid_from
+  label: Valid From
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: fiscal_year
+  label: Fiscal Year
+  fieldtype: Link
+  options: Fiscal Year
+  required: true
+- fieldname: tax_withholding_category
+  label: Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+title_field: certificate_no
+layout:
+- section: Certificate Details
+  columns:
+  - - tax_withholding_category
+    - fiscal_year
+  - - company
+    - certificate_no
+- section: Deductee Details
+  columns:
+  - - supplier
+  - - pan_no
+- section: Validity Details
+  columns:
+  - - valid_from
+  - - valid_upto
+- section: Comptabilité et montants
+  columns:
+  - - rate
+  - - certificate_limit
+views:
+  calendar:
+    start: valid_from
+    title: certificate_no

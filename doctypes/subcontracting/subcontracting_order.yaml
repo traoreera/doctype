@@ -1,0 +1,279 @@
+schema_version: 1
+name: Subcontracting Order
+label: Subcontracting Order
+module: subcontracting
+submittable: true
+icon: shopping-bag
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - SC-ORD-.YYYY.-
+  required: true
+- fieldname: purchase_order
+  label: Subcontracting Purchase Order
+  fieldtype: Link
+  options: Purchase Order
+  required: true
+- fieldname: supplier
+  label: Job Worker
+  fieldtype: Link
+  options: Supplier
+  required: true
+- fieldname: supplier_name
+  label: Job Worker Name
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: supplier_warehouse
+  label: Job Worker Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: transaction_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: schedule_date
+  label: Required By
+  fieldtype: Date
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Subcontracting Order
+  read_only: true
+- fieldname: supplier_address
+  label: Job Worker Address
+  fieldtype: Link
+  options: Address
+- fieldname: address_display
+  label: Job Worker Address Details
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_person
+  label: Job Worker Contact
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_display
+  label: Contact Name
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Contact Mobile No
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: LongText
+  read_only: true
+- fieldname: shipping_address
+  label: Company Shipping Address
+  fieldtype: Link
+  options: Address
+- fieldname: shipping_address_display
+  label: Shipping Address Details
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: billing_address
+  label: Company Billing Address
+  fieldtype: Link
+  options: Address
+- fieldname: billing_address_display
+  label: Billing Address Details
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: set_warehouse
+  label: Set Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: Sets 'Warehouse' in each row of the Items table.
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Subcontracting Order Item
+- fieldname: total_qty
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: service_items
+  label: Service Items
+  fieldtype: Table
+  options: Subcontracting Order Service Item
+  read_only: true
+- fieldname: set_reserve_warehouse
+  label: Set Reserve Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: Sets 'Reserve Warehouse' in each row of the Supplied Items table.
+- fieldname: supplied_items
+  label: Supplied Items
+  fieldtype: Table
+  options: Subcontracting Order Supplied Item
+  read_only: true
+- fieldname: additional_costs
+  label: Additional Costs
+  fieldtype: Table
+  options: Landed Cost Taxes and Charges
+- fieldname: total_additional_costs
+  label: Total Additional Costs
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Open
+  - Partially Received
+  - Completed
+  - Material Transferred
+  - Partial Material Transferred
+  - Cancelled
+  - Closed
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: per_received
+  label: '% Received'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: distribute_additional_costs_based_on
+  label: 'Distribute Additional Costs Based On '
+  fieldtype: Select
+  options:
+  - Qty
+  - Amount
+  default: Qty
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: supplier_currency
+  label: Job Worker Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+- fieldname: conversion_rate
+  label: Exchange Rate
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: reserve_stock
+  label: Reserve Stock
+  fieldtype: Boolean
+  default: false
+- fieldname: production_plan
+  label: Production Plan
+  fieldtype: Text
+  read_only: true
+  hidden: true
+title_field: title
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - purchase_order
+    - supplier
+    - supplier_name
+    - supplier_warehouse
+  - - company
+    - transaction_date
+    - schedule_date
+    - amended_from
+- tab: Général
+  section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+- tab: Général
+  section: Références
+  columns:
+  - - set_warehouse
+    - items
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - total_qty
+  - - total
+- tab: Général
+  section: Service Items
+  columns:
+  - - service_items
+- tab: Général
+  section: Raw Materials Supplied
+  columns:
+  - - set_reserve_warehouse
+    - reserve_stock
+    - supplied_items
+- tab: Address and Contact
+  section: Références
+  columns:
+  - - supplier_address
+    - address_display
+    - contact_person
+    - contact_display
+    - contact_mobile
+    - contact_email
+  - - shipping_address
+    - shipping_address_display
+    - billing_address
+    - billing_address_display
+- tab: Additional Costs
+  section: Comptabilité et montants
+  columns:
+  - - distribute_additional_costs_based_on
+    - additional_costs
+    - total_additional_costs
+- tab: Other Info
+  section: Informations complémentaires 9
+  columns:
+  - - title
+- tab: Other Info
+  section: Order Status
+  columns:
+  - - status
+  - - per_received
+- tab: Other Info
+  section: Printing Settings
+  columns:
+  - - select_print_heading
+  - - letter_head
+views:
+  calendar:
+    start: transaction_date
+    title: title
+  tree:
+    parent: amended_from

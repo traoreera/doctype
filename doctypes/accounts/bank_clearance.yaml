@@ -1,0 +1,66 @@
+schema_version: 1
+name: Bank Clearance
+label: Bank Clearance
+module: accounts
+icon: badge-check
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+  hidden: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+  description: Select the Bank Account to reconcile.
+- fieldname: include_reconciled_entries
+  label: Include Reconciled Entries
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: include_pos_transactions
+  label: Include POS Transactions
+  fieldtype: Boolean
+  default: false
+- fieldname: payment_entries
+  label: Payment Entries
+  fieldtype: Table
+  options: Bank Clearance Detail
+title_field: account
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - account
+    - from_date
+    - to_date
+  - - bank_account
+    - include_reconciled_entries
+    - include_pos_transactions
+- section: Comptabilité et montants
+  columns:
+  - - payment_entries
+views:
+  calendar:
+    start: from_date
+    title: account
+  gantt:
+    start: from_date
+    end: to_date
+    title: account

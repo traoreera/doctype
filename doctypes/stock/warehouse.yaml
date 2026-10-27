@@ -1,0 +1,126 @@
+schema_version: 1
+name: Warehouse
+label: Warehouse
+module: stock
+icon: warehouse
+fields:
+- fieldname: warehouse_name
+  label: Warehouse Name
+  fieldtype: Text
+  required: true
+- fieldname: is_group
+  label: Is Group Warehouse
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+  description: If blank, parent Warehouse Account or company default will be considered in transactions
+- fieldname: email_id
+  label: Email Address
+  fieldtype: Text
+  hidden: true
+- fieldname: phone_no
+  label: Phone No
+  fieldtype: Text
+- fieldname: mobile_no
+  label: Mobile No
+  fieldtype: Text
+- fieldname: address_line_1
+  label: Address Line 1
+  fieldtype: Text
+- fieldname: address_line_2
+  label: Address Line 2
+  fieldtype: Text
+- fieldname: city
+  label: City
+  fieldtype: Text
+- fieldname: state
+  label: State/Province
+  fieldtype: Text
+- fieldname: pin
+  label: PIN
+  fieldtype: Text
+- fieldname: parent_warehouse
+  label: Parent Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Link
+  options: Warehouse
+  read_only: true
+  hidden: true
+- fieldname: warehouse_type
+  label: Warehouse Type
+  fieldtype: Link
+  options: Warehouse Type
+- fieldname: default_in_transit_warehouse
+  label: Default In-Transit Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: is_rejected_warehouse
+  label: Is Rejected Warehouse
+  fieldtype: Boolean
+  description: If yes, then this warehouse will be used to store rejected materials
+  default: false
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  description: Only to be used for Subcontracting Inward.
+title_field: warehouse_name
+layout:
+- section: Warehouse Detail
+  columns:
+  - - warehouse_name
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - is_rejected_warehouse
+  - - account
+- section: Références
+  columns:
+  - - parent_warehouse
+    - is_group
+  - - customer
+- section: Warehouse Contact Info
+  columns:
+  - - phone_no
+    - mobile_no
+  - - address_line_1
+    - address_line_2
+    - city
+    - state
+    - pin
+- section: Transit
+  columns:
+  - - warehouse_type
+  - - default_in_transit_warehouse
+views:
+  tree:
+    parent: parent_warehouse

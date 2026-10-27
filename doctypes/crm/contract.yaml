@@ -1,0 +1,149 @@
+schema_version: 1
+name: Contract
+label: Contract
+module: crm
+submittable: true
+icon: signature
+fields:
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Select
+  options:
+  - Customer
+  - Supplier
+  - Employee
+  default: Customer
+  required: true
+- fieldname: is_signed
+  label: Signed
+  fieldtype: Boolean
+  default: false
+- fieldname: party_name
+  label: Party Name
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: party_user
+  label: Party User
+  fieldtype: Link
+  options: Member
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Unsigned
+  - Active
+  - Inactive
+  - Cancelled
+  in_list_view: true
+  hidden: true
+- fieldname: fulfilment_status
+  label: Fulfilment Status
+  fieldtype: Select
+  options:
+  - N/A
+  - Unfulfilled
+  - Partially Fulfilled
+  - Fulfilled
+  - Lapsed
+  in_list_view: true
+  hidden: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: signee
+  label: Signee
+  fieldtype: Text
+- fieldname: signed_on
+  label: Signed On
+  fieldtype: Datetime
+  in_list_view: true
+- fieldname: ip_address
+  label: IP Address
+  fieldtype: Text
+  read_only: true
+- fieldname: contract_template
+  label: Contract Template
+  fieldtype: Link
+  options: Contract Template
+- fieldname: contract_terms
+  label: Contract Terms
+  fieldtype: TextEditor
+  required: true
+  in_list_view: true
+- fieldname: requires_fulfilment
+  label: Requires Fulfilment
+  fieldtype: Boolean
+  default: false
+- fieldname: fulfilment_deadline
+  label: Fulfilment Deadline
+  fieldtype: Date
+- fieldname: fulfilment_terms
+  label: Fulfilment Terms
+  fieldtype: Table
+  options: Contract Fulfilment Checklist
+- fieldname: document_type
+  label: Document Type
+  fieldtype: Select
+  options:
+  - Quotation
+  - Project
+  - Sales Order
+  - Purchase Order
+  - Sales Invoice
+  - Purchase Invoice
+- fieldname: document_name
+  label: Document Name
+  fieldtype: DynamicLink
+  options: document_type
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Contract
+  read_only: true
+- fieldname: signed_by_company
+  label: Signed By (Company)
+  fieldtype: Link
+  options: Member
+  read_only: true
+- fieldname: party_full_name
+  label: Party Full Name
+  fieldtype: Text
+  read_only: true
+layout:
+- section: Références
+  columns:
+  - - party_type
+    - is_signed
+  - - party_name
+    - party_user
+    - party_full_name
+- section: Contract Period
+  columns:
+  - - start_date
+  - - end_date
+- section: Signee Details
+  columns:
+  - - signee
+    - signed_on
+  - - ip_address
+- section: Contract Details
+  columns:
+  - - contract_template
+    - contract_terms
+- section: Fulfilment Details
+  columns:
+  - - requires_fulfilment
+    - fulfilment_deadline
+    - fulfilment_terms
+- section: Authorised By
+  columns:
+  - - signed_by_company
+- section: References
+  columns:
+  - - document_type
+  - - document_name
+    - amended_from

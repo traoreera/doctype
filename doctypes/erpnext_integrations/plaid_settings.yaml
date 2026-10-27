@@ -1,0 +1,42 @@
+schema_version: 1
+name: Plaid Settings
+label: Plaid Settings
+module: erpnext_integrations
+single: true
+icon: landmark
+fields:
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: false
+- fieldname: automatic_sync
+  label: Synchronize all accounts every hour
+  fieldtype: Boolean
+  default: false
+- fieldname: plaid_client_id
+  label: Plaid Client ID
+  fieldtype: Text
+  in_list_view: true
+- fieldname: plaid_env
+  label: Plaid Environment
+  fieldtype: Select
+  options:
+  - sandbox
+  - development
+  - production
+  in_list_view: true
+- fieldname: enable_european_access
+  label: Enable European Access
+  fieldtype: Boolean
+  default: false
+title_field: plaid_client_id
+layout:
+- section: Synchronisation
+  columns:
+  - - enabled
+  - - automatic_sync
+- section: Connexion à Plaid
+  columns:
+  - - plaid_client_id
+  - - plaid_env
+    - enable_european_access

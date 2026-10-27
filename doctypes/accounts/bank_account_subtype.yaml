@@ -1,0 +1,13 @@
+schema_version: 1
+name: Bank Account Subtype
+label: Bank Account Subtype
+module: accounts
+icon: credit-card
+fields:
+- fieldname: account_subtype
+  label: Account Subtype
+  fieldtype: Text
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - account_subtype

@@ -1,0 +1,64 @@
+schema_version: 1
+name: Training Feedback
+label: Training Feedback
+module: hr
+submittable: true
+icon: message-square-text
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: course
+  label: Course
+  fieldtype: Text
+  read_only: true
+- fieldname: training_event
+  label: Training Event
+  fieldtype: Link
+  options: Training Event
+  required: true
+- fieldname: event_name
+  label: Event Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: trainer_name
+  label: Trainer Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: feedback
+  label: Feedback
+  fieldtype: LongText
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Training Feedback
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - course
+  - - training_event
+    - event_name
+    - trainer_name
+- section: Informations complémentaires 2
+  columns:
+  - - feedback
+    - amended_from

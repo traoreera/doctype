@@ -1,0 +1,13 @@
+schema_version: 1
+name: Bank Account Type
+label: Bank Account Type
+module: accounts
+icon: credit-card
+fields:
+- fieldname: account_type
+  label: Account Type
+  fieldtype: Text
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - account_type

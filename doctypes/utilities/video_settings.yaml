@@ -1,0 +1,33 @@
+schema_version: 1
+name: Video Settings
+label: Video Settings
+module: utilities
+single: true
+icon: settings
+fields:
+- fieldname: enable_youtube_tracking
+  label: Enable YouTube Tracking
+  fieldtype: Boolean
+  default: false
+- fieldname: api_key
+  label: API Key
+  fieldtype: Text
+- fieldname: frequency
+  label: Frequency
+  fieldtype: Select
+  options:
+  - 1 hr
+  - 6 hrs
+  - Daily
+  default: 1 hr
+- fieldname: last_youtube_update
+  label: Last YouTube Update
+  fieldtype: Datetime
+  read_only: true
+  hidden: true
+layout:
+- section: Paramètres généraux
+  columns:
+  - - enable_youtube_tracking
+    - api_key
+    - frequency

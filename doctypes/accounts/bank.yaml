@@ -1,0 +1,36 @@
+schema_version: 1
+name: Bank
+label: Bank
+module: accounts
+icon: landmark
+fields:
+- fieldname: bank_name
+  label: Bank Name
+  fieldtype: Text
+  required: true
+- fieldname: swift_number
+  label: SWIFT number
+  fieldtype: Text
+  in_list_view: true
+- fieldname: website
+  label: Website
+  fieldtype: Text
+- fieldname: bank_transaction_mapping
+  label: Bank Transaction Mapping
+  fieldtype: Table
+  options: Bank Transaction Mapping
+- fieldname: plaid_access_token
+  label: Plaid Access Token
+  fieldtype: Text
+  read_only: true
+  hidden: true
+title_field: swift_number
+layout:
+- section: Bank Details
+  columns:
+  - - bank_name
+    - swift_number
+  - - website
+- section: Data Import Configuration
+  columns:
+  - - bank_transaction_mapping

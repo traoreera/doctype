@@ -1,0 +1,43 @@
+schema_version: 1
+name: Sales Invoice Payment
+label: Sales Invoice Payment
+istable: true
+fields:
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  read_only: true
+- fieldname: type
+  label: Type
+  fieldtype: Text
+  read_only: true
+- fieldname: base_amount
+  label: Base Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: clearance_date
+  label: Clearance Date
+  fieldtype: Date
+  read_only: true
+- fieldname: default
+  label: Default
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: reference_no
+  label: Reference No
+  fieldtype: Text

@@ -1,0 +1,10 @@
+schema_version: 1
+name: Interview Detail
+label: Interview Detail
+istable: true
+fields:
+- fieldname: interviewer
+  label: Interviewer
+  fieldtype: Link
+  options: Member
+  in_list_view: true

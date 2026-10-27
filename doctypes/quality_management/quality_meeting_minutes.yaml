@@ -1,0 +1,23 @@
+schema_version: 1
+name: Quality Meeting Minutes
+label: Quality Meeting Minutes
+istable: true
+fields:
+- fieldname: minute
+  label: Minute
+  fieldtype: TextEditor
+  in_list_view: true
+- fieldname: document_type
+  label: Document Type
+  fieldtype: Select
+  options:
+  - Quality Review
+  - Quality Action
+  - Quality Feedback
+  required: true
+  in_list_view: true
+- fieldname: document_name
+  label: Document Name
+  fieldtype: DynamicLink
+  options: document_type
+  in_list_view: true

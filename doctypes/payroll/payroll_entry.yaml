@@ -1,0 +1,202 @@
+schema_version: 1
+name: Payroll Entry
+label: Payroll Entry
+module: payroll
+submittable: true
+icon: wallet
+fields:
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: payroll_frequency
+  label: Payroll Frequency
+  fieldtype: Select
+  options:
+  - Monthly
+  - Fortnightly
+  - Bimonthly
+  - Weekly
+  - Daily
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+  in_list_view: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+- fieldname: number_of_employees
+  label: Number Of Employees
+  fieldtype: Int
+  read_only: true
+- fieldname: employees
+  label: Employees
+  fieldtype: Table
+  options: Payroll Employee Detail
+- fieldname: validate_attendance
+  label: Validate Attendance
+  fieldtype: Boolean
+  default: false
+- fieldname: salary_slip_based_on_timesheet
+  label: Salary Slip Based on Timesheet
+  fieldtype: Boolean
+  default: false
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+- fieldname: deduct_tax_for_unsubmitted_tax_exemption_proof
+  label: Deduct Tax For Unsubmitted Tax Exemption Proof
+  fieldtype: Boolean
+  default: false
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+  required: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: payment_account
+  label: Payment Account
+  fieldtype: Link
+  options: Account
+  description: Select Payment Account to make Bank Entry
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Payroll Entry
+  read_only: true
+- fieldname: salary_slips_created
+  label: Salary Slips Created
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: salary_slips_submitted
+  label: Salary Slips Submitted
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  in_list_view: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  required: true
+- fieldname: payroll_payable_account
+  label: Payroll Payable Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: error_message
+  label: Error Message
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Cancelled
+  - Queued
+  - Failed
+  read_only: true
+- fieldname: grade
+  label: Grade
+  fieldtype: Link
+  options: Employee Grade
+- fieldname: overtime_step
+  label: Overtime Slip Step
+  fieldtype: Select
+  options:
+  - Create
+  - Submit
+title_field: status
+layout:
+- tab: Overview
+  section: Informations principales
+  columns:
+  - - posting_date
+    - company
+  - - currency
+    - exchange_rate
+    - payroll_payable_account
+    - status
+- tab: Overview
+  section: Informations complémentaires 2
+  columns:
+  - - salary_slip_based_on_timesheet
+    - payroll_frequency
+    - start_date
+    - end_date
+  - - deduct_tax_for_unsubmitted_tax_exemption_proof
+- tab: Employees
+  section: Filter Employees
+  columns:
+  - - branch
+    - department
+  - - designation
+    - grade
+    - number_of_employees
+- tab: Employees
+  section: Employee Details
+  columns:
+  - - employees
+- tab: Employees
+  section: Informations complémentaires 5
+  columns:
+  - - validate_attendance
+- tab: Accounting & Payment
+  section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+- tab: Accounting & Payment
+  section: Payment Entry
+  columns:
+  - - payment_account
+  - - bank_account
+    - overtime_step
+- tab: Failure Details
+  section: Informations complémentaires 8
+  columns:
+  - - error_message
+- tab: Failure Details
+  section: Informations complémentaires 9
+  columns:
+  - - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: status
+  gantt:
+    start: start_date
+    end: end_date
+    title: status

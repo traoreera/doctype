@@ -1,0 +1,50 @@
+schema_version: 1
+name: Fiscal Year
+label: Fiscal Year
+module: accounts
+icon: calendar
+fields:
+- fieldname: year
+  label: Year Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  description: For e.g. 2012, 2012-13
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: year_start_date
+  label: Year Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: year_end_date
+  label: Year End Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: companies
+  label: Companies
+  fieldtype: Table
+  options: Fiscal Year Company
+- fieldname: auto_created
+  label: Auto Created
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: is_short_year
+  label: Is Short/Long Year
+  fieldtype: Boolean
+  description: More/Less than 12 months.
+  default: false
+title_field: year
+layout:
+- section: Dates et planification
+  columns:
+  - - year
+    - disabled
+    - is_short_year
+    - year_start_date
+    - year_end_date
+    - companies

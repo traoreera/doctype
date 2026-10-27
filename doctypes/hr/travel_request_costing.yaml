@@ -1,0 +1,28 @@
+schema_version: 1
+name: Travel Request Costing
+label: Travel Request Costing
+istable: true
+fields:
+- fieldname: expense_type
+  label: Expense Type
+  fieldtype: Link
+  options: Expense Claim Type
+  in_list_view: true
+- fieldname: sponsored_amount
+  label: Sponsored Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: funded_amount
+  label: Funded Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: total_amount
+  label: Total Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: comments
+  label: Comments
+  fieldtype: LongText

@@ -1,0 +1,59 @@
+schema_version: 1
+name: Supplier Group
+label: Supplier Group
+module: setup
+icon: users
+fields:
+- fieldname: supplier_group_name
+  label: Supplier Group Name
+  fieldtype: Text
+  required: true
+- fieldname: parent_supplier_group
+  label: Parent Supplier Group
+  fieldtype: Link
+  options: Supplier Group
+  in_list_view: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  description: Only leaf nodes are allowed in transaction
+  default: false
+- fieldname: payment_terms
+  label: Default Payment Terms Template
+  fieldtype: Link
+  options: Payment Terms Template
+- fieldname: accounts
+  label: Accounts
+  fieldtype: Table
+  options: Party Account
+  description: Mention if non-standard receivable account applicable
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  hidden: true
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Link
+  options: Supplier Group
+  hidden: true
+title_field: parent_supplier_group
+layout:
+- section: Références
+  columns:
+  - - supplier_group_name
+    - parent_supplier_group
+    - is_group
+- section: Credit Limit
+  columns:
+  - - payment_terms
+- section: Default Payable Account
+  columns:
+  - - accounts
+views:
+  tree:
+    parent: parent_supplier_group

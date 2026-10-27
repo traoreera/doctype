@@ -1,0 +1,109 @@
+schema_version: 1
+name: Work Order Item
+label: Work Order Item
+istable: true
+fields:
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: source_warehouse
+  label: Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: required_qty
+  label: Required Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: transferred_qty
+  label: Transferred Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: requested_qty
+  label: Requested Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: picked_qty
+  label: Picked Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: allow_alternative_item
+  label: Allow Alternative Item
+  fieldtype: Boolean
+  default: false
+- fieldname: include_item_in_manufacturing
+  label: Include Item In Manufacturing
+  fieldtype: Boolean
+  default: false
+- fieldname: consumed_qty
+  label: Consumed Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: available_qty_at_source_warehouse
+  label: Available Qty at Source Warehouse
+  fieldtype: Number
+  read_only: true
+- fieldname: available_qty_at_wip_warehouse
+  label: Available Qty at WIP Warehouse
+  fieldtype: Number
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: returned_qty
+  label: 'Returned Qty '
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: subcontracted_qty
+  label: Subcontracted Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: operation_row_id
+  label: Operation Row Id
+  fieldtype: Int
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: stock_reserved_qty
+  label: Stock Reserved Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: is_additional_item
+  label: Is Additional Item
+  fieldtype: Boolean
+  read_only: true
+- fieldname: voucher_detail_reference
+  label: Voucher Detail Reference
+  fieldtype: Text
+  read_only: true
+- fieldname: is_customer_provided_item
+  label: Is Customer Provided Item
+  fieldtype: Boolean
+  read_only: true

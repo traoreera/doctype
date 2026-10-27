@@ -1,0 +1,264 @@
+schema_version: 1
+name: Lead
+label: Lead
+module: crm
+icon: user-plus
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - CRM-LEAD-.YYYY.-
+- fieldname: lead_name
+  label: Full Name
+  fieldtype: Text
+  read_only: true
+- fieldname: company_name
+  label: Organization Name
+  fieldtype: Text
+  in_list_view: true
+- fieldname: email_id
+  label: Email
+  fieldtype: Text
+- fieldname: lead_owner
+  label: Lead Owner
+  fieldtype: Link
+  options: Member
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Lead
+  - Open
+  - Replied
+  - Opportunity
+  - Quotation
+  - Lost Quotation
+  - Interested
+  - Converted
+  - Do Not Contact
+  default: Lead
+  required: true
+  in_list_view: true
+- fieldname: salutation
+  label: Salutation
+  fieldtype: Link
+  options: Salutation
+- fieldname: gender
+  label: Gender
+  fieldtype: Link
+  options: Gender
+- fieldname: customer
+  label: From Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+- fieldname: phone
+  label: Phone
+  fieldtype: Text
+- fieldname: mobile_no
+  label: Mobile No
+  fieldtype: Text
+- fieldname: fax
+  label: Fax
+  fieldtype: Text
+- fieldname: type
+  label: Lead Type
+  fieldtype: Select
+  options:
+  - Client
+  - Channel Partner
+  - Consultant
+- fieldname: market_segment
+  label: Market Segment
+  fieldtype: Link
+  options: Market Segment
+- fieldname: industry
+  label: Industry
+  fieldtype: Link
+  options: Industry Type
+- fieldname: request_type
+  label: Request Type
+  fieldtype: Select
+  options:
+  - Product Enquiry
+  - Request for Information
+  - Suggestions
+  - Other
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: website
+  label: Website
+  fieldtype: Text
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+  in_list_view: true
+- fieldname: unsubscribed
+  label: Unsubscribed
+  fieldtype: Boolean
+  default: false
+- fieldname: blog_subscriber
+  label: Blog Subscriber
+  fieldtype: Boolean
+  default: false
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: language
+  label: Print Language
+  fieldtype: Link
+  options: Language
+- fieldname: first_name
+  label: First Name
+  fieldtype: Text
+- fieldname: middle_name
+  label: Middle Name
+  fieldtype: Text
+- fieldname: last_name
+  label: Last Name
+  fieldtype: Text
+- fieldname: no_of_employees
+  label: No of Employees
+  fieldtype: Select
+  options:
+  - 1-10
+  - 11-50
+  - 51-200
+  - 201-500
+  - 501-1000
+  - 1000+
+- fieldname: whatsapp_no
+  label: WhatsApp
+  fieldtype: Text
+- fieldname: phone_ext
+  label: Phone Ext.
+  fieldtype: Text
+- fieldname: qualified_by
+  label: Qualified By
+  fieldtype: Link
+  options: Member
+- fieldname: qualified_on
+  label: Qualified on
+  fieldtype: Date
+- fieldname: qualification_status
+  label: Qualification Status
+  fieldtype: Select
+  options:
+  - Unqualified
+  - In Process
+  - Qualified
+- fieldname: job_title
+  label: Job Title
+  fieldtype: Text
+  in_list_view: true
+- fieldname: annual_revenue
+  label: Annual Revenue
+  fieldtype: Currency
+  decimals: 2
+- fieldname: notes
+  label: Notes
+  fieldtype: Table
+  options: CRM Note
+  hidden: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: city
+  label: City
+  fieldtype: Text
+- fieldname: state
+  label: State/Province
+  fieldtype: Text
+- fieldname: country
+  label: Country
+  fieldtype: Link
+  options: Country
+- fieldname: utm_content
+  label: Content
+  fieldtype: Text
+- fieldname: utm_source
+  label: Source
+  fieldtype: Link
+  options: UTM Source
+- fieldname: utm_medium
+  label: Medium
+  fieldtype: Link
+  options: UTM Medium
+- fieldname: utm_campaign
+  label: Campaign
+  fieldtype: Link
+  options: UTM Campaign
+title_field: lead_name
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - salutation
+    - first_name
+    - middle_name
+    - last_name
+  - - lead_name
+    - job_title
+    - gender
+  - - lead_owner
+    - status
+    - customer
+    - type
+    - request_type
+- tab: Général
+  section: Contact Info
+  columns:
+  - - email_id
+    - website
+  - - mobile_no
+    - whatsapp_no
+  - - phone
+    - phone_ext
+- tab: Général
+  section: Organization
+  columns:
+  - - company_name
+    - no_of_employees
+  - - annual_revenue
+    - industry
+    - market_segment
+  - - territory
+    - fax
+- tab: Général
+  section: Address & Contacts
+  columns:
+  - - city
+    - state
+    - country
+- tab: Général
+  section: Analytics
+  columns:
+  - - utm_source
+    - utm_medium
+  - - utm_campaign
+    - utm_content
+- tab: Général
+  section: Qualification
+  columns:
+  - - qualification_status
+  - - qualified_by
+    - qualified_on
+- tab: Général
+  section: Additional Information
+  columns:
+  - - company
+  - - language
+  - - disabled
+    - unsubscribed
+    - blog_subscriber

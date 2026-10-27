@@ -1,0 +1,105 @@
+schema_version: 1
+name: Journal Entry Account
+label: Journal Entry Account
+istable: true
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: account_type
+  label: Account Type
+  fieldtype: Text
+  hidden: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+  description: If Income or Expense
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+  in_list_view: true
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+  in_list_view: true
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+- fieldname: debit_in_account_currency
+  label: Debit
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: debit
+  label: Debit in Company Currency
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: credit_in_account_currency
+  label: Credit
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: credit
+  label: Credit in Company Currency
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: reference_type
+  label: Reference Type
+  fieldtype: Text
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  options: reference_type
+- fieldname: reference_due_date
+  label: Reference Due Date
+  fieldtype: Date
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: is_advance
+  label: Is Advance
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: user_remark
+  label: User Remark
+  fieldtype: LongText
+- fieldname: against_account
+  label: Against Account
+  fieldtype: LongText
+  hidden: true
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: reference_detail_no
+  label: Reference Detail No
+  fieldtype: Text
+  hidden: true
+- fieldname: advance_voucher_type
+  label: Advance Voucher Type
+  fieldtype: Text
+  read_only: true
+- fieldname: advance_voucher_no
+  label: Advance Voucher No
+  fieldtype: DynamicLink
+  options: advance_voucher_type
+  read_only: true
+- fieldname: is_tax_withholding_account
+  label: Is Tax Withholding Account
+  fieldtype: Boolean
+  read_only: true

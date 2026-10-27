@@ -1,0 +1,74 @@
+schema_version: 1
+name: Overdue Payment
+label: Overdue Payment
+istable: true
+fields:
+- fieldname: payment_term
+  label: Payment Term
+  fieldtype: Link
+  options: Payment Term
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  read_only: true
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+  read_only: true
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+  read_only: true
+- fieldname: invoice_portion
+  label: Invoice Portion
+  fieldtype: Percent
+  read_only: true
+- fieldname: payment_amount
+  label: Payment Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: outstanding
+  label: Outstanding
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discounted_amount
+  label: Discounted Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: sales_invoice
+  label: Sales Invoice
+  fieldtype: Link
+  options: Sales Invoice
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: payment_schedule
+  label: Payment Schedule
+  fieldtype: Text
+  read_only: true
+- fieldname: overdue_days
+  label: Overdue Days
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: dunning_level
+  label: Dunning Level
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: interest
+  label: Interest
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true

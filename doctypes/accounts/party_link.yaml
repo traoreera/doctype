@@ -1,0 +1,30 @@
+schema_version: 1
+name: Party Link
+label: Party Link
+module: accounts
+icon: link
+fields:
+- fieldname: primary_role
+  label: Primary Role
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: secondary_role
+  label: Secondary Role
+  fieldtype: Text
+- fieldname: primary_party
+  label: Primary Party
+  fieldtype: DynamicLink
+  options: primary_role
+- fieldname: secondary_party
+  label: Secondary Party
+  fieldtype: DynamicLink
+  options: secondary_role
+title_field: primary_role
+layout:
+- section: Références
+  columns:
+  - - primary_role
+    - secondary_role
+  - - primary_party
+    - secondary_party

@@ -1,0 +1,10 @@
+schema_version: 1
+name: Process Statement Of Accounts CC
+label: Process Statement Of Accounts CC
+istable: true
+fields:
+- fieldname: cc
+  label: CC
+  fieldtype: Link
+  options: Member
+  in_list_view: true

@@ -1,0 +1,43 @@
+schema_version: 1
+name: Communication Medium
+label: Communication Medium
+module: communication
+icon: phone
+fields:
+- fieldname: communication_medium_type
+  label: Communication Medium Type
+  fieldtype: Select
+  options:
+  - Voice
+  - Email
+  - Chat
+  required: true
+  in_list_view: true
+- fieldname: catch_all
+  label: Catch All
+  fieldtype: Link
+  options: Employee Group
+  description: If there is no assigned timeslot, then communication will be handled by this group
+- fieldname: provider
+  label: Provider
+  fieldtype: Link
+  options: Supplier
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: timeslots
+  label: Timeslots
+  fieldtype: Table
+  options: Communication Medium Timeslot
+title_field: communication_medium_type
+layout:
+- section: État et options
+  columns:
+  - - communication_medium_type
+  - - catch_all
+    - provider
+    - disabled
+- section: Timeslots
+  columns:
+  - - timeslots

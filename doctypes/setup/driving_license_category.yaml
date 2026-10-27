@@ -1,0 +1,21 @@
+schema_version: 1
+name: Driving License Category
+label: Driving License Category
+istable: true
+fields:
+- fieldname: class
+  label: Driver licence class
+  fieldtype: Text
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: Text
+  in_list_view: true
+- fieldname: issuing_date
+  label: Issuing Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: expiry_date
+  label: Expiry Date
+  fieldtype: Date
+  in_list_view: true

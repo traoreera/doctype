@@ -1,0 +1,426 @@
+schema_version: 1
+name: Employee
+label: Employee
+module: setup
+icon: user
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Text
+  hidden: true
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-EMP-
+- fieldname: salutation
+  label: Salutation
+  fieldtype: Link
+  options: Salutation
+- fieldname: first_name
+  label: First Name
+  fieldtype: Text
+  required: true
+- fieldname: middle_name
+  label: Middle Name
+  fieldtype: Text
+- fieldname: last_name
+  label: Last Name
+  fieldtype: Text
+- fieldname: employee_name
+  label: Full Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Active
+  - Inactive
+  - Suspended
+  - Left
+  default: Active
+  required: true
+- fieldname: employee_number
+  label: Employee Number
+  fieldtype: Text
+- fieldname: gender
+  label: Gender
+  fieldtype: Link
+  options: Gender
+  required: true
+- fieldname: date_of_birth
+  label: Date of Birth
+  fieldtype: Date
+  required: true
+- fieldname: date_of_joining
+  label: Date of Joining
+  fieldtype: Date
+  required: true
+- fieldname: emergency_phone_number
+  label: Emergency Phone
+  fieldtype: Text
+- fieldname: person_to_be_contacted
+  label: Emergency Contact Name
+  fieldtype: Text
+- fieldname: relation
+  label: Relation
+  fieldtype: Text
+- fieldname: user_id
+  label: User ID
+  fieldtype: Link
+  options: Member
+  description: System User (login) ID. If set, it will become default for all HR forms.
+- fieldname: create_user_permission
+  label: Create User Permission
+  fieldtype: Boolean
+  description: This will restrict user access to other employee records
+  default: true
+- fieldname: create_user_automatically
+  label: Create User Automatically
+  fieldtype: Boolean
+  description: Creates a User account for this employee using the Preferred, Company, or Personal email.
+  default: false
+- fieldname: scheduled_confirmation_date
+  label: Offer Date
+  fieldtype: Date
+- fieldname: final_confirmation_date
+  label: Confirmation Date
+  fieldtype: Date
+- fieldname: contract_end_date
+  label: Contract End Date
+  fieldtype: Date
+- fieldname: notice_number_of_days
+  label: Notice (days)
+  fieldtype: Int
+- fieldname: date_of_retirement
+  label: Date Of Retirement
+  fieldtype: Date
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  in_list_view: true
+- fieldname: reports_to
+  label: Reports to
+  fieldtype: Link
+  options: Employee
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+  in_list_view: true
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+  description: Applicable Holiday List
+- fieldname: salary_mode
+  label: Salary Mode
+  fieldtype: Select
+  options:
+  - Bank
+  - Cash
+  - Cheque
+- fieldname: bank_name
+  label: Bank Name
+  fieldtype: Text
+- fieldname: bank_ac_no
+  label: Bank A/C No.
+  fieldtype: Text
+- fieldname: cell_number
+  label: Mobile
+  fieldtype: Text
+- fieldname: prefered_contact_email
+  label: Preferred Contact Email
+  fieldtype: Select
+  options:
+  - Company Email
+  - Personal Email
+  - User ID
+- fieldname: prefered_email
+  label: Preferred Email
+  fieldtype: Text
+  read_only: true
+- fieldname: company_email
+  label: Company Email
+  fieldtype: Text
+  description: Provide Email Address registered in company
+- fieldname: personal_email
+  label: Personal Email
+  fieldtype: Text
+- fieldname: unsubscribed
+  label: Unsubscribed
+  fieldtype: Boolean
+  default: false
+- fieldname: permanent_accommodation_type
+  label: Permanent Address Is
+  fieldtype: Select
+  options:
+  - Rented
+  - Owned
+- fieldname: permanent_address
+  label: Permanent Address
+  fieldtype: LongText
+- fieldname: current_accommodation_type
+  label: Current Address Is
+  fieldtype: Select
+  options:
+  - Rented
+  - Owned
+- fieldname: current_address
+  label: Current Address
+  fieldtype: LongText
+- fieldname: bio
+  label: Bio / Cover Letter
+  fieldtype: TextEditor
+  description: Short biography for website and other publications.
+- fieldname: passport_number
+  label: Passport Number
+  fieldtype: Text
+- fieldname: date_of_issue
+  label: Date of Issue
+  fieldtype: Date
+- fieldname: valid_upto
+  label: Valid Up To
+  fieldtype: Date
+- fieldname: place_of_issue
+  label: Place of Issue
+  fieldtype: Text
+- fieldname: marital_status
+  label: Marital Status
+  fieldtype: Select
+  options:
+  - Single
+  - Married
+  - Divorced
+  - Widowed
+- fieldname: blood_group
+  label: Blood Group
+  fieldtype: Select
+  options:
+  - A+
+  - A-
+  - B+
+  - B-
+  - AB+
+  - AB-
+  - O+
+  - O-
+- fieldname: family_background
+  label: Family Background
+  fieldtype: LongText
+  description: Here you can maintain family details like name and occupation of parent, spouse and children
+- fieldname: health_details
+  label: Health Details
+  fieldtype: LongText
+  description: Here you can maintain height, weight, allergies, medical concerns etc
+- fieldname: education
+  label: Education
+  fieldtype: Table
+  options: Employee Education
+- fieldname: external_work_history
+  label: External Work History
+  fieldtype: Table
+  options: Employee External Work History
+- fieldname: internal_work_history
+  label: Internal Work History
+  fieldtype: Table
+  options: Employee Internal Work History
+- fieldname: resignation_letter_date
+  label: Resignation Letter Date
+  fieldtype: Date
+- fieldname: relieving_date
+  label: Relieving Date
+  fieldtype: Date
+- fieldname: reason_for_leaving
+  label: Reason for Leaving
+  fieldtype: LongText
+- fieldname: leave_encashed
+  label: Leave Encashed?
+  fieldtype: Select
+  options:
+  - 'Yes'
+  - 'No'
+- fieldname: encashment_date
+  label: Encashment Date
+  fieldtype: Date
+- fieldname: held_on
+  label: Exit Interview Held On
+  fieldtype: Date
+- fieldname: new_workplace
+  label: New Workplace
+  fieldtype: Text
+- fieldname: feedback
+  label: Feedback
+  fieldtype: LongText
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Text
+  hidden: true
+- fieldname: attendance_device_id
+  label: Attendance Device ID (Biometric/RF tag ID)
+  fieldtype: Text
+- fieldname: salary_currency
+  label: Salary Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: ctc
+  label: Cost to Company (CTC)
+  fieldtype: Currency
+  decimals: 2
+- fieldname: iban
+  label: IBAN
+  fieldtype: Text
+title_field: status
+layout:
+- tab: Overview
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - first_name
+    - middle_name
+    - last_name
+    - employee_name
+  - - gender
+    - date_of_birth
+    - salutation
+  - - date_of_joining
+    - status
+- tab: Overview
+  section: User Details
+  columns:
+  - - user_id
+    - create_user_permission
+  - - create_user_automatically
+- tab: Overview
+  section: Company Details
+  columns:
+  - - company
+    - department
+    - employee_number
+  - - designation
+    - reports_to
+  - - branch
+- tab: Address & Contacts
+  section: Références
+  columns:
+  - - cell_number
+  - - company_email
+    - personal_email
+  - - prefered_contact_email
+    - prefered_email
+    - unsubscribed
+- tab: Address & Contacts
+  section: Address
+  columns:
+  - - current_address
+    - current_accommodation_type
+  - - permanent_address
+    - permanent_accommodation_type
+- tab: Address & Contacts
+  section: Emergency Contact
+  columns:
+  - - person_to_be_contacted
+  - - emergency_phone_number
+  - - relation
+- tab: Attendance & Leaves
+  section: Dates et planification
+  columns:
+  - - attendance_device_id
+  - - holiday_list
+- tab: Salary
+  section: Comptabilité et montants
+  columns:
+  - - ctc
+    - salary_currency
+    - salary_mode
+- tab: Salary
+  section: Bank Details
+  columns:
+  - - bank_name
+  - - bank_ac_no
+    - iban
+- tab: Personal Details
+  section: Détails
+  columns:
+  - - marital_status
+    - family_background
+  - - blood_group
+    - health_details
+- tab: Personal Details
+  section: Passport Details
+  columns:
+  - - passport_number
+    - valid_upto
+  - - date_of_issue
+    - place_of_issue
+- tab: Profile
+  section: Informations complémentaires 12
+  columns:
+  - - bio
+- tab: Profile
+  section: Educational Qualification
+  columns:
+  - - education
+- tab: Profile
+  section: Previous Work Experience
+  columns:
+  - - external_work_history
+- tab: Profile
+  section: History In Company
+  columns:
+  - - internal_work_history
+- tab: Joining
+  section: Dates et planification
+  columns:
+  - - scheduled_confirmation_date
+  - - final_confirmation_date
+    - contract_end_date
+  - - notice_number_of_days
+    - date_of_retirement
+- tab: Exit
+  section: Dates et planification
+  columns:
+  - - resignation_letter_date
+    - relieving_date
+  - - held_on
+    - new_workplace
+  - - leave_encashed
+    - encashment_date
+- tab: Exit
+  section: Feedback
+  columns:
+  - - reason_for_leaving
+  - - feedback
+views:
+  kanban:
+    field: status
+    card_fields: null
+  tree:
+    parent: reports_to

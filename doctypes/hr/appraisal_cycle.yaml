@@ -1,0 +1,113 @@
+schema_version: 1
+name: Appraisal Cycle
+label: Appraisal Cycle
+module: hr
+icon: refresh-cw
+fields:
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: appraisees
+  label: Appraisees
+  fieldtype: Table
+  options: Appraisee
+- fieldname: cycle_name
+  label: Cycle Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: kra_evaluation_method
+  label: KRA Evaluation Method
+  fieldtype: Select
+  options:
+  - Automated Based on Goal Progress
+  - Manual Rating
+  default: Automated Based on Goal Progress
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Not Started
+  - In Progress
+  - Completed
+  default: Not Started
+  in_list_view: true
+  read_only: true
+- fieldname: final_score_formula
+  label: Final Score Formula
+  fieldtype: Code
+- fieldname: calculate_final_score_based_on_formula
+  label: Calculate Final Score based on Formula
+  fieldtype: Boolean
+  description: By default, the Final Score is calculated as the average of Goal Score, Feedback Score, and Self
+    Appraisal Score. Enable this to set a different formula
+  default: false
+title_field: status
+layout:
+- tab: Overview
+  section: Informations principales
+  columns:
+  - - cycle_name
+    - company
+    - status
+  - - start_date
+    - end_date
+- tab: Overview
+  section: Description
+  columns:
+  - - description
+- tab: Overview
+  section: Settings
+  columns:
+  - - kra_evaluation_method
+- tab: Overview
+  section: Informations complémentaires 4
+  columns:
+  - - calculate_final_score_based_on_formula
+    - final_score_formula
+- tab: Applicable For
+  section: Filters
+  columns:
+  - - branch
+    - department
+  - - designation
+- tab: Applicable For
+  section: Employees
+  columns:
+  - - appraisees
+views:
+  calendar:
+    start: start_date
+    title: status
+  gantt:
+    start: start_date
+    end: end_date
+    title: status

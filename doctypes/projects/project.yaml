@@ -1,0 +1,295 @@
+schema_version: 1
+name: Project
+label: Project
+module: projects
+icon: folder-kanban
+fields:
+- fieldname: project_name
+  label: Project Name
+  fieldtype: Text
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - On hold
+  - Completed
+  - Cancelled
+  default: Open
+- fieldname: project_type
+  label: Project Type
+  fieldtype: Link
+  options: Project Type
+  in_list_view: true
+- fieldname: is_active
+  label: Is Active
+  fieldtype: Select
+  options:
+  - 'Yes'
+  - 'No'
+- fieldname: percent_complete_method
+  label: '% Complete Method'
+  fieldtype: Select
+  options:
+  - Manual
+  - Task Completion
+  - Task Progress
+  - Task Weight
+  default: Task Completion
+- fieldname: percent_complete
+  label: '% Completed'
+  fieldtype: Percent
+  in_list_view: true
+- fieldname: project_template
+  label: From Template
+  fieldtype: Link
+  options: Project Template
+- fieldname: expected_start_date
+  label: Expected Start date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: expected_end_date
+  label: Expected End date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: priority
+  label: Priority
+  fieldtype: Select
+  options:
+  - Low
+  - Medium
+  - High
+  default: Medium
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  in_list_view: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+- fieldname: users
+  label: Users
+  fieldtype: Table
+  options: Project User
+  description: Project will be accessible on the website to these users
+- fieldname: copied_from
+  label: Copied From
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: notes
+  label: Notes
+  fieldtype: TextEditor
+- fieldname: actual_start_date
+  label: Actual Start date (via Timesheet)
+  fieldtype: Date
+  read_only: true
+- fieldname: actual_time
+  label: Actual Time in hours (via Timesheet)
+  fieldtype: Number
+  read_only: true
+- fieldname: actual_end_date
+  label: Actual End date (via Timesheet)
+  fieldtype: Date
+  read_only: true
+- fieldname: estimated_costing
+  label: Estimated Cost
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: total_costing_amount
+  label: Total Costing Amount (via Timesheet)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_purchase_cost
+  label: Total Purchase Cost (via Purchase Invoice)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: total_sales_amount
+  label: Total Sales amount (via Sales Order)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_billable_amount
+  label: Total Billable amount (via Timesheet)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_billed_amount
+  label: Total Billed amount (via Sales Invoice)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_consumed_material_cost
+  label: Total Consumed Material Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: cost_center
+  label: Default Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: gross_margin
+  label: Gross Margin
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: per_gross_margin
+  label: Gross Margin %
+  fieldtype: Percent
+  read_only: true
+- fieldname: collect_progress
+  label: Email users for progress updates
+  fieldtype: Boolean
+  description: Emails the users in Portal users on the schedule below, asking for a status update. Needs email accounts
+    set up for sending and receiving.
+  default: false
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+- fieldname: frequency
+  label: Frequency to collect progress
+  fieldtype: Select
+  options:
+  - Hourly
+  - Twice Daily
+  - Daily
+  - Weekly
+- fieldname: from_time
+  label: From time
+  fieldtype: Time
+- fieldname: to_time
+  label: To time
+  fieldtype: Time
+- fieldname: first_email
+  label: First email
+  fieldtype: Time
+- fieldname: second_email
+  label: Second email
+  fieldtype: Time
+- fieldname: daily_time_to_send
+  label: Daily time to send
+  fieldtype: Time
+- fieldname: day_to_send
+  label: Day to Send
+  fieldtype: Select
+  options:
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  - Saturday
+  - Sunday
+- fieldname: weekly_time_to_send
+  label: Weekly time to send
+  fieldtype: Time
+- fieldname: message
+  label: Message
+  fieldtype: LongText
+  description: Message will be sent to the users to get their status on the Project
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - PROJ-.####
+  required: true
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+title_field: subject
+layout:
+- tab: Details
+  section: Références
+  columns:
+  - - naming_series
+    - project_name
+    - status
+    - project_type
+    - percent_complete_method
+  - - project_template
+    - priority
+    - department
+    - is_active
+    - percent_complete
+- tab: Details
+  section: Timeline
+  columns:
+  - - expected_start_date
+    - expected_end_date
+  - - actual_start_date
+    - actual_end_date
+    - actual_time
+- tab: Customer
+  section: Références
+  columns:
+  - - customer
+  - - sales_order
+- tab: Customer
+  section: Notes
+  columns:
+  - - notes
+- tab: Costing
+  section: Accounting
+  columns:
+  - - company
+  - - cost_center
+- tab: Costing
+  section: Costing and Billing
+  columns:
+  - - estimated_costing
+    - total_costing_amount
+    - total_purchase_cost
+  - - total_sales_amount
+    - total_billable_amount
+    - total_billed_amount
+    - total_consumed_material_cost
+- tab: Costing
+  section: Margin
+  columns:
+  - - gross_margin
+  - - per_gross_margin
+- tab: Progress updates
+  section: Dates et planification
+  columns:
+  - - collect_progress
+    - holiday_list
+    - frequency
+    - from_time
+    - to_time
+    - first_email
+    - second_email
+    - daily_time_to_send
+    - day_to_send
+    - weekly_time_to_send
+  - - subject
+    - message
+- tab: More Info
+  section: Références
+  columns:
+  - - users
+views:
+  kanban:
+    field: status
+    card_fields:
+    - subject
+  gantt:
+    start: expected_start_date
+    end: expected_end_date
+    title: subject
+    color: status

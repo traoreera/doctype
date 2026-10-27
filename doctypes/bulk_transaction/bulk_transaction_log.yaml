@@ -1,0 +1,36 @@
+schema_version: 1
+name: Bulk Transaction Log
+label: Bulk Transaction Log
+module: bulk_transaction
+icon: file
+fields:
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: log_entries
+  label: Log Entries
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: succeeded
+  label: Succeeded
+  fieldtype: Int
+  read_only: true
+- fieldname: failed
+  label: Failed
+  fieldtype: Int
+  read_only: true
+layout:
+- section: Dates et planification
+  columns:
+  - - date
+  - - log_entries
+- section: Informations complémentaires 2
+  columns:
+  - - succeeded
+  - - failed
+views:
+  calendar:
+    start: date

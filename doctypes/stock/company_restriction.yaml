@@ -1,0 +1,6 @@
+schema_version: 1
+name: "Company Restriction"
+label: "Company Restriction"
+istable: true
+fields:
+  - { fieldname: company, label: "Company", fieldtype: Link, options: "Company", required: true, in_list_view: true }

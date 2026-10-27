@@ -1,0 +1,91 @@
+schema_version: 1
+name: Subscription Plan
+label: Subscription Plan
+module: accounts
+icon: calendar-sync
+fields:
+- fieldname: plan_name
+  label: Plan Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: item
+  label: Item
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: price_determination
+  label: Subscription Price Based On
+  fieldtype: Select
+  options:
+  - Fixed Rate
+  - Based On Price List
+  - Monthly Rate
+  required: true
+- fieldname: cost
+  label: Cost
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: billing_interval
+  label: Billing Interval
+  fieldtype: Select
+  options:
+  - Day
+  - Week
+  - Month
+  - Year
+  default: Day
+  required: true
+  in_list_view: true
+- fieldname: billing_interval_count
+  label: Billing Interval Count
+  fieldtype: Int
+  required: true
+  description: Number of intervals for the interval field e.g if Interval is 'Days' and Billing Interval Count is
+    3, invoices will be generated every 3 days
+  default: 1
+- fieldname: payment_gateway
+  label: Payment Gateway
+  fieldtype: Link
+  options: Payment Gateway Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: product_price_id
+  label: Product Price ID
+  fieldtype: Text
+title_field: plan_name
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - plan_name
+    - currency
+  - - item
+- section: Comptabilité et montants
+  columns:
+  - - price_determination
+  - - cost
+    - price_list
+- section: Informations complémentaires 3
+  columns:
+  - - billing_interval
+  - - billing_interval_count
+- section: Payment Plan
+  columns:
+  - - product_price_id
+  - - payment_gateway
+- section: Accounting Dimensions
+  columns:
+  - - cost_center

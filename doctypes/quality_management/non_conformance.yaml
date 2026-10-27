@@ -1,0 +1,62 @@
+schema_version: 1
+name: Non Conformance
+label: Non Conformance
+module: quality_management
+icon: triangle-alert
+fields:
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: procedure
+  label: Procedure
+  fieldtype: Link
+  options: Quality Procedure
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Resolved
+  - Cancelled
+  required: true
+  in_list_view: true
+- fieldname: details
+  label: Details
+  fieldtype: TextEditor
+- fieldname: process_owner
+  label: Process Owner
+  fieldtype: Text
+  read_only: true
+- fieldname: full_name
+  label: Full Name
+  fieldtype: Text
+  read_only: true
+- fieldname: corrective_action
+  label: Corrective Action
+  fieldtype: TextEditor
+- fieldname: preventive_action
+  label: Preventive Action
+  fieldtype: TextEditor
+title_field: subject
+layout:
+- section: État et options
+  columns:
+  - - subject
+    - procedure
+    - process_owner
+    - full_name
+  - - status
+- section: Détails
+  columns:
+  - - details
+    - corrective_action
+    - preventive_action
+views:
+  kanban:
+    field: status
+    card_fields:
+    - subject

@@ -1,0 +1,81 @@
+schema_version: 1
+name: Coupon Code
+label: Coupon Code
+module: accounts
+icon: ticket-percent
+fields:
+- fieldname: coupon_name
+  label: Coupon Name
+  fieldtype: Text
+  required: true
+  description: e.g. "Summer Holiday 2019 Offer 20"
+- fieldname: coupon_type
+  label: Coupon Type
+  fieldtype: Select
+  options:
+  - Promotional
+  - Gift Card
+  required: true
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: coupon_code
+  label: Coupon Code
+  fieldtype: Text
+  description: unique e.g. SAVE20  To be used to get discount
+- fieldname: pricing_rule
+  label: Pricing Rule
+  fieldtype: Link
+  options: Pricing Rule
+- fieldname: valid_from
+  label: Valid From
+  fieldtype: Date
+  in_list_view: true
+- fieldname: valid_upto
+  label: Valid Up To
+  fieldtype: Date
+- fieldname: maximum_use
+  label: Maximum Use
+  fieldtype: Int
+- fieldname: used
+  label: Used
+  fieldtype: Int
+  read_only: true
+- fieldname: description
+  label: Coupon Description
+  fieldtype: TextEditor
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Coupon Code
+  read_only: true
+- fieldname: from_external_ecomm_platform
+  label: From External Ecomm Platform
+  fieldtype: Boolean
+  default: false
+title_field: customer
+layout:
+- section: Références
+  columns:
+  - - coupon_name
+    - coupon_type
+    - customer
+  - - coupon_code
+    - from_external_ecomm_platform
+    - pricing_rule
+- section: Validity and Usage
+  columns:
+  - - valid_from
+    - valid_upto
+    - maximum_use
+    - used
+  - - description
+    - amended_from
+views:
+  calendar:
+    start: valid_from
+    title: customer
+  tree:
+    parent: amended_from

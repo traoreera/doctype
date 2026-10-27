@@ -1,0 +1,17 @@
+schema_version: 1
+name: Job Card Scheduled Time
+label: Job Card Scheduled Time
+istable: true
+fields:
+- fieldname: from_time
+  label: From Time
+  fieldtype: Datetime
+  in_list_view: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Datetime
+  in_list_view: true
+- fieldname: time_in_mins
+  label: Time (In Mins)
+  fieldtype: Number
+  in_list_view: true

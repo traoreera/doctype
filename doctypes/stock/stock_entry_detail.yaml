@@ -1,0 +1,59 @@
+schema_version: 1
+name: "Stock Entry Detail"
+label: "Stock Entry Detail"
+istable: true
+fields:
+  - { fieldname: barcode, label: "Barcode", fieldtype: Text }
+  - { fieldname: s_warehouse, label: "Source Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true }
+  - { fieldname: t_warehouse, label: "Target Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true }
+  - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
+  - { fieldname: description, label: "Description", fieldtype: TextEditor }
+  - { fieldname: qty, label: "Qty", fieldtype: Number, required: true, in_list_view: true }
+  - { fieldname: basic_rate, label: "Basic Rate (as per Stock UOM)", fieldtype: Currency, decimals: 2, in_list_view: true }
+  - { fieldname: basic_amount, label: "Basic Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: additional_cost, label: "Additional Cost", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: valuation_rate, label: "Valuation Rate", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", required: true }
+  - { fieldname: conversion_factor, label: "Conversion Factor", fieldtype: Number, required: true }
+  - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", required: true, read_only: true }
+  - { fieldname: transfer_qty, label: "Qty as per Stock UOM", fieldtype: Number, read_only: true }
+  - { fieldname: retain_sample, label: "Retain Sample", fieldtype: Boolean, read_only: true }
+  - { fieldname: sample_quantity, label: "Sample Quantity", fieldtype: Int }
+  - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
+  - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }
+  - { fieldname: quality_inspection, label: "Quality Inspection", fieldtype: Link, options: "Quality Inspection" }
+  - { fieldname: expense_account, label: "Difference Account", fieldtype: Link, options: "Account" }
+  - { fieldname: cost_center, label: "Cost Center", fieldtype: Link, options: "Cost Center" }
+  - { fieldname: allow_zero_valuation_rate, label: "Allow Zero Valuation Rate", fieldtype: Boolean, default: false }
+  - { fieldname: actual_qty, label: "Actual Qty (at source/target)", fieldtype: Number, read_only: true }
+  - { fieldname: bom_no, label: "BOM No", fieldtype: Link, options: "BOM", hidden: true, description: "BOM No. for a Finished Good Item" }
+  - { fieldname: allow_alternative_item, label: "Allow Alternative Item", fieldtype: Boolean, read_only: true }
+  - { fieldname: material_request, label: "Material Request", fieldtype: Link, options: "Material Request", read_only: true, hidden: true, description: "Material Request used to make this Stock Entry" }
+  - { fieldname: material_request_item, label: "Material Request Item", fieldtype: Link, options: "Material Request Item", read_only: true, hidden: true }
+  - { fieldname: pick_list_item, label: "Pick List Item", fieldtype: Link, options: "Pick List Item", read_only: true, hidden: true }
+  - { fieldname: original_item, label: "Original Item", fieldtype: Link, options: "Item", read_only: true, hidden: true }
+  - { fieldname: subcontracted_item, label: "Subcontracted Item", fieldtype: Link, options: "Item" }
+  - { fieldname: against_stock_entry, label: "Against Stock Entry", fieldtype: Link, options: "Stock Entry", read_only: true }
+  - { fieldname: ste_detail, label: "Stock Entry Child", fieldtype: Text, read_only: true }
+  - { fieldname: transferred_qty, label: "Transferred Qty", fieldtype: Number, read_only: true }
+  - { fieldname: item_group, label: "Item Group", fieldtype: Text }
+  - { fieldname: reference_purchase_receipt, label: "Reference Purchase Receipt", fieldtype: Link, options: "Purchase Receipt", read_only: true }
+  - { fieldname: project, label: "Project", fieldtype: Link, options: "Project" }
+  - { fieldname: po_detail, label: "PO Supplied Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: sco_rm_detail, label: "SCO Supplied Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: set_basic_rate_manually, label: "Set Basic Rate Manually", fieldtype: Boolean, default: false }
+  - { fieldname: putaway_rule, label: "Putaway Rule", fieldtype: Link, options: "Putaway Rule", read_only: true }
+  - { fieldname: is_finished_item, label: "Is Finished Item", fieldtype: Boolean, default: false }
+  - { fieldname: job_card_item, label: "Job Card Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: has_item_scanned, label: "Has Item Scanned", fieldtype: Boolean, read_only: true }
+  - { fieldname: serial_and_batch_bundle, label: "Serial and Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle" }
+  - { fieldname: use_serial_batch_fields, label: "Use Serial No / Batch Fields", fieldtype: Boolean, default: false }
+  - { fieldname: landed_cost_voucher_amount, label: "Landed Cost Voucher Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: customer_provided_item_cost, label: "Customer Provided Item Cost", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: scio_detail, label: "SCIO Detail", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: against_fg, label: "Against Finished Good", fieldtype: Link, options: "Subcontracting Inward Order Item" }
+  - { fieldname: secondary_item_type, label: "Type", fieldtype: Select, options: ["Co-Product", "By-Product", "Scrap", "Additional Finished Good"] }
+  - { fieldname: bom_secondary_item, label: "BOM Secondary Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: valuation_type, label: "Valuation Type", fieldtype: Select, options: ["Valuation Rate", "% of Component Cost", "Manual"] }

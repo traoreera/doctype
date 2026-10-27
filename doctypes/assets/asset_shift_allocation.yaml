@@ -1,0 +1,54 @@
+schema_version: 1
+name: Asset Shift Allocation
+label: Asset Shift Allocation
+module: assets
+submittable: true
+icon: clipboard-clock
+fields:
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset Shift Allocation
+  read_only: true
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+  in_list_view: true
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: previous_depreciation_schedule
+  label: Previous Depreciation Schedule
+  fieldtype: Link
+  options: Asset Depreciation Schedule
+  read_only: true
+  description: The depreciation schedule this allocation replaced, restored when the allocation is cancelled
+- fieldname: depreciation_schedule
+  label: Depreciation Schedule
+  fieldtype: Table
+  options: Depreciation Schedule
+  read_only: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - ACC-ASA-.YYYY.-
+  required: true
+title_field: asset
+layout:
+- section: Dates et planification
+  columns:
+  - - asset
+    - naming_series
+  - - finance_book
+    - amended_from
+    - previous_depreciation_schedule
+- section: Depreciation Schedule
+  columns:
+  - - depreciation_schedule
+views:
+  tree:
+    parent: amended_from

@@ -1,0 +1,33 @@
+schema_version: 1
+name: Print Format
+label: Print Format
+module: setup
+icon: file-text
+fields:
+- fieldname: format_name
+  label: Format Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: doc_type
+  label: DocType
+  fieldtype: Text
+  required: true
+- fieldname: standard
+  label: Standard
+  fieldtype: Boolean
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+- fieldname: format_data
+  label: Format Data
+  fieldtype: JSON
+title_field: format_name
+layout:
+- section: Informations principales
+  columns:
+  - - format_name
+    - doc_type
+    - standard
+    - disabled
+    - format_data

@@ -1,0 +1,71 @@
+schema_version: 1
+name: SMS Center
+label: SMS Center
+module: selling
+icon: message-square
+fields:
+- fieldname: send_to
+  label: Send To
+  fieldtype: Select
+  options:
+  - All Contact
+  - All Customer Contact
+  - All Supplier Contact
+  - All Sales Partner Contact
+  - All Lead (Open)
+  - All Employee (Active)
+  - All Sales Person
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  in_list_view: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  in_list_view: true
+- fieldname: sales_partner
+  label: Sales Partner
+  fieldtype: Link
+  options: Sales Partner
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+- fieldname: receiver_list
+  label: Receiver List
+  fieldtype: Code
+- fieldname: message
+  label: Message
+  fieldtype: LongText
+  required: true
+  description: Messages greater than 160 characters will be split into multiple messages
+- fieldname: total_characters
+  label: Total Characters
+  fieldtype: Int
+  read_only: true
+- fieldname: total_messages
+  label: Total Message(s)
+  fieldtype: Int
+  read_only: true
+title_field: send_to
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - send_to
+    - customer
+    - supplier
+    - sales_partner
+    - department
+    - branch
+    - receiver_list
+  - - message
+    - total_characters
+    - total_messages

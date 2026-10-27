@@ -1,0 +1,29 @@
+schema_version: 1
+name: Appointment Letter Template
+label: Appointment Letter Template
+module: hr
+icon: file-text
+fields:
+- fieldname: introduction
+  label: Introduction
+  fieldtype: LongText
+  required: true
+  in_list_view: true
+- fieldname: closing_notes
+  label: Closing Notes
+  fieldtype: LongText
+- fieldname: terms
+  label: Terms
+  fieldtype: Table
+  options: Appointment Letter content
+- fieldname: template_name
+  label: Template Name
+  fieldtype: Text
+  required: true
+layout:
+- section: Informations principales
+  columns:
+  - - template_name
+    - introduction
+    - terms
+    - closing_notes

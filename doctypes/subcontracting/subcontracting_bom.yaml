@@ -1,0 +1,71 @@
+schema_version: 1
+name: Subcontracting BOM
+label: Subcontracting BOM
+module: subcontracting
+icon: list-tree
+fields:
+- fieldname: is_active
+  label: Is Active
+  fieldtype: Boolean
+  in_list_view: true
+  default: true
+- fieldname: finished_good
+  label: Finished Good
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: finished_good_qty
+  label: Finished Good Qty
+  fieldtype: Number
+  required: true
+  default: 1.0
+- fieldname: finished_good_bom
+  label: Finished Good BOM
+  fieldtype: Link
+  options: BOM
+  required: true
+  in_list_view: true
+- fieldname: service_item
+  label: Service Item
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: service_item_qty
+  label: Service Item Qty
+  fieldtype: Number
+  required: true
+  default: 1.0
+- fieldname: service_item_uom
+  label: Service Item UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+  description: Service Item Qty / Finished Good Qty
+- fieldname: finished_good_uom
+  label: Finished Good UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+title_field: finished_good
+layout:
+- section: Informations principales
+  columns:
+  - - is_active
+- section: Informations complémentaires 2
+  columns:
+  - - finished_good
+    - finished_good_qty
+  - - finished_good_uom
+    - finished_good_bom
+- section: Références
+  columns:
+  - - service_item
+    - service_item_qty
+  - - service_item_uom
+    - conversion_factor

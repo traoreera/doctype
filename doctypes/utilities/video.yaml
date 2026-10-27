@@ -1,0 +1,75 @@
+schema_version: 1
+name: Video
+label: Video
+module: utilities
+icon: video
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: provider
+  label: Provider
+  fieldtype: Select
+  options:
+  - YouTube
+  - Vimeo
+  required: true
+  in_list_view: true
+- fieldname: url
+  label: URL
+  fieldtype: Text
+  required: true
+- fieldname: publish_date
+  label: Publish Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  required: true
+- fieldname: like_count
+  label: Likes
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: view_count
+  label: Views
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: dislike_count
+  label: Dislikes
+  fieldtype: Number
+  read_only: true
+- fieldname: comment_count
+  label: Comments
+  fieldtype: Number
+  read_only: true
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+- fieldname: youtube_video_id
+  label: Youtube ID
+  fieldtype: Text
+  read_only: true
+  hidden: true
+title_field: title
+layout:
+- section: Dates et planification
+  columns:
+  - - title
+    - provider
+    - url
+  - - publish_date
+- section: Youtube Statistics
+  columns:
+  - - like_count
+    - view_count
+  - - dislike_count
+    - comment_count
+- section: Description et notes
+  columns:
+  - - description

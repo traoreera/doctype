@@ -1,0 +1,78 @@
+schema_version: 1
+name: Asset Finance Book
+label: Asset Finance Book
+istable: true
+fields:
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+  in_list_view: true
+- fieldname: depreciation_method
+  label: Depreciation Method
+  fieldtype: Select
+  options:
+  - Straight Line
+  - Double Declining Balance
+  - Written Down Value
+  - Manual
+  required: true
+  in_list_view: true
+- fieldname: total_number_of_depreciations
+  label: Total Number of Depreciations
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: frequency_of_depreciation
+  label: Frequency of Depreciation (Months)
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: depreciation_start_date
+  label: Depreciation Posting Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: expected_value_after_useful_life
+  label: Salvage Value
+  fieldtype: Currency
+  decimals: 2
+  description: Expected Value After Useful Life
+- fieldname: value_after_depreciation
+  label: Value After Depreciation
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: value_adjustment_amount
+  label: Value Adjustment Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Net change from Asset Value Adjustments
+- fieldname: rate_of_depreciation
+  label: Rate of Depreciation (%)
+  fieldtype: Percent
+- fieldname: is_rate_of_depreciation_entered
+  label: Is Rate of Depreciation Entered
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: salvage_value_percentage
+  label: Salvage Value Percentage
+  fieldtype: Percent
+- fieldname: daily_prorata_based
+  label: Depreciate based on daily pro-rata
+  fieldtype: Boolean
+  default: false
+- fieldname: shift_based
+  label: Depreciate based on shifts
+  fieldtype: Boolean
+  default: false
+- fieldname: total_number_of_booked_depreciations
+  label: 'Total Number of Booked Depreciations '
+  fieldtype: Int
+  read_only: true
+- fieldname: increase_in_asset_life
+  label: Increase In Asset Life (Months)
+  fieldtype: Int
+  read_only: true
+  description: via Asset Repair

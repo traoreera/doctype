@@ -1,0 +1,119 @@
+schema_version: 1
+name: Invoice Discounting
+label: Invoice Discounting
+module: accounts
+submittable: true
+icon: ticket-percent
+fields:
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: loan_start_date
+  label: Loan Start Date
+  fieldtype: Date
+- fieldname: loan_period
+  label: Loan Period (Days)
+  fieldtype: Int
+- fieldname: loan_end_date
+  label: Loan End Date
+  fieldtype: Date
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Sanctioned
+  - Disbursed
+  - Settled
+  - Cancelled
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: invoices
+  label: Invoices
+  fieldtype: Table
+  options: Discounted Invoice
+- fieldname: total_amount
+  label: Total Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: bank_charges
+  label: Bank Charges
+  fieldtype: Currency
+  decimals: 2
+- fieldname: short_term_loan
+  label: Short Term Loan Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: bank_charges_account
+  label: Bank Charges Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: accounts_receivable_credit
+  label: Accounts Receivable Credit Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: accounts_receivable_discounted
+  label: Accounts Receivable Discounted Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: accounts_receivable_unpaid
+  label: Accounts Receivable Unpaid Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Invoice Discounting
+  read_only: true
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - posting_date
+    - loan_start_date
+    - loan_period
+    - loan_end_date
+  - - status
+    - company
+- section: Informations complémentaires 2
+  columns:
+  - - invoices
+- section: Comptabilité et montants
+  columns:
+  - - total_amount
+  - - bank_charges
+- section: Comptabilité et montants
+  columns:
+  - - short_term_loan
+    - bank_account
+    - bank_charges_account
+  - - accounts_receivable_credit
+    - accounts_receivable_discounted
+    - accounts_receivable_unpaid
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

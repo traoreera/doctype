@@ -1,0 +1,21 @@
+schema_version: 1
+name: "Delivery Stop"
+label: "Delivery Stop"
+istable: true
+fields:
+  - { fieldname: customer, label: "Customer", fieldtype: Link, options: "Customer", in_list_view: true }
+  - { fieldname: address, label: "Address Name", fieldtype: Link, options: "Address", required: true, in_list_view: true }
+  - { fieldname: locked, label: "Locked", fieldtype: Boolean, in_list_view: true, default: false }
+  - { fieldname: customer_address, label: "Customer Address", fieldtype: TextEditor, read_only: true }
+  - { fieldname: visited, label: "Visited", fieldtype: Boolean, default: false }
+  - { fieldname: delivery_note, label: "Delivery Note", fieldtype: Link, options: "Delivery Note", in_list_view: true, read_only: true }
+  - { fieldname: grand_total, label: "Grand Total", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: contact, label: "Contact Name", fieldtype: Link, options: "Contact" }
+  - { fieldname: email_sent_to, label: "Email sent to", fieldtype: Text, read_only: true }
+  - { fieldname: customer_contact, label: "Customer Contact", fieldtype: TextEditor, read_only: true }
+  - { fieldname: distance, label: "Distance", fieldtype: Number, read_only: true }
+  - { fieldname: estimated_arrival, label: "Estimated Arrival", fieldtype: Datetime, in_list_view: true }
+  - { fieldname: lat, label: "Latitude", fieldtype: Number, hidden: true }
+  - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", read_only: true }
+  - { fieldname: lng, label: "Longitude", fieldtype: Number, hidden: true }
+  - { fieldname: details, label: "Details", fieldtype: TextEditor }

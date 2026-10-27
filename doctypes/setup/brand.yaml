@@ -1,0 +1,31 @@
+schema_version: 1
+name: Brand
+label: Brand
+module: setup
+icon: award
+fields:
+- fieldname: brand
+  label: Brand Name
+  fieldtype: Text
+  required: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: brand_defaults
+  label: Brand Defaults
+  fieldtype: Table
+  options: Item Default
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+title_field: brand
+layout:
+- section: Description et notes
+  columns:
+  - - brand
+    - description
+- section: Defaults
+  columns:
+  - - brand_defaults

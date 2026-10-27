@@ -1,0 +1,17 @@
+schema_version: 1
+name: Tax Withholding Account
+label: Tax Withholding Account
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true

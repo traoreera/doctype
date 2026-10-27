@@ -1,0 +1,86 @@
+schema_version: 1
+name: Expense Claim Advance
+label: Expense Claim Advance
+istable: true
+fields:
+- fieldname: employee_advance
+  label: Employee Advance
+  fieldtype: Link
+  options: Employee Advance
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: advance_paid
+  label: Advance Paid
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: unclaimed_amount
+  label: Unclaimed Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: allocated_amount
+  label: Allocated Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: advance_account
+  label: Advance Account
+  fieldtype: Link
+  options: Account
+  hidden: true
+- fieldname: return_amount
+  label: Returned Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_advance_paid
+  label: Advance Paid (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_unclaimed_amount
+  label: Unclaimed Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_allocated_amount
+  label: Allocated Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  read_only: true
+  description: Exchange rate of Payment Entry against Employee Advance
+- fieldname: exchange_gain_loss
+  label: Exchange Gain/Loss
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: payment_entry_reference
+  label: Payment Entry Reference
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: reference_type
+  label: Reference Type
+  fieldtype: Select
+  options:
+  - Payment Entry
+  - Journal Entry
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  options: reference_type
+  read_only: true

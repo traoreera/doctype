@@ -1,0 +1,21 @@
+schema_version: 1
+name: Employee Feedback Rating
+label: Employee Feedback Rating
+istable: true
+fields:
+- fieldname: rating
+  label: Rating
+  fieldtype: Rating
+  stars: 5
+  in_list_view: true
+- fieldname: criteria
+  label: Criteria
+  fieldtype: Link
+  options: Employee Feedback Criteria
+  required: true
+  in_list_view: true
+- fieldname: per_weightage
+  label: Weightage (%)
+  fieldtype: Percent
+  required: true
+  in_list_view: true

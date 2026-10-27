@@ -1,0 +1,154 @@
+schema_version: 1
+name: Account
+label: Account
+module: accounts
+icon: vault
+fields:
+- fieldname: account_name
+  label: Account Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: account_number
+  label: Account Number
+  fieldtype: Text
+  in_list_view: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: root_type
+  label: Root Type
+  fieldtype: Select
+  options:
+  - Asset
+  - Liability
+  - Income
+  - Expense
+  - Equity
+  read_only: true
+- fieldname: report_type
+  label: Report Type
+  fieldtype: Select
+  options:
+  - Balance Sheet
+  - Profit and Loss
+  read_only: true
+- fieldname: account_currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: parent_account
+  label: Parent Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: account_type
+  label: Account Type
+  fieldtype: Select
+  options:
+  - Accumulated Depreciation
+  - Asset Received But Not Billed
+  - Bank
+  - Cash
+  - Chargeable
+  - Capital Work in Progress
+  - Cost of Goods Sold
+  - Current Asset
+  - Current Liability
+  - Depreciation
+  - Direct Expense
+  - Direct Income
+  - Equity
+  - Expense Account
+  - Expenses Included In Asset Valuation
+  - Expenses Included In Valuation
+  - Fixed Asset
+  - Income Account
+  - Indirect Expense
+  - Indirect Income
+  - Liability
+  - Payable
+  - Receivable
+  - Round Off
+  - Round Off for Opening
+  - Stock
+  - Stock Adjustment
+  - Stock Received But Not Billed
+  - Stock Delivered But Not Billed
+  - Service Received But Not Billed
+  - Tax
+  - Temporary
+  description: Setting Account Type helps in selecting this Account in transactions.
+- fieldname: tax_rate
+  label: Tax Rate
+  fieldtype: Number
+  description: Rate at which this tax is applied
+- fieldname: freeze_account
+  label: Frozen
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+  description: If the account is frozen, entries are allowed to restricted users.
+- fieldname: balance_must_be
+  label: Balance must be
+  fieldtype: Select
+  options:
+  - Debit
+  - Credit
+- fieldname: lft
+  label: Lft
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: Rgt
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: include_in_gross
+  label: Include in gross
+  fieldtype: Boolean
+  default: false
+- fieldname: disabled
+  label: Disable
+  fieldtype: Boolean
+  default: false
+- fieldname: account_category
+  label: Account Category
+  fieldtype: Link
+  options: Account Category
+  description: Used with Financial Report Template
+title_field: account_name
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - disabled
+    - account_name
+    - account_number
+    - is_group
+    - company
+    - root_type
+    - report_type
+    - account_currency
+  - - parent_account
+    - account_category
+    - account_type
+    - tax_rate
+    - freeze_account
+    - balance_must_be
+    - include_in_gross
+views:
+  tree:
+    parent: parent_account

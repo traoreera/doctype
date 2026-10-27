@@ -1,0 +1,89 @@
+schema_version: 1
+name: Payment Entry Reference
+label: Payment Entry Reference
+istable: true
+fields:
+- fieldname: reference_doctype
+  label: Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: reference_name
+  label: Name
+  fieldtype: DynamicLink
+  options: reference_doctype
+  in_list_view: true
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: bill_no
+  label: Supplier Invoice No
+  fieldtype: Text
+  read_only: true
+- fieldname: total_amount
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: outstanding_amount
+  label: Outstanding
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: allocated_amount
+  label: Allocated
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: payment_term
+  label: Payment Term
+  fieldtype: Link
+  options: Payment Term
+- fieldname: exchange_gain_loss
+  label: Exchange Gain/Loss
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+- fieldname: account_type
+  label: Account Type
+  fieldtype: Text
+- fieldname: payment_type
+  label: Payment Type
+  fieldtype: Text
+- fieldname: payment_request
+  label: Payment Request
+  fieldtype: Link
+  options: Payment Request
+- fieldname: payment_term_outstanding
+  label: Payment Term Outstanding
+  fieldtype: Number
+  read_only: true
+- fieldname: payment_request_outstanding
+  label: Payment Request Outstanding
+  fieldtype: Number
+  read_only: true
+- fieldname: reconcile_effect_on
+  label: Reconcile Effect On
+  fieldtype: Date
+  read_only: true
+- fieldname: advance_voucher_type
+  label: Advance Voucher Type
+  fieldtype: Text
+  read_only: true
+- fieldname: advance_voucher_no
+  label: Advance Voucher No
+  fieldtype: DynamicLink
+  options: advance_voucher_type
+  read_only: true

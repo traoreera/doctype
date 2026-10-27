@@ -1,0 +1,132 @@
+schema_version: 1
+name: Employee Referral
+label: Employee Referral
+module: hr
+submittable: true
+icon: user-round-plus
+fields:
+- fieldname: first_name
+  label: 'First Name '
+  fieldtype: Text
+  required: true
+- fieldname: last_name
+  label: Last Name
+  fieldtype: Text
+  required: true
+- fieldname: full_name
+  label: Full Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: contact_no
+  label: Contact No.
+  fieldtype: Text
+- fieldname: current_employer
+  label: 'Current Employer '
+  fieldtype: Text
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - In Process
+  - Accepted
+  - Rejected
+  - Cancelled
+  required: true
+  read_only: true
+- fieldname: current_job_title
+  label: Current Job Title
+  fieldtype: Text
+- fieldname: resume
+  label: Resume
+  fieldtype: Attach
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: work_references
+  label: Work References
+  fieldtype: TextEditor
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Referral
+  read_only: true
+- fieldname: for_designation
+  label: 'For Designation '
+  fieldtype: Link
+  options: Designation
+  required: true
+  in_list_view: true
+- fieldname: email
+  label: Email
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: is_applicable_for_referral_bonus
+  label: Is Applicable for Referral Bonus
+  fieldtype: Boolean
+  default: true
+- fieldname: qualification_reason
+  label: Why is this Candidate Qualified for this Position?
+  fieldtype: TextEditor
+- fieldname: referrer
+  label: Referrer
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: referrer_name
+  label: Referrer Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: resume_link
+  label: Resume Link
+  fieldtype: Text
+- fieldname: referral_payment_status
+  label: Referral Bonus Payment Status
+  fieldtype: Select
+  options:
+  - Unpaid
+  - Paid
+  read_only: true
+title_field: status
+layout:
+- section: Informations principales
+  columns:
+  - - first_name
+    - last_name
+    - full_name
+  - - date
+    - status
+    - for_designation
+- section: Referral Details
+  columns:
+  - - email
+    - contact_no
+    - resume_link
+  - - current_employer
+    - current_job_title
+    - resume
+- section: Referrer Details
+  columns:
+  - - referrer
+    - referrer_name
+  - - is_applicable_for_referral_bonus
+    - referral_payment_status
+    - department
+- section: 'Additional Information '
+  columns:
+  - - qualification_reason
+    - work_references
+    - amended_from
+views:
+  calendar:
+    start: date
+    title: status

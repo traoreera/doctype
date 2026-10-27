@@ -1,0 +1,26 @@
+schema_version: 1
+name: BOM Update Batch
+label: BOM Update Batch
+istable: true
+fields:
+- fieldname: level
+  label: Level
+  fieldtype: Int
+  in_list_view: true
+- fieldname: batch_no
+  label: Batch No.
+  fieldtype: Int
+  in_list_view: true
+- fieldname: boms_updated
+  label: BOMs Updated
+  fieldtype: LongText
+  in_list_view: true
+  hidden: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  in_list_view: true
+  read_only: true

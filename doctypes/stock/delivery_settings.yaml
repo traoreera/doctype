@@ -1,0 +1,34 @@
+schema_version: 1
+name: Delivery Settings
+label: Delivery Settings
+module: stock
+icon: settings
+fields:
+- fieldname: dispatch_template
+  label: Dispatch Notification Template
+  fieldtype: Link
+  options: Email Template
+- fieldname: dispatch_attachment
+  label: Dispatch Notification Attachment
+  fieldtype: Link
+  options: Print Format
+  description: Leave blank to use the standard Delivery Note format
+- fieldname: send_with_attachment
+  label: Send with Attachment
+  fieldtype: Boolean
+  default: false
+- fieldname: stop_delay
+  label: Delay between Delivery Stops
+  fieldtype: Int
+  description: In minutes
+single: true
+layout:
+- section: Dispatch Settings
+  columns:
+  - - dispatch_template
+    - dispatch_attachment
+    - send_with_attachment
+  - - stop_delay
+permissions:
+  create: []
+  delete: []

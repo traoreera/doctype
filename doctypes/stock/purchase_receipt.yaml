@@ -1,0 +1,610 @@
+schema_version: 1
+name: Purchase Receipt
+label: Purchase Receipt
+module: stock
+submittable: true
+icon: package-check
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-PRE-.YYYY.-
+  - MAT-PR-RET-.YYYY.-
+  required: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  required: true
+- fieldname: supplier_name
+  label: Supplier Name
+  fieldtype: Text
+  read_only: true
+- fieldname: supplier_delivery_note
+  label: Supplier Delivery Note
+  fieldtype: Text
+- fieldname: posting_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  required: true
+- fieldname: set_posting_time
+  label: Edit Posting Date and Time
+  fieldtype: Boolean
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: is_return
+  label: Is Return
+  fieldtype: Boolean
+  read_only: true
+- fieldname: return_against
+  label: Return Against Purchase Receipt
+  fieldtype: Link
+  options: Purchase Receipt
+  read_only: true
+- fieldname: supplier_address
+  label: Supplier Address
+  fieldtype: Link
+  options: Address
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: LongText
+  read_only: true
+- fieldname: shipping_address
+  label: Shipping Address Template
+  fieldtype: Link
+  options: Address
+- fieldname: shipping_address_display
+  label: Shipping Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: conversion_rate
+  label: Exchange Rate
+  fieldtype: Number
+  required: true
+  description: Rate at which supplier's currency is converted to company's base currency
+- fieldname: use_transaction_date_exchange_rate
+  label: Use Transaction Date Exchange Rate
+  fieldtype: Boolean
+  read_only: true
+- fieldname: buying_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: price_list_currency
+  label: Price List Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: plc_conversion_rate
+  label: Price List Exchange Rate
+  fieldtype: Number
+- fieldname: ignore_pricing_rule
+  label: Ignore Pricing Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: set_warehouse
+  label: Accepted Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: rejected_warehouse
+  label: Rejected Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: is_subcontracted
+  label: Is Subcontracted
+  fieldtype: Boolean
+  read_only: true
+- fieldname: supplier_warehouse
+  label: Supplier Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Purchase Receipt Item
+- fieldname: pricing_rules
+  label: Pricing Rule Detail
+  fieldtype: Table
+  options: Pricing Rule Detail
+  read_only: true
+- fieldname: supplied_items
+  label: Consumed Items
+  fieldtype: Table
+  options: Purchase Receipt Item Supplied
+- fieldname: total_qty
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: base_total
+  label: Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_total
+  label: Net Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_total
+  label: Net Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_net_weight
+  label: Total Net Weight
+  fieldtype: Number
+  read_only: true
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+- fieldname: shipping_rule
+  label: Shipping Rule
+  fieldtype: Link
+  options: Shipping Rule
+- fieldname: taxes_and_charges
+  label: Purchase Taxes and Charges Template
+  fieldtype: Link
+  options: Purchase Taxes and Charges Template
+- fieldname: taxes
+  label: Purchase Taxes and Charges
+  fieldtype: Table
+  options: Purchase Taxes and Charges
+- fieldname: other_charges_calculation
+  label: Taxes and Charges Calculation
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: base_taxes_and_charges_added
+  label: Taxes and Charges Added (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_taxes_and_charges_deducted
+  label: Taxes and Charges Deducted (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_taxes_and_charges
+  label: Total Taxes and Charges (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: taxes_and_charges_added
+  label: Taxes and Charges Added
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: taxes_and_charges_deducted
+  label: Taxes and Charges Deducted
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_taxes_and_charges
+  label: Total Taxes and Charges
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: apply_discount_on
+  label: Apply Additional Discount On
+  fieldtype: Select
+  options:
+  - Grand Total
+  - Net Total
+  default: Grand Total
+- fieldname: base_discount_amount
+  label: Additional Discount Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_discount_percentage
+  label: Additional Discount Percentage
+  fieldtype: Number
+- fieldname: discount_amount
+  label: Additional Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rounding_adjustment
+  label: Rounding Adjustment
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: base_rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: rounding_adjustment
+  label: Rounding Adjustment
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: disable_rounded_total
+  label: Disable Rounded Total
+  fieldtype: Boolean
+  default: false
+- fieldname: tc_name
+  label: Terms
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: terms
+  label: Terms and Conditions
+  fieldtype: TextEditor
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Partly Billed
+  - To Bill
+  - Completed
+  - Return
+  - Return Issued
+  - Cancelled
+  - Closed
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Purchase Receipt
+  read_only: true
+  hidden: true
+- fieldname: range
+  label: Range
+  fieldtype: Text
+  hidden: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: per_billed
+  label: '% Amount Billed'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: auto_repeat
+  label: Auto Repeat
+  fieldtype: Link
+  options: Auto Repeat
+  read_only: true
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: language
+  label: Print Language
+  fieldtype: Text
+  read_only: true
+- fieldname: group_same_items
+  label: Group same items
+  fieldtype: Boolean
+  default: false
+- fieldname: instructions
+  label: Instructions
+  fieldtype: LongText
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: transporter_name
+  label: Transporter Name
+  fieldtype: Text
+- fieldname: lr_no
+  label: Vehicle Number
+  fieldtype: Text
+- fieldname: lr_date
+  label: Vehicle Date
+  fieldtype: Date
+- fieldname: is_internal_supplier
+  label: Is Internal Supplier
+  fieldtype: Boolean
+  read_only: true
+- fieldname: inter_company_reference
+  label: Inter Company Reference
+  fieldtype: Link
+  options: Delivery Note
+  read_only: true
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: billing_address
+  label: Billing Address
+  fieldtype: Link
+  options: Address
+- fieldname: billing_address_display
+  label: Billing Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: apply_putaway_rule
+  label: Apply Putaway Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: per_returned
+  label: '% Returned'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: set_from_warehouse
+  label: Set From Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: represents_company
+  label: Represents Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: incoterm
+  label: Incoterm
+  fieldtype: Link
+  options: Incoterm
+- fieldname: named_place
+  label: Named Place
+  fieldtype: Text
+- fieldname: subcontracting_receipt
+  label: Subcontracting Receipt
+  fieldtype: Link
+  options: Subcontracting Receipt
+  read_only: true
+- fieldname: dispatch_address
+  label: Dispatch Address Template
+  fieldtype: Link
+  options: Address
+- fieldname: dispatch_address_display
+  label: Dispatch Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: last_scanned_warehouse
+  label: Last Scanned Warehouse
+  fieldtype: Text
+- fieldname: item_wise_tax_details
+  label: Item Wise Tax Details
+  fieldtype: Table
+  options: Item Wise Tax Detail
+  hidden: true
+title_field: supplier_name
+layout:
+- tab: General
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - supplier
+    - supplier_name
+    - supplier_delivery_note
+    - subcontracting_receipt
+  - - posting_date
+    - posting_time
+    - set_posting_time
+  - - company
+    - apply_putaway_rule
+    - is_return
+    - return_against
+- tab: General
+  section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+- tab: General
+  section: Currency and Price List
+  columns:
+  - - currency
+    - conversion_rate
+    - use_transaction_date_exchange_rate
+  - - buying_price_list
+    - price_list_currency
+    - plc_conversion_rate
+    - ignore_pricing_rule
+- tab: General
+  section: Items
+  columns:
+  - - scan_barcode
+    - last_scanned_warehouse
+  - - set_warehouse
+    - set_from_warehouse
+  - - rejected_warehouse
+    - is_subcontracted
+    - supplier_warehouse
+- tab: General
+  section: Références
+  columns:
+  - - items
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - total_qty
+    - total_net_weight
+  - - base_total
+    - base_net_total
+  - - total
+    - net_total
+- tab: General
+  section: Taxes and Charges
+  columns:
+  - - tax_category
+    - taxes_and_charges
+  - - shipping_rule
+  - - incoterm
+    - named_place
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - taxes
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - base_taxes_and_charges_added
+    - base_taxes_and_charges_deducted
+    - base_total_taxes_and_charges
+  - - taxes_and_charges_added
+    - taxes_and_charges_deducted
+    - total_taxes_and_charges
+- tab: General
+  section: Totals
+  columns:
+  - - grand_total
+    - in_words
+  - - disable_rounded_total
+    - rounding_adjustment
+    - rounded_total
+- tab: General
+  section: Totals (Company Currency)
+  columns:
+  - - base_grand_total
+    - base_in_words
+  - - base_rounding_adjustment
+    - base_rounded_total
+- tab: General
+  section: Additional Discount
+  columns:
+  - - apply_discount_on
+    - base_discount_amount
+  - - additional_discount_percentage
+    - discount_amount
+- tab: General
+  section: Tax Breakup
+  columns:
+  - - other_charges_calculation
+- tab: General
+  section: Pricing Rules
+  columns:
+  - - pricing_rules
+- tab: General
+  section: Raw Materials Consumed
+  columns:
+  - - supplied_items
+- tab: Address & Contact
+  section: Supplier Address
+  columns:
+  - - supplier_address
+    - address_display
+  - - contact_person
+    - contact_display
+    - contact_mobile
+    - contact_email
+- tab: Address & Contact
+  section: Shipping Address
+  columns:
+  - - dispatch_address
+    - dispatch_address_display
+  - - shipping_address
+    - shipping_address_display
+- tab: Address & Contact
+  section: Company Billing Address
+  columns:
+  - - billing_address
+  - - billing_address_display
+- tab: Terms
+  section: Description et notes
+  columns:
+  - - tc_name
+    - terms
+- tab: More Info
+  section: Status
+  columns:
+  - - status
+  - - per_billed
+    - per_returned
+- tab: More Info
+  section: Auto Repeat
+  columns:
+  - - auto_repeat
+- tab: More Info
+  section: Printing Settings
+  columns:
+  - - letter_head
+    - group_same_items
+  - - select_print_heading
+    - language
+- tab: More Info
+  section: Transporter
+  columns:
+  - - transporter_name
+  - - lr_no
+    - lr_date
+- tab: More Info
+  section: Additional Info
+  columns:
+  - - instructions
+    - is_internal_supplier
+    - represents_company
+    - title
+    - inter_company_reference
+  - - remarks
+views:
+  calendar:
+    start: posting_date
+    title: supplier_name
+  tree:
+    parent: return_against

@@ -1,0 +1,73 @@
+schema_version: 1
+name: Retention Bonus
+label: Retention Bonus
+module: payroll
+submittable: true
+icon: gem
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: bonus_payment_date
+  label: Bonus Payment Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: bonus_amount
+  label: Bonus Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Retention Bonus
+  read_only: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: date_of_joining
+  label: Date of Joining
+  fieldtype: Text
+  read_only: true
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+title_field: employee_name
+layout:
+- section: Employee
+  columns:
+  - - employee
+    - employee_name
+    - department
+  - - company
+    - date_of_joining
+- section: Bonus
+  columns:
+  - - salary_component
+    - bonus_amount
+  - - bonus_payment_date
+    - currency
+    - amended_from

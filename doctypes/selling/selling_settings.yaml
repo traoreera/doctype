@@ -1,0 +1,294 @@
+schema_version: 1
+name: Selling Settings
+label: Selling Settings
+module: selling
+single: true
+icon: settings
+fields:
+- fieldname: cust_master_name
+  label: Customer Naming By
+  fieldtype: Select
+  options:
+  - Customer Name
+  - Naming Series
+  - Auto Name
+  default: Customer Name
+  in_list_view: true
+- fieldname: customer_group
+  label: Default Customer Group
+  fieldtype: Link
+  options: Customer Group
+  in_list_view: true
+- fieldname: territory
+  label: Default Territory
+  fieldtype: Link
+  options: Territory
+  in_list_view: true
+- fieldname: selling_price_list
+  label: Default Price List
+  fieldtype: Link
+  options: Price List
+  in_list_view: true
+- fieldname: so_required
+  label: Is Sales Order required to create Sales Invoice/Delivery Note?
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: dn_required
+  label: Is Delivery Note required to create Sales Invoice?
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: skip_delivery_note_for_service_items
+  label: Skip Delivery Note Creation for Service Items
+  fieldtype: Boolean
+  description: Non-stock items will not require a Delivery Note. Sales Orders will be marked as Completed once all
+    stock items are delivered and the order is fully billed
+  default: false
+- fieldname: sales_update_frequency
+  label: How often should sales data be updated in Company/Project?
+  fieldtype: Select
+  options:
+  - Monthly
+  - Each Transaction
+  - Daily
+  default: Daily
+  required: true
+  description: The frequency at which project progress and company transaction details will be updated. Set it to
+    daily or monthly if you post a lot of transactions. Daily refreshes nightly; Monthly refreshes on the 1st of
+    each month.
+- fieldname: maintain_same_sales_rate
+  label: Maintain same rate throughout sales cycle
+  fieldtype: Boolean
+  description: Warn or stop if Item rate is changed in Delivery Notes and Sales Invoices generated from a Sales
+    Order.
+  default: false
+- fieldname: editable_price_list_rate
+  label: Allow editing Price List rate in transactions
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_multiple_items
+  label: Allow same Item to be added multiple times in a transaction
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_against_multiple_purchase_orders
+  label: Allow multiple Sales Orders against a customer's Purchase Order
+  fieldtype: Boolean
+  default: false
+- fieldname: validate_selling_price
+  label: Validate selling price for Item against purchase or valuation rate
+  fieldtype: Boolean
+  description: Enable this to block transactions where the selling price is less than the purchase or valuation
+    rate
+  default: false
+- fieldname: hide_tax_id
+  label: Hide Customer's Tax ID from sales transactions
+  fieldtype: Boolean
+  description: Most Customers have a unique Tax ID that is fetched into selling transactions. Enable this setting
+    if you do not want Customer Tax IDs to appear in sales transactions.
+  default: false
+- fieldname: maintain_same_rate_action
+  label: Action if same rate is not maintained throughout sales cycle
+  fieldtype: Select
+  options:
+  - Stop
+  - Warn
+  default: Stop
+- fieldname: role_to_override_stop_action
+  label: Role allowed to override stop action
+  fieldtype: Link
+  options: Role
+- fieldname: editable_bundle_item_rates
+  label: Calculate Product Bundle price based on child Item's rates
+  fieldtype: Boolean
+  description: 'Enabling this will do the following:
+
+    <ul style="padding-left:16px">
+
+    <li>Make the rate column of all Packed/Bundle Items tables editable.</li>
+
+    <li>Calculate the prices of all <a href="/desk/product-bundle" rel="noopener noreferrer">Product Bundles</a>
+    in the Items table, based on the prices of its child Items, specified in the Packed/Bundle Items table. </li>
+
+    </ul>
+
+    Note: If this is enabled, updating the rate of the Product Bundle in the Items table will not change its price.
+    It will get reset to '
+  default: false
+- fieldname: enable_discount_accounting
+  label: Enable discount accounting for selling
+  fieldtype: Boolean
+  description: If enabled, additional ledger entries will be made for discounts in a separate Discount Account
+  default: false
+- fieldname: allow_sales_order_creation_for_expired_quotation
+  label: Allow Sales Order creation for expired Quotation
+  fieldtype: Boolean
+  description: This allows creation of sales orders from quotations that have passed their expiration date, providing
+    flexibility in processing orders despite outdated quotes.
+  default: false
+- fieldname: dont_reserve_sales_order_qty_on_sales_return
+  label: Don't reserve Sales Order qty on sales return
+  fieldtype: Boolean
+  description: Prevents the automatic reservation of stock quantities from sales orders when processing sales returns.
+  default: false
+- fieldname: allow_negative_rates_for_items
+  label: Allow negative rates for Items
+  fieldtype: Boolean
+  description: Enable this option to permit the use of negative rates for items in sales transactions. This setting
+    is useful for applying substantial discounts, processing refunds or returns, and handling special promotional
+    pricing.
+  default: false
+- fieldname: blanket_order_allowance
+  label: Blanket Order Allowance (%)
+  fieldtype: Number
+  description: Percentage you are allowed to sell beyond the Blanket Order quantity.
+- fieldname: enable_cutoff_date_on_bulk_delivery_note_creation
+  label: Enable cut-off date on creating bulk Delivery Notes
+  fieldtype: Boolean
+  description: When enabled, it adds a cutoff date filter to Delivery Notes created in bulk from Sales Orders. This
+    allows you to process orders only with a transaction date up to the specified cutoff date, which is useful for
+    period-end processing and batch fulfillment.
+  default: false
+- fieldname: allow_zero_qty_in_sales_order
+  label: Allow Sales Order with zero quantity
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_zero_qty_in_quotation
+  label: Allow Quotation with zero quantity
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_delivery_of_overproduced_qty
+  label: Allow delivery of overproduced quantity
+  fieldtype: Boolean
+  description: If enabled, system will allow user to deliver the entire quantity of the finished goods produced
+    against the Subcontracting Inward Order. If disabled, system will allow delivery of only the ordered quantity.
+  default: false
+- fieldname: fallback_to_default_price_list
+  label: Use prices from Default Price List as fallback
+  fieldtype: Boolean
+  description: If no Item Price is found for an item in the Price List set in the transaction, prices from the Default
+    Price List will be fetched.
+  default: false
+- fieldname: use_legacy_js_reactivity
+  label: Use Legacy (Client side) Reactivity
+  fieldtype: Boolean
+  default: false
+- fieldname: set_zero_rate_for_expired_batch
+  label: Set incoming rate as zero for expired Batch
+  fieldtype: Boolean
+  description: If enabled, system will set incoming rate as zero for stand-alone credit notes with expired batch
+    item.
+  default: false
+- fieldname: enable_tracking_sales_commissions
+  label: Enable tracking sales commissions
+  fieldtype: Boolean
+  description: Manage sales partner's and sales team's commissions
+  default: false
+- fieldname: enable_utm
+  label: Enable UTM
+  fieldtype: Boolean
+  description: Enable Urchin Tracking Module parameters in Quotation, Sales Order, Sales Invoice, POS Invoice, Lead,  and
+    Delivery Note.
+  default: false
+- fieldname: deliver_secondary_items
+  label: Deliver secondary Items
+  fieldtype: Boolean
+  description: If enabled, the Secondary Items generated against a Finished Good will also be added in the Stock
+    Entry when delivering that Finished Good.
+  default: false
+- fieldname: enable_proforma_invoice
+  label: Enable Proforma Invoice
+  fieldtype: Boolean
+  description: Allow issuing Proforma Invoices against a Sales Order.
+  default: false
+- fieldname: default_proforma_print_format
+  label: Default Proforma Print Format
+  fieldtype: Link
+  options: Print Format
+  description: Default print format used when generating a Proforma Invoice PDF.
+- fieldname: proforma_email_template
+  label: Proforma Email Template
+  fieldtype: Link
+  options: Email Template
+  description: Subject and message used when emailing a Proforma Invoice. The template gets the Proforma Invoice
+    as doc, e.g. {{ doc.customer_name }}. Leave empty to send the default text.
+- fieldname: naming_series_details
+  label: Naming Series options
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+title_field: cust_master_name
+layout:
+- tab: Customer Defaults
+  section: Références
+  columns:
+  - - cust_master_name
+  - - customer_group
+    - territory
+- tab: Pricing
+  section: Comptabilité et montants
+  columns:
+  - - selling_price_list
+    - fallback_to_default_price_list
+    - editable_price_list_rate
+- tab: Pricing
+  section: Comptabilité et montants
+  columns:
+  - - maintain_same_sales_rate
+  - - maintain_same_rate_action
+    - role_to_override_stop_action
+- tab: Pricing
+  section: Comptabilité et montants
+  columns:
+  - - validate_selling_price
+    - editable_bundle_item_rates
+    - allow_negative_rates_for_items
+- tab: Transaction
+  section: Transaction Settings
+  columns:
+  - - so_required
+    - dn_required
+    - skip_delivery_note_for_service_items
+    - sales_update_frequency
+  - - allow_multiple_items
+    - allow_against_multiple_purchase_orders
+    - hide_tax_id
+- tab: Transaction
+  section: Comptabilité et montants
+  columns:
+  - - allow_sales_order_creation_for_expired_quotation
+    - dont_reserve_sales_order_qty_on_sales_return
+    - enable_cutoff_date_on_bulk_delivery_note_creation
+    - set_zero_rate_for_expired_batch
+- tab: Transaction
+  section: Zero-Quantity Line Items
+  columns:
+  - - allow_zero_qty_in_quotation
+  - - allow_zero_qty_in_sales_order
+- tab: Transaction
+  section: Blanket Orders
+  columns:
+  - - blanket_order_allowance
+- tab: Transaction
+  section: Proforma Invoice
+  columns:
+  - - enable_proforma_invoice
+    - default_proforma_print_format
+    - proforma_email_template
+- tab: Advanced Features
+  section: Comptabilité et montants
+  columns:
+  - - enable_tracking_sales_commissions
+    - enable_discount_accounting
+    - enable_utm
+- tab: Advanced Features
+  section: Experimental
+  columns:
+  - - use_legacy_js_reactivity
+- tab: Subcontracting Inward
+  section: Références
+  columns:
+  - - allow_delivery_of_overproduced_qty
+  - - deliver_secondary_items

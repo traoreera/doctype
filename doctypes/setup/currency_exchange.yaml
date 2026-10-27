@@ -1,0 +1,50 @@
+schema_version: 1
+name: Currency Exchange
+label: Currency Exchange
+module: setup
+icon: arrow-right-left
+fields:
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: from_currency
+  label: From Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  in_list_view: true
+- fieldname: to_currency
+  label: To Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  in_list_view: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: for_buying
+  label: For Buying
+  fieldtype: Boolean
+  default: true
+- fieldname: for_selling
+  label: For Selling
+  fieldtype: Boolean
+  default: true
+title_field: from_currency
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - date
+    - from_currency
+    - to_currency
+    - exchange_rate
+  - - for_buying
+    - for_selling
+views:
+  calendar:
+    start: date
+    title: from_currency

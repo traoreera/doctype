@@ -1,0 +1,24 @@
+schema_version: 1
+name: Employee Tax Exemption Category
+label: Employee Tax Exemption Category
+module: payroll
+icon: tag
+fields:
+- fieldname: max_amount
+  label: Max Exemption Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: is_active
+  label: Is Active
+  fieldtype: Boolean
+  default: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+layout:
+- section: Informations principales
+  columns:
+  - - max_amount
+    - is_active
+    - description

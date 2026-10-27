@@ -1,0 +1,30 @@
+schema_version: 1
+name: Expense Claim Type
+label: Expense Claim Type
+module: hr
+icon: tag
+fields:
+- fieldname: expense_type
+  label: Expense Claim Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: accounts
+  label: Accounts
+  fieldtype: Table
+  options: Expense Claim Account
+- fieldname: deferred_expense_account
+  label: Deferred Expense Account
+  fieldtype: Boolean
+  default: false
+title_field: expense_type
+layout:
+- section: Informations principales
+  columns:
+  - - deferred_expense_account
+    - expense_type
+    - accounts
+    - description

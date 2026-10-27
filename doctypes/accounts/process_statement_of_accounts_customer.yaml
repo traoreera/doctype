@@ -1,0 +1,24 @@
+schema_version: 1
+name: Process Statement Of Accounts Customer
+label: Process Statement Of Accounts Customer
+istable: true
+fields:
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+  in_list_view: true
+- fieldname: primary_email
+  label: Primary Contact Email
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: billing_email
+  label: Billing Email
+  fieldtype: Text
+  in_list_view: true
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true

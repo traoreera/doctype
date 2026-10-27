@@ -1,0 +1,12 @@
+schema_version: 1
+name: Repost Payment Ledger Items
+label: Repost Payment Ledger Items
+istable: true
+fields:
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  options: voucher_type

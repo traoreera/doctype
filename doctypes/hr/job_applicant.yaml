@@ -1,0 +1,122 @@
+schema_version: 1
+name: Job Applicant
+label: Job Applicant
+module: hr
+icon: user-round
+fields:
+- fieldname: applicant_name
+  label: Full Name
+  fieldtype: Text
+  required: true
+- fieldname: email_id
+  label: Email Address
+  fieldtype: Text
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Replied
+  - Shortlisted
+  - Rejected
+  - Hold
+  - Accepted
+  required: true
+  in_list_view: true
+- fieldname: job_title
+  label: Job Opening
+  fieldtype: Link
+  options: Job Opening
+  in_list_view: true
+- fieldname: source
+  label: Source
+  fieldtype: Link
+  options: Job Applicant Source
+- fieldname: source_name
+  label: Source Name
+  fieldtype: Link
+  options: Employee
+- fieldname: cover_letter
+  label: Cover Letter
+  fieldtype: LongText
+- fieldname: resume_attachment
+  label: Attachment
+  fieldtype: Attach
+- fieldname: notes
+  label: Notes
+  fieldtype: Text
+  read_only: true
+- fieldname: phone_number
+  label: Phone Number
+  fieldtype: Text
+- fieldname: country
+  label: Country
+  fieldtype: Link
+  options: Pays
+- fieldname: resume_link
+  label: Link
+  fieldtype: Text
+- fieldname: applicant_rating
+  label: Applicant Rating
+  fieldtype: Rating
+  stars: 5
+  in_list_view: true
+- fieldname: lower_range
+  label: Lower Range
+  fieldtype: Currency
+  decimals: 2
+- fieldname: upper_range
+  label: Upper Range
+  fieldtype: Currency
+  decimals: 2
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: employee_referral
+  label: Employee Referral
+  fieldtype: Link
+  options: Employee Referral
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+title_field: applicant_name
+layout:
+- tab: Général
+  section: Details
+  columns:
+  - - applicant_name
+    - email_id
+    - phone_number
+  - - job_title
+    - designation
+    - country
+  - - status
+    - applicant_rating
+- tab: Général
+  section: Resume
+  columns:
+  - - resume_link
+    - cover_letter
+    - resume_attachment
+    - notes
+- tab: Général
+  section: Source
+  columns:
+  - - source
+    - source_name
+  - - employee_referral
+- tab: Salary Expectation
+  section: Informations complémentaires 4
+  columns:
+  - - currency
+  - - lower_range
+    - upper_range
+views:
+  kanban:
+    field: status
+    card_fields:
+    - applicant_name

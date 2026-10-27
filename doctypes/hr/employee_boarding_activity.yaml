@@ -1,0 +1,43 @@
+schema_version: 1
+name: Employee Boarding Activity
+label: Employee Boarding Activity
+istable: true
+fields:
+- fieldname: activity_name
+  label: Activity Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  in_list_view: true
+- fieldname: role
+  label: Role
+  fieldtype: Link
+  options: Role
+- fieldname: task
+  label: Task
+  fieldtype: Link
+  options: Task
+  read_only: true
+- fieldname: task_weight
+  label: Task Weight
+  fieldtype: Number
+- fieldname: required_for_employee_creation
+  label: Required for Employee Creation
+  fieldtype: Boolean
+  description: Applicable in the case of Employee Onboarding
+  default: false
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: duration
+  label: Duration (Days)
+  fieldtype: Int
+  in_list_view: true
+- fieldname: begin_on
+  label: Begin On (Days)
+  fieldtype: Int
+  in_list_view: true

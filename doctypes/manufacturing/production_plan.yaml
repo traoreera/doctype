@@ -1,0 +1,272 @@
+schema_version: 1
+name: Production Plan
+label: Production Plan
+module: manufacturing
+submittable: true
+icon: calendar-check
+fields:
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - MFG-PP-.YYYY.-
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: get_items_from
+  label: Get Items From
+  fieldtype: Select
+  options:
+  - Sales Order
+  - Material Request
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  in_list_view: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: sales_orders
+  label: Sales Orders
+  fieldtype: Table
+  options: Production Plan Sales Order
+- fieldname: material_requests
+  label: Material Requests
+  fieldtype: Table
+  options: Production Plan Material Request
+- fieldname: po_items
+  label: Assembly Items
+  fieldtype: Table
+  options: Production Plan Item
+- fieldname: include_non_stock_items
+  label: Include Non Stock Items
+  fieldtype: Boolean
+  default: true
+- fieldname: include_subcontracted_items
+  label: Include Subcontracted Items
+  fieldtype: Boolean
+  default: true
+- fieldname: ignore_existing_ordered_qty
+  label: Consider Projected Qty in Calculation (RM)
+  fieldtype: Boolean
+  description: 'If enabled, formula for <b>Required Qty</b>: <br>
+
+    Required Qty (BOM) - <a href="https://docs.frappe.io/erpnext/user/manual/en/projected-quantity" rel="noopener
+    noreferrer">Projected Qty</a>. <br> This helps avoid over-ordering.'
+  default: true
+- fieldname: mr_items
+  label: Raw Materials
+  fieldtype: Table
+  options: Material Request Plan Item
+- fieldname: total_planned_qty
+  label: Total Planned Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: total_produced_qty
+  label: Total Produced Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Not Started
+  - In Process
+  - Completed
+  - Closed
+  - Cancelled
+  - Material Requested
+  default: Draft
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Production Plan
+  read_only: true
+- fieldname: for_warehouse
+  label: For Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: raw_material_group_warehouse
+  label: Raw Material Group Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: Optional group warehouse. Raw material availability is checked across its child warehouses; material
+    is still received into For Warehouse.
+- fieldname: warehouses
+  label: Warehouses
+  fieldtype: Table
+  options: Production Plan Material Request Warehouse
+  read_only: true
+  hidden: true
+- fieldname: sales_order_status
+  label: Sales Order Status
+  fieldtype: Select
+  options:
+  - To Deliver and Bill
+  - To Bill
+  - To Deliver
+- fieldname: include_safety_stock
+  label: Include Safety Stock in Required Qty Calculation
+  fieldtype: Boolean
+  default: false
+- fieldname: combine_items
+  label: Consolidate Sales Order Items
+  fieldtype: Boolean
+  default: false
+- fieldname: prod_plan_references
+  label: Sales Order Reference
+  fieldtype: Table
+  options: Production Plan Item Reference
+  hidden: true
+- fieldname: sub_assembly_items
+  label: Sub Assembly Items
+  fieldtype: Table
+  options: Production Plan Sub Assembly Item
+- fieldname: from_delivery_date
+  label: From Delivery Date
+  fieldtype: Date
+- fieldname: to_delivery_date
+  label: To Delivery Date
+  fieldtype: Date
+- fieldname: combine_sub_items
+  label: Consolidate Sub Assembly Items
+  fieldtype: Boolean
+  default: false
+- fieldname: skip_available_sub_assembly_item
+  label: Consider Projected Qty in Calculation
+  fieldtype: Boolean
+  description: 'If enabled, formula for <b>Qty to Order</b>: <br>
+
+    Required Qty (BOM) - <a href="https://docs.frappe.io/erpnext/user/manual/en/projected-quantity" rel="noopener
+    noreferrer">Projected Qty</a>. <br> This helps avoid over-ordering.'
+  default: true
+- fieldname: sub_assembly_warehouse
+  label: Sub Assembly Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: When a parent warehouse is chosen, the system conducts Project Qty checks against the associated
+    child warehouses
+- fieldname: consider_minimum_order_qty
+  label: Consider Minimum Order Qty
+  fieldtype: Boolean
+  default: false
+- fieldname: reserve_stock
+  label: Reserve Stock
+  fieldtype: Boolean
+  default: false
+- fieldname: no_of_shifts
+  label: No of Shifts
+  fieldtype: Int
+  description: 'Used by scheduling when an item has no BOM operations: scales the Item Lead Time daily capacity
+    to this many shifts.'
+title_field: item_code
+layout:
+- tab: General
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+  - - status
+    - posting_date
+    - reserve_stock
+- tab: General
+  section: Other Details
+  columns:
+  - - total_planned_qty
+    - total_produced_qty
+  - - amended_from
+- tab: Demand
+  section: Références
+  columns:
+  - - get_items_from
+- tab: Demand
+  section: Filters
+  columns:
+  - - item_code
+    - customer
+    - warehouse
+    - project
+    - sales_order_status
+  - - from_date
+    - to_date
+    - from_delivery_date
+    - to_delivery_date
+- tab: Demand
+  section: Sales Orders
+  columns:
+  - - combine_items
+    - sales_orders
+- tab: Demand
+  section: Material Request Detail
+  columns:
+  - - material_requests
+- tab: Finished Items
+  section: Select Items to Manufacture
+  columns:
+  - - po_items
+- tab: Sub Assemblies
+  section: Sub Assembly Items
+  columns:
+  - - sub_assembly_warehouse
+  - - skip_available_sub_assembly_item
+    - combine_sub_items
+    - no_of_shifts
+- tab: Sub Assemblies
+  section: Références
+  columns:
+  - - sub_assembly_items
+- tab: Raw Material
+  section: For Raw Materials
+  columns:
+  - - include_non_stock_items
+    - include_subcontracted_items
+    - consider_minimum_order_qty
+    - include_safety_stock
+    - ignore_existing_ordered_qty
+  - - raw_material_group_warehouse
+    - for_warehouse
+- tab: Raw Material
+  section: Références
+  columns:
+  - - mr_items
+views:
+  calendar:
+    start: posting_date
+    title: item_code
+  gantt:
+    start: from_date
+    end: to_date
+    title: item_code
+  tree:
+    parent: amended_from

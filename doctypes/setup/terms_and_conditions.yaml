@@ -1,0 +1,45 @@
+schema_version: 1
+name: Terms and Conditions
+label: Terms and Conditions
+module: setup
+icon: file-text
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: terms
+  label: Terms and Conditions
+  fieldtype: TextEditor
+- fieldname: selling
+  label: Selling
+  fieldtype: Boolean
+  in_list_view: true
+  default: true
+- fieldname: buying
+  label: Buying
+  fieldtype: Boolean
+  in_list_view: true
+  default: true
+- fieldname: copy_attachments_to_transaction
+  label: Copy Attachments to Transaction
+  fieldtype: Boolean
+  default: false
+title_field: title
+layout:
+- section: État et options
+  columns:
+  - - title
+    - disabled
+  - - copy_attachments_to_transaction
+- section: Applicable Modules
+  columns:
+  - - selling
+    - buying
+- section: Description et notes
+  columns:
+  - - terms

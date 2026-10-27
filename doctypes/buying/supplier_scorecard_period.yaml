@@ -1,0 +1,79 @@
+schema_version: 1
+name: Supplier Scorecard Period
+label: Supplier Scorecard Period
+module: buying
+submittable: true
+icon: calendar-range
+fields:
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - PU-SSP-.YYYY.-
+  required: true
+- fieldname: total_score
+  label: Period Score
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+- fieldname: criteria
+  label: Criteria
+  fieldtype: Table
+  options: Supplier Scorecard Scoring Criteria
+- fieldname: variables
+  label: Variables
+  fieldtype: Table
+  options: Supplier Scorecard Scoring Variable
+- fieldname: scorecard
+  label: Supplier Scorecard Setup
+  fieldtype: Link
+  options: Supplier Scorecard
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Supplier Scorecard Period
+  read_only: true
+title_field: supplier
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - supplier
+    - naming_series
+    - total_score
+  - - start_date
+    - end_date
+- section: Calculations
+  columns:
+  - - criteria
+    - variables
+- section: Reference
+  columns:
+  - - scorecard
+    - amended_from
+views:
+  calendar:
+    start: start_date
+    title: supplier
+  gantt:
+    start: start_date
+    end: end_date
+    title: supplier
+  tree:
+    parent: amended_from

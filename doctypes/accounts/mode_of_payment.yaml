@@ -1,0 +1,35 @@
+schema_version: 1
+name: Mode of Payment
+label: Mode of Payment
+module: accounts
+icon: wallet
+fields:
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: type
+  label: Type
+  fieldtype: Select
+  options:
+  - Cash
+  - Bank
+  - General
+  - Phone
+- fieldname: accounts
+  label: Accounts
+  fieldtype: Table
+  options: Mode of Payment Account
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+title_field: mode_of_payment
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - mode_of_payment
+    - enabled
+    - type
+    - accounts

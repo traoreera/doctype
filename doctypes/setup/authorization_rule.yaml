@@ -1,0 +1,99 @@
+schema_version: 1
+name: Authorization Rule
+label: Authorization Rule
+module: setup
+icon: shield-check
+fields:
+- fieldname: transaction
+  label: Transaction
+  fieldtype: Select
+  options:
+  - Sales Order
+  - Purchase Order
+  - Quotation
+  - Delivery Note
+  - Sales Invoice
+  - Purchase Invoice
+  - Purchase Receipt
+  required: true
+  in_list_view: true
+- fieldname: based_on
+  label: Based On
+  fieldtype: Select
+  options:
+  - Grand Total
+  - Average Discount
+  - Customerwise Discount
+  - Itemwise Discount
+  - Item Group wise Discount
+  - Not Applicable
+  required: true
+  in_list_view: true
+- fieldname: customer_or_item
+  label: Customer or Item
+  fieldtype: Select
+  options:
+  - Customer
+  - Item
+  - Item Group
+  read_only: true
+  hidden: true
+- fieldname: master_name
+  label: Customer / Item / Item Group
+  fieldtype: DynamicLink
+  options: customer_or_item
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: value
+  label: Authorized Value
+  fieldtype: Number
+- fieldname: system_role
+  label: Applicable To (Role)
+  fieldtype: Link
+  options: Role
+  in_list_view: true
+- fieldname: to_emp
+  label: Applicable To (Employee)
+  fieldtype: Link
+  options: Employee
+- fieldname: system_user
+  label: Applicable To (User)
+  fieldtype: Link
+  options: Member
+- fieldname: to_designation
+  label: Applicable To (Designation)
+  fieldtype: Link
+  options: Designation
+- fieldname: approving_role
+  label: Approving Role (above authorized value)
+  fieldtype: Link
+  options: Role
+- fieldname: approving_user
+  label: Approving User  (above authorized value)
+  fieldtype: Link
+  options: Member
+title_field: transaction
+layout:
+- section: Références
+  columns:
+  - - transaction
+    - based_on
+    - master_name
+  - - company
+- section: Informations complémentaires 2
+  columns:
+  - - value
+- section: Références
+  columns:
+  - - system_role
+    - to_emp
+  - - system_user
+    - to_designation
+- section: Références
+  columns:
+  - - approving_role
+  - - approving_user

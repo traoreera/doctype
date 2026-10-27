@@ -1,0 +1,17 @@
+schema_version: 1
+name: Task Type
+label: Task Type
+module: projects
+icon: tag
+fields:
+- fieldname: weight
+  label: Weight
+  fieldtype: Number
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+layout:
+- section: Description et notes
+  columns:
+  - - weight
+    - description

@@ -1,0 +1,43 @@
+schema_version: 1
+name: Workstation Type
+label: Workstation Type
+module: manufacturing
+icon: tag
+fields:
+- fieldname: workstation_type
+  label: Workstation Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: hour_rate
+  label: Net Hour Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: per hour
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: workstation_costs
+  label: Operating Components Cost
+  fieldtype: Table
+  options: Workstation Cost
+title_field: workstation_type
+layout:
+- tab: General
+  section: Informations principales
+  columns:
+  - - workstation_type
+- tab: General
+  section: Operating Costs (Per Hour)
+  columns:
+  - - workstation_costs
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - hour_rate
+- tab: Description
+  section: Description et notes
+  columns:
+  - - description

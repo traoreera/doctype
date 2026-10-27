@@ -1,0 +1,52 @@
+schema_version: 1
+name: Bisect Nodes
+label: Bisect Nodes
+module: accounts
+icon: git-branch
+fields:
+- fieldname: root
+  label: Root
+  fieldtype: Link
+  options: Bisect Nodes
+- fieldname: left_child
+  label: Left Child
+  fieldtype: Link
+  options: Bisect Nodes
+- fieldname: right_child
+  label: Right Child
+  fieldtype: Link
+  options: Bisect Nodes
+- fieldname: period_from_date
+  label: Period_from_date
+  fieldtype: Datetime
+- fieldname: period_to_date
+  label: Period To Date
+  fieldtype: Datetime
+- fieldname: difference
+  label: Difference
+  fieldtype: Number
+- fieldname: balance_sheet_summary
+  label: Balance Sheet Summary
+  fieldtype: Number
+- fieldname: profit_loss_summary
+  label: Profit and Loss Summary
+  fieldtype: Number
+- fieldname: generated
+  label: Generated
+  fieldtype: Boolean
+  default: false
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - root
+    - left_child
+    - right_child
+    - period_from_date
+    - period_to_date
+    - difference
+    - balance_sheet_summary
+    - profit_loss_summary
+    - generated
+views:
+  tree:
+    parent: root

@@ -1,0 +1,30 @@
+schema_version: 1
+name: Transaction Deletion Record To Delete
+label: Transaction Deletion Record To Delete
+istable: true
+fields:
+- fieldname: doctype_name
+  label: DocType
+  fieldtype: Text
+  in_list_view: true
+- fieldname: company_field
+  label: Company Field
+  fieldtype: Text
+  in_list_view: true
+  description: Company link field name used for filtering (optional - leave empty to delete all records)
+- fieldname: document_count
+  label: Document Count
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: child_doctypes
+  label: Child DocTypes
+  fieldtype: LongText
+  in_list_view: true
+  read_only: true
+  description: Child tables that will also be deleted
+- fieldname: deleted
+  label: Deleted
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true

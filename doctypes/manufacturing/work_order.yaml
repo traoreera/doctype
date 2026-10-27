@@ -1,0 +1,386 @@
+schema_version: 1
+name: Work Order
+label: Work Order
+module: manufacturing
+submittable: true
+icon: factory
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MFG-WO-.YYYY.-
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Not Started
+  - In Process
+  - Stock Reserved
+  - Stock Partially Reserved
+  - Completed
+  - Stopped
+  - Closed
+  - Cancelled
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: production_item
+  label: Item To Manufacture
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  read_only: true
+  hidden: true
+- fieldname: bom_no
+  label: BOM No
+  fieldtype: Link
+  options: BOM
+  required: true
+  in_list_view: true
+- fieldname: allow_alternative_item
+  label: Allow Alternative Item
+  fieldtype: Boolean
+  default: false
+- fieldname: use_multi_level_bom
+  label: Use Multi-Level BOM
+  fieldtype: Boolean
+  description: Plan material for sub-assemblies
+  default: true
+- fieldname: skip_transfer
+  label: Skip Material Transfer to WIP Warehouse
+  fieldtype: Boolean
+  description: Check if material transfer entry is not required
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: qty
+  label: Qty To Manufacture
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  default: 1.0
+- fieldname: material_transferred_for_manufacturing
+  label: Material Transferred for Manufacturing
+  fieldtype: Number
+  read_only: true
+- fieldname: produced_qty
+  label: Manufactured Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: from_wip_warehouse
+  label: Backflush Raw Materials From Work-in-Progress Warehouse
+  fieldtype: Boolean
+  default: false
+- fieldname: wip_warehouse
+  label: Work-in-Progress Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: This is a location where operations are executed.
+- fieldname: fg_warehouse
+  label: Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: This is a location where final product stored.
+- fieldname: scrap_warehouse
+  label: Scrap Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: This is a location where scraped materials are stored.
+- fieldname: required_items
+  label: Required Items
+  fieldtype: Table
+  options: Work Order Item
+- fieldname: planned_start_date
+  label: Planned Start Date
+  fieldtype: Datetime
+  required: true
+  default: now
+- fieldname: actual_start_date
+  label: Actual Start Date
+  fieldtype: Datetime
+- fieldname: planned_end_date
+  label: Planned End Date
+  fieldtype: Datetime
+- fieldname: actual_end_date
+  label: Actual End Date
+  fieldtype: Datetime
+- fieldname: expected_delivery_date
+  label: Expected Delivery Date
+  fieldtype: Date
+- fieldname: transfer_material_against
+  label: Transfer Material Against
+  fieldtype: Select
+  options:
+  - Work Order
+  - Job Card
+- fieldname: operations
+  label: Operations
+  fieldtype: Table
+  options: Work Order Operation
+- fieldname: planned_operating_cost
+  label: Planned Operating Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: actual_operating_cost
+  label: Actual Operating Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_operating_cost
+  label: Additional Operating Cost
+  fieldtype: Currency
+  decimals: 2
+- fieldname: total_operating_cost
+  label: Total Operating Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: description
+  label: Item Description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: material_request
+  label: Material Request
+  fieldtype: Link
+  options: Material Request
+  read_only: true
+  description: Manufacture against Material Request
+- fieldname: material_request_item
+  label: Material Request Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: sales_order_item
+  label: Sales Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: production_plan
+  label: Production Plan
+  fieldtype: Link
+  options: Production Plan
+  read_only: true
+- fieldname: production_plan_item
+  label: Production Plan Item
+  fieldtype: Text
+  read_only: true
+- fieldname: product_bundle_item
+  label: Product Bundle Item
+  fieldtype: Link
+  options: Item
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Work Order
+  read_only: true
+- fieldname: source_warehouse
+  label: Default source Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: This is a location where raw materials are available.
+- fieldname: lead_time
+  label: Lead Time
+  fieldtype: Number
+  read_only: true
+  description: In Mins
+- fieldname: has_serial_no
+  label: Has Serial No
+  fieldtype: Boolean
+  read_only: true
+- fieldname: has_batch_no
+  label: Has Batch No
+  fieldtype: Boolean
+  read_only: true
+- fieldname: batch_size
+  label: Batch Size
+  fieldtype: Number
+  default: 0.0
+- fieldname: corrective_operation_cost
+  label: Corrective Operation Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: From Corrective Job Card
+- fieldname: production_plan_sub_assembly_item
+  label: Production Plan Sub Assembly Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: process_loss_qty
+  label: Process Loss Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: track_semi_finished_goods
+  label: Produce Item per Operation
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+  description: Each operation produces its own output item and puts it in stock, for example Cut Sheet, then Painted
+    Sheet, then the final Box.
+- fieldname: reserve_stock
+  label: Reserve Stock
+  fieldtype: Boolean
+  default: false
+- fieldname: disassembled_qty
+  label: Disassembled Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: mps
+  label: MPS
+  fieldtype: Link
+  options: Master Production Schedule
+  read_only: true
+- fieldname: additional_transferred_qty
+  label: Additional Transferred Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: subcontracting_inward_order
+  label: Subcontracting Inward Order
+  fieldtype: Link
+  options: Subcontracting Inward Order
+  read_only: true
+- fieldname: subcontracting_inward_order_item
+  label: Subcontracting Inward Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: max_producible_qty
+  label: Max Producible Qty
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: non_stock_items
+  label: Additional Costs (as per BOM)
+  fieldtype: Table
+  options: Work Order Additional Item
+  read_only: true
+- fieldname: secondary_items
+  label: Secondary Items (as per BOM)
+  fieldtype: Table
+  options: Work Order Additional Item
+  read_only: true
+title_field: item_name
+layout:
+- tab: Production Item
+  section: Références
+  columns:
+  - - company
+    - naming_series
+    - production_item
+    - bom_no
+  - - qty
+    - sales_order
+    - reserve_stock
+    - allow_alternative_item
+- tab: Production Item
+  section: Informations complémentaires 2
+  columns:
+  - - produced_qty
+    - process_loss_qty
+    - disassembled_qty
+  - - material_transferred_for_manufacturing
+    - additional_transferred_qty
+- tab: Production Item
+  section: Warehouse
+  columns:
+  - - wip_warehouse
+    - fg_warehouse
+    - scrap_warehouse
+  - - skip_transfer
+    - from_wip_warehouse
+- tab: Production Item
+  section: Operations
+  columns:
+  - - transfer_material_against
+    - operations
+- tab: Production Item
+  section: Required Items
+  columns:
+  - - use_multi_level_bom
+    - source_warehouse
+    - required_items
+- tab: Scheduling & Costing
+  section: Time
+  columns:
+  - - planned_start_date
+    - planned_end_date
+    - expected_delivery_date
+  - - actual_start_date
+    - actual_end_date
+    - lead_time
+- tab: Scheduling & Costing
+  section: Operation Cost
+  columns:
+  - - planned_operating_cost
+    - actual_operating_cost
+    - additional_operating_cost
+  - - corrective_operation_cost
+    - total_operating_cost
+- tab: More Info
+  section: Production Item Info
+  columns:
+  - - item_name
+    - stock_uom
+  - - description
+- tab: More Info
+  section: Finished Good Serial / Batch
+  columns:
+  - - has_serial_no
+    - has_batch_no
+  - - batch_size
+- tab: More Info
+  section: Comptabilité et montants
+  columns:
+  - - non_stock_items
+- tab: More Info
+  section: Références
+  columns:
+  - - secondary_items
+- tab: More Info
+  section: Reference
+  columns:
+  - - project
+    - subcontracting_inward_order
+    - production_plan
+    - mps
+    - material_request
+  - - production_plan_item
+    - product_bundle_item
+- tab: More Info
+  section: Dates et planification
+  columns:
+  - - status
+  - - amended_from
+views:
+  tree:
+    parent: amended_from

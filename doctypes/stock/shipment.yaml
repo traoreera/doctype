@@ -1,0 +1,271 @@
+schema_version: 1
+name: Shipment
+label: Shipment
+module: stock
+submittable: true
+icon: truck
+fields:
+- fieldname: pickup_from_type
+  label: Pickup from
+  fieldtype: Select
+  options:
+  - Company
+  - Customer
+  - Supplier
+  default: Company
+- fieldname: pickup_company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: pickup_customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: pickup_supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: pickup
+  label: Pickup From
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: pickup_address_name
+  label: Address
+  fieldtype: Link
+  options: Address
+  required: true
+- fieldname: pickup_address
+  label: Pickup Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: pickup_contact_name
+  label: Contact
+  fieldtype: Link
+  options: Contact
+- fieldname: pickup_contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: pickup_contact
+  label: Pickup Contact
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: delivery_to_type
+  label: Delivery to
+  fieldtype: Select
+  options:
+  - Company
+  - Customer
+  - Supplier
+  default: Customer
+- fieldname: delivery_company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: delivery_customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: delivery_supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: delivery_to
+  label: Delivery To
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: delivery_address_name
+  label: Address
+  fieldtype: Link
+  options: Address
+  required: true
+- fieldname: delivery_address
+  label: Delivery Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: delivery_contact_name
+  label: Contact
+  fieldtype: Link
+  options: Contact
+- fieldname: delivery_contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: delivery_contact
+  label: Delivery Contact
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: shipment_parcel
+  label: Shipment Parcel
+  fieldtype: Table
+  options: Shipment Parcel
+- fieldname: parcel_template
+  label: Parcel Template
+  fieldtype: Link
+  options: Shipment Parcel Template
+- fieldname: pallets
+  label: Pallets
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+  default: 'No'
+- fieldname: value_of_goods
+  label: Value of Goods
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: pickup_date
+  label: Pickup Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: pickup_from
+  label: Pickup from
+  fieldtype: Time
+  required: true
+- fieldname: pickup_to
+  label: Pickup to
+  fieldtype: Time
+  required: true
+- fieldname: shipment_type
+  label: Shipment Type
+  fieldtype: Select
+  options:
+  - Goods
+  - Documents
+  default: Goods
+- fieldname: pickup_type
+  label: Pickup Type
+  fieldtype: Select
+  options:
+  - Pickup
+  - Self delivery
+  default: Pickup
+- fieldname: description_of_content
+  label: Description of Content
+  fieldtype: LongText
+  required: true
+- fieldname: service_provider
+  label: Service Provider
+  fieldtype: Text
+- fieldname: shipment_id
+  label: Shipment ID
+  fieldtype: Text
+- fieldname: shipment_amount
+  label: Shipment Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Booked
+  - Cancelled
+  - Completed
+  read_only: true
+- fieldname: tracking_url
+  label: Tracking URL
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: carrier
+  label: Carrier
+  fieldtype: Text
+- fieldname: carrier_service
+  label: Carrier Service
+  fieldtype: Text
+- fieldname: awb_number
+  label: AWB Number
+  fieldtype: Text
+- fieldname: tracking_status
+  label: Tracking Status
+  fieldtype: Select
+  options:
+  - In Progress
+  - Delivered
+  - Returned
+  - Lost
+- fieldname: tracking_status_info
+  label: Tracking Status Info
+  fieldtype: Text
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Shipment
+  read_only: true
+  hidden: true
+- fieldname: incoterm
+  label: Incoterm
+  fieldtype: Link
+  options: Incoterm
+- fieldname: shipment_delivery_note
+  label: Shipment Delivery Note
+  fieldtype: Table
+  options: Shipment Delivery Note
+- fieldname: pickup_contact_person
+  label: Pickup Contact Person
+  fieldtype: Link
+  options: Member
+- fieldname: total_weight
+  label: Total Weight (kg)
+  fieldtype: Number
+  read_only: true
+title_field: status
+layout:
+- section: Références
+  columns:
+  - - pickup_from_type
+    - pickup_company
+    - pickup_customer
+    - pickup_supplier
+    - pickup_address_name
+    - pickup_address
+    - pickup_contact_person
+    - pickup_contact_name
+    - pickup_contact
+  - - delivery_to_type
+    - delivery_company
+    - delivery_customer
+    - delivery_supplier
+    - delivery_address_name
+    - delivery_address
+    - delivery_contact_name
+    - delivery_contact
+- section: Parcels
+  columns:
+  - - shipment_parcel
+    - parcel_template
+    - total_weight
+  - - shipment_delivery_note
+- section: Shipment details
+  columns:
+  - - pallets
+    - value_of_goods
+    - pickup_date
+    - pickup_from
+    - pickup_to
+  - - shipment_type
+    - pickup_type
+    - incoterm
+    - description_of_content
+- section: Shipment Information
+  columns:
+  - - service_provider
+    - shipment_id
+    - shipment_amount
+    - status
+  - - carrier
+    - carrier_service
+    - awb_number
+    - tracking_status
+    - tracking_status_info

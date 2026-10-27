@@ -1,0 +1,11 @@
+schema_version: 1
+name: Overtime Salary Component
+label: Overtime Salary Component
+istable: true
+fields:
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true

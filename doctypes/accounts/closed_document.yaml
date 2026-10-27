@@ -1,0 +1,15 @@
+schema_version: 1
+name: Closed Document
+label: Closed Document
+istable: true
+fields:
+- fieldname: document_type
+  label: Document Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: closed
+  label: Closed
+  fieldtype: Boolean
+  in_list_view: true
+  default: false

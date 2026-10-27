@@ -1,0 +1,16 @@
+schema_version: 1
+name: Employment Type
+label: Employment Type
+module: hr
+icon: briefcase
+fields:
+- fieldname: employee_type_name
+  label: Employment Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: employee_type_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee_type_name

@@ -1,0 +1,62 @@
+schema_version: 1
+name: Ledger Merge
+label: Ledger Merge
+module: accounts
+icon: merge
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: merge_accounts
+  label: Accounts to Merge
+  fieldtype: Table
+  options: Ledger Merge Accounts
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Success
+  - Partial Success
+  - Error
+  in_list_view: true
+  read_only: true
+- fieldname: root_type
+  label: Root Type
+  fieldtype: Select
+  options:
+  - Asset
+  - Liability
+  - Income
+  - Expense
+  - Equity
+  required: true
+- fieldname: account_name
+  label: Account Name
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  read_only: true
+title_field: account_name
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - root_type
+    - account
+    - account_name
+  - - company
+    - status
+    - is_group
+- section: Comptabilité et montants
+  columns:
+  - - merge_accounts

@@ -1,0 +1,68 @@
+schema_version: 1
+name: Repost Payment Ledger
+label: Repost Payment Ledger
+module: accounts
+submittable: true
+icon: list-restart
+fields:
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Repost Payment Ledger
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: repost_vouchers
+  label: Selected Vouchers
+  fieldtype: Table
+  options: Repost Payment Ledger Items
+- fieldname: repost_status
+  label: Repost Status
+  fieldtype: Select
+  options:
+  - Queued
+  - Failed
+  - Completed
+  read_only: true
+- fieldname: add_manually
+  label: Add Manually
+  fieldtype: Boolean
+  description: Ignore Voucher Type filter and Select Vouchers Manually
+  default: false
+- fieldname: repost_error_log
+  label: Repost Error Log
+  fieldtype: LongText
+title_field: company
+layout:
+- section: Filters
+  columns:
+  - - company
+    - posting_date
+  - - voucher_type
+    - add_manually
+- section: Status
+  columns:
+  - - repost_status
+    - repost_error_log
+- section: Vouchers
+  columns:
+  - - repost_vouchers
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

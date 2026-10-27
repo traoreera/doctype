@@ -1,0 +1,39 @@
+schema_version: 1
+name: Incoming Call Settings
+label: Incoming Call Settings
+module: telephony
+single: true
+icon: phone-incoming
+fields:
+- fieldname: call_routing
+  label: Call Routing
+  fieldtype: Select
+  options:
+  - Sequential
+  - Simultaneous
+  default: Sequential
+  in_list_view: true
+- fieldname: greeting_message
+  label: Greeting Message
+  fieldtype: Text
+- fieldname: agent_busy_message
+  label: Agent Busy Message
+  fieldtype: Text
+- fieldname: agent_unavailable_message
+  label: Agent Unavailable Message
+  fieldtype: Text
+- fieldname: call_handling_schedule
+  label: Call Handling Schedule
+  fieldtype: Table
+  options: Incoming Call Handling Schedule
+title_field: call_routing
+layout:
+- section: Description et notes
+  columns:
+  - - call_routing
+  - - greeting_message
+    - agent_busy_message
+    - agent_unavailable_message
+- section: Dates et planification
+  columns:
+  - - call_handling_schedule

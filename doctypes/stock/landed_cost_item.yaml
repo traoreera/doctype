@@ -1,0 +1,66 @@
+schema_version: 1
+name: Landed Cost Item
+label: Landed Cost Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  in_list_view: true
+  read_only: true
+- fieldname: receipt_document_type
+  label: Receipt Document Type
+  fieldtype: Text
+  read_only: true
+- fieldname: receipt_document
+  label: Receipt Document
+  fieldtype: DynamicLink
+  read_only: true
+  options: receipt_document_type
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: applicable_charges
+  label: Applicable Charges
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: purchase_receipt_item
+  label: Purchase Receipt Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: is_fixed_asset
+  label: Is Fixed Asset
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: stock_entry_item
+  label: Stock Entry Item
+  fieldtype: Text
+  read_only: true

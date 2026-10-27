@@ -1,0 +1,50 @@
+schema_version: 1
+name: Cost Center Allocation
+label: Cost Center Allocation
+module: accounts
+submittable: true
+icon: chart-pie
+fields:
+- fieldname: main_cost_center
+  label: Main Cost Center
+  fieldtype: Link
+  options: Cost Center
+  required: true
+  in_list_view: true
+- fieldname: valid_from
+  label: Valid From
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: allocation_percentages
+  label: Cost Center Allocation Percentages
+  fieldtype: Table
+  options: Cost Center Allocation Percentage
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Cost Center Allocation
+  read_only: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - main_cost_center
+    - company
+  - - valid_from
+- section: Comptabilité et montants
+  columns:
+  - - allocation_percentages
+    - amended_from
+views:
+  calendar:
+    start: valid_from
+    title: company
+  tree:
+    parent: amended_from

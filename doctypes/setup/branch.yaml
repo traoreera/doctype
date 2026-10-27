@@ -1,0 +1,16 @@
+schema_version: 1
+name: Branch
+label: Branch
+module: setup
+icon: store
+fields:
+- fieldname: branch
+  label: Branch
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: branch
+layout:
+- section: Informations principales
+  columns:
+  - - branch

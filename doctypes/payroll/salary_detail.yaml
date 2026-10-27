@@ -1,0 +1,113 @@
+schema_version: 1
+name: Salary Detail
+label: Salary Detail
+istable: true
+fields:
+- fieldname: salary_component
+  label: Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true
+- fieldname: abbr
+  label: Abbr
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: statistical_component
+  label: Statistical Component
+  fieldtype: Boolean
+  description: If selected, the value specified or calculated in this component will not contribute to the earnings
+    or deductions. However, it's value can be referenced by other components that can be added or deducted.
+  default: false
+- fieldname: is_tax_applicable
+  label: Is Tax Applicable
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+- fieldname: is_flexible_benefit
+  label: Is Flexible Benefit
+  fieldtype: Boolean
+  read_only: true
+- fieldname: variable_based_on_taxable_salary
+  label: Variable Based On Taxable Salary
+  fieldtype: Boolean
+  read_only: true
+- fieldname: depends_on_payment_days
+  label: Depends on Payment Days
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+- fieldname: deduct_full_tax_on_selected_payroll_date
+  label: Deduct Full Tax on Selected Payroll Date
+  fieldtype: Boolean
+  read_only: true
+- fieldname: condition
+  label: Condition
+  fieldtype: Code
+- fieldname: amount_based_on_formula
+  label: Amount based on formula
+  fieldtype: Boolean
+  default: false
+- fieldname: formula
+  label: Formula
+  fieldtype: Code
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: do_not_include_in_total
+  label: Do not include in total
+  fieldtype: Boolean
+  default: false
+- fieldname: default_amount
+  label: Default Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: additional_amount
+  label: Additional Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: tax_on_flexible_benefit
+  label: Tax on flexible benefit
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: tax_on_additional_salary
+  label: Tax on additional salary
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_salary
+  label: 'Additional Salary '
+  fieldtype: Link
+  options: Additional Salary
+  read_only: true
+- fieldname: exempted_from_income_tax
+  label: Exempted from Income Tax
+  fieldtype: Boolean
+  read_only: true
+- fieldname: year_to_date
+  label: Year To Date
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Total salary booked against this component for this employee from the beginning of the year (payroll
+    period or fiscal year) up to the current salary slip's end date.
+- fieldname: is_recurring_additional_salary
+  label: Is Recurring Additional Salary
+  fieldtype: Boolean
+  read_only: true
+- fieldname: do_not_include_in_accounts
+  label: Do Not Include in Accounting Entries
+  fieldtype: Boolean
+  description: If enabled, the amount will be excluded from accounting entries during Journal Entry creation.
+  default: false
+- fieldname: accrual_component
+  label: Accrual Component
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true

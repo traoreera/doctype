@@ -1,0 +1,11 @@
+schema_version: 1
+name: Department Approver
+label: Department Approver
+istable: true
+fields:
+- fieldname: approver
+  label: Approver
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true

@@ -1,0 +1,129 @@
+schema_version: 1
+name: Training Event
+label: Training Event
+module: hr
+submittable: true
+icon: presentation
+fields:
+- fieldname: event_name
+  label: Event Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: training_program
+  label: Training Program
+  fieldtype: Link
+  options: Training Program
+- fieldname: event_status
+  label: Event Status
+  fieldtype: Select
+  options:
+  - Scheduled
+  - Completed
+  - Cancelled
+  required: true
+  in_list_view: true
+- fieldname: has_certificate
+  label: Has Certificate
+  fieldtype: Boolean
+  default: false
+- fieldname: type
+  label: Type
+  fieldtype: Select
+  options:
+  - Seminar
+  - Theory
+  - Workshop
+  - Conference
+  - Exam
+  - Internet
+  - Self-Study
+  required: true
+  in_list_view: true
+- fieldname: level
+  label: Level
+  fieldtype: Select
+  options:
+  - Beginner
+  - Intermediate
+  - Advance
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: trainer_name
+  label: Trainer Name
+  fieldtype: Text
+- fieldname: trainer_email
+  label: Trainer Email
+  fieldtype: Text
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: contact_number
+  label: Contact Number
+  fieldtype: Text
+- fieldname: course
+  label: Course
+  fieldtype: Text
+- fieldname: location
+  label: Location
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: start_time
+  label: Start Time
+  fieldtype: Datetime
+  required: true
+- fieldname: end_time
+  label: End Time
+  fieldtype: Datetime
+  required: true
+- fieldname: introduction
+  label: Introduction
+  fieldtype: TextEditor
+  required: true
+- fieldname: employees
+  label: Employees
+  fieldtype: Table
+  options: Training Event Employee
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Training Event
+  read_only: true
+- fieldname: employee_emails
+  label: Employee Emails
+  fieldtype: LongText
+  hidden: true
+title_field: event_name
+layout:
+- section: Informations principales
+  columns:
+  - - event_name
+    - training_program
+    - event_status
+    - has_certificate
+  - - type
+    - level
+    - company
+- section: Informations complémentaires 2
+  columns:
+  - - trainer_name
+    - trainer_email
+  - - supplier
+    - contact_number
+- section: Informations complémentaires 3
+  columns:
+  - - course
+    - location
+  - - start_time
+    - end_time
+- section: Informations complémentaires 4
+  columns:
+  - - introduction
+- section: Attendees
+  columns:
+  - - employees
+    - amended_from

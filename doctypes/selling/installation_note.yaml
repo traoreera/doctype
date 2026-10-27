@@ -1,0 +1,122 @@
+schema_version: 1
+name: Installation Note
+label: Installation Note
+module: selling
+submittable: true
+icon: wrench
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-INS-.YYYY.-
+  required: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+- fieldname: customer_address
+  label: Customer Address
+  fieldtype: Link
+  options: Address
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: customer_name
+  label: Name
+  fieldtype: Text
+  read_only: true
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+  hidden: true
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+  required: true
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: inst_date
+  label: Installation Date
+  fieldtype: Date
+  required: true
+- fieldname: inst_time
+  label: Installation Time
+  fieldtype: Time
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Cancelled
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Installation Note
+  read_only: true
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Installation Note Item
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+title_field: customer_name
+layout:
+- section: Installation Note
+  columns:
+  - - naming_series
+    - customer
+    - customer_address
+    - contact_person
+    - customer_name
+    - contact_mobile
+    - contact_email
+    - territory
+    - customer_group
+  - - inst_date
+    - inst_time
+    - status
+    - company
+    - project
+    - amended_from
+    - remarks
+- section: Références
+  columns:
+  - - items
+views:
+  tree:
+    parent: amended_from

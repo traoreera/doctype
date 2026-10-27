@@ -1,0 +1,58 @@
+schema_version: 1
+name: Gratuity Rule
+label: Gratuity Rule
+module: payroll
+icon: scale
+fields:
+- fieldname: disable
+  label: Disable
+  fieldtype: Boolean
+  default: false
+- fieldname: calculate_gratuity_amount_based_on
+  label: Calculate Gratuity Amount Based On
+  fieldtype: Select
+  options:
+  - Current Slab
+  - Sum of all previous slabs
+  required: true
+  in_list_view: true
+- fieldname: applicable_earnings_component
+  label: Applicable Earnings Component
+  fieldtype: Table
+  options: Gratuity Applicable Component
+  description: Salary components should be part of the Salary Structure.
+- fieldname: gratuity_rule_slabs
+  label: Current Work Experience
+  fieldtype: Table
+  options: Gratuity Rule Slab
+  description: Set "From(Year)" and "To(Year)" to 0 for no upper and lower limit.
+- fieldname: work_experience_calculation_function
+  label: Work Experience Calculation Method
+  fieldtype: Select
+  options:
+  - Round off Work Experience
+  - Take Exact Completed Years
+  - Manual
+  default: Round off Work Experience
+- fieldname: total_working_days_per_year
+  label: Total working Days Per Year
+  fieldtype: Number
+  default: 365.0
+- fieldname: minimum_year_for_gratuity
+  label: Minimum Year for Gratuity
+  fieldtype: Int
+title_field: calculate_gratuity_amount_based_on
+layout:
+- section: Gratuity
+  columns:
+  - - disable
+- section: Informations complémentaires 2
+  columns:
+  - - calculate_gratuity_amount_based_on
+    - total_working_days_per_year
+  - - work_experience_calculation_function
+    - minimum_year_for_gratuity
+  - - applicable_earnings_component
+- section: Rules
+  columns:
+  - - gratuity_rule_slabs

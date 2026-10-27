@@ -1,0 +1,56 @@
+schema_version: 1
+name: Project Update
+label: Project Update
+module: projects
+submittable: true
+icon: message-square
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Text
+  hidden: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+  required: true
+  in_list_view: true
+- fieldname: sent
+  label: Sent
+  fieldtype: Boolean
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  read_only: true
+- fieldname: time
+  label: Time
+  fieldtype: Time
+  read_only: true
+- fieldname: users
+  label: Users
+  fieldtype: Table
+  options: Project User
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Project Update
+  read_only: true
+title_field: project
+layout:
+- section: Dates et planification
+  columns:
+  - - project
+    - sent
+  - - date
+    - time
+- section: Dates et planification
+  columns:
+  - - users
+    - amended_from
+views:
+  calendar:
+    start: date
+    title: project
+  tree:
+    parent: amended_from

@@ -1,0 +1,74 @@
+schema_version: 1
+name: Leave Policy Assignment
+label: Leave Policy Assignment
+module: hr
+submittable: true
+icon: user-check
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee name
+  fieldtype: Text
+  read_only: true
+- fieldname: leave_policy
+  label: Leave Policy
+  fieldtype: Link
+  options: Leave Policy
+  required: true
+  in_list_view: true
+- fieldname: assignment_based_on
+  label: Assignment based on
+  fieldtype: Select
+  options:
+  - Leave Period
+  - Joining Date
+- fieldname: leave_period
+  label: Leave Period
+  fieldtype: Link
+  options: Leave Period
+- fieldname: effective_from
+  label: Effective From
+  fieldtype: Date
+  required: true
+- fieldname: effective_to
+  label: Effective To
+  fieldtype: Date
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Leave Policy Assignment
+  read_only: true
+- fieldname: carry_forward
+  label: Add unused leaves from previous allocations
+  fieldtype: Boolean
+  default: false
+- fieldname: leaves_allocated
+  label: Leaves Allocated
+  fieldtype: Boolean
+  hidden: true
+  default: false
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - company
+    - leave_policy
+    - carry_forward
+  - - assignment_based_on
+    - leave_period
+    - effective_from
+    - effective_to
+    - amended_from

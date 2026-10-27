@@ -1,0 +1,46 @@
+schema_version: 1
+name: Purchase Taxes and Charges Template
+label: Purchase Taxes and Charges Template
+module: accounts
+icon: badge-percent
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+- fieldname: is_default
+  label: Default
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: taxes
+  label: Purchase Taxes and Charges
+  fieldtype: Table
+  options: Purchase Taxes and Charges
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - title
+    - is_default
+    - disabled
+  - - company
+    - tax_category
+- section: Comptabilité et montants
+  columns:
+  - - taxes

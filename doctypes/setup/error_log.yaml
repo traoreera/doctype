@@ -1,0 +1,31 @@
+schema_version: 1
+name: Error Log
+label: Error Log
+module: setup
+icon: file-text
+fields:
+- fieldname: method
+  label: Method
+  fieldtype: Text
+  in_list_view: true
+- fieldname: error
+  label: Error
+  fieldtype: LongText
+- fieldname: seen
+  label: Seen
+  fieldtype: Boolean
+- fieldname: reference_doctype
+  label: Reference DocType
+  fieldtype: Text
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: Text
+title_field: method
+layout:
+- section: Informations principales
+  columns:
+  - - method
+    - error
+    - seen
+    - reference_doctype
+    - reference_name

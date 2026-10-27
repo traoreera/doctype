@@ -1,0 +1,84 @@
+schema_version: 1
+name: Period Closing Voucher
+label: Period Closing Voucher
+module: accounts
+submittable: true
+icon: folder-lock
+fields:
+- fieldname: transaction_date
+  label: Transaction Date
+  fieldtype: Date
+  default: today
+- fieldname: fiscal_year
+  label: Fiscal Year
+  fieldtype: Link
+  options: Fiscal Year
+  required: true
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Period Closing Voucher
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: closing_account_head
+  label: Closing Account Head
+  fieldtype: Link
+  options: Account
+  required: true
+  description: The account head under Liability or Equity, in which Profit/Loss will be booked
+- fieldname: stock_value_difference
+  label: Accepted Stock Value Difference
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Difference between the Stock Asset accounts balance and the Stock Balance value accepted while submitting
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+  required: true
+- fieldname: gle_processing_status
+  label: GL Entry Processing Status
+  fieldtype: Select
+  options:
+  - In Progress
+  - Completed
+  - Failed
+  read_only: true
+- fieldname: error_message
+  label: Error Message
+  fieldtype: LongText
+  read_only: true
+- fieldname: period_end_date
+  label: Period End Date
+  fieldtype: Date
+  required: true
+- fieldname: period_start_date
+  label: Period Start Date
+  fieldtype: Date
+  required: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - transaction_date
+    - company
+    - fiscal_year
+    - period_start_date
+    - period_end_date
+    - amended_from
+  - - closing_account_head
+    - stock_value_difference
+    - gle_processing_status
+    - remarks
+    - error_message
+views:
+  calendar:
+    start: transaction_date
+    title: company
+  tree:
+    parent: amended_from

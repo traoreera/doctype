@@ -1,0 +1,17 @@
+schema_version: 1
+name: Skill
+label: Skill
+module: hr
+icon: sparkles
+fields:
+- fieldname: skill_name
+  label: Skill Name
+  fieldtype: Text
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+layout:
+- section: Informations principales
+  columns:
+  - - skill_name
+    - description

@@ -1,0 +1,342 @@
+schema_version: 1
+name: Asset
+label: Asset
+module: assets
+submittable: true
+icon: building
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-ASS-.YYYY.-
+- fieldname: asset_name
+  label: Asset Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+- fieldname: asset_category
+  label: Asset Category
+  fieldtype: Link
+  options: Asset Category
+  in_list_view: true
+  read_only: true
+- fieldname: asset_owner
+  label: Asset Owner
+  fieldtype: Select
+  options:
+  - Company
+  - Supplier
+  - Customer
+  default: Company
+- fieldname: asset_owner_company
+  label: Asset Owner Company
+  fieldtype: Link
+  options: Company
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: location
+  label: Location
+  fieldtype: Link
+  options: Location
+  required: true
+  in_list_view: true
+- fieldname: custodian
+  label: Custodian
+  fieldtype: Link
+  options: Employee
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: purchase_date
+  label: Purchase Date
+  fieldtype: Date
+  required: true
+- fieldname: disposal_date
+  label: Disposal Date
+  fieldtype: Date
+  read_only: true
+- fieldname: journal_entry_for_scrap
+  label: Journal Entry for Scrap
+  fieldtype: Link
+  options: Journal Entry
+  read_only: true
+- fieldname: available_for_use_date
+  label: Available for Use Date
+  fieldtype: Date
+- fieldname: calculate_depreciation
+  label: Calculate Depreciation
+  fieldtype: Boolean
+  default: false
+- fieldname: opening_accumulated_depreciation
+  label: Opening Accumulated Depreciation
+  fieldtype: Currency
+  decimals: 2
+- fieldname: finance_books
+  label: Finance Books
+  fieldtype: Table
+  options: Asset Finance Book
+- fieldname: depreciation_method
+  label: Depreciation Method
+  fieldtype: Select
+  options:
+  - Straight Line
+  - Double Declining Balance
+  - Written Down Value
+  - Manual
+- fieldname: value_after_depreciation
+  label: Value After Depreciation
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: total_number_of_depreciations
+  label: Total Number of Depreciations
+  fieldtype: Int
+- fieldname: frequency_of_depreciation
+  label: Frequency of Depreciation (Months)
+  fieldtype: Int
+- fieldname: next_depreciation_date
+  label: Next Depreciation Date
+  fieldtype: Date
+  hidden: true
+- fieldname: policy_number
+  label: Policy number
+  fieldtype: Text
+- fieldname: insurer
+  label: Insurer
+  fieldtype: Text
+- fieldname: insured_value
+  label: Insured value
+  fieldtype: Text
+- fieldname: insurance_start_date
+  label: Insurance Start Date
+  fieldtype: Date
+- fieldname: insurance_end_date
+  label: Insurance End Date
+  fieldtype: Date
+- fieldname: comprehensive_insurance
+  label: Comprehensive Insurance
+  fieldtype: Text
+- fieldname: maintenance_required
+  label: Maintenance Required
+  fieldtype: Boolean
+  default: false
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Cancelled
+  - Partially Depreciated
+  - Fully Depreciated
+  - Sold
+  - Scrapped
+  - In Maintenance
+  - Out of Order
+  - Issue
+  - Receipt
+  - Capitalized
+  - Work In Progress
+  default: Draft
+  in_list_view: true
+  read_only: true
+- fieldname: booked_fixed_asset
+  label: Booked Fixed Asset
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: purchase_receipt
+  label: Purchase Receipt
+  fieldtype: Link
+  options: Purchase Receipt
+- fieldname: purchase_invoice
+  label: Purchase Invoice
+  fieldtype: Link
+  options: Purchase Invoice
+- fieldname: default_finance_book
+  label: Default Finance Book
+  fieldtype: Link
+  options: Finance Book
+  read_only: true
+  hidden: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset
+  read_only: true
+- fieldname: split_from
+  label: Split From
+  fieldtype: Link
+  options: Asset
+  read_only: true
+- fieldname: asset_quantity
+  label: Asset Quantity
+  fieldtype: Int
+  default: 1
+- fieldname: depr_entry_posting_status
+  label: Depreciation Entry Posting Status
+  fieldtype: Select
+  options:
+  - Successful
+  - Failed
+  read_only: true
+  hidden: true
+- fieldname: is_fully_depreciated
+  label: Is Fully Depreciated
+  fieldtype: Boolean
+  default: false
+- fieldname: total_asset_cost
+  label: Total Asset Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_asset_cost
+  label: Additional Asset Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: value_adjustment_amount
+  label: Value Adjustment Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Net change from Asset Value Adjustments
+- fieldname: purchase_amount
+  label: Purchase Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: opening_number_of_booked_depreciations
+  label: Opening Number of Booked Depreciations
+  fieldtype: Int
+- fieldname: purchase_receipt_item
+  label: Purchase Receipt Item
+  fieldtype: Text
+  hidden: true
+- fieldname: purchase_invoice_item
+  label: Purchase Invoice Item
+  fieldtype: Text
+  hidden: true
+- fieldname: net_purchase_amount
+  label: Net Purchase Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: asset_type
+  label: Asset Type
+  fieldtype: Select
+  options:
+  - Existing Asset
+  - Composite Asset
+  - Composite Component
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+title_field: item_code
+layout:
+- tab: Général
+  section: Références
+  columns:
+  - - naming_series
+    - item_code
+    - asset_name
+    - location
+  - - company
+    - asset_category
+    - asset_type
+    - maintenance_required
+    - calculate_depreciation
+- tab: Général
+  section: Purchase Details
+  columns:
+  - - purchase_receipt
+    - purchase_invoice
+    - purchase_date
+    - available_for_use_date
+    - disposal_date
+  - - net_purchase_amount
+    - asset_quantity
+    - additional_asset_cost
+    - value_adjustment_amount
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - total_asset_cost
+- tab: Depreciation
+  section: Informations complémentaires 4
+  columns:
+  - - opening_accumulated_depreciation
+    - is_fully_depreciated
+  - - opening_number_of_booked_depreciations
+- tab: Depreciation
+  section: Informations complémentaires 5
+  columns:
+  - - finance_books
+- tab: Depreciation
+  section: Depreciation Details
+  columns:
+  - - depreciation_method
+    - frequency_of_depreciation
+  - - total_number_of_depreciations
+- tab: More Info
+  section: Accounting Dimensions
+  columns:
+  - - cost_center
+- tab: More Info
+  section: Ownership
+  columns:
+  - - asset_owner
+  - - asset_owner_company
+    - customer
+    - supplier
+- tab: More Info
+  section: Insurance
+  columns:
+  - - policy_number
+    - insurer
+    - insured_value
+  - - insurance_start_date
+    - insurance_end_date
+    - comprehensive_insurance
+- tab: More Info
+  section: Additional Info
+  columns:
+  - - status
+    - custodian
+    - department
+  - - journal_entry_for_scrap
+    - split_from
+    - amended_from
+views:
+  tree:
+    parent: amended_from

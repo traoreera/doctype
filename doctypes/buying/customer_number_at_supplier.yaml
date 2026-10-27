@@ -1,0 +1,14 @@
+schema_version: 1
+name: Customer Number At Supplier
+label: Customer Number At Supplier
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: customer_number
+  label: Customer Number
+  fieldtype: Text
+  in_list_view: true

@@ -1,0 +1,25 @@
+schema_version: 1
+name: Employee Property History
+label: Employee Property History
+istable: true
+fields:
+- fieldname: property
+  label: Property
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: current
+  label: Current
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: new
+  label: New
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: fieldname
+  label: Field Name
+  fieldtype: Text
+  read_only: true
+  hidden: true

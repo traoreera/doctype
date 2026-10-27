@@ -1,0 +1,96 @@
+schema_version: 1
+name: "Purchase Receipt Item"
+label: "Purchase Receipt Item"
+istable: true
+fields:
+  - { fieldname: barcode, label: "Barcode", fieldtype: Text }
+  - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
+  - { fieldname: supplier_part_no, label: "Supplier Part Number", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, required: true }
+  - { fieldname: description, label: "Description", fieldtype: TextEditor }
+  - { fieldname: received_qty, label: "Received Quantity", fieldtype: Number, required: true, read_only: true }
+  - { fieldname: qty, label: "Accepted Quantity", fieldtype: Number, in_list_view: true }
+  - { fieldname: rejected_qty, label: "Rejected Quantity", fieldtype: Number, in_list_view: true }
+  - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", required: true }
+  - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", required: true, read_only: true }
+  - { fieldname: conversion_factor, label: "Conversion Factor", fieldtype: Number, required: true }
+  - { fieldname: retain_sample, label: "Retain Sample", fieldtype: Boolean, read_only: true }
+  - { fieldname: sample_quantity, label: "Sample Quantity", fieldtype: Int }
+  - { fieldname: price_list_rate, label: "Price List Rate", fieldtype: Currency, decimals: 2 }
+  - { fieldname: discount_percentage, label: "Discount on Price List Rate (%)", fieldtype: Percent }
+  - { fieldname: discount_amount, label: "Discount Amount", fieldtype: Currency, decimals: 2 }
+  - { fieldname: base_price_list_rate, label: "Price List Rate (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: rate, label: "Rate", fieldtype: Currency, decimals: 2, in_list_view: true }
+  - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, in_list_view: true, read_only: true }
+  - { fieldname: base_rate, label: "Rate (Company Currency)", fieldtype: Currency, decimals: 2, required: true, read_only: true }
+  - { fieldname: base_amount, label: "Amount (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: pricing_rules, label: "Pricing Rules", fieldtype: LongText, read_only: true, hidden: true }
+  - { fieldname: is_free_item, label: "Is Free Item", fieldtype: Boolean, read_only: true }
+  - { fieldname: net_rate, label: "Net Rate", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: net_amount, label: "Net Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: base_net_rate, label: "Net Rate (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: base_net_amount, label: "Net Amount (Company Currency)", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: weight_per_unit, label: "Weight Per Unit", fieldtype: Number }
+  - { fieldname: total_weight, label: "Total Weight", fieldtype: Number, read_only: true }
+  - { fieldname: weight_uom, label: "Weight UOM", fieldtype: Link, options: "UOM" }
+  - { fieldname: warehouse, label: "Accepted Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true }
+  - { fieldname: rejected_warehouse, label: "Rejected Warehouse", fieldtype: Link, options: "Warehouse" }
+  - { fieldname: quality_inspection, label: "Quality Inspection", fieldtype: Link, options: "Quality Inspection" }
+  - { fieldname: is_fixed_asset, label: "Is Fixed Asset", fieldtype: Boolean, read_only: true, hidden: true }
+  - { fieldname: purchase_order, label: "Purchase Order", fieldtype: Link, options: "Purchase Order", read_only: true }
+  - { fieldname: schedule_date, label: "Required By", fieldtype: Date, read_only: true }
+  - { fieldname: stock_qty, label: "Accepted Qty in Stock UOM", fieldtype: Number, read_only: true }
+  - { fieldname: item_tax_template, label: "Item Tax Template", fieldtype: Link, options: "Item Tax Template" }
+  - { fieldname: project, label: "Project", fieldtype: Link, options: "Project" }
+  - { fieldname: cost_center, label: "Cost Center", fieldtype: Link, options: "Cost Center" }
+  - { fieldname: purchase_order_item, label: "Purchase Order Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: allow_zero_valuation_rate, label: "Allow Zero Valuation Rate", fieldtype: Boolean, default: false }
+  - { fieldname: billed_amt, label: "Billed Amt", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: closed, label: "Closed", fieldtype: Boolean, read_only: true }
+  - { fieldname: landed_cost_voucher_amount, label: "Landed Cost Voucher Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: brand, label: "Brand", fieldtype: Link, options: "Brand", read_only: true, hidden: true }
+  - { fieldname: item_group, label: "Item Group", fieldtype: Link, options: "Item Group", read_only: true }
+  - { fieldname: rm_supp_cost, label: "Raw Materials Supplied Cost", fieldtype: Currency, decimals: 2, read_only: true, hidden: true }
+  - { fieldname: item_tax_amount, label: "Item Tax Amount Included in Value", fieldtype: Currency, decimals: 2, read_only: true, hidden: true }
+  - { fieldname: valuation_rate, label: "Valuation Rate", fieldtype: Currency, decimals: 2, read_only: true, hidden: true }
+  - { fieldname: item_tax_rate, label: "Item Tax Rate", fieldtype: Code, read_only: true, hidden: true, description: "Tax detail table fetched from item master as a string and stored in this field.\nUsed for Taxes and Charges" }
+  - { fieldname: page_break, label: "Page Break", fieldtype: Boolean, default: false }
+  - { fieldname: material_request, label: "Material Request", fieldtype: Link, options: "Material Request", read_only: true }
+  - { fieldname: material_request_item, label: "Material Request Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: expense_account, label: "Expense Account", fieldtype: Link, options: "Account" }
+  - { fieldname: manufacturer, label: "Manufacturer", fieldtype: Link, options: "Manufacturer" }
+  - { fieldname: manufacturer_part_no, label: "Manufacturer Part Number", fieldtype: Text }
+  - { fieldname: asset_location, label: "Asset Location", fieldtype: Link, options: "Location" }
+  - { fieldname: asset_category, label: "Asset Category", fieldtype: Link, options: "Asset Category", read_only: true }
+  - { fieldname: from_warehouse, label: "From Warehouse", fieldtype: Link, options: "Warehouse", hidden: true }
+  - { fieldname: purchase_receipt_item, label: "Purchase Receipt Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: putaway_rule, label: "Putaway Rule", fieldtype: Link, options: "Putaway Rule", read_only: true }
+  - { fieldname: returned_qty, label: "Returned Qty in Stock UOM", fieldtype: Number, read_only: true }
+  - { fieldname: received_stock_qty, label: "Received Qty in Stock UOM", fieldtype: Number, read_only: true }
+  - { fieldname: stock_uom_rate, label: "Rate of Stock UOM", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: delivery_note_item, label: "Delivery Note Item", fieldtype: Text, read_only: true }
+  - { fieldname: delivery_note_packed_item, label: "Delivery Note Packed Item", fieldtype: Text, read_only: true }
+  - { fieldname: margin_type, label: "Margin Type", fieldtype: Select, options: ["Percentage", "Amount"] }
+  - { fieldname: margin_rate_or_amount, label: "Margin Rate or Amount", fieldtype: Number }
+  - { fieldname: rate_with_margin, label: "Rate With Margin", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: base_rate_with_margin, label: "Rate With Margin (Company Currency)", fieldtype: Currency, decimals: 2 }
+  - { fieldname: purchase_invoice, label: "Purchase Invoice", fieldtype: Link, options: "Purchase Invoice", read_only: true }
+  - { fieldname: purchase_invoice_item, label: "Purchase Invoice Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: product_bundle, label: "Product Bundle", fieldtype: Link, options: "Product Bundle", read_only: true, hidden: true, description: "Product Bundle version this row was packed from" }
+  - { fieldname: provisional_expense_account, label: "Provisional Expense Account", fieldtype: Link, options: "Account" }
+  - { fieldname: has_item_scanned, label: "Has Item Scanned", fieldtype: Boolean, read_only: true }
+  - { fieldname: serial_and_batch_bundle, label: "Serial and Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle" }
+  - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
+  - { fieldname: rejected_serial_no, label: "Rejected Serial No", fieldtype: LongText }
+  - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }
+  - { fieldname: rejected_serial_and_batch_bundle, label: "Rejected Serial and Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle" }
+  - { fieldname: wip_composite_asset, label: "WIP Composite Asset", fieldtype: Link, options: "Asset" }
+  - { fieldname: sales_order, label: "Sales Order", fieldtype: Link, options: "Sales Order", read_only: true }
+  - { fieldname: sales_order_item, label: "Sales Order Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: subcontracting_receipt_item, label: "Subcontracting Receipt Item", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: use_serial_batch_fields, label: "Use Serial No / Batch Fields", fieldtype: Boolean, default: false }
+  - { fieldname: return_qty_from_rejected_warehouse, label: "Return Qty from Rejected Warehouse", fieldtype: Boolean, read_only: true }
+  - { fieldname: sales_incoming_rate, label: "Sales Incoming Rate", fieldtype: Currency, decimals: 2, hidden: true, description: "Valuation rate for the item as per Sales Invoice (Only for Internal Transfers)" }
+  - { fieldname: distributed_discount_amount, label: "Distributed Discount Amount", fieldtype: Currency, decimals: 2 }
+  - { fieldname: mapped_additional_discount_amount, label: "Additional Discount per Stock Unit", fieldtype: Currency, decimals: 2, read_only: true, description: "Tax-exclusive additional discount carried from a source document, per stock unit." }
+  - { fieldname: amount_difference_with_purchase_invoice, label: "Amount Difference with Purchase Invoice", fieldtype: Currency, decimals: 2, read_only: true }

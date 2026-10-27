@@ -1,0 +1,70 @@
+schema_version: 1
+name: Asset Maintenance Task
+label: Asset Maintenance Task
+istable: true
+fields:
+- fieldname: maintenance_task
+  label: Maintenance Task
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: maintenance_type
+  label: Maintenance Type
+  fieldtype: Select
+  options:
+  - Preventive Maintenance
+  - Calibration
+- fieldname: maintenance_status
+  label: Maintenance Status
+  fieldtype: Select
+  options:
+  - Planned
+  - Overdue
+  - Cancelled
+  required: true
+  in_list_view: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: periodicity
+  label: Periodicity
+  fieldtype: Select
+  options:
+  - Daily
+  - Weekly
+  - Monthly
+  - Quarterly
+  - Half-yearly
+  - Yearly
+  - 2 Yearly
+  - 3 Yearly
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: certificate_required
+  label: Certificate Required
+  fieldtype: Boolean
+  default: false
+- fieldname: assign_to
+  label: Assign To
+  fieldtype: Link
+  options: Member
+  in_list_view: true
+- fieldname: assign_to_name
+  label: Assign to Name
+  fieldtype: Text
+  read_only: true
+- fieldname: next_due_date
+  label: Next Due Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: last_completion_date
+  label: Last Completion Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor

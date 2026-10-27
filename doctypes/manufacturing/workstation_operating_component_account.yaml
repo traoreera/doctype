@@ -1,0 +1,16 @@
+schema_version: 1
+name: Workstation Operating Component Account
+label: Workstation Operating Component Account
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true

@@ -1,0 +1,179 @@
+schema_version: 1
+name: Item Default
+label: Item Default
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: default_warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: default_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+  in_list_view: true
+  description: Default price list for buying or selling this item
+- fieldname: default_discount_account
+  label: Discount Account
+  fieldtype: Link
+  options: Account
+- fieldname: default_inventory_account
+  label: Inventory Account
+  fieldtype: Link
+  options: Account
+  description: Stock account where inventory value for this item will be tracked
+- fieldname: inventory_account_currency
+  label: Inventory Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: vf_default_warehouse
+  label: Warehouse
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_default_price_list
+  label: Price List
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_default_discount_account
+  label: Discount Account
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_default_inventory_account
+  label: Inventory Account
+  fieldtype: Text
+  read_only: true
+- fieldname: buying_cost_center
+  label: Buying Cost Center
+  fieldtype: Link
+  options: Cost Center
+  description: Cost center used for tracking purchase expenses for this item
+- fieldname: default_supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  description: This supplier will be auto-selected in new purchase transactions
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+  description: Account where the cost of this item will be debited on purchase
+- fieldname: default_provisional_account
+  label: Provisional Account (Service)
+  fieldtype: Link
+  options: Account
+  description: Provisional liability account used for service items before invoice is received
+- fieldname: purchase_expense_account
+  label: Purchase Expense Account
+  fieldtype: Link
+  options: Account
+  description: Account to record additional purchase expenses like freight or customs
+- fieldname: purchase_expense_contra_account
+  label: Purchase Expense Contra Account
+  fieldtype: Link
+  options: Account
+  description: Used to balance the books when recording extra purchase costs
+- fieldname: expenses_added_to_stock_account
+  label: Expenses Added To Stock Account
+  fieldtype: Link
+  options: Account
+  description: Account to track value added to stock via Stock Entry, Stock Reconciliation or Landed Cost Voucher
+- fieldname: expenses_added_to_stock_contra_account
+  label: Expenses Added To Stock Contra Account
+  fieldtype: Link
+  options: Account
+  description: Used to balance the books when recording expenses added to stock
+- fieldname: purchase_price_variance_account
+  label: Purchase Price Variance Account
+  fieldtype: Link
+  options: Account
+  description: 'For Standard Cost items: the purchase price vs standard rate difference is booked here. Falls back
+    to the Company''s Default Purchase Price Variance Account.'
+- fieldname: manufacturing_variance_account
+  label: Manufacturing Variance Account
+  fieldtype: Link
+  options: Account
+  description: 'For Standard Cost items: the Manufacture/Repack consumed cost vs standard rate difference is booked
+    here. Falls back to the Company''s Default Manufacturing Variance Account.'
+- fieldname: vf_buying_cost_center
+  label: Buying Cost Center
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_default_supplier
+  label: Supplier
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_expense_account
+  label: Expense Account
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_default_provisional_account
+  label: Provisional Account (Service)
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_purchase_expense_account
+  label: Purchase Expense Account
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_purchase_expense_contra_account
+  label: Purchase Expense Contra Account
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_expenses_added_to_stock_account
+  label: Expenses Added To Stock Account
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_expenses_added_to_stock_contra_account
+  label: Expenses Added To Stock Contra Account
+  fieldtype: Text
+  read_only: true
+- fieldname: selling_cost_center
+  label: Selling Cost Center
+  fieldtype: Link
+  options: Cost Center
+  description: Cost center used for tracking sales revenue for this item
+- fieldname: income_account
+  label: Income Account
+  fieldtype: Link
+  options: Account
+  description: Account where revenue from selling this item will be credited
+- fieldname: vf_selling_cost_center
+  label: Selling Cost Center
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_income_account
+  label: Income Account
+  fieldtype: Text
+  read_only: true
+- fieldname: default_cogs_account
+  label: COGS Account
+  fieldtype: Link
+  options: Account
+  description: Account where cost of goods sold will be posted when this item is sold
+- fieldname: vf_default_cogs_account
+  label: COGS Account
+  fieldtype: Text
+  read_only: true
+- fieldname: deferred_expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: deferred_revenue_account
+  label: Revenue Account
+  fieldtype: Link
+  options: Account
+- fieldname: vf_deferred_expense_account
+  label: Deferred Expense Account
+  fieldtype: Text
+  read_only: true
+- fieldname: vf_deferred_revenue_account
+  label: Deferred Revenue Account
+  fieldtype: Text
+  read_only: true

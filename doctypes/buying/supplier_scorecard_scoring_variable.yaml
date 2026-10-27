@@ -1,0 +1,31 @@
+schema_version: 1
+name: Supplier Scorecard Scoring Variable
+label: Supplier Scorecard Scoring Variable
+istable: true
+fields:
+- fieldname: variable_label
+  label: Variable Name
+  fieldtype: Link
+  options: Supplier Scorecard Variable
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  read_only: true
+- fieldname: value
+  label: Value
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: param_name
+  label: Parameter Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: path
+  label: Path
+  fieldtype: Text
+  read_only: true
+  hidden: true

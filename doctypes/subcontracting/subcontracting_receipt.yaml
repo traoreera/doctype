@@ -1,0 +1,326 @@
+schema_version: 1
+name: Subcontracting Receipt
+label: Subcontracting Receipt
+module: subcontracting
+submittable: true
+icon: package-check
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-SCR-.YYYY.-
+  - MAT-SCR-RET-.YYYY.-
+  required: true
+- fieldname: supplier
+  label: Job Worker
+  fieldtype: Link
+  options: Supplier
+  required: true
+- fieldname: supplier_name
+  label: Job Worker Name
+  fieldtype: Text
+  read_only: true
+- fieldname: posting_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  required: true
+  description: Time at which materials were received
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: supplier_address
+  label: Select Job Worker Address
+  fieldtype: Link
+  options: Address
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: LongText
+  read_only: true
+- fieldname: shipping_address
+  label: Select Shipping Address
+  fieldtype: Link
+  options: Address
+- fieldname: shipping_address_display
+  label: Shipping Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: set_warehouse
+  label: Accepted Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: Sets 'Accepted Warehouse' in each row of the Items table.
+- fieldname: rejected_warehouse
+  label: Rejected Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: Sets 'Rejected Warehouse' in each row of the Items table.
+- fieldname: supplier_warehouse
+  label: Job Worker Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Subcontracting Receipt Item
+- fieldname: supplied_items
+  label: Consumed Items
+  fieldtype: Table
+  options: Subcontracting Receipt Supplied Item
+- fieldname: total_qty
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: bill_no
+  label: Bill No
+  fieldtype: Text
+  hidden: true
+- fieldname: bill_date
+  label: Bill Date
+  fieldtype: Date
+  hidden: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Completed
+  - Return
+  - Return Issued
+  - Cancelled
+  - Closed
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Subcontracting Receipt
+  read_only: true
+  hidden: true
+- fieldname: range
+  label: Range
+  fieldtype: Text
+  hidden: true
+- fieldname: auto_repeat
+  label: Auto Repeat
+  fieldtype: Link
+  options: Auto Repeat
+  read_only: true
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: language
+  label: Print Language
+  fieldtype: Text
+  read_only: true
+- fieldname: instructions
+  label: Instructions
+  fieldtype: LongText
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: transporter_name
+  label: Transporter Name
+  fieldtype: Text
+- fieldname: lr_no
+  label: Vehicle Number
+  fieldtype: Text
+- fieldname: lr_date
+  label: Vehicle Date
+  fieldtype: Date
+- fieldname: billing_address
+  label: Select Billing Address
+  fieldtype: Link
+  options: Address
+- fieldname: billing_address_display
+  label: Billing Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: represents_company
+  label: Represents Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: is_return
+  label: Is Return
+  fieldtype: Boolean
+  read_only: true
+- fieldname: return_against
+  label: Return Against Subcontracting Receipt
+  fieldtype: Link
+  options: Subcontracting Receipt
+  read_only: true
+- fieldname: per_returned
+  label: '% Returned'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: distribute_additional_costs_based_on
+  label: 'Distribute Additional Costs Based On '
+  fieldtype: Select
+  options:
+  - Qty
+  - Amount
+  default: Qty
+- fieldname: additional_costs
+  label: Additional Costs
+  fieldtype: Table
+  options: Landed Cost Taxes and Charges
+- fieldname: total_additional_costs
+  label: Total Additional Costs
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: set_posting_time
+  label: Edit Posting Date and Time
+  fieldtype: Boolean
+  default: false
+- fieldname: supplier_delivery_note
+  label: Job Worker Delivery Note
+  fieldtype: Text
+title_field: title
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - supplier
+    - supplier_name
+    - supplier_delivery_note
+  - - company
+    - posting_date
+    - posting_time
+    - set_posting_time
+    - is_return
+    - return_against
+- tab: Général
+  section: 'Accounting Dimensions '
+  columns:
+  - - cost_center
+  - - project
+- tab: Général
+  section: Références
+  columns:
+  - - set_warehouse
+    - rejected_warehouse
+  - - supplier_warehouse
+- tab: Général
+  section: Références
+  columns:
+  - - items
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - total_qty
+  - - total
+- tab: Général
+  section: Raw Materials Consumed
+  columns:
+  - - supplied_items
+- tab: Général
+  section: Informations complémentaires 7
+  columns:
+  - - in_words
+- tab: Address and Contact
+  section: Références
+  columns:
+  - - supplier_address
+    - contact_person
+    - address_display
+    - contact_display
+    - contact_mobile
+    - contact_email
+  - - shipping_address
+    - shipping_address_display
+    - billing_address
+    - billing_address_display
+- tab: Additional Costs
+  section: Comptabilité et montants
+  columns:
+  - - distribute_additional_costs_based_on
+    - additional_costs
+    - total_additional_costs
+- tab: Other Info
+  section: More Information
+  columns:
+  - - title
+  - - represents_company
+- tab: Other Info
+  section: Order Status
+  columns:
+  - - status
+  - - per_returned
+- tab: Other Info
+  section: Auto Repeat Detail
+  columns:
+  - - auto_repeat
+- tab: Other Info
+  section: Printing Settings
+  columns:
+  - - letter_head
+    - language
+    - instructions
+  - - select_print_heading
+    - remarks
+- tab: Other Info
+  section: Transporter Details
+  columns:
+  - - transporter_name
+  - - lr_no
+    - lr_date
+views:
+  calendar:
+    start: posting_date
+    title: title
+  tree:
+    parent: return_against

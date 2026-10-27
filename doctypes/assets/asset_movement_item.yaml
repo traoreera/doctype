@@ -1,0 +1,41 @@
+schema_version: 1
+name: Asset Movement Item
+label: Asset Movement Item
+istable: true
+fields:
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+  in_list_view: true
+- fieldname: asset_name
+  label: Asset Name
+  fieldtype: Text
+  read_only: true
+- fieldname: source_location
+  label: Source Location
+  fieldtype: Link
+  options: Location
+  in_list_view: true
+- fieldname: target_location
+  label: Target Location
+  fieldtype: Link
+  options: Location
+  in_list_view: true
+- fieldname: from_employee
+  label: From Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: to_employee
+  label: To Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+  hidden: true

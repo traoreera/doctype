@@ -1,0 +1,75 @@
+schema_version: 1
+name: CRM Settings
+label: CRM Settings
+module: crm
+single: true
+icon: settings
+fields:
+- fieldname: campaign_naming_by
+  label: Campaign Naming By
+  fieldtype: Select
+  options:
+  - Campaign Name
+  - Naming Series
+  in_list_view: true
+- fieldname: default_valid_till
+  label: Default Quotation Validity Days
+  fieldtype: Text
+- fieldname: allow_lead_duplication_based_on_emails
+  label: Allow Lead Duplication based on Emails
+  fieldtype: Boolean
+  default: false
+- fieldname: auto_creation_of_contact
+  label: Auto Creation of Contact
+  fieldtype: Boolean
+  default: true
+- fieldname: close_opportunity_after_days
+  label: Close Replied Opportunity After Days
+  fieldtype: Int
+  description: Auto close Opportunity Replied after the no. of days mentioned above
+  default: 15
+- fieldname: carry_forward_communication_and_comments
+  label: Carry Forward Communication and Comments
+  fieldtype: Boolean
+  description: All the Comments and Emails will be copied from one document to another newly created document(Lead
+    -> Opportunity -> Quotation) throughout the CRM documents.
+  default: false
+- fieldname: update_timestamp_on_new_communication
+  label: Update timestamp on new communication
+  fieldtype: Boolean
+  description: Update the modified timestamp on new communications received in Lead & Opportunity.
+  default: false
+- fieldname: enable_opportunity_creation_from_contact_us
+  label: Enable Opportunity Creation from Contact Us
+  fieldtype: Boolean
+  default: false
+- fieldname: allowed_users
+  label: Allowed Users
+  fieldtype: Table
+  options: Frappe CRM Allowed User
+  hidden: true
+- fieldname: enable_frappe_crm_data_synchronization
+  label: Enable Frappe CRM Data Synchronization
+  fieldtype: Boolean
+  default: false
+title_field: campaign_naming_by
+layout:
+- section: Lead
+  columns:
+  - - campaign_naming_by
+    - allow_lead_duplication_based_on_emails
+  - - auto_creation_of_contact
+- section: Opportunity
+  columns:
+  - - close_opportunity_after_days
+  - - enable_opportunity_creation_from_contact_us
+- section: Quotation
+  columns:
+  - - default_valid_till
+- section: Activity
+  columns:
+  - - carry_forward_communication_and_comments
+  - - update_timestamp_on_new_communication
+- section: Frappe CRM
+  columns:
+  - - enable_frappe_crm_data_synchronization

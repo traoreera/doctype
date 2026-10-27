@@ -1,0 +1,167 @@
+schema_version: 1
+name: Pick List
+label: Pick List
+module: stock
+submittable: true
+icon: list-checks
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: parent_warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  description: Items under this warehouse will be suggested
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  in_list_view: true
+- fieldname: work_order
+  label: Work Order
+  fieldtype: Link
+  options: Work Order
+- fieldname: locations
+  label: Item Locations
+  fieldtype: Table
+  options: Pick List Item
+- fieldname: for_qty
+  label: Qty of Finished Goods Item
+  fieldtype: Number
+  read_only: true
+  description: Qty of raw materials will be decided based on the qty of the Finished Goods Item
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Pick List
+  read_only: true
+- fieldname: purpose
+  label: Purpose
+  fieldtype: Select
+  options:
+  - Material Transfer for Manufacture
+  - Material Transfer
+  - Delivery
+  default: Material Transfer for Manufacture
+- fieldname: material_request
+  label: Material Request
+  fieldtype: Link
+  options: Material Request
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - STO-PICK-.YYYY.-
+  required: true
+- fieldname: group_same_items
+  label: Group Same Items
+  fieldtype: Boolean
+  default: false
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: scan_mode
+  label: Scan Mode
+  fieldtype: Boolean
+  description: If checked, picked qty won't automatically be fulfilled on submit of pick list.
+  default: false
+- fieldname: prompt_qty
+  label: Prompt Qty
+  fieldtype: Boolean
+  default: false
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Open
+  - Partly Delivered
+  - Partially Transferred
+  - Completed
+  - Cancelled
+  default: Draft
+  required: true
+  read_only: true
+  hidden: true
+- fieldname: consider_rejected_warehouses
+  label: Consider Rejected Warehouses
+  fieldtype: Boolean
+  description: Enable it if users want to consider rejected materials to dispatch.
+  default: false
+- fieldname: pick_manually
+  label: Pick Manually
+  fieldtype: Boolean
+  description: If enabled then system won't override the picked qty / batches / serial numbers / warehouse.
+  default: false
+- fieldname: ignore_pricing_rule
+  label: Ignore Pricing Rule
+  fieldtype: Boolean
+  description: If enabled then system won't apply the pricing rule on the delivery note which will be create from
+    the pick list
+  default: false
+- fieldname: delivery_status
+  label: Delivery Status
+  fieldtype: Select
+  options:
+  - Not Delivered
+  - Fully Delivered
+  - Partly Delivered
+  hidden: true
+- fieldname: per_delivered
+  label: '% Delivered'
+  fieldtype: Percent
+  read_only: true
+  description: '% of materials delivered against this Pick List'
+title_field: customer_name
+layout:
+- tab: General
+  section: Références
+  columns:
+  - - company
+    - naming_series
+    - purpose
+    - customer
+  - - for_qty
+    - parent_warehouse
+    - consider_rejected_warehouses
+- tab: General
+  section: Informations complémentaires 2
+  columns:
+  - - pick_manually
+  - - ignore_pricing_rule
+- tab: General
+  section: Informations complémentaires 3
+  columns:
+  - - scan_barcode
+  - - scan_mode
+    - prompt_qty
+- tab: General
+  section: Références
+  columns:
+  - - locations
+- tab: More Info
+  section: Print Settings
+  columns:
+  - - group_same_items
+- tab: More Info
+  section: Status
+  columns:
+  - - per_delivered
+- tab: More Info
+  section: Reference
+  columns:
+  - - work_order
+    - customer_name
+  - - material_request
+    - amended_from
+views:
+  tree:
+    parent: amended_from

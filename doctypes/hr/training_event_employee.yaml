@@ -1,0 +1,41 @@
+schema_version: 1
+name: Training Event Employee
+label: Training Event Employee
+istable: true
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Invited
+  - Completed
+  - Feedback Submitted
+  default: Open
+  in_list_view: true
+- fieldname: attendance
+  label: Attendance
+  fieldtype: Select
+  options:
+  - Present
+  - Absent
+  in_list_view: true
+- fieldname: is_mandatory
+  label: Is Mandatory
+  fieldtype: Boolean
+  in_list_view: true
+  default: true

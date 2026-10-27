@@ -1,0 +1,148 @@
+schema_version: 1
+name: BOM Item
+label: BOM Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item name
+  fieldtype: Text
+- fieldname: operation
+  label: Item operation
+  fieldtype: Link
+  options: Operation
+- fieldname: bom_no
+  label: BOM No
+  fieldtype: Link
+  options: BOM
+- fieldname: set_rate_of_sub_assembly_item_based_on_bom
+  label: Set rate based on sub-assembly BOM
+  fieldtype: Boolean
+  description: Cost this sub-assembly by rolling up its BOM cost instead of the item's own valuation or price-list
+    rate. Applies only to this component.
+  default: true
+- fieldname: source_warehouse
+  label: Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: description
+  label: Item Description
+  fieldtype: TextEditor
+- fieldname: percentage
+  label: Percentage (%)
+  fieldtype: Percent
+  in_list_view: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: stock_qty
+  label: Stock Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: base_rate
+  label: Basic Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: qty_consumed_per_unit
+  label: Qty Consumed Per Unit
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: allow_alternative_item
+  label: Allow Alternative Item
+  fieldtype: Boolean
+  description: Allow this component to be swapped for a defined alternative during production. Copied from the item's
+    setting, works only when the BOM's "Allow alternative raw materials" is on.
+  default: false
+- fieldname: include_item_in_manufacturing
+  label: Include Item in manufacturing
+  fieldtype: Boolean
+  default: false
+- fieldname: original_item
+  label: Original Item
+  fieldtype: Link
+  options: Item
+  read_only: true
+  hidden: true
+- fieldname: has_variants
+  label: Has variants
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: sourced_by_supplier
+  label: Sourced by Supplier
+  fieldtype: Boolean
+  default: false
+- fieldname: do_not_explode
+  label: Do not explode
+  fieldtype: Boolean
+  description: A sub-assembly is a component with its own BOM. By default it's broken down into its own raw materials;
+    enable this to keep it as a single finished part.
+  default: false
+- fieldname: is_stock_item
+  label: Is stock Item
+  fieldtype: Boolean
+  read_only: true
+- fieldname: operation_row_id
+  label: Operation ID
+  fieldtype: Int
+- fieldname: is_sub_assembly_item
+  label: Is sub assembly Item
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+  description: Set automatically when this component is a semi-finished good produced by an operation in this BOM.
+    It's made in-house during the process, so it's excluded from raw-material requirement and explosion calculations
+    to avoid double-counting.
+- fieldname: is_phantom_item
+  label: Is Phantom Item
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+  description: When this is enabled it defines the BOM as a logical grouping of raw materials without producing
+    an item. The Production Item must be non-stock and will be automatically exploded when used as a raw material
+    in another BOM.
+- fieldname: is_balance_item
+  label: Is Balance Item
+  fieldtype: Boolean
+  description: This component absorbs the percentage remaining after all other percentage rows
+  default: false

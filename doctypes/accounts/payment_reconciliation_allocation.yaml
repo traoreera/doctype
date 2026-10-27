@@ -1,0 +1,85 @@
+schema_version: 1
+name: Payment Reconciliation Allocation
+label: Payment Reconciliation Allocation
+istable: true
+fields:
+- fieldname: invoice_number
+  label: Invoice Number
+  fieldtype: DynamicLink
+  options: invoice_type
+  in_list_view: true
+  read_only: true
+- fieldname: allocated_amount
+  label: Allocated Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: difference_account
+  label: Difference Account
+  fieldtype: Link
+  options: Account
+  read_only: true
+- fieldname: difference_amount
+  label: Difference Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  options: reference_type
+  in_list_view: true
+  read_only: true
+- fieldname: is_advance
+  label: Is Advance
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: reference_type
+  label: Reference Type
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: invoice_type
+  label: Invoice Type
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: unreconciled_amount
+  label: Unreconciled Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: reference_row
+  label: Reference Row
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  hidden: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: gain_loss_posting_date
+  label: Difference Posting Date
+  fieldtype: Date
+- fieldname: debit_or_credit_note_posting_date
+  label: Debit / Credit Note Posting Date
+  fieldtype: Date

@@ -1,0 +1,143 @@
+schema_version: 1
+name: Tax Rule
+label: Tax Rule
+module: accounts
+icon: badge-percent
+fields:
+- fieldname: tax_type
+  label: Tax Type
+  fieldtype: Select
+  options:
+  - Sales
+  - Purchase
+  default: Sales
+  in_list_view: true
+- fieldname: use_for_shopping_cart
+  label: Use for Shopping Cart
+  fieldtype: Boolean
+  default: true
+- fieldname: sales_tax_template
+  label: Sales Tax Template
+  fieldtype: Link
+  options: Sales Taxes and Charges Template
+- fieldname: purchase_tax_template
+  label: Purchase Tax Template
+  fieldtype: Link
+  options: Purchase Taxes and Charges Template
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: item
+  label: Item
+  fieldtype: Link
+  options: Item
+- fieldname: billing_city
+  label: Billing City
+  fieldtype: Text
+- fieldname: billing_county
+  label: Billing County
+  fieldtype: Text
+- fieldname: billing_state
+  label: Billing State
+  fieldtype: Text
+- fieldname: billing_zipcode
+  label: Billing Zipcode
+  fieldtype: Text
+- fieldname: billing_country
+  label: Billing Country
+  fieldtype: Link
+  options: Country
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: supplier_group
+  label: Supplier Group
+  fieldtype: Link
+  options: Supplier Group
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+- fieldname: shipping_city
+  label: Shipping City
+  fieldtype: Text
+- fieldname: shipping_county
+  label: Shipping County
+  fieldtype: Text
+- fieldname: shipping_state
+  label: Shipping State
+  fieldtype: Text
+- fieldname: shipping_zipcode
+  label: Shipping Zipcode
+  fieldtype: Text
+- fieldname: shipping_country
+  label: Shipping Country
+  fieldtype: Link
+  options: Country
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: priority
+  label: Priority
+  fieldtype: Int
+  default: 1
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+title_field: customer
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - tax_type
+    - use_for_shopping_cart
+  - - sales_tax_template
+    - purchase_tax_template
+- section: Filters
+  columns:
+  - - customer
+    - supplier
+    - item
+    - billing_city
+    - billing_county
+    - billing_state
+    - billing_zipcode
+    - billing_country
+    - tax_category
+  - - customer_group
+    - supplier_group
+    - item_group
+    - shipping_city
+    - shipping_county
+    - shipping_state
+    - shipping_zipcode
+    - shipping_country
+- section: Validity
+  columns:
+  - - from_date
+  - - to_date
+- section: Références
+  columns:
+  - - priority
+  - - company
+views:
+  calendar:
+    start: from_date
+    title: customer
+  gantt:
+    start: from_date
+    end: to_date
+    title: customer

@@ -1,0 +1,55 @@
+schema_version: 1
+name: Share Balance
+label: Share Balance
+istable: true
+fields:
+- fieldname: share_type
+  label: Share Type
+  fieldtype: Link
+  options: Share Type
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: from_no
+  label: From No
+  fieldtype: Int
+  required: true
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: no_of_shares
+  label: No of Shares
+  fieldtype: Int
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: to_no
+  label: To No
+  fieldtype: Int
+  required: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: is_company
+  label: Is Company
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: current_state
+  label: Current State
+  fieldtype: Select
+  options:
+  - Issued
+  - Purchased
+  read_only: true
+  hidden: true

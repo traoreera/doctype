@@ -1,0 +1,90 @@
+schema_version: 1
+name: Employee Attendance Tool
+label: Employee Attendance Tool
+module: hr
+icon: list-checks
+fields:
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  default: today
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Present
+  - Absent
+  - Half Day
+  - Work From Home
+  in_list_view: true
+- fieldname: late_entry
+  label: Late Entry
+  fieldtype: Boolean
+  default: false
+- fieldname: early_exit
+  label: Early Exit
+  fieldtype: Boolean
+  default: false
+- fieldname: shift
+  label: Shift
+  fieldtype: Link
+  options: Shift Type
+- fieldname: employment_type
+  label: Employment Type
+  fieldtype: Link
+  options: Employment Type
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+- fieldname: employee_grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+- fieldname: half_day_status
+  label: Status for Other Half
+  fieldtype: Select
+  options:
+  - Present
+  - Absent
+- fieldname: filter_by_shift
+  label: Filter by Shift
+  fieldtype: Boolean
+  default: false
+title_field: status
+layout:
+- section: Informations principales
+  columns:
+  - - date
+    - shift
+  - - late_entry
+    - early_exit
+- section: Get Employees
+  columns:
+  - - company
+    - branch
+    - department
+    - filter_by_shift
+  - - employment_type
+    - designation
+    - employee_grade
+- section: Select Employees
+  columns:
+  - - status
+    - half_day_status
+views:
+  calendar:
+    start: date
+    title: status

@@ -1,0 +1,32 @@
+schema_version: 1
+name: Job Offer Component
+label: Job Offer Component
+istable: true
+fields:
+- fieldname: fixed_components
+  label: Fixed Components
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: per_cycle
+  label: Per Cycle
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: yearly
+  label: Yearly
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+- fieldname: is_summary
+  label: Is Summary
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+  description: Set by the system on total rows. A row added by hand is a component.

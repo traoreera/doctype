@@ -1,0 +1,17 @@
+schema_version: 1
+name: Employee Benefit Detail
+label: Employee Benefit Detail
+istable: true
+fields:
+- fieldname: salary_component
+  label: Earning Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Benefit Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true

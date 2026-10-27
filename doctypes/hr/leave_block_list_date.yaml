@@ -1,0 +1,15 @@
+schema_version: 1
+name: Leave Block List Date
+label: Leave Block List Date
+istable: true
+fields:
+- fieldname: block_date
+  label: Block Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: reason
+  label: Reason
+  fieldtype: LongText
+  required: true
+  in_list_view: true

@@ -1,0 +1,93 @@
+schema_version: 1
+name: POS Opening Entry
+label: POS Opening Entry
+module: accounts
+submittable: true
+icon: folder-open
+fields:
+- fieldname: period_start_date
+  label: Period Start Date
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: period_end_date
+  label: Period End Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: pos_profile
+  label: POS Profile
+  fieldtype: Link
+  options: POS Profile
+  required: true
+  in_list_view: true
+- fieldname: user
+  label: Cashier
+  fieldtype: Link
+  options: Member
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: POS Opening Entry
+  read_only: true
+- fieldname: set_posting_date
+  label: Set Posting Date
+  fieldtype: Boolean
+  default: false
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Open
+  - Closed
+  - Cancelled
+  default: Draft
+  read_only: true
+  hidden: true
+- fieldname: pos_closing_entry
+  label: POS Closing Entry
+  fieldtype: Text
+  read_only: true
+- fieldname: balance_details
+  label: Opening Balance Details
+  fieldtype: Table
+  options: POS Opening Entry Detail
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - period_start_date
+    - period_end_date
+  - - posting_date
+    - set_posting_date
+- section: Références
+  columns:
+  - - company
+    - pos_profile
+    - pos_closing_entry
+  - - user
+- section: Comptabilité et montants
+  columns:
+  - - balance_details
+- section: Dates et planification
+  columns:
+  - - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

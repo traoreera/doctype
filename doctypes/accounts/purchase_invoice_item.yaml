@@ -1,0 +1,377 @@
+schema_version: 1
+name: Purchase Invoice Item
+label: Purchase Invoice Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  required: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: received_qty
+  label: Received Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: qty
+  label: Accepted Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: rejected_qty
+  label: Rejected Qty
+  fieldtype: Number
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+- fieldname: conversion_factor
+  label: UOM Conversion Factor
+  fieldtype: Number
+  required: true
+  read_only: true
+- fieldname: stock_qty
+  label: Accepted Qty in Stock UOM
+  fieldtype: Number
+  required: true
+  read_only: true
+- fieldname: price_list_rate
+  label: Price List Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discount_percentage
+  label: Discount on Price List Rate (%)
+  fieldtype: Percent
+- fieldname: discount_amount
+  label: Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_price_list_rate
+  label: Price List Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: base_rate
+  label: Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: pricing_rules
+  label: Pricing Rules
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: is_free_item
+  label: Is Free Item
+  fieldtype: Boolean
+  read_only: true
+- fieldname: net_rate
+  label: Net Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_amount
+  label: Net Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_rate
+  label: Net Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_amount
+  label: Net Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: weight_per_unit
+  label: Weight Per Unit
+  fieldtype: Number
+- fieldname: total_weight
+  label: Total Weight
+  fieldtype: Number
+  read_only: true
+- fieldname: weight_uom
+  label: Weight UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: warehouse
+  label: Accepted Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: rejected_warehouse
+  label: Rejected Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: quality_inspection
+  label: Quality Inspection
+  fieldtype: Link
+  options: Quality Inspection
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+- fieldname: rejected_serial_no
+  label: Rejected Serial No
+  fieldtype: LongText
+- fieldname: expense_account
+  label: Expense Head
+  fieldtype: Link
+  options: Account
+- fieldname: item_tax_template
+  label: Item Tax Template
+  fieldtype: Link
+  options: Item Tax Template
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: deferred_expense_account
+  label: Deferred Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: service_stop_date
+  label: Service Stop Date
+  fieldtype: Date
+- fieldname: enable_deferred_expense
+  label: Enable Deferred Expense
+  fieldtype: Boolean
+  default: false
+- fieldname: service_start_date
+  label: Service Start Date
+  fieldtype: Date
+- fieldname: service_end_date
+  label: Service End Date
+  fieldtype: Date
+- fieldname: allow_zero_valuation_rate
+  label: Allow Zero Valuation Rate
+  fieldtype: Boolean
+  default: false
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+  hidden: true
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  read_only: true
+- fieldname: item_tax_rate
+  label: Item Tax Rate
+  fieldtype: Code
+  read_only: true
+  hidden: true
+  description: 'Tax detail table fetched from item master as a string and stored in this field.
+
+    Used for Taxes and Charges'
+- fieldname: item_tax_amount
+  label: Item Tax Amount Included in Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: purchase_order
+  label: Purchase Order
+  fieldtype: Link
+  options: Purchase Order
+  read_only: true
+- fieldname: include_exploded_items
+  label: Include Exploded Items
+  fieldtype: Boolean
+  read_only: true
+- fieldname: is_fixed_asset
+  label: Is Fixed Asset
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: asset_location
+  label: Asset Location
+  fieldtype: Link
+  options: Location
+- fieldname: po_detail
+  label: Purchase Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: purchase_receipt
+  label: Purchase Receipt
+  fieldtype: Link
+  options: Purchase Receipt
+  read_only: true
+- fieldname: page_break
+  label: Page Break
+  fieldtype: Boolean
+  default: false
+- fieldname: pr_detail
+  label: Purchase Receipt Detail
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: valuation_rate
+  label: Valuation Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: rm_supp_cost
+  label: Raw Materials Supplied Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: landed_cost_voucher_amount
+  label: Landed Cost Voucher Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: manufacturer
+  label: Manufacturer
+  fieldtype: Link
+  options: Manufacturer
+- fieldname: manufacturer_part_no
+  label: Manufacturer Part Number
+  fieldtype: Text
+- fieldname: asset_category
+  label: Asset Category
+  fieldtype: Link
+  options: Asset Category
+  read_only: true
+- fieldname: from_warehouse
+  label: From Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: purchase_invoice_item
+  label: Purchase Invoice Item
+  fieldtype: Text
+  read_only: true
+- fieldname: stock_uom_rate
+  label: Rate of Stock UOM
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: sales_invoice_item
+  label: Sales Invoice Item
+  fieldtype: Text
+  read_only: true
+- fieldname: margin_type
+  label: Margin Type
+  fieldtype: Select
+  options:
+  - Percentage
+  - Amount
+- fieldname: margin_rate_or_amount
+  label: Margin Rate or Amount
+  fieldtype: Number
+- fieldname: rate_with_margin
+  label: Rate With Margin
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rate_with_margin
+  label: Rate With Margin (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: product_bundle
+  label: Product Bundle
+  fieldtype: Link
+  options: Product Bundle
+  read_only: true
+  hidden: true
+  description: Product Bundle version this row was packed from
+- fieldname: apply_tds
+  label: Consider for Tax Withholding
+  fieldtype: Boolean
+  default: true
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: rejected_serial_and_batch_bundle
+  label: Rejected Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: wip_composite_asset
+  label: WIP Composite Asset
+  fieldtype: Link
+  options: Asset
+- fieldname: use_serial_batch_fields
+  label: Use Serial No / Batch Fields
+  fieldtype: Boolean
+  default: false
+- fieldname: material_request
+  label: Material Request
+  fieldtype: Link
+  options: Material Request
+  read_only: true
+- fieldname: material_request_item
+  label: Material Request Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: sales_incoming_rate
+  label: Sales Incoming Rate
+  fieldtype: Currency
+  decimals: 2
+  hidden: true
+  description: Valuation rate for the item as per Sales Invoice (Only for Internal Transfers)
+- fieldname: distributed_discount_amount
+  label: Distributed Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: mapped_additional_discount_amount
+  label: Additional Discount per Stock Unit
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Tax-exclusive additional discount carried from a source document, per stock unit.
+- fieldname: tax_withholding_category
+  label: Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+- fieldname: delivered_by_supplier
+  label: Delivered by Supplier
+  fieldtype: Boolean
+  read_only: true
+  hidden: true

@@ -1,0 +1,26 @@
+schema_version: 1
+name: Salary Withholding Cycle
+label: Salary Withholding Cycle
+istable: true
+fields:
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: is_salary_released
+  label: Is Salary Released
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+- fieldname: journal_entry
+  label: Journal Entry
+  fieldtype: Link
+  options: Journal Entry
+  in_list_view: true
+  read_only: true

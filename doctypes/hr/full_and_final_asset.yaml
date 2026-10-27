@@ -1,0 +1,56 @@
+schema_version: 1
+name: Full and Final Asset
+label: Full and Final Asset
+istable: true
+fields:
+- fieldname: reference
+  label: Reference
+  fieldtype: Link
+  options: Asset Movement
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Owned
+  - Returned
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: asset_name
+  label: Asset Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Datetime
+  read_only: true
+- fieldname: action
+  label: Action
+  fieldtype: Select
+  options:
+  - Return
+  - Recover Cost
+  default: Return
+  required: true
+  in_list_view: true
+- fieldname: cost
+  label: Cost
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: actual_cost
+  label: Actual Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true

@@ -1,0 +1,25 @@
+schema_version: 1
+name: Appraisal Goal
+label: Appraisal Goal
+istable: true
+fields:
+- fieldname: kra
+  label: Goal
+  fieldtype: LongText
+  required: true
+  in_list_view: true
+  description: Key Responsibility Area
+- fieldname: per_weightage
+  label: Weightage (%)
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: score
+  label: Score
+  fieldtype: Number
+  in_list_view: true
+- fieldname: score_earned
+  label: Score Earned
+  fieldtype: Number
+  in_list_view: true
+  read_only: true

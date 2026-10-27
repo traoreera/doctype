@@ -1,0 +1,43 @@
+schema_version: 1
+name: Party Specific Item
+label: Party Specific Item
+module: selling
+icon: package
+fields:
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Select
+  options:
+  - Customer
+  - Customer Group
+  - Supplier
+  - Supplier Group
+  required: true
+  in_list_view: true
+- fieldname: party
+  label: Party Name
+  fieldtype: DynamicLink
+  options: party_type
+  in_list_view: true
+- fieldname: restrict_based_on
+  label: Restrict Items Based On
+  fieldtype: Select
+  options:
+  - Item
+  - Item Group
+  - Brand
+  required: true
+  in_list_view: true
+- fieldname: based_on_value
+  label: Based On Value
+  fieldtype: DynamicLink
+  options: restrict_based_on
+  in_list_view: true
+title_field: party_type
+layout:
+- section: Références
+  columns:
+  - - party_type
+    - party
+  - - restrict_based_on
+    - based_on_value

@@ -1,0 +1,25 @@
+schema_version: 1
+name: manufacturing
+label: Fabrication
+icon: cog
+description: Nomenclatures, ordres de fabrication et suivi des opérations.
+order: 30
+
+blocks:
+  - { type: header, text: Vue d’ensemble }
+  - { type: number_card, label: Ordres de fabrication en brouillon, doctype: Work Order, filters: { docstatus: 0 }, color: orange }
+  - { type: number_card, label: Ordres de fabrication soumis, doctype: Work Order, filters: { docstatus: 1 }, color: green }
+  - { type: number_card, label: Fiches de travail, doctype: Job Card, color: blue }
+  - { type: number_card, label: Plans de production, doctype: Production Plan, color: teal }
+  - { type: chart, label: Ordres par état, doctype: Work Order, kind: donut, group_by: status, filters: { docstatus: 1 }, cols: 4 }
+  - { type: chart, label: Plans de production par mois, doctype: Production Plan, kind: bar, group_by: posting_date, bucket: month, periods: 6, filters: { docstatus: 1 }, cols: 8 }
+  - { type: quick_list, label: Ordres de fabrication récents, doctype: Work Order, limit: 5, cols: 12 }
+  - { type: header, text: Planification et production }
+  - { type: shortcut, doctype: Production Plan, new: true }
+  - { type: shortcut, doctype: Work Order, new: true }
+  - { type: shortcut, doctype: Job Card, new: true }
+  - { type: shortcut, doctype: Downtime Entry, new: true }
+  - { type: header, text: Référentiel }
+  - { type: shortcut, doctype: BOM, new: true }
+  - { type: shortcut, doctype: Operation, new: true }
+  - { type: shortcut, doctype: Workstation, new: true }

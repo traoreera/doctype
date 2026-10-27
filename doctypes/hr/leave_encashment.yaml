@@ -1,0 +1,157 @@
+schema_version: 1
+name: Leave Encashment
+label: Leave Encashment
+module: hr
+submittable: true
+icon: banknote
+fields:
+- fieldname: leave_period
+  label: Leave Period
+  fieldtype: Link
+  options: Leave Period
+  required: true
+  in_list_view: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+  required: true
+  in_list_view: true
+- fieldname: leave_allocation
+  label: Leave Allocation
+  fieldtype: Link
+  options: Leave Allocation
+  read_only: true
+- fieldname: leave_balance
+  label: Leave Balance
+  fieldtype: Number
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Leave Encashment
+  read_only: true
+- fieldname: encashment_amount
+  label: Encashment Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: encashment_date
+  label: Encashment Date
+  fieldtype: Date
+  default: today
+- fieldname: additional_salary
+  label: Additional Salary
+  fieldtype: Link
+  options: Additional Salary
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: encashment_days
+  label: Encashment Days
+  fieldtype: Number
+- fieldname: actual_encashable_days
+  label: Actual Encashable Days
+  fieldtype: Number
+  read_only: true
+  description: Number of leaves eligible for encashment based on leave type settings
+- fieldname: payable_account
+  label: Payable Account
+  fieldtype: Link
+  options: Account
+- fieldname: pay_via_payment_entry
+  label: Pay via Payment Entry
+  fieldtype: Boolean
+  description: Process leave encashment via a separate Payment Entry instead of Salary Slip
+  default: false
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Amount paid against this encashment
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Unpaid
+  - Paid
+  - Submitted
+  - Cancelled
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  default: today
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - company
+  - - leave_period
+    - leave_type
+    - leave_allocation
+    - leave_balance
+  - - actual_encashable_days
+    - encashment_days
+    - encashment_amount
+- section: Accounting
+  columns:
+  - - pay_via_payment_entry
+    - expense_account
+    - payable_account
+  - - posting_date
+    - currency
+    - paid_amount
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+- section: Payroll
+  columns:
+  - - encashment_date
+  - - additional_salary
+- section: More Info
+  columns:
+  - - amended_from
+    - status
+views:
+  calendar:
+    start: posting_date
+    title: employee_name

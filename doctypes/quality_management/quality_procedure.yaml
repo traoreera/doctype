@@ -1,0 +1,62 @@
+schema_version: 1
+name: Quality Procedure
+label: Quality Procedure
+module: quality_management
+icon: clipboard-list
+fields:
+- fieldname: parent_quality_procedure
+  label: Parent Procedure
+  fieldtype: Link
+  options: Quality Procedure
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  read_only: true
+- fieldname: lft
+  label: Left Index
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: Right Index
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: old_parent
+  label: old_parent
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: processes
+  label: Processes
+  fieldtype: Table
+  options: Quality Procedure Process
+- fieldname: quality_procedure_name
+  label: Quality Procedure
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: process_owner
+  label: Process Owner
+  fieldtype: Link
+  options: Member
+- fieldname: process_owner_full_name
+  label: Process Owner Full Name
+  fieldtype: Text
+  hidden: true
+title_field: quality_procedure_name
+layout:
+- section: Informations principales
+  columns:
+  - - quality_procedure_name
+    - process_owner
+- section: Informations complémentaires 2
+  columns:
+  - - processes
+- section: Parent
+  columns:
+  - - parent_quality_procedure
+    - is_group
+views:
+  tree:
+    parent: parent_quality_procedure

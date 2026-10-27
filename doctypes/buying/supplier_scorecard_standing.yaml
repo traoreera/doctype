@@ -1,0 +1,67 @@
+schema_version: 1
+name: Supplier Scorecard Standing
+label: Supplier Scorecard Standing
+module: buying
+icon: podium
+fields:
+- fieldname: standing_name
+  label: Standing Name
+  fieldtype: Text
+- fieldname: standing_color
+  label: Color
+  fieldtype: Select
+  options:
+  - Blue
+  - Purple
+  - Green
+  - Yellow
+  - Orange
+  - Red
+- fieldname: min_grade
+  label: Min Grade
+  fieldtype: Percent
+- fieldname: max_grade
+  label: Max Grade
+  fieldtype: Percent
+- fieldname: warn_rfqs
+  label: Warn RFQs
+  fieldtype: Boolean
+  default: false
+- fieldname: warn_pos
+  label: Warn Purchase Orders
+  fieldtype: Boolean
+  default: false
+- fieldname: prevent_rfqs
+  label: Prevent RFQs
+  fieldtype: Boolean
+  default: false
+- fieldname: prevent_pos
+  label: Prevent Purchase Orders
+  fieldtype: Boolean
+  default: false
+- fieldname: notify_supplier
+  label: Notify Supplier
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: notify_employee
+  label: Notify Other
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: employee_link
+  label: Other
+  fieldtype: Link
+  options: Employee
+  hidden: true
+layout:
+- section: Informations principales
+  columns:
+  - - standing_name
+    - standing_color
+    - min_grade
+    - max_grade
+  - - warn_rfqs
+    - warn_pos
+    - prevent_rfqs
+    - prevent_pos

@@ -1,0 +1,165 @@
+schema_version: 1
+name: Stock Reservation Entry
+label: Stock Reservation Entry
+module: stock
+submittable: true
+icon: bookmark
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+  read_only: true
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+  read_only: true
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  read_only: true
+  options: voucher_type
+- fieldname: voucher_detail_no
+  label: Voucher Detail No
+  fieldtype: Text
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: reserved_qty
+  label: Reserved Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Partially Reserved
+  - Reserved
+  - Partially Delivered
+  - Partially Used
+  - Delivered
+  - Cancelled
+  - Closed
+  default: Draft
+  read_only: true
+- fieldname: delivered_qty
+  label: Delivered Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Stock Reservation Entry
+  read_only: true
+- fieldname: available_qty
+  label: Available Qty to Reserve
+  fieldtype: Number
+  read_only: true
+- fieldname: voucher_qty
+  label: Voucher Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: has_serial_no
+  label: Has Serial No
+  fieldtype: Boolean
+  read_only: true
+- fieldname: has_batch_no
+  label: Has Batch No
+  fieldtype: Boolean
+  read_only: true
+- fieldname: sb_entries
+  label: Sb Entries
+  fieldtype: Table
+  options: Serial and Batch Entry
+- fieldname: reservation_based_on
+  label: Reservation Based On
+  fieldtype: Select
+  options:
+  - Qty
+  - Serial and Batch
+  default: Qty
+  read_only: true
+- fieldname: from_voucher_type
+  label: From Voucher Type
+  fieldtype: Text
+  read_only: true
+- fieldname: from_voucher_detail_no
+  label: From Voucher Detail No
+  fieldtype: Text
+  read_only: true
+- fieldname: from_voucher_no
+  label: From Voucher No
+  fieldtype: DynamicLink
+  read_only: true
+  options: from_voucher_type
+- fieldname: consumed_qty
+  label: Consumed Qty
+  fieldtype: Number
+- fieldname: transferred_qty
+  label: Transferred Qty
+  fieldtype: Number
+title_field: item_code
+layout:
+- tab: General
+  section: Transaction Information
+  columns:
+  - - voucher_type
+    - voucher_no
+    - voucher_detail_no
+  - - voucher_qty
+    - available_qty
+  - - reserved_qty
+    - delivered_qty
+- tab: General
+  section: Item Information
+  columns:
+  - - item_code
+    - warehouse
+  - - stock_uom
+    - has_serial_no
+    - has_batch_no
+  - - from_voucher_type
+    - from_voucher_no
+    - from_voucher_detail_no
+- tab: General
+  section: Informations complémentaires 3
+  columns:
+  - - transferred_qty
+  - - consumed_qty
+- tab: Serial and Batch Reservation
+  section: Informations complémentaires 4
+  columns:
+  - - reservation_based_on
+    - sb_entries
+- tab: More Information
+  section: Dates et planification
+  columns:
+  - - company
+  - - project
+    - status
+    - amended_from
+views:
+  tree:
+    parent: amended_from

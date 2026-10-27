@@ -1,0 +1,107 @@
+schema_version: 1
+name: Payroll Correction
+label: Payroll Correction
+module: payroll
+submittable: true
+icon: file-diff
+fields:
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Payroll Correction
+  read_only: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: payroll_period
+  label: Payroll Period
+  fieldtype: Link
+  options: Payroll Period
+  required: true
+  in_list_view: true
+- fieldname: salary_slip_reference
+  label: Salary Slip Reference
+  fieldtype: Link
+  options: Salary Slip
+  required: true
+  read_only: true
+- fieldname: working_days
+  label: Working Days
+  fieldtype: Number
+  read_only: true
+- fieldname: lwp_days
+  label: Total Days Without Pay
+  fieldtype: Number
+  read_only: true
+- fieldname: days_to_reverse
+  label: Days to Reverse
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  description: Enter the number of Leave Without Pay (LWP) days you want to reverse. This value cannot exceed the
+    total LWP days recorded for the selected month
+- fieldname: earning_arrears
+  label: Earning Arrears
+  fieldtype: Table
+  options: Payroll Correction Child
+  read_only: true
+- fieldname: deduction_arrears
+  label: Deduction Arrears
+  fieldtype: Table
+  options: Payroll Correction Child
+  read_only: true
+- fieldname: payroll_date
+  label: Payroll Date
+  fieldtype: Date
+  required: true
+  description: Choose the date on which you want to create these components as arrears.
+- fieldname: accrual_arrears
+  label: Accrual Arrears
+  fieldtype: Table
+  options: Payroll Correction Child
+  read_only: true
+- fieldname: payment_days
+  label: Payment Days
+  fieldtype: Number
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - amended_from
+    - employee
+    - employee_name
+    - payroll_date
+  - - company
+    - payroll_period
+    - currency
+- section: Informations complémentaires 2
+  columns:
+  - - working_days
+    - payment_days
+    - lwp_days
+  - - salary_slip_reference
+    - days_to_reverse
+- section: Informations complémentaires 3
+  columns:
+  - - earning_arrears
+    - deduction_arrears
+    - accrual_arrears

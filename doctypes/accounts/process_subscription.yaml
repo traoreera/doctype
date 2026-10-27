@@ -1,0 +1,32 @@
+schema_version: 1
+name: Process Subscription
+label: Process Subscription
+module: accounts
+submittable: true
+icon: repeat
+fields:
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Process Subscription
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: subscription
+  label: Subscription
+  fieldtype: Link
+  options: Subscription
+layout:
+- section: Dates et planification
+  columns:
+  - - posting_date
+    - subscription
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+  tree:
+    parent: amended_from

@@ -1,0 +1,118 @@
+schema_version: 1
+name: Employee Onboarding
+label: Employee Onboarding
+module: hr
+submittable: true
+icon: user-plus
+fields:
+- fieldname: job_offer
+  label: Job Offer
+  fieldtype: Link
+  options: Job Offer
+  required: true
+- fieldname: job_applicant
+  label: Job Applicant
+  fieldtype: Link
+  options: Job Applicant
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  read_only: true
+- fieldname: date_of_joining
+  label: Date of Joining
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: boarding_status
+  label: Boarding Status
+  fieldtype: Select
+  options:
+  - Pending
+  - In Process
+  - Completed
+  default: Pending
+  read_only: true
+- fieldname: notify_users_by_email
+  label: Notify users by email
+  fieldtype: Boolean
+  default: false
+- fieldname: employee_onboarding_template
+  label: Employee Onboarding Template
+  fieldtype: Link
+  options: Employee Onboarding Template
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  in_list_view: true
+- fieldname: employee_grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+  read_only: true
+- fieldname: activities
+  label: Activities
+  fieldtype: Table
+  options: Employee Boarding Activity
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Onboarding
+  read_only: true
+- fieldname: boarding_begins_on
+  label: Onboarding Begins On
+  fieldtype: Date
+  required: true
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - job_offer
+    - job_applicant
+    - employee_onboarding_template
+  - - company
+    - boarding_status
+    - project
+- section: Employee Details
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - designation
+    - employee_grade
+    - holiday_list
+  - - date_of_joining
+    - boarding_begins_on
+- section: Onboarding Activities
+  columns:
+  - - activities
+    - notify_users_by_email
+    - amended_from
+views:
+  calendar:
+    start: date_of_joining
+    title: employee_name

@@ -1,0 +1,17 @@
+schema_version: 1
+name: POS Closing Entry Taxes
+label: POS Closing Entry Taxes
+istable: true
+fields:
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: account_head
+  label: Account Head
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+  read_only: true

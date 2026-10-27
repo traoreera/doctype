@@ -1,0 +1,60 @@
+schema_version: 1
+name: Travel Itinerary
+label: Travel Itinerary
+istable: true
+fields:
+- fieldname: travel_from
+  label: Travel From
+  fieldtype: Text
+  in_list_view: true
+- fieldname: travel_to
+  label: Travel To
+  fieldtype: Text
+  in_list_view: true
+- fieldname: mode_of_travel
+  label: Mode of Travel
+  fieldtype: Select
+  options:
+  - Flight
+  - Train
+  - Taxi
+  - Rented Car
+  in_list_view: true
+- fieldname: meal_preference
+  label: Meal Preference
+  fieldtype: Select
+  options:
+  - Vegetarian
+  - Non-Vegetarian
+  - Gluten Free
+  - Non Diary
+- fieldname: travel_advance_required
+  label: Travel Advance Required
+  fieldtype: Boolean
+  default: false
+- fieldname: advance_amount
+  label: Advance Amount
+  fieldtype: Text
+- fieldname: departure_date
+  label: Departure Datetime
+  fieldtype: Datetime
+  in_list_view: true
+- fieldname: arrival_date
+  label: Arrival Datetime
+  fieldtype: Datetime
+- fieldname: lodging_required
+  label: Lodging Required
+  fieldtype: Boolean
+  default: false
+- fieldname: preferred_area_for_lodging
+  label: Preferred Area for Lodging
+  fieldtype: Text
+- fieldname: check_in_date
+  label: Check-in Date
+  fieldtype: Date
+- fieldname: check_out_date
+  label: Check-out Date
+  fieldtype: Date
+- fieldname: other_details
+  label: Other Details
+  fieldtype: LongText

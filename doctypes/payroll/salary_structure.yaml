@@ -1,0 +1,149 @@
+schema_version: 1
+name: Salary Structure
+label: Salary Structure
+module: payroll
+submittable: true
+icon: layout-list
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: is_active
+  label: Is Active
+  fieldtype: Select
+  options:
+  - 'Yes'
+  - 'No'
+  default: 'Yes'
+  required: true
+  in_list_view: true
+- fieldname: payroll_frequency
+  label: Payroll Frequency
+  fieldtype: Select
+  options:
+  - Monthly
+  - Fortnightly
+  - Bimonthly
+  - Weekly
+  - Daily
+  default: Monthly
+- fieldname: is_default
+  label: Is Default
+  fieldtype: Select
+  options:
+  - 'Yes'
+  - 'No'
+  default: 'No'
+  read_only: true
+  hidden: true
+- fieldname: salary_slip_based_on_timesheet
+  label: Salary Slip Based on Timesheet
+  fieldtype: Boolean
+  default: false
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+  description: Salary Component for timesheet based payroll.
+- fieldname: hour_rate
+  label: Hour Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: leave_encashment_amount_per_day
+  label: Leave Encashment Amount Per Day
+  fieldtype: Currency
+  decimals: 2
+- fieldname: max_benefits
+  label: Max Benefits (Amount)
+  fieldtype: Currency
+  decimals: 2
+- fieldname: earnings
+  label: Earnings
+  fieldtype: Table
+  options: Salary Detail
+- fieldname: deductions
+  label: Deductions
+  fieldtype: Table
+  options: Salary Detail
+- fieldname: employer_contributions
+  label: Employer Contributions
+  fieldtype: Table
+  options: Salary Detail
+- fieldname: total_earning
+  label: Total Earning
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: total_deduction
+  label: Total Deduction
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: net_pay
+  label: Net Pay
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: payment_account
+  label: Payment Account
+  fieldtype: Link
+  options: Account
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Salary Structure
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: employee_benefits
+  label: Flexible Benefits
+  fieldtype: Table
+  options: Employee Benefit Detail
+  description: Enter yearly benefit amounts
+title_field: is_active
+layout:
+- tab: Général
+  section: Informations principales
+  columns:
+  - - company
+    - letter_head
+  - - is_active
+    - currency
+    - amended_from
+- tab: Général
+  section: Informations complémentaires 2
+  columns:
+  - - leave_encashment_amount_per_day
+    - max_benefits
+  - - salary_slip_based_on_timesheet
+    - payroll_frequency
+    - salary_component
+    - hour_rate
+- tab: Earnings & Deductions
+  section: Informations complémentaires 3
+  columns:
+  - - earnings
+    - deductions
+    - employer_contributions
+    - employee_benefits
+- tab: Account
+  section: Informations complémentaires 4
+  columns:
+  - - mode_of_payment
+  - - payment_account

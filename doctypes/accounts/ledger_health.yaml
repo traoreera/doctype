@@ -1,0 +1,31 @@
+schema_version: 1
+name: Ledger Health
+label: Ledger Health
+module: accounts
+icon: heart-pulse
+fields:
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: Text
+- fieldname: debit_credit_mismatch
+  label: Debit-Credit mismatch
+  fieldtype: Boolean
+  default: false
+- fieldname: checked_on
+  label: Checked On
+  fieldtype: Datetime
+- fieldname: general_and_payment_ledger_mismatch
+  label: General and Payment Ledger mismatch
+  fieldtype: Boolean
+  default: false
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - voucher_type
+    - voucher_no
+    - checked_on
+    - debit_credit_mismatch
+    - general_and_payment_ledger_mismatch

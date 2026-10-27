@@ -1,0 +1,110 @@
+schema_version: 1
+name: Bank Account
+label: Bank Account
+module: accounts
+icon: credit-card
+fields:
+- fieldname: account_name
+  label: Account Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: account
+  label: Company Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: bank
+  label: Bank
+  fieldtype: Link
+  options: Bank
+  required: true
+- fieldname: account_type
+  label: Account Type
+  fieldtype: Link
+  options: Bank Account Type
+- fieldname: account_subtype
+  label: Account Subtype
+  fieldtype: Link
+  options: Bank Account Subtype
+- fieldname: is_default
+  label: Is Default Account
+  fieldtype: Boolean
+  default: false
+- fieldname: is_company_account
+  label: Is Company Account
+  fieldtype: Boolean
+  description: Setting the account as a Company Account is necessary for Bank Reconciliation
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: iban
+  label: IBAN
+  fieldtype: Text
+  in_list_view: true
+- fieldname: bank_account_no
+  label: Bank Account No
+  fieldtype: Text
+  in_list_view: true
+- fieldname: integration_id
+  label: Integration ID
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: last_integration_date
+  label: Last Integration Date
+  fieldtype: Date
+  description: Change this date manually to setup the next synchronization start date
+- fieldname: mask
+  label: Mask
+  fieldtype: Text
+  read_only: true
+- fieldname: branch_code
+  label: Branch Code
+  fieldtype: Text
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: is_credit_card
+  label: Is Credit Card
+  fieldtype: Boolean
+  description: If checked, journal entries made using bank reconciliation will be of type "Credit Card Entry"
+  default: false
+title_field: account_name
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - account_name
+    - account
+    - bank
+    - account_type
+    - account_subtype
+  - - disabled
+    - is_default
+    - is_company_account
+    - company
+    - is_credit_card
+- section: Party Details
+  columns:
+  - - party_type
+  - - party
+- section: Account Details
+  columns:
+  - - iban
+  - - branch_code
+    - bank_account_no
+- section: Integration Details
+  columns:
+  - - last_integration_date
+  - - mask

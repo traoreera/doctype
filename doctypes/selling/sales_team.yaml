@@ -1,0 +1,36 @@
+schema_version: 1
+name: Sales Team
+label: Sales Team
+istable: true
+fields:
+- fieldname: sales_person
+  label: Sales Person
+  fieldtype: Link
+  options: Sales Person
+  required: true
+  in_list_view: true
+- fieldname: contact_no
+  label: Contact No.
+  fieldtype: Text
+  in_list_view: true
+  hidden: true
+- fieldname: allocated_percentage
+  label: Contribution (%)
+  fieldtype: Number
+  in_list_view: true
+- fieldname: allocated_amount
+  label: Contribution to Net Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: commission_rate
+  label: Commission Rate
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: incentives
+  label: Incentives
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true

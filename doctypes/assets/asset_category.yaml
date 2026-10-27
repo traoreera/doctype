@@ -1,0 +1,42 @@
+schema_version: 1
+name: Asset Category
+label: Asset Category
+module: assets
+icon: folder
+fields:
+- fieldname: asset_category_name
+  label: Asset Category Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: finance_books
+  label: Finance Books
+  fieldtype: Table
+  options: Asset Finance Book
+- fieldname: accounts
+  label: Accounts
+  fieldtype: Table
+  options: Asset Category Account
+- fieldname: enable_cwip_accounting
+  label: Enable Capital Work in Progress Accounting
+  fieldtype: Boolean
+  default: false
+- fieldname: non_depreciable_category
+  label: Non Depreciable Category
+  fieldtype: Boolean
+  default: false
+title_field: asset_category_name
+layout:
+- section: Informations principales
+  columns:
+  - - asset_category_name
+- section: Depreciation Options
+  columns:
+  - - enable_cwip_accounting
+    - non_depreciable_category
+- section: Finance Book Detail
+  columns:
+  - - finance_books
+- section: Accounts
+  columns:
+  - - accounts

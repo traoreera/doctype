@@ -1,0 +1,56 @@
+schema_version: 1
+name: Appointment Letter
+label: Appointment Letter
+module: hr
+icon: mail-check
+fields:
+- fieldname: applicant_name
+  label: Applicant Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: appointment_date
+  label: Appointment Date
+  fieldtype: Date
+  required: true
+- fieldname: appointment_letter_template
+  label: Appointment Letter Template
+  fieldtype: Link
+  options: Appointment Letter Template
+  required: true
+- fieldname: introduction
+  label: Introduction
+  fieldtype: LongText
+  required: true
+- fieldname: job_applicant
+  label: Job Applicant
+  fieldtype: Link
+  options: Job Applicant
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: closing_notes
+  label: Closing Notes
+  fieldtype: LongText
+- fieldname: terms
+  label: Terms
+  fieldtype: Table
+  options: Appointment Letter content
+title_field: applicant_name
+layout:
+- section: Informations principales
+  columns:
+  - - job_applicant
+    - applicant_name
+  - - company
+    - appointment_date
+    - appointment_letter_template
+- section: Body
+  columns:
+  - - introduction
+    - terms
+    - closing_notes

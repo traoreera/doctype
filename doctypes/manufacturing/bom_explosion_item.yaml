@@ -1,0 +1,70 @@
+schema_version: 1
+name: BOM Explosion Item
+label: BOM Explosion Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: source_warehouse
+  label: Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+  read_only: true
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  in_list_view: true
+  read_only: true
+- fieldname: stock_qty
+  label: Stock Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: qty_consumed_per_unit
+  label: Qty Consumed Per Unit
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: include_item_in_manufacturing
+  label: Include Item In Manufacturing
+  fieldtype: Boolean
+  read_only: true
+- fieldname: sourced_by_supplier
+  label: Sourced by Supplier
+  fieldtype: Boolean
+  read_only: true
+- fieldname: is_sub_assembly_item
+  label: Is Sub Assembly Item
+  fieldtype: Boolean
+  read_only: true

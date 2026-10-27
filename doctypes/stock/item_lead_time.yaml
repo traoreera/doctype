@@ -1,0 +1,105 @@
+schema_version: 1
+name: Item Lead Time
+label: Item Lead Time
+module: stock
+icon: clock
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: buffer_time
+  label: Buffer Time
+  fieldtype: Int
+  in_list_view: true
+  description: In Days
+- fieldname: no_of_shift
+  label: No of Shift
+  fieldtype: Int
+  default: 1
+- fieldname: manufacturing_time_in_mins
+  label: Manufacturing Time
+  fieldtype: Int
+  description: Per Unit Time in Mins
+- fieldname: total_workstation_time
+  label: Total Workstation Time (In Hours)
+  fieldtype: Int
+  description: 'Per Day
+
+    Shift Time (In Hours) * No of Workstations * No of Shift'
+- fieldname: daily_yield
+  label: Daily Yield (%)
+  fieldtype: Percent
+  description: (Good Units Produced / Total Units Produced) × 100
+  default: 90.0
+- fieldname: capacity_per_day
+  label: Capacity
+  fieldtype: Int
+  in_list_view: true
+  description: (Daily Yield * No of Units Produced) / 100
+- fieldname: no_of_units_produced
+  label: No of Units Produced
+  fieldtype: Int
+  description: (Total Workstation Time / Manufacturing Time) * 60
+- fieldname: purchase_time
+  label: Purchase Time
+  fieldtype: Int
+  in_list_view: true
+  description: In Days
+- fieldname: shift_time_in_hours
+  label: Shift Time (In Hours)
+  fieldtype: Int
+  description: Per Day
+- fieldname: no_of_workstations
+  label: No of Workstations
+  fieldtype: Int
+  description: Similar types of workstations where the same operations run in parallel.
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: supplier_lead_times
+  label: Supplier Lead Times
+  fieldtype: Table
+  options: Item Lead Time Supplier
+  description: Overrides the Purchase Time above for the selected supplier. The row marked as default is used when
+    no supplier is selected.
+title_field: item_code
+layout:
+- tab: Manufacturing Time
+  section: Références
+  columns:
+  - - item_code
+- tab: Manufacturing Time
+  section: Workstation
+  columns:
+  - - shift_time_in_hours
+    - no_of_workstations
+  - - no_of_shift
+    - total_workstation_time
+- tab: Manufacturing Time
+  section: Manufacturing
+  columns:
+  - - manufacturing_time_in_mins
+    - no_of_units_produced
+  - - daily_yield
+    - capacity_per_day
+- tab: Purchase Time
+  section: Purchase
+  columns:
+  - - purchase_time
+  - - buffer_time
+- tab: Purchase Time
+  section: Supplier Wise Purchase Time
+  columns:
+  - - supplier_lead_times
+- tab: Item Details
+  section: Références
+  columns:
+  - - item_name
+    - stock_uom

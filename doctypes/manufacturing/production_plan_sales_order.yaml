@@ -1,0 +1,32 @@
+schema_version: 1
+name: Production Plan Sales Order
+label: Production Plan Sales Order
+istable: true
+fields:
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  required: true
+  in_list_view: true
+- fieldname: sales_order_date
+  label: Sales Order Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  in_list_view: true
+  read_only: true
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Text
+  in_list_view: true

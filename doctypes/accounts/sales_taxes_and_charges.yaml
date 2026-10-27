@@ -1,0 +1,112 @@
+schema_version: 1
+name: Sales Taxes and Charges
+label: Sales Taxes and Charges
+istable: true
+fields:
+- fieldname: charge_type
+  label: Type
+  fieldtype: Select
+  options:
+  - Actual
+  - On Net Total
+  - On Previous Row Amount
+  - On Previous Row Total
+  - On Item Quantity
+  required: true
+  in_list_view: true
+- fieldname: row_id
+  label: 'Reference Row #'
+  fieldtype: Text
+- fieldname: account_head
+  label: Account Head
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  required: true
+- fieldname: included_in_print_rate
+  label: Is this Tax included in Basic Rate?
+  fieldtype: Boolean
+  description: If checked, the tax amount will be considered as already included in the Print Rate / Print Amount
+  default: false
+- fieldname: rate
+  label: Tax Rate
+  fieldtype: Number
+  in_list_view: true
+- fieldname: tax_amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: tax_amount_after_discount_amount
+  label: Tax Amount After Discount Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_tax_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total
+  label: Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_tax_amount_after_discount_amount
+  label: Tax Amount After Discount Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: included_in_paid_amount
+  label: Considered In Paid Amount
+  fieldtype: Boolean
+  description: If checked, the tax amount will be considered as already included in the Paid Amount in Payment Entry
+  default: false
+- fieldname: dont_recompute_tax
+  label: Don't Recompute Tax
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: net_amount
+  label: Net Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: base_net_amount
+  label: Net Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: set_by_item_tax_template
+  label: Set by Item Tax Template
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: is_tax_withholding_account
+  label: Is Tax Withholding Account
+  fieldtype: Boolean
+  read_only: true

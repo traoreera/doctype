@@ -1,0 +1,138 @@
+schema_version: 1
+name: BOM Creator Item
+label: BOM Creator Item
+istable: true
+fields:
+- fieldname: part_number
+  label: Part Number
+  fieldtype: Text
+  in_list_view: true
+- fieldname: part_name
+  label: Part Name
+  fieldtype: Text
+- fieldname: qty
+  label: Quantity
+  fieldtype: Number
+  in_list_view: true
+  default: 1.0
+- fieldname: design_quantity
+  label: Design Quantity
+  fieldtype: Number
+  read_only: true
+  description: Quantity from the design file.
+- fieldname: node_id
+  label: Node
+  fieldtype: Int
+  read_only: true
+- fieldname: is_expandable
+  label: Is Assembly
+  fieldtype: Boolean
+  read_only: true
+- fieldname: source
+  label: Source
+  fieldtype: Select
+  options:
+  - CAD File
+  - Manual
+  default: Manual
+  read_only: true
+- fieldname: change_type
+  label: Change
+  fieldtype: Select
+  options:
+  - Added
+  - Quantity Changed
+  in_list_view: true
+  read_only: true
+- fieldname: exclude_from_bom
+  label: Exclude from BOM
+  fieldtype: Boolean
+  default: false
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  read_only: true
+- fieldname: is_phantom_item
+  label: Is Phantom Item
+  fieldtype: Boolean
+  default: false
+- fieldname: sourced_by_supplier
+  label: Sourced by Supplier
+  fieldtype: Boolean
+  default: false
+- fieldname: bom_created
+  label: BOM Created
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true
+- fieldname: stock_qty
+  label: Stock Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rate
+  label: Base Rate
+  fieldtype: Currency
+  decimals: 2
+  hidden: true
+- fieldname: base_amount
+  label: Base Amount
+  fieldtype: Currency
+  decimals: 2
+  hidden: true
+- fieldname: do_not_explode
+  label: Do Not Explode
+  fieldtype: Boolean
+  description: Use the item as a raw material without its own BOM.
+  default: true
+- fieldname: bom_no
+  label: BOM No
+  fieldtype: Link
+  options: BOM
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  description: Operation of the routing that uses this material.
+- fieldname: instruction
+  label: Instruction
+  fieldtype: LongText
+- fieldname: placements
+  label: Placements in Model
+  fieldtype: JSON
+  hidden: true

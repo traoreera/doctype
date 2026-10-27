@@ -1,0 +1,21 @@
+schema_version: 1
+name: Ledger Merge Accounts
+label: Ledger Merge Accounts
+istable: true
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: merged
+  label: Merged
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+- fieldname: account_name
+  label: Account Name
+  fieldtype: Text
+  required: true
+  read_only: true

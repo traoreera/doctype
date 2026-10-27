@@ -1,0 +1,93 @@
+schema_version: 1
+name: Landed Cost Voucher
+label: Landed Cost Voucher
+module: stock
+submittable: true
+icon: ship
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-LCV-.YYYY.-
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: purchase_receipts
+  label: Vouchers
+  fieldtype: Table
+  options: Landed Cost Purchase Receipt
+- fieldname: items
+  label: Receipt Items
+  fieldtype: Table
+  options: Landed Cost Item
+- fieldname: taxes
+  label: Landed Cost
+  fieldtype: Table
+  options: Landed Cost Taxes and Charges
+- fieldname: total_taxes_and_charges
+  label: Total Landed Cost (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: distribute_charges_based_on
+  label: Distribute Charges Based On
+  fieldtype: Select
+  options:
+  - Qty
+  - Amount
+  - Distribute Manually
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Landed Cost Voucher
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: vendor_invoices
+  label: Vendor Invoices
+  fieldtype: Table
+  options: Landed Cost Vendor Invoice
+- fieldname: total_vendor_invoices_cost
+  label: Total Vendor Invoices Cost (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+  - - posting_date
+- section: Informations complémentaires 2
+  columns:
+  - - purchase_receipts
+- section: Items
+  columns:
+  - - items
+- section: Applicable Charges
+  columns:
+  - - vendor_invoices
+    - taxes
+- section: Comptabilité et montants
+  columns:
+  - - total_vendor_invoices_cost
+    - total_taxes_and_charges
+  - - distribute_charges_based_on
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

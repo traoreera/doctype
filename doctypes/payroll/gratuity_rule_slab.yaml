@@ -1,0 +1,22 @@
+schema_version: 1
+name: Gratuity Rule Slab
+label: Gratuity Rule Slab
+istable: true
+fields:
+- fieldname: fraction_of_applicable_earnings
+  label: 'Fraction of Applicable Earnings '
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: from_year
+  label: From(Year)
+  fieldtype: Int
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: to_year
+  label: To(Year)
+  fieldtype: Int
+  required: true
+  in_list_view: true
+  default: 0

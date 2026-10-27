@@ -1,0 +1,36 @@
+schema_version: 1
+name: POS Closing Entry Detail
+label: POS Closing Entry Detail
+istable: true
+fields:
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+  required: true
+  in_list_view: true
+- fieldname: expected_amount
+  label: Expected Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: difference
+  label: Difference
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: opening_amount
+  label: Opening Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: closing_amount
+  label: Closing Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true

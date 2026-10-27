@@ -1,0 +1,153 @@
+schema_version: 1
+name: Maintenance Visit
+label: Maintenance Visit
+module: maintenance
+submittable: true
+icon: wrench
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-MVS-.YYYY.-
+  required: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+  hidden: true
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: mntc_date
+  label: Maintenance Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: mntc_time
+  label: Maintenance Time
+  fieldtype: Time
+- fieldname: completion_status
+  label: Completion Status
+  fieldtype: Select
+  options:
+  - Partially Completed
+  - Fully Completed
+  required: true
+  in_list_view: true
+- fieldname: maintenance_type
+  label: Maintenance Type
+  fieldtype: Select
+  options:
+  - Scheduled
+  - Unscheduled
+  - Breakdown
+  default: Unscheduled
+  required: true
+  in_list_view: true
+- fieldname: purposes
+  label: Purposes
+  fieldtype: Table
+  options: Maintenance Visit Purpose
+- fieldname: customer_feedback
+  label: Customer Feedback
+  fieldtype: LongText
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Cancelled
+  - Submitted
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Maintenance Visit
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: customer_address
+  label: Customer Address
+  fieldtype: Link
+  options: Address
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: maintenance_schedule
+  label: Maintenance Schedule
+  fieldtype: Link
+  options: Maintenance Schedule
+  read_only: true
+- fieldname: maintenance_schedule_detail
+  label: Maintenance Schedule Detail
+  fieldtype: Link
+  options: Maintenance Schedule Detail
+  hidden: true
+title_field: status
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - customer
+    - maintenance_schedule
+  - - mntc_date
+    - mntc_time
+- section: État et options
+  columns:
+  - - completion_status
+  - - maintenance_type
+- section: Informations complémentaires 3
+  columns:
+  - - purposes
+- section: More Information
+  columns:
+  - - customer_feedback
+  - - status
+    - amended_from
+    - company
+- section: Contact Info
+  columns:
+  - - customer_address
+    - contact_person
+  - - territory
+    - customer_group
+views:
+  tree:
+    parent: amended_from

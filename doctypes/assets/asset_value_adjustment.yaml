@@ -1,0 +1,92 @@
+schema_version: 1
+name: Asset Value Adjustment
+label: Asset Value Adjustment
+module: assets
+submittable: true
+icon: sliders-horizontal
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+- fieldname: asset_category
+  label: Asset Category
+  fieldtype: Text
+  read_only: true
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+  in_list_view: true
+- fieldname: journal_entry
+  label: Journal Entry
+  fieldtype: Link
+  options: Journal Entry
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+- fieldname: current_asset_value
+  label: Current Asset Value
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: new_asset_value
+  label: New Asset Value
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: difference_amount
+  label: Difference Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset Value Adjustment
+  read_only: true
+- fieldname: difference_account
+  label: Difference Account
+  fieldtype: Link
+  options: Account
+  required: true
+title_field: finance_book
+layout:
+- section: Dates et planification
+  columns:
+  - - company
+    - asset
+    - asset_category
+  - - date
+    - finance_book
+    - amended_from
+- section: Value Details
+  columns:
+  - - current_asset_value
+    - new_asset_value
+  - - difference_amount
+    - difference_account
+    - journal_entry
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+views:
+  calendar:
+    start: date
+    title: finance_book
+  tree:
+    parent: amended_from

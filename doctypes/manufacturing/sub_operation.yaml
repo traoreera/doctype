@@ -1,0 +1,20 @@
+schema_version: 1
+name: Sub Operation
+label: Sub Operation
+istable: true
+fields:
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  required: true
+  in_list_view: true
+- fieldname: time_in_mins
+  label: Operation Time
+  fieldtype: Number
+  in_list_view: true
+  description: Time in mins
+  default: 0.0
+- fieldname: description
+  label: Description
+  fieldtype: LongText

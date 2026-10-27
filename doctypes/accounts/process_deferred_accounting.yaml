@@ -1,0 +1,66 @@
+schema_version: 1
+name: Process Deferred Accounting
+label: Process Deferred Accounting
+module: accounts
+submittable: true
+icon: list-clock
+fields:
+- fieldname: type
+  label: Type
+  fieldtype: Select
+  options:
+  - Income
+  - Expense
+  required: true
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Process Deferred Accounting
+  read_only: true
+- fieldname: start_date
+  label: Service Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: Service End Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - type
+    - account
+  - - posting_date
+    - start_date
+    - end_date
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  gantt:
+    start: start_date
+    end: end_date
+    title: company
+  tree:
+    parent: amended_from

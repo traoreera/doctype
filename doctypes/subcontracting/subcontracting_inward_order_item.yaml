@@ -1,0 +1,77 @@
+schema_version: 1
+name: Subcontracting Inward Order Item
+label: Subcontracting Inward Order Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: qty
+  label: Quantity
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  default: 1.0
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: bom
+  label: BOM
+  fieldtype: Link
+  options: BOM
+  required: true
+  in_list_view: true
+- fieldname: include_exploded_items
+  label: Include Exploded Items
+  fieldtype: Boolean
+  default: false
+- fieldname: delivered_qty
+  label: Delivered Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: returned_qty
+  label: Returned Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: sales_order_item
+  label: Sales Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: subcontracting_conversion_factor
+  label: Subcontracting Conversion Factor
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: produced_qty
+  label: Produced Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: process_loss_qty
+  label: Process Loss Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: delivery_warehouse
+  label: Delivery Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  in_list_view: true

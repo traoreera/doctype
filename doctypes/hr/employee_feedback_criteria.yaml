@@ -1,0 +1,16 @@
+schema_version: 1
+name: Employee Feedback Criteria
+label: Employee Feedback Criteria
+module: hr
+icon: list-ordered
+fields:
+- fieldname: criteria
+  label: Criteria
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: criteria
+layout:
+- section: Informations principales
+  columns:
+  - - criteria

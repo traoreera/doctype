@@ -1,0 +1,13 @@
+schema_version: 1
+name: Market Segment
+label: Market Segment
+module: crm
+icon: chart-pie
+fields:
+- fieldname: market_segment
+  label: Market Segment
+  fieldtype: Text
+layout:
+- section: Informations principales
+  columns:
+  - - market_segment

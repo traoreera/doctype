@@ -1,0 +1,177 @@
+schema_version: 1
+name: Promotional Scheme
+label: Promotional Scheme
+module: accounts
+icon: megaphone
+fields:
+- fieldname: apply_on
+  label: Apply On
+  fieldtype: Select
+  options:
+  - Item Code
+  - Item Group
+  - Brand
+  - Transaction
+  default: Item Code
+  required: true
+  in_list_view: true
+- fieldname: disable
+  label: Disable
+  fieldtype: Boolean
+  default: false
+- fieldname: items
+  label: Pricing Rule Item Code
+  fieldtype: Table
+  options: Pricing Rule Item Code
+- fieldname: item_groups
+  label: Pricing Rule Item Group
+  fieldtype: Table
+  options: Pricing Rule Item Group
+- fieldname: brands
+  label: Pricing Rule Brand
+  fieldtype: Table
+  options: Pricing Rule Brand
+- fieldname: mixed_conditions
+  label: Mixed Conditions
+  fieldtype: Boolean
+  default: false
+- fieldname: is_cumulative
+  label: Is Cumulative
+  fieldtype: Boolean
+  default: false
+- fieldname: apply_rule_on_other
+  label: Apply Rule On Other
+  fieldtype: Select
+  options:
+  - Item Code
+  - Item Group
+  - Brand
+- fieldname: other_item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+- fieldname: other_item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+- fieldname: other_brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+- fieldname: selling
+  label: Selling
+  fieldtype: Boolean
+  default: false
+- fieldname: buying
+  label: Buying
+  fieldtype: Boolean
+  default: false
+- fieldname: applicable_for
+  label: Applicable For
+  fieldtype: Select
+  options:
+  - Customer
+  - Customer Group
+  - Territory
+  - Sales Partner
+  - Campaign
+  - Supplier
+  - Supplier Group
+- fieldname: customer
+  label: Customer
+  fieldtype: Table
+  options: Customer Item
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Table
+  options: Customer Group Item
+- fieldname: territory
+  label: Territory
+  fieldtype: Table
+  options: Territory Item
+- fieldname: sales_partner
+  label: Sales Partner
+  fieldtype: Table
+  options: Sales Partner Item
+- fieldname: campaign
+  label: Campaign
+  fieldtype: Table
+  options: Campaign Item
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Table
+  options: Supplier Item
+- fieldname: supplier_group
+  label: Supplier Group
+  fieldtype: Table
+  options: Supplier Group Item
+- fieldname: valid_from
+  label: Valid From
+  fieldtype: Date
+  default: today
+- fieldname: valid_upto
+  label: Valid Up To
+  fieldtype: Date
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: price_discount_slabs
+  label: Promotional Scheme Price Discount
+  fieldtype: Table
+  options: Promotional Scheme Price Discount
+- fieldname: product_discount_slabs
+  label: Promotional Scheme Product Discount
+  fieldtype: Table
+  options: Promotional Scheme Product Discount
+title_field: company
+layout:
+- section: Références
+  columns:
+  - - apply_on
+    - disable
+  - - items
+    - item_groups
+    - brands
+    - mixed_conditions
+    - is_cumulative
+- section: Discount on Other Item
+  columns:
+  - - apply_rule_on_other
+  - - other_item_code
+    - other_item_group
+    - other_brand
+- section: Party Information
+  columns:
+  - - selling
+    - buying
+  - - applicable_for
+    - customer
+    - customer_group
+    - territory
+    - sales_partner
+    - campaign
+    - supplier
+    - supplier_group
+- section: Period Settings
+  columns:
+  - - valid_from
+    - valid_upto
+  - - company
+    - currency
+- section: Price Discount Slabs
+  columns:
+  - - price_discount_slabs
+- section: Product Discount Slabs
+  columns:
+  - - product_discount_slabs
+views:
+  calendar:
+    start: valid_from
+    title: company

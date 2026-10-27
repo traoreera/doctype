@@ -1,0 +1,42 @@
+schema_version: 1
+name: Email Account
+label: Email Account
+module: communication
+icon: file-text
+fields:
+- fieldname: email_account_name
+  label: Email Account Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: email_id
+  label: Email Address
+  fieldtype: Text
+  format: email
+  required: true
+- fieldname: enable_incoming
+  label: Enable Incoming
+  fieldtype: Boolean
+- fieldname: enable_outgoing
+  label: Enable Outgoing
+  fieldtype: Boolean
+- fieldname: default_incoming
+  label: Default Incoming
+  fieldtype: Boolean
+- fieldname: default_outgoing
+  label: Default Outgoing
+  fieldtype: Boolean
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+title_field: email_account_name
+layout:
+- section: Informations principales
+  columns:
+  - - email_account_name
+    - email_id
+    - enable_incoming
+    - enable_outgoing
+    - default_incoming
+    - default_outgoing
+    - disabled

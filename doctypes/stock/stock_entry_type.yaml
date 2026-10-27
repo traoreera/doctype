@@ -1,0 +1,47 @@
+schema_version: 1
+name: Stock Entry Type
+label: Stock Entry Type
+module: stock
+icon: tag
+fields:
+- fieldname: purpose
+  label: Purpose
+  fieldtype: Select
+  options:
+  - Material Issue
+  - Material Receipt
+  - Material Transfer
+  - Material Transfer for Manufacture
+  - Material Consumption for Manufacture
+  - Manufacture
+  - Repack
+  - Send to Subcontractor
+  - Disassemble
+  - Receive from Customer
+  - Return Raw Material to Customer
+  - Subcontracting Delivery
+  - Subcontracting Return
+  default: Material Issue
+  required: true
+  in_list_view: true
+- fieldname: add_to_transit
+  label: Add to Transit
+  fieldtype: Boolean
+  default: false
+- fieldname: batch_split
+  label: Batch Split
+  fieldtype: Boolean
+  read_only: true
+  description: On submission of the stock entry, the consumed batch is split into one child batch per finished piece
+- fieldname: is_standard
+  label: Is Standard
+  fieldtype: Boolean
+  read_only: true
+title_field: purpose
+layout:
+- section: Informations principales
+  columns:
+  - - purpose
+    - add_to_transit
+    - batch_split
+    - is_standard

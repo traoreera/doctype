@@ -1,0 +1,70 @@
+schema_version: 1
+name: Employee Promotion
+label: Employee Promotion
+module: hr
+submittable: true
+icon: trending-up
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: promotion_date
+  label: Promotion Date
+  fieldtype: Date
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: promotion_details
+  label: Promotion Details
+  fieldtype: Table
+  options: Employee Property History
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Promotion
+  read_only: true
+- fieldname: salary_currency
+  label: Salary Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: current_ctc
+  label: Current CTC
+  fieldtype: Currency
+  decimals: 2
+- fieldname: revised_ctc
+  label: Revised CTC
+  fieldtype: Currency
+  decimals: 2
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - salary_currency
+  - - promotion_date
+    - company
+- section: Employee Promotion Details
+  columns:
+  - - promotion_details
+- section: Salary Details
+  columns:
+  - - current_ctc
+  - - revised_ctc
+    - amended_from

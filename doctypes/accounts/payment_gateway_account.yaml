@@ -1,0 +1,57 @@
+schema_version: 1
+name: Payment Gateway Account
+label: Payment Gateway Account
+module: accounts
+icon: credit-card
+fields:
+- fieldname: payment_gateway
+  label: Payment Gateway
+  fieldtype: Link
+  options: Payment Gateway
+  required: true
+  in_list_view: true
+- fieldname: is_default
+  label: Is Default
+  fieldtype: Boolean
+  default: false
+- fieldname: payment_account
+  label: Payment Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Text
+  read_only: true
+- fieldname: message
+  label: Default Payment Request Message
+  fieldtype: LongText
+  default: Please click on the link below to make your payment
+- fieldname: payment_channel
+  label: Payment Channel
+  fieldtype: Select
+  options:
+  - Email
+  - Phone
+  - Other
+  default: Email
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - payment_gateway
+    - payment_channel
+    - company
+    - is_default
+  - - payment_account
+    - currency
+- section: Comptabilité et montants
+  columns:
+  - - message

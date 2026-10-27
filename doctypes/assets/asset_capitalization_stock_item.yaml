@@ -1,0 +1,71 @@
+schema_version: 1
+name: Asset Capitalization Stock Item
+label: Asset Capitalization Stock Item
+istable: true
+fields:
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  in_list_view: true
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+- fieldname: stock_qty
+  label: Quantity
+  fieldtype: Number
+  in_list_view: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: valuation_rate
+  label: Valuation Rate
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: actual_qty
+  label: Actual Qty in Warehouse
+  fieldtype: Number
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: use_serial_batch_fields
+  label: Use Serial No / Batch Fields
+  fieldtype: Boolean
+  default: false
+- fieldname: purchase_receipt_item
+  label: Purchase Receipt Item
+  fieldtype: Text
+  hidden: true

@@ -1,0 +1,66 @@
+schema_version: 1
+name: Stock Closing Entry
+label: Stock Closing Entry
+module: stock
+submittable: true
+icon: lock
+fields:
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - CBAL-.#####
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Queued
+  - In Progress
+  - Completed
+  - Outdated
+  - Failed
+  - Cancelled
+  default: Draft
+  in_list_view: true
+  read_only: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  read_only: true
+  description: Set automatically to the day after the previous Stock Closing Entry, or to the first stock transaction's
+    date
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Stock Closing Entry
+  read_only: true
+title_field: status
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+    - status
+  - - from_date
+    - to_date
+    - amended_from
+views:
+  calendar:
+    start: from_date
+    title: status
+  gantt:
+    start: from_date
+    end: to_date
+    title: status
+  tree:
+    parent: amended_from

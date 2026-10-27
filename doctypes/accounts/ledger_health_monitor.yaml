@@ -1,0 +1,40 @@
+schema_version: 1
+name: Ledger Health Monitor
+label: Ledger Health Monitor
+module: accounts
+icon: activity
+fields:
+- fieldname: enable_health_monitor
+  label: Enable Health Monitor
+  fieldtype: Boolean
+  default: false
+- fieldname: debit_credit_mismatch
+  label: Debit-Credit Mismatch
+  fieldtype: Boolean
+  default: false
+- fieldname: general_and_payment_ledger_mismatch
+  label: Discrepancy between General and Payment Ledger
+  fieldtype: Boolean
+  default: false
+- fieldname: monitor_for_last_x_days
+  label: Monitor for Last 'X' days
+  fieldtype: Int
+  required: true
+  in_list_view: true
+  default: 60
+- fieldname: companies
+  label: Companies
+  fieldtype: Table
+  options: Ledger Health Monitor Company
+layout:
+- section: Informations principales
+  columns:
+  - - enable_health_monitor
+- section: Configuration
+  columns:
+  - - monitor_for_last_x_days
+    - debit_credit_mismatch
+    - general_and_payment_ledger_mismatch
+- section: Companies
+  columns:
+  - - companies

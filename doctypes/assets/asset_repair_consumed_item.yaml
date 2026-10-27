@@ -1,0 +1,40 @@
+schema_version: 1
+name: Asset Repair Consumed Item
+label: Asset Repair Consumed Item
+istable: true
+fields:
+- fieldname: valuation_rate
+  label: Valuation Rate
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: consumed_quantity
+  label: Consumed Quantity
+  fieldtype: Text
+  in_list_view: true
+- fieldname: total_value
+  label: Total Value
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+  hidden: true
+- fieldname: item_code
+  label: Item
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  in_list_view: true

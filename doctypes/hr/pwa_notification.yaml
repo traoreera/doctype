@@ -1,0 +1,49 @@
+schema_version: 1
+name: PWA Notification
+label: PWA Notification
+module: hr
+icon: bell
+fields:
+- fieldname: from_user
+  label: From User
+  fieldtype: Link
+  options: Member
+  in_list_view: true
+- fieldname: to_user
+  label: To User
+  fieldtype: Link
+  options: Member
+  in_list_view: true
+- fieldname: message
+  label: Message
+  fieldtype: TextEditor
+- fieldname: read
+  label: Read
+  fieldtype: Boolean
+  default: false
+- fieldname: reference_document_type
+  label: Reference Document Type
+  fieldtype: Text
+  in_list_view: true
+- fieldname: reference_document_name
+  label: Reference Document Name
+  fieldtype: Text
+  in_list_view: true
+permissions:
+  write: []
+  create: []
+  delete: []
+title_field: from_user
+layout:
+- section: Informations principales
+  columns:
+  - - to_user
+  - - from_user
+- section: Informations complémentaires 2
+  columns:
+  - - message
+    - read
+- section: Informations complémentaires 3
+  columns:
+  - - reference_document_type
+  - - reference_document_name

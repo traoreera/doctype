@@ -1,0 +1,108 @@
+schema_version: 1
+name: Tax Withholding Entry
+label: Tax Withholding Entry
+istable: true
+fields:
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+  read_only: true
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+  read_only: true
+- fieldname: tax_id
+  label: Tax ID
+  fieldtype: Text
+  read_only: true
+- fieldname: tax_withholding_category
+  label: Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+  in_list_view: true
+  read_only: true
+- fieldname: tax_rate
+  label: Tax Rate
+  fieldtype: Percent
+  in_list_view: true
+- fieldname: taxable_amount
+  label: Base Taxable Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: lower_deduction_certificate
+  label: Lower Deduction Certificate
+  fieldtype: Link
+  options: Lower Deduction Certificate
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Settled
+  - Under Withheld
+  - Over Withheld
+  - Duplicate
+  - Cancelled
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: conversion_rate
+  label: Exchange Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: withholding_doctype
+  label: Withholding Document Type
+  fieldtype: Text
+- fieldname: withholding_name
+  label: Withholding Document Name
+  fieldtype: DynamicLink
+  options: withholding_doctype
+- fieldname: taxable_doctype
+  label: Taxable Document Type
+  fieldtype: Text
+- fieldname: taxable_name
+  label: Taxable Document Name
+  fieldtype: DynamicLink
+  options: taxable_doctype
+  in_list_view: true
+- fieldname: taxable_date
+  label: Taxable Date
+  fieldtype: Date
+  read_only: true
+- fieldname: withholding_date
+  label: Withholding Date
+  fieldtype: Date
+  read_only: true
+- fieldname: under_withheld_reason
+  label: Under Withheld Reason
+  fieldtype: Select
+  options:
+  - Threshold Exemption
+  - Lower Deduction Certificate
+  read_only: true
+- fieldname: withholding_amount
+  label: Base Tax Withheld
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: tax_withholding_group
+  label: Tax Withholding Group
+  fieldtype: Link
+  options: Tax Withholding Group
+  in_list_view: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: created_by_migration
+  label: Created By Migration
+  fieldtype: Boolean
+  read_only: true
+  hidden: true

@@ -1,0 +1,30 @@
+schema_version: 1
+name: Target Detail
+label: Target Detail
+istable: true
+fields:
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  in_list_view: true
+- fieldname: fiscal_year
+  label: Fiscal Year
+  fieldtype: Link
+  options: Fiscal Year
+  required: true
+  in_list_view: true
+- fieldname: target_qty
+  label: Target Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: target_amount
+  label: Target  Amount
+  fieldtype: Number
+  in_list_view: true
+- fieldname: distribution_id
+  label: Target Distribution
+  fieldtype: Link
+  options: Monthly Distribution
+  required: true
+  in_list_view: true

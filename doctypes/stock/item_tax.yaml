@@ -1,0 +1,10 @@
+schema_version: 1
+name: "Item Tax"
+label: "Item Tax"
+istable: true
+fields:
+  - { fieldname: item_tax_template, label: "Item Tax Template", fieldtype: Link, options: "Item Tax Template", required: true, in_list_view: true }
+  - { fieldname: tax_category, label: "Tax Category", fieldtype: Link, options: "Tax Category", in_list_view: true }
+  - { fieldname: valid_from, label: "Valid From", fieldtype: Date, in_list_view: true }
+  - { fieldname: maximum_net_rate, label: "Maximum Net Rate", fieldtype: Number, in_list_view: true }
+  - { fieldname: minimum_net_rate, label: "Minimum Net Rate", fieldtype: Number, in_list_view: true }

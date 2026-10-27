@@ -1,0 +1,19 @@
+schema_version: 1
+name: Task Depends On
+label: Task Depends On
+istable: true
+fields:
+- fieldname: task
+  label: Task
+  fieldtype: Link
+  options: Task
+  in_list_view: true
+- fieldname: subject
+  label: Subject
+  fieldtype: LongText
+  in_list_view: true
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: LongText
+  read_only: true

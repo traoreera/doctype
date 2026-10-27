@@ -1,0 +1,72 @@
+schema_version: 1
+name: Sales Person
+label: Sales Person
+module: setup
+icon: user-round
+fields:
+- fieldname: sales_person_name
+  label: Sales Person Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: parent_sales_person
+  label: Parent Sales Person
+  fieldtype: Link
+  options: Sales Person
+  in_list_view: true
+  description: Select company name first.
+- fieldname: commission_rate
+  label: Commission Rate
+  fieldtype: Percent
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  required: true
+  in_list_view: true
+  default: false
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  hidden: true
+- fieldname: old_parent
+  label: old_parent
+  fieldtype: Text
+  hidden: true
+- fieldname: targets
+  label: Targets
+  fieldtype: Table
+  options: Target Detail
+title_field: sales_person_name
+layout:
+- section: Name and Employee ID
+  columns:
+  - - sales_person_name
+    - parent_sales_person
+    - commission_rate
+    - is_group
+    - enabled
+  - - employee
+    - department
+- section: Sales Person Targets
+  columns:
+  - - targets
+views:
+  tree:
+    parent: parent_sales_person

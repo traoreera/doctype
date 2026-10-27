@@ -1,0 +1,85 @@
+schema_version: 1
+name: Purchase Receipt Item Supplied
+label: Purchase Receipt Item Supplied
+istable: true
+fields:
+- fieldname: main_item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: rm_item_code
+  label: Raw Material Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+- fieldname: required_qty
+  label: Available Qty For Consumption
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: consumed_qty
+  label: Qty to Be Consumed
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: stock_uom
+  label: Stock Uom
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: current_stock
+  label: Current Stock
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: bom_detail_no
+  label: BOM Detail No
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: purchase_order
+  label: Purchase Order
+  fieldtype: Link
+  options: Purchase Order
+  read_only: true
+  hidden: true

@@ -1,0 +1,22 @@
+schema_version: 1
+name: Production Plan Item Reference
+label: Production Plan Item Reference
+istable: true
+fields:
+- fieldname: sales_order
+  label: Sales Order Reference
+  fieldtype: Link
+  options: Sales Order
+  in_list_view: true
+- fieldname: sales_order_item
+  label: Sales Order Item
+  fieldtype: Text
+  in_list_view: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: item_reference
+  label: Item Reference
+  fieldtype: Text
+  in_list_view: true

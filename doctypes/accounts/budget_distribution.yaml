@@ -1,0 +1,28 @@
+schema_version: 1
+name: Budget Distribution
+label: Budget Distribution
+istable: true
+fields:
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: percent
+  label: Percent
+  fieldtype: Percent
+  required: true
+  in_list_view: true

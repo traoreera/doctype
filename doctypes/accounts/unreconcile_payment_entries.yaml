@@ -1,0 +1,38 @@
+schema_version: 1
+name: Unreconcile Payment Entries
+label: Unreconcile Payment Entries
+istable: true
+fields:
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  options: reference_doctype
+  in_list_view: true
+- fieldname: allocated_amount
+  label: Allocated Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: unlinked
+  label: Unlinked
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+- fieldname: reference_doctype
+  label: Reference Type
+  fieldtype: Text
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Text
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: Text
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true

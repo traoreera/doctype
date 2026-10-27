@@ -1,0 +1,16 @@
+schema_version: 1
+name: Cashier Closing Payments
+label: Cashier Closing Payments
+istable: true
+fields:
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Number
+  in_list_view: true
+  default: 0.0

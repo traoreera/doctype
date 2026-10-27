@@ -1,0 +1,16 @@
+schema_version: 1
+name: Job Offer Term
+label: Job Offer Term
+istable: true
+fields:
+- fieldname: offer_term
+  label: Offer Term
+  fieldtype: Link
+  options: Offer Term
+  required: true
+  in_list_view: true
+- fieldname: value
+  label: Value / Description
+  fieldtype: LongText
+  required: true
+  in_list_view: true

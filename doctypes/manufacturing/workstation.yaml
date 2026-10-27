@@ -1,0 +1,113 @@
+schema_version: 1
+name: Workstation
+label: Workstation
+module: manufacturing
+icon: robot-arm
+fields:
+- fieldname: workstation_name
+  label: Workstation Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: hour_rate
+  label: Net Hour Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: per hour
+- fieldname: working_hours
+  label: Working Hours
+  fieldtype: Table
+  options: Workstation Working Hour
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+- fieldname: production_capacity
+  label: Job Capacity
+  fieldtype: Int
+  required: true
+  description: Run parallel job cards in a workstation
+  default: 1
+- fieldname: workstation_type
+  label: Workstation Type
+  fieldtype: Link
+  options: Workstation Type
+- fieldname: plant_floor
+  label: Plant Floor
+  fieldtype: Link
+  options: Plant Floor
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Production
+  - 'Off'
+  - Idle
+  - Problem
+  - Maintenance
+  - Setup
+  in_list_view: true
+- fieldname: on_status_image
+  label: Active Status
+  fieldtype: Image
+- fieldname: off_status_image
+  label: Inactive Status
+  fieldtype: Image
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: total_working_hours
+  label: Total Working Hours
+  fieldtype: Number
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: workstation_costs
+  label: Operating Components Cost
+  fieldtype: Table
+  options: Workstation Cost
+title_field: status
+layout:
+- tab: Details
+  section: Références
+  columns:
+  - - workstation_name
+    - workstation_type
+    - plant_floor
+    - disabled
+  - - production_capacity
+    - warehouse
+- tab: Workstation Status
+  section: État et options
+  columns:
+  - - status
+- tab: Workstation Status
+  section: Status Illustration
+  columns:
+  - - on_status_image
+  - - off_status_image
+- tab: Operating Costs
+  section: Operating Costs (Per Hour)
+  columns:
+  - - workstation_costs
+- tab: Operating Costs
+  section: Comptabilité et montants
+  columns:
+  - - hour_rate
+- tab: Description
+  section: Description et notes
+  columns:
+  - - description
+- tab: Working Hours
+  section: Comptabilité et montants
+  columns:
+  - - holiday_list
+    - working_hours
+    - total_working_hours

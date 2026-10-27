@@ -1,0 +1,32 @@
+schema_version: 1
+name: Job Card Time Log
+label: Job Card Time Log
+istable: true
+fields:
+- fieldname: from_time
+  label: From Time
+  fieldtype: Datetime
+  in_list_view: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Datetime
+  in_list_view: true
+- fieldname: time_in_mins
+  label: Time In Mins
+  fieldtype: Number
+  in_list_view: true
+- fieldname: completed_qty
+  label: Completed Qty
+  fieldtype: Number
+  in_list_view: true
+  default: 0.0
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: operation
+  label: Sub Operation
+  fieldtype: Link
+  options: Operation
+  in_list_view: true

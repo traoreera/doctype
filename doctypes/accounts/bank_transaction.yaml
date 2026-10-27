@@ -1,0 +1,169 @@
+schema_version: 1
+name: Bank Transaction
+label: Bank Transaction
+module: accounts
+submittable: true
+icon: arrow-left-right
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-BTN-.YYYY.-
+  default: ACC-BTN-.YYYY.-
+  required: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Settled
+  - Unreconciled
+  - Reconciled
+  - Cancelled
+  default: Pending
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: reference_number
+  label: Reference Number
+  fieldtype: LongText
+- fieldname: transaction_id
+  label: Transaction ID
+  fieldtype: Text
+  read_only: true
+- fieldname: payment_entries
+  label: Payment Entries
+  fieldtype: Table
+  options: Bank Transaction Payments
+- fieldname: allocated_amount
+  label: Allocated Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Bank Transaction
+  read_only: true
+- fieldname: unallocated_amount
+  label: Unallocated Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: deposit
+  label: Deposit
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: withdrawal
+  label: Withdrawal
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: transaction_type
+  label: Transaction Type
+  fieldtype: Text
+- fieldname: bank_party_name
+  label: Party Name/Account Holder (Bank Statement)
+  fieldtype: Text
+- fieldname: bank_party_iban
+  label: Party IBAN (Bank Statement)
+  fieldtype: Text
+- fieldname: bank_party_account_number
+  label: Party Account No. (Bank Statement)
+  fieldtype: Text
+- fieldname: included_fee
+  label: Included Fee
+  fieldtype: Currency
+  decimals: 2
+- fieldname: excluded_fee
+  label: Excluded Fee
+  fieldtype: Currency
+  decimals: 2
+  description: On save, the Excluded Fee will be converted to an Included Fee.
+- fieldname: is_rule_evaluated
+  label: Is Rule Evaluated
+  fieldtype: Boolean
+  read_only: true
+- fieldname: matched_transaction_rule
+  label: Matched Transaction Rule
+  fieldtype: Link
+  options: Bank Transaction Rule
+  read_only: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - naming_series
+    - date
+    - is_rule_evaluated
+    - matched_transaction_rule
+  - - status
+    - bank_account
+    - company
+    - amended_from
+- section: Comptabilité et montants
+  columns:
+  - - deposit
+    - withdrawal
+  - - currency
+- section: Références
+  columns:
+  - - description
+    - reference_number
+  - - transaction_id
+    - transaction_type
+- section: Comptabilité et montants
+  columns:
+  - - payment_entries
+- section: Comptabilité et montants
+  columns:
+  - - allocated_amount
+  - - unallocated_amount
+- section: Payment From / To
+  columns:
+  - - party_type
+    - party
+  - - bank_party_name
+    - bank_party_account_number
+    - bank_party_iban
+- section: Extended Bank Statement
+  columns:
+  - - included_fee
+    - excluded_fee
+views:
+  kanban:
+    field: status
+    card_fields:
+    - company
+  calendar:
+    start: date
+    title: company
+    color: status
+  tree:
+    parent: amended_from

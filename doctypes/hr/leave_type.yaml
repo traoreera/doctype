@@ -1,0 +1,155 @@
+schema_version: 1
+name: Leave Type
+label: Leave Type
+module: hr
+icon: tag
+fields:
+- fieldname: leave_type_name
+  label: Leave Type Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: max_leaves_allowed
+  label: Maximum Leave Allocation Allowed per Leave Period
+  fieldtype: Number
+- fieldname: applicable_after
+  label: Allow Leave Application After (Calendar Days)
+  fieldtype: Int
+  description: Minimum calendar days required since Date of Joining to apply for this leave
+- fieldname: max_continuous_days_allowed
+  label: Maximum Consecutive Leaves Allowed
+  fieldtype: Int
+  in_list_view: true
+- fieldname: is_carry_forward
+  label: Carry Forward
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: is_lwp
+  label: Is Leave Without Pay
+  fieldtype: Boolean
+  default: false
+- fieldname: is_optional_leave
+  label: Leave for optional holiday
+  fieldtype: Boolean
+  description: These leaves are holidays permitted by the company however, availing it is optional for an Employee.
+  default: false
+- fieldname: allow_negative
+  label: Allow Negative Balance
+  fieldtype: Boolean
+  default: false
+- fieldname: include_holiday
+  label: Include holidays within leaves as leaves
+  fieldtype: Boolean
+  default: false
+- fieldname: is_compensatory
+  label: Is Compensatory
+  fieldtype: Boolean
+  default: false
+- fieldname: expire_carry_forwarded_leaves_after_days
+  label: Expire Carry Forwarded Leaves (Days)
+  fieldtype: Int
+  description: Calculated in days
+- fieldname: allow_encashment
+  label: Allow Encashment
+  fieldtype: Boolean
+  default: false
+- fieldname: earning_component
+  label: Earning Component
+  fieldtype: Link
+  options: Salary Component
+- fieldname: is_earned_leave
+  label: Is Earned Leave
+  fieldtype: Boolean
+  default: false
+- fieldname: earned_leave_frequency
+  label: Earned Leave Frequency
+  fieldtype: Select
+  options:
+  - Monthly
+  - Quarterly
+  - Half-Yearly
+  - Yearly
+- fieldname: rounding
+  label: Rounding
+  fieldtype: Select
+  options:
+  - '0.25'
+  - '0.5'
+  - '1.0'
+- fieldname: maximum_carry_forwarded_leaves
+  label: Maximum Carry Forwarded Leaves
+  fieldtype: Number
+- fieldname: is_ppl
+  label: Is Partially Paid Leave
+  fieldtype: Boolean
+  default: false
+- fieldname: fraction_of_daily_salary_per_leave
+  label: Fraction of Daily Salary per Leave
+  fieldtype: Number
+  description: Fraction of one day's salary that is paid for each day of this leave. For example, 0.60 pays 60%
+    of the daily salary for a leave day, and the remaining 40% is deducted as Leave Without Pay. Enter 1 for fully
+    paid and 0 for fully unpaid.
+- fieldname: allow_over_allocation
+  label: Allow Over Allocation
+  fieldtype: Boolean
+  description: Allows allocating more leaves than the number of days in the allocation period.
+  default: false
+- fieldname: allocate_on_day
+  label: Allocate on Day
+  fieldtype: Select
+  options:
+  - First Day
+  - Last Day
+  - Date of Joining
+  default: Last Day
+  description: The day of the month when leaves should be allocated
+- fieldname: max_encashable_leaves
+  label: Maximum Encashable Leaves
+  fieldtype: Int
+- fieldname: non_encashable_leaves
+  label: Non-Encashable Leaves
+  fieldtype: Int
+  description: Indicates the number of leaves that cannot be encashed from the leave balance. E.g. with a leave
+    balance of 10 and 4 Non-Encashable Leaves, you can encash 6, while the remaining 4 can be carried forward or
+    expired
+title_field: leave_type_name
+layout:
+- tab: Général
+  section: Informations principales
+  columns:
+  - - leave_type_name
+    - is_compensatory
+    - is_lwp
+    - is_ppl
+    - fraction_of_daily_salary_per_leave
+  - - allow_negative
+    - allow_over_allocation
+    - include_holiday
+    - is_optional_leave
+- tab: Général
+  section: Carry Forward
+  columns:
+  - - is_carry_forward
+    - maximum_carry_forwarded_leaves
+    - expire_carry_forwarded_leaves_after_days
+- tab: Général
+  section: Encashment
+  columns:
+  - - allow_encashment
+    - max_encashable_leaves
+    - non_encashable_leaves
+  - - earning_component
+- tab: Général
+  section: Earned Leave
+  columns:
+  - - is_earned_leave
+    - earned_leave_frequency
+  - - allocate_on_day
+    - rounding
+- tab: Limits
+  section: Informations complémentaires 5
+  columns:
+  - - max_leaves_allowed
+    - max_continuous_days_allowed
+  - - applicable_after

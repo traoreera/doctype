@@ -1,0 +1,102 @@
+schema_version: 1
+name: Employee Checkin
+label: Employee Checkin
+module: hr
+icon: fingerprint-pattern
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: log_type
+  label: Log Type
+  fieldtype: Select
+  options:
+  - IN
+  - OUT
+  in_list_view: true
+- fieldname: shift
+  label: Shift
+  fieldtype: Link
+  options: Shift Type
+  read_only: true
+- fieldname: time
+  label: Time
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: device_id
+  label: Location / Device ID
+  fieldtype: Text
+- fieldname: skip_auto_attendance
+  label: Skip Auto Attendance
+  fieldtype: Boolean
+  default: false
+- fieldname: attendance
+  label: Attendance Marked
+  fieldtype: Link
+  options: Attendance
+  read_only: true
+- fieldname: shift_start
+  label: Shift Start
+  fieldtype: Datetime
+  hidden: true
+- fieldname: shift_end
+  label: Shift End
+  fieldtype: Datetime
+  hidden: true
+- fieldname: shift_actual_start
+  label: Shift Actual Start
+  fieldtype: Datetime
+  hidden: true
+- fieldname: shift_actual_end
+  label: Shift Actual End
+  fieldtype: Datetime
+  hidden: true
+- fieldname: geolocation
+  label: Geolocation
+  fieldtype: JSON
+  read_only: true
+- fieldname: latitude
+  label: Latitude
+  fieldtype: Number
+  read_only: true
+- fieldname: longitude
+  label: Longitude
+  fieldtype: Number
+  read_only: true
+- fieldname: offshift
+  label: Off-shift
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: overtime_type
+  label: Overtime Type
+  fieldtype: Link
+  options: Overtime Type
+  hidden: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - log_type
+    - shift
+  - - time
+    - device_id
+    - skip_auto_attendance
+    - attendance
+- section: Location
+  columns:
+  - - latitude
+  - - longitude
+- section: Informations complémentaires 3
+  columns:
+  - - geolocation

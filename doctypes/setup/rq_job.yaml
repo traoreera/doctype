@@ -1,0 +1,46 @@
+schema_version: 1
+name: RQ Job
+label: RQ Job
+module: setup
+icon: file-text
+fields:
+- fieldname: job_id
+  label: Job ID
+  fieldtype: Text
+  required: true
+  unique: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Queued
+  - Started
+  - Finished
+  - Failed
+- fieldname: queue
+  label: Queue
+  fieldtype: Text
+- fieldname: method
+  label: Method
+  fieldtype: Text
+- fieldname: creation_time
+  label: Creation Time
+  fieldtype: Datetime
+- fieldname: ended_at
+  label: Ended At
+  fieldtype: Datetime
+- fieldname: exc_info
+  label: Error Details
+  fieldtype: LongText
+title_field: job_id
+layout:
+- section: Informations principales
+  columns:
+  - - job_id
+    - status
+    - queue
+    - method
+    - creation_time
+    - ended_at
+    - exc_info

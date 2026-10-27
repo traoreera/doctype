@@ -1,0 +1,226 @@
+schema_version: 1
+name: Buying Settings
+label: Buying Settings
+module: buying
+single: true
+icon: settings
+fields:
+- fieldname: supp_master_name
+  label: Supplier Naming By
+  fieldtype: Select
+  options:
+  - Supplier Name
+  - Naming Series
+  - Auto Name
+  default: Supplier Name
+- fieldname: supplier_group
+  label: Default Supplier Group
+  fieldtype: Link
+  options: Supplier Group
+- fieldname: buying_price_list
+  label: Default Buying Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: po_required
+  label: Is Purchase Order required for Purchase Invoice & Receipt creation?
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: pr_required
+  label: Is Purchase Receipt required for Purchase Invoice creation?
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: maintain_same_rate
+  label: Maintain same rate throughout the purchase  cycle
+  fieldtype: Boolean
+  description: Warn or stop if Item rate is changed in Purchase Invoice or Purchase Receipt generated from a Purchase
+    Order.
+  default: false
+- fieldname: allow_multiple_items
+  label: Allow Item to be added multiple times in a transaction
+  fieldtype: Boolean
+  default: false
+- fieldname: backflush_raw_materials_of_subcontract_based_on
+  label: Backflush raw materials of subcontract based on
+  fieldtype: Select
+  options:
+  - BOM
+  - Material Transferred for Subcontract
+  default: BOM
+- fieldname: over_transfer_allowance
+  label: Over Transfer Allowance (%)
+  fieldtype: Number
+  description: 'Percentage you are allowed to transfer more against the quantity ordered. For example: If you have
+    ordered 100 units. and your Allowance is 10% then you are allowed to transfer 110 units.'
+- fieldname: maintain_same_rate_action
+  label: Action if same rate is not maintained
+  fieldtype: Select
+  options:
+  - Stop
+  - Warn
+  default: Stop
+  description: Configure the action to stop the transaction or just warn if the same rate is not maintained.
+- fieldname: role_to_override_stop_action
+  label: Role allowed to override stop action
+  fieldtype: Link
+  options: Role
+- fieldname: bill_for_rejected_quantity_in_purchase_invoice
+  label: Bill for rejected quantity in Purchase Invoice
+  fieldtype: Boolean
+  description: If checked, the rejected quantity is billed anywhere in the purchase cycle.
+  default: true
+- fieldname: disable_last_purchase_rate
+  label: Disable last purchase rate
+  fieldtype: Boolean
+  description: Prevents the system from automatically using the rate from the last purchase transaction when creating
+    new purchase orders or transactions.
+  default: false
+- fieldname: show_pay_button
+  label: Show pay button in Purchase Order portal
+  fieldtype: Boolean
+  default: true
+- fieldname: set_landed_cost_based_on_purchase_invoice_rate
+  label: Set Landed Cost Based on Purchase Invoice Rate
+  fieldtype: Boolean
+  description: Users can enable the checkbox If they want to adjust the incoming rate (set using purchase receipt)
+    based on the purchase invoice rate.
+  default: false
+- fieldname: use_transaction_date_exchange_rate
+  label: Use Transaction Date Exchange Rate
+  fieldtype: Boolean
+  description: While making a Purchase Receipt or Purchase Invoice from a Purchase Order, use the exchange rate
+    on its posting date rather than inheriting it from the Purchase Order.
+  default: false
+- fieldname: blanket_order_allowance
+  label: Blanket Order Allowance (%)
+  fieldtype: Number
+  description: Percentage you are allowed to order beyond the Blanket Order quantity.
+  default: 0.0
+- fieldname: auto_create_subcontracting_order
+  label: Auto create Subcontracting Order
+  fieldtype: Boolean
+  description: Subcontracting Order (Draft) will be auto-created on submission of Purchase Order.
+  default: false
+- fieldname: auto_create_purchase_receipt
+  label: Auto create Purchase Receipt
+  fieldtype: Boolean
+  description: Purchase Receipt (Draft) will be auto-created on submission of Subcontracting Receipt.
+  default: false
+- fieldname: project_update_frequency
+  label: How often should project be updated of Total Purchase Cost ?
+  fieldtype: Select
+  options:
+  - Each Transaction
+  - Manual
+  default: Each Transaction
+- fieldname: allow_zero_qty_in_purchase_order
+  label: Allow Purchase Order with Zero Quantity
+  fieldtype: Boolean
+  description: Allows users to submit Purchase Orders with zero quantity. Useful when rates are fixed but the quantities
+    are not. Eg. Rate Contracts.
+  default: false
+- fieldname: allow_zero_qty_in_request_for_quotation
+  label: Allow Request for Quotation with Zero Quantity
+  fieldtype: Boolean
+  description: Allows users to submit Request for Quotations with zero quantity. Useful when rates are fixed but
+    the quantities are not. Eg. Rate Contracts.
+  default: false
+- fieldname: allow_zero_qty_in_supplier_quotation
+  label: Allow Supplier Quotation with Zero Quantity
+  fieldtype: Boolean
+  description: Allows users to submit Supplier Quotations with zero quantity. Useful when rates are fixed but the
+    quantities are not. Eg. Rate Contracts.
+  default: false
+- fieldname: set_valuation_rate_for_rejected_materials
+  label: Set valuation rate for rejected Materials
+  fieldtype: Boolean
+  description: If enabled, the system will generate an accounting entry for material rejected anywhere in the purchase
+    cycle.
+  default: false
+- fieldname: fixed_email
+  label: Fixed Outgoing Email Account
+  fieldtype: Link
+  options: Email Account
+  description: If set, the system does not use the user's Email or the standard outgoing Email account for sending
+    request for quotations.
+- fieldname: validate_consumed_qty
+  label: Validate consumed quantity (as per BOM)
+  fieldtype: Boolean
+  description: Raw materials consumed qty will be validated based on FG BOM required qty
+  default: false
+- fieldname: allow_negative_rates_for_items
+  label: Allow negative rates for Items
+  fieldtype: Boolean
+  default: false
+- fieldname: naming_series_details
+  label: Naming Series options
+  fieldtype: LongText
+  hidden: true
+- fieldname: over_order_allowance
+  label: Over Order Allowance (%)
+  fieldtype: Number
+  description: The percentage by which you are allowed to order more on a Purchase Order than the quantity requested
+    on the originating Material Request. For example, if the Material Request has 100 units and the allowance is
+    10%, you can order up to 110 units
+layout:
+- tab: Defaults
+  section: Supplier Defaults
+  columns:
+  - - supp_master_name
+  - - supplier_group
+- tab: Pricing
+  section: État et options
+  columns:
+  - - buying_price_list
+- tab: Pricing
+  section: Comptabilité et montants
+  columns:
+  - - maintain_same_rate
+  - - set_landed_cost_based_on_purchase_invoice_rate
+    - maintain_same_rate_action
+    - role_to_override_stop_action
+- tab: Transaction Settings
+  section: Comptabilité et montants
+  columns:
+  - - po_required
+    - pr_required
+    - project_update_frequency
+    - over_order_allowance
+  - - allow_multiple_items
+    - allow_negative_rates_for_items
+    - set_valuation_rate_for_rejected_materials
+    - disable_last_purchase_rate
+    - show_pay_button
+- tab: Transaction Settings
+  section: Purchase Invoice Settings
+  columns:
+  - - bill_for_rejected_quantity_in_purchase_invoice
+    - use_transaction_date_exchange_rate
+- tab: Transaction Settings
+  section: Zero-Quantity Line Items
+  columns:
+  - - allow_zero_qty_in_supplier_quotation
+    - allow_zero_qty_in_request_for_quotation
+    - allow_zero_qty_in_purchase_order
+- tab: Transaction Settings
+  section: Blanket Orders
+  columns:
+  - - blanket_order_allowance
+- tab: Subcontracting Settings
+  section: Dates et planification
+  columns:
+  - - backflush_raw_materials_of_subcontract_based_on
+    - over_transfer_allowance
+    - validate_consumed_qty
+- tab: Subcontracting Settings
+  section: Options complémentaires 9
+  columns:
+  - - auto_create_subcontracting_order
+    - auto_create_purchase_receipt
+- tab: Request for Quotation
+  section: Comptabilité et montants
+  columns:
+  - - fixed_email

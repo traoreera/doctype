@@ -1,0 +1,11 @@
+schema_version: 1
+name: POS Customer Group
+label: POS Customer Group
+istable: true
+fields:
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+  required: true
+  in_list_view: true

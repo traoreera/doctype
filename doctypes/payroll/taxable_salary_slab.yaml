@@ -1,0 +1,26 @@
+schema_version: 1
+name: Taxable Salary Slab
+label: Taxable Salary Slab
+istable: true
+fields:
+- fieldname: from_amount
+  label: From Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: to_amount
+  label: To Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: percent_deduction
+  label: Percent Deduction
+  fieldtype: Percent
+  required: true
+  in_list_view: true
+  default: 0.0
+- fieldname: condition
+  label: Condition
+  fieldtype: Code
+  in_list_view: true

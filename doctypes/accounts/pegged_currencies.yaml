@@ -1,0 +1,14 @@
+schema_version: 1
+name: Pegged Currencies
+label: Pegged Currencies
+module: accounts
+icon: anchor
+fields:
+- fieldname: pegged_currency_item
+  label: Pegged Currency Item
+  fieldtype: Table
+  options: Pegged Currency Details
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - pegged_currency_item

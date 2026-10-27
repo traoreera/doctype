@@ -1,0 +1,32 @@
+schema_version: 1
+name: Discounted Invoice
+label: Discounted Invoice
+istable: true
+fields:
+- fieldname: sales_invoice
+  label: Invoice
+  fieldtype: Link
+  options: Sales Invoice
+  required: true
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: outstanding_amount
+  label: Outstanding Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: debit_to
+  label: Debit to
+  fieldtype: Link
+  options: Account
+  read_only: true

@@ -1,0 +1,19 @@
+schema_version: 1
+name: Quality Goal Objective
+label: Quality Goal Objective
+istable: true
+fields:
+- fieldname: objective
+  label: Objective
+  fieldtype: LongText
+  required: true
+  in_list_view: true
+- fieldname: target
+  label: Target
+  fieldtype: Text
+  in_list_view: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true

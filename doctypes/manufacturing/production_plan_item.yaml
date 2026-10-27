@@ -1,0 +1,94 @@
+schema_version: 1
+name: Production Plan Item
+label: Production Plan Item
+istable: true
+fields:
+- fieldname: include_exploded_items
+  label: Include Exploded Items
+  fieldtype: Boolean
+  default: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: bom_no
+  label: BOM No
+  fieldtype: Link
+  options: BOM
+  required: true
+  in_list_view: true
+- fieldname: planned_qty
+  label: Planned Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: warehouse
+  label: Finished Goods Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: planned_start_date
+  label: Planned Start Date
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: pending_qty
+  label: Pending Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: ordered_qty
+  label: Ordered Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: produced_qty
+  label: Produced Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: stock_uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  read_only: true
+- fieldname: sales_order_item
+  label: Sales Order Item
+  fieldtype: Text
+  hidden: true
+- fieldname: material_request
+  label: Material Request
+  fieldtype: Link
+  options: Material Request
+  read_only: true
+- fieldname: material_request_item
+  label: material_request_item
+  fieldtype: Text
+  hidden: true
+- fieldname: product_bundle_item
+  label: Product Bundle Item
+  fieldtype: Link
+  options: Item
+  read_only: true
+- fieldname: item_reference
+  label: Item Reference
+  fieldtype: Text
+  hidden: true
+- fieldname: temporary_name
+  label: temporary name
+  fieldtype: Text
+  hidden: true
+- fieldname: planned_end_date
+  label: Planned End Date
+  fieldtype: Datetime
+  read_only: true

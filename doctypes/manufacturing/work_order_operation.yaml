@@ -1,0 +1,157 @@
+schema_version: 1
+name: Work Order Operation
+label: Work Order Operation
+istable: true
+fields:
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  required: true
+  in_list_view: true
+- fieldname: bom
+  label: BOM
+  fieldtype: Link
+  options: BOM
+- fieldname: bom_operation
+  label: BOM Operation
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: description
+  label: Operation Description
+  fieldtype: TextEditor
+- fieldname: completed_qty
+  label: Completed Qty
+  fieldtype: Number
+  description: Operation completed for how many finished goods?
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Work in Progress
+  - Completed
+  default: Pending
+- fieldname: workstation
+  label: Workstation
+  fieldtype: Link
+  options: Workstation
+  in_list_view: true
+- fieldname: planned_start_time
+  label: Planned Start Time
+  fieldtype: Datetime
+  read_only: true
+- fieldname: planned_end_time
+  label: Planned End Time
+  fieldtype: Datetime
+  read_only: true
+- fieldname: time_in_mins
+  label: Time
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  description: In Minutes
+- fieldname: hour_rate
+  label: Hour Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: planned_operating_cost
+  label: Planned Operating Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: actual_start_time
+  label: Actual Start Time
+  fieldtype: Datetime
+  read_only: true
+  description: Updated via 'Time Log' (In Minutes)
+- fieldname: actual_end_time
+  label: Actual End Time
+  fieldtype: Datetime
+  read_only: true
+  description: Updated via 'Time Log' (In Minutes)
+- fieldname: actual_operation_time
+  label: Actual Operation Time
+  fieldtype: Number
+  read_only: true
+  description: Updated via 'Time Log' (In Minutes)
+- fieldname: actual_operating_cost
+  label: Actual Operating Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: (Hour Rate / 60) * Actual Operation Time
+- fieldname: batch_size
+  label: Batch Size
+  fieldtype: Number
+  default: 1.0
+- fieldname: sequence_id
+  label: Sequence ID
+  fieldtype: Int
+- fieldname: workstation_type
+  label: Workstation Type
+  fieldtype: Link
+  options: Workstation Type
+- fieldname: process_loss_qty
+  label: Process Loss Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: bom_no
+  label: Output Item BOM
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: finished_good
+  label: Output Item
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: output_qty
+  label: Output Qty
+  fieldtype: Number
+  read_only: true
+  description: Quantity of the output item this operation makes for the whole Work Order
+- fieldname: wip_warehouse
+  label: WIP WH
+  fieldtype: Link
+  options: Warehouse
+- fieldname: fg_warehouse
+  label: Finished Goods Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: source_warehouse
+  label: Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: is_subcontracted
+  label: Is Subcontracted
+  fieldtype: Boolean
+  read_only: true
+- fieldname: skip_material_transfer
+  label: Skip Material Transfer
+  fieldtype: Boolean
+  read_only: true
+- fieldname: backflush_from_wip_warehouse
+  label: Backflush Materials From WIP Warehouse
+  fieldtype: Boolean
+  read_only: true
+- fieldname: batch_split
+  label: Batch Split
+  fieldtype: Boolean
+  read_only: true
+- fieldname: weight_per_piece
+  label: Weight Per Piece
+  fieldtype: Number
+  read_only: true
+- fieldname: quality_inspection_required
+  label: Quality Inspection Required
+  fieldtype: Boolean
+  default: false
+- fieldname: pending_qty
+  label: Pending Qty
+  fieldtype: Number
+  read_only: true

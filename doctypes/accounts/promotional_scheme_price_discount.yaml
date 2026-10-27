@@ -1,0 +1,100 @@
+schema_version: 1
+name: Promotional Scheme Price Discount
+label: Promotional Scheme Price Discount
+istable: true
+fields:
+- fieldname: disable
+  label: Disable
+  fieldtype: Boolean
+  default: false
+- fieldname: rule_description
+  label: Rule Description
+  fieldtype: LongText
+  required: true
+- fieldname: min_qty
+  label: Min Qty
+  fieldtype: Number
+  in_list_view: true
+  default: 0.0
+- fieldname: max_qty
+  label: Max Qty
+  fieldtype: Number
+  in_list_view: true
+  default: 0.0
+- fieldname: min_amount
+  label: Min Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: max_amount
+  label: Max Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: rate_or_discount
+  label: Discount Type
+  fieldtype: Select
+  options:
+  - Rate
+  - Discount Percentage
+  - Discount Amount
+  default: Discount Percentage
+  in_list_view: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discount_amount
+  label: Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discount_percentage
+  label: Discount Percentage
+  fieldtype: Number
+- fieldname: for_price_list
+  label: For Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: threshold_percentage
+  label: Threshold for Suggestion
+  fieldtype: Percent
+- fieldname: validate_applied_rule
+  label: Validate Applied Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: priority
+  label: Priority
+  fieldtype: Select
+  options:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+  - '6'
+  - '7'
+  - '8'
+  - '9'
+  - '10'
+  - '11'
+  - '12'
+  - '13'
+  - '14'
+  - '15'
+  - '16'
+  - '17'
+  - '18'
+  - '19'
+  - '20'
+- fieldname: apply_multiple_pricing_rules
+  label: Apply Multiple Pricing Rules
+  fieldtype: Boolean
+  default: false
+- fieldname: apply_discount_on_rate
+  label: Apply Discount on Rate
+  fieldtype: Boolean
+  default: false

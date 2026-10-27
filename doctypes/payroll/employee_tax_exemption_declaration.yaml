@@ -1,0 +1,77 @@
+schema_version: 1
+name: Employee Tax Exemption Declaration
+label: Employee Tax Exemption Declaration
+module: payroll
+submittable: true
+icon: file-pen-line
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: payroll_period
+  label: Payroll Period
+  fieldtype: Link
+  options: Payroll Period
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Tax Exemption Declaration
+  read_only: true
+- fieldname: declarations
+  label: Declarations
+  fieldtype: Table
+  options: Employee Tax Exemption Declaration Category
+- fieldname: total_declared_amount
+  label: Total Declared Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_exemption_amount
+  label: Total Exemption Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+title_field: employee_name
+layout:
+- tab: Général
+  section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+  - - company
+    - payroll_period
+    - currency
+    - amended_from
+- tab: Tax Exemption Declaration
+  section: Informations complémentaires 2
+  columns:
+  - - declarations
+- tab: Tax Exemption Declaration
+  section: Informations complémentaires 3
+  columns:
+  - - total_declared_amount
+  - - total_exemption_amount

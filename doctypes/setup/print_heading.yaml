@@ -1,0 +1,20 @@
+schema_version: 1
+name: Print Heading
+label: Print Heading
+module: setup
+icon: file-text
+fields:
+- fieldname: print_heading
+  label: Print Heading
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+title_field: print_heading
+layout:
+- section: Informations principales
+  columns:
+  - - print_heading
+    - disabled

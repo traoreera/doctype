@@ -1,0 +1,47 @@
+schema_version: 1
+name: Leave Period
+label: Leave Period
+module: hr
+icon: calendar-range
+fields:
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: is_active
+  label: Is Active
+  fieldtype: Boolean
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: optional_holiday_list
+  label: Holiday List for Optional Leave
+  fieldtype: Link
+  options: Holiday List
+title_field: company
+layout:
+- section: Informations principales
+  columns:
+  - - from_date
+    - to_date
+    - is_active
+  - - company
+    - optional_holiday_list
+views:
+  calendar:
+    start: from_date
+    title: company
+  gantt:
+    start: from_date
+    end: to_date
+    title: company

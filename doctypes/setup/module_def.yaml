@@ -1,0 +1,25 @@
+schema_version: 1
+name: Module Def
+label: Module Def
+module: setup
+icon: file-text
+fields:
+- fieldname: module_name
+  label: Module Name
+  fieldtype: Text
+  required: true
+  unique: true
+  in_list_view: true
+- fieldname: app_name
+  label: App Name
+  fieldtype: Text
+- fieldname: custom
+  label: Custom
+  fieldtype: Boolean
+title_field: module_name
+layout:
+- section: Informations principales
+  columns:
+  - - module_name
+    - app_name
+    - custom

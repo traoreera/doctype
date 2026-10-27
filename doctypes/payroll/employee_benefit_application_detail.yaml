@@ -1,0 +1,25 @@
+schema_version: 1
+name: Employee Benefit Application Detail
+label: Employee Benefit Application Detail
+istable: true
+fields:
+- fieldname: max_benefit_amount
+  label: Max Benefit Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: salary_component
+  label: Earning Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true
+  read_only: true

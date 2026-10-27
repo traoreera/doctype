@@ -1,0 +1,21 @@
+schema_version: 1
+name: UTM Source
+label: UTM Source
+module: crm
+icon: file-text
+fields:
+- fieldname: source_name
+  label: Source Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+title_field: source_name
+layout:
+- section: Informations principales
+  columns:
+  - - source_name
+    - enabled

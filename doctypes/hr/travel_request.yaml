@@ -1,0 +1,136 @@
+schema_version: 1
+name: Travel Request
+label: Travel Request
+module: hr
+submittable: true
+icon: plane-takeoff
+fields:
+- fieldname: travel_type
+  label: Travel Type
+  fieldtype: Select
+  options:
+  - Domestic
+  - International
+  required: true
+  in_list_view: true
+- fieldname: travel_funding
+  label: Travel Funding
+  fieldtype: Select
+  options:
+  - Require Full Funding
+  - Fully Sponsored
+  - Partially Sponsored, Require Partial Funding
+- fieldname: travel_proof
+  label: Copy of Invitation/Announcement
+  fieldtype: Attach
+- fieldname: purpose_of_travel
+  label: Purpose of Travel
+  fieldtype: Link
+  options: Purpose of Travel
+  required: true
+  in_list_view: true
+- fieldname: details_of_sponsor
+  label: Details of Sponsor (Name, Location)
+  fieldtype: Text
+- fieldname: description
+  label: Any other details
+  fieldtype: LongText
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: cell_number
+  label: Contact Number
+  fieldtype: Text
+- fieldname: prefered_email
+  label: Contact Email
+  fieldtype: Text
+- fieldname: date_of_birth
+  label: Date of Birth
+  fieldtype: Date
+  read_only: true
+- fieldname: personal_id_type
+  label: Identification Document Type
+  fieldtype: Link
+  options: Identification Document Type
+- fieldname: personal_id_number
+  label: Identification Document Number
+  fieldtype: Text
+- fieldname: passport_number
+  label: Passport Number
+  fieldtype: Text
+- fieldname: itinerary
+  label: Itinerary
+  fieldtype: Table
+  options: Travel Itinerary
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: costings
+  label: Costing
+  fieldtype: Table
+  options: Travel Request Costing
+- fieldname: name_of_organizer
+  label: Name of Organizer
+  fieldtype: Text
+- fieldname: address_of_organizer
+  label: Address of Organizer
+  fieldtype: Text
+- fieldname: other_details
+  label: Other Details
+  fieldtype: LongText
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Travel Request
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - travel_type
+    - travel_funding
+    - travel_proof
+  - - purpose_of_travel
+    - details_of_sponsor
+- section: Employee Details
+  columns:
+  - - employee
+    - employee_name
+    - cell_number
+    - prefered_email
+    - company
+  - - date_of_birth
+    - personal_id_type
+    - personal_id_number
+    - passport_number
+- section: Description
+  columns:
+  - - description
+- section: Travel Itinerary
+  columns:
+  - - itinerary
+- section: Costing Details
+  columns:
+  - - costings
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+- section: Event Details
+  columns:
+  - - name_of_organizer
+    - address_of_organizer
+    - other_details
+    - amended_from

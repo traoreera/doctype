@@ -1,0 +1,135 @@
+schema_version: 1
+name: Employee Grievance
+label: Employee Grievance
+module: hr
+submittable: true
+icon: message-square-warning
+fields:
+- fieldname: grievance_type
+  label: Grievance Type
+  fieldtype: Link
+  options: Grievance Type
+  required: true
+  in_list_view: true
+- fieldname: date
+  label: 'Date '
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Investigated
+  - Resolved
+  - Invalid
+  - Cancelled
+  default: Open
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  required: true
+- fieldname: cause_of_grievance
+  label: Cause of Grievance
+  fieldtype: LongText
+- fieldname: resolved_by
+  label: Resolved By
+  fieldtype: Link
+  options: Member
+- fieldname: employee_responsible
+  label: 'Employee Responsible '
+  fieldtype: Link
+  options: Employee
+- fieldname: resolution_detail
+  label: Resolution Details
+  fieldtype: LongText
+- fieldname: resolution_date
+  label: Resolution Date
+  fieldtype: Date
+- fieldname: grievance_against
+  label: Grievance Against
+  fieldtype: DynamicLink
+  options: grievance_against_party
+- fieldname: raised_by
+  label: Raised By
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Grievance
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: reports_to
+  label: Reports To
+  fieldtype: Link
+  options: Employee
+  read_only: true
+- fieldname: grievance_against_party
+  label: Grievance Against Party
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: associated_document_type
+  label: Associated Document Type
+  fieldtype: Text
+- fieldname: associated_document
+  label: Associated Document
+  fieldtype: DynamicLink
+  options: associated_document_type
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  required: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - subject
+    - raised_by
+    - employee_name
+    - designation
+  - - date
+    - status
+    - reports_to
+- section: Grievance Details
+  columns:
+  - - grievance_against_party
+    - grievance_against
+    - grievance_type
+  - - associated_document_type
+    - associated_document
+- section: Informations complémentaires 3
+  columns:
+  - - description
+- section: Investigation Details
+  columns:
+  - - cause_of_grievance
+- section: Resolution Details
+  columns:
+  - - resolved_by
+    - resolution_date
+    - employee_responsible
+  - - resolution_detail
+    - amended_from
+views:
+  kanban:
+    field: status
+    card_fields:
+    - employee_name
+  calendar:
+    start: date
+    title: employee_name
+    color: status

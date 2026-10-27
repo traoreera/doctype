@@ -1,0 +1,93 @@
+schema_version: 1
+name: Employee Benefit Ledger
+label: Employee Benefit Ledger
+module: payroll
+icon: book-open
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+- fieldname: company
+  label: Company
+  fieldtype: Text
+- fieldname: transaction_type
+  label: Transaction Type
+  fieldtype: Select
+  options:
+  - Accrual
+  - Payout
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  default: today
+- fieldname: yearly_benefit
+  label: Yearly Benefit
+  fieldtype: Currency
+  decimals: 2
+- fieldname: payroll_period
+  label: Payroll Period
+  fieldtype: Link
+  options: Payroll Period
+- fieldname: remarks
+  label: Remarks
+  fieldtype: Text
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+  in_list_view: true
+- fieldname: salary_slip
+  label: Salary Slip
+  fieldtype: Link
+  options: Salary Slip
+- fieldname: flexible_benefit
+  label: Flexible Benefit
+  fieldtype: Boolean
+  description: Enabled only for Employee Benefit components from Salary Structure Assignment
+  default: false
+- fieldname: reference_doctype
+  label: Reference Doctype
+  fieldtype: Text
+- fieldname: reference_document
+  label: Reference Document
+  fieldtype: DynamicLink
+  options: reference_doctype
+permissions:
+  write: []
+  create: []
+  delete: []
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - posting_date
+    - employee
+    - employee_name
+    - salary_component
+  - - company
+    - payroll_period
+    - reference_doctype
+    - reference_document
+    - salary_slip
+- section: Benefit Details
+  columns:
+  - - transaction_type
+    - amount
+    - flexible_benefit
+  - - yearly_benefit
+    - remarks
+views:
+  calendar:
+    start: posting_date
+    title: employee_name

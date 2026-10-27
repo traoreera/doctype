@@ -1,0 +1,13 @@
+schema_version: 1
+name: Purpose of Travel
+label: Purpose of Travel
+module: hr
+icon: tag
+fields:
+- fieldname: purpose_of_travel
+  label: Purpose of Travel
+  fieldtype: Text
+layout:
+- section: Informations principales
+  columns:
+  - - purpose_of_travel

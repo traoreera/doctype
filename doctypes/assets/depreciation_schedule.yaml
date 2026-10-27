@@ -1,0 +1,32 @@
+schema_version: 1
+name: Depreciation Schedule
+label: Depreciation Schedule
+istable: true
+fields:
+- fieldname: schedule_date
+  label: Schedule Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: depreciation_amount
+  label: Depreciation Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: accumulated_depreciation_amount
+  label: Accumulated Depreciation Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: journal_entry
+  label: Journal Entry
+  fieldtype: Link
+  options: Journal Entry
+  in_list_view: true
+  read_only: true
+- fieldname: shift
+  label: Shift
+  fieldtype: Link
+  options: Asset Shift Factor

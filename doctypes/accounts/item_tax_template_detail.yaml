@@ -1,0 +1,21 @@
+schema_version: 1
+name: Item Tax Template Detail
+label: Item Tax Template Detail
+istable: true
+fields:
+- fieldname: tax_type
+  label: Tax
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: tax_rate
+  label: Tax Rate
+  fieldtype: Number
+  in_list_view: true
+- fieldname: not_applicable
+  label: Not Applicable
+  fieldtype: Boolean
+  in_list_view: true
+  description: Check if this tax is not applicable to items (distinct from 0% rate)
+  default: false

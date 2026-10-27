@@ -1,0 +1,70 @@
+schema_version: 1
+name: Customer Group
+label: Customer Group
+module: setup
+icon: users
+fields:
+- fieldname: customer_group_name
+  label: Customer Group Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: parent_customer_group
+  label: Parent Customer Group
+  fieldtype: Link
+  options: Customer Group
+  in_list_view: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  description: Only leaf nodes are allowed in transaction
+  default: false
+- fieldname: default_price_list
+  label: Default Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: payment_terms
+  label: Default Payment Terms Template
+  fieldtype: Link
+  options: Payment Terms Template
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  hidden: true
+- fieldname: old_parent
+  label: old_parent
+  fieldtype: Link
+  options: Customer Group
+  hidden: true
+- fieldname: accounts
+  label: Accounts
+  fieldtype: Table
+  options: Party Account
+  description: Mention if non-standard receivable account applicable
+- fieldname: credit_limits
+  label: Credit & Overdue Limits
+  fieldtype: Table
+  options: Customer Credit Limit
+title_field: customer_group_name
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - customer_group_name
+    - parent_customer_group
+    - is_group
+  - - default_price_list
+    - payment_terms
+- section: Default Accounts
+  columns:
+  - - accounts
+- section: Credit Limits
+  columns:
+  - - credit_limits
+views:
+  tree:
+    parent: parent_customer_group

@@ -1,0 +1,16 @@
+schema_version: 1
+name: Tax Withholding Group
+label: Tax Withholding Group
+module: accounts
+icon: badge-percent
+fields:
+- fieldname: group_name
+  label: Group Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: group_name
+layout:
+- section: Informations principales
+  columns:
+  - - group_name

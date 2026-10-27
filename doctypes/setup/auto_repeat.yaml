@@ -1,0 +1,48 @@
+schema_version: 1
+name: Auto Repeat
+label: Auto Repeat
+module: setup
+icon: file-text
+fields:
+- fieldname: reference_doctype
+  label: Reference DocType
+  fieldtype: Text
+  required: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: Text
+  required: true
+- fieldname: frequency
+  label: Frequency
+  fieldtype: Select
+  options:
+  - Daily
+  - Weekly
+  - Monthly
+  - Quarterly
+  - Half-yearly
+  - Yearly
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: next_date
+  label: Next Date
+  fieldtype: Date
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+title_field: reference_doctype
+layout:
+- section: Informations principales
+  columns:
+  - - reference_doctype
+    - reference_name
+    - frequency
+    - start_date
+    - end_date
+    - next_date
+    - disabled

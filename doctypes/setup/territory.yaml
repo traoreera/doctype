@@ -1,0 +1,59 @@
+schema_version: 1
+name: Territory
+label: Territory
+module: setup
+icon: map
+fields:
+- fieldname: territory_name
+  label: Territory Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: parent_territory
+  label: Parent Territory
+  fieldtype: Link
+  options: Territory
+  in_list_view: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  description: Only leaf nodes are allowed in transaction
+  default: false
+- fieldname: territory_manager
+  label: Territory Manager
+  fieldtype: Link
+  options: Sales Person
+  in_list_view: true
+  description: For reference
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  hidden: true
+- fieldname: old_parent
+  label: old_parent
+  fieldtype: Link
+  options: Territory
+  hidden: true
+- fieldname: targets
+  label: Targets
+  fieldtype: Table
+  options: Target Detail
+title_field: territory_name
+layout:
+- section: Informations principales
+  columns:
+  - - territory_name
+    - parent_territory
+    - is_group
+  - - territory_manager
+- section: Territory Targets
+  columns:
+  - - targets
+views:
+  tree:
+    parent: parent_territory

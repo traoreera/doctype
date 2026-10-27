@@ -1,0 +1,13 @@
+schema_version: 1
+name: Identification Document Type
+label: Identification Document Type
+module: hr
+icon: id-card
+fields:
+- fieldname: identification_document_type
+  label: Identification Document Type
+  fieldtype: Text
+layout:
+- section: Informations principales
+  columns:
+  - - identification_document_type

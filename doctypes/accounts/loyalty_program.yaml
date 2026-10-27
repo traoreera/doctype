@@ -1,0 +1,95 @@
+schema_version: 1
+name: Loyalty Program
+label: Loyalty Program
+module: accounts
+icon: gift
+fields:
+- fieldname: loyalty_program_name
+  label: Loyalty Program Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: loyalty_program_type
+  label: Loyalty Program Type
+  fieldtype: Select
+  options:
+  - Single Tier Program
+  - Multiple Tier Program
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: customer_territory
+  label: Customer Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: auto_opt_in
+  label: Auto Opt In (For all customers)
+  fieldtype: Boolean
+  default: false
+- fieldname: collection_rules
+  label: Collection Rules
+  fieldtype: Table
+  options: Loyalty Program Collection
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  description: 1 Loyalty Points = How much base currency?
+- fieldname: expiry_duration
+  label: Expiry Duration (in days)
+  fieldtype: Int
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - loyalty_program_name
+    - loyalty_program_type
+    - from_date
+    - to_date
+  - - customer_group
+    - customer_territory
+    - auto_opt_in
+- section: Collection Tier
+  columns:
+  - - collection_rules
+- section: Redemption
+  columns:
+  - - conversion_factor
+    - expiry_duration
+  - - expense_account
+    - company
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+views:
+  calendar:
+    start: from_date
+    title: company
+  gantt:
+    start: from_date
+    end: to_date
+    title: company

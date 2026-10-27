@@ -1,0 +1,38 @@
+schema_version: 1
+name: Accounting Dimension Detail
+label: Accounting Dimension Detail
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: reference_document
+  label: Reference Document
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: default_dimension
+  label: Default Dimension
+  fieldtype: DynamicLink
+  options: reference_document
+  in_list_view: true
+- fieldname: mandatory_for_bs
+  label: Mandatory For Balance Sheet
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: mandatory_for_pl
+  label: Mandatory For Profit and Loss Account
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: automatically_post_balancing_accounting_entry
+  label: Automatically post balancing accounting entry
+  fieldtype: Boolean
+  default: false
+- fieldname: offsetting_account
+  label: Offsetting Account
+  fieldtype: Link
+  options: Account

@@ -1,0 +1,176 @@
+schema_version: 1
+name: Subcontracting Inward Order
+label: Subcontracting Inward Order
+module: subcontracting
+submittable: true
+icon: package-plus
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - SCI-ORD-.YYYY.-
+  required: true
+- fieldname: sales_order
+  label: Subcontracting Sales Order
+  fieldtype: Link
+  options: Sales Order
+  required: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+  read_only: true
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: transaction_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Subcontracting Inward Order
+  read_only: true
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Subcontracting Inward Order Item
+- fieldname: service_items
+  label: Service Items
+  fieldtype: Table
+  options: Subcontracting Inward Order Service Item
+  read_only: true
+- fieldname: received_items
+  label: Required Items
+  fieldtype: Table
+  options: Subcontracting Inward Order Received Item
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Open
+  - Ongoing
+  - Produced
+  - Delivered
+  - Returned
+  - Cancelled
+  - Closed
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: per_delivered
+  label: '% Delivered'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: per_produced
+  label: '% Produced'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: per_process_loss
+  label: '% Process Loss'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: set_delivery_warehouse
+  label: Set Delivery Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: customer_warehouse
+  label: Customer Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+- fieldname: per_returned
+  label: '% Returned'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: per_raw_material_returned
+  label: '% Raw Material Returned'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: per_raw_material_received
+  label: '% Raw Material Received'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: currency
+  label: Customer Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+- fieldname: secondary_items
+  label: Secondary Items
+  fieldtype: Table
+  options: Subcontracting Inward Order Secondary Item
+title_field: title
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - sales_order
+    - customer
+    - customer_name
+  - - company
+    - transaction_date
+    - customer_warehouse
+    - amended_from
+- tab: Général
+  section: Items
+  columns:
+  - - set_delivery_warehouse
+    - items
+- tab: Général
+  section: Raw Materials Required
+  columns:
+  - - received_items
+- tab: Général
+  section: Secondary Items Generated
+  columns:
+  - - secondary_items
+- tab: Général
+  section: Service Items
+  columns:
+  - - service_items
+- tab: Other Info
+  section: Informations complémentaires 6
+  columns:
+  - - title
+- tab: Other Info
+  section: Order Status
+  columns:
+  - - status
+    - per_raw_material_received
+    - per_produced
+    - per_delivered
+  - - per_raw_material_returned
+    - per_process_loss
+    - per_returned
+views:
+  calendar:
+    start: transaction_date
+    title: title
+  tree:
+    parent: amended_from

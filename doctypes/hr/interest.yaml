@@ -1,0 +1,16 @@
+schema_version: 1
+name: Interest
+label: Interest
+module: hr
+icon: heart
+fields:
+- fieldname: interest
+  label: Interest
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: interest
+layout:
+- section: Informations principales
+  columns:
+  - - interest

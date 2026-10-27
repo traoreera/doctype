@@ -1,0 +1,72 @@
+schema_version: 1
+name: Address
+label: Address
+module: setup
+icon: file-text
+fields:
+- fieldname: address_title
+  label: Address Title
+  fieldtype: Text
+- fieldname: address_type
+  label: Address Type
+  fieldtype: Select
+  options:
+  - Billing
+  - Shipping
+  - Office
+  - Personal
+  - Other
+- fieldname: address_line1
+  label: Address Line 1
+  fieldtype: Text
+  required: true
+- fieldname: address_line2
+  label: Address Line 2
+  fieldtype: Text
+- fieldname: city
+  label: City
+  fieldtype: Text
+- fieldname: state
+  label: State / Province
+  fieldtype: Text
+- fieldname: postal_code
+  label: Postal Code
+  fieldtype: Text
+- fieldname: country
+  label: Country
+  fieldtype: Link
+  options: Pays
+- fieldname: email_id
+  label: Email
+  fieldtype: Text
+  format: email
+- fieldname: phone
+  label: Phone
+  fieldtype: Text
+  format: phone
+- fieldname: is_primary_address
+  label: Primary Address
+  fieldtype: Boolean
+- fieldname: is_shipping_address
+  label: Shipping Address
+  fieldtype: Boolean
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+title_field: address_title
+layout:
+- section: Informations principales
+  columns:
+  - - address_title
+    - address_type
+    - address_line1
+    - address_line2
+    - city
+    - state
+    - postal_code
+    - country
+    - email_id
+    - phone
+    - is_primary_address
+    - is_shipping_address
+    - disabled

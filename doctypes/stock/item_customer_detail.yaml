@@ -1,0 +1,8 @@
+schema_version: 1
+name: "Item Customer Detail"
+label: "Item Customer Detail"
+istable: true
+fields:
+  - { fieldname: customer_name, label: "Customer Name", fieldtype: Link, options: "Customer", in_list_view: true }
+  - { fieldname: customer_group, label: "Customer Group", fieldtype: Link, options: "Customer Group", in_list_view: true }
+  - { fieldname: ref_code, label: "Ref Code", fieldtype: Text, required: true, in_list_view: true, description: "Enter the Item Code that this customer uses at their end. This will be shown in Sales Orders for the customer's reference." }

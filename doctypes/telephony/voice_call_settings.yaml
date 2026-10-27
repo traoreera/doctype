@@ -1,0 +1,38 @@
+schema_version: 1
+name: Voice Call Settings
+label: Voice Call Settings
+module: telephony
+single: true
+icon: phone-call
+fields:
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true
+- fieldname: greeting_message
+  label: Greeting Message
+  fieldtype: Text
+- fieldname: agent_busy_message
+  label: Agent Busy Message
+  fieldtype: Text
+- fieldname: agent_unavailable_message
+  label: Agent Unavailable Message
+  fieldtype: Text
+- fieldname: call_receiving_device
+  label: Call Receiving Device
+  fieldtype: Select
+  options:
+  - Computer
+  - Phone
+  default: Computer
+title_field: user
+layout:
+- section: Références
+  columns:
+  - - user
+    - call_receiving_device
+  - - greeting_message
+    - agent_busy_message
+    - agent_unavailable_message

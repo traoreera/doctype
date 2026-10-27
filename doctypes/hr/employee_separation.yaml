@@ -1,0 +1,105 @@
+schema_version: 1
+name: Employee Separation
+label: Employee Separation
+module: hr
+submittable: true
+icon: user-minus
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: resignation_letter_date
+  label: Resignation Letter Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: boarding_status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - In Process
+  - Completed
+  default: Pending
+  read_only: true
+- fieldname: notify_users_by_email
+  label: Notify users by email
+  fieldtype: Boolean
+  default: false
+- fieldname: employee_separation_template
+  label: Employee Separation Template
+  fieldtype: Link
+  options: Employee Separation Template
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  in_list_view: true
+  read_only: true
+- fieldname: employee_grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+  read_only: true
+- fieldname: activities
+  label: Activities
+  fieldtype: Table
+  options: Employee Boarding Activity
+- fieldname: exit_interview
+  label: Exit Interview Summary
+  fieldtype: TextEditor
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Separation
+  read_only: true
+- fieldname: boarding_begins_on
+  label: Separation Begins On
+  fieldtype: Date
+  required: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - designation
+    - employee_grade
+  - - company
+    - boarding_status
+    - resignation_letter_date
+    - boarding_begins_on
+    - project
+- section: Separation Activities
+  columns:
+  - - employee_separation_template
+    - activities
+    - notify_users_by_email
+- section: Informations complémentaires 3
+  columns:
+  - - exit_interview
+    - amended_from

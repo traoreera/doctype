@@ -1,0 +1,48 @@
+schema_version: 1
+name: Expense Taxes and Charges
+label: Expense Taxes and Charges
+istable: true
+fields:
+- fieldname: account_head
+  label: Account Head
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  required: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Number
+  in_list_view: true
+- fieldname: tax_amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: base_total
+  label: Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_tax_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true

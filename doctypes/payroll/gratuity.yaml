@@ -1,0 +1,131 @@
+schema_version: 1
+name: Gratuity
+label: Gratuity
+module: payroll
+submittable: true
+icon: piggy-bank
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+- fieldname: posting_date
+  label: Posting date
+  fieldtype: Date
+  required: true
+- fieldname: current_work_experience
+  label: Current Work Experience
+  fieldtype: Number
+  default: 0.0
+- fieldname: amount
+  label: Total Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Unpaid
+  - Paid
+  - Submitted
+  - Cancelled
+  default: Draft
+  in_list_view: true
+  read_only: true
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: gratuity_rule
+  label: Gratuity Rule
+  fieldtype: Link
+  options: Gratuity Rule
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Text
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Gratuity
+  read_only: true
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: payable_account
+  label: Payable Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: pay_via_salary_slip
+  label: Pay via Salary Slip
+  fieldtype: Boolean
+  default: true
+- fieldname: payroll_date
+  label: Payroll Date
+  fieldtype: Date
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+title_field: employee_name
+layout:
+- tab: Gratuity
+  section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - designation
+    - current_work_experience
+  - - posting_date
+    - gratuity_rule
+    - status
+    - company
+    - amended_from
+- tab: Payment and Accounting
+  section: Informations complémentaires 2
+  columns:
+  - - pay_via_salary_slip
+    - amount
+    - paid_amount
+  - - payroll_date
+    - salary_component
+    - cost_center
+    - mode_of_payment
+    - expense_account
+    - payable_account
+views:
+  calendar:
+    start: posting_date
+    title: employee_name

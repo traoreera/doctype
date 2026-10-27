@@ -1,0 +1,26 @@
+schema_version: 1
+name: Incoterm
+label: Incoterm
+module: setup
+icon: ship
+fields:
+- fieldname: code
+  label: Code
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+title_field: title
+layout:
+- section: Description et notes
+  columns:
+  - - code
+    - title
+    - description

@@ -1,0 +1,31 @@
+schema_version: 1
+name: Payroll Employee Detail
+label: Payroll Employee Detail
+istable: true
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: is_salary_withheld
+  label: Is Salary Withheld
+  fieldtype: Boolean
+  in_list_view: true
+  default: false

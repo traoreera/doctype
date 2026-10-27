@@ -1,0 +1,7 @@
+schema_version: 1
+name: "UOM Conversion Detail"
+label: "UOM Conversion Detail"
+istable: true
+fields:
+  - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", required: true, in_list_view: true }
+  - { fieldname: conversion_factor, label: "Conversion Factor", fieldtype: Number, in_list_view: true }

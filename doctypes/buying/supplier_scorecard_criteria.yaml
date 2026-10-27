@@ -1,0 +1,32 @@
+schema_version: 1
+name: Supplier Scorecard Criteria
+label: Supplier Scorecard Criteria
+module: buying
+icon: list-checks
+fields:
+- fieldname: criteria_name
+  label: Criteria Name
+  fieldtype: Text
+  required: true
+- fieldname: max_score
+  label: Max Score
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  default: 100.0
+- fieldname: formula
+  label: Criteria Formula
+  fieldtype: LongText
+  required: true
+  in_list_view: true
+- fieldname: weight
+  label: Criteria Weight
+  fieldtype: Percent
+title_field: criteria_name
+layout:
+- section: Détails
+  columns:
+  - - criteria_name
+    - max_score
+    - formula
+    - weight

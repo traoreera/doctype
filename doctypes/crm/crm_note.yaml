@@ -1,0 +1,18 @@
+schema_version: 1
+name: CRM Note
+label: CRM Note
+istable: true
+fields:
+- fieldname: note
+  label: Note
+  fieldtype: TextEditor
+  in_list_view: true
+- fieldname: added_by
+  label: Added By
+  fieldtype: Link
+  options: Member
+  in_list_view: true
+- fieldname: added_on
+  label: Added On
+  fieldtype: Datetime
+  in_list_view: true

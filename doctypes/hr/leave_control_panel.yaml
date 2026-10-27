@@ -1,0 +1,102 @@
+schema_version: 1
+name: Leave Control Panel
+label: Leave Control Panel
+module: hr
+icon: settings-2
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: employment_type
+  label: Employment Type
+  fieldtype: Link
+  options: Employment Type
+  in_list_view: true
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+  in_list_view: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  in_list_view: true
+- fieldname: employee_grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  default: today
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: leave_policy
+  label: Leave Policy
+  fieldtype: Link
+  options: Leave Policy
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+- fieldname: carry_forward
+  label: Carry Forward
+  fieldtype: Boolean
+  description: Add unused leaves from previous leave period's allocation to this allocation
+  default: true
+- fieldname: no_of_days
+  label: New Leaves Allocated (In Days)
+  fieldtype: Number
+- fieldname: dates_based_on
+  label: Dates Based On
+  fieldtype: Select
+  options:
+  - Leave Period
+  - Joining Date
+  - Custom Range
+  default: Leave Period
+- fieldname: leave_period
+  label: Leave Period
+  fieldtype: Link
+  options: Leave Period
+- fieldname: allocate_based_on_leave_policy
+  label: Allocate Based On Leave Policy
+  fieldtype: Boolean
+  default: true
+title_field: employment_type
+layout:
+- section: Set Leave Details
+  columns:
+  - - dates_based_on
+    - leave_period
+    - company
+    - from_date
+    - to_date
+  - - leave_policy
+    - leave_type
+    - no_of_days
+    - allocate_based_on_leave_policy
+    - carry_forward
+- section: Quick Filters
+  columns:
+  - - branch
+    - department
+    - designation
+  - - employment_type
+    - employee_grade
+views:
+  calendar:
+    start: from_date
+    title: employment_type
+  gantt:
+    start: from_date
+    end: to_date
+    title: employment_type

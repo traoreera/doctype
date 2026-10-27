@@ -1,0 +1,23 @@
+schema_version: 1
+name: Contract Fulfilment Checklist
+label: Contract Fulfilment Checklist
+istable: true
+fields:
+- fieldname: fulfilled
+  label: Fulfilled
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: requirement
+  label: Requirement
+  fieldtype: Text
+  in_list_view: true
+- fieldname: notes
+  label: Notes
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Contract Fulfilment Checklist
+  read_only: true

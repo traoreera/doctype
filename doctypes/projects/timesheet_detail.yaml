@@ -1,0 +1,95 @@
+schema_version: 1
+name: Timesheet Detail
+label: Timesheet Detail
+istable: true
+fields:
+- fieldname: activity_type
+  label: Activity Type
+  fieldtype: Link
+  options: Activity Type
+  in_list_view: true
+- fieldname: from_time
+  label: From Time
+  fieldtype: Datetime
+  in_list_view: true
+- fieldname: expected_hours
+  label: Expected Hrs
+  fieldtype: Number
+- fieldname: hours
+  label: Hrs
+  fieldtype: Number
+  in_list_view: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Datetime
+- fieldname: completed
+  label: Completed
+  fieldtype: Boolean
+  default: false
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+  in_list_view: true
+- fieldname: task
+  label: Task
+  fieldtype: Link
+  options: Task
+- fieldname: billing_hours
+  label: Billing Hours
+  fieldtype: Number
+- fieldname: billing_rate
+  label: Billing Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: billing_amount
+  label: Billing Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: costing_rate
+  label: Costing Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: costing_amount
+  label: Costing Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: sales_invoice
+  label: Sales Invoice
+  fieldtype: Link
+  options: Sales Invoice
+  read_only: true
+- fieldname: is_billable
+  label: Is Billable
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: project_name
+  label: Project Name
+  fieldtype: Text
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: base_billing_rate
+  label: Billing Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_billing_amount
+  label: Billing Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_costing_rate
+  label: Costing Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_costing_amount
+  label: Costing Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true

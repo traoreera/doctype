@@ -1,0 +1,13 @@
+schema_version: 1
+name: Sales Stage
+label: Sales Stage
+module: crm
+icon: milestone
+fields:
+- fieldname: stage_name
+  label: Stage Name
+  fieldtype: Text
+layout:
+- section: Informations principales
+  columns:
+  - - stage_name

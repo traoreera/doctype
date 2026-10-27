@@ -1,0 +1,43 @@
+schema_version: 1
+name: Earned Leave Schedule
+label: Earned Leave Schedule
+istable: true
+fields:
+- fieldname: allocation_date
+  label: Allocation Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: number_of_leaves
+  label: Number of Leaves
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: is_allocated
+  label: Is Allocated
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+- fieldname: failure_reason
+  label: Failure Reason
+  fieldtype: LongText
+  read_only: true
+- fieldname: allocated_via
+  label: Allocated Via
+  fieldtype: Select
+  options:
+  - Scheduler
+  - Leave Policy Assignment
+  - Manually
+  in_list_view: true
+  read_only: true
+- fieldname: attempted
+  label: Attempted
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: failed
+  label: Failed
+  fieldtype: Boolean
+  read_only: true
+  hidden: true

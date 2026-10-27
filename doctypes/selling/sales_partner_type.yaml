@@ -1,0 +1,16 @@
+schema_version: 1
+name: Sales Partner Type
+label: Sales Partner Type
+module: selling
+icon: handshake
+fields:
+- fieldname: sales_partner_type
+  label: Sales Partner Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: sales_partner_type
+layout:
+- section: Informations principales
+  columns:
+  - - sales_partner_type

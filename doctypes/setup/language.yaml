@@ -1,0 +1,27 @@
+schema_version: 1
+name: Language
+label: Language
+module: setup
+icon: file-text
+fields:
+- fieldname: language_name
+  label: Language Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: language_code
+  label: Language Code
+  fieldtype: Text
+  required: true
+  unique: true
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+title_field: language_name
+layout:
+- section: Informations principales
+  columns:
+  - - language_name
+    - language_code
+    - enabled

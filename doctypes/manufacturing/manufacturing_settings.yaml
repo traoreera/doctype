@@ -1,0 +1,152 @@
+schema_version: 1
+name: Manufacturing Settings
+label: Manufacturing Settings
+module: manufacturing
+single: true
+icon: settings
+fields:
+- fieldname: allow_overtime
+  label: Allow Overtime
+  fieldtype: Boolean
+  description: Plan time logs outside Workstation working hours
+  default: false
+- fieldname: allow_production_on_holidays
+  label: Allow Production on Holidays
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: capacity_planning_for_days
+  label: Capacity Planning For (Days)
+  fieldtype: Int
+  description: Plan operations X days in advance
+  default: 30
+- fieldname: mins_between_operations
+  label: Time Between Operations (Mins)
+  fieldtype: Int
+  description: 'Default: 10 mins'
+  default: 10
+- fieldname: overproduction_percentage_for_sales_order
+  label: Overproduction Percentage For Sales Order
+  fieldtype: Percent
+- fieldname: overproduction_percentage_for_work_order
+  label: Overproduction Percentage For Work Order
+  fieldtype: Percent
+- fieldname: backflush_raw_materials_based_on
+  label: Backflush Raw Materials Based On
+  fieldtype: Select
+  options:
+  - BOM
+  - Material Transferred for Manufacture
+  default: BOM
+- fieldname: material_consumption
+  label: Allow Continuous Material Consumption
+  fieldtype: Boolean
+  description: Allow material consumptions without immediately manufacturing finished goods against a Work Order
+  default: false
+- fieldname: update_bom_costs_automatically
+  label: Update BOM Cost Automatically
+  fieldtype: Boolean
+  description: Update BOM cost automatically via scheduler, based on the latest Valuation Rate/Price List Rate/Last
+    Purchase Rate of raw materials
+  default: false
+- fieldname: disable_capacity_planning
+  label: Disable Capacity Planning
+  fieldtype: Boolean
+  default: false
+- fieldname: make_serial_no_batch_from_work_order
+  label: Make Serial No / Batch from Work Order
+  fieldtype: Boolean
+  description: System will automatically create the serial numbers / batch for the Finished Good on submission of
+    work order
+  default: false
+- fieldname: add_corrective_operation_cost_in_finished_good_valuation
+  label: Add Corrective Operation Cost in Finished Good Valuation
+  fieldtype: Boolean
+  default: false
+- fieldname: job_card_excess_transfer
+  label: Allow Excess Material Transfer
+  fieldtype: Boolean
+  description: Allow transferring raw materials even after the Required Quantity is fulfilled
+  default: false
+- fieldname: get_rm_cost_from_consumption_entry
+  label: Get Raw Materials Cost from Consumption Entry
+  fieldtype: Boolean
+  default: false
+- fieldname: validate_components_quantities_per_bom
+  label: Validate Components and Quantities Per BOM
+  fieldtype: Boolean
+  default: false
+- fieldname: enforce_time_logs
+  label: Enforce Time Logs
+  fieldtype: Boolean
+  description: Enabling this checkbox will force each Job Card Time Log to have From Time and To Time
+  default: false
+- fieldname: transfer_extra_materials_percentage
+  label: Transfer Extra Raw Materials to WIP (%)
+  fieldtype: Percent
+  description: The user will be able to transfer additional materials from the store to the Work in Progress (WIP)
+    warehouse.
+- fieldname: allow_editing_of_items_and_quantities_in_work_order
+  label: Allow Editing of Items and Quantities in Work Order
+  fieldtype: Boolean
+  description: If enabled, the system will allow users to edit the raw materials and their quantities in the Work
+    Order. The system will not reset the quantities as per the BOM, if the user has changed them.
+  default: false
+- fieldname: allow_alternative_finished_goods
+  label: Allow Alternative Finished Goods
+  fieldtype: Boolean
+  description: If enabled, the produced item of a Work Order can be converted into one of its alternative items
+    (defined via Item Alternative) using the 'Change Finished Item' action. The conversion creates a Repack entry
+    linked to the Work Order.
+  default: false
+- fieldname: set_op_cost_and_secondary_items_from_sub_assemblies
+  label: Set Operating Cost / Secondary Items From Sub-assemblies
+  fieldtype: Boolean
+  description: To include sub-assembly costs and secondary items in Finished Goods on a work order without using
+    a job card, when the 'Use Multi-Level BOM' option is enabled.
+  default: false
+layout:
+- tab: BOM and Production
+  section: Raw Materials Consumption
+  columns:
+  - - material_consumption
+    - get_rm_cost_from_consumption_entry
+  - - backflush_raw_materials_based_on
+    - validate_components_quantities_per_bom
+- tab: BOM and Production
+  section: BOM
+  columns:
+  - - update_bom_costs_automatically
+  - - allow_editing_of_items_and_quantities_in_work_order
+    - allow_alternative_finished_goods
+- tab: BOM and Production
+  section: Overproduction for Sales and Work Order
+  columns:
+  - - overproduction_percentage_for_sales_order
+  - - overproduction_percentage_for_work_order
+- tab: BOM and Production
+  section: Extra Material Transfer
+  columns:
+  - - transfer_extra_materials_percentage
+- tab: Job Card and Capacity Planning
+  section: Comptabilité et montants
+  columns:
+  - - add_corrective_operation_cost_in_finished_good_valuation
+    - enforce_time_logs
+  - - job_card_excess_transfer
+- tab: Job Card and Capacity Planning
+  section: Capacity Planning
+  columns:
+  - - disable_capacity_planning
+    - allow_overtime
+    - allow_production_on_holidays
+  - - capacity_planning_for_days
+    - mins_between_operations
+- tab: Job Card and Capacity Planning
+  section: Other Settings
+  columns:
+  - - set_op_cost_and_secondary_items_from_sub_assemblies
+  - - make_serial_no_batch_from_work_order
+permissions:
+  create: []
+  delete: []

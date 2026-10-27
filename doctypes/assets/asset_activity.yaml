@@ -1,0 +1,42 @@
+schema_version: 1
+name: Asset Activity
+label: Asset Activity
+module: assets
+icon: activity
+fields:
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: subject
+  label: Subject
+  fieldtype: TextEditor
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true
+  read_only: true
+title_field: asset
+layout:
+- section: Dates et planification
+  columns:
+  - - asset
+  - - date
+  - - user
+- section: Description et notes
+  columns:
+  - - subject

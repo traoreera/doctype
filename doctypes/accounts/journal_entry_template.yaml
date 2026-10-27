@@ -1,0 +1,62 @@
+schema_version: 1
+name: Journal Entry Template
+label: Journal Entry Template
+module: accounts
+icon: notebook-text
+fields:
+- fieldname: voucher_type
+  label: Journal Entry Type
+  fieldtype: Select
+  options:
+  - Journal Entry
+  - Inter Company Journal Entry
+  - Bank Entry
+  - Cash Entry
+  - Credit Card Entry
+  - Debit Note
+  - Credit Note
+  - Contra Entry
+  - Excise Entry
+  - Write Off Entry
+  - Opening Entry
+  - Depreciation Entry
+  - Exchange Rate Revaluation
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: is_opening
+  label: Is Opening
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+  default: 'No'
+- fieldname: accounts
+  label: Accounting Entries
+  fieldtype: Table
+  options: Journal Entry Template Account
+- fieldname: template_title
+  label: Template Title
+  fieldtype: Text
+  required: true
+- fieldname: multi_currency
+  label: Multi Currency
+  fieldtype: Boolean
+  default: false
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - template_title
+    - voucher_type
+  - - company
+    - is_opening
+    - multi_currency
+- section: Comptabilité et montants
+  columns:
+  - - accounts

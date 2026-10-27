@@ -1,0 +1,35 @@
+schema_version: 1
+name: Shift Location
+label: Shift Location
+module: hr
+icon: map-pin
+fields:
+- fieldname: location_name
+  label: Location Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: checkin_radius
+  label: Checkin Radius
+  fieldtype: Int
+  description: Radius within which check-in is allowed (in meters)
+- fieldname: longitude
+  label: Longitude
+  fieldtype: Number
+- fieldname: geolocation
+  label: Geolocation
+  fieldtype: JSON
+- fieldname: latitude
+  label: Latitude
+  fieldtype: Number
+title_field: location_name
+layout:
+- section: Informations principales
+  columns:
+  - - location_name
+    - checkin_radius
+  - - latitude
+    - longitude
+- section: Informations complémentaires 2
+  columns:
+  - - geolocation

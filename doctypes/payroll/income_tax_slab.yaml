@@ -1,0 +1,74 @@
+schema_version: 1
+name: Income Tax Slab
+label: Income Tax Slab
+module: payroll
+submittable: true
+icon: badge-percent
+fields:
+- fieldname: effective_from
+  label: Effective from
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: allow_tax_exemption
+  label: Allow Tax Exemption
+  fieldtype: Boolean
+  description: If enabled, Tax Exemption Declaration will be considered for income tax calculation.
+  default: false
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Income Tax Slab
+  read_only: true
+- fieldname: slabs
+  label: Taxable Salary Slabs
+  fieldtype: Table
+  options: Taxable Salary Slab
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: standard_tax_exemption_amount
+  label: Standard Tax Exemption Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: other_taxes_and_charges
+  label: Other Taxes and Charges
+  fieldtype: Table
+  options: Income Tax Slab Other Charges
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: tax_relief_limit
+  label: Taxable Income Relief Threshold Limit
+  fieldtype: Currency
+  decimals: 2
+  description: Maximum annual taxable income eligible for full tax relief. No tax is applied if income does not
+    exceed this limit
+layout:
+- section: Informations principales
+  columns:
+  - - disabled
+- section: Informations complémentaires 2
+  columns:
+  - - effective_from
+    - company
+  - - currency
+    - standard_tax_exemption_amount
+    - allow_tax_exemption
+    - amended_from
+- section: Taxable Salary Slabs
+  columns:
+  - - slabs
+- section: Informations complémentaires 4
+  columns:
+  - - tax_relief_limit
+- section: Taxes and Charges on Income Tax
+  columns:
+  - - other_taxes_and_charges

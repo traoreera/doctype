@@ -1,0 +1,73 @@
+schema_version: 1
+name: Job Opening Template
+label: Job Opening Template
+module: hr
+icon: file-text
+fields:
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: employment_type
+  label: Employment Type
+  fieldtype: Link
+  options: Employment Type
+- fieldname: location
+  label: Location
+  fieldtype: Link
+  options: Branch
+- fieldname: template_title
+  label: Template Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: upper_range
+  label: Upper Range
+  fieldtype: Currency
+  decimals: 2
+- fieldname: lower_range
+  label: Lower Range
+  fieldtype: Currency
+  decimals: 2
+- fieldname: salary_per
+  label: Salary Paid Per
+  fieldtype: Select
+  options:
+  - Month
+  - Year
+  default: Month
+- fieldname: publish_salary_range
+  label: Publish Salary Range
+  fieldtype: Boolean
+  default: false
+title_field: department
+layout:
+- section: Informations principales
+  columns:
+  - - template_title
+    - department
+    - designation
+  - - employment_type
+    - location
+- section: Pay Details
+  columns:
+  - - currency
+    - upper_range
+    - lower_range
+  - - salary_per
+    - publish_salary_range
+- section: Informations complémentaires 3
+  columns:
+  - - description

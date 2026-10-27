@@ -1,0 +1,78 @@
+schema_version: 1
+name: Delivery Schedule Item
+label: Delivery Schedule Item
+module: selling
+icon: file
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  read_only: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+- fieldname: stock_qty
+  label: Stock Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: delivery_date
+  label: Delivery Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  read_only: true
+- fieldname: sales_order_item
+  label: Sales Order Item
+  fieldtype: Text
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  read_only: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+permissions:
+  write: []
+  create: []
+  delete: []
+title_field: item_code
+layout:
+- section: Dates et planification
+  columns:
+  - - item_code
+    - warehouse
+  - - delivery_date
+    - sales_order
+    - sales_order_item
+- section: Informations complémentaires 2
+  columns:
+  - - qty
+    - uom
+    - conversion_factor
+  - - stock_qty
+    - stock_uom
+views:
+  calendar:
+    start: delivery_date
+    title: item_code

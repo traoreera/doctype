@@ -1,0 +1,15 @@
+schema_version: 1
+name: Payroll Period Date
+label: Payroll Period Date
+istable: true
+fields:
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+  in_list_view: true

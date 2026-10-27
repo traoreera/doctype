@@ -1,0 +1,34 @@
+schema_version: 1
+name: Incoming Call Handling Schedule
+label: Incoming Call Handling Schedule
+istable: true
+fields:
+- fieldname: day_of_week
+  label: Day Of Week
+  fieldtype: Select
+  options:
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  - Saturday
+  - Sunday
+  required: true
+  in_list_view: true
+- fieldname: from_time
+  label: From Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: agent_group
+  label: Agent Group
+  fieldtype: Link
+  options: Employee Group
+  required: true
+  in_list_view: true

@@ -1,0 +1,88 @@
+schema_version: 1
+name: Employee Benefit Claim
+label: Employee Benefit Claim
+module: payroll
+submittable: true
+icon: receipt
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: earning_component
+  label: Claim Benefit For
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true
+- fieldname: max_amount_eligible
+  label: Max Amount Eligible For Claim
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: claimed_amount
+  label: Claimed Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Benefit Claim
+  read_only: true
+- fieldname: attachments
+  label: Attachments
+  fieldtype: Attach
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: payroll_date
+  label: Payroll Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: yearly_benefit
+  label: Yearly Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+  - - payroll_date
+    - currency
+    - company
+    - amended_from
+- section: Benefits
+  columns:
+  - - earning_component
+    - yearly_benefit
+  - - claimed_amount
+    - max_amount_eligible
+- section: Expense Proof
+  columns:
+  - - attachments

@@ -1,0 +1,280 @@
+schema_version: 1
+name: Expense Claim
+label: Expense Claim
+module: hr
+submittable: true
+icon: receipt
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-EXP-.YYYY.-
+  required: true
+- fieldname: employee
+  label: From Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: expense_approver
+  label: Expense Approver
+  fieldtype: Link
+  options: Member
+- fieldname: approval_status
+  label: Approval Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Approved
+  - Rejected
+  - Cancelled
+  default: Draft
+- fieldname: total_claimed_amount
+  label: Total Claimed Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: total_sanctioned_amount
+  label: Total Sanctioned Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: is_paid
+  label: Is Paid
+  fieldtype: Boolean
+  default: false
+- fieldname: expenses
+  label: Expenses
+  fieldtype: Table
+  options: Expense Claim Detail
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: vehicle_log
+  label: Vehicle Log
+  fieldtype: Link
+  options: Vehicle Log
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: task
+  label: Task
+  fieldtype: Link
+  options: Task
+- fieldname: total_amount_reimbursed
+  label: Total Amount Reimbursed
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: remark
+  label: Remark
+  fieldtype: LongText
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: clearance_date
+  label: Clearance Date
+  fieldtype: Date
+- fieldname: payable_account
+  label: Payable Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Paid
+  - Partially Paid
+  - Unpaid
+  - Rejected
+  - Submitted
+  - Cancelled
+  default: Draft
+  in_list_view: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Expense Claim
+  read_only: true
+- fieldname: advances
+  label: Advances
+  fieldtype: Table
+  options: Expense Claim Advance
+- fieldname: total_advance_amount
+  label: Total Advance Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: taxes
+  label: Expense Taxes and Charges
+  fieldtype: Table
+  options: Expense Taxes and Charges
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: total_taxes_and_charges
+  label: Total Taxes and Charges
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: delivery_trip
+  label: Delivery Trip
+  fieldtype: Link
+  options: Delivery Trip
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  required: true
+- fieldname: base_total_sanctioned_amount
+  label: Total Sanctioned Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_grand_total
+  label: Grand Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_advance_amount
+  label: Total Advance Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_taxes_and_charges
+  label: Total Taxes and Charges (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_claimed_amount
+  label: Total Claimed Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: bank_or_cash_account
+  label: Bank / Cash Account
+  fieldtype: Link
+  options: Account
+- fieldname: gain_loss_account
+  label: Gain Loss Account
+  fieldtype: Link
+  options: Account
+- fieldname: total_exchange_gain_loss
+  label: Total Exchange Gain/Loss
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+title_field: employee_name
+layout:
+- tab: Expenses & Advances
+  section: Informations principales
+  columns:
+  - - naming_series
+    - employee
+    - employee_name
+    - department
+    - company
+  - - expense_approver
+    - approval_status
+- tab: Expenses & Advances
+  section: Currency
+  columns:
+  - - currency
+  - - exchange_rate
+- tab: Expenses & Advances
+  section: Informations complémentaires 3
+  columns:
+  - - expenses
+- tab: Expenses & Advances
+  section: Taxes & Charges
+  columns:
+  - - taxes
+- tab: Expenses & Advances
+  section: Advance Payments
+  columns:
+  - - advances
+- tab: Expenses & Advances
+  section: Totals
+  columns:
+  - - base_total_sanctioned_amount
+    - base_total_advance_amount
+    - base_grand_total
+    - base_total_claimed_amount
+    - base_total_taxes_and_charges
+  - - total_sanctioned_amount
+    - total_advance_amount
+    - grand_total
+    - total_claimed_amount
+    - total_taxes_and_charges
+    - total_amount_reimbursed
+- tab: Expenses & Advances
+  section: Exchange Gain/Loss
+  columns:
+  - - total_exchange_gain_loss
+    - gain_loss_account
+- tab: Accounting
+  section: Accounting Details
+  columns:
+  - - posting_date
+    - is_paid
+    - mode_of_payment
+    - bank_or_cash_account
+    - payable_account
+  - - clearance_date
+    - remark
+- tab: Accounting
+  section: Accounting Dimensions
+  columns:
+  - - project
+  - - cost_center
+- tab: More Info
+  section: Informations complémentaires 10
+  columns:
+  - - status
+    - task
+    - amended_from
+  - - delivery_trip
+    - vehicle_log
+views:
+  kanban:
+    field: approval_status
+    card_fields:
+    - employee_name
+    - employee
+  calendar:
+    start: posting_date
+    title: employee_name
+    color: approval_status

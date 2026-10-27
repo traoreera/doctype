@@ -1,0 +1,14 @@
+schema_version: 1
+name: Employee Training
+label: Employee Training
+istable: true
+fields:
+- fieldname: training
+  label: Training
+  fieldtype: Link
+  options: Training Event
+  in_list_view: true
+- fieldname: training_date
+  label: Training Date
+  fieldtype: Date
+  in_list_view: true

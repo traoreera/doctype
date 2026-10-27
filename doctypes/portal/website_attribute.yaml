@@ -1,0 +1,11 @@
+schema_version: 1
+name: Website Attribute
+label: Website Attribute
+istable: true
+fields:
+- fieldname: attribute
+  label: Attribute
+  fieldtype: Link
+  options: Item Attribute
+  required: true
+  in_list_view: true

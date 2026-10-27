@@ -1,0 +1,10 @@
+schema_version: 1
+name: POS Search Fields
+label: POS Search Fields
+istable: true
+fields:
+- fieldname: fieldname
+  label: Fieldname
+  fieldtype: Text
+  in_list_view: true
+  read_only: true

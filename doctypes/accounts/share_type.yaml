@@ -1,0 +1,20 @@
+schema_version: 1
+name: Share Type
+label: Share Type
+module: accounts
+icon: tag
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+title_field: title
+layout:
+- section: Description et notes
+  columns:
+  - - title
+    - description

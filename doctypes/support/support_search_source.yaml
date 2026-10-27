@@ -1,0 +1,53 @@
+schema_version: 1
+name: Support Search Source
+label: Support Search Source
+istable: true
+fields:
+- fieldname: source_name
+  label: Source Name
+  fieldtype: Text
+  in_list_view: true
+- fieldname: source_type
+  label: Source Type
+  fieldtype: Select
+  options:
+  - API
+  - Link
+  required: true
+  in_list_view: true
+- fieldname: base_url
+  label: Base URL
+  fieldtype: Text
+- fieldname: query_route
+  label: Query Route String
+  fieldtype: Text
+- fieldname: search_term_param_name
+  label: Search Term Param Name
+  fieldtype: Text
+- fieldname: response_result_key_path
+  label: Response Result Key Path
+  fieldtype: Text
+- fieldname: post_route
+  label: Post Route String
+  fieldtype: Text
+- fieldname: post_route_key_list
+  label: Post Route Key List
+  fieldtype: Text
+- fieldname: post_title_key
+  label: Post Title Key
+  fieldtype: Text
+- fieldname: post_description_key
+  label: Post Description Key
+  fieldtype: Text
+- fieldname: source_doctype
+  label: Source DocType
+  fieldtype: Text
+- fieldname: result_title_field
+  label: Result Title Field
+  fieldtype: Text
+- fieldname: result_preview_field
+  label: Result Preview Field
+  fieldtype: Text
+- fieldname: result_route_field
+  label: Result Route Field
+  fieldtype: Text

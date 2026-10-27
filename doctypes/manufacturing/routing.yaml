@@ -1,0 +1,23 @@
+schema_version: 1
+name: Routing
+label: Routing
+module: manufacturing
+icon: route
+fields:
+- fieldname: routing_name
+  label: Routing Name
+  fieldtype: Text
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: operations
+  label: BOM Operation
+  fieldtype: Table
+  options: BOM Operation
+layout:
+- section: État et options
+  columns:
+  - - routing_name
+    - disabled
+    - operations

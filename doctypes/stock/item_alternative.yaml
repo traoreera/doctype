@@ -1,0 +1,39 @@
+schema_version: 1
+name: Item Alternative
+label: Item Alternative
+module: stock
+icon: replace
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: alternative_item_code
+  label: Alternative Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: two_way
+  label: Two-way
+  fieldtype: Boolean
+  default: false
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: alternative_item_name
+  label: Alternative Item Name
+  fieldtype: Text
+  read_only: true
+title_field: item_code
+layout:
+- section: Références
+  columns:
+  - - item_code
+    - alternative_item_code
+    - two_way
+  - - item_name
+    - alternative_item_name

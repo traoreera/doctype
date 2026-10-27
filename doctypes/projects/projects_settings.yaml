@@ -1,0 +1,26 @@
+schema_version: 1
+name: Projects Settings
+label: Projects Settings
+module: projects
+single: true
+icon: settings
+fields:
+- fieldname: ignore_user_time_overlap
+  label: Ignore User Time Overlap
+  fieldtype: Boolean
+  default: false
+- fieldname: ignore_employee_time_overlap
+  label: Ignore Employee Time Overlap
+  fieldtype: Boolean
+  default: false
+- fieldname: fetch_timesheet_in_sales_invoice
+  label: Fetch Timesheet in Sales Invoice
+  fieldtype: Boolean
+  description: Enabling the check box will fetch timesheet on select of a Project in Sales Invoice
+  default: false
+layout:
+- section: Timesheets
+  columns:
+  - - ignore_user_time_overlap
+    - ignore_employee_time_overlap
+    - fetch_timesheet_in_sales_invoice

@@ -1,0 +1,119 @@
+schema_version: 1
+name: Production Plan Sub Assembly Item
+label: Production Plan Sub Assembly Item
+istable: true
+fields:
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: qty
+  label: Qty to Order
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: purchase_order
+  label: Purchase Order
+  fieldtype: Link
+  options: Purchase Order
+  read_only: true
+- fieldname: received_qty
+  label: Received Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: bom_no
+  label: BOM No
+  fieldtype: Link
+  options: BOM
+  in_list_view: true
+- fieldname: production_plan_item
+  label: Production Plan Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: bom_level
+  label: Level (BOM)
+  fieldtype: Int
+  read_only: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: description
+  label: description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: production_item
+  label: Sub Assembly Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: indent
+  label: Indent
+  fieldtype: Int
+- fieldname: fg_warehouse
+  label: Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: type_of_manufacturing
+  label: Manufacturing Type
+  fieldtype: Select
+  options:
+  - In House
+  - Subcontract
+  - Material Request
+  default: In House
+  in_list_view: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  in_list_view: true
+- fieldname: schedule_date
+  label: Schedule Date
+  fieldtype: Datetime
+- fieldname: actual_qty
+  label: Actual Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: projected_qty
+  label: Projected Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: wo_produced_qty
+  label: Produced Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: required_qty
+  label: Required Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: stock_reserved_qty
+  label: Stock Reserved Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: ordered_qty
+  label: Ordered Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  read_only: true
+- fieldname: sales_order_item
+  label: Sales Order Item
+  fieldtype: Text
+  hidden: true
+- fieldname: schedule_end_date
+  label: Schedule End Date
+  fieldtype: Datetime
+  read_only: true

@@ -1,0 +1,57 @@
+schema_version: 1
+name: Bank Reconciliation Tool
+label: Bank Reconciliation Tool
+module: accounts
+icon: arrow-left-right
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: bank_statement_from_date
+  label: From Date
+  fieldtype: Date
+- fieldname: bank_statement_to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: account_opening_balance
+  label: Account Opening Balance
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: bank_statement_closing_balance
+  label: Closing Balance
+  fieldtype: Currency
+  decimals: 2
+- fieldname: from_reference_date
+  label: From Reference Date
+  fieldtype: Date
+- fieldname: to_reference_date
+  label: To Reference Date
+  fieldtype: Date
+- fieldname: filter_by_reference_date
+  label: Filter by Reference Date
+  fieldtype: Boolean
+  default: false
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+  hidden: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - bank_account
+  - - bank_statement_from_date
+    - bank_statement_to_date
+    - from_reference_date
+    - to_reference_date
+    - filter_by_reference_date
+  - - account_opening_balance
+    - bank_statement_closing_balance

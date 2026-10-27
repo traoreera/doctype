@@ -1,0 +1,220 @@
+schema_version: 1
+name: BOM Creator
+label: BOM Creator
+module: manufacturing
+submittable: true
+icon: list-plus
+fields:
+- fieldname: design_name
+  label: Design Name
+  fieldtype: Text
+- fieldname: item_code
+  label: Finished Good
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: design_file
+  label: Design File
+  fieldtype: Attach
+  description: STEP file (.step or .stp) or CSV file. A CSV file needs a Level or Item Number column, a Part Number
+    or Part Name column, and a Quantity column.
+- fieldname: track_semi_finished_goods
+  label: Produce Item per Operation
+  fieldtype: Boolean
+  description: Each operation makes an item that a later operation can use. The last operation makes the finished
+    good.
+  default: false
+- fieldname: qty
+  label: Finished Good Quantity
+  fieldtype: Number
+  required: true
+  description: The BOM of the finished good is made for this quantity. Part quantities are for one finished good.
+  default: 1.0
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: BOM Creator Item
+  hidden: true
+- fieldname: operations
+  label: Operations
+  fieldtype: Table
+  options: BOM Creator Operation
+  hidden: true
+- fieldname: materials
+  label: Materials
+  fieldtype: Table
+  options: BOM Creator Material
+  hidden: true
+- fieldname: rm_cost_as_per
+  label: Rate Of Materials Based On
+  fieldtype: Select
+  options:
+  - Valuation Rate
+  - Last Purchase Rate
+  - Price List
+  default: Valuation Rate
+  required: true
+- fieldname: buying_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: price_list_currency
+  label: Price List Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: plc_conversion_rate
+  label: Price List Exchange Rate
+  fieldtype: Number
+- fieldname: set_rate_based_on_warehouse
+  label: Set Valuation Rate Based on Source Warehouse
+  fieldtype: Boolean
+  default: false
+- fieldname: default_warehouse
+  label: Default Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: conversion_rate
+  label: Conversion Rate
+  fieldtype: Number
+  default: 1.0
+- fieldname: raw_material_cost
+  label: Total Cost
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - BOM-CRE-.YYYY.-
+  default: BOM-CRE-.YYYY.-
+  required: true
+  hidden: true
+- fieldname: item_group
+  label: Item Group for New Items
+  fieldtype: Link
+  options: Item Group
+  description: Item group of the items created from design parts.
+- fieldname: part_number
+  label: Part Number
+  fieldtype: Text
+  description: Part number of the top assembly in the design file.
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: is_phantom
+  label: Is Phantom BOM
+  fieldtype: Boolean
+  default: false
+- fieldname: routing
+  label: Routing
+  fieldtype: Link
+  options: Routing
+  description: The BOM of the finished good gets its operations from this routing.
+- fieldname: revision
+  label: Revision
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: previous_revision
+  label: Previous Revision
+  fieldtype: Link
+  options: BOM Creator
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+  hidden: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - In Progress
+  - Completed
+  - Failed
+  - Superseded
+  - Cancelled
+  default: Draft
+  in_list_view: true
+  read_only: true
+- fieldname: remarks
+  label: Remarks
+  fieldtype: TextEditor
+- fieldname: error_log
+  label: Error Log
+  fieldtype: LongText
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: BOM Creator
+  read_only: true
+title_field: item_code
+layout:
+- tab: Design
+  section: Références
+  columns:
+  - - design_name
+    - item_code
+  - - company
+    - design_file
+    - track_semi_finished_goods
+    - qty
+- tab: Costing
+  section: Comptabilité et montants
+  columns:
+  - - rm_cost_as_per
+    - buying_price_list
+    - price_list_currency
+    - plc_conversion_rate
+    - set_rate_based_on_warehouse
+    - default_warehouse
+  - - currency
+    - conversion_rate
+    - raw_material_cost
+- tab: Details
+  section: Références
+  columns:
+  - - item_group
+    - project
+    - routing
+  - - part_number
+    - is_phantom
+- tab: Details
+  section: Description et notes
+  columns:
+  - - remarks
+- tab: Details
+  section: More Information
+  columns:
+  - - status
+    - previous_revision
+    - error_log
+  - - revision
+    - amended_from
+views:
+  tree:
+    parent: previous_revision

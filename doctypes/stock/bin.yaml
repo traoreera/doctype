@@ -1,0 +1,113 @@
+schema_version: 1
+name: Bin
+label: Bin
+module: stock
+icon: archive
+fields:
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: reserved_qty
+  label: Reserved Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: actual_qty
+  label: Actual Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: ordered_qty
+  label: Ordered Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: indented_qty
+  label: Requested Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: planned_qty
+  label: Planned Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: projected_qty
+  label: Projected Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: reserved_qty_for_production
+  label: Reserved Qty for Production
+  fieldtype: Number
+  read_only: true
+- fieldname: reserved_qty_for_sub_contract
+  label: Reserved Qty for Subcontract
+  fieldtype: Number
+  read_only: true
+- fieldname: stock_uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: valuation_rate
+  label: Valuation Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: stock_value
+  label: Stock Value
+  fieldtype: Number
+  read_only: true
+- fieldname: reserved_qty_for_production_plan
+  label: Reserved Qty for Production Plan
+  fieldtype: Number
+  read_only: true
+- fieldname: reserved_stock
+  label: Reserved Stock
+  fieldtype: Number
+  read_only: true
+title_field: item_code
+layout:
+- section: Item and Warehouse
+  columns:
+  - - item_code
+  - - warehouse
+- section: Available / Future Inventory
+  columns:
+  - - actual_qty
+    - planned_qty
+  - - indented_qty
+    - ordered_qty
+- section: Reserved Inventory
+  columns:
+  - - reserved_qty
+    - reserved_qty_for_production
+  - - reserved_qty_for_sub_contract
+    - reserved_qty_for_production_plan
+- section: Références
+  columns:
+  - - projected_qty
+  - - reserved_stock
+- section: Comptabilité et montants
+  columns:
+  - - stock_uom
+    - company
+  - - valuation_rate
+    - stock_value
+permissions:
+  write: []
+  create: []
+  delete: []

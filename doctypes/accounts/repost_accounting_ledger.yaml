@@ -1,0 +1,66 @@
+schema_version: 1
+name: Repost Accounting Ledger
+label: Repost Accounting Ledger
+module: accounts
+submittable: true
+icon: list-restart
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Repost Accounting Ledger
+  read_only: true
+- fieldname: vouchers
+  label: Vouchers
+  fieldtype: Table
+  options: Repost Accounting Ledger Items
+- fieldname: delete_cancelled_entries
+  label: Delete Cancelled Ledger Entries
+  fieldtype: Boolean
+  default: false
+- fieldname: error_log
+  label: Error Log
+  fieldtype: Code
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Queued
+  - In Progress
+  - Partially Reposted
+  - Completed
+  - Failed
+  - Cancelled
+  in_list_view: true
+  read_only: true
+- fieldname: scheduled_job
+  label: Scheduled Job
+  fieldtype: Link
+  options: RQ Job
+  read_only: true
+  hidden: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - delete_cancelled_entries
+  - - status
+- section: Informations complémentaires 2
+  columns:
+  - - vouchers
+- section: Error
+  columns:
+  - - error_log
+- section: Miscellaneous
+  columns:
+  - - amended_from
+views:
+  tree:
+    parent: amended_from

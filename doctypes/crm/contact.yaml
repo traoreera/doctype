@@ -1,0 +1,51 @@
+schema_version: 1
+name: Contact
+label: Contact
+module: crm
+icon: file-text
+fields:
+- fieldname: first_name
+  label: First Name
+  fieldtype: Text
+  required: true
+- fieldname: middle_name
+  label: Middle Name
+  fieldtype: Text
+- fieldname: last_name
+  label: Last Name
+  fieldtype: Text
+- fieldname: designation
+  label: Designation
+  fieldtype: Text
+- fieldname: email_id
+  label: Email
+  fieldtype: Text
+  format: email
+  in_list_view: true
+- fieldname: phone
+  label: Phone
+  fieldtype: Text
+  format: phone
+- fieldname: mobile_no
+  label: Mobile
+  fieldtype: Text
+  format: phone
+- fieldname: is_primary_contact
+  label: Primary Contact
+  fieldtype: Boolean
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+title_field: email_id
+layout:
+- section: Informations principales
+  columns:
+  - - first_name
+    - middle_name
+    - last_name
+    - designation
+    - email_id
+    - phone
+    - mobile_no
+    - is_primary_contact
+    - disabled

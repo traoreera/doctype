@@ -1,0 +1,267 @@
+schema_version: 1
+name: Payment Request
+label: Payment Request
+module: accounts
+submittable: true
+icon: hand-coins
+fields:
+- fieldname: payment_request_type
+  label: Payment Request Type
+  fieldtype: Select
+  options:
+  - Outward
+  - Inward
+  default: Inward
+  required: true
+- fieldname: transaction_date
+  label: Transaction Date
+  fieldtype: Date
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-PRQ-.YYYY.-
+  required: true
+  in_list_view: true
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: reference_doctype
+  label: Reference Doctype
+  fieldtype: Text
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  options: reference_doctype
+  read_only: true
+- fieldname: grand_total
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  description: Amount in transaction currency
+- fieldname: is_a_subscription
+  label: Is a Subscription
+  fieldtype: Boolean
+  default: false
+- fieldname: currency
+  label: Transaction Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: subscription_plans
+  label: Subscription Plans
+  fieldtype: Table
+  options: Subscription Plan Detail
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: bank
+  label: Bank
+  fieldtype: Link
+  options: Bank
+  read_only: true
+- fieldname: bank_account_no
+  label: Bank Account No
+  fieldtype: Text
+  read_only: true
+- fieldname: account
+  label: Account
+  fieldtype: Text
+  read_only: true
+- fieldname: iban
+  label: IBAN
+  fieldtype: Text
+  read_only: true
+- fieldname: branch_code
+  label: Branch Code
+  fieldtype: Text
+  read_only: true
+- fieldname: swift_number
+  label: SWIFT Number
+  fieldtype: Text
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: email_to
+  label: To
+  fieldtype: Text
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+- fieldname: payment_gateway_account
+  label: Payment Gateway Account
+  fieldtype: Link
+  options: Payment Gateway Account
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Requested
+  - Initiated
+  - Partially Paid
+  - Payment Ordered
+  - Paid
+  - Failed
+  - Cancelled
+  default: Draft
+  read_only: true
+  hidden: true
+- fieldname: make_sales_invoice
+  label: Make Sales Invoice
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: message
+  label: Message
+  fieldtype: LongText
+- fieldname: mute_email
+  label: Mute Email
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: payment_url
+  label: Payment URL
+  fieldtype: Text
+  read_only: true
+- fieldname: payment_gateway
+  label: Payment Gateway
+  fieldtype: Text
+  read_only: true
+- fieldname: payment_account
+  label: Payment Account
+  fieldtype: Text
+  read_only: true
+- fieldname: payment_channel
+  label: Payment Channel
+  fieldtype: Select
+  options:
+  - Email
+  - Phone
+  - Other
+  read_only: true
+- fieldname: payment_order
+  label: Payment Order
+  fieldtype: Link
+  options: Payment Order
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Payment Request
+  read_only: true
+- fieldname: failed_reason
+  label: Reason for Failure
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: outstanding_amount
+  label: Outstanding Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Amount in party's bank account currency
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: party_account_currency
+  label: Party Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: party_name
+  label: Party Name
+  fieldtype: Text
+  read_only: true
+- fieldname: phone_number
+  label: Phone Number
+  fieldtype: Text
+- fieldname: payment_reference
+  label: Payment Reference
+  fieldtype: Table
+  options: Payment Reference
+  read_only: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - payment_request_type
+    - transaction_date
+  - - naming_series
+    - company
+    - mode_of_payment
+- section: Party Details
+  columns:
+  - - party_type
+    - party
+    - party_name
+  - - reference_doctype
+    - reference_name
+- section: Comptabilité et montants
+  columns:
+  - - payment_reference
+- section: Transaction Details
+  columns:
+  - - grand_total
+    - currency
+    - is_a_subscription
+  - - outstanding_amount
+    - party_account_currency
+- section: Subscription
+  columns:
+  - - subscription_plans
+- section: Bank Account Details
+  columns:
+  - - bank_account
+    - bank
+    - bank_account_no
+    - account
+  - - iban
+    - branch_code
+    - swift_number
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+- section: Recipient Message And Payment Details
+  columns:
+  - - email_to
+    - subject
+  - - payment_gateway_account
+- section: Description et notes
+  columns:
+  - - message
+- section: Payment Gateway Details
+  columns:
+  - - payment_gateway
+    - payment_account
+    - payment_channel
+    - payment_order
+    - amended_from
+  - - payment_url
+  - - phone_number
+views:
+  calendar:
+    start: transaction_date
+    title: company
+  tree:
+    parent: amended_from

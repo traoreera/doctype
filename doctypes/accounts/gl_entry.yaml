@@ -1,0 +1,207 @@
+schema_version: 1
+name: GL Entry
+label: GL Entry
+module: accounts
+submittable: true
+icon: book-open
+fields:
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: transaction_date
+  label: Transaction Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+  in_list_view: true
+- fieldname: debit
+  label: Debit Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: credit
+  label: Credit Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: debit_in_account_currency
+  label: Debit Amount in Account Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: credit_in_account_currency
+  label: Credit Amount in Account Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: against
+  label: Against
+  fieldtype: LongText
+- fieldname: against_voucher_type
+  label: Against Voucher Type
+  fieldtype: Text
+- fieldname: against_voucher
+  label: Against Voucher
+  fieldtype: DynamicLink
+  options: against_voucher_type
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  options: voucher_type
+- fieldname: voucher_detail_no
+  label: Voucher Detail No
+  fieldtype: Text
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: is_opening
+  label: Is Opening
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: is_advance
+  label: Is Advance
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: fiscal_year
+  label: Fiscal Year
+  fieldtype: Link
+  options: Fiscal Year
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: to_rename
+  label: To Rename
+  fieldtype: Boolean
+  hidden: true
+  default: true
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+- fieldname: is_cancelled
+  label: Is Cancelled
+  fieldtype: Boolean
+  default: false
+- fieldname: transaction_currency
+  label: Transaction Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: transaction_exchange_rate
+  label: Transaction Exchange Rate
+  fieldtype: Number
+- fieldname: debit_in_transaction_currency
+  label: Debit Amount in Transaction Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: credit_in_transaction_currency
+  label: Credit Amount in Transaction Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: voucher_subtype
+  label: Voucher Subtype
+  fieldtype: LongText
+- fieldname: debit_in_reporting_currency
+  label: Debit Amount in Reporting Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: credit_in_reporting_currency
+  label: Credit Amount in Reporting Currency
+  fieldtype: Currency
+  decimals: 2
+- fieldname: reporting_currency_exchange_rate
+  label: Reporting Currency Exchange Rate
+  fieldtype: Number
+title_field: company
+layout:
+- section: Dates
+  columns:
+  - - posting_date
+    - transaction_date
+  - - fiscal_year
+    - due_date
+- section: Account Details
+  columns:
+  - - account
+    - account_currency
+  - - against
+    - party_type
+    - party
+- section: Transaction Details
+  columns:
+  - - voucher_type
+    - voucher_no
+    - voucher_subtype
+    - transaction_currency
+  - - against_voucher_type
+    - against_voucher
+    - voucher_detail_no
+    - transaction_exchange_rate
+    - reporting_currency_exchange_rate
+- section: Amounts
+  columns:
+  - - debit_in_account_currency
+    - debit
+    - debit_in_transaction_currency
+    - debit_in_reporting_currency
+  - - credit_in_account_currency
+    - credit
+    - credit_in_transaction_currency
+    - credit_in_reporting_currency
+- section: Dimensions
+  columns:
+  - - cost_center
+  - - project
+- section: More Info
+  columns:
+  - - finance_book
+    - company
+    - is_opening
+    - is_advance
+  - - is_cancelled
+    - remarks
+views:
+  calendar:
+    start: posting_date
+    title: company
+  gantt:
+    start: posting_date
+    end: due_date
+    title: company
+permissions:
+  write: []
+  create: []
+  delete: []
+  submit: []
+  cancel: []

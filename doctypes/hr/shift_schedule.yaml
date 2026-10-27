@@ -1,0 +1,40 @@
+schema_version: 1
+name: Shift Schedule
+label: Shift Schedule
+module: hr
+submittable: true
+icon: calendar-days
+fields:
+- fieldname: frequency
+  label: Frequency
+  fieldtype: Select
+  options:
+  - Every Week
+  - Every 2 Weeks
+  - Every 3 Weeks
+  - Every 4 Weeks
+  required: true
+  in_list_view: true
+- fieldname: repeat_on_days
+  label: Repeat On Days
+  fieldtype: Table
+  options: Assignment Rule Day
+- fieldname: shift_type
+  label: Shift Type
+  fieldtype: Link
+  options: Shift Type
+  required: true
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Shift Schedule
+  read_only: true
+title_field: frequency
+layout:
+- section: Informations principales
+  columns:
+  - - shift_type
+  - - frequency
+    - repeat_on_days
+    - amended_from

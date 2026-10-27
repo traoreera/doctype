@@ -1,0 +1,38 @@
+schema_version: 1
+name: Sales Forecast Item
+label: Sales Forecast Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true
+  read_only: true
+- fieldname: delivery_date
+  label: Delivery Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: demand_qty
+  label: Demand Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+  read_only: true

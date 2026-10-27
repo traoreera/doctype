@@ -1,0 +1,25 @@
+schema_version: 1
+name: Income Tax Slab Other Charges
+label: Income Tax Slab Other Charges
+istable: true
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: percent
+  label: Percent
+  fieldtype: Percent
+  required: true
+  in_list_view: true
+- fieldname: min_taxable_income
+  label: Min Taxable Income
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: max_taxable_income
+  label: Max Taxable Income
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true

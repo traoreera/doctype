@@ -1,0 +1,50 @@
+schema_version: 1
+name: Item Attribute
+label: Item Attribute
+module: stock
+icon: tags
+fields:
+- fieldname: attribute_name
+  label: Attribute Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: numeric_values
+  label: Numeric Values
+  fieldtype: Boolean
+  default: false
+- fieldname: from_range
+  label: From Range
+  fieldtype: Number
+  default: 0.0
+- fieldname: increment
+  label: Increment
+  fieldtype: Number
+  default: 0.0
+- fieldname: to_range
+  label: To Range
+  fieldtype: Number
+  default: 0.0
+- fieldname: item_attribute_values
+  label: Item Attribute Values
+  fieldtype: Table
+  options: Item Attribute Value
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+title_field: attribute_name
+layout:
+- section: État et options
+  columns:
+  - - attribute_name
+    - numeric_values
+  - - disabled
+- section: Informations complémentaires 2
+  columns:
+  - - from_range
+    - increment
+  - - to_range
+- section: Références
+  columns:
+  - - item_attribute_values

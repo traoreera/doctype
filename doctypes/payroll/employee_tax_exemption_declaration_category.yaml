@@ -1,0 +1,31 @@
+schema_version: 1
+name: Employee Tax Exemption Declaration Category
+label: Employee Tax Exemption Declaration Category
+istable: true
+fields:
+- fieldname: exemption_sub_category
+  label: Exemption Sub Category
+  fieldtype: Link
+  options: Employee Tax Exemption Sub Category
+  required: true
+  in_list_view: true
+- fieldname: exemption_category
+  label: Exemption Category
+  fieldtype: Link
+  options: Employee Tax Exemption Category
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: max_amount
+  label: Maximum Exempted Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Declared Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true

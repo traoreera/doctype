@@ -1,0 +1,15 @@
+schema_version: 1
+name: POS Profile User
+label: POS Profile User
+istable: true
+fields:
+- fieldname: default
+  label: Default
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  in_list_view: true

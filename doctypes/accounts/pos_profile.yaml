@@ -1,0 +1,299 @@
+schema_version: 1
+name: POS Profile
+label: POS Profile
+module: accounts
+icon: monitor
+fields:
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: country
+  label: Country
+  fieldtype: Text
+  read_only: true
+- fieldname: company_address
+  label: Company Address
+  fieldtype: Link
+  options: Address
+- fieldname: applicable_for_users
+  label: Applicable for Users
+  fieldtype: Table
+  options: POS Profile User
+- fieldname: payments
+  label: Payment Methods
+  fieldtype: Table
+  options: POS Payment Method
+- fieldname: item_groups
+  label: Item Groups
+  fieldtype: Table
+  options: POS Item Group
+  description: Only show Items from these Item Groups
+- fieldname: customer_groups
+  label: Customer Groups
+  fieldtype: Table
+  options: POS Customer Group
+  description: Only show Customer of these Customer Groups
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: tc_name
+  label: Terms and Conditions
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: selling_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: write_off_account
+  label: Write Off Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: write_off_cost_center
+  label: Write Off Cost Center
+  fieldtype: Link
+  options: Cost Center
+  required: true
+- fieldname: account_for_change_amount
+  label: Account for Change Amount
+  fieldtype: Link
+  options: Account
+- fieldname: income_account
+  label: Income Account
+  fieldtype: Link
+  options: Account
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: taxes_and_charges
+  label: Taxes and Charges
+  fieldtype: Link
+  options: Sales Taxes and Charges Template
+- fieldname: apply_discount_on
+  label: Apply Discount On
+  fieldtype: Select
+  options:
+  - Grand Total
+  - Net Total
+  default: Grand Total
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+- fieldname: print_format
+  label: Print Format
+  fieldtype: Link
+  options: Print Format
+- fieldname: receipt_email_template
+  label: Receipt Email Template
+  fieldtype: Link
+  options: Email Template
+  description: Subject and message for receipts emailed from the POS. The template gets the invoice as doc. A message
+    typed by the cashier replaces the template message. Leave empty to send the default email.
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+- fieldname: ignore_pricing_rule
+  label: Ignore Pricing Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: update_stock
+  label: Update Stock
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: hide_unavailable_items
+  label: Hide Unavailable Items
+  fieldtype: Boolean
+  default: false
+- fieldname: hide_images
+  label: Hide Images
+  fieldtype: Boolean
+  default: false
+- fieldname: auto_add_item_to_cart
+  label: Automatically Add Filtered Item To Cart
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_rate_change
+  label: Allow User to Edit Rate
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_discount_change
+  label: Allow User to Edit Discount
+  fieldtype: Boolean
+  default: false
+- fieldname: validate_stock_on_save
+  label: Validate Stock on Save
+  fieldtype: Boolean
+  default: false
+- fieldname: write_off_limit
+  label: Write Off Limit
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  description: Auto write off precision loss while consolidation
+- fieldname: disable_rounded_total
+  label: Disable Rounded Total
+  fieldtype: Boolean
+  description: If enabled, the consolidated invoices will have rounded total disabled
+  default: false
+- fieldname: utm_campaign
+  label: Campaign
+  fieldtype: Link
+  options: UTM Campaign
+- fieldname: utm_source
+  label: Source
+  fieldtype: Link
+  options: UTM Source
+- fieldname: utm_medium
+  label: Medium
+  fieldtype: Link
+  options: UTM Campaign
+- fieldname: print_receipt_on_order_complete
+  label: Print Receipt on Order Complete
+  fieldtype: Boolean
+  default: false
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: set_grand_total_to_default_mop
+  label: Set Grand Total to Default Payment Method
+  fieldtype: Boolean
+  default: true
+- fieldname: action_on_new_invoice
+  label: Action on New Invoice
+  fieldtype: Select
+  options:
+  - Always Ask
+  - Save Changes and Load New Invoice
+  - Discard Changes and Load New Invoice
+  default: Always Ask
+- fieldname: allow_partial_payment
+  label: Allow Partial Payment
+  fieldtype: Boolean
+  description: Applicable only on Transactions made using POS
+  default: false
+- fieldname: allow_warehouse_change
+  label: Allow User to Edit Warehouse
+  fieldtype: Boolean
+  default: false
+title_field: customer
+layout:
+- tab: General
+  section: Références
+  columns:
+  - - company
+    - customer
+    - country
+    - disabled
+  - - warehouse
+    - company_address
+- tab: Accounting
+  section: Payment Methods
+  columns:
+  - - payments
+    - set_grand_total_to_default_mop
+- tab: Accounting
+  section: Price List & Currency
+  columns:
+  - - currency
+  - - selling_price_list
+- tab: Accounting
+  section: Write Off
+  columns:
+  - - write_off_account
+  - - write_off_cost_center
+  - - write_off_limit
+- tab: Accounting
+  section: Income and Expense
+  columns:
+  - - income_account
+  - - expense_account
+- tab: Accounting
+  section: Taxes
+  columns:
+  - - taxes_and_charges
+  - - tax_category
+- tab: Accounting
+  section: Miscellaneous
+  columns:
+  - - account_for_change_amount
+    - disable_rounded_total
+  - - apply_discount_on
+    - allow_partial_payment
+- tab: Accounting
+  section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+- tab: POS Configurations
+  section: Dates et planification
+  columns:
+  - - action_on_new_invoice
+    - validate_stock_on_save
+  - - ignore_pricing_rule
+    - print_receipt_on_order_complete
+- tab: POS Configurations
+  section: POS Item Selector
+  columns:
+  - - hide_images
+  - - hide_unavailable_items
+  - - auto_add_item_to_cart
+- tab: POS Configurations
+  section: POS Item Details
+  columns:
+  - - allow_rate_change
+  - - allow_discount_change
+  - - allow_warehouse_change
+- tab: POS Configurations
+  section: Applicable for Users
+  columns:
+  - - applicable_for_users
+- tab: POS Configurations
+  section: Filters
+  columns:
+  - - item_groups
+  - - customer_groups
+- tab: More Info
+  section: Print Settings
+  columns:
+  - - print_format
+    - receipt_email_template
+    - letter_head
+  - - tc_name
+    - select_print_heading
+- tab: More Info
+  section: Campaign
+  columns:
+  - - utm_source
+  - - utm_campaign
+  - - utm_medium

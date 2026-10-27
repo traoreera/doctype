@@ -1,0 +1,65 @@
+schema_version: 1
+name: Asset Maintenance
+label: Asset Maintenance
+module: assets
+icon: wrench
+fields:
+- fieldname: asset_name
+  label: Asset Name
+  fieldtype: Link
+  options: Asset
+  required: true
+  in_list_view: true
+- fieldname: asset_category
+  label: Asset Category
+  fieldtype: Link
+  options: Asset Category
+  read_only: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Text
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: maintenance_team
+  label: Maintenance Team
+  fieldtype: Link
+  options: Asset Maintenance Team
+  required: true
+  in_list_view: true
+- fieldname: maintenance_manager
+  label: Maintenance Manager
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: maintenance_manager_name
+  label: Maintenance Manager Name
+  fieldtype: Text
+  read_only: true
+- fieldname: asset_maintenance_tasks
+  label: Maintenance Tasks
+  fieldtype: Table
+  options: Asset Maintenance Task
+title_field: item_code
+layout:
+- section: Références
+  columns:
+  - - asset_name
+    - asset_category
+    - company
+  - - item_code
+    - item_name
+- section: Informations complémentaires 2
+  columns:
+  - - maintenance_team
+  - - maintenance_manager_name
+- section: Tasks
+  columns:
+  - - asset_maintenance_tasks

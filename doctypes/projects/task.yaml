@@ -1,0 +1,221 @@
+schema_version: 1
+name: Task
+label: Task
+module: projects
+icon: list-checks
+fields:
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  required: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+  in_list_view: true
+- fieldname: issue
+  label: Issue
+  fieldtype: Link
+  options: Issue
+- fieldname: type
+  label: Type
+  fieldtype: Link
+  options: Task Type
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Working
+  - Pending Review
+  - Overdue
+  - Template
+  - Completed
+  - Cancelled
+  in_list_view: true
+- fieldname: priority
+  label: Priority
+  fieldtype: Select
+  options:
+  - Low
+  - Medium
+  - High
+  - Urgent
+  in_list_view: true
+- fieldname: color
+  label: Color
+  fieldtype: Color
+- fieldname: parent_task
+  label: Parent Task
+  fieldtype: Link
+  options: Task
+- fieldname: exp_start_date
+  label: Expected Start Date
+  fieldtype: Datetime
+- fieldname: expected_time
+  label: Expected Time (in hours)
+  fieldtype: Number
+  default: 0.0
+- fieldname: task_weight
+  label: Weight
+  fieldtype: Number
+- fieldname: exp_end_date
+  label: Expected End Date
+  fieldtype: Datetime
+- fieldname: progress
+  label: '% Progress'
+  fieldtype: Percent
+- fieldname: is_milestone
+  label: Is Milestone
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: description
+  label: Task Description
+  fieldtype: TextEditor
+- fieldname: depends_on
+  label: Dependent Tasks
+  fieldtype: Table
+  options: Task Depends On
+- fieldname: depends_on_tasks
+  label: Depends on Tasks
+  fieldtype: Code
+  read_only: true
+  hidden: true
+- fieldname: act_start_date
+  label: Actual Start Date (via Timesheet)
+  fieldtype: Date
+  read_only: true
+- fieldname: actual_time
+  label: Actual Time in Hours (via Timesheet)
+  fieldtype: Number
+  read_only: true
+- fieldname: act_end_date
+  label: Actual End Date (via Timesheet)
+  fieldtype: Date
+  read_only: true
+- fieldname: total_costing_amount
+  label: Total Costing Amount (via Timesheet)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_billing_amount
+  label: Total Billable Amount (via Timesheet)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: review_date
+  label: Review Date
+  fieldtype: Date
+- fieldname: closing_date
+  label: Closing Date
+  fieldtype: Date
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: completed_by
+  label: Completed By
+  fieldtype: Link
+  options: Member
+- fieldname: is_template
+  label: Is Template
+  fieldtype: Boolean
+  default: false
+- fieldname: start
+  label: Begin On (Days)
+  fieldtype: Int
+- fieldname: duration
+  label: Duration (Days)
+  fieldtype: Int
+- fieldname: completed_on
+  label: Completed On
+  fieldtype: Date
+- fieldname: template_task
+  label: Template Task
+  fieldtype: Text
+  hidden: true
+title_field: subject
+layout:
+- tab: Général
+  section: Références
+  columns:
+  - - subject
+    - project
+    - issue
+    - type
+    - color
+    - is_group
+  - - status
+    - priority
+    - task_weight
+    - parent_task
+    - completed_by
+    - completed_on
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - is_template
+  - - start
+    - duration
+- tab: Général
+  section: Timeline
+  columns:
+  - - exp_start_date
+    - expected_time
+  - - exp_end_date
+    - progress
+    - is_milestone
+- tab: Général
+  section: Details
+  columns:
+  - - description
+- tab: Dependencies
+  section: Dates et planification
+  columns:
+  - - depends_on
+- tab: Dependencies
+  section: Dates et planification
+  columns:
+  - - act_start_date
+    - actual_time
+  - - act_end_date
+- tab: Dependencies
+  section: Costing
+  columns:
+  - - total_costing_amount
+  - - total_billing_amount
+- tab: More Info
+  section: Additional Info
+  columns:
+  - - company
+    - review_date
+    - closing_date
+  - - department
+views:
+  tree:
+    parent: parent_task

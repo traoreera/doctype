@@ -1,0 +1,11 @@
+schema_version: 1
+name: Frappe CRM Allowed User
+label: Frappe CRM Allowed User
+istable: true
+fields:
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true

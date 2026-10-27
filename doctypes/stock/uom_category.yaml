@@ -1,0 +1,16 @@
+schema_version: 1
+name: UOM Category
+label: UOM Category
+module: stock
+icon: ruler
+fields:
+- fieldname: category_name
+  label: Category Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: category_name
+layout:
+- section: Informations principales
+  columns:
+  - - category_name

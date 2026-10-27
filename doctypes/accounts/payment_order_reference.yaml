@@ -1,0 +1,54 @@
+schema_version: 1
+name: Payment Order Reference
+label: Payment Order Reference
+istable: true
+fields:
+- fieldname: reference_doctype
+  label: Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: reference_name
+  label: Name
+  fieldtype: DynamicLink
+  options: reference_doctype
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  read_only: true
+- fieldname: payment_request
+  label: Payment Request
+  fieldtype: Link
+  options: Payment Request
+  read_only: true
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+  read_only: true
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+  required: true
+  read_only: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  read_only: true
+- fieldname: payment_reference
+  label: Payment Reference
+  fieldtype: Text
+  read_only: true

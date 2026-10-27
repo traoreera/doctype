@@ -1,0 +1,62 @@
+schema_version: 1
+name: Asset Movement
+label: Asset Movement
+module: assets
+submittable: true
+icon: move
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: purpose
+  label: Purpose
+  fieldtype: Select
+  options:
+  - Issue
+  - Receipt
+  - Transfer
+  - Transfer and Issue
+  required: true
+  in_list_view: true
+- fieldname: transaction_date
+  label: Transaction Date
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: reference_doctype
+  label: Reference Document Type
+  fieldtype: Text
+- fieldname: reference_name
+  label: Reference Document Name
+  fieldtype: DynamicLink
+  options: reference_doctype
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset Movement
+  read_only: true
+- fieldname: assets
+  label: Assets
+  fieldtype: Table
+  options: Asset Movement Item
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - company
+    - purpose
+  - - transaction_date
+- section: Informations complémentaires 2
+  columns:
+  - - assets
+- section: Reference
+  columns:
+  - - reference_doctype
+  - - reference_name
+    - amended_from
+views:
+  tree:
+    parent: amended_from

@@ -1,0 +1,39 @@
+schema_version: 1
+name: Prospect Opportunity
+label: Prospect Opportunity
+istable: true
+fields:
+- fieldname: opportunity
+  label: Opportunity
+  fieldtype: Link
+  options: Opportunity
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: stage
+  label: Stage
+  fieldtype: Text
+  in_list_view: true
+- fieldname: probability
+  label: Probability
+  fieldtype: Percent
+  in_list_view: true
+- fieldname: expected_closing
+  label: Closing
+  fieldtype: Date
+  in_list_view: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: deal_owner
+  label: Deal Owner
+  fieldtype: Text
+  in_list_view: true
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact

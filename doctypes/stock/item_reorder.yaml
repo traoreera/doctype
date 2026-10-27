@@ -1,0 +1,10 @@
+schema_version: 1
+name: "Item Reorder"
+label: "Item Reorder"
+istable: true
+fields:
+  - { fieldname: warehouse_group, label: "Check Availability in Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true }
+  - { fieldname: warehouse, label: "Request for", fieldtype: Link, options: "Warehouse", required: true, in_list_view: true }
+  - { fieldname: warehouse_reorder_level, label: "Re-order Level", fieldtype: Number, in_list_view: true }
+  - { fieldname: warehouse_reorder_qty, label: "Re-order Qty", fieldtype: Number, in_list_view: true }
+  - { fieldname: material_request_type, label: "Material Request Type", fieldtype: Select, options: ["Purchase", "Transfer", "Material Issue", "Manufacture"], required: true, in_list_view: true }

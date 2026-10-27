@@ -1,0 +1,35 @@
+schema_version: 1
+name: Overtime Details
+label: Overtime Details
+istable: true
+fields:
+- fieldname: reference_document
+  label: Reference Document
+  fieldtype: Link
+  options: Attendance
+  in_list_view: true
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: overtime_type
+  label: Overtime Type
+  fieldtype: Link
+  options: Overtime Type
+  required: true
+  in_list_view: true
+- fieldname: overtime_duration
+  label: Overtime Duration
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: maximum_overtime_hours_allowed
+  label: Maximum Overtime Hours Allowed
+  fieldtype: Number
+  read_only: true
+- fieldname: standard_working_hours
+  label: Standard Working Hours
+  fieldtype: Number
+  required: true

@@ -1,0 +1,28 @@
+schema_version: 1
+name: Customer Credit Limit
+label: Customer Credit Limit
+istable: true
+fields:
+- fieldname: credit_limit
+  label: Credit Limit
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: overdue_billing_threshold
+  label: Overdue Limit
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  hidden: true
+  description: New Sales Invoices are blocked when the customer's overdue amount exceeds this. Requires 'Restrict
+    Customer Over Billing' in Accounts Settings.
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: bypass_credit_limit_check
+  label: Bypass credit limit check at sales order
+  fieldtype: Boolean
+  in_list_view: true
+  default: false

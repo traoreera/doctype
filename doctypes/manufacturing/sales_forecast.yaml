@@ -1,0 +1,103 @@
+schema_version: 1
+name: Sales Forecast
+label: Sales Forecast
+module: manufacturing
+submittable: true
+icon: trending-up
+fields:
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - SF.YY.-.######
+  default: SF.YY.-.######
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+  default: today
+- fieldname: selected_items
+  label: Select Items
+  fieldtype: Table
+  options: Sales Forecast Item
+- fieldname: parent_warehouse
+  label: Parent Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  description: For projected and forecast quantities, the system will consider all child warehouses under the selected
+    parent warehouse.
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Sales Forecast Item
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Sales Forecast
+  read_only: true
+- fieldname: demand_number
+  label: Number of Weeks / Months
+  fieldtype: Int
+  required: true
+  default: 6
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Planned
+  - MPS Generated
+  - Cancelled
+  in_list_view: true
+  read_only: true
+- fieldname: frequency
+  label: Frequency
+  fieldtype: Select
+  options:
+  - Weekly
+  - Monthly
+  default: Monthly
+  required: true
+title_field: company
+layout:
+- tab: General
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+    - posting_date
+  - - from_date
+    - frequency
+    - demand_number
+- tab: General
+  section: Item and Warehouse
+  columns:
+  - - selected_items
+  - - parent_warehouse
+- tab: General
+  section: Références
+  columns:
+  - - items
+- tab: General
+  section: Dates et planification
+  columns:
+  - - amended_from
+  - - status
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

@@ -1,0 +1,33 @@
+schema_version: 1
+name: Tax Withholding Rate
+label: Tax Withholding Rate
+istable: true
+fields:
+- fieldname: tax_withholding_rate
+  label: Tax Withholding Rate
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: single_threshold
+  label: Transaction Threshold
+  fieldtype: Number
+  in_list_view: true
+- fieldname: cumulative_threshold
+  label: Cumulative Threshold
+  fieldtype: Number
+  in_list_view: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: tax_withholding_group
+  label: Tax Withholding Group
+  fieldtype: Link
+  options: Tax Withholding Group
+  in_list_view: true

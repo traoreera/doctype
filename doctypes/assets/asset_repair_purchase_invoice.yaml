@@ -1,0 +1,22 @@
+schema_version: 1
+name: Asset Repair Purchase Invoice
+label: Asset Repair Purchase Invoice
+istable: true
+fields:
+- fieldname: purchase_invoice
+  label: Purchase Invoice
+  fieldtype: Link
+  options: Purchase Invoice
+  in_list_view: true
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: repair_cost
+  label: Repair Cost
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true

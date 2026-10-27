@@ -1,0 +1,15 @@
+schema_version: 1
+name: Subscription Invoice
+label: Subscription Invoice
+istable: true
+fields:
+- fieldname: document_type
+  label: 'Document Type '
+  fieldtype: Text
+  read_only: true
+- fieldname: invoice
+  label: Invoice
+  fieldtype: DynamicLink
+  options: document_type
+  in_list_view: true
+  read_only: true

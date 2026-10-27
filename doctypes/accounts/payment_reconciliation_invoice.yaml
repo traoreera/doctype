@@ -1,0 +1,41 @@
+schema_version: 1
+name: Payment Reconciliation Invoice
+label: Payment Reconciliation Invoice
+istable: true
+fields:
+- fieldname: invoice_type
+  label: Invoice Type
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: invoice_number
+  label: Invoice Number
+  fieldtype: DynamicLink
+  options: invoice_type
+  in_list_view: true
+  read_only: true
+- fieldname: invoice_date
+  label: Invoice Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: outstanding_amount
+  label: Outstanding Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  hidden: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  hidden: true

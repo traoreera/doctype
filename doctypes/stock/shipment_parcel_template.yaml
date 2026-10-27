@@ -1,0 +1,40 @@
+schema_version: 1
+name: Shipment Parcel Template
+label: Shipment Parcel Template
+module: stock
+icon: package
+fields:
+- fieldname: length
+  label: Length (cm)
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: width
+  label: Width (cm)
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: height
+  label: Height (cm)
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: weight
+  label: Weight (kg)
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: parcel_template_name
+  label: Parcel Template Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: parcel_template_name
+layout:
+- section: Détails
+  columns:
+  - - parcel_template_name
+    - length
+    - width
+    - height
+    - weight

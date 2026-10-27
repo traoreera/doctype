@@ -1,0 +1,31 @@
+schema_version: 1
+name: POS Field
+label: POS Field
+istable: true
+fields:
+- fieldname: fieldtype
+  label: Fieldtype
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: label
+  label: Label
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: options
+  label: Options
+  fieldtype: LongText
+  in_list_view: true
+  read_only: true
+- fieldname: reqd
+  label: Mandatory
+  fieldtype: Boolean
+  default: false
+- fieldname: read_only
+  label: Read Only
+  fieldtype: Boolean
+  default: false
+- fieldname: default_value
+  label: Default Value
+  fieldtype: Text

@@ -1,0 +1,116 @@
+schema_version: 1
+name: Salary Withholding
+label: Salary Withholding
+module: payroll
+submittable: true
+icon: hand
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+  read_only: true
+- fieldname: payroll_frequency
+  label: Payroll Frequency
+  fieldtype: Select
+  options:
+  - Monthly
+  - Fortnightly
+  - Bimonthly
+  - Weekly
+  - Daily
+  read_only: true
+- fieldname: number_of_withholding_cycles
+  label: Number of Withholding Cycles
+  fieldtype: Int
+  required: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+  read_only: true
+- fieldname: date_of_joining
+  label: Date of Joining
+  fieldtype: Date
+  read_only: true
+- fieldname: relieving_date
+  label: Relieving Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: reason_for_withholding_salary
+  label: Reason for Withholding Salary
+  fieldtype: LongText
+- fieldname: cycles
+  label: Cycles
+  fieldtype: Table
+  options: Salary Withholding Cycle
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Salary Withholding
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Withheld
+  - Released
+  - Cancelled
+  default: Draft
+  in_list_view: true
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - company
+  - - posting_date
+    - payroll_frequency
+    - number_of_withholding_cycles
+  - - status
+    - from_date
+    - to_date
+- section: Exit Details
+  columns:
+  - - date_of_joining
+  - - relieving_date
+- section: Reason
+  columns:
+  - - reason_for_withholding_salary
+- section: Informations complémentaires 4
+  columns:
+  - - cycles
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: employee_name
+  gantt:
+    start: from_date
+    end: to_date
+    title: employee_name

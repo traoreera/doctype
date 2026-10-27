@@ -1,0 +1,801 @@
+schema_version: 1
+name: POS Invoice
+label: POS Invoice
+module: accounts
+submittable: true
+icon: receipt-text
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-PSINV-.YYYY.-
+  required: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+- fieldname: tax_id
+  label: Tax Id
+  fieldtype: Text
+  read_only: true
+- fieldname: is_pos
+  label: Include Payment (POS)
+  fieldtype: Boolean
+  required: true
+  read_only: true
+- fieldname: pos_profile
+  label: POS Profile
+  fieldtype: Link
+  options: POS Profile
+- fieldname: is_return
+  label: Is Return (Credit Note)
+  fieldtype: Boolean
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: posting_date
+  label: Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+- fieldname: set_posting_time
+  label: Edit Posting Date and Time
+  fieldtype: Boolean
+  default: false
+- fieldname: due_date
+  label: Payment Due Date
+  fieldtype: Date
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: POS Invoice
+  read_only: true
+- fieldname: return_against
+  label: Return Against
+  fieldtype: Link
+  options: POS Invoice
+  read_only: true
+- fieldname: update_billed_amount_in_sales_order
+  label: Update Billed Amount in Sales Order
+  fieldtype: Boolean
+  default: false
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: po_no
+  label: Customer's Purchase Order
+  fieldtype: Text
+- fieldname: po_date
+  label: Customer's Purchase Order Date
+  fieldtype: Date
+- fieldname: customer_address
+  label: Customer Address
+  fieldtype: Link
+  options: Address
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: shipping_address_name
+  label: Shipping Address Name
+  fieldtype: Link
+  options: Address
+- fieldname: shipping_address
+  label: Shipping Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: company_address
+  label: Company Address Name
+  fieldtype: Link
+  options: Address
+- fieldname: company_address_display
+  label: Company Address
+  fieldtype: TextEditor
+  read_only: true
+  hidden: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: conversion_rate
+  label: Exchange Rate
+  fieldtype: Number
+  required: true
+  description: Rate at which Customer Currency is converted to customer's base currency
+- fieldname: selling_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+  required: true
+- fieldname: price_list_currency
+  label: Price List Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: plc_conversion_rate
+  label: Price List Exchange Rate
+  fieldtype: Number
+  required: true
+  description: Rate at which Price list currency is converted to customer's base currency
+- fieldname: ignore_pricing_rule
+  label: Ignore Pricing Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: set_warehouse
+  label: Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: update_stock
+  label: Update Stock
+  fieldtype: Boolean
+  default: false
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: POS Invoice Item
+- fieldname: pricing_rules
+  label: Pricing Rule Detail
+  fieldtype: Table
+  options: Pricing Rule Detail
+  read_only: true
+- fieldname: packed_items
+  label: Packed Items
+  fieldtype: Table
+  options: Packed Item
+- fieldname: timesheets
+  label: Time Sheets
+  fieldtype: Table
+  options: Sales Invoice Timesheet
+- fieldname: total_billing_amount
+  label: Total Billing Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_qty
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: base_total
+  label: Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_total
+  label: Net Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_total
+  label: Net Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_net_weight
+  label: Total Net Weight
+  fieldtype: Number
+  read_only: true
+- fieldname: taxes_and_charges
+  label: Sales Taxes and Charges Template
+  fieldtype: Link
+  options: Sales Taxes and Charges Template
+- fieldname: shipping_rule
+  label: Shipping Rule
+  fieldtype: Link
+  options: Shipping Rule
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+- fieldname: taxes
+  label: Sales Taxes and Charges
+  fieldtype: Table
+  options: Sales Taxes and Charges
+- fieldname: other_charges_calculation
+  label: Taxes and Charges Calculation
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: base_total_taxes_and_charges
+  label: Total Taxes and Charges (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_taxes_and_charges
+  label: Total Taxes and Charges
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: loyalty_points
+  label: Loyalty Points
+  fieldtype: Int
+- fieldname: loyalty_amount
+  label: Loyalty Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: redeem_loyalty_points
+  label: Redeem Loyalty Points
+  fieldtype: Boolean
+  default: false
+- fieldname: loyalty_program
+  label: Loyalty Program
+  fieldtype: Link
+  options: Loyalty Program
+  read_only: true
+- fieldname: loyalty_redemption_account
+  label: Redemption Account
+  fieldtype: Link
+  options: Account
+- fieldname: loyalty_redemption_cost_center
+  label: Redemption Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: apply_discount_on
+  label: Apply Additional Discount On
+  fieldtype: Select
+  options:
+  - Grand Total
+  - Net Total
+  default: Grand Total
+- fieldname: base_discount_amount
+  label: Additional Discount Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_discount_percentage
+  label: Additional Discount Percentage
+  fieldtype: Number
+- fieldname: discount_amount
+  label: Additional Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_grand_total
+  label: Grand Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: base_rounding_adjustment
+  label: Rounding Adjustment (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rounded_total
+  label: Rounded Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_in_words
+  label: In Words (Company Currency)
+  fieldtype: Text
+  read_only: true
+  description: In Words will be visible once you save the Sales Invoice.
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: rounding_adjustment
+  label: Rounding Adjustment
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: total_advance
+  label: Total Advance
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: outstanding_amount
+  label: Outstanding Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: allocate_advances_automatically
+  label: Allocate Advances Automatically (FIFO)
+  fieldtype: Boolean
+  default: false
+- fieldname: advances
+  label: Advances
+  fieldtype: Table
+  options: Sales Invoice Advance
+- fieldname: payment_terms_template
+  label: Payment Terms Template
+  fieldtype: Link
+  options: Payment Terms Template
+- fieldname: payment_schedule
+  label: Payment Schedule
+  fieldtype: Table
+  options: Payment Schedule
+- fieldname: cash_bank_account
+  label: Cash/Bank Account
+  fieldtype: Link
+  options: Account
+  hidden: true
+- fieldname: payments
+  label: Sales Invoice Payment
+  fieldtype: Table
+  options: Sales Invoice Payment
+- fieldname: base_paid_amount
+  label: Paid Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_change_amount
+  label: Base Change Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: change_amount
+  label: Change Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: account_for_change_amount
+  label: Account for Change Amount
+  fieldtype: Link
+  options: Account
+- fieldname: write_off_amount
+  label: Write Off Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_write_off_amount
+  label: Write Off Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: write_off_outstanding_amount_automatically
+  label: Write Off Outstanding Amount
+  fieldtype: Boolean
+  default: false
+- fieldname: write_off_account
+  label: Write Off Account
+  fieldtype: Link
+  options: Account
+- fieldname: write_off_cost_center
+  label: Write Off Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: tc_name
+  label: Terms
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: terms
+  label: Terms and Conditions Details
+  fieldtype: TextEditor
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: group_same_items
+  label: Group same items
+  fieldtype: Boolean
+  default: false
+- fieldname: language
+  label: Print Language
+  fieldtype: Text
+  read_only: true
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: inter_company_invoice_reference
+  label: Inter Company Invoice Reference
+  fieldtype: Link
+  options: Purchase Invoice
+  read_only: true
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+  hidden: true
+- fieldname: is_discounted
+  label: Is Discounted
+  fieldtype: Boolean
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Return
+  - Credit Note Issued
+  - Consolidated
+  - Submitted
+  - Paid
+  - Partly Paid
+  - Unpaid
+  - Partly Paid and Discounted
+  - Unpaid and Discounted
+  - Overdue and Discounted
+  - Overdue
+  - Cancelled
+  default: Draft
+  read_only: true
+- fieldname: debit_to
+  label: Debit To
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: party_account_currency
+  label: Party Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+- fieldname: is_opening
+  label: Is Opening Entry
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+  default: 'No'
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: sales_partner
+  label: Sales Partner
+  fieldtype: Link
+  options: Sales Partner
+- fieldname: commission_rate
+  label: Commission Rate (%)
+  fieldtype: Number
+- fieldname: total_commission
+  label: Total Commission
+  fieldtype: Currency
+  decimals: 2
+- fieldname: sales_team
+  label: Sales Team
+  fieldtype: Table
+  options: Sales Team
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: auto_repeat
+  label: Auto Repeat
+  fieldtype: Link
+  options: Auto Repeat
+  read_only: true
+- fieldname: against_income_account
+  label: Against Income Account
+  fieldtype: LongText
+  hidden: true
+- fieldname: consolidated_invoice
+  label: Consolidated Sales Invoice
+  fieldtype: Link
+  options: Sales Invoice
+  read_only: true
+- fieldname: coupon_code
+  label: Coupon Code
+  fieldtype: Link
+  options: Coupon Code
+- fieldname: amount_eligible_for_commission
+  label: Amount Eligible for Commission
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: update_billed_amount_in_delivery_note
+  label: Update Billed Amount in Delivery Note
+  fieldtype: Boolean
+  default: true
+- fieldname: utm_medium
+  label: Medium
+  fieldtype: Link
+  options: UTM Medium
+- fieldname: utm_campaign
+  label: Campaign
+  fieldtype: Link
+  options: UTM Campaign
+- fieldname: utm_source
+  label: Source
+  fieldtype: Link
+  options: UTM Source
+- fieldname: company_contact_person
+  label: Company Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: last_scanned_warehouse
+  label: Last Scanned Warehouse
+  fieldtype: Text
+- fieldname: item_wise_tax_details
+  label: Item Wise Tax Details
+  fieldtype: Table
+  options: Item Wise Tax Detail
+  hidden: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+title_field: customer
+layout:
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - naming_series
+    - customer
+    - customer_name
+    - tax_id
+    - pos_profile
+    - consolidated_invoice
+    - is_pos
+    - is_return
+    - update_billed_amount_in_sales_order
+    - update_billed_amount_in_delivery_note
+  - - company
+    - posting_date
+    - posting_time
+    - set_posting_time
+    - due_date
+    - amended_from
+    - return_against
+- tab: General
+  section: Accounting Dimensions
+  columns:
+  - - project
+  - - cost_center
+- tab: General
+  section: Currency and Price List
+  columns:
+  - - currency
+    - conversion_rate
+  - - selling_price_list
+    - price_list_currency
+    - plc_conversion_rate
+    - ignore_pricing_rule
+- tab: General
+  section: Warehouse
+  columns:
+  - - set_warehouse
+- tab: General
+  section: Items
+  columns:
+  - - update_stock
+    - scan_barcode
+    - last_scanned_warehouse
+    - items
+- tab: General
+  section: Pricing Rules
+  columns:
+  - - pricing_rules
+- tab: General
+  section: Packing List
+  columns:
+  - - packed_items
+- tab: General
+  section: Time Sheet List
+  columns:
+  - - timesheets
+    - total_billing_amount
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - total_qty
+    - base_total
+    - base_net_total
+  - - total
+    - net_total
+    - total_net_weight
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - taxes_and_charges
+  - - shipping_rule
+    - tax_category
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - taxes
+- tab: General
+  section: Tax Breakup
+  columns:
+  - - other_charges_calculation
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - base_total_taxes_and_charges
+  - - total_taxes_and_charges
+- tab: General
+  section: Additional Discount
+  columns:
+  - - coupon_code
+    - apply_discount_on
+    - base_discount_amount
+  - - additional_discount_percentage
+    - discount_amount
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - base_grand_total
+    - base_rounding_adjustment
+    - base_rounded_total
+    - base_in_words
+  - - grand_total
+    - rounding_adjustment
+    - rounded_total
+    - in_words
+    - total_advance
+    - outstanding_amount
+- tab: Payments
+  section: Payments
+  columns:
+  - - payments
+- tab: Payments
+  section: Comptabilité et montants
+  columns:
+  - - base_paid_amount
+  - - paid_amount
+- tab: Payments
+  section: Changes
+  columns:
+  - - base_change_amount
+  - - change_amount
+    - account_for_change_amount
+- tab: Payments
+  section: Advance Payments
+  columns:
+  - - allocate_advances_automatically
+    - advances
+- tab: Payments
+  section: Write Off
+  columns:
+  - - write_off_amount
+    - base_write_off_amount
+    - write_off_outstanding_amount_automatically
+  - - write_off_account
+    - write_off_cost_center
+- tab: Payments
+  section: Loyalty Points Redemption
+  columns:
+  - - loyalty_points
+    - loyalty_amount
+    - redeem_loyalty_points
+  - - loyalty_program
+    - loyalty_redemption_account
+    - loyalty_redemption_cost_center
+- tab: Address & Contact
+  section: Address and Contact
+  columns:
+  - - customer_address
+    - address_display
+    - contact_person
+    - contact_display
+    - territory
+  - - shipping_address_name
+    - shipping_address
+    - company_address
+    - company_contact_person
+- tab: Terms
+  section: Payment Terms
+  columns:
+  - - payment_terms_template
+    - payment_schedule
+- tab: Terms
+  section: Terms and Conditions
+  columns:
+  - - tc_name
+    - terms
+- tab: More Info
+  section: Customer PO Details
+  columns:
+  - - po_no
+  - - po_date
+- tab: More Info
+  section: Printing Settings
+  columns:
+  - - letter_head
+    - group_same_items
+    - language
+  - - select_print_heading
+- tab: More Info
+  section: UTM Analytics
+  columns:
+  - - utm_source
+    - utm_medium
+  - - utm_campaign
+- tab: More Info
+  section: More Information
+  columns:
+  - - inter_company_invoice_reference
+    - is_discounted
+  - - status
+    - title
+- tab: More Info
+  section: Accounting Details
+  columns:
+  - - debit_to
+    - is_opening
+  - - remarks
+- tab: More Info
+  section: Commission
+  columns:
+  - - sales_partner
+  - - amount_eligible_for_commission
+    - commission_rate
+    - total_commission
+- tab: More Info
+  section: Sales Team
+  columns:
+  - - sales_team
+- tab: More Info
+  section: Subscription
+  columns:
+  - - from_date
+    - to_date
+- tab: More Info
+  section: Auto Repeat
+  columns:
+  - - auto_repeat
+views:
+  calendar:
+    start: posting_date
+    title: customer
+  gantt:
+    start: from_date
+    end: to_date
+    title: customer
+  tree:
+    parent: amended_from

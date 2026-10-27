@@ -1,0 +1,90 @@
+schema_version: 1
+name: Packing Slip
+label: Packing Slip
+module: stock
+submittable: true
+icon: package
+fields:
+- fieldname: delivery_note
+  label: Delivery Note
+  fieldtype: Link
+  options: Delivery Note
+  required: true
+  in_list_view: true
+  description: Indicates that the package is a part of this delivery (Only Draft)
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-PAC-.YYYY.-
+  required: true
+- fieldname: from_case_no
+  label: From Package No.
+  fieldtype: Int
+  required: true
+  in_list_view: true
+  description: Identification of the package for the delivery (for print)
+- fieldname: to_case_no
+  label: To Package No.
+  fieldtype: Int
+  in_list_view: true
+  description: If more than one package of the same type (for print)
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Packing Slip Item
+- fieldname: net_weight_pkg
+  label: Net Weight
+  fieldtype: Number
+  read_only: true
+  description: The net weight of this package. (calculated automatically as sum of net weight of items)
+- fieldname: net_weight_uom
+  label: Net Weight UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: gross_weight_pkg
+  label: Gross Weight
+  fieldtype: Number
+  description: The gross weight of the package. Usually net weight + packaging material weight. (for print)
+- fieldname: gross_weight_uom
+  label: Gross Weight UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Packing Slip
+  read_only: true
+title_field: delivery_note
+layout:
+- section: État et options
+  columns:
+  - - delivery_note
+  - - naming_series
+- section: Informations complémentaires 2
+  columns:
+  - - from_case_no
+  - - to_case_no
+- section: Références
+  columns:
+  - - items
+- section: Package Weight Details
+  columns:
+  - - net_weight_pkg
+    - net_weight_uom
+  - - gross_weight_pkg
+    - gross_weight_uom
+- section: Letter Head
+  columns:
+  - - letter_head
+- section: Dates et planification
+  columns:
+  - - amended_from
+views:
+  tree:
+    parent: amended_from

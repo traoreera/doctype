@@ -1,0 +1,189 @@
+schema_version: 1
+name: Material Request
+label: Material Request
+module: stock
+submittable: true
+icon: clipboard-list
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-MR-.YYYY.-
+  required: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  hidden: true
+- fieldname: material_request_type
+  label: Purpose
+  fieldtype: Select
+  options:
+  - Purchase
+  - Material Transfer
+  - Material Issue
+  - Manufacture
+  - Subcontracting
+  - Customer Provided
+  required: true
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: schedule_date
+  label: Required By
+  fieldtype: Date
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Material Request
+  read_only: true
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Material Request Item
+- fieldname: transaction_date
+  label: Transaction Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Stopped
+  - Cancelled
+  - Pending
+  - Partially Ordered
+  - Partially Received
+  - Ordered
+  - Issued
+  - Transferred
+  - Received
+  read_only: true
+- fieldname: per_ordered
+  label: '% Ordered'
+  fieldtype: Percent
+  read_only: true
+- fieldname: per_received
+  label: '% Received'
+  fieldtype: Percent
+  read_only: true
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: tc_name
+  label: Terms
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: terms
+  label: Terms and Conditions Content
+  fieldtype: TextEditor
+- fieldname: job_card
+  label: Job Card
+  fieldtype: Link
+  options: Job Card
+  read_only: true
+- fieldname: set_warehouse
+  label: Set Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: set_from_warehouse
+  label: Set Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: transfer_status
+  label: Transfer Status
+  fieldtype: Select
+  options:
+  - Not Started
+  - In Transit
+  - Completed
+  read_only: true
+- fieldname: work_order
+  label: Work Order
+  fieldtype: Link
+  options: Work Order
+  read_only: true
+- fieldname: buying_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: last_scanned_warehouse
+  label: Last Scanned Warehouse
+  fieldtype: Text
+- fieldname: auto_created_via_reorder
+  label: Auto Created (Reorder)
+  fieldtype: Boolean
+  read_only: true
+title_field: status
+layout:
+- tab: General
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - material_request_type
+    - customer
+    - company
+    - auto_created_via_reorder
+  - - transaction_date
+    - schedule_date
+    - buying_price_list
+    - amended_from
+- tab: General
+  section: Items
+  columns:
+  - - scan_barcode
+    - last_scanned_warehouse
+  - - set_from_warehouse
+    - set_warehouse
+- tab: General
+  section: Références
+  columns:
+  - - items
+- tab: Terms
+  section: Description et notes
+  columns:
+  - - tc_name
+    - terms
+- tab: More Info
+  section: Status
+  columns:
+  - - status
+    - per_ordered
+  - - transfer_status
+    - per_received
+- tab: More Info
+  section: Printing Details
+  columns:
+  - - letter_head
+  - - select_print_heading
+- tab: More Info
+  section: Reference
+  columns:
+  - - job_card
+  - - work_order
+views:
+  calendar:
+    start: transaction_date
+    title: status
+  tree:
+    parent: amended_from

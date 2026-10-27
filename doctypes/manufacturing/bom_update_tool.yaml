@@ -1,0 +1,26 @@
+schema_version: 1
+name: BOM Update Tool
+label: BOM Update Tool
+module: manufacturing
+icon: refresh-cw
+fields:
+- fieldname: current_bom
+  label: Current BOM
+  fieldtype: Link
+  options: BOM
+  required: true
+  in_list_view: true
+  description: The BOM which will be replaced
+- fieldname: new_bom
+  label: New BOM
+  fieldtype: Link
+  options: BOM
+  required: true
+  in_list_view: true
+  description: The new BOM after replacement
+title_field: current_bom
+layout:
+- section: Replace BOM
+  columns:
+  - - current_bom
+    - new_bom

@@ -1,0 +1,166 @@
+schema_version: 1
+name: Appraisal
+label: Appraisal
+module: hr
+submittable: true
+icon: star
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-APR-.YYYY.-
+  required: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: appraisal_cycle
+  label: Appraisal Cycle
+  fieldtype: Link
+  options: Appraisal Cycle
+  required: true
+  in_list_view: true
+- fieldname: appraisal_kra
+  label: KRA vs Goals
+  fieldtype: Table
+  options: Appraisal KRA
+- fieldname: total_score
+  label: Total Goal Score
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: self_score
+  label: Total Self Score
+  fieldtype: Number
+  read_only: true
+- fieldname: avg_feedback_score
+  label: Average Feedback Score
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: employee_image
+  label: Employee Image
+  fieldtype: Image
+  hidden: true
+- fieldname: appraisal_template
+  label: Appraisal Template
+  fieldtype: Link
+  options: Appraisal Template
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Appraisal
+  read_only: true
+- fieldname: reflections
+  label: Reflections
+  fieldtype: TextEditor
+- fieldname: goals
+  label: Goals
+  fieldtype: Table
+  options: Appraisal Goal
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+  description: Any other remarks, noteworthy effort that should go in the records
+- fieldname: rate_goals_manually
+  label: Rate Goals Manually
+  fieldtype: Boolean
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  read_only: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  read_only: true
+- fieldname: goal_score_percentage
+  label: Goal Score (%)
+  fieldtype: Number
+  read_only: true
+- fieldname: self_ratings
+  label: Self Ratings
+  fieldtype: Table
+  options: Employee Feedback Rating
+- fieldname: final_score
+  label: Final Score
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+  description: Average of Goal Score, Feedback Score, and Self Appraisal Score
+title_field: employee_name
+layout:
+- tab: Overview
+  section: Informations principales
+  columns:
+  - - naming_series
+    - employee
+    - employee_name
+    - department
+    - designation
+  - - company
+    - appraisal_cycle
+    - start_date
+    - end_date
+- tab: Overview
+  section: Informations complémentaires 2
+  columns:
+  - - final_score
+- tab: KRAs
+  section: Informations complémentaires 3
+  columns:
+  - - appraisal_template
+    - rate_goals_manually
+- tab: KRAs
+  section: Informations complémentaires 4
+  columns:
+  - - appraisal_kra
+    - goal_score_percentage
+- tab: KRAs
+  section: Informations complémentaires 5
+  columns:
+  - - goals
+    - remarks
+- tab: KRAs
+  section: Informations complémentaires 6
+  columns:
+  - - total_score
+- tab: Self Appraisal
+  section: Ratings
+  columns:
+  - - self_ratings
+    - self_score
+- tab: Self Appraisal
+  section: Reflections
+  columns:
+  - - reflections
+    - amended_from
+views:
+  calendar:
+    start: start_date
+    title: employee_name
+  gantt:
+    start: start_date
+    end: end_date
+    title: employee_name

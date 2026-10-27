@@ -1,0 +1,22 @@
+schema_version: 1
+name: Salutation
+label: Salutation
+module: setup
+icon: file-text
+fields:
+- fieldname: salutation
+  label: Salutation
+  fieldtype: Text
+  required: true
+  unique: true
+  in_list_view: true
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+title_field: salutation
+layout:
+- section: Informations principales
+  columns:
+  - - salutation
+    - enabled

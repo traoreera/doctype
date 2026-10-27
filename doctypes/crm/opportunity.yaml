@@ -1,0 +1,308 @@
+schema_version: 1
+name: Opportunity
+label: Opportunity
+module: crm
+icon: user-star
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - CRM-OPP-.YYYY.-
+  required: true
+  in_list_view: true
+- fieldname: opportunity_from
+  label: Opportunity From
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: party_name
+  label: Party
+  fieldtype: DynamicLink
+  options: opportunity_from
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  hidden: true
+- fieldname: opportunity_type
+  label: Opportunity Type
+  fieldtype: Link
+  options: Opportunity Type
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Quotation
+  - Converted
+  - Lost
+  - Replied
+  - Closed
+  default: Open
+  required: true
+  in_list_view: true
+- fieldname: order_lost_reason
+  label: Detailed Reason
+  fieldtype: LongText
+  read_only: true
+- fieldname: lost_on
+  label: Lost On
+  fieldtype: Date
+  read_only: true
+  hidden: true
+- fieldname: expected_closing
+  label: Expected Closing Date
+  fieldtype: Date
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: opportunity_amount
+  label: Opportunity Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: sales_stage
+  label: Sales Stage
+  fieldtype: Link
+  options: Sales Stage
+- fieldname: probability
+  label: Probability (%)
+  fieldtype: Percent
+  default: 100.0
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Opportunity Item
+- fieldname: customer_address
+  label: Customer / Lead Address
+  fieldtype: Link
+  options: Address
+  hidden: true
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+  hidden: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+- fieldname: contact_mobile
+  label: Contact Mobile
+  fieldtype: Text
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: transaction_date
+  label: Opportunity Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Opportunity
+  read_only: true
+- fieldname: lost_reasons
+  label: Lost Reasons
+  fieldtype: Table
+  options: Opportunity Lost Reason Detail
+  read_only: true
+- fieldname: language
+  label: Print Language
+  fieldtype: Link
+  options: Language
+- fieldname: base_opportunity_amount
+  label: Opportunity Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total
+  label: Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: conversion_rate
+  label: Exchange Rate
+  fieldtype: Number
+- fieldname: competitors
+  label: Competitors
+  fieldtype: Table
+  options: Competitor Detail
+  read_only: true
+- fieldname: no_of_employees
+  label: No of Employees
+  fieldtype: Select
+  options:
+  - 1-10
+  - 11-50
+  - 51-200
+  - 201-500
+  - 501-1000
+  - 1000+
+- fieldname: annual_revenue
+  label: Annual Revenue
+  fieldtype: Currency
+  decimals: 2
+- fieldname: industry
+  label: Industry
+  fieldtype: Link
+  options: Industry Type
+- fieldname: market_segment
+  label: Market Segment
+  fieldtype: Link
+  options: Market Segment
+- fieldname: opportunity_owner
+  label: Opportunity Owner
+  fieldtype: Link
+  options: Member
+- fieldname: website
+  label: Website
+  fieldtype: Text
+- fieldname: whatsapp
+  label: WhatsApp
+  fieldtype: Text
+- fieldname: phone
+  label: Phone
+  fieldtype: Text
+- fieldname: phone_ext
+  label: Phone Ext.
+  fieldtype: Text
+- fieldname: job_title
+  label: Job Title
+  fieldtype: Text
+- fieldname: notes
+  label: Notes
+  fieldtype: Table
+  options: CRM Note
+  hidden: true
+- fieldname: city
+  label: City
+  fieldtype: Text
+- fieldname: state
+  label: State/Province
+  fieldtype: Text
+- fieldname: country
+  label: Country
+  fieldtype: Link
+  options: Country
+- fieldname: utm_source
+  label: Source
+  fieldtype: Link
+  options: UTM Source
+- fieldname: utm_campaign
+  label: Campaign
+  fieldtype: Link
+  options: UTM Campaign
+- fieldname: utm_medium
+  label: Medium
+  fieldtype: Link
+  options: UTM Medium
+- fieldname: utm_content
+  label: Content
+  fieldtype: Text
+title_field: status
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - opportunity_from
+    - party_name
+    - status
+  - - opportunity_type
+    - opportunity_owner
+  - - sales_stage
+    - expected_closing
+    - probability
+- tab: Général
+  section: Organization
+  columns:
+  - - no_of_employees
+    - annual_revenue
+    - customer_group
+  - - industry
+    - market_segment
+    - website
+  - - city
+    - state
+    - country
+    - territory
+- tab: Général
+  section: Opportunity Value
+  columns:
+  - - currency
+  - - conversion_rate
+  - - opportunity_amount
+    - base_opportunity_amount
+- tab: Général
+  section: Analytics
+  columns:
+  - - utm_source
+    - utm_medium
+  - - utm_campaign
+    - utm_content
+- tab: Général
+  section: More Information
+  columns:
+  - - company
+    - transaction_date
+  - - language
+    - amended_from
+- tab: Général
+  section: Lost Reasons
+  columns:
+  - - lost_reasons
+    - order_lost_reason
+  - - competitors
+- tab: Contacts
+  section: Primary Contact
+  columns:
+  - - contact_person
+    - job_title
+  - - contact_email
+    - contact_mobile
+  - - whatsapp
+    - phone
+    - phone_ext
+- tab: Contacts
+  section: Address & Contact
+  columns:
+  - - contact_display
+- tab: Items
+  section: Références
+  columns:
+  - - items
+- tab: Items
+  section: Comptabilité et montants
+  columns:
+  - - base_total
+  - - total

@@ -1,0 +1,202 @@
+schema_version: 1
+name: Request for Quotation
+label: Request for Quotation
+module: buying
+submittable: true
+icon: file-question-mark
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - PUR-RFQ-.YYYY.-
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: vendor
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  in_list_view: true
+  read_only: true
+  hidden: true
+  description: For individual supplier
+- fieldname: transaction_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: suppliers
+  label: Suppliers
+  fieldtype: Table
+  options: Request for Quotation Supplier
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Request for Quotation Item
+- fieldname: email_template
+  label: Email Template
+  fieldtype: Link
+  options: Email Template
+- fieldname: message_for_supplier
+  label: Message for Supplier
+  fieldtype: TextEditor
+- fieldname: tc_name
+  label: Terms
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: terms
+  label: Terms and Conditions
+  fieldtype: TextEditor
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: opportunity
+  label: Opportunity
+  fieldtype: Link
+  options: Opportunity
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Cancelled
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Request for Quotation
+  read_only: true
+- fieldname: schedule_date
+  label: Required Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: incoterm
+  label: Incoterm
+  fieldtype: Link
+  options: Incoterm
+- fieldname: named_place
+  label: Named Place
+  fieldtype: Text
+- fieldname: send_attached_files
+  label: Send Attached Files
+  fieldtype: Boolean
+  description: If enabled, all files attached to this document will be attached to each email
+  default: true
+- fieldname: send_document_print
+  label: Send Document Print
+  fieldtype: Boolean
+  description: If enabled, a print of this document will be attached to each email
+  default: false
+- fieldname: billing_address
+  label: Company Billing Address
+  fieldtype: Link
+  options: Address
+- fieldname: billing_address_display
+  label: Billing Address Details
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: has_unit_price_items
+  label: Has Unit Price Items
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  required: true
+  default: Request for Quotation
+- fieldname: mfs_html
+  label: Message for Supplier
+  fieldtype: Code
+- fieldname: use_html
+  label: Use HTML
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: shipping_address
+  label: Company Shipping Address
+  fieldtype: Link
+  options: Address
+- fieldname: shipping_address_display
+  label: Shipping Address Details
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+title_field: title
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+  - - transaction_date
+    - schedule_date
+    - status
+    - amended_from
+- tab: Général
+  section: Références
+  columns:
+  - - suppliers
+- tab: Général
+  section: Références
+  columns:
+  - - items
+- tab: Général
+  section: Email Details
+  columns:
+  - - email_template
+  - - send_attached_files
+    - send_document_print
+- tab: Général
+  section: Références
+  columns:
+  - - subject
+    - message_for_supplier
+    - mfs_html
+- tab: Général
+  section: Terms and Conditions
+  columns:
+  - - incoterm
+    - named_place
+    - tc_name
+    - terms
+- tab: Général
+  section: Printing Settings
+  columns:
+  - - select_print_heading
+    - letter_head
+- tab: Général
+  section: More Information
+  columns:
+  - - opportunity
+    - title
+- tab: Address & Contact
+  section: Références
+  columns:
+  - - billing_address
+    - billing_address_display
+  - - shipping_address
+    - shipping_address_display
+views:
+  calendar:
+    start: transaction_date
+    title: title
+  tree:
+    parent: amended_from

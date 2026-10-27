@@ -1,0 +1,124 @@
+schema_version: 1
+name: Payroll Settings
+label: Payroll Settings
+module: payroll
+single: true
+icon: settings
+fields:
+- fieldname: payroll_based_on
+  label: Calculate Payroll Working Days Based On
+  fieldtype: Select
+  options:
+  - Leave
+  - Attendance
+  default: Leave
+- fieldname: max_working_hours_against_timesheet
+  label: Max working hours against Timesheet
+  fieldtype: Number
+- fieldname: include_holidays_in_total_working_days
+  label: Include holidays in Total no. of Working Days
+  fieldtype: Boolean
+  description: If enabled, total no. of working days will include holidays, and this will reduce the value of Salary
+    Per Day
+  default: false
+- fieldname: disable_rounded_total
+  label: Disable Rounded Total
+  fieldtype: Boolean
+  description: If checked, hides and disables Rounded Total field in Salary Slips
+  default: false
+- fieldname: daily_wages_fraction_for_half_day
+  label: Fraction of Daily Salary for Half Day
+  fieldtype: Number
+  description: The fraction of daily wages to be paid for half-day attendance
+  default: 0.5
+- fieldname: email_salary_slip_to_employee
+  label: Email Salary Slip to Employee
+  fieldtype: Boolean
+  description: Emails salary slip to employee based on preferred email selected in Employee
+  default: true
+- fieldname: encrypt_salary_slips_in_emails
+  label: Encrypt Salary Slips in Emails
+  fieldtype: Boolean
+  description: The salary slip emailed to the employee will be password protected, the password will be generated
+    based on the password policy.
+  default: false
+- fieldname: password_policy
+  label: Password Policy
+  fieldtype: Text
+  in_list_view: true
+  description: <b>Example:</b> SAL-{first_name}-{date_of_birth.year} <br>This will generate a password like SAL-Jane-1972
+- fieldname: consider_unmarked_attendance_as
+  label: Consider Unmarked Attendance As
+  fieldtype: Select
+  options:
+  - Present
+  - Absent
+- fieldname: show_leave_balances_in_salary_slip
+  label: Show Leave Balances in Salary Slip
+  fieldtype: Boolean
+  default: false
+- fieldname: process_payroll_accounting_entry_based_on_employee
+  label: Process Payroll Accounting Entry based on Employee
+  fieldtype: Boolean
+  description: If checked, Payroll Payable will be booked against each employee
+  default: false
+- fieldname: consider_marked_attendance_on_holidays
+  label: Consider Marked Attendance on Holidays
+  fieldtype: Boolean
+  description: If enabled, deducts payment days for absent attendance on holidays. By default, holidays are considered
+    as paid
+  default: false
+- fieldname: sender
+  label: Sender
+  fieldtype: Link
+  options: Email Account
+- fieldname: sender_email
+  label: Sender Email
+  fieldtype: Text
+  read_only: true
+- fieldname: email_template
+  label: Email Template
+  fieldtype: Link
+  options: Email Template
+- fieldname: create_overtime_slip
+  label: Create Overtime Slip For Eligible Employee(s)
+  fieldtype: Boolean
+  description: If checked, overtime slip creation can be handled as part of payroll processing
+  default: false
+- fieldname: sender_copy
+  label: Sender Copy
+  fieldtype: Link
+  options: Email Account
+- fieldname: mandatory_benefit_application
+  label: Mandatory Benefit Application
+  fieldtype: Boolean
+  description: If checked, flexible benefits are considered only if benefit application exists
+  default: false
+title_field: password_policy
+layout:
+- section: Working Days and Hours
+  columns:
+  - - payroll_based_on
+    - consider_unmarked_attendance_as
+    - include_holidays_in_total_working_days
+    - consider_marked_attendance_on_holidays
+  - - max_working_hours_against_timesheet
+    - daily_wages_fraction_for_half_day
+- section: Salary Slip
+  columns:
+  - - disable_rounded_total
+  - - show_leave_balances_in_salary_slip
+- section: Email
+  columns:
+  - - email_salary_slip_to_employee
+    - sender
+    - sender_copy
+    - sender_email
+    - email_template
+  - - encrypt_salary_slips_in_emails
+    - password_policy
+- section: Other Settings
+  columns:
+  - - process_payroll_accounting_entry_based_on_employee
+    - mandatory_benefit_application
+  - - create_overtime_slip

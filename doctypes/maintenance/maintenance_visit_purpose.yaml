@@ -1,0 +1,47 @@
+schema_version: 1
+name: Maintenance Visit Purpose
+label: Maintenance Visit Purpose
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: Link
+  options: Serial No
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  in_list_view: true
+- fieldname: service_person
+  label: Sales Person
+  fieldtype: Link
+  options: Sales Person
+  required: true
+  in_list_view: true
+- fieldname: work_done
+  label: Work Done
+  fieldtype: LongText
+  required: true
+  in_list_view: true
+- fieldname: prevdoc_doctype
+  label: Document Type
+  fieldtype: Text
+  hidden: true
+- fieldname: prevdoc_docname
+  label: Against Document No
+  fieldtype: DynamicLink
+  options: prevdoc_doctype
+  hidden: true
+- fieldname: maintenance_schedule_detail
+  label: Maintenance Schedule Detail
+  fieldtype: Text
+  hidden: true

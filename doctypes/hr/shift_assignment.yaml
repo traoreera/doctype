@@ -1,0 +1,104 @@
+schema_version: 1
+name: Shift Assignment
+label: Shift Assignment
+module: hr
+submittable: true
+icon: user-check
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: shift_type
+  label: Shift Type
+  fieldtype: Link
+  options: Shift Type
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: shift_request
+  label: Shift Request
+  fieldtype: Link
+  options: Shift Request
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Shift Assignment
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Active
+  - Inactive
+  default: Active
+- fieldname: shift_location
+  label: Shift Location
+  fieldtype: Link
+  options: Shift Location
+- fieldname: shift_schedule_assignment
+  label: Shift Schedule Assignment
+  fieldtype: Link
+  options: Shift Schedule Assignment
+  read_only: true
+- fieldname: overtime_type
+  label: Overtime Type
+  fieldtype: Link
+  options: Overtime Type
+title_field: employee_name
+layout:
+- section: Employee Details
+  columns:
+  - - employee
+    - employee_name
+  - - company
+    - department
+- section: Shift Details
+  columns:
+  - - shift_type
+    - shift_location
+    - status
+    - overtime_type
+  - - start_date
+    - end_date
+    - shift_request
+    - shift_schedule_assignment
+    - amended_from
+views:
+  kanban:
+    field: status
+    card_fields:
+    - employee_name
+    - employee
+  calendar:
+    start: start_date
+    title: employee_name
+    color: status
+  gantt:
+    start: start_date
+    end: end_date
+    title: employee_name
+    color: status

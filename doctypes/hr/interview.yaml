@@ -1,0 +1,120 @@
+schema_version: 1
+name: Interview
+label: Interview
+module: hr
+submittable: true
+icon: messages-square
+fields:
+- fieldname: job_applicant
+  label: Job Applicant
+  fieldtype: Link
+  options: Job Applicant
+  required: true
+  in_list_view: true
+- fieldname: job_opening
+  label: Job Opening
+  fieldtype: Link
+  options: Job Opening
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Under Review
+  - Cleared
+  - Rejected
+  - Cancelled
+  default: Pending
+  required: true
+  in_list_view: true
+- fieldname: average_rating
+  label: Obtained Average Rating
+  fieldtype: Rating
+  stars: 5
+  in_list_view: true
+  read_only: true
+- fieldname: interview_summary
+  label: Interview Summary
+  fieldtype: LongText
+- fieldname: resume_link
+  label: Resume link
+  fieldtype: Text
+- fieldname: expected_average_rating
+  label: Expected Average Rating
+  fieldtype: Rating
+  stars: 5
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  in_list_view: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Interview
+  read_only: true
+- fieldname: scheduled_on
+  label: Scheduled On
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: reminded
+  label: Reminded
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: from_time
+  label: From Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: interview_details
+  label: Interviewers
+  fieldtype: Table
+  options: Interview Detail
+- fieldname: interview_type
+  label: Interview Type
+  fieldtype: Link
+  options: Interview Type
+  required: true
+  in_list_view: true
+title_field: status
+layout:
+- tab: Général
+  section: Details
+  columns:
+  - - interview_type
+    - job_applicant
+    - job_opening
+    - designation
+    - resume_link
+  - - status
+    - scheduled_on
+    - from_time
+    - to_time
+- tab: Général
+  section: Informations complémentaires 2
+  columns:
+  - - interview_details
+- tab: Général
+  section: Ratings
+  columns:
+  - - expected_average_rating
+  - - average_rating
+- tab: Général
+  section: Interview Summary
+  columns:
+  - - interview_summary
+    - amended_from
+views:
+  kanban:
+    field: status
+    card_fields: null

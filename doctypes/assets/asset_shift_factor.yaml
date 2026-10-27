@@ -1,0 +1,28 @@
+schema_version: 1
+name: Asset Shift Factor
+label: Asset Shift Factor
+module: assets
+icon: gauge
+fields:
+- fieldname: shift_name
+  label: Shift Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: shift_factor
+  label: Shift Factor
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: default
+  label: Default
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+title_field: shift_name
+layout:
+- section: État et options
+  columns:
+  - - shift_name
+    - shift_factor
+    - default

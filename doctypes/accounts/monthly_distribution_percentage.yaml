@@ -1,0 +1,15 @@
+schema_version: 1
+name: Monthly Distribution Percentage
+label: Monthly Distribution Percentage
+istable: true
+fields:
+- fieldname: month
+  label: Month
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: percentage_allocation
+  label: Percentage Allocation
+  fieldtype: Number
+  in_list_view: true

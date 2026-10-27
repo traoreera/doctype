@@ -1,0 +1,31 @@
+schema_version: 1
+name: Account Category
+label: Account Category
+module: accounts
+icon: folder-tree
+fields:
+- fieldname: account_category_name
+  label: Account Category Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: root_type
+  label: Root Type
+  fieldtype: Select
+  options:
+  - Asset
+  - Liability
+  - Income
+  - Expense
+  - Equity
+  in_list_view: true
+title_field: account_category_name
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - account_category_name
+    - root_type
+  - - description

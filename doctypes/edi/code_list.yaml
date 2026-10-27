@@ -1,0 +1,48 @@
+schema_version: 1
+name: Code List
+label: Code List
+module: edi
+icon: list
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: publisher
+  label: Publisher
+  fieldtype: Text
+- fieldname: code_version
+  label: Version
+  fieldtype: Text
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: canonical_uri
+  label: Canonical URI
+  fieldtype: Text
+  in_list_view: true
+- fieldname: publisher_id
+  label: Publisher ID
+  fieldtype: Text
+- fieldname: url
+  label: URL
+  fieldtype: Text
+- fieldname: default_common_code
+  label: Default Common Code
+  fieldtype: Link
+  options: Common Code
+  description: This value shall be used when no matching Common Code for a record is found.
+title_field: title
+layout:
+- section: État et options
+  columns:
+  - - title
+    - canonical_uri
+    - url
+    - default_common_code
+  - - code_version
+    - publisher
+    - publisher_id
+- section: Description et notes
+  columns:
+  - - description

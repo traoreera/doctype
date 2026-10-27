@@ -1,0 +1,32 @@
+schema_version: 1
+name: Landed Cost Purchase Receipt
+label: Landed Cost Purchase Receipt
+istable: true
+fields:
+- fieldname: receipt_document_type
+  label: Receipt Document Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: receipt_document
+  label: Receipt Document
+  fieldtype: DynamicLink
+  required: true
+  in_list_view: true
+  options: receipt_document_type
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  read_only: true
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true

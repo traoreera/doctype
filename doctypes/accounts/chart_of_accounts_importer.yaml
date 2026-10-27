@@ -1,0 +1,20 @@
+schema_version: 1
+name: Chart of Accounts Importer
+label: Chart of Accounts Importer
+module: accounts
+icon: file-input
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: import_file
+  label: Attach custom Chart of Accounts file
+  fieldtype: Attach
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - import_file

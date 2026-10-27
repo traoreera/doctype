@@ -1,0 +1,88 @@
+schema_version: 1
+name: Appointment Booking Settings
+label: Appointment Booking Settings
+module: crm
+single: true
+icon: settings
+fields:
+- fieldname: availability_of_slots
+  label: Availability Of Slots
+  fieldtype: Table
+  options: Appointment Booking Slots
+- fieldname: number_of_agents
+  label: Number of Concurrent Appointments
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+  in_list_view: true
+- fieldname: appointment_duration
+  label: Appointment Duration (In Minutes)
+  fieldtype: Int
+  required: true
+  default: 60
+- fieldname: email_reminders
+  label: Notify Via Email
+  fieldtype: Boolean
+  description: Notify customer and agent via email on the day of the appointment.
+  default: false
+- fieldname: advance_booking_days
+  label: Number of days appointments can be booked in advance
+  fieldtype: Int
+  default: 7
+- fieldname: agent_list
+  label: Agents
+  fieldtype: Table
+  options: Assignment Rule User
+  multiselect: true
+- fieldname: enable_scheduling
+  label: Enable Appointment Scheduling
+  fieldtype: Boolean
+  default: false
+- fieldname: success_redirect_url
+  label: Success Redirect URL
+  fieldtype: Text
+  description: 'Leave blank for home.
+
+    This is relative to site URL, for example "about" will redirect to "https://yoursitename.com/about"'
+- fieldname: verification_link_expiry_duration
+  label: Verification Link Expiry Duration
+  fieldtype: Int
+  description: 'In Minutes (min: 15 mins, max: 60 mins)'
+  default: 30
+- fieldname: enable_appointment_portal
+  label: Enable Appointment Booking Through Portal
+  fieldtype: Boolean
+  default: false
+- fieldname: action_for_expired_unverified_appointments
+  label: Action for Expired Unverified Appointments
+  fieldtype: Select
+  options:
+  - Mark as Closed
+  - Delete Permanently
+  default: Mark as Closed
+title_field: holiday_list
+layout:
+- section: Appointment Details
+  columns:
+  - - appointment_duration
+    - email_reminders
+  - - agent_list
+    - number_of_agents
+- section: Appointment Scheduling
+  columns:
+  - - enable_scheduling
+    - availability_of_slots
+- section: Options complémentaires 3
+  columns:
+  - - advance_booking_days
+  - - holiday_list
+- section: Appointment Booking Portal Settings
+  columns:
+  - - enable_appointment_portal
+    - verification_link_expiry_duration
+  - - success_redirect_url
+    - action_for_expired_unverified_appointments

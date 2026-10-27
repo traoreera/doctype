@@ -1,0 +1,67 @@
+schema_version: 1
+name: Bisect Accounting Statements
+label: Bisect Accounting Statements
+module: accounts
+icon: split
+fields:
+- fieldname: from_date
+  label: From Date
+  fieldtype: Datetime
+- fieldname: to_date
+  label: To Date
+  fieldtype: Datetime
+- fieldname: algorithm
+  label: Algorithm
+  fieldtype: Select
+  options:
+  - BFS
+  - DFS
+  default: BFS
+- fieldname: current_node
+  label: Current Node
+  fieldtype: Link
+  options: Bisect Nodes
+- fieldname: current_from_date
+  label: Current From Date
+  fieldtype: Datetime
+  read_only: true
+- fieldname: current_to_date
+  label: Current To Date
+  fieldtype: Datetime
+  read_only: true
+- fieldname: p_l_summary
+  label: P L Summary
+  fieldtype: Number
+  read_only: true
+- fieldname: b_s_summary
+  label: B S Summary
+  fieldtype: Number
+  read_only: true
+- fieldname: difference
+  label: Difference
+  fieldtype: Number
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - company
+  - - from_date
+  - - to_date
+  - - algorithm
+- section: Informations complémentaires 2
+  columns:
+  - - current_node
+- section: Dates et planification
+  columns:
+  - - current_from_date
+  - - current_to_date
+- section: Informations complémentaires 4
+  columns:
+  - - p_l_summary
+  - - b_s_summary
+  - - difference

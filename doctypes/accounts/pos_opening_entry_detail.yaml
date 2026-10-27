@@ -1,0 +1,17 @@
+schema_version: 1
+name: POS Opening Entry Detail
+label: POS Opening Entry Detail
+istable: true
+fields:
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+  required: true
+  in_list_view: true
+- fieldname: opening_amount
+  label: Opening Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true

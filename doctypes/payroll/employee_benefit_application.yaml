@@ -1,0 +1,94 @@
+schema_version: 1
+name: Employee Benefit Application
+label: Employee Benefit Application
+module: payroll
+submittable: true
+icon: gift
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: max_benefits
+  label: Max Benefits (Yearly)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: remaining_benefit
+  label: Remaining Benefits (Yearly)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: payroll_period
+  label: Payroll Period
+  fieldtype: Link
+  options: Payroll Period
+  required: true
+  in_list_view: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Benefit Application
+  read_only: true
+- fieldname: employee_benefits
+  label: Flexible Benefits
+  fieldtype: Table
+  options: Employee Benefit Application Detail
+- fieldname: total_amount
+  label: Total Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+  - - date
+    - payroll_period
+    - company
+    - amended_from
+- section: Benefits
+  columns:
+  - - currency
+  - - max_benefits
+  - - remaining_benefit
+- section: Informations complémentaires 3
+  columns:
+  - - employee_benefits
+- section: Totals
+  columns:
+  - - total_amount
+views:
+  calendar:
+    start: date
+    title: employee_name

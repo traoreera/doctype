@@ -1,0 +1,113 @@
+schema_version: 1
+name: Service Level Agreement
+label: Service Level Agreement
+module: support
+icon: signature
+fields:
+- fieldname: service_level
+  label: Service Level Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+  required: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: support_and_resolution
+  label: Working Hours
+  fieldtype: Table
+  options: Service Day
+- fieldname: priorities
+  label: Priorities
+  fieldtype: Table
+  options: Service Level Priority
+- fieldname: entity
+  label: Entity
+  fieldtype: DynamicLink
+  options: entity_type
+  in_list_view: true
+- fieldname: entity_type
+  label: Entity Type
+  fieldtype: Select
+  options:
+  - Customer
+  - Customer Group
+  - Territory
+- fieldname: default_service_level_agreement
+  label: Default Service Level Agreement
+  fieldtype: Boolean
+  default: false
+- fieldname: default_priority
+  label: Default Priority
+  fieldtype: Link
+  options: Issue Priority
+  read_only: true
+- fieldname: pause_sla_on
+  label: SLA Paused On
+  fieldtype: Table
+  options: Pause SLA On Status
+- fieldname: document_type
+  label: Apply On
+  fieldtype: Text
+  required: true
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+- fieldname: sla_fulfilled_on
+  label: SLA Fulfilled On
+  fieldtype: Table
+  options: SLA Fulfilled On Status
+- fieldname: apply_sla_for_resolution
+  label: Apply SLA for Resolution Time
+  fieldtype: Boolean
+  default: true
+- fieldname: condition
+  label: Condition
+  fieldtype: Code
+  description: 'Simple Python Expression, Example: doc.status == ''Open'' and doc.issue_type == ''Bug'''
+title_field: service_level
+layout:
+- section: État et options
+  columns:
+  - - document_type
+    - default_priority
+  - - service_level
+    - enabled
+- section: Assignment Conditions
+  columns:
+  - - default_service_level_agreement
+    - entity_type
+    - entity
+  - - condition
+- section: Valid From
+  columns:
+  - - start_date
+  - - end_date
+- section: Response and Resolution
+  columns:
+  - - apply_sla_for_resolution
+    - priorities
+- section: Status Details
+  columns:
+  - - sla_fulfilled_on
+  - - pause_sla_on
+- section: Working Hours
+  columns:
+  - - holiday_list
+    - support_and_resolution
+views:
+  calendar:
+    start: start_date
+    title: service_level
+  gantt:
+    start: start_date
+    end: end_date
+    title: service_level

@@ -1,0 +1,30 @@
+schema_version: 1
+name: stock
+label: Stock
+icon: warehouse
+description: Articles, entrepôts, lots et mouvements de stock.
+order: 20
+
+blocks:
+  - { type: header, text: Vue d’ensemble }
+  - { type: number_card, label: Mouvements en brouillon, doctype: Stock Entry, filters: { docstatus: 0 }, color: orange }
+  - { type: number_card, label: Mouvements soumis, doctype: Stock Entry, filters: { docstatus: 1 }, color: green }
+  - { type: number_card, label: Articles, doctype: Item, color: blue }
+  - { type: number_card, label: Entrepôts, doctype: Warehouse, color: teal }
+  - { type: number_card, label: Quantité en stock, doctype: Bin, function: sum, field: actual_qty, color: purple }
+  - { type: chart, label: Mouvements par mois, doctype: Stock Entry, kind: bar, group_by: posting_date, bucket: month, periods: 6, filters: { docstatus: 1 }, cols: 8 }
+  - { type: chart, label: Mouvements par nature, doctype: Stock Entry, kind: donut, group_by: purpose, filters: { docstatus: 1 }, cols: 4 }
+  - { type: chart, label: Quantité par entrepôt, doctype: Bin, kind: bar, group_by: warehouse, function: sum, field: actual_qty, limit: 8, cols: 6 }
+  - { type: chart, label: Quantité par article, doctype: Bin, kind: bar, group_by: item_code, function: sum, field: actual_qty, limit: 8, cols: 6 }
+  - { type: quick_list, label: Derniers mouvements, doctype: Stock Entry, limit: 5, cols: 12 }
+  - { type: header, text: Opérations }
+  - { type: shortcut, doctype: Stock Entry, new: true }
+  - { type: shortcut, doctype: Material Request, new: true }
+  - { type: shortcut, doctype: Pick List, new: true }
+  - { type: shortcut, doctype: Stock Reconciliation, new: true }
+  - { type: shortcut, doctype: Stock Ledger Entry }
+  - { type: shortcut, doctype: Bin }
+  - { type: header, text: Référentiel }
+  - { type: shortcut, doctype: Item, new: true }
+  - { type: shortcut, doctype: Batch, new: true }
+  - { type: shortcut, doctype: Warehouse, new: true }

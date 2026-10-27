@@ -1,0 +1,198 @@
+schema_version: 1
+name: Timesheet
+label: Timesheet
+module: projects
+submittable: true
+icon: clock
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  hidden: true
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - TS-.YYYY.-
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: sales_invoice
+  label: Sales Invoice
+  fieldtype: Link
+  options: Sales Invoice
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Partially Billed
+  - Billed
+  - Payslip
+  - Completed
+  - Cancelled
+  default: Draft
+  read_only: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  read_only: true
+- fieldname: time_logs
+  label: Time Sheets
+  fieldtype: Table
+  options: Timesheet Detail
+- fieldname: total_hours
+  label: Total Working Hours
+  fieldtype: Number
+  read_only: true
+- fieldname: total_billable_hours
+  label: Total Billable Hours
+  fieldtype: Number
+  read_only: true
+- fieldname: total_billed_hours
+  label: Total Billed Hours
+  fieldtype: Number
+  read_only: true
+- fieldname: total_costing_amount
+  label: Total Costing Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_billable_amount
+  label: Total Billable Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_billed_amount
+  label: Total Billed Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: per_billed
+  label: '% Amount Billed'
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: note
+  label: Note
+  fieldtype: TextEditor
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Timesheet
+  read_only: true
+- fieldname: parent_project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: base_total_costing_amount
+  label: Base Total Costing Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_billable_amount
+  label: Base Total Billable Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_billed_amount
+  label: Base Total Billed Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  default: 1.0
+title_field: status
+layout:
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - naming_series
+    - company
+    - customer
+    - currency
+    - exchange_rate
+    - sales_invoice
+  - - status
+    - parent_project
+    - user
+    - start_date
+    - end_date
+- tab: Général
+  section: Employee Detail
+  columns:
+  - - employee
+    - department
+  - - employee_name
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - time_logs
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - total_hours
+- tab: Billing
+  section: Billing Details
+  columns:
+  - - total_billable_hours
+    - total_billable_amount
+    - total_costing_amount
+    - base_total_billable_amount
+    - base_total_costing_amount
+  - - total_billed_hours
+    - total_billed_amount
+    - base_total_billed_amount
+    - per_billed
+- tab: Billing
+  section: Dates et planification
+  columns:
+  - - note
+    - amended_from
+views:
+  calendar:
+    start: start_date
+    title: status
+  gantt:
+    start: start_date
+    end: end_date
+    title: status
+  tree:
+    parent: amended_from

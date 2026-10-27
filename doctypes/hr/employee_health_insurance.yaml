@@ -1,0 +1,16 @@
+schema_version: 1
+name: Employee Health Insurance
+label: Employee Health Insurance
+module: hr
+icon: heart-pulse
+fields:
+- fieldname: health_insurance_name
+  label: Health Insurance Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: health_insurance_name
+layout:
+- section: Informations principales
+  columns:
+  - - health_insurance_name

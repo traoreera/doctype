@@ -1,0 +1,21 @@
+schema_version: 1
+name: UTM Medium
+label: UTM Medium
+module: crm
+icon: file-text
+fields:
+- fieldname: medium_name
+  label: Medium Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+title_field: medium_name
+layout:
+- section: Informations principales
+  columns:
+  - - medium_name
+    - enabled

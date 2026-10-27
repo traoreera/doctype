@@ -1,0 +1,113 @@
+schema_version: 1
+name: Stock Reconciliation
+label: Stock Reconciliation
+module: stock
+submittable: true
+icon: scale
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-RECO-.YYYY.-
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: purpose
+  label: Purpose
+  fieldtype: Select
+  options:
+  - Opening Stock
+  - Stock Reconciliation
+  - Adjustment Entry
+  required: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: set_posting_time
+  label: Edit Posting Date and Time
+  fieldtype: Boolean
+  default: false
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Stock Reconciliation Item
+- fieldname: expense_account
+  label: Difference Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: difference_amount
+  label: Difference Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Stock Reconciliation
+  read_only: true
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: scan_mode
+  label: Scan Mode
+  fieldtype: Boolean
+  description: Disables auto-fetching of existing quantity
+  default: false
+- fieldname: set_warehouse
+  label: Default Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: last_scanned_warehouse
+  label: Last Scanned Warehouse
+  fieldtype: Text
+title_field: naming_series
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+    - purpose
+  - - posting_date
+    - posting_time
+    - set_posting_time
+- section: Références
+  columns:
+  - - set_warehouse
+- section: Références
+  columns:
+  - - scan_barcode
+    - last_scanned_warehouse
+  - - scan_mode
+- section: Références
+  columns:
+  - - items
+- section: Comptabilité et montants
+  columns:
+  - - expense_account
+  - - difference_amount
+    - amended_from
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+views:
+  calendar:
+    start: posting_date
+    title: naming_series
+  tree:
+    parent: amended_from

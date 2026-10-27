@@ -1,0 +1,30 @@
+schema_version: 1
+name: Employee External Work History
+label: Employee External Work History
+istable: true
+fields:
+- fieldname: company_name
+  label: Company
+  fieldtype: Text
+  in_list_view: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Text
+  in_list_view: true
+- fieldname: salary
+  label: Salary
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: address
+  label: Address
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: contact
+  label: Contact
+  fieldtype: Text
+  in_list_view: true
+- fieldname: total_experience
+  label: Total Experience
+  fieldtype: Text
+  in_list_view: true

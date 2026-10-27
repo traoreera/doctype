@@ -1,0 +1,259 @@
+schema_version: 1
+name: Process Statement Of Accounts
+label: Process Statement Of Accounts
+module: accounts
+icon: mail
+fields:
+- fieldname: frequency
+  label: Frequency
+  fieldtype: Select
+  options:
+  - Daily
+  - Weekly
+  - Biweekly
+  - Monthly
+  - Quarterly
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Table
+  options: PSOA Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Table
+  options: PSOA Project
+- fieldname: customer_collection
+  label: Select Customers By
+  fieldtype: Text
+- fieldname: collection_name
+  label: Recipient
+  fieldtype: DynamicLink
+  options: customer_collection
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: orientation
+  label: Orientation
+  fieldtype: Select
+  options:
+  - Landscape
+  - Portrait
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  default: today
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: include_ageing
+  label: Include Ageing Summary
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: ageing_based_on
+  label: Ageing Based On
+  fieldtype: Select
+  options:
+  - Due Date
+  - Posting Date
+  default: Due Date
+- fieldname: enable_auto_email
+  label: Enable Auto Email
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: primary_mandatory
+  label: Send To Primary Contact
+  fieldtype: Boolean
+  description: A customer must have primary contact email.
+  default: true
+- fieldname: cc_to
+  label: CC To
+  fieldtype: Table
+  options: Process Statement Of Accounts CC
+- fieldname: filter_duration
+  label: Filter Duration (Months)
+  fieldtype: Int
+  default: 1
+- fieldname: customers
+  label: Customers
+  fieldtype: Table
+  options: Process Statement Of Accounts Customer
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+- fieldname: body
+  label: Body
+  fieldtype: TextEditor
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: terms_and_conditions
+  label: Terms and Conditions
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: include_break
+  label: Page Break After Each SoA
+  fieldtype: Boolean
+  default: true
+- fieldname: show_net_values_in_party_account
+  label: Show Net Values in Party Account
+  fieldtype: Boolean
+  default: false
+- fieldname: sender
+  label: Sender
+  fieldtype: Link
+  options: Email Account
+- fieldname: report
+  label: Report
+  fieldtype: Select
+  options:
+  - General Ledger
+  - Accounts Receivable
+  required: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  default: today
+- fieldname: payment_terms_template
+  label: Payment Terms Template
+  fieldtype: Link
+  options: Payment Terms Template
+- fieldname: sales_partner
+  label: Sales Partner
+  fieldtype: Link
+  options: Sales Partner
+- fieldname: sales_person
+  label: Sales Person
+  fieldtype: Link
+  options: Sales Person
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: based_on_payment_terms
+  label: Based On Payment Terms
+  fieldtype: Boolean
+  default: false
+- fieldname: pdf_name
+  label: PDF Name
+  fieldtype: Text
+- fieldname: ignore_exchange_rate_revaluation_journals
+  label: Ignore Exchange Rate Revaluation and Gain / Loss Journals
+  fieldtype: Boolean
+  default: false
+- fieldname: ignore_cr_dr_notes
+  label: Ignore System Generated Credit / Debit Notes
+  fieldtype: Boolean
+  default: false
+- fieldname: show_remarks
+  label: Show Remarks
+  fieldtype: Boolean
+  default: false
+- fieldname: categorize_by
+  label: Categorize By
+  fieldtype: Select
+  options:
+  - Categorize by Voucher
+  - Categorize by Voucher (Consolidated)
+  default: Categorize by Voucher (Consolidated)
+- fieldname: show_future_payments
+  label: Show Future Payments
+  fieldtype: Boolean
+  default: false
+- fieldname: print_format
+  label: Print Format
+  fieldtype: Link
+  options: Print Format
+- fieldname: show_opening_entries
+  label: Show Opening Entries
+  fieldtype: Boolean
+  default: false
+title_field: company
+layout:
+- section: Informations principales
+  columns:
+  - - report
+- section: Report Filters
+  columns:
+  - - from_date
+    - posting_date
+    - company
+    - account
+    - categorize_by
+    - cost_center
+    - territory
+    - show_opening_entries
+    - ignore_exchange_rate_revaluation_journals
+    - ignore_cr_dr_notes
+  - - to_date
+    - finance_book
+    - currency
+    - project
+    - payment_terms_template
+    - sales_partner
+    - sales_person
+    - show_remarks
+    - based_on_payment_terms
+    - show_future_payments
+- section: Customers
+  columns:
+  - - customer_collection
+    - collection_name
+  - - primary_mandatory
+    - show_net_values_in_party_account
+- section: Références
+  columns:
+  - - customers
+- section: Print Preferences
+  columns:
+  - - print_format
+    - orientation
+    - include_break
+    - include_ageing
+    - ageing_based_on
+  - - letter_head
+    - terms_and_conditions
+- section: Email Settings
+  columns:
+  - - enable_auto_email
+  - - sender
+- section: Dates et planification
+  columns:
+  - - frequency
+    - filter_duration
+  - - start_date
+- section: Description et notes
+  columns:
+  - - pdf_name
+    - subject
+  - - cc_to
+- section: Informations complémentaires 9
+  columns:
+  - - body
+views:
+  calendar:
+    start: posting_date
+    title: company
+  gantt:
+    start: from_date
+    end: to_date
+    title: company

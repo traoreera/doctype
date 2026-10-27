@@ -1,0 +1,28 @@
+schema_version: 1
+name: Service Day
+label: Service Day
+istable: true
+fields:
+- fieldname: workday
+  label: Workday
+  fieldtype: Select
+  options:
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  - Saturday
+  - Sunday
+  required: true
+  in_list_view: true
+- fieldname: start_time
+  label: Start Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: end_time
+  label: End Time
+  fieldtype: Time
+  required: true
+  in_list_view: true

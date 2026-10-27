@@ -1,0 +1,40 @@
+schema_version: 1
+name: Manufacturer
+label: Manufacturer
+module: stock
+icon: factory
+fields:
+- fieldname: short_name
+  label: Short Name
+  fieldtype: Text
+  required: true
+  description: Limited to 12 characters
+- fieldname: full_name
+  label: Full Name
+  fieldtype: Text
+  in_list_view: true
+- fieldname: website
+  label: Website
+  fieldtype: Text
+- fieldname: country
+  label: Country
+  fieldtype: Link
+  options: Country
+- fieldname: logo
+  label: Logo
+  fieldtype: Image
+- fieldname: notes
+  label: Notes
+  fieldtype: LongText
+title_field: full_name
+layout:
+- section: Informations principales
+  columns:
+  - - short_name
+    - full_name
+    - website
+    - country
+    - logo
+- section: Description et notes
+  columns:
+  - - notes

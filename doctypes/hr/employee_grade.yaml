@@ -1,0 +1,25 @@
+schema_version: 1
+name: Employee Grade
+label: Employee Grade
+module: hr
+icon: layers
+fields:
+- fieldname: default_salary_structure
+  label: Default Salary Structure
+  fieldtype: Link
+  options: Salary Structure
+- fieldname: default_base_pay
+  label: Default Base Pay
+  fieldtype: Currency
+  decimals: 2
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+layout:
+- section: Informations principales
+  columns:
+  - - default_salary_structure
+    - default_base_pay

@@ -1,0 +1,22 @@
+schema_version: 1
+name: Loyalty Program Collection
+label: Loyalty Program Collection
+istable: true
+fields:
+- fieldname: tier_name
+  label: Tier Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: min_spent
+  label: Minimum Total Spent
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: collection_factor
+  label: Collection Factor (=1 LP)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  description: For how much spent = 1 Loyalty Point

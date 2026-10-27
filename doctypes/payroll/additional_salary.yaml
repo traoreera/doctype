@@ -1,0 +1,132 @@
+schema_version: 1
+name: Additional Salary
+label: Additional Salary
+module: payroll
+submittable: true
+icon: circle-plus
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-ADS-.YY.-.MM.-
+  required: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: overwrite_salary_structure_amount
+  label: Overwrite Salary Structure Amount
+  fieldtype: Boolean
+  default: true
+- fieldname: deduct_full_tax_on_selected_payroll_date
+  label: Deduct Full Tax on Selected Payroll Date
+  fieldtype: Boolean
+  default: false
+- fieldname: payroll_date
+  label: Payroll Date
+  fieldtype: Date
+  in_list_view: true
+  description: The date on which Salary Component with Amount will contribute for Earnings/Deduction in Salary Slip.
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: type
+  label: Salary Component Type
+  fieldtype: Text
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Additional Salary
+  read_only: true
+- fieldname: is_recurring
+  label: Is Recurring
+  fieldtype: Boolean
+  default: false
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+- fieldname: ref_doctype
+  label: Reference Document Type
+  fieldtype: Text
+  read_only: true
+- fieldname: ref_docname
+  label: Reference Document
+  fieldtype: DynamicLink
+  options: ref_doctype
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - naming_series
+    - employee
+    - employee_name
+    - department
+  - - company
+    - is_recurring
+    - disabled
+    - from_date
+    - to_date
+    - payroll_date
+    - amended_from
+- section: Salary
+  columns:
+  - - salary_component
+    - type
+    - currency
+    - amount
+  - - deduct_full_tax_on_selected_payroll_date
+    - overwrite_salary_structure_amount
+- section: References
+  columns:
+  - - ref_doctype
+    - ref_docname
+views:
+  calendar:
+    start: from_date
+    title: employee_name
+  gantt:
+    start: from_date
+    end: to_date
+    title: employee_name

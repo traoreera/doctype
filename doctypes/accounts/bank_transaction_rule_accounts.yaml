@@ -1,0 +1,27 @@
+schema_version: 1
+name: Bank Transaction Rule Accounts
+label: Bank Transaction Rule Accounts
+istable: true
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: debit
+  label: Debit
+  fieldtype: Text
+- fieldname: credit
+  label: Credit
+  fieldtype: Text
+- fieldname: user_remark
+  label: User Remark
+  fieldtype: LongText

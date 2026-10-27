@@ -1,0 +1,127 @@
+schema_version: 1
+name: Item Price
+label: Item Price
+module: stock
+icon: tag
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+- fieldname: packing_unit
+  label: Packing Unit
+  fieldtype: Int
+  description: Quantity  that must be bought or sold per UOM
+  default: 0
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+  in_list_view: true
+  read_only: true
+- fieldname: item_description
+  label: Item Description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+  required: true
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: buying
+  label: Buying
+  fieldtype: Boolean
+  read_only: true
+- fieldname: selling
+  label: Selling
+  fieldtype: Boolean
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: price_list_rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: valid_from
+  label: Valid From
+  fieldtype: Date
+  default: today
+- fieldname: lead_time_days
+  label: Lead Time in days
+  fieldtype: Int
+  default: 0
+- fieldname: valid_upto
+  label: Valid Up To
+  fieldtype: Date
+- fieldname: note
+  label: Note
+  fieldtype: LongText
+- fieldname: reference
+  label: Reference
+  fieldtype: Text
+  in_list_view: true
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+title_field: item_code
+layout:
+- section: Références
+  columns:
+  - - item_code
+    - uom
+    - packing_unit
+  - - item_name
+    - brand
+    - item_description
+- section: Price List
+  columns:
+  - - price_list
+    - customer
+    - supplier
+    - batch_no
+  - - buying
+    - selling
+- section: Comptabilité et montants
+  columns:
+  - - currency
+  - - price_list_rate
+- section: Dates et planification
+  columns:
+  - - valid_from
+    - lead_time_days
+  - - valid_upto
+- section: Références
+  columns:
+  - - note
+    - reference
+views:
+  calendar:
+    start: valid_from
+    title: item_code

@@ -1,0 +1,40 @@
+schema_version: 1
+name: Request for Quotation Supplier
+label: Request for Quotation Supplier
+istable: true
+fields:
+- fieldname: send_email
+  label: Send Email
+  fieldtype: Boolean
+  in_list_view: true
+  default: true
+- fieldname: email_sent
+  label: Email Sent
+  fieldtype: Boolean
+  read_only: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  required: true
+  in_list_view: true
+- fieldname: contact
+  label: Contact
+  fieldtype: Link
+  options: Contact
+  in_list_view: true
+- fieldname: quote_status
+  label: Quote Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Received
+  read_only: true
+- fieldname: supplier_name
+  label: Supplier Name
+  fieldtype: Text
+  read_only: true
+- fieldname: email_id
+  label: Email ID
+  fieldtype: Text
+  in_list_view: true

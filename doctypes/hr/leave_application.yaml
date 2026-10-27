@@ -1,0 +1,162 @@
+schema_version: 1
+name: Leave Application
+label: Leave Application
+module: hr
+submittable: true
+icon: plane
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-LAP-.YYYY.-
+  required: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: employee_email
+  label: Employee Email
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+  required: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: leave_balance
+  label: Leave Balance Before Application
+  fieldtype: Number
+  read_only: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+- fieldname: half_day
+  label: Half Day
+  fieldtype: Boolean
+  default: false
+- fieldname: half_day_date
+  label: Half Day Date
+  fieldtype: Date
+- fieldname: total_leave_days
+  label: Total Leave Days
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: description
+  label: Reason
+  fieldtype: LongText
+- fieldname: leave_approver
+  label: Leave Approver
+  fieldtype: Link
+  options: Member
+- fieldname: leave_approver_name
+  label: Leave Approver Name
+  fieldtype: Text
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Approved
+  - Rejected
+  - Cancelled
+  default: Open
+  required: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+- fieldname: follow_via_email
+  label: Follow via Email
+  fieldtype: Boolean
+  default: true
+- fieldname: salary_slip
+  label: Salary Slip
+  fieldtype: Link
+  options: Salary Slip
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: color
+  label: Color
+  fieldtype: Color
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Leave Application
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - naming_series
+    - employee
+    - employee_name
+  - - leave_type
+    - company
+    - department
+- section: Dates & Reason
+  columns:
+  - - from_date
+    - to_date
+    - half_day
+    - half_day_date
+    - total_leave_days
+  - - description
+    - leave_balance
+- section: Approval
+  columns:
+  - - leave_approver
+    - leave_approver_name
+    - follow_via_email
+  - - posting_date
+    - status
+- section: Other Details
+  columns:
+  - - salary_slip
+    - color
+  - - letter_head
+    - amended_from
+views:
+  kanban:
+    field: status
+    card_fields:
+    - employee_name
+    - employee
+    - from_date
+  calendar:
+    start: posting_date
+    title: employee_name
+    color: status
+  gantt:
+    start: from_date
+    end: to_date
+    title: employee_name
+    color: status

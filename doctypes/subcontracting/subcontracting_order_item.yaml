@@ -1,0 +1,148 @@
+schema_version: 1
+name: Subcontracting Order Item
+label: Subcontracting Order Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  required: true
+- fieldname: schedule_date
+  label: Required By
+  fieldtype: Date
+  read_only: true
+- fieldname: expected_delivery_date
+  label: Expected Delivery Date
+  fieldtype: Date
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: qty
+  label: Quantity
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  default: 1.0
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: manufacturer
+  label: Manufacturer
+  fieldtype: Link
+  options: Manufacturer
+- fieldname: manufacturer_part_no
+  label: Manufacturer Part Number
+  fieldtype: Text
+- fieldname: bom
+  label: BOM
+  fieldtype: Link
+  options: BOM
+  required: true
+  in_list_view: true
+- fieldname: include_exploded_items
+  label: Include Exploded Items
+  fieldtype: Boolean
+  default: false
+- fieldname: service_cost_per_qty
+  label: Service Cost Per Qty
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: additional_cost_per_qty
+  label: Additional Cost Per Qty
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rm_cost_per_qty
+  label: Raw Material Cost Per Qty
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: page_break
+  label: Page Break
+  fieldtype: Boolean
+  default: false
+- fieldname: received_qty
+  label: Received Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: returned_qty
+  label: Returned Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: material_request
+  label: Material Request
+  fieldtype: Link
+  options: Material Request
+  read_only: true
+- fieldname: material_request_item
+  label: Material Request Item
+  fieldtype: Text
+  read_only: true
+- fieldname: purchase_order_item
+  label: Purchase Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: job_card
+  label: Job Card
+  fieldtype: Link
+  options: Job Card
+  read_only: true
+- fieldname: subcontracting_conversion_factor
+  label: Subcontracting Conversion Factor
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: production_plan_sub_assembly_item
+  label: Production Plan Sub Assembly Item
+  fieldtype: Text
+  read_only: true
+  hidden: true

@@ -1,0 +1,16 @@
+schema_version: 1
+name: Offer Term
+label: Offer Term
+module: hr
+icon: file-text
+fields:
+- fieldname: offer_term
+  label: Offer Term
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: offer_term
+layout:
+- section: Informations principales
+  columns:
+  - - offer_term

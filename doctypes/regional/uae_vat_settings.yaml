@@ -1,0 +1,23 @@
+schema_version: 1
+name: UAE VAT Settings
+label: UAE VAT Settings
+module: regional
+single: true
+icon: percent
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: uae_vat_accounts
+  label: UAE VAT Accounts
+  fieldtype: Table
+  options: UAE VAT Account
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - uae_vat_accounts

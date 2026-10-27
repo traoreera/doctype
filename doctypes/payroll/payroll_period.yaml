@@ -1,0 +1,42 @@
+schema_version: 1
+name: Payroll Period
+label: Payroll Period
+module: payroll
+icon: calendar-range
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+- fieldname: periods
+  label: Payroll Periods
+  fieldtype: Table
+  options: Payroll Period Date
+title_field: company
+layout:
+- section: Informations principales
+  columns:
+  - - company
+  - - start_date
+    - end_date
+- section: Payroll Periods
+  columns:
+  - - periods
+views:
+  calendar:
+    start: start_date
+    title: company
+  gantt:
+    start: start_date
+    end: end_date
+    title: company

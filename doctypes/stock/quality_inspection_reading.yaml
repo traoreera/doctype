@@ -1,0 +1,26 @@
+schema_version: 1
+name: "Quality Inspection Reading"
+label: "Quality Inspection Reading"
+istable: true
+fields:
+  - { fieldname: specification, label: "Parameter", fieldtype: Link, options: "Quality Inspection Parameter", required: true, in_list_view: true }
+  - { fieldname: value, label: "Acceptance Criteria Value", fieldtype: Text }
+  - { fieldname: reading_1, label: "Reading 1", fieldtype: Text, in_list_view: true }
+  - { fieldname: reading_2, label: "Reading 2", fieldtype: Text }
+  - { fieldname: reading_3, label: "Reading 3", fieldtype: Text }
+  - { fieldname: reading_4, label: "Reading 4", fieldtype: Text }
+  - { fieldname: reading_5, label: "Reading 5", fieldtype: Text }
+  - { fieldname: reading_6, label: "Reading 6", fieldtype: Text }
+  - { fieldname: reading_7, label: "Reading 7", fieldtype: Text }
+  - { fieldname: reading_8, label: "Reading 8", fieldtype: Text }
+  - { fieldname: reading_9, label: "Reading 9", fieldtype: Text }
+  - { fieldname: reading_10, label: "Reading 10", fieldtype: Text }
+  - { fieldname: status, label: "Status", fieldtype: Select, options: ["Accepted", "Rejected"], default: "Accepted", in_list_view: true }
+  - { fieldname: acceptance_formula, label: "Acceptance Criteria Formula", fieldtype: Code, description: "Simple Python formula applied on Reading fields.<br> Numeric eg. 1: <b>reading_1 &gt; 0.2 and reading_1 &lt; 0.5</b><br>\nNumeric eg. 2: <b>mean &gt; 3.5</b> (mean of populated fields)<br>\nValue based eg.:  <b>reading_value in (\"A\", \"B\", \"C\")</b>" }
+  - { fieldname: formula_based_criteria, label: "Formula Based Criteria", fieldtype: Boolean, default: false }
+  - { fieldname: min_value, label: "Minimum Value", fieldtype: Number, description: "Applied on each reading." }
+  - { fieldname: max_value, label: "Maximum Value", fieldtype: Number, description: "Applied on each reading." }
+  - { fieldname: reading_value, label: "Reading Value", fieldtype: Text, in_list_view: true }
+  - { fieldname: manual_inspection, label: "Manual Inspection", fieldtype: Boolean, description: "Set the status manually.", default: false }
+  - { fieldname: numeric, label: "Numeric", fieldtype: Boolean, in_list_view: true, default: true }
+  - { fieldname: parameter_group, label: "Parameter Group", fieldtype: Link, options: "Quality Inspection Parameter Group", read_only: true }

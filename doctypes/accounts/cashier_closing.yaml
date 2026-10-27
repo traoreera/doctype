@@ -1,0 +1,85 @@
+schema_version: 1
+name: Cashier Closing
+label: Cashier Closing
+module: accounts
+submittable: true
+icon: lock
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - POS-CLO-
+  default: POS-CLO-
+  read_only: true
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  read_only: true
+- fieldname: from_time
+  label: From Time
+  fieldtype: Time
+  required: true
+- fieldname: time
+  label: To Time
+  fieldtype: Time
+  required: true
+- fieldname: expense
+  label: Expense
+  fieldtype: Number
+  default: 0.0
+- fieldname: custody
+  label: Custody
+  fieldtype: Number
+  default: 0.0
+- fieldname: returns
+  label: Returns
+  fieldtype: Number
+  default: 0.0
+- fieldname: outstanding_amount
+  label: Outstanding Amount
+  fieldtype: Number
+  read_only: true
+- fieldname: payments
+  label: Payments
+  fieldtype: Table
+  options: Cashier Closing Payments
+- fieldname: net_amount
+  label: Net Amount
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Cashier Closing
+  read_only: true
+title_field: user
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - naming_series
+    - user
+    - date
+    - from_time
+    - time
+    - expense
+    - custody
+    - returns
+    - outstanding_amount
+    - payments
+    - net_amount
+    - amended_from
+views:
+  calendar:
+    start: date
+    title: user
+  tree:
+    parent: amended_from

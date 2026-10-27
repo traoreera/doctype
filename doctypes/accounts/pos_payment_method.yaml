@@ -1,0 +1,21 @@
+schema_version: 1
+name: POS Payment Method
+label: POS Payment Method
+istable: true
+fields:
+- fieldname: default
+  label: Default
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+  required: true
+  in_list_view: true
+- fieldname: allow_in_returns
+  label: Allow In Returns
+  fieldtype: Boolean
+  in_list_view: true
+  default: false

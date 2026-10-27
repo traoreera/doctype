@@ -1,0 +1,141 @@
+schema_version: 1
+name: Exit Interview
+label: Exit Interview
+module: hr
+submittable: true
+icon: door-open
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: relieving_date
+  label: Relieving Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: ref_doctype
+  label: Reference Document Type
+  fieldtype: Text
+- fieldname: reference_document_name
+  label: Reference Document Name
+  fieldtype: DynamicLink
+  options: ref_doctype
+  in_list_view: true
+- fieldname: interviewers
+  label: Interviewers
+  fieldtype: Table
+  options: Interviewer
+- fieldname: date_of_joining
+  label: Date of Joining
+  fieldtype: Date
+  read_only: true
+- fieldname: reports_to
+  label: Reports To
+  fieldtype: Link
+  options: Employee
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - HR-EXIT-INT-
+- fieldname: questionnaire_email_sent
+  label: Questionnaire Email Sent
+  fieldtype: Boolean
+  read_only: true
+- fieldname: email
+  label: Email ID
+  fieldtype: Text
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Scheduled
+  - Completed
+  - Cancelled
+  required: true
+  in_list_view: true
+- fieldname: employee_status
+  label: Final Decision
+  fieldtype: Select
+  options:
+  - Employee Retained
+  - Exit Confirmed
+  in_list_view: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Exit Interview
+  read_only: true
+- fieldname: interview_summary
+  label: Interview Summary
+  fieldtype: TextEditor
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - naming_series
+    - employee
+    - employee_name
+    - email
+  - - company
+    - status
+    - date
+- section: Employee Details
+  columns:
+  - - department
+    - designation
+    - reports_to
+  - - date_of_joining
+    - relieving_date
+- section: Exit Questionnaire
+  columns:
+  - - ref_doctype
+    - questionnaire_email_sent
+  - - reference_document_name
+- section: Interview Details
+  columns:
+  - - interviewers
+    - interview_summary
+- section: Informations complémentaires 5
+  columns:
+  - - employee_status
+    - amended_from
+views:
+  kanban:
+    field: status
+    card_fields:
+    - employee_name
+    - employee
+  calendar:
+    start: date
+    title: employee_name
+    color: status

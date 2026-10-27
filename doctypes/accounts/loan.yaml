@@ -1,0 +1,67 @@
+schema_version: 1
+name: Loan
+label: Loan
+module: accounts
+icon: file-text
+fields:
+- fieldname: applicant_type
+  label: Applicant Type
+  fieldtype: Select
+  options:
+  - Employee
+  - Customer
+  - Member
+  required: true
+- fieldname: applicant
+  label: Applicant
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: loan_product
+  label: Loan Product
+  fieldtype: Link
+  options: Loan Product
+  required: true
+- fieldname: loan_amount
+  label: Loan Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: rate_of_interest
+  label: Rate of Interest
+  fieldtype: Percent
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+- fieldname: repayment_periods
+  label: Repayment Periods
+  fieldtype: Int
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Sanctioned
+  - ' disbursed'
+  - Closed
+  - Written Off
+  in_list_view: true
+title_field: applicant
+layout:
+- section: Informations principales
+  columns:
+  - - applicant_type
+    - applicant
+    - company
+    - loan_product
+    - loan_amount
+    - rate_of_interest
+    - posting_date
+    - repayment_periods
+    - status

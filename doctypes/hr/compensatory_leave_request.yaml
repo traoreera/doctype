@@ -1,0 +1,72 @@
+schema_version: 1
+name: Compensatory Leave Request
+label: Compensatory Leave Request
+module: hr
+submittable: true
+icon: calendar-plus-2
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+- fieldname: leave_allocation
+  label: Leave Allocation
+  fieldtype: Link
+  options: Leave Allocation
+  read_only: true
+- fieldname: work_from_date
+  label: Work From Date
+  fieldtype: Date
+  required: true
+- fieldname: work_end_date
+  label: Work End Date
+  fieldtype: Date
+  required: true
+- fieldname: half_day
+  label: Half Day
+  fieldtype: Boolean
+  default: false
+- fieldname: half_day_date
+  label: Half Day Date
+  fieldtype: Date
+- fieldname: reason
+  label: Reason
+  fieldtype: LongText
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Compensatory Leave Request
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+  - - leave_type
+    - leave_allocation
+- section: Worked On Holiday
+  columns:
+  - - work_from_date
+    - work_end_date
+    - half_day
+    - half_day_date
+  - - reason
+    - amended_from

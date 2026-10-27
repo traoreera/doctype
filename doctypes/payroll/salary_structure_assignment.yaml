@@ -1,0 +1,146 @@
+schema_version: 1
+name: Salary Structure Assignment
+label: Salary Structure Assignment
+module: payroll
+submittable: true
+icon: user-check
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: salary_structure
+  label: Salary Structure
+  fieldtype: Link
+  options: Salary Structure
+  required: true
+  in_list_view: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: base
+  label: Base
+  fieldtype: Currency
+  decimals: 2
+- fieldname: annual_gross_earning
+  label: Annual Gross Earning
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: ctc
+  label: Total Cost To Company (CTC)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: variable
+  label: Variable
+  fieldtype: Currency
+  decimals: 2
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Salary Structure Assignment
+  read_only: true
+- fieldname: income_tax_slab
+  label: Income Tax Slab
+  fieldtype: Link
+  options: Income Tax Slab
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: payroll_payable_account
+  label: Payroll Payable Account
+  fieldtype: Link
+  options: Account
+- fieldname: payroll_cost_centers
+  label: Cost Centers
+  fieldtype: Table
+  options: Employee Cost Center
+- fieldname: grade
+  label: Grade
+  fieldtype: Link
+  options: Employee Grade
+  read_only: true
+- fieldname: tax_deducted_till_date
+  label: Tax Deducted Till Date
+  fieldtype: Currency
+  decimals: 2
+- fieldname: taxable_earnings_till_date
+  label: Taxable Earnings Till Date
+  fieldtype: Currency
+  decimals: 2
+- fieldname: employee_benefits
+  label: Flexible Benefits
+  fieldtype: Table
+  options: Employee Benefit Detail
+- fieldname: max_benefits
+  label: Maximum Benefit Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: leave_encashment_amount_per_day
+  label: Leave Encashment Amount Per Day
+  fieldtype: Currency
+  decimals: 2
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - designation
+    - grade
+  - - salary_structure
+    - from_date
+    - income_tax_slab
+  - - company
+    - payroll_payable_account
+    - currency
+- section: Base, Variable & Leave Encashment
+  columns:
+  - - base
+    - annual_gross_earning
+  - - variable
+    - ctc
+    - amended_from
+  - - leave_encashment_amount_per_day
+- section: Opening Balances
+  columns:
+  - - taxable_earnings_till_date
+  - - tax_deducted_till_date
+- section: Employee Benefits
+  columns:
+  - - max_benefits
+    - employee_benefits
+- section: Payroll Cost Centers
+  columns:
+  - - payroll_cost_centers
+views:
+  calendar:
+    start: from_date
+    title: employee_name

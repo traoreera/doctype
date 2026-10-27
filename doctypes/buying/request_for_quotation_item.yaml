@@ -1,0 +1,89 @@
+schema_version: 1
+name: Request for Quotation Item
+label: Request for Quotation Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: supplier_part_no
+  label: Supplier Part No
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: qty
+  label: Quantity
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: schedule_date
+  label: Required Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: project_name
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: material_request
+  label: Material Request
+  fieldtype: Link
+  options: Material Request
+  read_only: true
+- fieldname: material_request_item
+  label: Material Request Item
+  fieldtype: Text
+  hidden: true
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+  read_only: true
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  read_only: true
+- fieldname: page_break
+  label: Page Break
+  fieldtype: Boolean
+  default: false
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  read_only: true
+- fieldname: conversion_factor
+  label: UOM Conversion Factor
+  fieldtype: Number
+  required: true
+  read_only: true
+- fieldname: stock_qty
+  label: Qty as per Stock UOM
+  fieldtype: Number
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center

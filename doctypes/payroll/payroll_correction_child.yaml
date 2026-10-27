@@ -1,0 +1,16 @@
+schema_version: 1
+name: Payroll Correction Child
+label: Payroll Correction Child
+istable: true
+fields:
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Number
+  required: true
+  in_list_view: true

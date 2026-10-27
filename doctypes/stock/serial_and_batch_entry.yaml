@@ -1,0 +1,25 @@
+schema_version: 1
+name: "Serial and Batch Entry"
+label: "Serial and Batch Entry"
+istable: true
+fields:
+  - { fieldname: serial_no, label: "Serial No", fieldtype: Link, options: "Serial No", in_list_view: true }
+  - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch", in_list_view: true }
+  - { fieldname: qty, label: "Qty", fieldtype: Number, in_list_view: true, default: 1.0 }
+  - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true }
+  - { fieldname: incoming_rate, label: "Valuation Rate", fieldtype: Number, read_only: true }
+  - { fieldname: outgoing_rate, label: "Outgoing Rate", fieldtype: Number, read_only: true, hidden: true }
+  - { fieldname: stock_value_difference, label: "Change in Stock Value", fieldtype: Number, read_only: true }
+  - { fieldname: is_outward, label: "Is Outward", fieldtype: Boolean, read_only: true, hidden: true }
+  - { fieldname: stock_queue, label: "FIFO Stock Queue (qty, rate)", fieldtype: LongText, read_only: true }
+  - { fieldname: delivered_qty, label: "Delivered Qty", fieldtype: Number, read_only: true }
+  - { fieldname: reference_for_reservation, label: "Reference for Reservation", fieldtype: Text, read_only: true, hidden: true }
+  - { fieldname: posting_datetime, label: "Posting Datetime", fieldtype: Datetime, read_only: true }
+  - { fieldname: voucher_type, label: "Voucher Type", fieldtype: Text, read_only: true }
+  - { fieldname: voucher_no, label: "Voucher No", fieldtype: Text, read_only: true }
+  - { fieldname: voucher_detail_no, label: "Voucher Detail No", fieldtype: Text, read_only: true }
+  - { fieldname: type_of_transaction, label: "Type of Transaction", fieldtype: Text, read_only: true }
+  - { fieldname: is_cancelled, label: "Is Cancelled", fieldtype: Boolean, read_only: true }
+  - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", read_only: true }
+  - { fieldname: fg_serial_no, label: "Finished Good Serial No", fieldtype: Link, options: "Serial No", read_only: true, description: "Finished good serial no this raw material was consumed into (Manufacture / Repack)" }
+  - { fieldname: fg_batch_no, label: "Finished Good Batch No", fieldtype: Link, options: "Batch", read_only: true, description: "Finished good batch this raw material was consumed into (Manufacture / Repack)" }

@@ -1,0 +1,43 @@
+schema_version: 1
+name: Installation Note Item
+label: Installation Note Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+- fieldname: qty
+  label: Installed Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  in_list_view: true
+  read_only: true
+- fieldname: prevdoc_detail_docname
+  label: Against Document Detail No
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: prevdoc_docname
+  label: Against Document No
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: prevdoc_doctype
+  label: Document Type
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle

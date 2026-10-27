@@ -1,0 +1,452 @@
+schema_version: 1
+name: Salary Slip
+label: Salary Slip
+module: payroll
+submittable: true
+icon: receipt-text
+fields:
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Cancelled
+  - Withheld
+  read_only: true
+- fieldname: journal_entry
+  label: Journal Entry
+  fieldtype: Link
+  options: Journal Entry
+- fieldname: payroll_entry
+  label: Payroll Entry
+  fieldtype: Link
+  options: Payroll Entry
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: salary_slip_based_on_timesheet
+  label: Salary Slip Based on Timesheet
+  fieldtype: Boolean
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: salary_structure
+  label: Salary Structure
+  fieldtype: Link
+  options: Salary Structure
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: payroll_frequency
+  label: Payroll Frequency
+  fieldtype: Select
+  options:
+  - Monthly
+  - Fortnightly
+  - Bimonthly
+  - Weekly
+  - Daily
+- fieldname: total_working_days
+  label: Working Days
+  fieldtype: Number
+  required: true
+  read_only: true
+- fieldname: leave_without_pay
+  label: Leave Without Pay
+  fieldtype: Number
+- fieldname: payment_days
+  label: Payment Days
+  fieldtype: Number
+  required: true
+  read_only: true
+- fieldname: timesheets
+  label: Salary Slip Timesheet
+  fieldtype: Table
+  options: Salary Slip Timesheet
+- fieldname: total_working_hours
+  label: Total Working Hours
+  fieldtype: Number
+- fieldname: hour_rate
+  label: Hour Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: bank_name
+  label: Bank Name
+  fieldtype: Text
+- fieldname: bank_account_no
+  label: Bank Account No
+  fieldtype: Text
+- fieldname: deduct_tax_for_unsubmitted_tax_exemption_proof
+  label: Deduct Tax For Unsubmitted Tax Exemption Proof
+  fieldtype: Boolean
+  default: false
+- fieldname: earnings
+  label: Earnings
+  fieldtype: Table
+  options: Salary Detail
+- fieldname: deductions
+  label: Deductions
+  fieldtype: Table
+  options: Salary Detail
+- fieldname: gross_pay
+  label: Gross Pay
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_pay
+  label: Net Pay
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Salary Slip
+  read_only: true
+- fieldname: absent_days
+  label: Absent Days
+  fieldtype: Number
+  read_only: true
+- fieldname: unmarked_days
+  label: Unmarked days
+  fieldtype: Number
+  hidden: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: total_deduction
+  label: Total Deduction
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_in_words
+  label: Total in words
+  fieldtype: Text
+  read_only: true
+- fieldname: base_hour_rate
+  label: Hour Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_gross_pay
+  label: Gross Pay (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  required: true
+  hidden: true
+  default: 1.0
+- fieldname: base_total_deduction
+  label: Total Deduction (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_pay
+  label: Net Pay (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rounded_total
+  label: Rounded Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_in_words
+  label: Total in words (Company Currency)
+  fieldtype: Text
+  read_only: true
+- fieldname: year_to_date
+  label: Year To Date
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Total salary booked for this employee from the beginning of the year (payroll period or fiscal year)
+    up to the current salary slip's end date.
+- fieldname: month_to_date
+  label: Month To Date
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Total salary booked for this employee from the beginning of the month up to the current salary slip's
+    end date.
+- fieldname: base_year_to_date
+  label: Year To Date(Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_month_to_date
+  label: Month To Date(Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: leave_details
+  label: Leave Details
+  fieldtype: Table
+  options: Salary Slip Leave
+  read_only: true
+- fieldname: gross_year_to_date
+  label: Gross Year To Date
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_gross_year_to_date
+  label: Gross Year To Date(Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: ctc
+  label: CTC
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: income_from_other_sources
+  label: Income from Other Sources
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_earnings
+  label: Total Earnings
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: non_taxable_earnings
+  label: Non Taxable Earnings
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: deductions_before_tax_calculation
+  label: Deductions before tax calculation
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: tax_exemption_declaration
+  label: Tax Exemption Declaration
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: standard_tax_exemption_amount
+  label: Standard Tax Exemption Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: annual_taxable_amount
+  label: Annual Taxable Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: income_tax_deducted_till_date
+  label: Income Tax Deducted Till Date
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: future_income_tax_deductions
+  label: Future Income Tax
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: current_month_income_tax
+  label: Current Month Income Tax
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_income_tax
+  label: Total Income Tax
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: salary_withholding
+  label: Salary Withholding
+  fieldtype: Link
+  options: Salary Withholding
+  read_only: true
+- fieldname: salary_withholding_cycle
+  label: Salary Withholding Cycle
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: current_payroll_period
+  label: Current Payroll Period
+  fieldtype: Link
+  options: Payroll Period
+  read_only: true
+  hidden: true
+- fieldname: accrued_benefits
+  label: Accrued Benefits
+  fieldtype: Table
+  options: Employee Benefit Detail
+  read_only: true
+- fieldname: employer_contributions
+  label: Employer Contributions
+  fieldtype: Table
+  options: Salary Detail
+title_field: employee_name
+layout:
+- tab: Details
+  section: Employee Info
+  columns:
+  - - employee
+    - employee_name
+    - company
+    - department
+    - designation
+    - branch
+  - - posting_date
+    - letter_head
+  - - status
+    - salary_withholding
+    - currency
+- tab: Details
+  section: Payroll Info
+  columns:
+  - - payroll_frequency
+    - start_date
+    - end_date
+  - - salary_structure
+    - payroll_entry
+  - - salary_slip_based_on_timesheet
+- tab: Details
+  section: Informations complémentaires 3
+  columns:
+  - - deduct_tax_for_unsubmitted_tax_exemption_proof
+- tab: Payment Days
+  section: Informations complémentaires 4
+  columns:
+  - - total_working_days
+    - leave_without_pay
+  - - absent_days
+    - payment_days
+- tab: Earnings & Deductions
+  section: Timesheet Details
+  columns:
+  - - timesheets
+  - - total_working_hours
+    - hour_rate
+    - base_hour_rate
+- tab: Earnings & Deductions
+  section: Informations complémentaires 6
+  columns:
+  - - earnings
+  - - deductions
+- tab: Earnings & Deductions
+  section: Informations complémentaires 7
+  columns:
+  - - accrued_benefits
+- tab: Earnings & Deductions
+  section: Employer Contributions
+  columns:
+  - - employer_contributions
+- tab: Earnings & Deductions
+  section: Totals
+  columns:
+  - - gross_pay
+    - base_gross_pay
+    - gross_year_to_date
+    - base_gross_year_to_date
+  - - total_deduction
+    - base_total_deduction
+- tab: Net Pay Info
+  section: Informations complémentaires 10
+  columns:
+  - - net_pay
+    - base_net_pay
+    - rounded_total
+    - base_rounded_total
+  - - year_to_date
+    - base_year_to_date
+    - month_to_date
+    - base_month_to_date
+- tab: Net Pay Info
+  section: Informations complémentaires 11
+  columns:
+  - - total_in_words
+  - - base_total_in_words
+- tab: Income Tax Breakup
+  section: Informations complémentaires 12
+  columns:
+  - - ctc
+    - income_from_other_sources
+    - total_earnings
+  - - non_taxable_earnings
+    - standard_tax_exemption_amount
+    - tax_exemption_declaration
+    - deductions_before_tax_calculation
+    - annual_taxable_amount
+  - - income_tax_deducted_till_date
+    - current_month_income_tax
+    - future_income_tax_deductions
+    - total_income_tax
+- tab: Bank Details
+  section: Informations complémentaires 13
+  columns:
+  - - journal_entry
+    - amended_from
+  - - bank_name
+    - bank_account_no
+- tab: Leaves
+  section: Informations complémentaires 14
+  columns:
+  - - leave_details
+views:
+  calendar:
+    start: posting_date
+    title: employee_name
+  gantt:
+    start: start_date
+    end: end_date
+    title: employee_name

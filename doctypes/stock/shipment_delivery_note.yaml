@@ -1,0 +1,7 @@
+schema_version: 1
+name: "Shipment Delivery Note"
+label: "Shipment Delivery Note"
+istable: true
+fields:
+  - { fieldname: delivery_note, label: "Delivery Note", fieldtype: Link, options: "Delivery Note", required: true, in_list_view: true }
+  - { fieldname: grand_total, label: "Value", fieldtype: Currency, decimals: 2, in_list_view: true, read_only: true }

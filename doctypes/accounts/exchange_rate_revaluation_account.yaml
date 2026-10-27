@@ -1,0 +1,65 @@
+schema_version: 1
+name: Exchange Rate Revaluation Account
+label: Exchange Rate Revaluation Account
+istable: true
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: balance_in_account_currency
+  label: Balance In Account Currency
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: current_exchange_rate
+  label: Current Exchange Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: balance_in_base_currency
+  label: Balance In Base Currency
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: new_exchange_rate
+  label: New Exchange Rate
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: new_balance_in_base_currency
+  label: New Balance In Base Currency
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: gain_loss
+  label: Gain/Loss
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: zero_balance
+  label: Zero Balance
+  fieldtype: Boolean
+  description: This Account has '0' balance in either Base Currency or Account Currency
+  default: false
+- fieldname: new_balance_in_account_currency
+  label: New Balance In Account Currency
+  fieldtype: Currency
+  decimals: 2
+  read_only: true

@@ -1,0 +1,9 @@
+schema_version: 1
+name: Repost Allowed Types
+label: Repost Allowed Types
+istable: true
+fields:
+- fieldname: document_type
+  label: Doctype
+  fieldtype: Text
+  in_list_view: true

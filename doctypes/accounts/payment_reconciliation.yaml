@@ -1,0 +1,162 @@
+schema_version: 1
+name: Payment Reconciliation
+label: Payment Reconciliation
+module: accounts
+icon: arrow-left-right
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+  required: true
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: receivable_payable_account
+  label: Receivable / Payable Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+- fieldname: bank_cash_account
+  label: Bank / Cash Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+  description: This filter will be applied to Journal Entry.
+- fieldname: payments
+  label: Payments
+  fieldtype: Table
+  options: Payment Reconciliation Payment
+- fieldname: total_invoice_amount
+  label: Total Invoice Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_payment_amount
+  label: Total Payment Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: difference_amount
+  label: Difference Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: invoices
+  label: Invoices
+  fieldtype: Table
+  options: Payment Reconciliation Invoice
+- fieldname: allocation
+  label: Allocation
+  fieldtype: Table
+  options: Payment Reconciliation Allocation
+- fieldname: from_invoice_date
+  label: From Invoice Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: to_invoice_date
+  label: To Invoice Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: minimum_invoice_amount
+  label: Minimum Invoice Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: invoice_limit
+  label: Invoice Limit
+  fieldtype: Int
+  description: System will fetch all the entries if limit value is zero.
+  default: 50
+- fieldname: from_payment_date
+  label: From Payment Date
+  fieldtype: Date
+- fieldname: to_payment_date
+  label: To Payment Date
+  fieldtype: Date
+- fieldname: minimum_payment_amount
+  label: Minimum Payment Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: maximum_payment_amount
+  label: Maximum Payment Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: payment_limit
+  label: Payment Limit
+  fieldtype: Int
+  description: System will fetch all the entries if limit value is zero.
+  default: 50
+- fieldname: maximum_invoice_amount
+  label: Maximum Invoice Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: default_advance_account
+  label: Default Advance Account
+  fieldtype: Link
+  options: Account
+  description: Only 'Payment Entries' made against this advance account are supported.
+- fieldname: invoice_name
+  label: Filter on Invoice
+  fieldtype: Text
+- fieldname: payment_name
+  label: Filter on Payment
+  fieldtype: Text
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - party_type
+  - - party
+    - receivable_payable_account
+    - default_advance_account
+- section: Filters
+  columns:
+  - - from_invoice_date
+    - from_payment_date
+    - minimum_invoice_amount
+    - minimum_payment_amount
+  - - to_invoice_date
+    - to_payment_date
+    - maximum_invoice_amount
+    - maximum_payment_amount
+  - - invoice_limit
+    - payment_limit
+    - bank_cash_account
+- section: Accounting Dimensions Filter
+  columns:
+  - - cost_center
+  - - project
+- section: Unreconciled Entries
+  columns:
+  - - invoice_name
+    - invoices
+  - - payment_name
+    - payments
+- section: Totals
+  columns:
+  - - total_invoice_amount
+  - - total_payment_amount
+  - - difference_amount
+- section: Allocated Entries
+  columns:
+  - - allocation

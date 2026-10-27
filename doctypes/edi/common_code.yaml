@@ -1,0 +1,49 @@
+schema_version: 1
+name: Common Code
+label: Common Code
+module: edi
+icon: code
+fields:
+- fieldname: code_list
+  label: Code List
+  fieldtype: Link
+  options: Code List
+  required: true
+  in_list_view: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: applies_to
+  label: Applies To
+  fieldtype: JSON
+- fieldname: common_code
+  label: Common Code
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: additional_data
+  label: Additional Data
+  fieldtype: Code
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: canonical_uri
+  label: Canonical URI
+  fieldtype: Text
+title_field: title
+layout:
+- section: Description et notes
+  columns:
+  - - code_list
+    - canonical_uri
+    - title
+    - common_code
+    - description
+  - - additional_data
+- section: Informations complémentaires 2
+  columns:
+  - - applies_to

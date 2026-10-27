@@ -1,0 +1,39 @@
+schema_version: 1
+name: Bank Statement Import Log Column Map
+label: Bank Statement Import Log Column Map
+istable: true
+fields:
+- fieldname: header_text
+  label: Header Text
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: maps_to
+  label: Maps To
+  fieldtype: Select
+  options:
+  - Do not import
+  - Date
+  - Withdrawal
+  - Deposit
+  - Amount
+  - Description
+  - Reference
+  - Transaction Type
+  - Debit/Credit
+  - Balance
+  - Included Fee
+  - Excluded Fee
+  - Party Name/Account Holder
+  - Party Account No.
+  - Party IBAN
+  required: true
+  in_list_view: true
+- fieldname: index
+  label: Index
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: variable
+  label: Variable
+  fieldtype: Text

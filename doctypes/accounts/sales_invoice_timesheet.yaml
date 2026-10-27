@@ -1,0 +1,48 @@
+schema_version: 1
+name: Sales Invoice Timesheet
+label: Sales Invoice Timesheet
+istable: true
+fields:
+- fieldname: time_sheet
+  label: Time Sheet
+  fieldtype: Link
+  options: Timesheet
+  in_list_view: true
+  read_only: true
+- fieldname: billing_hours
+  label: Billing Hours
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: billing_amount
+  label: Billing Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: timesheet_detail
+  label: Timesheet Detail
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: activity_type
+  label: Activity Type
+  fieldtype: Link
+  options: Activity Type
+  in_list_view: true
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+  read_only: true
+- fieldname: from_time
+  label: From Time
+  fieldtype: Datetime
+- fieldname: to_time
+  label: To Time
+  fieldtype: Datetime
+- fieldname: project_name
+  label: Project Name
+  fieldtype: Text
+  read_only: true

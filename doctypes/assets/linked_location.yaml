@@ -1,0 +1,11 @@
+schema_version: 1
+name: Linked Location
+label: Linked Location
+istable: true
+fields:
+- fieldname: location
+  label: Location
+  fieldtype: Link
+  options: Location
+  required: true
+  in_list_view: true

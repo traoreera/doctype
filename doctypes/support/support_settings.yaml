@@ -1,0 +1,88 @@
+schema_version: 1
+name: Support Settings
+label: Support Settings
+module: support
+single: true
+icon: settings
+fields:
+- fieldname: close_issue_after_days
+  label: Close Issue After Days
+  fieldtype: Int
+  description: Set this value to 0 to disable the feature.
+  default: 7
+- fieldname: get_started_sections
+  label: Get Started Sections
+  fieldtype: Code
+- fieldname: show_latest_forum_posts
+  label: Show Latest Forum Posts
+  fieldtype: Boolean
+  default: false
+- fieldname: forum_url
+  label: Forum URL
+  fieldtype: Text
+- fieldname: get_latest_query
+  label: Get Latest Query
+  fieldtype: Text
+- fieldname: response_key_list
+  label: Response Key List
+  fieldtype: Text
+- fieldname: post_title_key
+  label: Post Title Key
+  fieldtype: Text
+- fieldname: post_description_key
+  label: Post Description Key
+  fieldtype: Text
+- fieldname: post_route_key
+  label: Post Route Key
+  fieldtype: Text
+- fieldname: post_route_string
+  label: Post Route String
+  fieldtype: Text
+- fieldname: search_apis
+  label: Search APIs
+  fieldtype: Table
+  options: Support Search Source
+- fieldname: track_service_level_agreement
+  label: Track Service Level Agreement
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_resetting_service_level_agreement
+  label: Allow Resetting Service Level Agreement
+  fieldtype: Boolean
+  default: false
+- fieldname: greeting_title
+  label: Greeting Title
+  fieldtype: Text
+  default: We're here to help
+- fieldname: greeting_subtitle
+  label: Greeting Subtitle
+  fieldtype: Text
+  default: Browse help topics
+layout:
+- section: Service Level Agreements
+  columns:
+  - - track_service_level_agreement
+    - allow_resetting_service_level_agreement
+- section: Issues
+  columns:
+  - - close_issue_after_days
+- section: Support Portal
+  columns:
+  - - get_started_sections
+    - show_latest_forum_posts
+- section: Forum Posts
+  columns:
+  - - forum_url
+    - get_latest_query
+    - response_key_list
+  - - post_title_key
+    - post_description_key
+    - post_route_key
+    - post_route_string
+- section: Greetings Section
+  columns:
+  - - greeting_title
+  - - greeting_subtitle
+- section: Search APIs
+  columns:
+  - - search_apis

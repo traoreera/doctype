@@ -1,0 +1,16 @@
+schema_version: 1
+name: Campaign Email Schedule
+label: Campaign Email Schedule
+istable: true
+fields:
+- fieldname: send_after_days
+  label: Send After (days)
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: email_template
+  label: Email Template
+  fieldtype: Link
+  options: Email Template
+  required: true
+  in_list_view: true

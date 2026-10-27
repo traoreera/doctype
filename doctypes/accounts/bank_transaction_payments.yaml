@@ -1,0 +1,33 @@
+schema_version: 1
+name: Bank Transaction Payments
+label: Bank Transaction Payments
+istable: true
+fields:
+- fieldname: payment_document
+  label: Payment Document
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: payment_entry
+  label: Payment Entry
+  fieldtype: DynamicLink
+  options: payment_document
+  in_list_view: true
+- fieldname: allocated_amount
+  label: Allocated Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: clearance_date
+  label: Clearance Date
+  fieldtype: Date
+  read_only: true
+- fieldname: reconciliation_type
+  label: Reconciliation Type
+  fieldtype: Select
+  options:
+  - Matched
+  - Voucher Created
+  default: Matched
+  read_only: true

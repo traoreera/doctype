@@ -1,0 +1,11 @@
+schema_version: 1
+name: Gratuity Applicable Component
+label: Gratuity Applicable Component
+istable: true
+fields:
+- fieldname: salary_component
+  label: 'Salary Component '
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true

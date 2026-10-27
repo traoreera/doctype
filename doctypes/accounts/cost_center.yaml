@@ -1,0 +1,61 @@
+schema_version: 1
+name: Cost Center
+label: Cost Center
+module: accounts
+icon: chart-pie
+fields:
+- fieldname: cost_center_name
+  label: Cost Center Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: cost_center_number
+  label: Cost Center Number
+  fieldtype: Text
+  in_list_view: true
+- fieldname: parent_cost_center
+  label: Parent Cost Center
+  fieldtype: Link
+  options: Cost Center
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  default: false
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  hidden: true
+- fieldname: old_parent
+  label: old_parent
+  fieldtype: Link
+  options: Cost Center
+  hidden: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - cost_center_name
+    - cost_center_number
+    - parent_cost_center
+    - company
+  - - is_group
+    - disabled
+views:
+  tree:
+    parent: parent_cost_center

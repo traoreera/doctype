@@ -1,0 +1,16 @@
+schema_version: 1
+name: Salary Slip Timesheet
+label: Salary Slip Timesheet
+istable: true
+fields:
+- fieldname: time_sheet
+  label: Time Sheet
+  fieldtype: Link
+  options: Timesheet
+  required: true
+  in_list_view: true
+- fieldname: working_hours
+  label: Working Hours
+  fieldtype: Number
+  in_list_view: true
+  read_only: true

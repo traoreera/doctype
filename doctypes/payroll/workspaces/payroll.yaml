@@ -1,0 +1,24 @@
+schema_version: 1
+name: payroll
+label: Paie
+icon: wallet
+description: Préparation des paies, bulletins et éléments de rémunération.
+order: 60
+
+blocks:
+  - { type: header, text: Vue d’ensemble }
+  - { type: number_card, label: Lots de paie en brouillon, doctype: Payroll Entry, filters: { docstatus: 0 }, color: orange }
+  - { type: number_card, label: Lots de paie soumis, doctype: Payroll Entry, filters: { docstatus: 1 }, color: green }
+  - { type: number_card, label: Bulletins de paie, doctype: Salary Slip, color: blue }
+  - { type: chart, label: Lots de paie par mois, doctype: Payroll Entry, kind: bar, group_by: posting_date, bucket: month, periods: 6, filters: { docstatus: 1 }, cols: 8 }
+  - { type: chart, label: Bulletins par état, doctype: Salary Slip, kind: donut, group_by: status, cols: 4 }
+  - { type: quick_list, label: Bulletins récents, doctype: Salary Slip, limit: 5, cols: 12 }
+  - { type: header, text: Traitement de la paie }
+  - { type: shortcut, doctype: Payroll Entry, new: true }
+  - { type: shortcut, doctype: Salary Slip, new: true }
+  - { type: shortcut, doctype: Additional Salary, new: true }
+  - { type: shortcut, doctype: Employee Benefit Application, new: true }
+  - { type: header, text: Référentiel }
+  - { type: shortcut, doctype: Salary Structure, new: true }
+  - { type: shortcut, doctype: Salary Component, new: true }
+  - { type: shortcut, doctype: Payroll Period, new: true }

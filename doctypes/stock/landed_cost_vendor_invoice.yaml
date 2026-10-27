@@ -1,0 +1,7 @@
+schema_version: 1
+name: "Landed Cost Vendor Invoice"
+label: "Landed Cost Vendor Invoice"
+istable: true
+fields:
+  - { fieldname: vendor_invoice, label: "Vendor Invoice", fieldtype: Link, options: "Purchase Invoice", in_list_view: true }
+  - { fieldname: amount, label: "Amount (Company Currency)", fieldtype: Currency, decimals: 2, in_list_view: true, read_only: true }

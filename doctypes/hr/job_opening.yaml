@@ -1,0 +1,173 @@
+schema_version: 1
+name: Job Opening
+label: Job Opening
+module: hr
+icon: briefcase-business
+fields:
+- fieldname: job_title
+  label: Job Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Closed
+  in_list_view: true
+  hidden: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  required: true
+  in_list_view: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: staffing_plan
+  label: Staffing Plan
+  fieldtype: Link
+  options: Staffing Plan
+  read_only: true
+- fieldname: planned_vacancies
+  label: Planned number of Positions
+  fieldtype: Int
+  read_only: true
+- fieldname: publish
+  label: Publish on website
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: route
+  label: Route
+  fieldtype: Text
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  in_list_view: true
+  description: Job profile, qualifications required etc.
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: lower_range
+  label: Lower Range
+  fieldtype: Currency
+  decimals: 2
+- fieldname: upper_range
+  label: Upper Range
+  fieldtype: Currency
+  decimals: 2
+- fieldname: job_application_route
+  label: Application Web Form Route
+  fieldtype: Text
+  description: Route to the custom Job Application Webform
+- fieldname: publish_salary_range
+  label: Publish Salary Range
+  fieldtype: Boolean
+  default: false
+- fieldname: job_requisition
+  label: Job Requisition
+  fieldtype: Link
+  options: Job Requisition
+  read_only: true
+- fieldname: vacancies
+  label: Vacancies
+  fieldtype: Int
+  read_only: true
+- fieldname: posted_on
+  label: Posted On
+  fieldtype: Datetime
+- fieldname: closes_on
+  label: Closes On
+  fieldtype: Date
+  description: If set, the job opening will be closed automatically after this date
+- fieldname: employment_type
+  label: Employment Type
+  fieldtype: Link
+  options: Employment Type
+  in_list_view: true
+- fieldname: location
+  label: Location
+  fieldtype: Link
+  options: Branch
+- fieldname: closed_on
+  label: Closed On
+  fieldtype: Date
+- fieldname: salary_per
+  label: Salary Paid Per
+  fieldtype: Select
+  options:
+  - Month
+  - Year
+  default: Month
+- fieldname: publish_applications_received
+  label: Publish Applications Received
+  fieldtype: Boolean
+  description: If enabled, the total no. of applications received for this opening will be displayed on the website
+  default: true
+- fieldname: prevent_duplicate_applicant
+  label: Prevent Duplicate Applications
+  fieldtype: Boolean
+  description: If enabled, candidates who have already applied with the same email address will not be allowed to
+    apply again
+  default: false
+- fieldname: job_opening_template
+  label: Job Opening Template
+  fieldtype: Link
+  options: Job Opening Template
+title_field: job_title
+layout:
+- tab: Général
+  section: Informations principales
+  columns:
+  - - job_opening_template
+    - job_title
+    - designation
+  - - posted_on
+    - closes_on
+    - closed_on
+- tab: Général
+  section: Company Details
+  columns:
+  - - company
+    - department
+  - - employment_type
+    - location
+- tab: Général
+  section: References
+  columns:
+  - - staffing_plan
+    - planned_vacancies
+    - job_requisition
+    - vacancies
+- tab: Général
+  section: Informations complémentaires 4
+  columns:
+  - - publish
+    - prevent_duplicate_applicant
+    - route
+    - publish_applications_received
+  - - job_application_route
+- tab: Général
+  section: Informations complémentaires 5
+  columns:
+  - - description
+- tab: Pay Details
+  section: Informations complémentaires 6
+  columns:
+  - - currency
+    - lower_range
+    - upper_range
+  - - salary_per
+    - publish_salary_range

@@ -1,0 +1,10 @@
+schema_version: 1
+name: Designation Skill
+label: Designation Skill
+istable: true
+fields:
+- fieldname: skill
+  label: Skill
+  fieldtype: Link
+  options: Skill
+  in_list_view: true

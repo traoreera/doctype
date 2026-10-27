@@ -1,0 +1,18 @@
+schema_version: 1
+name: Skill Assessment
+label: Skill Assessment
+istable: true
+fields:
+- fieldname: skill
+  label: Skill
+  fieldtype: Link
+  options: Skill
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: rating
+  label: Rating
+  fieldtype: Rating
+  stars: 5
+  required: true
+  in_list_view: true

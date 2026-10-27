@@ -1,0 +1,52 @@
+schema_version: 1
+name: Expense Claim Detail
+label: Expense Claim Detail
+istable: true
+fields:
+- fieldname: expense_date
+  label: Expense Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: expense_type
+  label: Expense Claim Type
+  fieldtype: Link
+  options: Expense Claim Type
+  required: true
+  in_list_view: true
+- fieldname: default_account
+  label: Default Account
+  fieldtype: Link
+  options: Account
+  read_only: true
+  hidden: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: sanctioned_amount
+  label: Sanctioned Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_sanctioned_amount
+  label: Sanctioned Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2

@@ -1,0 +1,43 @@
+schema_version: 1
+name: Loan Product
+label: Loan Product
+module: accounts
+icon: file-text
+fields:
+- fieldname: product_name
+  label: Product Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: rate_of_interest
+  label: Rate of Interest
+  fieldtype: Percent
+- fieldname: maximum_loan_amount
+  label: Maximum Loan Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: repayment_method
+  label: Repayment Method
+  fieldtype: Select
+  options:
+  - Repay Over Number of Periods
+  - Repay Fixed Amount per Period
+- fieldname: is_active
+  label: Active
+  fieldtype: Boolean
+  default: true
+title_field: product_name
+layout:
+- section: Informations principales
+  columns:
+  - - product_name
+    - company
+    - rate_of_interest
+    - maximum_loan_amount
+    - repayment_method
+    - is_active

@@ -1,0 +1,32 @@
+schema_version: 1
+name: Letter Head
+label: Letter Head
+module: setup
+icon: file-text
+fields:
+- fieldname: letter_head_name
+  label: Letter Head Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: is_default
+  label: Default
+  fieldtype: Boolean
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+- fieldname: content
+  label: Content
+  fieldtype: TextEditor
+- fieldname: footer
+  label: Footer
+  fieldtype: TextEditor
+title_field: letter_head_name
+layout:
+- section: Informations principales
+  columns:
+  - - letter_head_name
+    - is_default
+    - disabled
+    - content
+    - footer

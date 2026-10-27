@@ -1,0 +1,108 @@
+schema_version: 1
+name: Promotional Scheme Product Discount
+label: Promotional Scheme Product Discount
+istable: true
+fields:
+- fieldname: disable
+  label: Disable
+  fieldtype: Boolean
+  default: false
+- fieldname: rule_description
+  label: Rule Description
+  fieldtype: LongText
+  required: true
+- fieldname: min_qty
+  label: Min Qty
+  fieldtype: Number
+  in_list_view: true
+  default: 0.0
+- fieldname: max_qty
+  label: Max Qty
+  fieldtype: Number
+  in_list_view: true
+  default: 0.0
+- fieldname: min_amount
+  label: Min Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: max_amount
+  label: Max Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: same_item
+  label: Same Item
+  fieldtype: Boolean
+  default: false
+- fieldname: free_item
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: free_qty
+  label: Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: free_item_uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: free_item_rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: threshold_percentage
+  label: Threshold for Suggestion
+  fieldtype: Percent
+- fieldname: priority
+  label: Priority
+  fieldtype: Select
+  options:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+  - '6'
+  - '7'
+  - '8'
+  - '9'
+  - '10'
+  - '11'
+  - '12'
+  - '13'
+  - '14'
+  - '15'
+  - '16'
+  - '17'
+  - '18'
+  - '19'
+  - '20'
+- fieldname: apply_multiple_pricing_rules
+  label: Apply Multiple Pricing Rules
+  fieldtype: Boolean
+  default: false
+- fieldname: is_recursive
+  label: Is Recursive
+  fieldtype: Boolean
+  description: Discounts to be applied in sequential ranges like buy 1 get 1, buy 2 get 2, buy 3 get 3 and so on
+  default: false
+- fieldname: recurse_for
+  label: Recurse Every (As Per Transaction UOM)
+  fieldtype: Number
+  description: Give free item for every N quantity
+  default: 0.0
+- fieldname: apply_recursion_over
+  label: Apply Recursion Over (As Per Transaction UOM)
+  fieldtype: Number
+  description: Qty for which recursion isn't applicable.
+  default: 0.0
+- fieldname: round_free_qty
+  label: Round Free Qty
+  fieldtype: Boolean
+  default: false

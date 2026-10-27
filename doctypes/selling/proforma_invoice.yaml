@@ -1,0 +1,145 @@
+schema_version: 1
+name: Proforma Invoice
+label: Proforma Invoice
+module: selling
+submittable: true
+icon: file-text
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - PRO-.YYYY.-
+  required: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  in_list_view: true
+  read_only: true
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+- fieldname: proforma_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: based_on
+  label: Based On
+  fieldtype: Select
+  options:
+  - Quantity
+  - Amount
+  default: Quantity
+  read_only: true
+- fieldname: hide_item_qty
+  label: Hide Item Quantity in Print
+  fieldtype: Boolean
+  read_only: true
+  description: Hide the item quantity and rate on the printed proforma.
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Proforma Invoice Item
+- fieldname: total_qty
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: print_format
+  label: Print Format
+  fieldtype: Link
+  options: Print Format
+  read_only: true
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+  read_only: true
+- fieldname: proforma_pdf
+  label: Proforma PDF
+  fieldtype: Attach
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Issued
+  - Cancelled
+  default: Draft
+  in_list_view: true
+  read_only: true
+- fieldname: sent_on
+  label: Sent On
+  fieldtype: Datetime
+  read_only: true
+- fieldname: emailed_to
+  label: Emailed To
+  fieldtype: LongText
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Proforma Invoice
+  read_only: true
+title_field: customer_name
+layout:
+- section: Details
+  columns:
+  - - naming_series
+    - sales_order
+    - customer
+    - customer_name
+    - company
+  - - proforma_date
+    - currency
+    - based_on
+    - hide_item_qty
+- section: Items
+  columns:
+  - - items
+- section: Comptabilité et montants
+  columns:
+  - - total_qty
+  - - grand_total
+- section: Print Settings
+  columns:
+  - - print_format
+    - letter_head
+  - - proforma_pdf
+- section: Status
+  columns:
+  - - status
+    - sent_on
+  - - emailed_to
+    - amended_from
+views:
+  tree:
+    parent: amended_from

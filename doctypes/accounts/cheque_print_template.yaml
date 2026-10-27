@@ -1,0 +1,143 @@
+schema_version: 1
+name: Cheque Print Template
+label: Cheque Print Template
+module: accounts
+icon: printer
+fields:
+- fieldname: has_print_format
+  label: Has Print Format
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: bank_name
+  label: Bank Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: cheque_size
+  label: Cheque Size
+  fieldtype: Select
+  options:
+  - Regular
+  - A4
+  default: Regular
+- fieldname: starting_position_from_top_edge
+  label: Starting position from top edge
+  fieldtype: Number
+- fieldname: cheque_width
+  label: Cheque Width
+  fieldtype: Number
+  default: 20.0
+- fieldname: cheque_height
+  label: Cheque Height
+  fieldtype: Number
+  default: 9.0
+- fieldname: scanned_cheque
+  label: Scanned Cheque
+  fieldtype: Attach
+- fieldname: is_account_payable
+  label: Is Account Payable
+  fieldtype: Boolean
+  default: true
+- fieldname: acc_pay_dist_from_top_edge
+  label: Distance from top edge
+  fieldtype: Number
+  default: 1.0
+- fieldname: acc_pay_dist_from_left_edge
+  label: Distance from left edge
+  fieldtype: Number
+  default: 9.0
+- fieldname: message_to_show
+  label: Message to show
+  fieldtype: Text
+  default: Acc. Payee
+- fieldname: date_dist_from_top_edge
+  label: Distance from top edge
+  fieldtype: Number
+  default: 1.0
+- fieldname: date_dist_from_left_edge
+  label: Starting location from left edge
+  fieldtype: Number
+  default: 15.0
+- fieldname: payer_name_from_top_edge
+  label: Distance from top edge
+  fieldtype: Number
+  default: 2.0
+- fieldname: payer_name_from_left_edge
+  label: Starting location from left edge
+  fieldtype: Number
+  default: 3.0
+- fieldname: amt_in_words_from_top_edge
+  label: Distance from top edge
+  fieldtype: Number
+  default: 3.0
+- fieldname: amt_in_words_from_left_edge
+  label: Starting location from left edge
+  fieldtype: Number
+  default: 4.0
+- fieldname: amt_in_word_width
+  label: Width of amount in word
+  fieldtype: Number
+  default: 15.0
+- fieldname: amt_in_words_line_spacing
+  label: Line spacing for amount in words
+  fieldtype: Number
+  default: 0.5
+- fieldname: amt_in_figures_from_top_edge
+  label: Distance from top edge
+  fieldtype: Number
+  default: 3.5
+- fieldname: amt_in_figures_from_left_edge
+  label: Starting location from left edge
+  fieldtype: Number
+  default: 16.0
+- fieldname: acc_no_dist_from_top_edge
+  label: Distance from top edge
+  fieldtype: Number
+  default: 5.0
+- fieldname: acc_no_dist_from_left_edge
+  label: Starting location from left edge
+  fieldtype: Number
+  default: 4.0
+- fieldname: signatory_from_top_edge
+  label: Distance from top edge
+  fieldtype: Number
+  default: 6.0
+- fieldname: signatory_from_left_edge
+  label: Starting location from left edge
+  fieldtype: Number
+  default: 15.0
+title_field: bank_name
+layout:
+- section: Primary Settings
+  columns:
+  - - bank_name
+    - cheque_size
+    - starting_position_from_top_edge
+    - cheque_width
+    - cheque_height
+    - scanned_cheque
+  - - is_account_payable
+    - acc_pay_dist_from_top_edge
+    - acc_pay_dist_from_left_edge
+    - message_to_show
+- section: Dates et planification
+  columns:
+  - - date_dist_from_top_edge
+    - date_dist_from_left_edge
+  - - payer_name_from_top_edge
+    - payer_name_from_left_edge
+- section: Comptabilité et montants
+  columns:
+  - - amt_in_words_from_top_edge
+    - amt_in_words_from_left_edge
+    - amt_in_word_width
+    - amt_in_words_line_spacing
+  - - amt_in_figures_from_top_edge
+    - amt_in_figures_from_left_edge
+- section: Dates et planification
+  columns:
+  - - acc_no_dist_from_top_edge
+    - acc_no_dist_from_left_edge
+  - - signatory_from_top_edge
+    - signatory_from_left_edge

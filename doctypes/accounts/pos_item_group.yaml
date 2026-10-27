@@ -1,0 +1,11 @@
+schema_version: 1
+name: POS Item Group
+label: POS Item Group
+istable: true
+fields:
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  required: true
+  in_list_view: true

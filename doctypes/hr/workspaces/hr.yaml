@@ -1,0 +1,26 @@
+schema_version: 1
+name: hr
+label: Ressources humaines
+icon: users
+description: Dossiers du personnel, absences, présence et organisation des équipes.
+order: 50
+
+blocks:
+  - { type: header, text: Vue d’ensemble }
+  - { type: number_card, label: Employés, doctype: Employee, color: blue }
+  - { type: number_card, label: Demandes de congé ouvertes, doctype: Leave Application, filters: { status: Open }, color: orange }
+  - { type: number_card, label: Demandes de congé soumises, doctype: Leave Application, filters: { docstatus: 1 }, color: green }
+  - { type: chart, label: Demandes de congé par mois, doctype: Leave Application, kind: bar, group_by: from_date, bucket: month, periods: 6, filters: { docstatus: 1 }, cols: 8 }
+  - { type: chart, label: Présences par état, doctype: Attendance, kind: donut, group_by: status, filters: { docstatus: 1 }, cols: 4 }
+  - { type: quick_list, label: Demandes de congé récentes, doctype: Leave Application, limit: 5, cols: 12 }
+  - { type: header, text: Personnel et organisation }
+  - { type: shortcut, doctype: Employee, new: true }
+  - { type: shortcut, doctype: Department, new: true }
+  - { type: shortcut, doctype: Employee Checkin, new: true }
+  - { type: shortcut, doctype: Attendance, new: true }
+  - { type: shortcut, doctype: Shift Assignment, new: true }
+  - { type: header, text: Congés et paramètres }
+  - { type: shortcut, doctype: Leave Application, new: true }
+  - { type: shortcut, doctype: Leave Type, new: true }
+  - { type: shortcut, doctype: Holiday List, new: true }
+  - { type: shortcut, doctype: HR Settings }

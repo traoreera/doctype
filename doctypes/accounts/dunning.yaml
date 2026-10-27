@@ -1,0 +1,231 @@
+schema_version: 1
+name: Dunning
+label: Dunning
+module: accounts
+submittable: true
+icon: bell-ring
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - DUNN-.MM.-.YY.-
+  default: DUNN-.MM.-.YY.-
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: dunning_type
+  label: Dunning Type
+  fieldtype: Link
+  options: Dunning Type
+  in_list_view: true
+- fieldname: dunning_fee
+  label: Dunning Fee
+  fieldtype: Currency
+  decimals: 2
+- fieldname: language
+  label: Print Language
+  fieldtype: Link
+  options: Language
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Dunning
+  read_only: true
+- fieldname: body_text
+  label: Body Text
+  fieldtype: TextEditor
+- fieldname: closing_text
+  label: Closing Text
+  fieldtype: TextEditor
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+- fieldname: rate_of_interest
+  label: Rate of Interest (%) Yearly
+  fieldtype: Number
+  default: 0.0
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: LongText
+  read_only: true
+- fieldname: company_address_display
+  label: Company Address Display
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Resolved
+  - Unresolved
+  - Cancelled
+  default: Draft
+  read_only: true
+- fieldname: income_account
+  label: Income Account
+  fieldtype: Link
+  options: Account
+  description: For dunning fee and interest
+- fieldname: overdue_payments
+  label: Overdue Payments
+  fieldtype: Table
+  options: Overdue Payment
+- fieldname: total_interest
+  label: Total Interest
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_outstanding
+  label: Total Outstanding
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: customer_address
+  label: Customer Address
+  fieldtype: Link
+  options: Address
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: dunning_amount
+  label: Dunning Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: spacer
+  label: Spacer
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: company_address
+  label: Company Address
+  fieldtype: Link
+  options: Address
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: conversion_rate
+  label: Conversion Rate
+  fieldtype: Number
+- fieldname: base_dunning_amount
+  label: Dunning Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+title_field: customer
+layout:
+- tab: General
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - customer
+    - customer_name
+  - - company
+    - posting_date
+    - posting_time
+    - status
+- tab: General
+  section: Currency
+  columns:
+  - - currency
+  - - conversion_rate
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - dunning_type
+  - - rate_of_interest
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - overdue_payments
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - total_interest
+    - dunning_fee
+  - - dunning_amount
+    - base_dunning_amount
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - total_outstanding
+    - grand_total
+- tab: General
+  section: Printing Settings
+  columns:
+  - - language
+    - body_text
+  - - letter_head
+    - closing_text
+- tab: General
+  section: Accounting Details
+  columns:
+  - - income_account
+  - - cost_center
+    - amended_from
+- tab: Address & Contact
+  section: Références
+  columns:
+  - - customer_address
+    - address_display
+  - - contact_person
+    - contact_display
+    - contact_mobile
+    - contact_email
+- tab: Address & Contact
+  section: Références
+  columns:
+  - - company_address
+    - company_address_display
+views:
+  calendar:
+    start: posting_date
+    title: customer
+  tree:
+    parent: amended_from

@@ -1,0 +1,31 @@
+schema_version: 1
+name: Training Result Employee
+label: Training Result Employee
+istable: true
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: hours
+  label: Hours
+  fieldtype: Number
+  in_list_view: true
+- fieldname: grade
+  label: Grade
+  fieldtype: Text
+  in_list_view: true
+- fieldname: comments
+  label: Comments
+  fieldtype: LongText
+  in_list_view: true

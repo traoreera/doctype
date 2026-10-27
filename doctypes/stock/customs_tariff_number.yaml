@@ -1,0 +1,21 @@
+schema_version: 1
+name: Customs Tariff Number
+label: Customs Tariff Number
+module: stock
+icon: hash
+fields:
+- fieldname: tariff_number
+  label: Tariff Number
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: Text
+  in_list_view: true
+title_field: tariff_number
+layout:
+- section: Description et notes
+  columns:
+  - - tariff_number
+    - description

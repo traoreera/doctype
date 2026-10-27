@@ -1,0 +1,24 @@
+schema_version: 1
+name: Salary Component Account
+label: Salary Component Account
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+  description: Default Bank / Cash account will be automatically updated in Salary Journal Entry when this mode
+    is selected.
+- fieldname: liability_account
+  label: Liability Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+  description: Liability account credited for employer contributions. Applicable only for Employer Contribution
+    components, where Account is debited as the expense.

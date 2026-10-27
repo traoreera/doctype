@@ -1,0 +1,11 @@
+schema_version: 1
+name: PSOA Cost Center
+label: PSOA Cost Center
+istable: true
+fields:
+- fieldname: cost_center_name
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+  required: true
+  in_list_view: true

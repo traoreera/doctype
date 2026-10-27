@@ -1,0 +1,97 @@
+schema_version: 1
+name: Attendance Request
+label: Attendance Request
+module: hr
+submittable: true
+icon: calendar-plus
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: half_day
+  label: Half Day
+  fieldtype: Boolean
+  default: false
+- fieldname: half_day_date
+  label: Half Day Date
+  fieldtype: Date
+- fieldname: reason
+  label: Reason
+  fieldtype: Select
+  options:
+  - Work From Home
+  - On Duty
+  required: true
+  in_list_view: true
+- fieldname: explanation
+  label: Explanation
+  fieldtype: LongText
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Attendance Request
+  read_only: true
+- fieldname: shift
+  label: Shift
+  fieldtype: Link
+  options: Shift Type
+  description: 'Note: Shift will not be overwritten in existing attendance records'
+- fieldname: include_holidays
+  label: Include Holidays
+  fieldtype: Boolean
+  description: Select if any of the days selected for request are holidays
+  default: false
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - department
+    - company
+  - - from_date
+    - to_date
+    - half_day
+    - half_day_date
+    - include_holidays
+    - shift
+- section: Reason
+  columns:
+  - - reason
+  - - explanation
+    - amended_from
+views:
+  calendar:
+    start: from_date
+    title: employee_name
+  gantt:
+    start: from_date
+    end: to_date
+    title: employee_name

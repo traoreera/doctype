@@ -1,0 +1,88 @@
+schema_version: 1
+name: Quality Goal
+label: Quality Goal
+module: quality_management
+icon: target
+fields:
+- fieldname: frequency
+  label: Monitoring Frequency
+  fieldtype: Select
+  options:
+  - None
+  - Daily
+  - Weekly
+  - Monthly
+  - Quarterly
+  default: None
+  in_list_view: true
+- fieldname: procedure
+  label: Procedure
+  fieldtype: Link
+  options: Quality Procedure
+  in_list_view: true
+- fieldname: date
+  label: Date
+  fieldtype: Select
+  options:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+  - '6'
+  - '7'
+  - '8'
+  - '9'
+  - '10'
+  - '11'
+  - '12'
+  - '13'
+  - '14'
+  - '15'
+  - '16'
+  - '17'
+  - '18'
+  - '19'
+  - '20'
+  - '21'
+  - '22'
+  - '23'
+  - '24'
+  - '25'
+  - '26'
+  - '27'
+  - '28'
+  - '29'
+  - '30'
+  - '31'
+- fieldname: weekday
+  label: Weekday
+  fieldtype: Select
+  options:
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  - Saturday
+  - Sunday
+- fieldname: objectives
+  label: Objectives
+  fieldtype: Table
+  options: Quality Goal Objective
+- fieldname: goal
+  label: Goal
+  fieldtype: Text
+  required: true
+title_field: frequency
+layout:
+- section: Dates et planification
+  columns:
+  - - goal
+    - frequency
+  - - procedure
+    - weekday
+    - date
+- section: Objectives
+  columns:
+  - - objectives

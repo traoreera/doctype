@@ -1,0 +1,492 @@
+schema_version: 1
+name: Accounts Settings
+label: Accounts Settings
+module: accounts
+single: true
+icon: settings
+fields:
+- fieldname: determine_address_tax_category_from
+  label: Determine Address Tax Category from
+  fieldtype: Select
+  options:
+  - Billing Address
+  - Shipping Address
+  default: Billing Address
+  description: Address used to determine Tax Category in transactions
+- fieldname: credit_controller
+  label: Role allowed to bypass credit limit
+  fieldtype: Link
+  options: Role
+  in_list_view: true
+- fieldname: check_supplier_invoice_uniqueness
+  label: Check Supplier invoice number uniqueness
+  fieldtype: Boolean
+  description: Enabling this ensures each Purchase Invoice has a unique value in Supplier Invoice No. field within
+    a particular fiscal year
+  default: false
+- fieldname: make_payment_via_journal_entry
+  label: Make Payment via Journal Entry
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: unlink_payment_on_cancellation_of_invoice
+  label: Unlink Payment on cancellation of invoice
+  fieldtype: Boolean
+  default: true
+- fieldname: unlink_advance_payment_on_cancelation_of_order
+  label: Unlink Advance Payment on cancellation of order
+  fieldtype: Boolean
+  default: true
+- fieldname: book_asset_depreciation_entry_automatically
+  label: Book Asset Depreciation entry automatically
+  fieldtype: Boolean
+  default: true
+- fieldname: add_taxes_from_item_tax_template
+  label: Automatically add Taxes and Charges from Item Tax Template
+  fieldtype: Boolean
+  default: true
+- fieldname: show_inclusive_tax_in_print
+  label: Show inclusive tax in print
+  fieldtype: Boolean
+  default: false
+- fieldname: show_payment_schedule_in_print
+  label: Show Payment Schedule in print
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_stale
+  label: Allow Stale Exchange Rates
+  fieldtype: Boolean
+  in_list_view: true
+  description: 'System will use the latest saved Currency Exchange rate on or before the transaction date, however
+    old it is. <br>
+
+    Uncheck to ignore rates older than Stale Days and fetch a fresh rate from the exchange rate provider instead.'
+  default: true
+- fieldname: stale_days
+  label: Stale Days
+  fieldtype: Int
+  default: 1
+- fieldname: automatically_fetch_payment_terms
+  label: Automatically fetch Payment Terms from Order/Quotation
+  fieldtype: Boolean
+  description: Payment Terms from orders will be fetched into the invoices as is
+  default: false
+- fieldname: over_billing_allowance
+  label: Over Billing Allowance (%)
+  fieldtype: Currency
+  decimals: 2
+  description: The percentage you are allowed to bill more against the amount ordered. For example, if the order
+    value is $100 for an item and tolerance is set as 10%, then you are allowed to bill up to $110
+- fieldname: automatically_process_deferred_accounting_entry
+  label: Automatically process deferred Accounting entry
+  fieldtype: Boolean
+  default: true
+- fieldname: book_deferred_entries_via_journal_entry
+  label: Book deferred entries via Journal Entry
+  fieldtype: Boolean
+  description: If this is unchecked, direct GL entries will be created to book deferred revenue or expense
+  default: false
+- fieldname: submit_journal_entries
+  label: Submit Journal entries
+  fieldtype: Boolean
+  description: If this is unchecked Journal Entries will be saved in a Draft state and will have to be submitted
+    manually
+  default: false
+- fieldname: book_deferred_entries_based_on
+  label: Book Deferred entries based on
+  fieldtype: Select
+  options:
+  - Days
+  - Months
+  default: Days
+  description: If "Months" is selected, a fixed amount will be booked as deferred revenue or expense for each month
+    irrespective of the number of days in a month. It will be prorated if deferred revenue or expense is not booked
+    for an entire month
+- fieldname: delete_linked_ledger_entries
+  label: Delete Accounting and Stock Ledger entries on deletion of transaction
+  fieldtype: Boolean
+  default: false
+- fieldname: role_allowed_to_over_bill
+  label: 'Role Allowed to over bill '
+  fieldtype: Link
+  options: Role
+  description: Users with this role are allowed to over bill above the allowance percentage
+- fieldname: enable_overdue_billing_threshold
+  label: Prevent Sales Invoice when Customer is Overdue
+  fieldtype: Boolean
+  description: Enabling this option prevents the creation of a new Sales Invoice when the customer has an overdue
+    limit set and their outstanding overdue amount exceeds that limit.
+  default: false
+- fieldname: role_allowed_to_bypass_overdue_billing
+  label: Role Allowed to Bypass Over Billing Restriction
+  fieldtype: Link
+  options: Role
+  description: Users with this role can still submit invoices for customers who have crossed their Overdue Limit.
+- fieldname: enable_common_party_accounting
+  label: Enable Common Party Accounting
+  fieldtype: Boolean
+  description: Learn about <a href="https://docs.frappe.io/erpnext/user/manual/en/common_party_accounting" rel="noopener
+    noreferrer">Common Party</a>
+  default: false
+- fieldname: allow_multi_currency_invoices_against_single_party_account
+  label: 'Allow multi-currency invoices against single party account '
+  fieldtype: Boolean
+  description: Enabling this will allow creation of multi-currency invoices against single party account in company
+    currency
+  default: false
+- fieldname: show_balance_in_coa
+  label: Show balances in Chart of Accounts
+  fieldtype: Boolean
+  default: true
+- fieldname: book_tax_discount_loss
+  label: Book tax loss on early payment discount
+  fieldtype: Boolean
+  description: Split Early Payment Discount Loss into Income and Tax Loss
+  default: false
+- fieldname: merge_similar_account_heads
+  label: Merge similar Account Heads
+  fieldtype: Boolean
+  description: Merge rows with the same account head in the ledger for Journal Entries and Payment Entries only.
+  default: false
+- fieldname: auto_reconcile_payments
+  label: Auto reconcile Payments
+  fieldtype: Boolean
+  default: false
+- fieldname: show_taxes_as_table_in_print
+  label: Show taxes as table in print
+  fieldtype: Boolean
+  default: false
+- fieldname: enable_party_matching
+  label: Enable Automatic Party Matching
+  fieldtype: Boolean
+  description: Auto match and set the Party in Bank Transactions
+  default: false
+- fieldname: enable_fuzzy_matching
+  label: Enable Fuzzy Matching
+  fieldtype: Boolean
+  description: Approximately match the description/party name against parties
+  default: false
+- fieldname: ignore_account_closing_balance
+  label: Ignore Account closing balance
+  fieldtype: Boolean
+  description: Financial reports will be generated using GL Entry doctypes (should be enabled if Period Closing
+    Voucher is not posted for all years sequentially or missing)
+  default: false
+- fieldname: round_row_wise_tax
+  label: Round tax amount row-wise
+  fieldtype: Boolean
+  description: Tax Amount will be rounded on a row(items) level
+  default: false
+- fieldname: general_ledger_remarks_length
+  label: General Ledger remarks length
+  fieldtype: Int
+  description: Truncates 'Remarks' column to set character length
+  default: 0
+- fieldname: receivable_payable_remarks_length
+  label: Accounts Receivable / Payable remarks length
+  fieldtype: Int
+  description: Truncates 'Remarks' column to set character length
+  default: 0
+- fieldname: enable_immutable_ledger
+  label: Enable Immutable Ledger
+  fieldtype: Boolean
+  description: On enabling this cancellation entries will be posted on the actual cancellation date and reports
+    will consider cancelled entries as well
+  default: false
+- fieldname: calculate_depr_using_total_days
+  label: Calculate daily depreciation using total days in depreciation period
+  fieldtype: Boolean
+  description: Enable this option to calculate daily depreciation by considering the total number of days in the
+    entire depreciation period, (including leap years) while using daily pro-rata based depreciation
+  default: false
+- fieldname: create_pr_in_draft_status
+  label: Create payment requests in Draft status
+  fieldtype: Boolean
+  description: Payment Requests made from Sales / Purchase Invoice will be put in Draft explicitly
+  default: true
+- fieldname: auto_reconciliation_job_trigger
+  label: Auto Reconciliation job trigger
+  fieldtype: Int
+  description: Interval should be between 1 to 59 MInutes
+  default: 15
+- fieldname: reconciliation_queue_size
+  label: Reconciliation queue size
+  fieldtype: Int
+  description: Documents Processed on each trigger. Queue Size should be between 5 and 100
+  default: 5
+- fieldname: ignore_is_opening_check_for_reporting
+  label: Ignore Is Opening check for reporting
+  fieldtype: Boolean
+  description: Ignores legacy Is Opening field in GL Entry that allows adding opening balance post the system is
+    in use while generating reports
+  default: false
+- fieldname: exchange_gain_loss_posting_date
+  label: Posting Date inheritance for exchange gain / loss
+  fieldtype: Select
+  options:
+  - Invoice
+  - Payment
+  - Reconciliation Date
+  default: Payment
+  description: Only applies for Normal Payments
+- fieldname: receivable_payable_fetch_method
+  label: Data fetch method
+  fieldtype: Select
+  options:
+  - Buffered Cursor
+  - UnBuffered Cursor
+  default: Buffered Cursor
+- fieldname: maintain_same_internal_transaction_rate
+  label: Maintain same rate throughout internal Transaction
+  fieldtype: Boolean
+  default: false
+- fieldname: maintain_same_rate_action
+  label: Action if same rate is not maintained throughout internal transaction
+  fieldtype: Select
+  options:
+  - Stop
+  - Warn
+  default: Stop
+- fieldname: role_to_override_stop_action
+  label: Role allowed to override stop action
+  fieldtype: Link
+  options: Role
+- fieldname: confirm_before_resetting_posting_date
+  label: Confirm before resetting posting date
+  fieldtype: Boolean
+  description: If enabled, user will be alerted before resetting posting date to current date in relevant transactions
+  default: true
+- fieldname: allow_pegged_currencies_exchange_rates
+  label: Allow Implicit Pegged Currency Conversion
+  fieldtype: Boolean
+  description: 'System will do an implicit conversion using the pegged currency. <br>
+
+    Ex: Instead of AED -&gt; INR, system will do AED -&gt; USD -&gt; INR using the pegged exchange rate of AED against
+    USD.'
+  default: false
+- fieldname: add_taxes_from_taxes_and_charges_template
+  label: Automatically add taxes from Taxes and Charges Template
+  fieldtype: Boolean
+  description: If no taxes are set, and Taxes and Charges Template is selected, the system will automatically apply
+    the taxes from the chosen template.
+  default: false
+- fieldname: fetch_valuation_rate_for_internal_transaction
+  label: Fetch valuation rate for internal Transaction
+  fieldtype: Boolean
+  default: false
+- fieldname: use_legacy_budget_controller
+  label: Use legacy Budget Controller
+  fieldtype: Boolean
+  description: Enable this if you are experiencing issues with the new budget controller. Uses the older budget
+    validation logic
+  default: false
+- fieldname: use_legacy_controller_for_pcv
+  label: Use legacy controller for Period Closing Voucher
+  fieldtype: Boolean
+  default: true
+- fieldname: pcv_job_timeout
+  label: PCV Job Timeout (seconds)
+  fieldtype: Int
+  description: Timeout (in seconds) for each background job enqueued by Process Period Closing Voucher
+  default: 3600
+- fieldname: role_to_notify_on_depreciation_failure
+  label: Role to Notify on Depreciation Failure
+  fieldtype: Link
+  options: Role
+  description: Users with this role will be notified if the asset depreciation gets failed
+- fieldname: default_ageing_range
+  label: Default Ageing Range
+  fieldtype: Text
+  default: 30, 60, 90, 120
+- fieldname: enable_discounts_and_margin
+  label: Enable Discounts and Margin
+  fieldtype: Boolean
+  description: Apply discounts and margins on products
+  default: false
+- fieldname: enable_loyalty_point_program
+  label: Enable Loyalty Point Program
+  fieldtype: Boolean
+  default: false
+- fieldname: enable_accounting_dimensions
+  label: Enable Accounting Dimensions
+  fieldtype: Boolean
+  description: Enable cost center, projects and other custom accounting dimensions
+  default: false
+- fieldname: enable_subscription
+  label: Enable Subscription
+  fieldtype: Boolean
+  description: Enable Subscription tracking in invoice
+  default: true
+- fieldname: fetch_payment_schedule_in_payment_request
+  label: Fetch Payment Schedule in Payment Request
+  fieldtype: Boolean
+  default: true
+- fieldname: transfer_match_days
+  label: Match transfers within 'N' days
+  fieldtype: Int
+  description: Number of days to consider for matching transfers across bank accounts
+  default: 3
+- fieldname: automatically_run_rules_on_unreconciled_transactions
+  label: Automatically run rules on unreconciled transactions
+  fieldtype: Boolean
+  description: If enabled, rule matching algorithm will run every hour
+  default: true
+- fieldname: repost_allowed_types
+  label: Allowed DocTypes
+  fieldtype: Table
+  options: Repost Allowed Types
+- fieldname: preview_mode
+  label: Preview mode
+  fieldtype: Boolean
+  description: Runs a preview check on save before submission without making any actual changes.
+  default: false
+- fieldname: book_stock_expense_gl_entries
+  label: Book Stock Expense GL Entries
+  fieldtype: Boolean
+  description: Books Purchase Expense and Expenses Added To Stock account pairs against stock value. On enabling
+    this, the accounts become mandatory in Company or Item Defaults for Purchase Receipt, Purchase Invoice, Stock
+    Entry, Stock Reconciliation and Landed Cost Voucher
+  default: false
+- fieldname: disable_include_dimensions
+  label: Disable "Consider Accounting Dimension" Filter
+  fieldtype: Boolean
+  default: false
+title_field: credit_controller
+layout:
+- tab: Invoice and Billing
+  section: Invoice Cancellation
+  columns:
+  - - unlink_payment_on_cancellation_of_invoice
+    - unlink_advance_payment_on_cancelation_of_order
+  - - delete_linked_ledger_entries
+    - enable_immutable_ledger
+- tab: Invoice and Billing
+  section: Invoicing Features
+  columns:
+  - - check_supplier_invoice_uniqueness
+    - automatically_fetch_payment_terms
+    - enable_subscription
+  - - enable_common_party_accounting
+    - allow_multi_currency_invoices_against_single_party_account
+    - confirm_before_resetting_posting_date
+    - preview_mode
+- tab: Invoice and Billing
+  section: Stock Expense Accounting
+  columns:
+  - - book_stock_expense_gl_entries
+- tab: Invoice and Billing
+  section: Analytical Accounting
+  columns:
+  - - enable_discounts_and_margin
+    - enable_accounting_dimensions
+- tab: Invoice and Billing
+  section: Journals
+  columns:
+  - - merge_similar_account_heads
+- tab: Invoice and Billing
+  section: Deferred Accounting Settings
+  columns:
+  - - book_deferred_entries_based_on
+  - - automatically_process_deferred_accounting_entry
+    - book_deferred_entries_via_journal_entry
+    - submit_journal_entries
+- tab: Invoice and Billing
+  section: Tax Settings
+  columns:
+  - - determine_address_tax_category_from
+  - - add_taxes_from_item_tax_template
+    - add_taxes_from_taxes_and_charges_template
+    - book_tax_discount_loss
+    - round_row_wise_tax
+- tab: Invoice and Billing
+  section: Print Settings
+  columns:
+  - - show_inclusive_tax_in_print
+    - show_taxes_as_table_in_print
+    - show_payment_schedule_in_print
+- tab: Invoice and Billing
+  section: Item Price Settings
+  columns:
+  - - maintain_same_internal_transaction_rate
+    - fetch_valuation_rate_for_internal_transaction
+  - - maintain_same_rate_action
+    - role_to_override_stop_action
+- tab: Invoice and Billing
+  section: Currency Exchange Settings
+  columns:
+  - - allow_stale
+    - allow_pegged_currencies_exchange_rates
+  - - stale_days
+- tab: Payments
+  section: Payment Reconciliation Settings
+  columns:
+  - - auto_reconcile_payments
+    - exchange_gain_loss_posting_date
+    - auto_reconciliation_job_trigger
+    - reconciliation_queue_size
+- tab: Payments
+  section: Repost
+  columns:
+  - - repost_allowed_types
+- tab: Payments
+  section: Payment Options
+  columns:
+  - - fetch_payment_schedule_in_payment_request
+    - enable_loyalty_point_program
+- tab: Credit Limits
+  section: Comptabilité et montants
+  columns:
+  - - over_billing_allowance
+    - credit_controller
+    - role_allowed_to_over_bill
+    - enable_overdue_billing_threshold
+    - role_allowed_to_bypass_overdue_billing
+- tab: Assets
+  section: Asset Settings
+  columns:
+  - - book_asset_depreciation_entry_automatically
+    - calculate_depr_using_total_days
+    - role_to_notify_on_depreciation_failure
+- tab: Accounts Closing
+  section: Comptabilité et montants
+  columns:
+  - - ignore_account_closing_balance
+    - use_legacy_controller_for_pcv
+    - pcv_job_timeout
+- tab: Reports
+  section: General Ledger Report
+  columns:
+  - - disable_include_dimensions
+  - - general_ledger_remarks_length
+- tab: Reports
+  section: Accounts Receivable / Payable Report
+  columns:
+  - - receivable_payable_fetch_method
+    - default_ageing_range
+  - - receivable_payable_remarks_length
+- tab: Reports
+  section: Legacy Fields
+  columns:
+  - - ignore_is_opening_check_for_reporting
+- tab: Others
+  section: Chart of Accounts
+  columns:
+  - - show_balance_in_coa
+- tab: Others
+  section: Banking
+  columns:
+  - - enable_party_matching
+    - automatically_run_rules_on_unreconciled_transactions
+    - enable_fuzzy_matching
+    - transfer_match_days
+- tab: Others
+  section: Payment Request
+  columns:
+  - - create_pr_in_draft_status
+- tab: Others
+  section: Budget
+  columns:
+  - - use_legacy_budget_controller
+permissions:
+  create: []
+  delete: []

@@ -1,0 +1,50 @@
+schema_version: 1
+name: Accounting Dimension Filter
+label: Accounting Dimension Filter
+module: accounts
+icon: funnel
+fields:
+- fieldname: allow_or_restrict
+  label: Allow Or Restrict Dimension
+  fieldtype: Select
+  options:
+  - Allow
+  - Restrict
+  required: true
+- fieldname: accounts
+  label: Applicable On Account
+  fieldtype: Table
+  options: Applicable On Account
+- fieldname: dimensions
+  label: Applicable Dimension
+  fieldtype: Table
+  options: Allowed Dimension
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: apply_restriction_on_values
+  label: Apply restriction on dimension values
+  fieldtype: Boolean
+  default: true
+- fieldname: fieldname
+  label: Fieldname
+  fieldtype: Text
+  hidden: true
+title_field: company
+layout:
+- section: Références
+  columns:
+  - - disabled
+  - - company
+    - apply_restriction_on_values
+    - allow_or_restrict
+- section: Comptabilité et montants
+  columns:
+  - - accounts
+  - - dimensions

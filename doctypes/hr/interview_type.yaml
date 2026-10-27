@@ -1,0 +1,41 @@
+schema_version: 1
+name: Interview Type
+label: Interview Type
+module: hr
+icon: tag
+fields:
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+- fieldname: expected_skill_set
+  label: Expected Skillset
+  fieldtype: Table
+  options: Expected Skill Set
+- fieldname: expected_average_rating
+  label: Expected Average Rating
+  fieldtype: Rating
+  stars: 5
+- fieldname: interviewers
+  label: Interviewers
+  fieldtype: Table
+  options: Interviewer
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: interview_type_name
+  label: Interview Type Name
+  fieldtype: Text
+layout:
+- section: Informations principales
+  columns:
+  - - interview_type_name
+    - interviewers
+  - - expected_average_rating
+- section: Informations complémentaires 2
+  columns:
+  - - designation
+    - expected_skill_set
+- section: Informations complémentaires 3
+  columns:
+  - - description

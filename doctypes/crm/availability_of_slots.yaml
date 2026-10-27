@@ -1,0 +1,28 @@
+schema_version: 1
+name: Availability Of Slots
+label: Availability Of Slots
+istable: true
+fields:
+- fieldname: day_of_week
+  label: Day Of Week
+  fieldtype: Select
+  options:
+  - Sunday
+  - Monday
+  - Tuesday
+  - Wednesday
+  - Thursday
+  - Friday
+  - Saturday
+  required: true
+  in_list_view: true
+- fieldname: from_time
+  label: From Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Time
+  required: true
+  in_list_view: true

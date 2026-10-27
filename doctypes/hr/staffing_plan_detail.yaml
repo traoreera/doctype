@@ -1,0 +1,39 @@
+schema_version: 1
+name: Staffing Plan Detail
+label: Staffing Plan Detail
+istable: true
+fields:
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  required: true
+  in_list_view: true
+- fieldname: number_of_positions
+  label: Number Of Positions
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: estimated_cost_per_position
+  label: Estimated Cost Per Position
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: current_count
+  label: Current Count
+  fieldtype: Int
+  read_only: true
+- fieldname: current_openings
+  label: Current Openings
+  fieldtype: Int
+  read_only: true
+- fieldname: vacancies
+  label: Vacancies
+  fieldtype: Int
+  in_list_view: true
+- fieldname: total_estimated_cost
+  label: Total Estimated Cost
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true

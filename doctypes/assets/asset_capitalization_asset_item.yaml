@@ -1,0 +1,56 @@
+schema_version: 1
+name: Asset Capitalization Asset Item
+label: Asset Capitalization Asset Item
+istable: true
+fields:
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+  in_list_view: true
+- fieldname: asset_name
+  label: Asset Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: asset_value
+  label: Asset Value
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: fixed_asset_account
+  label: Fixed Asset Account
+  fieldtype: Link
+  options: Account
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: current_asset_value
+  label: Current Asset Value
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true

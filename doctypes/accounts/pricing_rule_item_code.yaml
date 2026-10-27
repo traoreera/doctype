@@ -1,0 +1,15 @@
+schema_version: 1
+name: Pricing Rule Item Code
+label: Pricing Rule Item Code
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  in_list_view: true

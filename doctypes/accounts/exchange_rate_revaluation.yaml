@@ -1,0 +1,75 @@
+schema_version: 1
+name: Exchange Rate Revaluation
+label: Exchange Rate Revaluation
+module: accounts
+submittable: true
+icon: arrow-right-left
+fields:
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: accounts
+  label: Exchange Rate Revaluation Account
+  fieldtype: Table
+  options: Exchange Rate Revaluation Account
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Exchange Rate Revaluation
+  read_only: true
+- fieldname: gain_loss_unbooked
+  label: Gain/Loss from Revaluation
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: gain_loss_booked
+  label: Gain/Loss already booked
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Gain/Loss accumulated in foreign currency account. Accounts with '0' balance in either Base or Account
+    currency
+- fieldname: total_gain_loss
+  label: Total Gain/Loss
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rounding_loss_allowance
+  label: Rounding Loss Allowance
+  fieldtype: Number
+  description: 'Only values between [0,1) are allowed. Like {0.00, 0.04, 0.09, ...}
+
+    Ex: If allowance is set at 0.07, accounts that have balance of 0.07 in either of the currencies will be considered
+    as zero balance account'
+  default: 0.05
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - posting_date
+    - rounding_loss_allowance
+  - - company
+- section: Comptabilité et montants
+  columns:
+  - - accounts
+- section: Comptabilité et montants
+  columns:
+  - - gain_loss_unbooked
+    - gain_loss_booked
+  - - total_gain_loss
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

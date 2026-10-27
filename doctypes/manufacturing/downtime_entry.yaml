@@ -1,0 +1,67 @@
+schema_version: 1
+name: Downtime Entry
+label: Downtime Entry
+module: manufacturing
+icon: clock-alert
+fields:
+- fieldname: workstation
+  label: Workstation / Machine
+  fieldtype: Link
+  options: Workstation
+  required: true
+- fieldname: from_time
+  label: From Time
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: operator
+  label: Operator
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: downtime
+  label: Downtime
+  fieldtype: Number
+  read_only: true
+  description: In Mins
+- fieldname: stop_reason
+  label: Stop Reason
+  fieldtype: Select
+  options:
+  - Excessive machine set up time
+  - Unplanned machine maintenance
+  - On-machine press checks
+  - Machine operator errors
+  - Machine malfunction
+  - Electricity down
+  - Other
+  required: true
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - DT-
+  required: true
+title_field: operator
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - workstation
+    - operator
+  - - from_time
+    - to_time
+    - downtime
+- section: Downtime Reason
+  columns:
+  - - stop_reason
+  - - remarks

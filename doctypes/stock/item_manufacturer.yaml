@@ -1,0 +1,45 @@
+schema_version: 1
+name: Item Manufacturer
+label: Item Manufacturer
+module: stock
+icon: factory
+fields:
+- fieldname: manufacturer
+  label: Manufacturer
+  fieldtype: Link
+  options: Manufacturer
+  required: true
+  in_list_view: true
+- fieldname: manufacturer_part_no
+  label: Manufacturer Part Number
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  read_only: true
+- fieldname: is_default
+  label: Is Default
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+title_field: item_code
+layout:
+- section: Références
+  columns:
+  - - item_code
+    - manufacturer
+    - manufacturer_part_no
+  - - item_name
+    - description
+    - is_default

@@ -1,0 +1,54 @@
+schema_version: 1
+name: Shareholder
+label: Shareholder
+module: accounts
+icon: user-star
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - ACC-SH-.YYYY.-
+- fieldname: folio_no
+  label: Folio no.
+  fieldtype: Text
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: is_company
+  label: Is Company
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: share_balance
+  label: Share Balance
+  fieldtype: Table
+  options: Share Balance
+  read_only: true
+- fieldname: contact_list
+  label: Contact List
+  fieldtype: Code
+  read_only: true
+  hidden: true
+  description: Hidden list maintaining the list of contacts linked to Shareholder
+title_field: company
+layout:
+- section: État et options
+  columns:
+  - - title
+  - - naming_series
+- section: Références
+  columns:
+  - - folio_no
+  - - company
+- section: Share Balance
+  columns:
+  - - share_balance

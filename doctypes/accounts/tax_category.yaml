@@ -1,0 +1,21 @@
+schema_version: 1
+name: Tax Category
+label: Tax Category
+module: accounts
+icon: badge-percent
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+title_field: title
+layout:
+- section: État et options
+  columns:
+  - - title
+    - disabled

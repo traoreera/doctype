@@ -1,0 +1,24 @@
+schema_version: 1
+name: Quality Feedback Parameter
+label: Quality Feedback Parameter
+istable: true
+fields:
+- fieldname: parameter
+  label: Parameter
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: rating
+  label: Rating
+  fieldtype: Select
+  options:
+  - '1'
+  - '2'
+  - '3'
+  - '4'
+  - '5'
+  in_list_view: true
+- fieldname: feedback
+  label: Feedback
+  fieldtype: TextEditor
+  in_list_view: true

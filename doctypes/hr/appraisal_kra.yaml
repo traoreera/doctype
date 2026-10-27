@@ -1,0 +1,27 @@
+schema_version: 1
+name: Appraisal KRA
+label: Appraisal KRA
+istable: true
+fields:
+- fieldname: kra
+  label: KRA
+  fieldtype: Link
+  options: KRA
+  required: true
+  in_list_view: true
+  description: Key Performance Area
+- fieldname: per_weightage
+  label: Weightage (%)
+  fieldtype: Percent
+  required: true
+  in_list_view: true
+- fieldname: goal_completion
+  label: Goal Completion (%)
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: goal_score
+  label: Goal Score (weighted)
+  fieldtype: Number
+  in_list_view: true
+  read_only: true

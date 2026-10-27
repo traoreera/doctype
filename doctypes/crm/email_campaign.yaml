@@ -1,0 +1,58 @@
+schema_version: 1
+name: Email Campaign
+label: Email Campaign
+module: crm
+icon: mails
+fields:
+- fieldname: campaign_name
+  label: Campaign
+  fieldtype: Link
+  options: Campaign
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Scheduled
+  - In Progress
+  - Completed
+  - Unsubscribed
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  read_only: true
+- fieldname: email_campaign_for
+  label: 'Email Campaign For '
+  fieldtype: Select
+  options:
+  - Lead
+  - Contact
+  - Email Group
+  default: Lead
+  required: true
+  in_list_view: true
+- fieldname: recipient
+  label: Recipient
+  fieldtype: DynamicLink
+  options: email_campaign_for
+- fieldname: sender
+  label: Sender
+  fieldtype: Link
+  options: Member
+title_field: campaign_name
+layout:
+- section: Dates et planification
+  columns:
+  - - campaign_name
+    - email_campaign_for
+    - recipient
+    - sender
+  - - start_date
+    - end_date
+    - status

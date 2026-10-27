@@ -1,0 +1,35 @@
+schema_version: 1
+name: Item Tax Template
+label: Item Tax Template
+module: accounts
+icon: circle-percent
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: taxes
+  label: Tax Rates
+  fieldtype: Table
+  options: Item Tax Template Detail
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+title_field: company
+layout:
+- section: Références
+  columns:
+  - - title
+    - company
+  - - disabled
+- section: Comptabilité et montants
+  columns:
+  - - taxes

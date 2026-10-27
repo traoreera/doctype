@@ -1,0 +1,39 @@
+schema_version: 1
+name: Employee Skill Map
+label: Employee Skill Map
+module: hr
+icon: network
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Text
+  read_only: true
+- fieldname: employee_skills
+  label: Employee Skills
+  fieldtype: Table
+  options: Employee Skill
+- fieldname: trainings
+  label: Trainings
+  fieldtype: Table
+  options: Employee Training
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+  - - designation
+- section: Skills
+  columns:
+  - - employee_skills
+- section: Trainings
+  columns:
+  - - trainings

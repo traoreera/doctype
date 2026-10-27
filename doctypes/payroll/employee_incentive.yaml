@@ -1,0 +1,67 @@
+schema_version: 1
+name: Employee Incentive
+label: Employee Incentive
+module: payroll
+submittable: true
+icon: badge-dollar-sign
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: incentive_amount
+  label: Incentive Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: payroll_date
+  label: Payroll Date
+  fieldtype: Date
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Incentive
+  read_only: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: salary_component
+  label: Salary Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+title_field: employee_name
+layout:
+- section: Employee
+  columns:
+  - - employee
+    - employee_name
+    - amended_from
+  - - company
+    - department
+- section: Incentive
+  columns:
+  - - salary_component
+    - currency
+  - - payroll_date
+    - incentive_amount

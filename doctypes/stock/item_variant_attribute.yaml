@@ -1,0 +1,13 @@
+schema_version: 1
+name: "Item Variant Attribute"
+label: "Item Variant Attribute"
+istable: true
+fields:
+  - { fieldname: variant_of, label: "Variant Of", fieldtype: Link, options: "Item" }
+  - { fieldname: attribute, label: "Attribute", fieldtype: Link, options: "Item Attribute", required: true, in_list_view: true }
+  - { fieldname: attribute_value, label: "Attribute Value", fieldtype: Text, in_list_view: true }
+  - { fieldname: numeric_values, label: "Numeric Values", fieldtype: Boolean, default: false }
+  - { fieldname: from_range, label: "From Range", fieldtype: Number }
+  - { fieldname: increment, label: "Increment", fieldtype: Number }
+  - { fieldname: to_range, label: "To Range", fieldtype: Number }
+  - { fieldname: disabled, label: "Disabled", fieldtype: Boolean, default: false }

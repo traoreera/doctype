@@ -1,0 +1,59 @@
+schema_version: 1
+name: Bulk Transaction Log Detail
+label: Bulk Transaction Log Detail
+module: bulk_transaction
+icon: file
+fields:
+- fieldname: transaction_name
+  label: Name
+  fieldtype: DynamicLink
+  options: from_doctype
+  in_list_view: true
+  read_only: true
+- fieldname: transaction_status
+  label: Status
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: error_description
+  label: Error Description
+  fieldtype: LongText
+  read_only: true
+- fieldname: from_doctype
+  label: From Doctype
+  fieldtype: Text
+  read_only: true
+- fieldname: to_doctype
+  label: To Doctype
+  fieldtype: Text
+  read_only: true
+- fieldname: date
+  label: 'Date '
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: time
+  label: Time
+  fieldtype: Time
+  read_only: true
+- fieldname: retried
+  label: Retried
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+title_field: transaction_status
+layout:
+- section: Dates et planification
+  columns:
+  - - from_doctype
+    - transaction_name
+    - date
+    - time
+    - transaction_status
+    - error_description
+    - to_doctype
+    - retried
+views:
+  calendar:
+    start: date
+    title: transaction_status

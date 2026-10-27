@@ -1,0 +1,842 @@
+schema_version: 1
+name: Purchase Invoice
+label: Purchase Invoice
+module: accounts
+submittable: true
+icon: receipt-text
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-PINV-.YYYY.-
+  - ACC-PINV-RET-.YYYY.-
+  required: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  required: true
+- fieldname: supplier_name
+  label: Supplier Name
+  fieldtype: Text
+  read_only: true
+- fieldname: tax_id
+  label: Tax Id
+  fieldtype: Text
+  read_only: true
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: is_paid
+  label: Is Paid
+  fieldtype: Boolean
+  default: false
+- fieldname: is_return
+  label: Is Return (Debit Note)
+  fieldtype: Boolean
+  default: false
+- fieldname: apply_tds
+  label: Consider for Tax Withholding
+  fieldtype: Boolean
+  default: false
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+- fieldname: set_posting_time
+  label: Edit Posting Date and Time
+  fieldtype: Boolean
+  default: false
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Purchase Invoice
+  read_only: true
+- fieldname: on_hold
+  label: Hold Invoice
+  fieldtype: Boolean
+  default: false
+- fieldname: release_date
+  label: Release Date
+  fieldtype: Date
+  description: Once set, this invoice will be on hold till the set date
+- fieldname: hold_comment
+  label: Reason For Putting On Hold
+  fieldtype: LongText
+- fieldname: bill_no
+  label: Supplier Invoice No
+  fieldtype: Text
+  in_list_view: true
+- fieldname: bill_date
+  label: Supplier Invoice Date
+  fieldtype: Date
+- fieldname: return_against
+  label: Return Against Purchase Invoice
+  fieldtype: Link
+  options: Purchase Invoice
+  read_only: true
+- fieldname: update_billed_amount_in_purchase_order
+  label: Update Billed Amount in Purchase Order
+  fieldtype: Boolean
+  default: false
+- fieldname: update_billed_amount_in_purchase_receipt
+  label: Update Billed Amount in Purchase Receipt
+  fieldtype: Boolean
+  default: true
+- fieldname: supplier_address
+  label: Select Supplier Address
+  fieldtype: Link
+  options: Address
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: LongText
+  read_only: true
+- fieldname: shipping_address
+  label: Select Shipping Address
+  fieldtype: Link
+  options: Address
+- fieldname: shipping_address_display
+  label: Shipping Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+- fieldname: conversion_rate
+  label: Exchange Rate
+  fieldtype: Number
+- fieldname: buying_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: price_list_currency
+  label: Price List Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: plc_conversion_rate
+  label: Price List Exchange Rate
+  fieldtype: Number
+- fieldname: ignore_pricing_rule
+  label: Ignore Pricing Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: set_warehouse
+  label: Set Accepted Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: rejected_warehouse
+  label: Rejected Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: is_subcontracted
+  label: Is Subcontracted
+  fieldtype: Boolean
+  read_only: true
+- fieldname: update_stock
+  label: Update Stock
+  fieldtype: Boolean
+  description: If checked, updates inventory; stock and accounting entries are created together. Leave unchecked
+    if a Purchase Receipt is created separately.
+  default: false
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Purchase Invoice Item
+- fieldname: pricing_rules
+  label: Pricing Rule Detail
+  fieldtype: Table
+  options: Pricing Rule Detail
+  read_only: true
+- fieldname: supplied_items
+  label: Supplied Items
+  fieldtype: Table
+  options: Purchase Receipt Item Supplied
+- fieldname: total_qty
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: base_total
+  label: Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_total
+  label: Net Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_total
+  label: Net Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_net_weight
+  label: Total Net Weight
+  fieldtype: Number
+  read_only: true
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+- fieldname: shipping_rule
+  label: Shipping Rule
+  fieldtype: Link
+  options: Shipping Rule
+- fieldname: taxes_and_charges
+  label: Purchase Taxes and Charges Template
+  fieldtype: Link
+  options: Purchase Taxes and Charges Template
+- fieldname: taxes
+  label: Purchase Taxes and Charges
+  fieldtype: Table
+  options: Purchase Taxes and Charges
+- fieldname: other_charges_calculation
+  label: Taxes and Charges Calculation
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: base_taxes_and_charges_added
+  label: Taxes and Charges Added (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_taxes_and_charges_deducted
+  label: Taxes and Charges Deducted (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_total_taxes_and_charges
+  label: Total Taxes and Charges (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: taxes_and_charges_added
+  label: Taxes and Charges Added
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: taxes_and_charges_deducted
+  label: Taxes and Charges Deducted
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_taxes_and_charges
+  label: Total Taxes and Charges
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: apply_discount_on
+  label: Apply Additional Discount On
+  fieldtype: Select
+  options:
+  - Grand Total
+  - Net Total
+  default: Grand Total
+- fieldname: base_discount_amount
+  label: Additional Discount Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_discount_percentage
+  label: Additional Discount Percentage
+  fieldtype: Number
+- fieldname: discount_amount
+  label: Additional Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rounding_adjustment
+  label: Rounding Adjustment
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: rounding_adjustment
+  label: Rounding Adjustment
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: total_advance
+  label: Total Advance
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: outstanding_amount
+  label: Outstanding Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: disable_rounded_total
+  label: Disable Rounded Total
+  fieldtype: Boolean
+  default: false
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: cash_bank_account
+  label: Cash/Bank Account
+  fieldtype: Link
+  options: Account
+- fieldname: clearance_date
+  label: Clearance Date
+  fieldtype: Date
+  read_only: true
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_paid_amount
+  label: Paid Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: write_off_amount
+  label: Write Off Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_write_off_amount
+  label: Write Off Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: write_off_account
+  label: Write Off Account
+  fieldtype: Link
+  options: Account
+- fieldname: write_off_cost_center
+  label: Write Off Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: allocate_advances_automatically
+  label: Set Advances and Allocate (FIFO)
+  fieldtype: Boolean
+  default: false
+- fieldname: advances
+  label: Advances
+  fieldtype: Table
+  options: Purchase Invoice Advance
+- fieldname: payment_terms_template
+  label: Payment Terms Template
+  fieldtype: Link
+  options: Payment Terms Template
+- fieldname: payment_schedule
+  label: Payment Schedule
+  fieldtype: Table
+  options: Payment Schedule
+- fieldname: tc_name
+  label: Terms
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: terms
+  label: Terms and Conditions
+  fieldtype: TextEditor
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: group_same_items
+  label: Group same items
+  fieldtype: Boolean
+  default: false
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: language
+  label: Print Language
+  fieldtype: Text
+  read_only: true
+- fieldname: is_internal_supplier
+  label: Is Internal Supplier
+  fieldtype: Boolean
+  read_only: true
+- fieldname: credit_to
+  label: Credit To
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: party_account_currency
+  label: Party Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+- fieldname: is_opening
+  label: Is Opening Entry
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+  default: 'No'
+- fieldname: against_expense_account
+  label: Against Expense Account
+  fieldtype: LongText
+  hidden: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Return
+  - Debit Note Issued
+  - Submitted
+  - Paid
+  - Partly Paid
+  - Unpaid
+  - Overdue
+  - Cancelled
+  - Internal Transfer
+  default: Draft
+- fieldname: inter_company_invoice_reference
+  label: Inter Company Invoice Reference
+  fieldtype: Link
+  options: Sales Invoice
+  read_only: true
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  description: Start date of current invoice's period
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  description: End date of current invoice's period
+- fieldname: auto_repeat
+  label: Auto Repeat
+  fieldtype: Link
+  options: Auto Repeat
+  read_only: true
+- fieldname: billing_address
+  label: Select Billing Address
+  fieldtype: Link
+  options: Address
+- fieldname: billing_address_display
+  label: Billing Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: unrealized_profit_loss_account
+  label: Unrealized Profit / Loss Account
+  fieldtype: Link
+  options: Account
+  description: Unrealized Profit/Loss account for intra-company transfers
+- fieldname: represents_company
+  label: Represents Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+  description: Company which internal supplier represents
+- fieldname: set_from_warehouse
+  label: Set From Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: supplier_warehouse
+  label: Supplier Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: per_received
+  label: Per Received
+  fieldtype: Percent
+  read_only: true
+  hidden: true
+- fieldname: ignore_default_payment_terms_template
+  label: Ignore Default Payment Terms Template
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: subscription
+  label: Subscription
+  fieldtype: Link
+  options: Subscription
+- fieldname: incoterm
+  label: Incoterm
+  fieldtype: Link
+  options: Incoterm
+- fieldname: named_place
+  label: Named Place
+  fieldtype: Text
+- fieldname: only_include_allocated_payments
+  label: Only Include Allocated Payments
+  fieldtype: Boolean
+  description: Advance payments allocated against orders will only be fetched
+  default: false
+- fieldname: use_company_roundoff_cost_center
+  label: Use Company Default Round Off Cost Center
+  fieldtype: Boolean
+  default: false
+- fieldname: use_transaction_date_exchange_rate
+  label: Use Transaction Date Exchange Rate
+  fieldtype: Boolean
+  read_only: true
+- fieldname: supplier_group
+  label: Supplier Group
+  fieldtype: Link
+  options: Supplier Group
+- fieldname: update_outstanding_for_self
+  label: Update Outstanding for Self
+  fieldtype: Boolean
+  description: Debit Note will update it's own outstanding amount, even if 'Return Against' is specified.
+  default: true
+- fieldname: sender
+  label: Sender
+  fieldtype: Text
+- fieldname: dispatch_address_display
+  label: Dispatch Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: dispatch_address
+  label: 'Select Dispatch Address '
+  fieldtype: Link
+  options: Address
+- fieldname: last_scanned_warehouse
+  label: Last Scanned Warehouse
+  fieldtype: Text
+- fieldname: claimed_landed_cost_amount
+  label: Claimed Landed Cost Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: item_wise_tax_details
+  label: Item Wise Tax Details
+  fieldtype: Table
+  options: Item Wise Tax Detail
+  hidden: true
+- fieldname: tax_withholding_group
+  label: Tax Withholding Group
+  fieldtype: Link
+  options: Tax Withholding Group
+- fieldname: tax_withholding_entries
+  label: Tax Withholding Entries
+  fieldtype: Table
+  options: Tax Withholding Entry
+- fieldname: ignore_tax_withholding_threshold
+  label: Ignore Tax Withholding Threshold
+  fieldtype: Boolean
+  default: false
+- fieldname: override_tax_withholding_entries
+  label: Edit Tax Withholding Entries
+  fieldtype: Boolean
+  default: false
+title_field: supplier
+layout:
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - naming_series
+    - supplier
+    - supplier_name
+    - tax_id
+    - company
+  - - posting_date
+    - posting_time
+    - set_posting_time
+    - due_date
+  - - is_paid
+    - is_return
+    - return_against
+    - update_outstanding_for_self
+    - update_billed_amount_in_purchase_order
+    - update_billed_amount_in_purchase_receipt
+    - apply_tds
+    - amended_from
+- tab: General
+  section: Supplier Invoice
+  columns:
+  - - bill_no
+  - - bill_date
+- tab: General
+  section: 'Accounting Dimensions '
+  columns:
+  - - cost_center
+  - - project
+- tab: General
+  section: Currency and Price List
+  columns:
+  - - currency
+    - conversion_rate
+    - use_transaction_date_exchange_rate
+  - - buying_price_list
+    - price_list_currency
+    - plc_conversion_rate
+    - ignore_pricing_rule
+- tab: General
+  section: Items
+  columns:
+  - - scan_barcode
+    - last_scanned_warehouse
+  - - update_stock
+    - set_warehouse
+    - set_from_warehouse
+    - is_subcontracted
+    - rejected_warehouse
+    - supplier_warehouse
+- tab: General
+  section: Références
+  columns:
+  - - items
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - total_qty
+    - total_net_weight
+  - - base_total
+    - base_net_total
+    - claimed_landed_cost_amount
+  - - total
+    - net_total
+- tab: General
+  section: Taxes and Charges
+  columns:
+  - - tax_category
+    - taxes_and_charges
+  - - shipping_rule
+  - - incoterm
+    - named_place
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - taxes
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - base_taxes_and_charges_added
+    - base_taxes_and_charges_deducted
+    - base_total_taxes_and_charges
+  - - taxes_and_charges_added
+    - taxes_and_charges_deducted
+    - total_taxes_and_charges
+- tab: General
+  section: Totals
+  columns:
+  - - use_company_roundoff_cost_center
+    - grand_total
+    - in_words
+  - - disable_rounded_total
+    - rounding_adjustment
+    - rounded_total
+- tab: General
+  section: Totals (Company Currency)
+  columns:
+  - - base_grand_total
+    - base_in_words
+  - - base_rounding_adjustment
+    - base_rounded_total
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - total_advance
+  - - outstanding_amount
+- tab: General
+  section: Tax Withholding Entry
+  columns:
+  - - tax_withholding_group
+    - ignore_tax_withholding_threshold
+    - override_tax_withholding_entries
+    - tax_withholding_entries
+- tab: General
+  section: Additional Discount
+  columns:
+  - - apply_discount_on
+    - base_discount_amount
+  - - additional_discount_percentage
+    - discount_amount
+- tab: General
+  section: Tax Breakup
+  columns:
+  - - other_charges_calculation
+- tab: General
+  section: Pricing Rules
+  columns:
+  - - pricing_rules
+- tab: General
+  section: Raw Materials Supplied
+  columns:
+  - - supplied_items
+- tab: Payments
+  section: Payments
+  columns:
+  - - mode_of_payment
+    - base_paid_amount
+    - clearance_date
+  - - cash_bank_account
+    - paid_amount
+- tab: Payments
+  section: Advance Payments
+  columns:
+  - - allocate_advances_automatically
+    - only_include_allocated_payments
+    - advances
+- tab: Payments
+  section: Write Off
+  columns:
+  - - write_off_amount
+    - base_write_off_amount
+  - - write_off_account
+    - write_off_cost_center
+- tab: Address & Contact
+  section: Supplier Address
+  columns:
+  - - supplier_address
+    - address_display
+  - - contact_person
+    - contact_display
+    - contact_mobile
+    - contact_email
+- tab: Address & Contact
+  section: Shipping Address
+  columns:
+  - - dispatch_address
+    - dispatch_address_display
+  - - shipping_address
+    - shipping_address_display
+- tab: Address & Contact
+  section: Company Billing Address
+  columns:
+  - - billing_address
+  - - billing_address_display
+- tab: Terms
+  section: Payment Terms
+  columns:
+  - - payment_terms_template
+    - payment_schedule
+- tab: Terms
+  section: Terms and Conditions
+  columns:
+  - - tc_name
+    - terms
+- tab: More Info
+  section: Status
+  columns:
+  - - status
+- tab: More Info
+  section: Accounting Details
+  columns:
+  - - credit_to
+    - is_opening
+  - - unrealized_profit_loss_account
+- tab: More Info
+  section: Subscription
+  columns:
+  - - subscription
+  - - from_date
+    - to_date
+- tab: More Info
+  section: Automation
+  columns:
+  - - auto_repeat
+- tab: More Info
+  section: Print Settings
+  columns:
+  - - letter_head
+    - group_same_items
+  - - select_print_heading
+    - language
+- tab: More Info
+  section: Hold Invoice
+  columns:
+  - - on_hold
+    - release_date
+  - - hold_comment
+- tab: More Info
+  section: Additional Info
+  columns:
+  - - is_internal_supplier
+    - title
+    - represents_company
+    - supplier_group
+    - sender
+  - - inter_company_invoice_reference
+    - remarks
+views:
+  kanban:
+    field: status
+    card_fields:
+    - supplier
+    - posting_date
+  calendar:
+    start: posting_date
+    title: supplier
+    color: status
+  gantt:
+    start: from_date
+    end: to_date
+    title: supplier
+    color: status
+  tree:
+    parent: amended_from

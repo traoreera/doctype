@@ -1,0 +1,39 @@
+schema_version: 1
+name: UOM Conversion Factor
+label: UOM Conversion Factor
+module: setup
+icon: ruler
+fields:
+- fieldname: category
+  label: Category
+  fieldtype: Link
+  options: UOM Category
+  required: true
+  in_list_view: true
+- fieldname: from_uom
+  label: From
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: to_uom
+  label: To
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: value
+  label: Value
+  fieldtype: Number
+  required: true
+  in_list_view: true
+title_field: category
+layout:
+- section: Informations principales
+  columns:
+  - - category
+- section: Informations complémentaires 2
+  columns:
+  - - from_uom
+    - to_uom
+    - value

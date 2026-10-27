@@ -1,0 +1,46 @@
+schema_version: 1
+name: UOM
+label: UOM
+module: setup
+icon: ruler
+fields:
+- fieldname: uom_name
+  label: UOM Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: must_be_whole_number
+  label: Must be Whole Number
+  fieldtype: Boolean
+  description: Check this to disallow fractions. (for Nos)
+  default: false
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+- fieldname: symbol
+  label: Symbol
+  fieldtype: Text
+- fieldname: common_code
+  label: Common Code
+  fieldtype: Text
+  description: According to CEFACT/ICG/2010/IC013 or CEFACT/ICG/2010/IC010
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: category
+  label: Category
+  fieldtype: Link
+  options: UOM Category
+  in_list_view: true
+title_field: uom_name
+layout:
+- section: État et options
+  columns:
+  - - uom_name
+    - symbol
+    - common_code
+    - description
+  - - category
+    - enabled
+    - must_be_whole_number

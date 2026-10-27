@@ -1,0 +1,19 @@
+schema_version: 1
+name: Job Offer Term Template
+label: Job Offer Term Template
+module: hr
+icon: file-text
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: offer_terms
+  label: Offer Terms
+  fieldtype: Table
+  options: Job Offer Term
+title_field: title
+layout:
+- section: Informations principales
+  columns:
+  - - title
+    - offer_terms

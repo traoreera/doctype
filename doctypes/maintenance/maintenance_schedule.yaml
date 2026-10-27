@@ -1,0 +1,119 @@
+schema_version: 1
+name: Maintenance Schedule
+label: Maintenance Schedule
+module: maintenance
+submittable: true
+icon: calendar-check
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-MSH-.YYYY.-
+  required: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Submitted
+  - Cancelled
+  default: Draft
+  required: true
+  read_only: true
+- fieldname: transaction_date
+  label: Transaction Date
+  fieldtype: Date
+  required: true
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Maintenance Schedule Item
+- fieldname: schedules
+  label: Schedules
+  fieldtype: Table
+  options: Maintenance Schedule Detail
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: customer_address
+  label: Customer Address
+  fieldtype: Link
+  options: Address
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+  hidden: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Maintenance Schedule
+  read_only: true
+title_field: customer_name
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - customer
+  - - status
+    - transaction_date
+- section: Références
+  columns:
+  - - items
+- section: Schedule
+  columns:
+  - - schedules
+- section: Contact Info
+  columns:
+  - - customer_name
+    - contact_person
+  - - customer_address
+    - territory
+    - customer_group
+    - company
+    - amended_from
+views:
+  calendar:
+    start: transaction_date
+    title: customer_name
+  tree:
+    parent: amended_from

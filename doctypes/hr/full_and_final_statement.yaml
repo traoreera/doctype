@@ -1,0 +1,122 @@
+schema_version: 1
+name: Full and Final Statement
+label: Full and Final Statement
+module: hr
+submittable: true
+icon: file-check
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Paid
+  - Unpaid
+  - Cancelled
+  default: Unpaid
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Full and Final Statement
+  read_only: true
+- fieldname: assets_allocated
+  label: Assets Allocated
+  fieldtype: Table
+  options: Full and Final Asset
+- fieldname: relieving_date
+  label: 'Relieving Date '
+  fieldtype: Date
+  read_only: true
+- fieldname: date_of_joining
+  label: Date of Joining
+  fieldtype: Date
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+  read_only: true
+- fieldname: payables
+  label: Payables
+  fieldtype: Table
+  options: Full and Final Outstanding Statement
+- fieldname: receivables
+  label: Receivables
+  fieldtype: Table
+  options: Full and Final Outstanding Statement
+- fieldname: transaction_date
+  label: Transaction Date
+  fieldtype: Date
+  required: true
+- fieldname: total_payable_amount
+  label: Total Payable Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: total_receivable_amount
+  label: Total Receivable Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: total_asset_recovery_cost
+  label: Total Asset Recovery Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - transaction_date
+  - - company
+    - status
+    - amended_from
+- section: Employee Details
+  columns:
+  - - date_of_joining
+    - relieving_date
+  - - designation
+    - department
+- section: Payables
+  columns:
+  - - payables
+- section: Receivables
+  columns:
+  - - receivables
+- section: Assets Allocated
+  columns:
+  - - assets_allocated
+    - total_asset_recovery_cost
+- section: Totals
+  columns:
+  - - total_payable_amount
+  - - total_receivable_amount
+views:
+  calendar:
+    start: transaction_date
+    title: employee_name

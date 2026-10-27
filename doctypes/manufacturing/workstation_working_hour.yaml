@@ -1,0 +1,24 @@
+schema_version: 1
+name: Workstation Working Hour
+label: Workstation Working Hour
+istable: true
+fields:
+- fieldname: start_time
+  label: Start Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: end_time
+  label: End Time
+  fieldtype: Time
+  required: true
+  in_list_view: true
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  in_list_view: true
+  default: true
+- fieldname: hours
+  label: Hours
+  fieldtype: Number
+  read_only: true

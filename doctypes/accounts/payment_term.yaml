@@ -1,0 +1,71 @@
+schema_version: 1
+name: Payment Term
+label: Payment Term
+module: accounts
+icon: calendar-clock
+fields:
+- fieldname: payment_term_name
+  label: Payment Term Name
+  fieldtype: Text
+- fieldname: invoice_portion
+  label: Invoice Portion (%)
+  fieldtype: Number
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: due_date_based_on
+  label: Due Date Based On
+  fieldtype: Select
+  options:
+  - Day(s) after invoice date
+  - Day(s) after the end of the invoice month
+  - Month(s) after the end of the invoice month
+- fieldname: credit_days
+  label: Credit Days
+  fieldtype: Int
+- fieldname: credit_months
+  label: Credit Months
+  fieldtype: Int
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: discount_type
+  label: Discount Type
+  fieldtype: Select
+  options:
+  - Percentage
+  - Amount
+  default: Percentage
+- fieldname: discount
+  label: Discount
+  fieldtype: Number
+- fieldname: discount_validity_based_on
+  label: Discount Validity Based On
+  fieldtype: Select
+  options:
+  - Day(s) after invoice date
+  - Day(s) after the end of the invoice month
+  - Month(s) after the end of the invoice month
+  default: Day(s) after invoice date
+- fieldname: discount_validity
+  label: Discount Validity
+  fieldtype: Int
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - payment_term_name
+    - invoice_portion
+    - mode_of_payment
+  - - due_date_based_on
+    - credit_days
+    - credit_months
+- section: Discount Settings
+  columns:
+  - - discount_type
+    - discount
+  - - discount_validity_based_on
+    - discount_validity
+- section: Description et notes
+  columns:
+  - - description

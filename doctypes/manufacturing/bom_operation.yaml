@@ -1,0 +1,134 @@
+schema_version: 1
+name: BOM Operation
+label: BOM Operation
+istable: true
+fields:
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  required: true
+  in_list_view: true
+- fieldname: workstation
+  label: Workstation
+  fieldtype: Link
+  options: Workstation
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: hour_rate
+  label: Hour rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: time_in_mins
+  label: Operation time
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  description: In minutes
+- fieldname: fixed_time
+  label: Fixed time
+  fieldtype: Boolean
+  description: Operation time does not depend on quantity to produce
+  default: false
+- fieldname: operating_cost
+  label: Operating cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_hour_rate
+  label: Base hour rate(Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_operating_cost
+  label: Operating cost(Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: batch_size
+  label: Batch size
+  fieldtype: Number
+  default: 1.0
+- fieldname: sequence_id
+  label: Sequence ID
+  fieldtype: Int
+  in_list_view: true
+  description: If you want to run operations in parallel, keep the same sequence ID for them.
+- fieldname: cost_per_unit
+  label: Cost per Unit
+  fieldtype: Number
+  read_only: true
+- fieldname: base_cost_per_unit
+  label: Base Cost per Unit
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: set_cost_based_on_bom_qty
+  label: Set operating cost based on BOM Quantity
+  fieldtype: Boolean
+  default: false
+- fieldname: workstation_type
+  label: Workstation Type
+  fieldtype: Link
+  options: Workstation Type
+  in_list_view: true
+- fieldname: finished_good
+  label: Output Item
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: bom_no
+  label: Output Item BOM
+  fieldtype: Link
+  options: BOM
+  in_list_view: true
+  description: Pick a BOM to copy its raw materials into this step. Leave it empty to add the raw materials yourself
+    with Add Raw Materials.
+- fieldname: finished_good_qty
+  label: Output Qty
+  fieldtype: Number
+  in_list_view: true
+  default: 1.0
+- fieldname: is_final_finished_good
+  label: Last Step
+  fieldtype: Boolean
+  description: Tick this on the step that makes this BOM's own item. The other steps make in-between items.
+  default: false
+- fieldname: wip_warehouse
+  label: WIP Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: fg_warehouse
+  label: Finished Goods Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: source_warehouse
+  label: Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: is_subcontracted
+  label: Is Subcontracted
+  fieldtype: Boolean
+  default: false
+- fieldname: skip_material_transfer
+  label: ' Skip Material Transfer'
+  fieldtype: Boolean
+  default: false
+- fieldname: backflush_from_wip_warehouse
+  label: Backflush materials from WIP Warehouse
+  fieldtype: Boolean
+  default: false
+- fieldname: quality_inspection_required
+  label: Quality Inspection required
+  fieldtype: Boolean
+  default: false
+- fieldname: batch_split
+  label: Batch split
+  fieldtype: Boolean
+  description: On completion of the Job Card, split the consumed batch into one child batch per finished piece
+  default: false
+- fieldname: weight_per_piece
+  label: Weight per piece
+  fieldtype: Number
+  description: Produced quantity is split into one batch per this many units of the finished good

@@ -1,0 +1,102 @@
+schema_version: 1
+name: Payment Schedule
+label: Payment Schedule
+istable: true
+fields:
+- fieldname: payment_term
+  label: Payment Term
+  fieldtype: Link
+  options: Payment Term
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: invoice_portion
+  label: Invoice Portion
+  fieldtype: Percent
+  in_list_view: true
+- fieldname: payment_amount
+  label: Payment Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discounted_amount
+  label: Discounted Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: outstanding
+  label: Outstanding
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: discount_date
+  label: Discount Date
+  fieldtype: Date
+- fieldname: discount_type
+  label: Discount Type
+  fieldtype: Select
+  options:
+  - Percentage
+  - Amount
+  default: Percentage
+- fieldname: discount
+  label: Discount
+  fieldtype: Number
+- fieldname: base_payment_amount
+  label: Payment Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_outstanding
+  label: Outstanding (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_paid_amount
+  label: Paid Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: due_date_based_on
+  label: Due Date Based On
+  fieldtype: Select
+  options:
+  - Day(s) after invoice date
+  - Day(s) after the end of the invoice month
+  - Month(s) after the end of the invoice month
+  read_only: true
+- fieldname: credit_days
+  label: Credit Days
+  fieldtype: Int
+  read_only: true
+- fieldname: credit_months
+  label: Credit Months
+  fieldtype: Int
+  read_only: true
+- fieldname: discount_validity_based_on
+  label: Discount Validity Based On
+  fieldtype: Select
+  options:
+  - Day(s) after invoice date
+  - Day(s) after the end of the invoice month
+  - Month(s) after the end of the invoice month
+  read_only: true
+- fieldname: discount_validity
+  label: Discount Validity
+  fieldtype: Int
+  read_only: true

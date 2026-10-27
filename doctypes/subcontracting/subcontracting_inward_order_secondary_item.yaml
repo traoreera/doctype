@@ -1,0 +1,58 @@
+schema_version: 1
+name: Subcontracting Inward Order Secondary Item
+label: Subcontracting Inward Order Secondary Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: Text
+  required: true
+  read_only: true
+- fieldname: produced_qty
+  label: Produced Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  default: 0.0
+- fieldname: delivered_qty
+  label: Delivered Qty
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  default: 0.0
+- fieldname: fg_item_code
+  label: Finished Good Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  read_only: true
+- fieldname: secondary_item_type
+  label: Type
+  fieldtype: Select
+  options:
+  - Co-Product
+  - By-Product
+  - Scrap
+  - Additional Finished Good
+  required: true
+  read_only: true

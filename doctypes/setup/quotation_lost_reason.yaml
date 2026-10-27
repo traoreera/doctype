@@ -1,0 +1,16 @@
+schema_version: 1
+name: Quotation Lost Reason
+label: Quotation Lost Reason
+module: setup
+icon: circle-x
+fields:
+- fieldname: order_lost_reason
+  label: Quotation Lost Reason
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: order_lost_reason
+layout:
+- section: Informations principales
+  columns:
+  - - order_lost_reason

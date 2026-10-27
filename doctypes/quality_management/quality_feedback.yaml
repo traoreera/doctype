@@ -1,0 +1,39 @@
+schema_version: 1
+name: Quality Feedback
+label: Quality Feedback
+module: quality_management
+icon: message-square-text
+fields:
+- fieldname: template
+  label: Template
+  fieldtype: Link
+  options: Quality Feedback Template
+  required: true
+  in_list_view: true
+- fieldname: parameters
+  label: Parameters
+  fieldtype: Table
+  options: Quality Feedback Parameter
+- fieldname: document_type
+  label: Type
+  fieldtype: Select
+  options:
+  - User
+  - Customer
+  required: true
+  in_list_view: true
+- fieldname: document_name
+  label: Feedback By
+  fieldtype: DynamicLink
+  options: document_type
+  in_list_view: true
+title_field: template
+layout:
+- section: Détails
+  columns:
+  - - template
+  - - document_type
+    - document_name
+- section: Détails
+  columns:
+  - - parameters

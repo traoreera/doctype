@@ -1,0 +1,61 @@
+schema_version: 1
+name: Accounting Period
+label: Accounting Period
+module: accounts
+icon: calendar-range
+fields:
+- fieldname: period_name
+  label: Period Name
+  fieldtype: Text
+  required: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: closed_documents
+  label: Closed Documents
+  fieldtype: Table
+  options: Closed Document
+- fieldname: exempted_role
+  label: Exempted Role
+  fieldtype: Link
+  options: Role
+  description: Role allowed to bypass period restrictions.
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - period_name
+    - start_date
+    - end_date
+  - - company
+    - disabled
+    - exempted_role
+- section: Informations complémentaires 2
+  columns:
+  - - closed_documents
+views:
+  calendar:
+    start: start_date
+    title: company
+  gantt:
+    start: start_date
+    end: end_date
+    title: company

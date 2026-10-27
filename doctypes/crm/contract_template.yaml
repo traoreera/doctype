@@ -1,0 +1,30 @@
+schema_version: 1
+name: Contract Template
+label: Contract Template
+module: crm
+icon: signature
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+- fieldname: contract_terms
+  label: Contract Terms and Conditions
+  fieldtype: TextEditor
+- fieldname: requires_fulfilment
+  label: Requires Fulfilment
+  fieldtype: Boolean
+  default: false
+- fieldname: fulfilment_terms
+  label: Fulfilment Terms and Conditions
+  fieldtype: Table
+  options: Contract Template Fulfilment Terms
+title_field: title
+layout:
+- section: Description et notes
+  columns:
+  - - title
+    - contract_terms
+- section: Description et notes
+  columns:
+  - - requires_fulfilment
+    - fulfilment_terms

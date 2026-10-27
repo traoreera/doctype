@@ -1,0 +1,73 @@
+schema_version: 1
+name: Putaway Rule
+label: Putaway Rule
+module: stock
+icon: archive
+fields:
+- fieldname: item_code
+  label: Item
+  fieldtype: Link
+  options: Item
+  required: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  required: true
+  in_list_view: true
+- fieldname: capacity
+  label: Capacity
+  fieldtype: Number
+  required: true
+  in_list_view: true
+  default: 0.0
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: priority
+  label: Priority
+  fieldtype: Int
+  in_list_view: true
+  default: 1
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: disable
+  label: Disable
+  fieldtype: Boolean
+  default: false
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: stock_capacity
+  label: Capacity in Stock UOM
+  fieldtype: Number
+  read_only: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  read_only: true
+title_field: item_code
+layout:
+- section: Références
+  columns:
+  - - disable
+    - item_code
+    - item_name
+    - warehouse
+    - priority
+  - - company
+    - capacity
+    - uom
+    - conversion_factor
+    - stock_uom
+    - stock_capacity

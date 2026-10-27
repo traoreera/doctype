@@ -1,0 +1,359 @@
+schema_version: 1
+name: Purchase Order Item
+label: Purchase Order Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: supplier_part_no
+  label: Supplier Part Number
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  required: true
+- fieldname: schedule_date
+  label: Required By
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: expected_delivery_date
+  label: Expected Delivery Date
+  fieldtype: Date
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: qty
+  label: Quantity
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  read_only: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: conversion_factor
+  label: UOM Conversion Factor
+  fieldtype: Number
+  required: true
+- fieldname: price_list_rate
+  label: Price List Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: discount_percentage
+  label: Discount on Price List Rate (%)
+  fieldtype: Percent
+- fieldname: discount_amount
+  label: Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: last_purchase_rate
+  label: Last Purchase Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_price_list_rate
+  label: Price List Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: base_rate
+  label: Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: pricing_rules
+  label: Pricing Rules
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: is_free_item
+  label: Is Free Item
+  fieldtype: Boolean
+  read_only: true
+- fieldname: net_rate
+  label: Net Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_amount
+  label: Net Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_rate
+  label: Net Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_amount
+  label: Net Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: weight_per_unit
+  label: Weight Per Unit
+  fieldtype: Number
+  read_only: true
+- fieldname: total_weight
+  label: Total Weight
+  fieldtype: Number
+  read_only: true
+- fieldname: weight_uom
+  label: Weight UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: warehouse
+  label: Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: material_request
+  label: Material Request
+  fieldtype: Link
+  options: Material Request
+  read_only: true
+- fieldname: material_request_item
+  label: Material Request Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+- fieldname: sales_order_item
+  label: Sales Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: supplier_quotation
+  label: Supplier Quotation
+  fieldtype: Link
+  options: Supplier Quotation
+  read_only: true
+- fieldname: supplier_quotation_item
+  label: Supplier Quotation Item
+  fieldtype: Link
+  options: Supplier Quotation Item
+  read_only: true
+  hidden: true
+- fieldname: delivered_by_supplier
+  label: To be Delivered to Customer
+  fieldtype: Boolean
+  default: false
+- fieldname: blanket_order
+  label: Blanket Order
+  fieldtype: Link
+  options: Blanket Order
+- fieldname: blanket_order_rate
+  label: Blanket Order Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  read_only: true
+  hidden: true
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+  read_only: true
+  hidden: true
+- fieldname: bom
+  label: BOM
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: stock_qty
+  label: Qty in Stock UOM
+  fieldtype: Number
+  read_only: true
+- fieldname: received_qty
+  label: Received Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: returned_qty
+  label: Returned Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: billed_amt
+  label: Billed Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: closed
+  label: Closed
+  fieldtype: Boolean
+  read_only: true
+- fieldname: item_tax_rate
+  label: Item Tax Rate
+  fieldtype: Code
+  read_only: true
+  hidden: true
+  description: 'Tax detail table fetched from item master as a string and stored in this field.
+
+    Used for Taxes and Charges'
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: page_break
+  label: Page Break
+  fieldtype: Boolean
+  default: false
+- fieldname: item_tax_template
+  label: Item Tax Template
+  fieldtype: Link
+  options: Item Tax Template
+- fieldname: manufacturer
+  label: Manufacturer
+  fieldtype: Link
+  options: Manufacturer
+- fieldname: manufacturer_part_no
+  label: Manufacturer Part Number
+  fieldtype: Text
+- fieldname: against_blanket_order
+  label: Against Blanket Order
+  fieldtype: Boolean
+  default: false
+- fieldname: is_fixed_asset
+  label: Is Fixed Asset
+  fieldtype: Boolean
+  read_only: true
+- fieldname: stock_uom_rate
+  label: Rate of Stock UOM
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: actual_qty
+  label: Available Qty at Target Warehouse
+  fieldtype: Number
+  read_only: true
+- fieldname: company_total_stock
+  label: Available Qty at Company
+  fieldtype: Number
+  read_only: true
+- fieldname: margin_type
+  label: Margin Type
+  fieldtype: Select
+  options:
+  - Percentage
+  - Amount
+- fieldname: margin_rate_or_amount
+  label: Margin Rate or Amount
+  fieldtype: Number
+- fieldname: rate_with_margin
+  label: Rate With Margin
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rate_with_margin
+  label: Rate With Margin (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: production_plan
+  label: Production Plan
+  fieldtype: Link
+  options: Production Plan
+  read_only: true
+- fieldname: production_plan_item
+  label: Production Plan Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: production_plan_sub_assembly_item
+  label: Production Plan Sub Assembly Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: product_bundle
+  label: Product Bundle
+  fieldtype: Link
+  options: Product Bundle
+  read_only: true
+  hidden: true
+  description: Product Bundle version this row was packed from
+- fieldname: sales_order_packed_item
+  label: Sales Order Packed Item
+  fieldtype: Text
+- fieldname: fg_item
+  label: Finished Good
+  fieldtype: Link
+  options: Item
+- fieldname: fg_item_qty
+  label: Finished Good Qty
+  fieldtype: Number
+  default: 1.0
+- fieldname: from_warehouse
+  label: From Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: wip_composite_asset
+  label: WIP Composite Asset
+  fieldtype: Link
+  options: Asset
+- fieldname: job_card
+  label: Job Card
+  fieldtype: Link
+  options: Job Card
+  read_only: true
+- fieldname: distributed_discount_amount
+  label: Distributed Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: mapped_additional_discount_amount
+  label: Additional Discount per Stock Unit
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Tax-exclusive additional discount carried from a source document, per stock unit.
+- fieldname: subcontracted_qty
+  label: Subcontracted Quantity
+  fieldtype: Number
+  read_only: true

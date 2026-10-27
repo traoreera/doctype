@@ -1,0 +1,73 @@
+schema_version: 1
+name: Employee Transfer
+label: Employee Transfer
+module: hr
+submittable: true
+icon: arrow-right-left
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: transfer_date
+  label: Transfer Date
+  fieldtype: Date
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: new_company
+  label: New Company
+  fieldtype: Link
+  options: Company
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: transfer_details
+  label: Employee Transfer Detail
+  fieldtype: Table
+  options: Employee Property History
+- fieldname: reallocate_leaves
+  label: Re-allocate Leaves
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: create_new_employee_id
+  label: Create New Employee Id
+  fieldtype: Boolean
+  default: false
+- fieldname: new_employee_id
+  label: New Employee ID
+  fieldtype: Link
+  options: Employee
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Transfer
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - employee
+    - employee_name
+    - transfer_date
+  - - company
+    - new_company
+    - department
+- section: Employee Transfer Details
+  columns:
+  - - transfer_details
+    - create_new_employee_id
+    - new_employee_id
+    - amended_from

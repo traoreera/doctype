@@ -1,0 +1,16 @@
+schema_version: 1
+name: Quality Inspection Parameter Group
+label: Quality Inspection Parameter Group
+module: stock
+icon: clipboard-list
+fields:
+- fieldname: group_name
+  label: Parameter Group Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+title_field: group_name
+layout:
+- section: Détails
+  columns:
+  - - group_name

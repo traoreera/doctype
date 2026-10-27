@@ -1,0 +1,97 @@
+schema_version: 1
+name: Bank Transaction Rule
+label: Bank Transaction Rule
+module: accounts
+icon: zap
+fields:
+- fieldname: rule_name
+  label: Rule Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: transaction_type
+  label: Transaction Type
+  fieldtype: Select
+  options:
+  - Any
+  - Withdrawal
+  - Deposit
+  default: Any
+  required: true
+- fieldname: min_amount
+  label: Min Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: max_amount
+  label: Max Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: rule_description
+  label: Rule Description
+  fieldtype: LongText
+- fieldname: description_rules
+  label: Description Rules
+  fieldtype: Table
+  options: Bank Transaction Rule Description Conditions
+- fieldname: classify_as
+  label: Classify As
+  fieldtype: Select
+  options:
+  - Bank Entry
+  - Payment Entry
+  - Transfer
+  required: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+- fieldname: priority
+  label: Priority
+  fieldtype: Int
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: bank_entry_type
+  label: Bank Entry Type
+  fieldtype: Select
+  options:
+  - Single Account
+  - Multiple Accounts
+- fieldname: accounts
+  label: Accounts
+  fieldtype: Table
+  options: Bank Transaction Rule Accounts
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - rule_name
+    - transaction_type
+    - priority
+    - min_amount
+    - max_amount
+  - - rule_description
+    - company
+- section: Description et notes
+  columns:
+  - - description_rules
+- section: Action
+  columns:
+  - - classify_as
+    - account
+    - bank_entry_type
+  - - party_type
+    - party
+- section: Comptabilité et montants
+  columns:
+  - - accounts

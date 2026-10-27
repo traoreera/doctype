@@ -1,0 +1,175 @@
+schema_version: 1
+name: Email Digest
+label: Email Digest
+module: setup
+icon: mail
+fields:
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: company
+  label: For Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: frequency
+  label: How frequently?
+  fieldtype: Select
+  options:
+  - Daily
+  - Weekly
+  - Monthly
+  required: true
+  in_list_view: true
+- fieldname: next_send
+  label: 'Next email will be sent on:'
+  fieldtype: Text
+  read_only: true
+- fieldname: income
+  label: New Income
+  fieldtype: Boolean
+  default: false
+- fieldname: expenses_booked
+  label: New Expenses
+  fieldtype: Boolean
+  default: false
+- fieldname: income_year_to_date
+  label: Annual Income
+  fieldtype: Boolean
+  default: false
+- fieldname: expense_year_to_date
+  label: Annual Expenses
+  fieldtype: Boolean
+  default: false
+- fieldname: bank_balance
+  label: Bank Balance
+  fieldtype: Boolean
+  default: false
+- fieldname: credit_balance
+  label: Bank Credit Balance
+  fieldtype: Boolean
+  default: false
+- fieldname: invoiced_amount
+  label: Receivables
+  fieldtype: Boolean
+  default: false
+- fieldname: payables
+  label: Payables
+  fieldtype: Boolean
+  default: false
+- fieldname: sales_orders_to_bill
+  label: Sales Orders to Bill
+  fieldtype: Boolean
+  default: false
+- fieldname: purchase_orders_to_bill
+  label: Purchase Orders to Bill
+  fieldtype: Boolean
+  default: false
+- fieldname: sales_order
+  label: New Sales Orders
+  fieldtype: Boolean
+  default: false
+- fieldname: purchase_order
+  label: New Purchase Orders
+  fieldtype: Boolean
+  default: false
+- fieldname: sales_orders_to_deliver
+  label: Sales Orders to Deliver
+  fieldtype: Boolean
+  default: false
+- fieldname: purchase_orders_to_receive
+  label: Purchase Orders to Receive
+  fieldtype: Boolean
+  default: false
+- fieldname: sales_invoice
+  label: New Sales Invoice
+  fieldtype: Boolean
+  default: false
+- fieldname: purchase_invoice
+  label: New Purchase Invoice
+  fieldtype: Boolean
+  default: false
+- fieldname: new_quotations
+  label: New Quotations
+  fieldtype: Boolean
+  default: false
+- fieldname: pending_quotations
+  label: Open Quotations
+  fieldtype: Boolean
+  default: false
+- fieldname: issue
+  label: Open Issues
+  fieldtype: Boolean
+  default: false
+- fieldname: project
+  label: Open Projects
+  fieldtype: Boolean
+  default: false
+- fieldname: purchase_orders_items_overdue
+  label: Purchase Orders Items Overdue
+  fieldtype: Boolean
+  default: false
+- fieldname: calendar_events
+  label: Upcoming Calendar Events
+  fieldtype: Boolean
+  default: false
+- fieldname: todo_list
+  label: Open To Do
+  fieldtype: Boolean
+  default: false
+- fieldname: notifications
+  label: Open Notifications
+  fieldtype: Boolean
+  default: false
+- fieldname: add_quote
+  label: Add Quote
+  fieldtype: Boolean
+  default: false
+- fieldname: recipients
+  label: Recipients
+  fieldtype: Table
+  options: Email Digest Recipient
+  description: 'Note: Email will not be sent to disabled users'
+title_field: company
+layout:
+- section: Email Digest Settings
+  columns:
+  - - enabled
+    - company
+    - frequency
+    - next_send
+  - - recipients
+- section: Accounts
+  columns:
+  - - income
+    - expenses_booked
+    - income_year_to_date
+    - expense_year_to_date
+  - - bank_balance
+    - credit_balance
+    - invoiced_amount
+    - payables
+  - - sales_orders_to_bill
+    - purchase_orders_to_bill
+- section: Operations
+  columns:
+  - - sales_order
+    - purchase_order
+    - sales_orders_to_deliver
+    - purchase_orders_to_receive
+    - sales_invoice
+    - purchase_invoice
+  - - new_quotations
+    - pending_quotations
+    - issue
+    - project
+    - purchase_orders_items_overdue
+- section: Other
+  columns:
+  - - calendar_events
+    - todo_list
+    - notifications
+  - - add_quote

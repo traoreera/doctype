@@ -1,0 +1,139 @@
+schema_version: 1
+name: Asset Depreciation Schedule
+label: Asset Depreciation Schedule
+module: assets
+submittable: true
+icon: trending-down
+fields:
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+  in_list_view: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - ACC-ADS-.YYYY.-
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset Depreciation Schedule
+  read_only: true
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: depreciation_method
+  label: Depreciation Method
+  fieldtype: Select
+  options:
+  - Straight Line
+  - Double Declining Balance
+  - Written Down Value
+  - Manual
+  read_only: true
+- fieldname: rate_of_depreciation
+  label: Rate of Depreciation
+  fieldtype: Percent
+  read_only: true
+  description: In Percentage
+- fieldname: total_number_of_depreciations
+  label: Total Number of Depreciations
+  fieldtype: Int
+  read_only: true
+- fieldname: depreciation_schedule
+  label: Depreciation Schedule
+  fieldtype: Table
+  options: Depreciation Schedule
+- fieldname: notes
+  label: Notes
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Active
+  - Cancelled
+  read_only: true
+  hidden: true
+- fieldname: frequency_of_depreciation
+  label: Frequency of Depreciation (Months)
+  fieldtype: Int
+  read_only: true
+- fieldname: expected_value_after_useful_life
+  label: Expected Value After Useful Life
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: finance_book_id
+  label: Finance Book Id
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: opening_accumulated_depreciation
+  label: Opening Accumulated Depreciation
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: opening_number_of_booked_depreciations
+  label: Opening Number of Booked Depreciations
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: daily_prorata_based
+  label: Depreciate based on daily pro-rata
+  fieldtype: Boolean
+  read_only: true
+- fieldname: shift_based
+  label: Depreciate based on shifts
+  fieldtype: Boolean
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: value_after_depreciation
+  label: Value After Depreciation
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_purchase_amount
+  label: Net Purchase Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+title_field: asset
+layout:
+- section: Références
+  columns:
+  - - asset
+    - naming_series
+    - company
+  - - finance_book
+- section: Depreciation Details
+  columns:
+  - - depreciation_method
+    - total_number_of_depreciations
+    - rate_of_depreciation
+    - daily_prorata_based
+    - shift_based
+  - - frequency_of_depreciation
+    - expected_value_after_useful_life
+    - value_after_depreciation
+- section: Depreciation Schedule
+  columns:
+  - - depreciation_schedule
+- section: Details
+  columns:
+  - - notes
+    - amended_from
+views:
+  tree:
+    parent: amended_from

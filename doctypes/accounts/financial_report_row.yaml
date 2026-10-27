@@ -1,0 +1,94 @@
+schema_version: 1
+name: Financial Report Row
+label: Financial Report Row
+istable: true
+fields:
+- fieldname: reference_code
+  label: Line Reference
+  fieldtype: Text
+  in_list_view: true
+  description: Code to reference this line in formulas (e.g., REV100, EXP200, ASSET100)
+- fieldname: display_name
+  label: Display Name
+  fieldtype: Text
+  in_list_view: true
+  description: Text displayed on the financial statement (e.g., 'Total Revenue', 'Cash and Cash Equivalents')
+- fieldname: indentation_level
+  label: Indent Level
+  fieldtype: Int
+  in_list_view: true
+  description: 'Indentation level: 0 = Main heading, 1 = Sub-category, 2 = Individual accounts, etc.'
+- fieldname: data_source
+  label: Data Source
+  fieldtype: Select
+  options:
+  - Account Data
+  - Calculated Amount
+  - Custom API
+  - Blank Line
+  - Column Break
+  - Section Break
+  in_list_view: true
+  description: How this line gets its data
+- fieldname: balance_type
+  label: Balance Type
+  fieldtype: Select
+  options:
+  - Opening Balance
+  - Closing Balance
+  - Period Movement (Debits - Credits)
+  in_list_view: true
+  description: Opening Balance = Start of period, Closing Balance = End of period, Period Movement = Net change
+    during period
+- fieldname: bold_text
+  label: Bold Text
+  fieldtype: Boolean
+  description: Bold text for emphasis (totals, major headings)
+  default: false
+- fieldname: italic_text
+  label: Italic Text
+  fieldtype: Boolean
+  description: Italic text for subtotals or notes
+  default: false
+- fieldname: hidden_calculation
+  label: Hidden Line (Internal Use Only)
+  fieldtype: Boolean
+  description: Calculate but don't show on final report
+  default: false
+- fieldname: hide_when_empty
+  label: Hide If Zero
+  fieldtype: Boolean
+  description: Hide this line if amount is zero
+  default: false
+- fieldname: reverse_sign
+  label: Reverse Sign
+  fieldtype: Boolean
+  in_list_view: true
+  description: Show negative values as positive (for expenses in P&L)
+  default: false
+- fieldname: calculation_formula
+  label: Formula or Account Filter
+  fieldtype: Code
+- fieldname: include_in_charts
+  label: Include in Charts
+  fieldtype: Boolean
+  description: If enabled, this row's values will be displayed on financial charts
+  default: false
+- fieldname: color
+  label: Color
+  fieldtype: Color
+  description: Color to highlight values (e.g., red for exceptions)
+- fieldname: fieldtype
+  label: Value Type
+  fieldtype: Select
+  options:
+  - Currency
+  - Float
+  - Int
+  - Percent
+  description: How to format and present values in the financial report (only if different from column fieldtype)
+- fieldname: advanced_filtering
+  label: Advanced Filtering
+  fieldtype: Boolean
+  description: Use <strong>Python</strong> filters to get Accounts
+  default: false

@@ -1,0 +1,10 @@
+schema_version: 1
+name: "Shipment Parcel"
+label: "Shipment Parcel"
+istable: true
+fields:
+  - { fieldname: length, label: "Length (cm)", fieldtype: Number, in_list_view: true }
+  - { fieldname: width, label: "Width (cm)", fieldtype: Number, in_list_view: true }
+  - { fieldname: height, label: "Height (cm)", fieldtype: Number, in_list_view: true }
+  - { fieldname: weight, label: "Weight (kg)", fieldtype: Number, required: true, in_list_view: true }
+  - { fieldname: count, label: "Count", fieldtype: Int, required: true, in_list_view: true, default: 1 }

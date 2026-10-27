@@ -1,0 +1,74 @@
+schema_version: 1
+name: Holiday List Assignment
+label: Holiday List Assignment
+module: hr
+submittable: true
+icon: calendar-off
+fields:
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Holiday List Assignment
+  read_only: true
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+  required: true
+  in_list_view: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - HR-HLA-.YYYY.-
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: assigned_to
+  label: Assigned To
+  fieldtype: DynamicLink
+  options: applicable_for
+  in_list_view: true
+- fieldname: employee_company
+  label: Employee Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+  hidden: true
+- fieldname: applicable_for
+  label: Applicable For
+  fieldtype: Select
+  options:
+  - Employee
+  - Company
+  required: true
+- fieldname: holiday_list_start
+  label: Holiday List Start
+  fieldtype: Date
+- fieldname: holiday_list_end
+  label: Holiday List End
+  fieldtype: Date
+- fieldname: from_date
+  label: Assignment Starts From
+  fieldtype: Date
+  required: true
+title_field: holiday_list
+layout:
+- section: Informations principales
+  columns:
+  - - naming_series
+    - applicable_for
+    - assigned_to
+    - amended_from
+  - - holiday_list
+    - from_date
+    - holiday_list_start
+    - holiday_list_end
+views:
+  calendar:
+    start: from_date
+    title: holiday_list

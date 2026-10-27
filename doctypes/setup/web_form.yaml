@@ -1,0 +1,39 @@
+schema_version: 1
+name: Web Form
+label: Web Form
+module: setup
+icon: file-text
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: route
+  label: Route
+  fieldtype: Text
+  required: true
+  unique: true
+- fieldname: doc_type
+  label: DocType
+  fieldtype: Text
+  required: true
+- fieldname: published
+  label: Published
+  fieldtype: Boolean
+- fieldname: login_required
+  label: Login Required
+  fieldtype: Boolean
+- fieldname: success_message
+  label: Success Message
+  fieldtype: LongText
+title_field: title
+layout:
+- section: Informations principales
+  columns:
+  - - title
+    - route
+    - doc_type
+    - published
+    - login_required
+    - success_message

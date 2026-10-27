@@ -1,0 +1,573 @@
+schema_version: 1
+name: Quotation
+label: Quotation
+module: selling
+submittable: true
+icon: file-text
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - SAL-QTN-.YYYY.-
+  required: true
+- fieldname: quotation_to
+  label: Quotation To
+  fieldtype: Text
+  required: true
+- fieldname: party_name
+  label: Party
+  fieldtype: DynamicLink
+  options: quotation_to
+- fieldname: customer_name
+  label: Customer Name
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Quotation
+  read_only: true
+- fieldname: revision_of
+  label: Revision Of
+  fieldtype: Link
+  options: Quotation
+  read_only: true
+- fieldname: is_latest_revision
+  label: Is Latest Revision
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: transaction_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: valid_till
+  label: Valid Till
+  fieldtype: Date
+- fieldname: is_active
+  label: Is Active
+  fieldtype: Boolean
+  default: true
+- fieldname: order_type
+  label: Order Type
+  fieldtype: Select
+  options:
+  - Sales
+  - Maintenance
+  - Shopping Cart
+  default: Sales
+  required: true
+- fieldname: customer_address
+  label: Customer Address
+  fieldtype: Link
+  options: Address
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: contact_person
+  label: Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: contact_display
+  label: Contact
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_mobile
+  label: Mobile No
+  fieldtype: LongText
+  read_only: true
+- fieldname: contact_email
+  label: Contact Email
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: shipping_address_name
+  label: Shipping Address
+  fieldtype: Link
+  options: Address
+- fieldname: shipping_address
+  label: Shipping Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+  hidden: true
+- fieldname: territory
+  label: Territory
+  fieldtype: Link
+  options: Territory
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: conversion_rate
+  label: Exchange Rate
+  fieldtype: Number
+  required: true
+  description: Rate at which customer's currency is converted to company's base currency
+- fieldname: selling_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+  required: true
+- fieldname: price_list_currency
+  label: Price List Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  read_only: true
+- fieldname: plc_conversion_rate
+  label: Price List Exchange Rate
+  fieldtype: Number
+  required: true
+  description: Rate at which Price list currency is converted to company's base currency
+- fieldname: ignore_pricing_rule
+  label: Ignore Pricing Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Quotation Item
+- fieldname: pricing_rules
+  label: Pricing Rule Detail
+  fieldtype: Table
+  options: Pricing Rule Detail
+  read_only: true
+- fieldname: total_qty
+  label: Total Quantity
+  fieldtype: Number
+  read_only: true
+- fieldname: base_total
+  label: Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_total
+  label: Net Total (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total
+  label: Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_total
+  label: Net Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_net_weight
+  label: Total Net Weight
+  fieldtype: Number
+  read_only: true
+- fieldname: tax_category
+  label: Tax Category
+  fieldtype: Link
+  options: Tax Category
+- fieldname: shipping_rule
+  label: Shipping Rule
+  fieldtype: Link
+  options: Shipping Rule
+- fieldname: taxes_and_charges
+  label: Sales Taxes and Charges Template
+  fieldtype: Link
+  options: Sales Taxes and Charges Template
+- fieldname: taxes
+  label: Sales Taxes and Charges
+  fieldtype: Table
+  options: Sales Taxes and Charges
+- fieldname: other_charges_calculation
+  label: Taxes and Charges Calculation
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: base_total_taxes_and_charges
+  label: Total Taxes and Charges (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_taxes_and_charges
+  label: Total Taxes and Charges
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: coupon_code
+  label: Coupon Code
+  fieldtype: Link
+  options: Coupon Code
+- fieldname: referral_sales_partner
+  label: Referral Sales Partner
+  fieldtype: Link
+  options: Sales Partner
+- fieldname: apply_discount_on
+  label: Apply Additional Discount On
+  fieldtype: Select
+  options:
+  - Grand Total
+  - Net Total
+  default: Grand Total
+- fieldname: base_discount_amount
+  label: Additional Discount Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_discount_percentage
+  label: Additional Discount Percentage
+  fieldtype: Number
+- fieldname: discount_amount
+  label: Additional Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_rounding_adjustment
+  label: Rounding Adjustment
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: base_rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: grand_total
+  label: Grand Total
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: rounding_adjustment
+  label: Rounding Adjustment
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rounded_total
+  label: Rounded Total
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: in_words
+  label: In Words
+  fieldtype: Text
+  read_only: true
+- fieldname: payment_terms_template
+  label: Payment Terms Template
+  fieldtype: Link
+  options: Payment Terms Template
+- fieldname: payment_schedule
+  label: Payment Schedule
+  fieldtype: Table
+  options: Payment Schedule
+- fieldname: tc_name
+  label: Terms
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: terms
+  label: Term Details
+  fieldtype: TextEditor
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: group_same_items
+  label: Group same items
+  fieldtype: Boolean
+  default: false
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: language
+  label: Print Language
+  fieldtype: Link
+  options: Language
+  read_only: true
+- fieldname: auto_repeat
+  label: Auto Repeat
+  fieldtype: Link
+  options: Auto Repeat
+  read_only: true
+- fieldname: order_lost_reason
+  label: Detailed Reason
+  fieldtype: LongText
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Open
+  - Replied
+  - Partially Ordered
+  - Ordered
+  - Lost
+  - Cancelled
+  - Expired
+  default: Draft
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: enq_det
+  label: Opportunity Item
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: supplier_quotation
+  label: Supplier Quotation
+  fieldtype: Link
+  options: Supplier Quotation
+- fieldname: opportunity
+  label: Opportunity
+  fieldtype: Link
+  options: Opportunity
+  read_only: true
+- fieldname: lost_reasons
+  label: Lost Reasons
+  fieldtype: Table
+  options: Quotation Lost Reason Detail
+  read_only: true
+- fieldname: packed_items
+  label: Bundle Items
+  fieldtype: Table
+  options: Packed Item
+- fieldname: competitors
+  label: Competitors
+  fieldtype: Table
+  options: Competitor Detail
+- fieldname: company_address
+  label: Company Address Name
+  fieldtype: Link
+  options: Address
+- fieldname: company_address_display
+  label: Company Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: incoterm
+  label: Incoterm
+  fieldtype: Link
+  options: Incoterm
+- fieldname: named_place
+  label: Named Place
+  fieldtype: Text
+- fieldname: utm_campaign
+  label: Campaign
+  fieldtype: Link
+  options: UTM Campaign
+- fieldname: utm_source
+  label: Source
+  fieldtype: Link
+  options: UTM Source
+- fieldname: utm_medium
+  label: Medium
+  fieldtype: Link
+  options: UTM Medium
+- fieldname: utm_content
+  label: Content
+  fieldtype: Text
+- fieldname: disable_rounded_total
+  label: Disable Rounded Total
+  fieldtype: Boolean
+  default: false
+- fieldname: company_contact_person
+  label: Company Contact Person
+  fieldtype: Link
+  options: Contact
+- fieldname: has_unit_price_items
+  label: Has Unit Price Items
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: last_scanned_warehouse
+  label: Last Scanned Warehouse
+  fieldtype: Text
+- fieldname: item_wise_tax_details
+  label: Item Wise Tax Details
+  fieldtype: Table
+  options: Item Wise Tax Detail
+  hidden: true
+- fieldname: title
+  label: Title
+  fieldtype: Text
+title_field: title
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - quotation_to
+    - party_name
+  - - transaction_date
+    - valid_till
+    - is_active
+  - - order_type
+    - company
+    - amended_from
+    - revision_of
+- tab: Général
+  section: Currency and Price List
+  columns:
+  - - currency
+    - conversion_rate
+  - - selling_price_list
+    - price_list_currency
+    - plc_conversion_rate
+    - ignore_pricing_rule
+- tab: Général
+  section: Références
+  columns:
+  - - scan_barcode
+    - last_scanned_warehouse
+    - items
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - total_qty
+    - total_net_weight
+  - - base_total
+    - base_net_total
+  - - total
+    - net_total
+- tab: Général
+  section: Taxes and Charges
+  columns:
+  - - tax_category
+    - taxes_and_charges
+  - - shipping_rule
+  - - incoterm
+    - named_place
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - taxes
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - base_total_taxes_and_charges
+  - - total_taxes_and_charges
+- tab: Général
+  section: Totals
+  columns:
+  - - grand_total
+    - in_words
+  - - rounded_total
+    - rounding_adjustment
+    - disable_rounded_total
+- tab: Général
+  section: Totals (Company Currency)
+  columns:
+  - - base_grand_total
+    - base_in_words
+  - - base_rounded_total
+    - base_rounding_adjustment
+- tab: Général
+  section: Additional Discount
+  columns:
+  - - apply_discount_on
+    - base_discount_amount
+    - coupon_code
+  - - additional_discount_percentage
+    - discount_amount
+    - referral_sales_partner
+- tab: Général
+  section: Tax Breakup
+  columns:
+  - - other_charges_calculation
+- tab: Général
+  section: Bundle Items
+  columns:
+  - - packed_items
+- tab: Général
+  section: Pricing Rules
+  columns:
+  - - pricing_rules
+- tab: Address & Contact
+  section: Billing Address
+  columns:
+  - - customer_address
+    - address_display
+  - - contact_person
+    - contact_display
+    - contact_mobile
+- tab: Address & Contact
+  section: Shipping Address
+  columns:
+  - - shipping_address_name
+  - - shipping_address
+- tab: Address & Contact
+  section: Company Address
+  columns:
+  - - company_address
+    - company_address_display
+  - - company_contact_person
+- tab: Terms
+  section: Payment Terms
+  columns:
+  - - payment_terms_template
+    - payment_schedule
+- tab: Terms
+  section: Terms and Conditions
+  columns:
+  - - tc_name
+    - terms
+- tab: More Info
+  section: Auto Repeat
+  columns:
+  - - auto_repeat
+- tab: More Info
+  section: Print Settings
+  columns:
+  - - letter_head
+    - group_same_items
+  - - select_print_heading
+    - language
+- tab: More Info
+  section: Lost Reasons
+  columns:
+  - - lost_reasons
+    - competitors
+  - - order_lost_reason
+- tab: More Info
+  section: UTM Analytics
+  columns:
+  - - utm_source
+    - utm_medium
+  - - utm_campaign
+    - utm_content
+- tab: More Info
+  section: Additional Info
+  columns:
+  - - status
+    - territory
+    - title
+  - - opportunity
+    - supplier_quotation
+views:
+  calendar:
+    start: transaction_date
+    title: title
+  tree:
+    parent: amended_from

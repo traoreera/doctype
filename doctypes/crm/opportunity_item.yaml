@@ -1,0 +1,60 @@
+schema_version: 1
+name: Opportunity Item
+label: Opportunity Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  in_list_view: true
+  default: 1.0
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  hidden: true
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+  hidden: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: base_rate
+  label: Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true

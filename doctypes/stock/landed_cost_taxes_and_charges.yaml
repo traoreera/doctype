@@ -1,0 +1,65 @@
+schema_version: 1
+name: Landed Cost Taxes and Charges
+label: Landed Cost Taxes and Charges
+istable: true
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: account_currency
+  label: Account Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: has_corrective_cost
+  label: Has Corrective Cost
+  fieldtype: Boolean
+  read_only: true
+- fieldname: has_operating_cost
+  label: Has Operating Cost
+  fieldtype: Boolean
+  read_only: true
+- fieldname: operation_id
+  label: Operation ID
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: operating_component
+  label: Operating Component
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project

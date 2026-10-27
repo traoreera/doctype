@@ -1,0 +1,149 @@
+schema_version: 1
+name: Asset Repair
+label: Asset Repair
+module: assets
+submittable: true
+icon: wrench
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-ASR-.YYYY.-
+  required: true
+- fieldname: failure_date
+  label: Failure Date
+  fieldtype: Datetime
+  required: true
+- fieldname: completion_date
+  label: Completion Date
+  fieldtype: Datetime
+- fieldname: repair_status
+  label: Repair Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Completed
+  - Cancelled
+  default: Pending
+- fieldname: description
+  label: Error Description
+  fieldtype: LongText
+- fieldname: actions_performed
+  label: Actions performed
+  fieldtype: LongText
+- fieldname: downtime
+  label: Downtime
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: repair_cost
+  label: Repair Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset Repair
+  read_only: true
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+  in_list_view: true
+- fieldname: asset_name
+  label: Asset Name
+  fieldtype: Text
+  read_only: true
+- fieldname: capitalize_repair_cost
+  label: Capitalize Repair Cost
+  fieldtype: Boolean
+  default: false
+- fieldname: stock_items
+  label: Stock Items
+  fieldtype: Table
+  options: Asset Repair Consumed Item
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: total_repair_cost
+  label: Total Repair Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: increase_in_asset_life
+  label: Increase In Asset Life(Months)
+  fieldtype: Int
+- fieldname: asset_value_updated
+  label: Asset Value Updated
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: invoices
+  label: Repair Purchase Invoices
+  fieldtype: Table
+  options: Asset Repair Purchase Invoice
+- fieldname: consumed_items_cost
+  label: Consumed Items Cost
+  fieldtype: Currency
+  decimals: 2
+title_field: asset_name
+layout:
+- tab: Général
+  section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+    - asset
+    - asset_name
+  - - repair_status
+    - failure_date
+    - completion_date
+    - downtime
+    - amended_from
+- tab: Général
+  section: Description
+  columns:
+  - - description
+  - - actions_performed
+- tab: Général
+  section: Informations complémentaires 3
+  columns:
+  - - invoices
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - repair_cost
+- tab: Général
+  section: Consumed Stock Items
+  columns:
+  - - stock_items
+- tab: Général
+  section: Comptabilité et montants
+  columns:
+  - - consumed_items_cost
+- tab: Général
+  section: Totals
+  columns:
+  - - capitalize_repair_cost
+    - increase_in_asset_life
+  - - total_repair_cost
+- tab: Général
+  section: Accounting Dimension
+  columns:
+  - - cost_center
+  - - project
+views:
+  tree:
+    parent: amended_from

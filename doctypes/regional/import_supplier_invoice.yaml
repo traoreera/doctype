@@ -1,0 +1,62 @@
+schema_version: 1
+name: Import Supplier Invoice
+label: Import Supplier Invoice
+module: regional
+icon: file-input
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: supplier_group
+  label: Supplier Group
+  fieldtype: Link
+  options: Supplier Group
+  required: true
+  in_list_view: true
+- fieldname: tax_account
+  label: Tax Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: zip_file
+  label: Zip File
+  fieldtype: Attach
+- fieldname: status
+  label: Status
+  fieldtype: Text
+  read_only: true
+- fieldname: invoice_series
+  label: Invoice Series
+  fieldtype: Select
+  options:
+  - ACC-PINV-.YYYY.-
+  required: true
+- fieldname: default_buying_price_list
+  label: Default Buying Price List
+  fieldtype: Link
+  options: Price List
+  required: true
+title_field: item_code
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - invoice_series
+    - company
+    - item_code
+  - - supplier_group
+    - tax_account
+    - default_buying_price_list
+- section: Upload XML Invoices
+  columns:
+  - - zip_file
+    - status

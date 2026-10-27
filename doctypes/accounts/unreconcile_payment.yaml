@@ -1,0 +1,39 @@
+schema_version: 1
+name: Unreconcile Payment
+label: Unreconcile Payment
+module: accounts
+submittable: true
+icon: unlink
+fields:
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Unreconcile Payment
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  options: voucher_type
+- fieldname: allocations
+  label: Allocations
+  fieldtype: Table
+  options: Unreconcile Payment Entries
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - company
+    - voucher_type
+    - voucher_no
+    - allocations
+    - amended_from
+views:
+  tree:
+    parent: amended_from

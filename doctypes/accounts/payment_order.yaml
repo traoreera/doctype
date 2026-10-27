@@ -1,0 +1,81 @@
+schema_version: 1
+name: Payment Order
+label: Payment Order
+module: accounts
+submittable: true
+icon: send
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - PMO-
+  default: PMO-
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: party
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+  default: today
+- fieldname: references
+  label: Payment Order Reference
+  fieldtype: Table
+  options: Payment Order Reference
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Payment Order
+  read_only: true
+- fieldname: payment_order_type
+  label: Payment Order Type
+  fieldtype: Select
+  options:
+  - Payment Request
+  - Payment Entry
+  required: true
+  read_only: true
+- fieldname: company_bank_account
+  label: Company Bank Account
+  fieldtype: Link
+  options: Bank Account
+  required: true
+- fieldname: company_bank
+  label: Bank
+  fieldtype: Link
+  options: Bank
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Text
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - naming_series
+    - company
+    - payment_order_type
+    - party
+  - - posting_date
+    - company_bank
+    - company_bank_account
+    - account
+- section: Comptabilité et montants
+  columns:
+  - - references
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: company
+  tree:
+    parent: amended_from

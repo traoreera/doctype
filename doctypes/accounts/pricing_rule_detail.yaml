@@ -1,0 +1,35 @@
+schema_version: 1
+name: Pricing Rule Detail
+label: Pricing Rule Detail
+istable: true
+fields:
+- fieldname: pricing_rule
+  label: Pricing Rule
+  fieldtype: Link
+  options: Pricing Rule
+  in_list_view: true
+  read_only: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: margin_type
+  label: Margin Type
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: rate_or_discount
+  label: Rate or Discount
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: child_docname
+  label: Child Docname
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: rule_applied
+  label: Rule Applied
+  fieldtype: Boolean
+  read_only: true

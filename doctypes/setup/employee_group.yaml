@@ -1,0 +1,23 @@
+schema_version: 1
+name: Employee Group
+label: Employee Group
+module: setup
+icon: users
+fields:
+- fieldname: employee_group_name
+  label: Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: employee_list
+  label: Employee
+  fieldtype: Table
+  options: Employee Group Table
+title_field: employee_group_name
+layout:
+- section: Références
+  columns:
+  - - employee_group_name
+- section: Employee
+  columns:
+  - - employee_list

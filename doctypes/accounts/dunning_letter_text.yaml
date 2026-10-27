@@ -1,0 +1,24 @@
+schema_version: 1
+name: Dunning Letter Text
+label: Dunning Letter Text
+istable: true
+fields:
+- fieldname: language
+  label: Language
+  fieldtype: Link
+  options: Language
+  in_list_view: true
+- fieldname: is_default_language
+  label: Is Default Language
+  fieldtype: Boolean
+  default: false
+- fieldname: body_text
+  label: Body Text
+  fieldtype: TextEditor
+  in_list_view: true
+  description: Letter or Email Body Text
+- fieldname: closing_text
+  label: Closing Text
+  fieldtype: TextEditor
+  in_list_view: true
+  description: Letter or Email Closing Text

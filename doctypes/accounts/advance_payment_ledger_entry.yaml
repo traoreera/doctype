@@ -1,0 +1,78 @@
+schema_version: 1
+name: Advance Payment Ledger Entry
+label: Advance Payment Ledger Entry
+module: accounts
+submittable: true
+icon: book-open
+fields:
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+  read_only: true
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  options: voucher_type
+  read_only: true
+- fieldname: against_voucher_type
+  label: Against Voucher Type
+  fieldtype: Text
+  read_only: true
+- fieldname: against_voucher_no
+  label: Against Voucher No
+  fieldtype: DynamicLink
+  options: against_voucher_type
+  read_only: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: event
+  label: Event
+  fieldtype: Text
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: delinked
+  label: DeLinked
+  fieldtype: Boolean
+  read_only: true
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  read_only: true
+title_field: company
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - company
+    - voucher_type
+    - voucher_no
+    - against_voucher_type
+    - against_voucher_no
+    - currency
+    - exchange_rate
+    - amount
+    - base_amount
+    - event
+    - delinked
+permissions:
+  write: []
+  create: []
+  delete: []
+  submit: []
+  cancel: []

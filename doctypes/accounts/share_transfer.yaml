@@ -1,0 +1,122 @@
+schema_version: 1
+name: Share Transfer
+label: Share Transfer
+module: accounts
+submittable: true
+icon: arrow-right-left
+fields:
+- fieldname: transfer_type
+  label: Transfer Type
+  fieldtype: Select
+  options:
+  - Issue
+  - Purchase
+  - Transfer
+  required: true
+  in_list_view: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  required: true
+- fieldname: from_shareholder
+  label: From Shareholder
+  fieldtype: Link
+  options: Shareholder
+- fieldname: from_folio_no
+  label: From Folio No
+  fieldtype: Text
+- fieldname: equity_or_liability_account
+  label: Equity/Liability Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: asset_account
+  label: Asset Account
+  fieldtype: Link
+  options: Account
+- fieldname: to_shareholder
+  label: To Shareholder
+  fieldtype: Link
+  options: Shareholder
+- fieldname: to_folio_no
+  label: To Folio No
+  fieldtype: Text
+- fieldname: share_type
+  label: Share Type
+  fieldtype: Link
+  options: Share Type
+  required: true
+- fieldname: from_no
+  label: From No
+  fieldtype: Int
+  required: true
+  description: (including)
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: no_of_shares
+  label: No of Shares
+  fieldtype: Int
+  required: true
+- fieldname: to_no
+  label: To No
+  fieldtype: Int
+  required: true
+  description: (including)
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Share Transfer
+  read_only: true
+title_field: company
+layout:
+- section: Dates et planification
+  columns:
+  - - transfer_type
+  - - date
+- section: Informations complémentaires 2
+  columns:
+  - - from_shareholder
+    - from_folio_no
+  - - to_shareholder
+    - to_folio_no
+- section: Comptabilité et montants
+  columns:
+  - - equity_or_liability_account
+  - - asset_account
+- section: Comptabilité et montants
+  columns:
+  - - share_type
+    - from_no
+    - rate
+  - - no_of_shares
+    - to_no
+    - amount
+- section: Références
+  columns:
+  - - company
+- section: Dates et planification
+  columns:
+  - - remarks
+    - amended_from
+views:
+  calendar:
+    start: date
+    title: company
+  tree:
+    parent: amended_from

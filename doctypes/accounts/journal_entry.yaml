@@ -1,0 +1,332 @@
+schema_version: 1
+name: Journal Entry
+label: Journal Entry
+module: accounts
+submittable: true
+icon: notebook-pen
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  hidden: true
+- fieldname: voucher_type
+  label: Entry Type
+  fieldtype: Select
+  options:
+  - Journal Entry
+  - Inter Company Journal Entry
+  - Bank Entry
+  - Cash Entry
+  - Credit Card Entry
+  - Debit Note
+  - Credit Note
+  - Contra Entry
+  - Excise Entry
+  - Write Off Entry
+  - Opening Entry
+  - Depreciation Entry
+  - Asset Disposal
+  - Periodic Accounting Entry
+  - Exchange Rate Revaluation
+  - Exchange Gain Or Loss
+  - Deferred Revenue
+  - Deferred Expense
+  default: Journal Entry
+  required: true
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-JV-.YYYY.-
+  required: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+  read_only: true
+- fieldname: accounts
+  label: Accounting Entries
+  fieldtype: Table
+  options: Journal Entry Account
+- fieldname: cheque_no
+  label: Reference Number
+  fieldtype: Text
+- fieldname: cheque_date
+  label: Reference Date
+  fieldtype: Date
+- fieldname: user_remark
+  label: User Remark
+  fieldtype: LongText
+  hidden: true
+- fieldname: total_debit
+  label: Total Debit
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: total_credit
+  label: Total Credit
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: difference
+  label: Difference (Dr - Cr)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: multi_currency
+  label: Multi Currency
+  fieldtype: Boolean
+  default: false
+- fieldname: total_amount_currency
+  label: Total Amount Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+  hidden: true
+- fieldname: total_amount
+  label: Total Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+- fieldname: total_amount_in_words
+  label: Total Amount in Words
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: clearance_date
+  label: Clearance Date
+  fieldtype: Date
+  read_only: true
+- fieldname: remark
+  label: Remark
+  fieldtype: LongText
+- fieldname: inter_company_journal_entry_reference
+  label: Inter Company Journal Entry Reference
+  fieldtype: Link
+  options: Journal Entry
+  read_only: true
+- fieldname: bill_no
+  label: Bill No
+  fieldtype: Text
+- fieldname: bill_date
+  label: Bill Date
+  fieldtype: Date
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+- fieldname: write_off_based_on
+  label: Write Off Based On
+  fieldtype: Select
+  options:
+  - Accounts Receivable
+  - Accounts Payable
+  default: Accounts Receivable
+- fieldname: write_off_amount
+  label: Write Off Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: pay_to_recd_from
+  label: Pay To / Recd From
+  fieldtype: Text
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: payment_order
+  label: Payment Order
+  fieldtype: Link
+  options: Payment Order
+  read_only: true
+- fieldname: is_opening
+  label: Is Opening
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+  default: 'No'
+- fieldname: stock_entry
+  label: Stock Entry
+  fieldtype: Link
+  options: Stock Entry
+  read_only: true
+- fieldname: auto_repeat
+  label: Auto Repeat
+  fieldtype: Link
+  options: Auto Repeat
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Journal Entry
+  read_only: true
+- fieldname: from_template
+  label: From Template
+  fieldtype: Link
+  options: Journal Entry Template
+- fieldname: tax_withholding_category
+  label: Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+- fieldname: apply_tds
+  label: 'Consider for Tax Withholding '
+  fieldtype: Boolean
+  default: false
+- fieldname: reversal_of
+  label: Reversal Of
+  fieldtype: Link
+  options: Journal Entry
+  read_only: true
+- fieldname: process_deferred_accounting
+  label: Process Deferred Accounting
+  fieldtype: Link
+  options: Process Deferred Accounting
+  read_only: true
+- fieldname: is_system_generated
+  label: Is System Generated
+  fieldtype: Boolean
+  read_only: true
+- fieldname: periodic_entry_difference_account
+  label: Periodic Entry Difference Account
+  fieldtype: Link
+  options: Account
+- fieldname: for_all_stock_asset_accounts
+  label: For All Stock Asset Accounts
+  fieldtype: Boolean
+  default: true
+- fieldname: stock_asset_account
+  label: Stock Asset Account
+  fieldtype: Link
+  options: Account
+- fieldname: party_not_required
+  label: Party Not Required
+  fieldtype: Boolean
+  hidden: true
+  default: false
+- fieldname: tax_withholding_group
+  label: Tax Withholding Group
+  fieldtype: Link
+  options: Tax Withholding Group
+- fieldname: ignore_tax_withholding_threshold
+  label: Ignore Tax Withholding Threshold
+  fieldtype: Boolean
+  default: false
+- fieldname: override_tax_withholding_entries
+  label: Edit Tax Withholding Entries
+  fieldtype: Boolean
+  default: false
+- fieldname: tax_withholding_entries
+  label: Tax Withholding Entries
+  fieldtype: Table
+  options: Tax Withholding Entry
+- fieldname: custom_remark
+  label: Custom Remark
+  fieldtype: Boolean
+  default: false
+title_field: company
+layout:
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - company
+    - voucher_type
+  - - naming_series
+    - posting_date
+    - multi_currency
+    - apply_tds
+    - tax_withholding_category
+    - is_system_generated
+    - amended_from
+- tab: General
+  section: Periodic Accounting
+  columns:
+  - - for_all_stock_asset_accounts
+  - - stock_asset_account
+    - periodic_entry_difference_account
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - accounts
+- tab: General
+  section: Comptabilité et montants
+  columns:
+  - - total_debit
+  - - total_credit
+    - difference
+- tab: General
+  section: Dates et planification
+  columns:
+  - - cheque_no
+    - cheque_date
+    - clearance_date
+- tab: General
+  section: Auto Repeat
+  columns:
+  - - auto_repeat
+- tab: Tax Withholding
+  section: Comptabilité et montants
+  columns:
+  - - tax_withholding_group
+    - ignore_tax_withholding_threshold
+    - override_tax_withholding_entries
+    - tax_withholding_entries
+- tab: More Info
+  section: Reference
+  columns:
+  - - bill_no
+    - bill_date
+    - due_date
+  - - inter_company_journal_entry_reference
+    - process_deferred_accounting
+    - reversal_of
+    - payment_order
+    - stock_entry
+- tab: More Info
+  section: Printing Settings
+  columns:
+  - - pay_to_recd_from
+    - letter_head
+    - select_print_heading
+- tab: More Info
+  section: Write Off
+  columns:
+  - - write_off_based_on
+  - - write_off_amount
+- tab: More Info
+  section: Additional Info
+  columns:
+  - - is_opening
+    - finance_book
+    - from_template
+  - - custom_remark
+    - remark
+    - mode_of_payment
+views:
+  calendar:
+    start: posting_date
+    title: company
+  gantt:
+    start: posting_date
+    end: due_date
+    title: company
+  tree:
+    parent: inter_company_journal_entry_reference

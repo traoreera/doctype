@@ -1,0 +1,25 @@
+schema_version: 1
+name: Transaction Deletion Record Details
+label: Transaction Deletion Record Details
+istable: true
+fields:
+- fieldname: doctype_name
+  label: DocType
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: docfield_name
+  label: DocField
+  fieldtype: Text
+  read_only: true
+- fieldname: no_of_docs
+  label: No of Docs
+  fieldtype: Int
+  in_list_view: true
+  read_only: true
+- fieldname: done
+  label: Done
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true

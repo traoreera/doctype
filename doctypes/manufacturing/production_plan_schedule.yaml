@@ -1,0 +1,102 @@
+schema_version: 1
+name: Production Plan Schedule
+label: Production Plan Schedule
+module: manufacturing
+icon: calendar
+fields:
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: production_plan
+  label: Production Plan
+  fieldtype: Link
+  options: Production Plan
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: row_type
+  label: Row Type
+  fieldtype: Select
+  options:
+  - Finished Good
+  - Sub Assembly
+  - Raw Material
+  read_only: true
+- fieldname: plan_row
+  label: Plan Row
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: task_key
+  label: Task Key
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  read_only: true
+- fieldname: workstation
+  label: Workstation
+  fieldtype: Link
+  options: Workstation
+  in_list_view: true
+  read_only: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+  read_only: true
+- fieldname: from_time
+  label: From Time
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: to_time
+  label: To Time
+  fieldtype: Datetime
+  required: true
+  read_only: true
+- fieldname: duration_mins
+  label: Duration (Mins)
+  fieldtype: Number
+  read_only: true
+title_field: item_code
+layout:
+- section: Références
+  columns:
+  - - subject
+    - production_plan
+    - company
+  - - row_type
+- section: Item & Operation
+  columns:
+  - - item_code
+    - item_name
+  - - operation
+    - workstation
+    - supplier
+- section: Schedule
+  columns:
+  - - from_time
+  - - to_time
+    - duration_mins

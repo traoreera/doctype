@@ -1,0 +1,86 @@
+schema_version: 1
+name: POS Invoice Merge Log
+label: POS Invoice Merge Log
+module: accounts
+submittable: true
+icon: merge
+fields:
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+  in_list_view: true
+- fieldname: pos_invoices
+  label: POS Invoices
+  fieldtype: Table
+  options: POS Invoice Reference
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: POS Invoice Merge Log
+  read_only: true
+- fieldname: consolidated_invoice
+  label: Consolidated Sales Invoice
+  fieldtype: Link
+  options: Sales Invoice
+  read_only: true
+- fieldname: consolidated_credit_note
+  label: Consolidated Credit Note
+  fieldtype: Link
+  options: Sales Invoice
+  read_only: true
+- fieldname: pos_closing_entry
+  label: POS Closing Entry
+  fieldtype: Link
+  options: POS Closing Entry
+- fieldname: merge_invoices_based_on
+  label: Merge Invoices Based On
+  fieldtype: Select
+  options:
+  - Customer
+  - Customer Group
+  required: true
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+title_field: customer
+layout:
+- section: Dates et planification
+  columns:
+  - - company
+    - posting_date
+    - posting_time
+    - merge_invoices_based_on
+  - - pos_closing_entry
+    - customer
+    - customer_group
+- section: Informations complémentaires 2
+  columns:
+  - - pos_invoices
+- section: References
+  columns:
+  - - consolidated_invoice
+  - - consolidated_credit_note
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: customer
+  tree:
+    parent: amended_from

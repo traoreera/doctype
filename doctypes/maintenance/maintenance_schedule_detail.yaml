@@ -1,0 +1,50 @@
+schema_version: 1
+name: Maintenance Schedule Detail
+label: Maintenance Schedule Detail
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: scheduled_date
+  label: Scheduled Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: actual_date
+  label: Actual Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: sales_person
+  label: Sales Person
+  fieldtype: Link
+  options: Sales Person
+  in_list_view: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+  in_list_view: true
+  read_only: true
+- fieldname: completion_status
+  label: Completion Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Partially Completed
+  - Fully Completed
+  default: Pending
+  in_list_view: true
+- fieldname: item_reference
+  label: Item Reference
+  fieldtype: Link
+  options: Maintenance Schedule Item
+  read_only: true
+  hidden: true

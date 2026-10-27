@@ -1,0 +1,31 @@
+schema_version: 1
+name: Activity Type
+label: Activity Type
+module: projects
+icon: tag
+fields:
+- fieldname: activity_type
+  label: Activity Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: costing_rate
+  label: Default Costing Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: billing_rate
+  label: Default Billing Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+title_field: activity_type
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - activity_type
+    - costing_rate
+  - - billing_rate
+    - disabled

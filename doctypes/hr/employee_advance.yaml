@@ -1,0 +1,151 @@
+schema_version: 1
+name: Employee Advance
+label: Employee Advance
+module: hr
+submittable: true
+icon: hand-coins
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-EAD-.YYYY.-
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: purpose
+  label: Purpose
+  fieldtype: LongText
+  required: true
+  in_list_view: true
+- fieldname: advance_amount
+  label: Advance Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  description: Amount of expense
+- fieldname: claimed_amount
+  label: Claimed Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Amount claimed via Expense Claim
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Paid
+  - Partially Paid
+  - Unpaid
+  - Claimed
+  - Returned
+  - Partly Claimed and Returned
+  - Cancelled
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Advance
+  read_only: true
+- fieldname: advance_account
+  label: Advance Account
+  fieldtype: Link
+  options: Account
+- fieldname: mode_of_payment
+  label: Mode of Payment
+  fieldtype: Link
+  options: Mode of Payment
+- fieldname: return_amount
+  label: Returned Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Amount scheduled for deduction via salary
+- fieldname: repay_unclaimed_amount_from_salary
+  label: Repay Unclaimed Amount from Salary
+  fieldtype: Boolean
+  default: false
+- fieldname: pending_amount
+  label: Pending Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Pending (unpaid) amount from previous advances
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: base_paid_amount
+  label: Paid Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Amount that has been paid against this advance
+- fieldname: paid_amount
+  label: Paid Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Amount that has been paid against this advance
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - naming_series
+    - employee
+    - employee_name
+  - - posting_date
+    - company
+    - department
+- section: 'Currency '
+  columns:
+  - - currency
+- section: Purpose & Amount
+  columns:
+  - - purpose
+  - - advance_amount
+    - paid_amount
+    - base_paid_amount
+    - pending_amount
+    - claimed_amount
+    - return_amount
+- section: Accounting
+  columns:
+  - - advance_account
+    - mode_of_payment
+  - - repay_unclaimed_amount_from_salary
+- section: More Info
+  columns:
+  - - status
+  - - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: employee_name

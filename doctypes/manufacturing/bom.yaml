@@ -1,0 +1,397 @@
+schema_version: 1
+name: BOM
+label: BOM
+module: manufacturing
+submittable: true
+icon: list-tree
+fields:
+- fieldname: item
+  label: Item to manufacture
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  description: The final item that will be produced using this BOM.
+- fieldname: item_name
+  label: Item name
+  fieldtype: Text
+  read_only: true
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  read_only: true
+  hidden: true
+- fieldname: uom
+  label: Unit of Measure
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: set_qty_based_on_percentage
+  label: Set component quantities based on percentage
+  fieldtype: Boolean
+  description: Component quantities are derived from their percentage of the Output Qty. One component row can be
+    marked as Balance Item to absorb the remaining percentage.
+  default: false
+- fieldname: quantity
+  label: Quantity (Output Qty)
+  fieldtype: Number
+  required: true
+  description: How many units of the final product this BOM makes.
+  default: 1.0
+- fieldname: is_active
+  label: Is active
+  fieldtype: Boolean
+  in_list_view: true
+  default: true
+- fieldname: is_default
+  label: Set as default
+  fieldtype: Boolean
+  in_list_view: true
+  description: This BOM will be selected by default in Work Orders etc. when the Item is selected.
+  default: true
+- fieldname: with_operations
+  label: With Operations
+  fieldtype: Boolean
+  description: Manage cost of operations
+  default: false
+- fieldname: inspection_required
+  label: Quality Inspection required
+  fieldtype: Boolean
+  default: false
+- fieldname: allow_alternative_item
+  label: Allow alternative raw material
+  fieldtype: Boolean
+  description: Enable this to select an alternative material when the required item is unavailable.
+  default: false
+- fieldname: quality_inspection_template
+  label: Quality Inspection Template
+  fieldtype: Link
+  options: Quality Inspection Template
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: transfer_material_against
+  label: Transfer material against
+  fieldtype: Select
+  options:
+  - Work Order
+  - Job Card
+  default: Work Order
+- fieldname: conversion_rate
+  label: Conversion rate
+  fieldtype: Number
+  required: true
+  default: 1.0
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+- fieldname: rm_cost_as_per
+  label: Rate of Materials based on
+  fieldtype: Select
+  options:
+  - Valuation Rate
+  - Last Purchase Rate
+  - Price List
+  default: Valuation Rate
+- fieldname: buying_price_list
+  label: Price List
+  fieldtype: Link
+  options: Price List
+- fieldname: routing
+  label: Routing
+  fieldtype: Link
+  options: Routing
+- fieldname: operations
+  label: Operations
+  fieldtype: Table
+  options: BOM Operation
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: BOM Item
+- fieldname: operating_cost
+  label: Operating Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: raw_material_cost
+  label: Raw Material Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_operating_cost
+  label: Operating Cost (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_raw_material_cost
+  label: Raw Material Cost (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_cost
+  label: Total Cost
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: base_total_cost
+  label: Total Cost (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: description
+  label: Item Description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: exploded_items
+  label: Exploded Items
+  fieldtype: Table
+  options: BOM Explosion Item
+  read_only: true
+- fieldname: show_in_website
+  label: Show in Website
+  fieldtype: Boolean
+  default: false
+- fieldname: route
+  label: Route
+  fieldtype: LongText
+  read_only: true
+- fieldname: website_image
+  label: Website Image
+  fieldtype: Image
+  description: Item Image (if not slideshow)
+- fieldname: thumbnail
+  label: Thumbnail
+  fieldtype: Text
+  read_only: true
+- fieldname: web_long_description
+  label: Website Description
+  fieldtype: TextEditor
+- fieldname: show_items
+  label: Show Items
+  fieldtype: Boolean
+  default: false
+- fieldname: show_operations
+  label: Show Operations
+  fieldtype: Boolean
+  default: false
+- fieldname: plc_conversion_rate
+  label: Price List Exchange Rate
+  fieldtype: Number
+- fieldname: price_list_currency
+  label: Price List Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: has_variants
+  label: Has variants
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: process_loss_percentage
+  label: '% Process loss'
+  fieldtype: Percent
+- fieldname: process_loss_qty
+  label: Process loss qty
+  fieldtype: Number
+  read_only: true
+- fieldname: fg_based_operating_cost
+  label: Finished goods based operating cost
+  fieldtype: Boolean
+  default: false
+- fieldname: operating_cost_per_bom_quantity
+  label: Operating cost per BOM quantity
+  fieldtype: Currency
+  decimals: 2
+- fieldname: bom_creator
+  label: BOM Creator
+  fieldtype: Link
+  options: BOM Creator
+  read_only: true
+- fieldname: bom_creator_item
+  label: BOM Creator Item
+  fieldtype: Text
+  read_only: true
+- fieldname: track_semi_finished_goods
+  label: Produce Item per Operation
+  fieldtype: Boolean
+  description: Each operation produces its own output item and puts it in stock, for example Cut Sheet, then Painted
+    Sheet, then the final Box.
+  default: false
+- fieldname: default_source_warehouse
+  label: Default Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: default_target_warehouse
+  label: Default Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: is_phantom_bom
+  label: Set as Phantom BOM
+  fieldtype: Boolean
+  description: Enable this to define the BOM as a logical grouping of raw materials without producing an item. The
+    Production Item must be non-stock and will be automatically exploded when used as a raw material in another
+    BOM.
+  default: false
+- fieldname: secondary_items
+  label: Secondary Items
+  fieldtype: Table
+  options: BOM Secondary Item
+- fieldname: secondary_items_cost
+  label: Secondary Items Cost
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_secondary_items_cost
+  label: Secondary Items Cost (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: cost_allocation
+  label: Cost allocation for Finished Good
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: cost_allocation_per
+  label: '% Cost allocation for Finished Good'
+  fieldtype: Percent
+  read_only: true
+- fieldname: backflush_based_on
+  label: Based on
+  fieldtype: Select
+  options:
+  - BOM
+  - Material Transferred for Manufacture
+  description: Controls how raw materials are consumed during the ‘Manufacture’ stock entry.
+title_field: item_name
+layout:
+- tab: Production Item
+  section: Références
+  columns:
+  - - company
+    - item
+  - - quantity
+    - uom
+- tab: Production Item
+  section: Operations
+  columns:
+  - - with_operations
+    - track_semi_finished_goods
+  - - transfer_material_against
+    - routing
+- tab: Production Item
+  section: Informations complémentaires 3
+  columns:
+  - - operations
+- tab: Production Item
+  section: Finished Goods Based Operating Cost
+  columns:
+  - - fg_based_operating_cost
+  - - operating_cost_per_bom_quantity
+- tab: Production Item
+  section: Process Loss
+  columns:
+  - - process_loss_percentage
+  - - process_loss_qty
+- tab: Production Item
+  section: Components
+  columns:
+  - - set_qty_based_on_percentage
+    - items
+- tab: Production Item
+  section: Secondary Items
+  columns:
+  - - secondary_items
+    - cost_allocation_per
+    - cost_allocation
+- tab: BOM Configuration
+  section: Références
+  columns:
+  - - is_active
+    - is_default
+    - allow_alternative_item
+    - is_phantom_bom
+- tab: BOM Configuration
+  section: Quality Inspection
+  columns:
+  - - inspection_required
+    - quality_inspection_template
+- tab: BOM Configuration
+  section: Default Warehouse
+  columns:
+  - - default_source_warehouse
+    - default_target_warehouse
+- tab: BOM Configuration
+  section: Consume Components
+  columns:
+  - - backflush_based_on
+- tab: Costing
+  section: Comptabilité et montants
+  columns:
+  - - operating_cost
+    - raw_material_cost
+    - secondary_items_cost
+  - - base_operating_cost
+    - base_raw_material_cost
+    - base_secondary_items_cost
+  - - total_cost
+    - base_total_cost
+- tab: More Info
+  section: Cost Configuration
+  columns:
+  - - rm_cost_as_per
+    - buying_price_list
+    - price_list_currency
+    - plc_conversion_rate
+  - - currency
+    - conversion_rate
+- tab: More Info
+  section: Production Item Info
+  columns:
+  - - item_name
+  - - description
+- tab: More Info
+  section: Références
+  columns:
+  - - project
+- tab: Exploded Items
+  section: Références
+  columns:
+  - - exploded_items
+- tab: Website
+  section: Informations complémentaires 17
+  columns:
+  - - show_in_website
+    - route
+  - - website_image
+    - thumbnail
+- tab: Website
+  section: Website Specifications
+  columns:
+  - - show_items
+    - show_operations
+    - web_long_description
+- tab: Website
+  section: Reference
+  columns:
+  - - bom_creator
+    - bom_creator_item
+  - - amended_from
+views:
+  tree:
+    parent: amended_from

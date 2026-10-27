@@ -1,0 +1,17 @@
+schema_version: 1
+name: Workstation Cost
+label: Workstation Cost
+istable: true
+fields:
+- fieldname: operating_cost
+  label: Operating Cost
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: operating_component
+  label: Operating Component
+  fieldtype: Link
+  options: Workstation Operating Component
+  required: true
+  in_list_view: true

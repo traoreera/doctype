@@ -1,0 +1,20 @@
+schema_version: 1
+name: Bank Transaction Rule Description Conditions
+label: Bank Transaction Rule Description Conditions
+istable: true
+fields:
+- fieldname: check
+  label: Check
+  fieldtype: Select
+  options:
+  - Contains
+  - Starts With
+  - Ends With
+  - Regex
+  required: true
+  in_list_view: true
+- fieldname: value
+  label: Value
+  fieldtype: LongText
+  required: true
+  in_list_view: true

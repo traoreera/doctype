@@ -1,0 +1,8 @@
+schema_version: 1
+name: SLA Fulfilled On Status
+label: SLA Fulfilled On Status
+istable: true
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: Text

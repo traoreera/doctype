@@ -1,0 +1,148 @@
+schema_version: 1
+name: Bank Guarantee
+label: Bank Guarantee
+module: accounts
+submittable: true
+icon: shield-check
+fields:
+- fieldname: bg_type
+  label: Bank Guarantee Type
+  fieldtype: Select
+  options:
+  - Receiving
+  - Providing
+  required: true
+- fieldname: reference_doctype
+  label: Reference Document Type
+  fieldtype: Text
+- fieldname: reference_docname
+  label: Reference Document Name
+  fieldtype: DynamicLink
+  options: reference_doctype
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: validity
+  label: Validity in Days
+  fieldtype: Int
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  read_only: true
+- fieldname: bank
+  label: Bank
+  fieldtype: Link
+  options: Bank
+- fieldname: bank_account
+  label: Bank Account
+  fieldtype: Link
+  options: Bank Account
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  read_only: true
+- fieldname: bank_account_no
+  label: Bank Account No
+  fieldtype: Text
+  read_only: true
+- fieldname: iban
+  label: IBAN
+  fieldtype: Text
+  read_only: true
+- fieldname: branch_code
+  label: Branch Code
+  fieldtype: Text
+  read_only: true
+- fieldname: swift_number
+  label: SWIFT number
+  fieldtype: Text
+  read_only: true
+- fieldname: more_information
+  label: Clauses and Conditions
+  fieldtype: TextEditor
+- fieldname: bank_guarantee_number
+  label: Bank Guarantee Number
+  fieldtype: Text
+- fieldname: name_of_beneficiary
+  label: Name of Beneficiary
+  fieldtype: Text
+- fieldname: margin_money
+  label: Margin Money
+  fieldtype: Currency
+  decimals: 2
+- fieldname: charges
+  label: Charges Incurred
+  fieldtype: Currency
+  decimals: 2
+- fieldname: fixed_deposit_number
+  label: Fixed Deposit Number
+  fieldtype: Text
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Bank Guarantee
+  read_only: true
+title_field: customer
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - bg_type
+    - reference_doctype
+    - reference_docname
+    - customer
+    - supplier
+    - project
+  - - amount
+    - start_date
+    - validity
+    - end_date
+- section: Bank Account Info
+  columns:
+  - - bank
+    - bank_account
+    - account
+    - bank_account_no
+  - - iban
+    - branch_code
+    - swift_number
+- section: Informations complémentaires 3
+  columns:
+  - - more_information
+- section: Other Details
+  columns:
+  - - bank_guarantee_number
+    - name_of_beneficiary
+  - - margin_money
+    - charges
+    - fixed_deposit_number
+    - amended_from
+views:
+  calendar:
+    start: start_date
+    title: customer
+  gantt:
+    start: start_date
+    end: end_date
+    title: customer
+  tree:
+    parent: amended_from

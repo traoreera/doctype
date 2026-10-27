@@ -1,0 +1,10 @@
+schema_version: 1
+name: Customer Group Item
+label: Customer Group Item
+istable: true
+fields:
+- fieldname: customer_group
+  label: Customer Group
+  fieldtype: Link
+  options: Customer Group
+  in_list_view: true

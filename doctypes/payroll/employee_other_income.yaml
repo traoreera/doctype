@@ -1,0 +1,56 @@
+schema_version: 1
+name: Employee Other Income
+label: Employee Other Income
+module: payroll
+submittable: true
+icon: coins
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: payroll_period
+  label: Payroll Period
+  fieldtype: Link
+  options: Payroll Period
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: source
+  label: Source
+  fieldtype: Text
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Employee Other Income
+  read_only: true
+title_field: employee_name
+layout:
+- section: Employee Details
+  columns:
+  - - employee
+    - employee_name
+    - amended_from
+  - - company
+    - payroll_period
+- section: Income Source
+  columns:
+  - - source
+  - - amount

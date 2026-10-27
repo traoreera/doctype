@@ -1,0 +1,95 @@
+schema_version: 1
+name: Overtime Slip
+label: Overtime Slip
+module: hr
+submittable: true
+icon: timer
+fields:
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Overtime Slip
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: overtime_details
+  label: Overtime Details
+  fieldtype: Table
+  options: Overtime Details
+- fieldname: total_overtime_duration
+  label: Total Overtime Duration
+  fieldtype: Number
+  read_only: true
+- fieldname: salary_slip
+  label: Salary Slip
+  fieldtype: Link
+  options: Salary Slip
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+- fieldname: payroll_entry
+  label: Payroll Entry
+  fieldtype: Link
+  options: Payroll Entry
+  read_only: true
+- fieldname: submitted_via_payroll_entry
+  label: Submitted via Payroll Entry
+  fieldtype: Boolean
+  hidden: true
+  default: false
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - posting_date
+    - employee
+    - employee_name
+  - - company
+    - department
+    - amended_from
+- section: Informations complémentaires 2
+  columns:
+  - - start_date
+    - end_date
+    - salary_slip
+  - - total_overtime_duration
+    - payroll_entry
+- section: Informations complémentaires 3
+  columns:
+  - - overtime_details
+views:
+  calendar:
+    start: posting_date
+    title: employee_name
+  gantt:
+    start: start_date
+    end: end_date
+    title: employee_name

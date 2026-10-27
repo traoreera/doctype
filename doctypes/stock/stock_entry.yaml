@@ -1,0 +1,393 @@
+schema_version: 1
+name: Stock Entry
+label: Stock Entry
+module: stock
+submittable: true
+icon: arrow-left-right
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-STE-.YYYY.-
+  required: true
+- fieldname: stock_entry_type
+  label: Stock Entry Type
+  fieldtype: Link
+  options: Stock Entry Type
+  required: true
+  in_list_view: true
+- fieldname: weight_per_piece
+  label: Weight Per Piece
+  fieldtype: Number
+  hidden: true
+  description: Splits the produced quantity into one batch per this many units
+- fieldname: outgoing_stock_entry
+  label: Stock Entry (Outward GIT)
+  fieldtype: Link
+  options: Stock Entry
+  read_only: true
+- fieldname: source_stock_entry
+  label: Source Stock Entry (Manufacture)
+  fieldtype: Link
+  options: Stock Entry
+- fieldname: purpose
+  label: Purpose
+  fieldtype: Select
+  options:
+  - Material Issue
+  - Material Receipt
+  - Material Transfer
+  - Material Transfer for Manufacture
+  - Material Consumption for Manufacture
+  - Manufacture
+  - Repack
+  - Send to Subcontractor
+  - Disassemble
+  - Receive from Customer
+  - Return Raw Material to Customer
+  - Subcontracting Delivery
+  - Subcontracting Return
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: work_order
+  label: Work Order
+  fieldtype: Link
+  options: Work Order
+- fieldname: is_fg_conversion
+  label: Is Finished Good Conversion
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: purchase_order
+  label: Purchase Order
+  fieldtype: Link
+  options: Purchase Order
+- fieldname: subcontracting_order
+  label: Subcontracting Order
+  fieldtype: Link
+  options: Subcontracting Order
+  read_only: true
+- fieldname: delivery_note_no
+  label: Delivery Note No
+  fieldtype: Link
+  options: Delivery Note
+  read_only: true
+- fieldname: sales_invoice_no
+  label: Sales Invoice No
+  fieldtype: Link
+  options: Sales Invoice
+  read_only: true
+- fieldname: purchase_receipt_no
+  label: Purchase Receipt No
+  fieldtype: Link
+  options: Purchase Receipt
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  default: today
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+- fieldname: set_posting_time
+  label: Edit Posting Date and Time
+  fieldtype: Boolean
+  default: false
+- fieldname: inspection_required
+  label: Inspection Required
+  fieldtype: Boolean
+  default: false
+- fieldname: from_bom
+  label: From BOM
+  fieldtype: Boolean
+  default: false
+- fieldname: bom_no
+  label: BOM No
+  fieldtype: Link
+  options: BOM
+- fieldname: fg_completed_qty
+  label: 'Finished Good Quantity '
+  fieldtype: Number
+  description: As per Stock UOM
+- fieldname: use_multi_level_bom
+  label: Use Multi-Level BOM
+  fieldtype: Boolean
+  description: Including items for sub assemblies
+  default: true
+- fieldname: from_warehouse
+  label: Default Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+  description: Sets 'Source Warehouse' in each row of the items table.
+- fieldname: source_warehouse_address
+  label: Source Warehouse Address Link
+  fieldtype: Link
+  options: Address
+- fieldname: source_address_display
+  label: Source Warehouse Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: to_warehouse
+  label: Default Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+  description: Sets 'Target Warehouse' in each row of the items table.
+- fieldname: target_warehouse_address
+  label: Target Warehouse Address Link
+  fieldtype: Link
+  options: Address
+- fieldname: target_address_display
+  label: Target Warehouse Address
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: scan_barcode
+  label: Scan Barcode
+  fieldtype: Text
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Stock Entry Detail
+- fieldname: total_incoming_value
+  label: Total Incoming Value (Receipt)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_outgoing_value
+  label: Total Outgoing Value (Consumption)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: value_difference
+  label: Total Value Difference (Incoming - Outgoing)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: additional_costs
+  label: Additional Costs
+  fieldtype: Table
+  options: Landed Cost Taxes and Charges
+- fieldname: total_additional_costs
+  label: Total Additional Costs
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: supplier_name
+  label: Supplier Name
+  fieldtype: Text
+  read_only: true
+- fieldname: supplier_address
+  label: Supplier Address
+  fieldtype: Link
+  options: Address
+- fieldname: address_display
+  label: Address
+  fieldtype: TextEditor
+- fieldname: select_print_heading
+  label: Print Heading
+  fieldtype: Link
+  options: Print Heading
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: is_opening
+  label: Is Opening
+  fieldtype: Select
+  options:
+  - 'No'
+  - 'Yes'
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: per_transferred
+  label: Per Transferred
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+- fieldname: total_amount
+  label: Total Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: job_card
+  label: Job Card
+  fieldtype: Link
+  options: Job Card
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Stock Entry
+  read_only: true
+- fieldname: credit_note
+  label: Credit Note
+  fieldtype: Link
+  options: Journal Entry
+  hidden: true
+- fieldname: pick_list
+  label: Pick List
+  fieldtype: Link
+  options: Pick List
+  read_only: true
+- fieldname: add_to_transit
+  label: Add to Transit
+  fieldtype: Boolean
+  default: false
+- fieldname: apply_putaway_rule
+  label: Apply Putaway Rule
+  fieldtype: Boolean
+  default: false
+- fieldname: is_return
+  label: Is Return
+  fieldtype: Boolean
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: process_loss_qty
+  label: Process Loss Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: process_loss_percentage
+  label: '% Process Loss'
+  fieldtype: Percent
+  read_only: true
+- fieldname: asset_repair
+  label: Asset Repair
+  fieldtype: Link
+  options: Asset Repair
+  read_only: true
+- fieldname: last_scanned_warehouse
+  label: Last Scanned Warehouse
+  fieldtype: Text
+- fieldname: is_additional_transfer_entry
+  label: Is Additional Transfer Entry
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: subcontracting_inward_order
+  label: Subcontracting Inward Order
+  fieldtype: Link
+  options: Subcontracting Inward Order
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+title_field: supplier_name
+layout:
+- tab: Details
+  section: Dates et planification
+  columns:
+  - - company
+    - naming_series
+    - stock_entry_type
+  - - set_posting_time
+    - posting_date
+    - posting_time
+- tab: Details
+  section: Détails
+  columns:
+  - - add_to_transit
+    - apply_putaway_rule
+    - inspection_required
+  - - work_order
+    - subcontracting_order
+    - outgoing_stock_entry
+    - source_stock_entry
+- tab: Details
+  section: Bill of Materials
+  columns:
+  - - from_bom
+    - use_multi_level_bom
+    - bom_no
+  - - fg_completed_qty
+    - process_loss_qty
+    - process_loss_percentage
+- tab: Details
+  section: Default Warehouse
+  columns:
+  - - from_warehouse
+    - source_warehouse_address
+    - source_address_display
+  - - to_warehouse
+    - target_warehouse_address
+    - target_address_display
+- tab: Details
+  section: Références
+  columns:
+  - - scan_barcode
+  - - last_scanned_warehouse
+- tab: Details
+  section: Références
+  columns:
+  - - items
+- tab: Details
+  section: Comptabilité et montants
+  columns:
+  - - total_outgoing_value
+  - - total_incoming_value
+    - value_difference
+- tab: Additional Costs
+  section: Comptabilité et montants
+  columns:
+  - - additional_costs
+    - total_additional_costs
+- tab: Supplier Info
+  section: Supplier Details
+  columns:
+  - - supplier
+    - supplier_name
+    - supplier_address
+    - address_display
+- tab: Accounting Dimensions
+  section: Comptabilité et montants
+  columns:
+  - - project
+  - - cost_center
+- tab: Other Info
+  section: Printing Settings
+  columns:
+  - - select_print_heading
+  - - letter_head
+- tab: Other Info
+  section: Reference
+  columns:
+  - - delivery_note_no
+    - sales_invoice_no
+    - job_card
+    - pick_list
+  - - asset_repair
+    - purchase_receipt_no
+    - purchase_order
+    - subcontracting_inward_order
+- tab: Other Info
+  section: More Information
+  columns:
+  - - is_opening
+    - remarks
+  - - per_transferred
+    - total_amount
+    - amended_from
+views:
+  calendar:
+    start: posting_date
+    title: supplier_name
+  tree:
+    parent: outgoing_stock_entry

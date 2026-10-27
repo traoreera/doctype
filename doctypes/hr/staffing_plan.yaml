@@ -1,0 +1,62 @@
+schema_version: 1
+name: Staffing Plan
+label: Staffing Plan
+module: hr
+submittable: true
+icon: users
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  required: true
+- fieldname: staffing_details
+  label: Staffing Details
+  fieldtype: Table
+  options: Staffing Plan Detail
+- fieldname: total_estimated_budget
+  label: Total Estimated Budget
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Staffing Plan
+  read_only: true
+title_field: company
+layout:
+- section: Informations principales
+  columns:
+  - - company
+    - department
+  - - from_date
+    - to_date
+- section: Details
+  columns:
+  - - staffing_details
+- section: Informations complémentaires 3
+  columns:
+  - - total_estimated_budget
+    - amended_from
+views:
+  calendar:
+    start: from_date
+    title: company
+  gantt:
+    start: from_date
+    end: to_date
+    title: company

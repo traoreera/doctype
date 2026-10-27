@@ -1,0 +1,70 @@
+schema_version: 1
+name: BOM Update Log
+label: BOM Update Log
+module: manufacturing
+submittable: true
+icon: file-clock
+fields:
+- fieldname: current_bom
+  label: Current BOM
+  fieldtype: Link
+  options: BOM
+  in_list_view: true
+- fieldname: new_bom
+  label: New BOM
+  fieldtype: Link
+  options: BOM
+  in_list_view: true
+- fieldname: update_type
+  label: Update Type
+  fieldtype: Select
+  options:
+  - Replace BOM
+  - Update Cost
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Queued
+  - In Progress
+  - Completed
+  - Failed
+  - Cancelled
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: BOM Update Log
+  read_only: true
+- fieldname: error_log
+  label: Error Log
+  fieldtype: Link
+  options: Error Log
+- fieldname: processed_boms
+  label: Processed BOMs
+  fieldtype: LongText
+  hidden: true
+- fieldname: bom_batches
+  label: Bom Batches
+  fieldtype: Table
+  options: BOM Update Batch
+- fieldname: current_level
+  label: Current Level
+  fieldtype: Int
+title_field: status
+layout:
+- section: Dates et planification
+  columns:
+  - - update_type
+    - status
+  - - current_bom
+    - new_bom
+    - error_log
+- section: Progress
+  columns:
+  - - current_level
+    - bom_batches
+    - amended_from
+views:
+  tree:
+    parent: amended_from

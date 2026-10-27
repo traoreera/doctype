@@ -1,0 +1,132 @@
+schema_version: 1
+name: Job Requisition
+label: Job Requisition
+module: hr
+icon: clipboard-pen
+fields:
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  required: true
+  in_list_view: true
+- fieldname: no_of_positions
+  label: No of. Positions
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: expected_compensation
+  label: Expected Compensation
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - Open & Approved
+  - Rejected
+  - Filled
+  - On Hold
+  - Cancelled
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: requested_by
+  label: Requested By
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: requested_by_name
+  label: Requested By (Name)
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: requested_by_dept
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: requested_by_designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  default: today
+- fieldname: expected_by
+  label: Expected By
+  fieldtype: Date
+  in_list_view: true
+- fieldname: completed_on
+  label: Completed On
+  fieldtype: Date
+- fieldname: description
+  label: Job Description
+  fieldtype: TextEditor
+  required: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - HR-HIREQ-
+- fieldname: reason_for_requesting
+  label: Reason for Requesting
+  fieldtype: LongText
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: time_to_fill
+  label: Time to Fill
+  fieldtype: Duration
+  read_only: true
+  description: Time taken to fill the open positions
+title_field: status
+layout:
+- tab: Général
+  section: Informations principales
+  columns:
+  - - naming_series
+    - designation
+    - department
+  - - no_of_positions
+    - expected_compensation
+  - - company
+    - status
+- tab: Général
+  section: Requested By
+  columns:
+  - - requested_by
+    - requested_by_name
+  - - requested_by_dept
+    - requested_by_designation
+- tab: Général
+  section: Timelines
+  columns:
+  - - posting_date
+    - completed_on
+  - - expected_by
+    - time_to_fill
+- tab: Job Description
+  section: Informations complémentaires 4
+  columns:
+  - - description
+    - reason_for_requesting
+views:
+  kanban:
+    field: status
+    card_fields: null
+  calendar:
+    start: posting_date
+    title: status
+    color: status

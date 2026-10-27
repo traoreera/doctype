@@ -1,0 +1,23 @@
+schema_version: 1
+name: Workstation Operating Component
+label: Workstation Operating Component
+module: manufacturing
+icon: cog
+fields:
+- fieldname: component_name
+  label: Component Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: accounts
+  label: Component Expense Account
+  fieldtype: Table
+  options: Workstation Operating Component Account
+title_field: component_name
+layout:
+- section: Informations principales
+  columns:
+  - - component_name
+- section: Comptabilité et montants
+  columns:
+  - - accounts

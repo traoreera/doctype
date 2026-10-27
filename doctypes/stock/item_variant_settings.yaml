@@ -1,0 +1,37 @@
+schema_version: 1
+name: Item Variant Settings
+label: Item Variant Settings
+module: stock
+icon: settings
+fields:
+- fieldname: do_not_update_variants
+  label: Do not update variants on save
+  fieldtype: Boolean
+  description: Fields will be copied over only at time of creation.
+  default: false
+- fieldname: allow_rename_attribute_value
+  label: Allow Rename Attribute Value
+  fieldtype: Boolean
+  description: Rename Attribute Value in Item Attribute.
+  default: false
+- fieldname: fields
+  label: Fields
+  fieldtype: Table
+  options: Variant Field
+- fieldname: allow_different_uom
+  label: Allow Variant UOM to be different from Template UOM
+  fieldtype: Boolean
+  default: false
+single: true
+layout:
+- section: Dates et planification
+  columns:
+  - - do_not_update_variants
+    - allow_rename_attribute_value
+    - allow_different_uom
+- section: Copy Fields to Variant
+  columns:
+  - - fields
+permissions:
+  create: []
+  delete: []

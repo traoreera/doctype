@@ -1,0 +1,25 @@
+schema_version: 1
+name: Payment Gateway
+label: Payment Gateway
+module: accounts
+icon: file-text
+fields:
+- fieldname: gateway
+  label: Gateway
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: gateway_settings
+  label: Gateway Settings
+  fieldtype: JSON
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+title_field: gateway
+layout:
+- section: Informations principales
+  columns:
+  - - gateway
+    - gateway_settings
+    - enabled

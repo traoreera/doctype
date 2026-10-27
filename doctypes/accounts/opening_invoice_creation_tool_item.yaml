@@ -1,0 +1,69 @@
+schema_version: 1
+name: Opening Invoice Creation Tool Item
+label: Opening Invoice Creation Tool Item
+istable: true
+fields:
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: party
+  label: Party ID
+  fieldtype: DynamicLink
+  options: party_type
+  in_list_view: true
+- fieldname: temporary_opening_account
+  label: Temporary Opening Account
+  fieldtype: Link
+  options: Account
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: due_date
+  label: Due Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  in_list_view: true
+  default: Opening Invoice Item
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  in_list_view: true
+  description: Currency of the outstanding amount. Defaults to the Company currency.
+- fieldname: outstanding_amount
+  label: Outstanding Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: qty
+  label: Quantity
+  fieldtype: Text
+  description: Must be positive. If the unit rate would change the opening amount through rounding, the invoice
+    uses quantity 1 and records this quantity in the description.
+  default: '1'
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: invoice_number
+  label: Invoice Number
+  fieldtype: Text
+  description: Reference number of the invoice from the previous system
+- fieldname: supplier_invoice_date
+  label: Supplier Invoice Date
+  fieldtype: Date
+- fieldname: party_name
+  label: Party Name
+  fieldtype: Text
+  in_list_view: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project

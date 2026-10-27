@@ -1,0 +1,58 @@
+schema_version: 1
+name: Batch
+label: Lot
+module: stock
+icon: layers
+title_field: batch_id
+naming:
+  series: BATCH-{YYYY}-{#####}
+fields:
+- fieldname: batch_id
+  label: N° de lot
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  description: Identifiant du lot utilisé sur les mouvements de stock.
+- fieldname: item
+  label: Article
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+  link_filters:
+    has_batch_no: 1
+    is_stock_item: 1
+- fieldname: disabled
+  label: Désactivé
+  fieldtype: Boolean
+  default: false
+  in_list_view: true
+- fieldname: manufacturing_date
+  label: Date de fabrication
+  fieldtype: Date
+- fieldname: expiry_date
+  label: Date d’expiration
+  fieldtype: Date
+  in_list_view: true
+- fieldname: parent_batch
+  label: Lot parent
+  fieldtype: Link
+  options: Batch
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+layout:
+- section: Identification du lot
+  columns:
+  - - batch_id
+    - item
+    - disabled
+  - - manufacturing_date
+    - expiry_date
+    - parent_batch
+- columns:
+  - - description
+  section: Description et notes
+views:
+  tree:
+    parent: parent_batch

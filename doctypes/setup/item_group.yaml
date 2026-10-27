@@ -1,0 +1,63 @@
+schema_version: 1
+name: Item Group
+label: Item Group
+module: setup
+icon: boxes
+fields:
+- fieldname: item_group_name
+  label: Item Group Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: parent_item_group
+  label: Parent Item Group
+  fieldtype: Link
+  options: Item Group
+  in_list_view: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  description: Only leaf nodes are allowed in transaction
+  default: false
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+- fieldname: item_group_defaults
+  label: Item Group Defaults
+  fieldtype: Table
+  options: Item Default
+- fieldname: taxes
+  label: Taxes
+  fieldtype: Table
+  options: Item Tax
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  hidden: true
+- fieldname: old_parent
+  label: old_parent
+  fieldtype: Link
+  options: Item Group
+  hidden: true
+title_field: item_group_name
+layout:
+- section: General Settings
+  columns:
+  - - item_group_name
+    - parent_item_group
+    - is_group
+- section: Defaults
+  columns:
+  - - item_group_defaults
+- section: Item Tax
+  columns:
+  - - taxes
+views:
+  tree:
+    parent: parent_item_group

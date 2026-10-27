@@ -1,0 +1,66 @@
+schema_version: 1
+name: Process Period Closing Voucher
+label: Process Period Closing Voucher
+module: accounts
+submittable: true
+icon: lock
+fields:
+- fieldname: parent_pcv
+  label: PCV
+  fieldtype: Link
+  options: Period Closing Voucher
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Queued
+  - Running
+  - Paused
+  - Completed
+  - Cancelled
+  default: Queued
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Process Period Closing Voucher
+  read_only: true
+- fieldname: p_l_closing_balance
+  label: P&L Closing Balance
+  fieldtype: JSON
+- fieldname: normal_balances
+  label: Dates to Process
+  fieldtype: Table
+  options: Process Period Closing Voucher Detail
+- fieldname: z_opening_balances
+  label: Opening Balances
+  fieldtype: Table
+  options: Process Period Closing Voucher Detail
+- fieldname: bs_closing_balance
+  label: Balance Sheet Closing Balance
+  fieldtype: JSON
+title_field: status
+layout:
+- tab: General
+  section: Dates et planification
+  columns:
+  - - parent_pcv
+    - status
+    - amended_from
+- tab: Normal Balances
+  section: Comptabilité et montants
+  columns:
+  - - p_l_closing_balance
+    - bs_closing_balance
+    - normal_balances
+- tab: Opening Balances
+  section: Comptabilité et montants
+  columns:
+  - - z_opening_balances
+views:
+  kanban:
+    field: status
+    card_fields: null
+  tree:
+    parent: amended_from

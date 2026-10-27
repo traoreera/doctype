@@ -1,0 +1,33 @@
+schema_version: 1
+name: Job Card Operation
+label: Job Card Operation
+istable: true
+fields:
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Complete
+  - Pause
+  - Pending
+  - Work In Progress
+  default: Pending
+  in_list_view: true
+  read_only: true
+- fieldname: completed_time
+  label: Completed Time
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+  description: In mins
+- fieldname: sub_operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  in_list_view: true
+  read_only: true
+- fieldname: completed_qty
+  label: Completed Qty
+  fieldtype: Number
+  in_list_view: true
+  read_only: true

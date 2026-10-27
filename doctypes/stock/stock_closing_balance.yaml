@@ -1,0 +1,125 @@
+schema_version: 1
+name: Stock Closing Balance
+label: Stock Closing Balance
+module: stock
+icon: lock
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  read_only: true
+- fieldname: posting_datetime
+  label: Posting Datetime
+  fieldtype: Datetime
+  read_only: true
+- fieldname: actual_qty
+  label: Qty Change
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: valuation_rate
+  label: Valuation Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: stock_value
+  label: Balance Stock Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: stock_value_difference
+  label: Change in Stock Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  read_only: true
+- fieldname: stock_closing_entry
+  label: Stock Closing Entry
+  fieldtype: Link
+  options: Stock Closing Entry
+  read_only: true
+- fieldname: inventory_dimension_key
+  label: Inventory Dimension key
+  fieldtype: LongText
+  read_only: true
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+  read_only: true
+- fieldname: fifo_queue
+  label: FIFO Queue
+  fieldtype: LongText
+  read_only: true
+title_field: item_code
+layout:
+- section: Dates et planification
+  columns:
+  - - item_code
+    - warehouse
+    - batch_no
+  - - posting_date
+    - posting_time
+    - posting_datetime
+- section: Comptabilité et montants
+  columns:
+  - - actual_qty
+    - valuation_rate
+  - - stock_value
+    - stock_value_difference
+- section: Références
+  columns:
+  - - company
+  - - stock_closing_entry
+- section: Références
+  columns:
+  - - item_name
+    - item_group
+  - - stock_uom
+    - inventory_dimension_key
+- section: Stock Ageing
+  columns:
+  - - fifo_queue
+views:
+  calendar:
+    start: posting_date
+    title: item_code
+permissions:
+  write: []
+  create: []
+  delete: []

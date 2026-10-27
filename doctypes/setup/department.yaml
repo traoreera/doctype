@@ -1,0 +1,56 @@
+schema_version: 1
+name: Department
+label: Department
+module: setup
+icon: building
+fields:
+- fieldname: department_name
+  label: Department
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: parent_department
+  label: Parent Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  default: false
+- fieldname: lft
+  label: lft
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: rgt
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Text
+  hidden: true
+title_field: department_name
+layout:
+- section: Références
+  columns:
+  - - department_name
+    - parent_department
+  - - company
+    - is_group
+    - disabled
+views:
+  tree:
+    parent: parent_department

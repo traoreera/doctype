@@ -1,0 +1,16 @@
+schema_version: 1
+name: Applicable On Account
+label: Applicable On Account
+istable: true
+fields:
+- fieldname: applicable_on_account
+  label: Accounts
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: is_mandatory
+  label: Is Mandatory
+  fieldtype: Boolean
+  in_list_view: true
+  default: false

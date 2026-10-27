@@ -1,0 +1,35 @@
+schema_version: 1
+name: Training Result
+label: Training Result
+module: hr
+submittable: true
+icon: award
+fields:
+- fieldname: training_event
+  label: Training Event
+  fieldtype: Link
+  options: Training Event
+  required: true
+  in_list_view: true
+- fieldname: employees
+  label: Employees
+  fieldtype: Table
+  options: Training Result Employee
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Training Result
+  read_only: true
+- fieldname: employee_emails
+  label: Employee Emails
+  fieldtype: LongText
+  hidden: true
+title_field: training_event
+layout:
+- section: Informations principales
+  columns:
+  - - training_event
+- section: Informations complémentaires 2
+  columns:
+  - - employees
+    - amended_from

@@ -1,0 +1,69 @@
+schema_version: 1
+name: Quality Action
+label: Quality Action
+module: quality_management
+icon: check-check
+fields:
+- fieldname: goal
+  label: Goal
+  fieldtype: Link
+  options: Quality Goal
+  in_list_view: true
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: procedure
+  label: Procedure
+  fieldtype: Link
+  options: Quality Procedure
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Completed
+  default: Open
+  in_list_view: true
+  read_only: true
+- fieldname: corrective_preventive
+  label: Corrective/Preventive
+  fieldtype: Select
+  options:
+  - Corrective
+  - Preventive
+  default: Corrective
+  required: true
+  in_list_view: true
+- fieldname: resolutions
+  label: Resolutions
+  fieldtype: Table
+  options: Quality Action Resolution
+- fieldname: review
+  label: Review
+  fieldtype: Link
+  options: Quality Review
+  in_list_view: true
+- fieldname: feedback
+  label: Feedback
+  fieldtype: Link
+  options: Quality Feedback
+title_field: status
+layout:
+- section: Dates et planification
+  columns:
+  - - corrective_preventive
+    - review
+    - feedback
+    - status
+  - - date
+    - goal
+    - procedure
+- section: Resolution
+  columns:
+  - - resolutions
+views:
+  calendar:
+    start: date
+    title: status

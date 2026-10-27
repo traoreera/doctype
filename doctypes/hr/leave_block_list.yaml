@@ -1,0 +1,49 @@
+schema_version: 1
+name: Leave Block List
+label: Leave Block List
+module: hr
+icon: calendar-x
+fields:
+- fieldname: leave_block_list_name
+  label: Leave Block List Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: applies_to_all_departments
+  label: Applies to Company
+  fieldtype: Boolean
+  in_list_view: true
+  description: If not checked, the list will have to be added to each Department where it has to be applied.
+  default: false
+- fieldname: leave_block_list_dates
+  label: Leave Block List Dates
+  fieldtype: Table
+  options: Leave Block List Date
+- fieldname: leave_block_list_allowed
+  label: Leave Block List Allowed
+  fieldtype: Table
+  options: Leave Block List Allow
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+title_field: leave_block_list_name
+layout:
+- section: Informations principales
+  columns:
+  - - leave_block_list_name
+    - leave_type
+  - - company
+    - applies_to_all_departments
+- section: Block Days
+  columns:
+  - - leave_block_list_dates
+- section: Allow Users
+  columns:
+  - - leave_block_list_allowed

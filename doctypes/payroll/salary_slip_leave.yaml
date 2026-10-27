@@ -1,0 +1,36 @@
+schema_version: 1
+name: Salary Slip Leave
+label: Salary Slip Leave
+istable: true
+fields:
+- fieldname: leave_type
+  label: Leave Type
+  fieldtype: Link
+  options: Leave Type
+  in_list_view: true
+  read_only: true
+- fieldname: total_allocated_leaves
+  label: Total Allocated Leave(s)
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: expired_leaves
+  label: Expired Leave(s)
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: used_leaves
+  label: Used Leave(s)
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: pending_leaves
+  label: Leave(s) Pending Approval
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: available_leaves
+  label: Available Leave(s)
+  fieldtype: Number
+  in_list_view: true
+  read_only: true

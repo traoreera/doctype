@@ -1,0 +1,35 @@
+schema_version: 1
+name: Prospect Lead
+label: Prospect Lead
+istable: true
+fields:
+- fieldname: lead
+  label: Lead
+  fieldtype: Link
+  options: Lead
+  required: true
+  in_list_view: true
+- fieldname: lead_name
+  label: Lead Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: email
+  label: Email
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: mobile_no
+  label: Mobile No
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: lead_owner
+  label: Lead Owner
+  fieldtype: Text
+  in_list_view: true

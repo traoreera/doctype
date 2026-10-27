@@ -1,0 +1,10 @@
+schema_version: 1
+name: UAE VAT Account
+label: UAE VAT Account
+istable: true
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true

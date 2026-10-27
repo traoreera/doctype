@@ -1,0 +1,14 @@
+schema_version: 1
+name: Allowed Dimension
+label: Allowed Dimension
+istable: true
+fields:
+- fieldname: accounting_dimension
+  label: Accounting Dimension
+  fieldtype: Text
+  read_only: true
+- fieldname: dimension_value
+  label: Dimension Value
+  fieldtype: DynamicLink
+  options: accounting_dimension
+  in_list_view: true

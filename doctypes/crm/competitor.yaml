@@ -1,0 +1,21 @@
+schema_version: 1
+name: Competitor
+label: Competitor
+module: crm
+icon: swords
+fields:
+- fieldname: competitor_name
+  label: Competitor Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: website
+  label: Website
+  fieldtype: Text
+  in_list_view: true
+title_field: competitor_name
+layout:
+- section: Informations principales
+  columns:
+  - - competitor_name
+    - website

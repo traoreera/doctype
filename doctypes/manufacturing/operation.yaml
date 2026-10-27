@@ -1,0 +1,62 @@
+schema_version: 1
+name: Operation
+label: Operation
+module: manufacturing
+icon: cog
+fields:
+- fieldname: workstation
+  label: Default Workstation
+  fieldtype: Link
+  options: Workstation
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: work_instruction
+  label: Work Instructions
+  fieldtype: TextEditor
+  description: Shown to operators on the Shop Floor. Supports rich text and embedded images for step-by-step guidance.
+- fieldname: sub_operations
+  label: Sub Operations
+  fieldtype: Table
+  options: Sub Operation
+- fieldname: total_operation_time
+  label: Total Operation Time
+  fieldtype: Number
+  read_only: true
+  description: Time in mins.
+- fieldname: batch_size
+  label: Batch Size
+  fieldtype: Int
+  default: 1
+- fieldname: create_job_card_based_on_batch_size
+  label: Create Job Card based on Batch Size
+  fieldtype: Boolean
+  default: false
+- fieldname: is_corrective_operation
+  label: Is Corrective Operation
+  fieldtype: Boolean
+  default: false
+- fieldname: quality_inspection_template
+  label: Quality Inspection Template
+  fieldtype: Link
+  options: Quality Inspection Template
+title_field: workstation
+layout:
+- section: État et options
+  columns:
+  - - workstation
+  - - is_corrective_operation
+- section: Job Card
+  columns:
+  - - create_job_card_based_on_batch_size
+    - quality_inspection_template
+  - - batch_size
+- section: Sub Operations
+  columns:
+  - - sub_operations
+    - total_operation_time
+- section: Operation Description
+  columns:
+  - - description
+    - work_instruction

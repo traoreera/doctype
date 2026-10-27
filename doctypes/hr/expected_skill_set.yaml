@@ -1,0 +1,15 @@
+schema_version: 1
+name: Expected Skill Set
+label: Expected Skill Set
+istable: true
+fields:
+- fieldname: skill
+  label: Skill
+  fieldtype: Link
+  options: Skill
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  in_list_view: true

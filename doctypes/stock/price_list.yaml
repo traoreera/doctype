@@ -1,0 +1,51 @@
+schema_version: 1
+name: Price List
+label: Price List
+module: stock
+icon: tags
+fields:
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+- fieldname: price_list_name
+  label: Price List Name
+  fieldtype: Text
+  required: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  required: true
+  in_list_view: true
+- fieldname: buying
+  label: Buying
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: selling
+  label: Selling
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: price_not_uom_dependent
+  label: Price Not UOM Dependent
+  fieldtype: Boolean
+  default: false
+- fieldname: countries
+  label: Applicable for Countries
+  fieldtype: Table
+  options: Price List Country
+title_field: currency
+layout:
+- section: État et options
+  columns:
+  - - enabled
+- section: Comptabilité et montants
+  columns:
+  - - price_list_name
+    - currency
+    - buying
+    - selling
+    - price_not_uom_dependent
+  - - countries

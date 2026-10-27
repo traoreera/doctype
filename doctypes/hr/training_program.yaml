@@ -1,0 +1,69 @@
+schema_version: 1
+name: Training Program
+label: Training Program
+module: hr
+icon: graduation-cap
+fields:
+- fieldname: training_program
+  label: Training Program
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Scheduled
+  - Completed
+  - Cancelled
+  default: Scheduled
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: trainer_name
+  label: Trainer Name
+  fieldtype: Text
+- fieldname: trainer_email
+  label: Trainer Email
+  fieldtype: Text
+- fieldname: supplier
+  label: Supplier
+  fieldtype: Link
+  options: Supplier
+- fieldname: contact_number
+  label: Contact Number
+  fieldtype: Text
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Training Program
+  read_only: true
+title_field: status
+layout:
+- section: Informations principales
+  columns:
+  - - training_program
+    - status
+  - - company
+- section: Informations complémentaires 2
+  columns:
+  - - trainer_name
+    - trainer_email
+  - - supplier
+    - contact_number
+- section: Informations complémentaires 3
+  columns:
+  - - description
+    - amended_from
+views:
+  kanban:
+    field: status
+    card_fields: null

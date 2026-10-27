@@ -1,0 +1,20 @@
+schema_version: 1
+name: Project Type
+label: Project Type
+module: projects
+icon: tag
+fields:
+- fieldname: project_type
+  label: Project Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+title_field: project_type
+layout:
+- section: Références
+  columns:
+  - - project_type
+    - description

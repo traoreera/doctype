@@ -1,0 +1,52 @@
+schema_version: 1
+name: Activity Cost
+label: Activity Cost
+module: projects
+icon: coins
+fields:
+- fieldname: activity_type
+  label: Activity Type
+  fieldtype: Link
+  options: Activity Type
+  required: true
+  in_list_view: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  read_only: true
+- fieldname: billing_rate
+  label: Billing Rate
+  fieldtype: Currency
+  decimals: 2
+  description: per hour
+- fieldname: costing_rate
+  label: Costing Rate
+  fieldtype: Currency
+  decimals: 2
+  description: per hour
+- fieldname: title
+  label: title
+  fieldtype: Text
+  read_only: true
+  hidden: true
+title_field: activity_type
+layout:
+- section: Références
+  columns:
+  - - activity_type
+    - employee
+  - - employee_name
+    - department
+- section: Comptabilité et montants
+  columns:
+  - - billing_rate
+  - - costing_rate

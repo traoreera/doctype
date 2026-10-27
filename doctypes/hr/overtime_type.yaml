@@ -1,0 +1,82 @@
+schema_version: 1
+name: Overtime Type
+label: Overtime Type
+module: hr
+icon: tag
+fields:
+- fieldname: overtime_salary_component
+  label: Overtime Salary Component
+  fieldtype: Link
+  options: Salary Component
+  required: true
+  in_list_view: true
+  description: Overtime earnings will be booked under this salary component for payout.
+- fieldname: applicable_salary_component
+  label: Applicable Salary Components
+  fieldtype: Table
+  options: Overtime Salary Component
+  description: Select the salary components whose total will be used from the salary slip to calculate the hourly
+    overtime rate.
+- fieldname: maximum_overtime_hours_allowed
+  label: Maximum Overtime Hours Allowed Per Day
+  fieldtype: Number
+- fieldname: standard_multiplier
+  label: Standard Multiplier
+  fieldtype: Number
+  required: true
+- fieldname: applicable_for_weekend
+  label: Apply for Weekend
+  fieldtype: Boolean
+  required: true
+  description: Enable this to use a specific multiplier for weekends. If unchecked, the standard multiplier will
+    be used instead.
+  default: false
+- fieldname: weekend_multiplier
+  label: Weekend Multiplier
+  fieldtype: Number
+- fieldname: applicable_for_public_holiday
+  label: Apply for Public Holiday
+  fieldtype: Boolean
+  description: Enable this to use a specific multiplier for public holidays. If unchecked, the standard multiplier
+    will be used instead.
+  default: false
+- fieldname: public_holiday_multiplier
+  label: Public Holiday Multiplier
+  fieldtype: Number
+- fieldname: hourly_rate
+  label: Hourly Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: overtime_calculation_method
+  label: Overtime Amount Calculation
+  fieldtype: Select
+  options:
+  - Salary Component Based
+  - Fixed Hourly Rate
+  default: Salary Component Based
+  description: 'Choose how the hourly overtime amount is calculated:
+
+    <ol style="padding-left:15px"><li>Fixed Hourly Rate: A fixed, manually entered hourly rate.</li>
+
+    <li>Salary Component-Based:
+
+
+    (Sum of selected component amounts) ÷ (Payment Days) ÷ (Standard Daily Hours)</li></ol>'
+title_field: overtime_salary_component
+layout:
+- section: Basic
+  columns:
+  - - maximum_overtime_hours_allowed
+  - - overtime_salary_component
+- section: Informations complémentaires 2
+  columns:
+  - - overtime_calculation_method
+  - - applicable_salary_component
+    - hourly_rate
+- section: Pay Rate Multipliers
+  columns:
+  - - standard_multiplier
+  - - applicable_for_public_holiday
+    - public_holiday_multiplier
+    - applicable_for_weekend
+    - weekend_multiplier

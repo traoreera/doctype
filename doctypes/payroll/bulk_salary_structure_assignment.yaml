@@ -1,0 +1,77 @@
+schema_version: 1
+name: Bulk Salary Structure Assignment
+label: Bulk Salary Structure Assignment
+module: payroll
+icon: users
+fields:
+- fieldname: salary_structure
+  label: Salary Structure
+  fieldtype: Link
+  options: Salary Structure
+  required: true
+  in_list_view: true
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: income_tax_slab
+  label: Income Tax Slab
+  fieldtype: Link
+  options: Income Tax Slab
+- fieldname: payroll_payable_account
+  label: Payroll Payable Account
+  fieldtype: Link
+  options: Account
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  read_only: true
+- fieldname: employment_type
+  label: Employment Type
+  fieldtype: Link
+  options: Employment Type
+- fieldname: grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+title_field: salary_structure
+layout:
+- section: Set Assignment Details
+  columns:
+  - - salary_structure
+    - from_date
+    - income_tax_slab
+  - - company
+    - payroll_payable_account
+    - currency
+- section: Quick Filters
+  columns:
+  - - branch
+    - department
+    - designation
+  - - grade
+    - employment_type
+views:
+  calendar:
+    start: from_date
+    title: salary_structure

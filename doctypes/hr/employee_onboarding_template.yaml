@@ -1,0 +1,46 @@
+schema_version: 1
+name: Employee Onboarding Template
+label: Employee Onboarding Template
+module: hr
+icon: clipboard-list
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  in_list_view: true
+- fieldname: employee_grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+  in_list_view: true
+- fieldname: activities
+  label: Activities
+  fieldtype: Table
+  options: Employee Boarding Activity
+title_field: title
+layout:
+- section: Informations principales
+  columns:
+  - - title
+    - company
+    - department
+  - - designation
+    - employee_grade
+- section: Activities
+  columns:
+  - - activities

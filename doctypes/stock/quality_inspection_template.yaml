@@ -1,0 +1,21 @@
+schema_version: 1
+name: Quality Inspection Template
+label: Quality Inspection Template
+module: stock
+icon: clipboard-list
+fields:
+- fieldname: quality_inspection_template_name
+  label: Quality Inspection Template Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: item_quality_inspection_parameter
+  label: Item Quality Inspection Parameter
+  fieldtype: Table
+  options: Item Quality Inspection Parameter
+title_field: quality_inspection_template_name
+layout:
+- section: Références
+  columns:
+  - - quality_inspection_template_name
+    - item_quality_inspection_parameter

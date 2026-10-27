@@ -1,0 +1,29 @@
+schema_version: 1
+name: Email Template
+label: Email Template
+module: communication
+icon: file-text
+fields:
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: use_html
+  label: Use HTML
+  fieldtype: Boolean
+- fieldname: response
+  label: Response
+  fieldtype: TextEditor
+- fieldname: enabled
+  label: Enabled
+  fieldtype: Boolean
+  default: true
+title_field: subject
+layout:
+- section: Informations principales
+  columns:
+  - - subject
+    - use_html
+    - response
+    - enabled

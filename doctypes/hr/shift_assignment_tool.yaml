@@ -1,0 +1,127 @@
+schema_version: 1
+name: Shift Assignment Tool
+label: Shift Assignment Tool
+module: hr
+icon: users
+fields:
+- fieldname: action
+  label: Action
+  fieldtype: Select
+  options:
+  - Assign Shift
+  - Assign Shift Schedule
+  - Process Shift Requests
+  default: Assign Shift
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: shift_type
+  label: Shift Type
+  fieldtype: Link
+  options: Shift Type
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Active
+  - Inactive
+  default: Active
+  description: When set to 'Inactive', employees with conflicting active shifts will not be excluded.
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+- fieldname: employment_type
+  label: Employment Type
+  fieldtype: Link
+  options: Employment Type
+- fieldname: shift_type_filter
+  label: Shift Type
+  fieldtype: Link
+  options: Shift Type
+- fieldname: approver
+  label: Approver
+  fieldtype: Link
+  options: Member
+- fieldname: from_date
+  label: From Date
+  fieldtype: Date
+  description: Shift Requests ending before this date will be excluded.
+- fieldname: to_date
+  label: To Date
+  fieldtype: Date
+  description: Shift Requests starting after this date will be excluded.
+- fieldname: grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+- fieldname: shift_location
+  label: Shift Location
+  fieldtype: Link
+  options: Shift Location
+- fieldname: shift_schedule
+  label: Shift Schedule
+  fieldtype: Link
+  options: Shift Schedule
+title_field: status
+layout:
+- section: Informations principales
+  columns:
+  - - action
+  - - company
+- section: Shift Assignment Details
+  columns:
+  - - shift_type
+    - shift_schedule
+    - shift_location
+    - status
+  - - start_date
+    - end_date
+- section: Shift Request Filters
+  columns:
+  - - shift_type_filter
+    - approver
+  - - from_date
+    - to_date
+- section: Quick Filters
+  columns:
+  - - branch
+    - department
+    - designation
+  - - grade
+    - employment_type
+views:
+  kanban:
+    field: status
+    card_fields:
+    - from_date
+  calendar:
+    start: from_date
+    title: status
+    color: status
+  gantt:
+    start: from_date
+    end: to_date
+    title: status
+    color: status

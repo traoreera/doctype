@@ -1,0 +1,121 @@
+schema_version: 1
+name: Goal
+label: Goal
+module: hr
+icon: target
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+- fieldname: progress
+  label: Progress
+  fieldtype: Percent
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Pending
+  - In Progress
+  - Completed
+  - Archived
+  - Closed
+  default: Pending
+  in_list_view: true
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: lft
+  label: Left
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: rgt
+  label: Right
+  fieldtype: Int
+  read_only: true
+  hidden: true
+- fieldname: is_group
+  label: Is Group
+  fieldtype: Boolean
+  in_list_view: true
+  default: false
+- fieldname: old_parent
+  label: Old Parent
+  fieldtype: Link
+  options: Goal
+  hidden: true
+- fieldname: parent_goal
+  label: Parent Goal
+  fieldtype: Link
+  options: Goal
+- fieldname: kra
+  label: KRA
+  fieldtype: Link
+  options: KRA
+- fieldname: appraisal_cycle
+  label: Appraisal Cycle
+  fieldtype: Link
+  options: Appraisal Cycle
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: user
+  label: User
+  fieldtype: Text
+  read_only: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: goal_name
+  label: Goal
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+title_field: employee_name
+layout:
+- section: Informations principales
+  columns:
+  - - goal_name
+    - is_group
+    - parent_goal
+  - - progress
+    - status
+- section: Informations complémentaires 2
+  columns:
+  - - employee
+    - employee_name
+    - company
+    - user
+  - - start_date
+    - end_date
+- section: Appraisal Linking
+  columns:
+  - - appraisal_cycle
+  - - kra
+- section: Description
+  columns:
+  - - description
+views:
+  calendar:
+    start: start_date
+    title: employee_name
+  gantt:
+    start: start_date
+    end: end_date
+    title: employee_name

@@ -1,0 +1,24 @@
+schema_version: 1
+name: Holiday
+label: Holiday
+istable: true
+fields:
+- fieldname: holiday_date
+  label: Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  required: true
+  in_list_view: true
+- fieldname: weekly_off
+  label: Weekly Off
+  fieldtype: Boolean
+  default: false
+- fieldname: is_half_day
+  label: Is Half Day
+  fieldtype: Boolean
+  in_list_view: true
+  default: false

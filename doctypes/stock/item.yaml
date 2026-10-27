@@ -1,0 +1,555 @@
+schema_version: 1
+name: Item
+label: Item
+module: stock
+icon: package
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - STO-ITEM-.YYYY.-
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Text
+  required: true
+- fieldname: variant_of
+  label: Variant Of
+  fieldtype: Link
+  options: Item
+  read_only: true
+  description: If item is a variant of another item then description, image, pricing, taxes etc will be set from
+    the template unless explicitly specified
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  required: true
+  in_list_view: true
+- fieldname: stock_uom
+  label: Default Unit of Measure
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+  description: Disabled items cannot be selected in any transaction.
+  default: false
+- fieldname: allow_alternative_item
+  label: Allow Alternative Item
+  fieldtype: Boolean
+  description: Allow substituting this item with an alternative from the Item Alternative list when stock is unavailable.
+  default: false
+- fieldname: is_stock_item
+  label: Maintain Stock
+  fieldtype: Boolean
+  description: ERPNext will make a stock ledger entry for each transaction of this item. Keep unchecked for non-stock
+    or service items.
+  default: true
+- fieldname: include_item_in_manufacturing
+  label: Include Item In Manufacturing
+  fieldtype: Boolean
+  description: Enable for raw material items used in BOM. Uncheck for additional services like 'washing' used in
+    manufacturing.
+  default: true
+- fieldname: opening_stock
+  label: Opening Stock
+  fieldtype: Number
+  hidden: true
+- fieldname: valuation_rate
+  label: Valuation Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: standard_rate
+  label: Standard Selling Rate
+  fieldtype: Currency
+  decimals: 2
+  description: Creates an Item Price automatically when the item is saved
+- fieldname: is_fixed_asset
+  label: Is Fixed Asset
+  fieldtype: Boolean
+  in_list_view: true
+  description: Enable if this item is a company asset like machinery or furniture.
+  default: false
+- fieldname: asset_category
+  label: Asset Category
+  fieldtype: Link
+  options: Asset Category
+- fieldname: image
+  label: Image
+  fieldtype: Image
+  hidden: true
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: barcodes
+  label: Barcodes
+  fieldtype: Table
+  options: Item Barcode
+- fieldname: shelf_life_in_days
+  label: Shelf Life In Days
+  fieldtype: Int
+- fieldname: end_of_life
+  label: End of Life
+  fieldtype: Date
+  description: Defines the date after which the item can no longer be used in transactions or manufacturing
+  default: '2099-12-31'
+- fieldname: default_material_request_type
+  label: Default Material Request Type
+  fieldtype: Select
+  options:
+  - Purchase
+  - Material Transfer
+  - Material Issue
+  - Manufacture
+  - Customer Provided
+  default: Purchase
+- fieldname: valuation_method
+  label: Valuation Method
+  fieldtype: Select
+  options:
+  - FIFO
+  - Moving Average
+  - LIFO
+  - Standard Cost
+  description: Serialized items are valued at Moving Average once stock transactions exist and Serial No Wise Valuation
+    is disabled.
+- fieldname: warranty_period
+  label: Warranty Period (in days)
+  fieldtype: Text
+- fieldname: weight_per_unit
+  label: Weight Per Unit
+  fieldtype: Number
+- fieldname: weight_uom
+  label: Weight UOM
+  fieldtype: Link
+  options: UOM
+- fieldname: reorder_levels
+  label: Reorder level based on Warehouse
+  fieldtype: Table
+  options: Item Reorder
+  description: Will also apply for variants unless overridden
+- fieldname: uoms
+  label: Uoms
+  fieldtype: Table
+  options: UOM Conversion Detail
+- fieldname: has_batch_no
+  label: Has Batch No
+  fieldtype: Boolean
+  description: Track this item in batches. Cannot be changed after a stock transaction exists.
+  default: false
+- fieldname: create_new_batch
+  label: Automatically Create New Batch
+  fieldtype: Boolean
+  description: Batch number will be auto-created in format AAAA.00001 if not specified in transactions. Leave blank
+    to always enter batch numbers manually.
+  default: false
+- fieldname: batch_number_series
+  label: Batch Number Series
+  fieldtype: Text
+  description: 'Example: ABCD.#####. If series is set and Batch No is not mentioned in transactions, then automatic
+    batch number will be created based on this series. If you always want to explicitly mention Batch No for this
+    item, leave this blank. Note: this setting will take priority over the Naming Series Prefix in Stock Settings.'
+- fieldname: has_expiry_date
+  label: Has Expiry Date
+  fieldtype: Boolean
+  description: Batch number will be created based on expiry date. Expiry dates can be set in the Batch master.
+  default: false
+- fieldname: retain_sample
+  label: Retain Sample
+  fieldtype: Boolean
+  description: Enable to reserve a small sample from each batch for any analysis arising ahead
+  default: false
+- fieldname: sample_quantity
+  label: Max Sample Quantity
+  fieldtype: Int
+  description: Maximum sample quantity that can be retained
+- fieldname: has_serial_no
+  label: Has Serial No
+  fieldtype: Boolean
+  description: Track each unit with a unique serial number for warranty and return tracking. Cannot be changed after
+    a stock transaction exists.
+  default: false
+- fieldname: serial_no_series
+  label: Serial Number Series
+  fieldtype: Text
+  description: 'Example: ABCD.#####
+
+    If series is set and Serial No is not mentioned in transactions, then automatic serial number will be created
+    based on this series. If you always want to explicitly mention Serial Nos for this item. leave this blank.'
+- fieldname: use_serial_no_wise_valuation
+  label: Use Serial No Wise Valuation
+  fieldtype: Boolean
+  description: Value every outward movement at each Serial No's own incoming rate. If unchecked, the item is valued
+    at Moving Average once stock transactions exist. Cannot be enabled once Serial Nos exist for this item.
+  default: true
+- fieldname: has_variants
+  label: Has Variants
+  fieldtype: Boolean
+  description: If this item has variants, then it cannot be selected in sales orders etc.
+  default: false
+- fieldname: variant_based_on
+  label: Variant Based On
+  fieldtype: Select
+  options:
+  - Item Attribute
+  - Manufacturer
+  default: Item Attribute
+- fieldname: attributes
+  label: Variant Attributes
+  fieldtype: Table
+  options: Item Variant Attribute
+  hidden: true
+- fieldname: item_defaults
+  label: Item Defaults
+  fieldtype: Table
+  options: Item Default
+- fieldname: is_purchase_item
+  label: Allow Purchase
+  fieldtype: Boolean
+  description: Allow this item to be used in purchase transactions.
+  default: true
+- fieldname: purchase_uom
+  label: Default Purchase Unit of Measure
+  fieldtype: Link
+  options: UOM
+- fieldname: min_order_qty
+  label: Minimum Order Qty
+  fieldtype: Number
+  description: Minimum quantity should be as per Stock UOM
+  default: 0.0
+- fieldname: safety_stock
+  label: Safety Stock
+  fieldtype: Number
+  description: 'Minimum stock level to maintain as a buffer. Used to calculate recommended reorder level: Reorder
+    Level = Safety Stock + (Average Daily Consumption × Lead Time).'
+- fieldname: lead_time_days
+  label: Lead Time in days
+  fieldtype: Int
+  description: Average time taken by the supplier to deliver
+- fieldname: last_purchase_rate
+  label: Last Purchase Rate
+  fieldtype: Number
+  read_only: true
+  description: The rate at which this item was last purchased via a Purchase Invoice. Auto-updated by the system.
+- fieldname: is_customer_provided_item
+  label: Is Customer Provided Item
+  fieldtype: Boolean
+  description: Enable if this item is provided by a customer and received via Stock Entry.
+  default: false
+- fieldname: delivered_by_supplier
+  label: Delivered by Supplier (Drop Ship)
+  fieldtype: Boolean
+  description: If checked, this item is treated as drop-shipped by default in Sales Orders, Sales Invoices and Purchase
+    Orders. The flag can be overridden on each transaction line.
+  default: false
+- fieldname: supplier_items
+  label: Item Supplier
+  fieldtype: Table
+  options: Item Supplier
+- fieldname: country_of_origin
+  label: Country of Origin
+  fieldtype: Link
+  options: Country
+- fieldname: customs_tariff_number
+  label: Customs Tariff Number
+  fieldtype: Link
+  options: Customs Tariff Number
+- fieldname: sales_uom
+  label: Default Sales Unit of Measure
+  fieldtype: Link
+  options: UOM
+- fieldname: is_sales_item
+  label: Allow Sales
+  fieldtype: Boolean
+  in_list_view: true
+  description: Allow this item to be used in sales transactions.
+  default: true
+- fieldname: max_discount
+  label: Max Discount (%)
+  fieldtype: Number
+  description: 'Maximum discount % allowed when selling this item. Eg: if set to 20%, a discount greater than 20%
+    cannot be applied in sales transactions.'
+- fieldname: enable_deferred_revenue
+  label: Enable Deferred Revenue
+  fieldtype: Boolean
+  description: 'Income from this item will be recognized over a period of months instead of all at once. Eg: annual
+    subscription paid upfront.'
+  default: false
+- fieldname: no_of_months
+  label: No of Months (Revenue)
+  fieldtype: Int
+- fieldname: enable_deferred_expense
+  label: Enable Deferred Expense
+  fieldtype: Boolean
+  description: 'Expense for this item will be recognized over a period of months. Eg: prepaid insurance or annual
+    software license'
+  default: false
+- fieldname: no_of_months_exp
+  label: No of Months (Expense)
+  fieldtype: Int
+- fieldname: customer_items
+  label: Customer Items
+  fieldtype: Table
+  options: Item Customer Detail
+- fieldname: taxes
+  label: Taxes
+  fieldtype: Table
+  options: Item Tax
+  description: Will also apply for variants
+- fieldname: inspection_required_before_purchase
+  label: Inspection Required before Purchase
+  fieldtype: Boolean
+  description: A quality inspection must be completed before generating a Purchase Receipt for this item.
+  default: false
+- fieldname: inspection_required_before_delivery
+  label: Inspection Required before Delivery
+  fieldtype: Boolean
+  description: A quality inspection must be completed before generating a Delivery Note for this item.
+  default: false
+- fieldname: quality_inspection_template
+  label: Quality Inspection Template
+  fieldtype: Link
+  options: Quality Inspection Template
+- fieldname: default_bom
+  label: Default BOM
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: is_sub_contracted_item
+  label: Is Subcontracted Item
+  fieldtype: Boolean
+  description: Enable if a vendor manufactures this item for you. You can choose to provide them raw materials using
+    the default BOM.
+  default: false
+- fieldname: customer_code
+  label: Customer Code
+  fieldtype: LongText
+  hidden: true
+- fieldname: total_projected_qty
+  label: Total Projected Qty
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: over_delivery_receipt_allowance
+  label: Over Delivery/Receipt Allowance (%)
+  fieldtype: Number
+  description: Percentage by which over-delivery or over-receipt is allowed against a Sales/Purchase Order for this
+    item. If not set, value from Stock Settings will be used.
+- fieldname: over_billing_allowance
+  label: Over Billing Allowance (%)
+  fieldtype: Number
+  description: Percentage by which over-billing is allowed against a Sales/Purchase Order for this item. If not
+    set, value from Accounts Settings will be used.
+- fieldname: auto_create_assets
+  label: Auto create assets on purchase
+  fieldtype: Boolean
+  default: false
+- fieldname: default_item_manufacturer
+  label: Default Item Manufacturer
+  fieldtype: Link
+  options: Manufacturer
+  read_only: true
+- fieldname: default_manufacturer_part_no
+  label: Default Manufacturer Part No
+  fieldtype: Text
+  read_only: true
+- fieldname: grant_commission
+  label: Grant Commission
+  fieldtype: Boolean
+  description: If enabled, sales from this item will be included in Sales Person and Sales Partner commission calculations
+  default: true
+- fieldname: is_grouped_asset
+  label: Create Grouped Asset
+  fieldtype: Boolean
+  description: Creates a single grouped asset instead of individual assets when purchased in bulk.
+  default: false
+- fieldname: allow_negative_stock
+  label: Allow Negative Stock
+  fieldtype: Boolean
+  description: Allow stock to go below zero for this item, even if negative stock is disabled in Stock Settings.
+  default: false
+- fieldname: purchase_tax_withholding_category
+  label: Purchase Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+- fieldname: sales_tax_withholding_category
+  label: Sales Tax Withholding Category
+  fieldtype: Link
+  options: Tax Withholding Category
+- fieldname: restrict_to_companies
+  label: Restrict to Companies
+  fieldtype: Boolean
+  description: If checked, this Item is only available for transactions in the companies listed below.
+  default: false
+- fieldname: allowed_companies
+  label: Allowed Companies
+  fieldtype: Table
+  options: Company Restriction
+title_field: item_code
+layout:
+- tab: Details
+  section: Références
+  columns:
+  - - naming_series
+    - item_code
+    - item_name
+    - item_group
+    - stock_uom
+  - - disabled
+    - is_stock_item
+    - is_fixed_asset
+    - auto_create_assets
+    - is_grouped_asset
+    - asset_category
+- tab: Details
+  section: Item Attributes
+  columns:
+  - - is_sales_item
+    - allow_alternative_item
+    - has_variants
+  - - is_purchase_item
+    - is_customer_provided_item
+- tab: Details
+  section: Comptabilité et montants
+  columns:
+  - - standard_rate
+- tab: Details
+  section: Informations complémentaires 4
+  columns:
+  - - over_delivery_receipt_allowance
+  - - over_billing_allowance
+- tab: Details
+  section: Company Restrictions
+  columns:
+  - - restrict_to_companies
+    - allowed_companies
+- tab: Details
+  section: Description
+  columns:
+  - - brand
+    - description
+- tab: Accounting
+  section: Références
+  columns:
+  - - item_defaults
+- tab: Accounting
+  section: Deferred Accounting
+  columns:
+  - - enable_deferred_expense
+    - no_of_months_exp
+  - - enable_deferred_revenue
+    - no_of_months
+- tab: UOM
+  section: Informations complémentaires 9
+  columns:
+  - - uoms
+- tab: Tax
+  section: Comptabilité et montants
+  columns:
+  - - taxes
+- tab: Tax
+  section: Comptabilité et montants
+  columns:
+  - - purchase_tax_withholding_category
+  - - sales_tax_withholding_category
+- tab: Inventory
+  section: Inventory Valuation
+  columns:
+  - - valuation_method
+  - - valuation_rate
+- tab: Inventory
+  section: Inventory Settings
+  columns:
+  - - end_of_life
+    - default_material_request_type
+  - - warranty_period
+    - weight_per_unit
+    - weight_uom
+    - allow_negative_stock
+- tab: Inventory
+  section: Barcodes
+  columns:
+  - - barcodes
+- tab: Inventory
+  section: Auto re-order
+  columns:
+  - - reorder_levels
+- tab: Inventory
+  section: Serial Nos / Batches
+  columns:
+  - - has_batch_no
+    - create_new_batch
+    - batch_number_series
+    - has_expiry_date
+    - shelf_life_in_days
+    - retain_sample
+    - sample_quantity
+  - - has_serial_no
+    - serial_no_series
+    - use_serial_no_wise_valuation
+- tab: Variants
+  section: Informations complémentaires 17
+  columns:
+  - - variant_of
+    - variant_based_on
+- tab: Purchasing
+  section: Comptabilité et montants
+  columns:
+  - - purchase_uom
+    - min_order_qty
+    - safety_stock
+  - - lead_time_days
+    - last_purchase_rate
+- tab: Purchasing
+  section: Supplier Details
+  columns:
+  - - delivered_by_supplier
+- tab: Purchasing
+  section: Références
+  columns:
+  - - supplier_items
+- tab: Purchasing
+  section: Foreign Trade Details
+  columns:
+  - - country_of_origin
+  - - customs_tariff_number
+- tab: Sales
+  section: État et options
+  columns:
+  - - sales_uom
+    - grant_commission
+  - - max_discount
+- tab: Sales
+  section: Customer Details
+  columns:
+  - - customer_items
+- tab: Manufacturing
+  section: Références
+  columns:
+  - - include_item_in_manufacturing
+    - is_sub_contracted_item
+    - default_bom
+- tab: Manufacturing
+  section: Références
+  columns:
+  - - default_manufacturer_part_no
+    - default_item_manufacturer
+- tab: Quality
+  section: Détails
+  columns:
+  - - inspection_required_before_purchase
+    - inspection_required_before_delivery
+  - - quality_inspection_template
+views:
+  tree:
+    parent: variant_of

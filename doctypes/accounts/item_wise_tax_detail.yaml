@@ -1,0 +1,29 @@
+schema_version: 1
+name: Item Wise Tax Detail
+label: Item Wise Tax Detail
+istable: true
+fields:
+- fieldname: item_row
+  label: Item Row
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: tax_row
+  label: Tax Row
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: rate
+  label: Tax Rate
+  fieldtype: Number
+  in_list_view: true
+- fieldname: amount
+  label: Tax Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: taxable_amount
+  label: Taxable Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true

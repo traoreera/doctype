@@ -1,0 +1,56 @@
+schema_version: 1
+name: Quality Review
+label: Quality Review
+module: quality_management
+icon: clipboard-check
+fields:
+- fieldname: date
+  label: Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: procedure
+  label: Procedure
+  fieldtype: Link
+  options: Quality Procedure
+  read_only: true
+- fieldname: additional_information
+  label: Additional Information
+  fieldtype: LongText
+- fieldname: reviews
+  label: Reviews
+  fieldtype: Table
+  options: Quality Review Objective
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Passed
+  - Failed
+  default: Open
+  read_only: true
+- fieldname: goal
+  label: Goal
+  fieldtype: Link
+  options: Quality Goal
+  required: true
+  in_list_view: true
+title_field: status
+layout:
+- section: Dates et planification
+  columns:
+  - - goal
+    - date
+  - - procedure
+    - status
+- section: Review
+  columns:
+  - - reviews
+- section: Notes
+  columns:
+  - - additional_information
+views:
+  calendar:
+    start: date
+    title: status

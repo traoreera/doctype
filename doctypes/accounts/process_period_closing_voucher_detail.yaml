@@ -1,0 +1,32 @@
+schema_version: 1
+name: Process Period Closing Voucher Detail
+label: Process Period Closing Voucher Detail
+istable: true
+fields:
+- fieldname: processing_date
+  label: Processing Date
+  fieldtype: Date
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Queued
+  - Running
+  - Paused
+  - Completed
+  - Cancelled
+  default: Queued
+  in_list_view: true
+- fieldname: closing_balance
+  label: Closing Balance
+  fieldtype: JSON
+  in_list_view: true
+- fieldname: report_type
+  label: Report Type
+  fieldtype: Select
+  options:
+  - Profit and Loss
+  - Balance Sheet
+  default: Profit and Loss
+  in_list_view: true

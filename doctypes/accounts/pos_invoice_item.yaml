@@ -1,0 +1,322 @@
+schema_version: 1
+name: POS Invoice Item
+label: POS Invoice Item
+istable: true
+fields:
+- fieldname: barcode
+  label: Barcode
+  fieldtype: Text
+- fieldname: item_code
+  label: Item
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: is_product_bundle
+  label: Is Product Bundle
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: product_bundle
+  label: Product Bundle
+  fieldtype: Link
+  options: Product Bundle
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  required: true
+- fieldname: customer_item_code
+  label: Customer's Item Code
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  read_only: true
+  hidden: true
+- fieldname: brand
+  label: Brand Name
+  fieldtype: Text
+  hidden: true
+- fieldname: qty
+  label: Quantity
+  fieldtype: Number
+  in_list_view: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+- fieldname: conversion_factor
+  label: UOM Conversion Factor
+  fieldtype: Number
+  required: true
+- fieldname: stock_qty
+  label: Qty as per Stock UOM
+  fieldtype: Number
+  read_only: true
+- fieldname: price_list_rate
+  label: Price List Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_price_list_rate
+  label: Price List Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: margin_type
+  label: Margin Type
+  fieldtype: Select
+  options:
+  - Percentage
+  - Amount
+- fieldname: margin_rate_or_amount
+  label: Margin Rate or Amount
+  fieldtype: Number
+- fieldname: rate_with_margin
+  label: Rate With Margin
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: discount_percentage
+  label: Discount (%) on Price List Rate with Margin
+  fieldtype: Percent
+- fieldname: discount_amount
+  label: Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: base_rate_with_margin
+  label: Rate With Margin (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: rate
+  label: Rate
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true
+  read_only: true
+- fieldname: item_tax_template
+  label: Item Tax Template
+  fieldtype: Link
+  options: Item Tax Template
+- fieldname: base_rate
+  label: Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: base_amount
+  label: Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+- fieldname: pricing_rules
+  label: Pricing Rules
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: is_free_item
+  label: Is Free Item
+  fieldtype: Boolean
+  read_only: true
+- fieldname: net_rate
+  label: Net Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: net_amount
+  label: Net Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_rate
+  label: Net Rate (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: base_net_amount
+  label: Net Amount (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: delivered_by_supplier
+  label: Delivered By Supplier
+  fieldtype: Boolean
+  read_only: true
+- fieldname: income_account
+  label: Income Account
+  fieldtype: Link
+  options: Account
+  required: true
+- fieldname: is_fixed_asset
+  label: Is Fixed Asset
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: expense_account
+  label: Expense Account
+  fieldtype: Link
+  options: Account
+- fieldname: deferred_revenue_account
+  label: Deferred Revenue Account
+  fieldtype: Link
+  options: Account
+- fieldname: service_stop_date
+  label: Service Stop Date
+  fieldtype: Date
+- fieldname: enable_deferred_revenue
+  label: Enable Deferred Revenue
+  fieldtype: Boolean
+  default: false
+- fieldname: service_start_date
+  label: Service Start Date
+  fieldtype: Date
+- fieldname: service_end_date
+  label: Service End Date
+  fieldtype: Date
+- fieldname: weight_per_unit
+  label: Weight Per Unit
+  fieldtype: Number
+  read_only: true
+- fieldname: total_weight
+  label: Total Weight
+  fieldtype: Number
+  read_only: true
+- fieldname: weight_uom
+  label: Weight UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: target_warehouse
+  label: Customer Warehouse (Optional)
+  fieldtype: Link
+  options: Warehouse
+  hidden: true
+- fieldname: quality_inspection
+  label: Quality Inspection
+  fieldtype: Link
+  options: Quality Inspection
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+- fieldname: allow_zero_valuation_rate
+  label: Allow Zero Valuation Rate
+  fieldtype: Boolean
+  default: false
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+  in_list_view: true
+- fieldname: item_tax_rate
+  label: Item Tax Rate
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: actual_batch_qty
+  label: Available Batch Qty at Warehouse
+  fieldtype: Number
+  read_only: true
+- fieldname: actual_qty
+  label: Available Qty at Warehouse
+  fieldtype: Number
+  read_only: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  read_only: true
+- fieldname: so_detail
+  label: Sales Order Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: delivery_note
+  label: Delivery Note
+  fieldtype: Link
+  options: Delivery Note
+  read_only: true
+- fieldname: dn_detail
+  label: Delivery Note Item
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: delivered_qty
+  label: Delivered Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+  required: true
+- fieldname: page_break
+  label: Page Break
+  fieldtype: Boolean
+  default: false
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: pos_invoice_item
+  label: POS Invoice Item
+  fieldtype: Text
+  read_only: true
+- fieldname: grant_commission
+  label: Grant Commission
+  fieldtype: Boolean
+  read_only: true
+- fieldname: has_item_scanned
+  label: Has Item Scanned
+  fieldtype: Boolean
+  read_only: true
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: use_serial_batch_fields
+  label: Use Serial No / Batch Fields
+  fieldtype: Boolean
+  default: false
+- fieldname: distributed_discount_amount
+  label: Distributed Discount Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: mapped_additional_discount_amount
+  label: Additional Discount per Stock Unit
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  description: Tax-exclusive additional discount carried from a source document, per stock unit.

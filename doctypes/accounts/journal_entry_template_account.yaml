@@ -1,0 +1,28 @@
+schema_version: 1
+name: Journal Entry Template Account
+label: Journal Entry Template Account
+istable: true
+fields:
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  required: true
+  in_list_view: true
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+  in_list_view: true
+- fieldname: party
+  label: Party
+  fieldtype: DynamicLink
+  options: party_type
+  in_list_view: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project

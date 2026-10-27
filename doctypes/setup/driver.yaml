@@ -1,0 +1,84 @@
+schema_version: 1
+name: Driver
+label: Driver
+module: setup
+icon: car
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - HR-DRI-.YYYY.-
+- fieldname: full_name
+  label: Full Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Active
+  - Suspended
+  - Left
+  required: true
+  in_list_view: true
+- fieldname: transporter
+  label: Transporter
+  fieldtype: Link
+  options: Supplier
+  description: Applicable for external driver
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  in_list_view: true
+- fieldname: cell_number
+  label: Cellphone Number
+  fieldtype: Text
+- fieldname: license_number
+  label: License Number
+  fieldtype: Text
+- fieldname: issuing_date
+  label: Issuing Date
+  fieldtype: Date
+- fieldname: expiry_date
+  label: Expiry Date
+  fieldtype: Date
+- fieldname: driving_license_category
+  label: Driving License Category
+  fieldtype: Table
+  options: Driving License Category
+- fieldname: address
+  label: Address
+  fieldtype: Link
+  options: Address
+- fieldname: user
+  label: User
+  fieldtype: Link
+  options: Member
+  in_list_view: true
+title_field: status
+layout:
+- section: Références
+  columns:
+  - - naming_series
+    - full_name
+    - status
+    - transporter
+  - - employee
+    - cell_number
+    - address
+    - user
+- section: License Details
+  columns:
+  - - license_number
+  - - issuing_date
+  - - expiry_date
+- section: Driving License Categories
+  columns:
+  - - driving_license_category
+views:
+  kanban:
+    field: status
+    card_fields: null

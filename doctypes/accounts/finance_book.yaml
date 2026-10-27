@@ -1,0 +1,13 @@
+schema_version: 1
+name: Finance Book
+label: Finance Book
+module: accounts
+icon: book
+fields:
+- fieldname: finance_book_name
+  label: Name
+  fieldtype: Text
+layout:
+- section: Informations principales
+  columns:
+  - - finance_book_name

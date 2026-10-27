@@ -1,0 +1,15 @@
+schema_version: 1
+name: Appointment Letter content
+label: Appointment Letter content
+istable: true
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  required: true
+  in_list_view: true

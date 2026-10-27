@@ -1,0 +1,13 @@
+schema_version: 1
+name: Opportunity Lost Reason
+label: Opportunity Lost Reason
+module: crm
+icon: circle-x
+fields:
+- fieldname: lost_reason
+  label: Lost Reason
+  fieldtype: Text
+layout:
+- section: Informations principales
+  columns:
+  - - lost_reason

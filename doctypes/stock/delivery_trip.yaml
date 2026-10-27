@@ -1,0 +1,109 @@
+schema_version: 1
+name: Delivery Trip
+label: Delivery Trip
+module: stock
+submittable: true
+icon: route
+fields:
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - MAT-DT-.YYYY.-
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: email_notification_sent
+  label: Initial Email Notification Sent
+  fieldtype: Boolean
+  read_only: true
+- fieldname: driver
+  label: Driver
+  fieldtype: Link
+  options: Driver
+- fieldname: driver_name
+  label: Driver Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: total_distance
+  label: Total Estimated Distance
+  fieldtype: Number
+  read_only: true
+- fieldname: uom
+  label: Distance UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: vehicle
+  label: Vehicle
+  fieldtype: Link
+  options: Vehicle
+  required: true
+- fieldname: departure_time
+  label: Departure Time
+  fieldtype: Datetime
+  required: true
+  in_list_view: true
+- fieldname: delivery_stops
+  label: Delivery Stop
+  fieldtype: Table
+  options: Delivery Stop
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Scheduled
+  - In Transit
+  - Completed
+  - Cancelled
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Delivery Trip
+  read_only: true
+- fieldname: driver_address
+  label: Driver Address
+  fieldtype: Link
+  options: Address
+- fieldname: driver_email
+  label: Driver Email
+  fieldtype: Text
+  read_only: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  read_only: true
+title_field: status
+layout:
+- section: Références
+  columns:
+  - - naming_series
+    - company
+  - - email_notification_sent
+- section: Delivery Details
+  columns:
+  - - driver
+    - driver_name
+    - driver_email
+    - driver_address
+    - total_distance
+    - uom
+  - - vehicle
+    - departure_time
+    - employee
+- section: Delivery Stops
+  columns:
+  - - delivery_stops
+- section: Dates et planification
+  columns:
+  - - status
+  - - amended_from
+views:
+  tree:
+    parent: amended_from

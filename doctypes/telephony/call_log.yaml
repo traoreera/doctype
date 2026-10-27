@@ -1,0 +1,103 @@
+schema_version: 1
+name: Call Log
+label: Call Log
+module: telephony
+icon: phone
+fields:
+- fieldname: id
+  label: ID
+  fieldtype: Text
+  read_only: true
+- fieldname: from
+  label: From
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: to
+  label: To
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Ringing
+  - In Progress
+  - Completed
+  - Failed
+  - Busy
+  - No Answer
+  - Queued
+  - Cancelled
+  in_list_view: true
+  read_only: true
+- fieldname: recording_url
+  label: Recording URL
+  fieldtype: Text
+  hidden: true
+- fieldname: medium
+  label: Medium
+  fieldtype: Text
+  read_only: true
+- fieldname: type
+  label: Type
+  fieldtype: Select
+  options:
+  - Incoming
+  - Outgoing
+  read_only: true
+- fieldname: links
+  label: Links
+  fieldtype: JSON
+- fieldname: summary
+  label: Summary
+  fieldtype: LongText
+- fieldname: start_time
+  label: Start Time
+  fieldtype: Datetime
+  read_only: true
+- fieldname: end_time
+  label: End Time
+  fieldtype: Datetime
+  read_only: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  read_only: true
+- fieldname: employee_user_id
+  label: Employee User Id
+  fieldtype: Link
+  options: Member
+  hidden: true
+- fieldname: type_of_call
+  label: Type Of Call
+  fieldtype: Link
+  options: Telephony Call Type
+- fieldname: call_received_by
+  label: Call Received By
+  fieldtype: Link
+  options: Employee
+  read_only: true
+title_field: status
+layout:
+- section: Call Details
+  columns:
+  - - id
+    - from
+    - to
+    - call_received_by
+    - medium
+    - start_time
+    - end_time
+  - - type
+    - customer
+    - status
+- section: Call Summary
+  columns:
+  - - type_of_call
+    - summary
+- section: Reference
+  columns:
+  - - links

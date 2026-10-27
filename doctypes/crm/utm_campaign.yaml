@@ -1,0 +1,28 @@
+schema_version: 1
+name: UTM Campaign
+label: UTM Campaign
+module: crm
+icon: file-text
+fields:
+- fieldname: campaign_name
+  label: Campaign Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: campaign_code
+  label: Campaign Code
+  fieldtype: Text
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+- fieldname: disabled
+  label: Disabled
+  fieldtype: Boolean
+title_field: campaign_name
+layout:
+- section: Informations principales
+  columns:
+  - - campaign_name
+    - campaign_code
+    - description
+    - disabled

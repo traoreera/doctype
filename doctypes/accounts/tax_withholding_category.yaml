@@ -1,0 +1,62 @@
+schema_version: 1
+name: Tax Withholding Category
+label: Tax Withholding Category
+module: accounts
+icon: badge-percent
+fields:
+- fieldname: category_name
+  label: Category Name
+  fieldtype: Text
+  in_list_view: true
+- fieldname: rates
+  label: Rates
+  fieldtype: Table
+  options: Tax Withholding Rate
+- fieldname: accounts
+  label: Accounts
+  fieldtype: Table
+  options: Tax Withholding Account
+- fieldname: tax_on_excess_amount
+  label: 'Only Deduct Tax On Excess Amount '
+  fieldtype: Boolean
+  description: Tax withheld only for amount exceeding cumulative threshold
+  default: false
+- fieldname: round_off_tax_amount
+  label: Round Off Tax Amount
+  fieldtype: Boolean
+  description: Checking this will round off the tax amount to the nearest integer
+  default: false
+- fieldname: tax_deduction_basis
+  label: Deduct Tax On Basis
+  fieldtype: Select
+  options:
+  - Gross Total
+  - Net Total
+  default: Net Total
+  required: true
+- fieldname: disable_cumulative_threshold
+  label: Disable Cumulative Threshold
+  fieldtype: Boolean
+  description: When checked, only transaction threshold will be applied for transaction individually
+  default: false
+- fieldname: disable_transaction_threshold
+  label: Disable Transaction Threshold
+  fieldtype: Boolean
+  description: When checked, only cumulative threshold will be applied
+  default: false
+title_field: category_name
+layout:
+- section: Category Details
+  columns:
+  - - category_name
+    - tax_deduction_basis
+  - - round_off_tax_amount
+    - tax_on_excess_amount
+    - disable_cumulative_threshold
+    - disable_transaction_threshold
+- section: Tax Withholding Rates
+  columns:
+  - - rates
+- section: Account Details
+  columns:
+  - - accounts

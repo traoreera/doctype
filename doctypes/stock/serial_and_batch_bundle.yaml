@@ -1,0 +1,150 @@
+schema_version: 1
+name: Serial and Batch Bundle
+label: Serial and Batch Bundle
+module: stock
+submittable: true
+icon: layers
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  hidden: true
+- fieldname: has_serial_no
+  label: Has Serial No
+  fieldtype: Boolean
+  read_only: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: has_batch_no
+  label: Has Batch No
+  fieldtype: Boolean
+  read_only: true
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  options: voucher_type
+- fieldname: is_cancelled
+  label: Is Cancelled
+  fieldtype: Boolean
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Serial and Batch Bundle
+  read_only: true
+- fieldname: avg_rate
+  label: Avg Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: total_amount
+  label: Total Amount
+  fieldtype: Number
+  read_only: true
+- fieldname: total_qty
+  label: Total Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+- fieldname: type_of_transaction
+  label: Type of Transaction
+  fieldtype: Select
+  options:
+  - Inward
+  - Outward
+  - Maintenance
+  - Asset Repair
+  required: true
+- fieldname: is_rejected
+  label: Is Rejected
+  fieldtype: Boolean
+  read_only: true
+- fieldname: voucher_detail_no
+  label: Voucher Detail No
+  fieldtype: Text
+  read_only: true
+- fieldname: entries
+  label: Entries
+  fieldtype: Table
+  options: Serial and Batch Entry
+- fieldname: returned_against
+  label: Returned Against
+  fieldtype: Text
+  read_only: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - SABB-.########
+  default: SABB-.########
+- fieldname: is_packed
+  label: Is Packed
+  fieldtype: Boolean
+  default: false
+- fieldname: posting_datetime
+  label: Posting Datetime
+  fieldtype: Datetime
+title_field: item_code
+layout:
+- tab: Serial and Batch
+  section: Références
+  columns:
+  - - naming_series
+    - company
+    - item_name
+    - has_serial_no
+    - has_batch_no
+  - - item_code
+    - warehouse
+    - type_of_transaction
+- tab: Serial and Batch
+  section: Serial / Batch No
+  columns:
+  - - entries
+- tab: Quantity and Rate
+  section: Comptabilité et montants
+  columns:
+  - - total_qty
+  - - avg_rate
+    - total_amount
+- tab: Reference
+  section: Dates et planification
+  columns:
+  - - voucher_type
+    - voucher_no
+    - voucher_detail_no
+  - - posting_datetime
+    - returned_against
+- tab: Reference
+  section: Dates et planification
+  columns:
+  - - is_cancelled
+    - is_packed
+    - is_rejected
+    - amended_from
+views:
+  tree:
+    parent: amended_from

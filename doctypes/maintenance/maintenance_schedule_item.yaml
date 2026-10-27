@@ -1,0 +1,62 @@
+schema_version: 1
+name: Maintenance Schedule Item
+label: Maintenance Schedule Item
+istable: true
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+  read_only: true
+- fieldname: start_date
+  label: Start Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: end_date
+  label: End Date
+  fieldtype: Date
+  required: true
+- fieldname: periodicity
+  label: Periodicity
+  fieldtype: Select
+  options:
+  - Weekly
+  - Monthly
+  - Quarterly
+  - Half Yearly
+  - Yearly
+  - Random
+  in_list_view: true
+- fieldname: no_of_visits
+  label: No of Visits
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: sales_person
+  label: Sales Person
+  fieldtype: Link
+  options: Sales Person
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+  read_only: true
+- fieldname: sales_order
+  label: Sales Order
+  fieldtype: Link
+  options: Sales Order
+  read_only: true
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle

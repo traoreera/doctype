@@ -1,0 +1,7 @@
+schema_version: 1
+name: "Item Website Specification"
+label: "Item Website Specification"
+istable: true
+fields:
+  - { fieldname: label, label: "Label", fieldtype: Text, in_list_view: true }
+  - { fieldname: description, label: "Description", fieldtype: TextEditor, in_list_view: true }

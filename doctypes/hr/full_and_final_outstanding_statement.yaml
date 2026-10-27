@@ -1,0 +1,44 @@
+schema_version: 1
+name: Full and Final Outstanding Statement
+label: Full and Final Outstanding Statement
+istable: true
+fields:
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Settled
+  - Unsettled
+  default: Unsettled
+  in_list_view: true
+- fieldname: remark
+  label: Remark
+  fieldtype: LongText
+- fieldname: reference_document
+  label: Reference Document
+  fieldtype: DynamicLink
+  options: reference_document_type
+  in_list_view: true
+- fieldname: component
+  label: Component
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: account
+  label: Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+- fieldname: reference_document_type
+  label: Reference Document Type
+  fieldtype: Text
+  in_list_view: true
+- fieldname: paid_via_salary_slip
+  label: Paid via Salary Slip
+  fieldtype: Boolean
+  default: false

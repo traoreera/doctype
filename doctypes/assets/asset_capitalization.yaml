@@ -1,0 +1,156 @@
+schema_version: 1
+name: Asset Capitalization
+label: Asset Capitalization
+module: assets
+submittable: true
+icon: trending-up
+fields:
+- fieldname: title
+  label: Title
+  fieldtype: Text
+  hidden: true
+- fieldname: target_item_code
+  label: Target Item Code
+  fieldtype: Link
+  options: Item
+  read_only: true
+  hidden: true
+- fieldname: target_asset
+  label: Target Asset
+  fieldtype: Link
+  options: Asset
+  required: true
+- fieldname: target_asset_name
+  label: Asset Name
+  fieldtype: Text
+  read_only: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+  default: today
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  required: true
+- fieldname: set_posting_time
+  label: Edit Posting Date and Time
+  fieldtype: Boolean
+  default: false
+- fieldname: naming_series
+  label: Series
+  fieldtype: Select
+  options:
+  - ACC-ASC-.YYYY.-
+  required: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Asset Capitalization
+  read_only: true
+- fieldname: stock_items
+  label: Stock Items
+  fieldtype: Table
+  options: Asset Capitalization Stock Item
+- fieldname: asset_items
+  label: Assets
+  fieldtype: Table
+  options: Asset Capitalization Asset Item
+- fieldname: stock_items_total
+  label: Consumed Stock Total Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: asset_items_total
+  label: Consumed Asset Total Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: finance_book
+  label: Finance Book
+  fieldtype: Link
+  options: Finance Book
+- fieldname: service_items
+  label: Services
+  fieldtype: Table
+  options: Asset Capitalization Service Item
+- fieldname: service_items_total
+  label: Service Expense Total Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: total_value
+  label: Total Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: target_incoming_rate
+  label: Target Incoming Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: target_fixed_asset_account
+  label: Target Fixed Asset Account
+  fieldtype: Link
+  options: Account
+  read_only: true
+title_field: target_asset
+layout:
+- section: Dates et planification
+  columns:
+  - - naming_series
+    - company
+    - target_asset
+    - target_asset_name
+  - - finance_book
+    - posting_date
+    - posting_time
+    - set_posting_time
+    - amended_from
+- section: Consumed Stock Items
+  columns:
+  - - stock_items
+- section: Comptabilité et montants
+  columns:
+  - - stock_items_total
+- section: Consumed Assets
+  columns:
+  - - asset_items
+- section: Comptabilité et montants
+  columns:
+  - - asset_items_total
+- section: Service Expenses
+  columns:
+  - - service_items
+- section: Comptabilité et montants
+  columns:
+  - - service_items_total
+- section: Totals
+  columns:
+  - - total_value
+  - - target_incoming_rate
+- section: Accounting Dimensions
+  columns:
+  - - cost_center
+  - - project
+    - target_fixed_asset_account
+views:
+  calendar:
+    start: posting_date
+    title: target_asset
+  tree:
+    parent: amended_from

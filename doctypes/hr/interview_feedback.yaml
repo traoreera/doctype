@@ -1,0 +1,75 @@
+schema_version: 1
+name: Interview Feedback
+label: Interview Feedback
+module: hr
+submittable: true
+icon: message-square-text
+fields:
+- fieldname: interview
+  label: Interview
+  fieldtype: Link
+  options: Interview
+  required: true
+  in_list_view: true
+- fieldname: interviewer
+  label: Interviewer
+  fieldtype: Link
+  options: Member
+  required: true
+  in_list_view: true
+- fieldname: skill_assessment
+  label: Skill Assessment
+  fieldtype: Table
+  options: Skill Assessment
+- fieldname: average_rating
+  label: Average Rating
+  fieldtype: Rating
+  stars: 5
+  in_list_view: true
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Interview Feedback
+  read_only: true
+- fieldname: feedback
+  label: Feedback
+  fieldtype: LongText
+- fieldname: result
+  label: Result
+  fieldtype: Select
+  options:
+  - Cleared
+  - Rejected
+  required: true
+  in_list_view: true
+- fieldname: job_applicant
+  label: Job Applicant
+  fieldtype: Link
+  options: Job Applicant
+  in_list_view: true
+  read_only: true
+- fieldname: interview_type
+  label: Interview Type
+  fieldtype: Link
+  options: Interview Type
+  required: true
+  in_list_view: true
+  read_only: true
+title_field: interview
+layout:
+- section: Details
+  columns:
+  - - interview
+    - interview_type
+    - job_applicant
+  - - interviewer
+    - result
+- section: Skill Assessment
+  columns:
+  - - skill_assessment
+    - average_rating
+- section: Feedback
+  columns:
+  - - feedback
+    - amended_from

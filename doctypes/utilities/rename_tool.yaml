@@ -1,0 +1,19 @@
+schema_version: 1
+name: Rename Tool
+label: Rename Tool
+module: utilities
+icon: pencil
+fields:
+- fieldname: select_doctype
+  label: Select DocType
+  fieldtype: Text
+  description: Type of document to rename.
+- fieldname: file_to_rename
+  label: File to Rename
+  fieldtype: Attach
+  description: Attach a comma separated .csv file with two columns, one for the old name and one for the new name.
+layout:
+- section: Références
+  columns:
+  - - select_doctype
+    - file_to_rename

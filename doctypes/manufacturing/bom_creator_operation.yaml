@@ -1,0 +1,41 @@
+schema_version: 1
+name: BOM Creator Operation
+label: BOM Creator Operation
+istable: true
+fields:
+- fieldname: operation_id
+  label: Operation ID
+  fieldtype: Int
+  read_only: true
+- fieldname: bom_node_id
+  label: BOM Node
+  fieldtype: Int
+  description: Node of the design part. 0 means the finished good.
+  default: 0
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  required: true
+  in_list_view: true
+- fieldname: workstation_type
+  label: Workstation Type
+  fieldtype: Link
+  options: Workstation Type
+  in_list_view: true
+- fieldname: time_in_mins
+  label: Operation Time (Minutes)
+  fieldtype: Number
+  in_list_view: true
+- fieldname: output_node_id
+  label: Output Node
+  fieldtype: Int
+- fieldname: output_item
+  label: Output Item
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+- fieldname: output_quantity
+  label: Output Quantity
+  fieldtype: Number
+  default: 1.0

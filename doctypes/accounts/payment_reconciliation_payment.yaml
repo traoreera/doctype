@@ -1,0 +1,58 @@
+schema_version: 1
+name: Payment Reconciliation Payment
+label: Payment Reconciliation Payment
+istable: true
+fields:
+- fieldname: reference_type
+  label: Reference Type
+  fieldtype: Text
+  read_only: true
+- fieldname: reference_name
+  label: Reference Name
+  fieldtype: DynamicLink
+  options: reference_type
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: is_advance
+  label: Is Advance
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: reference_row
+  label: Reference Row
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: amount
+  label: Amount
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  hidden: true
+- fieldname: difference_amount
+  label: Difference Amount
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: exchange_rate
+  label: Exchange Rate
+  fieldtype: Number
+  hidden: true
+- fieldname: cost_center
+  label: Cost Center
+  fieldtype: Link
+  options: Cost Center
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+  read_only: true

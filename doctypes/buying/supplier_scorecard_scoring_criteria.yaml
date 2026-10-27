@@ -1,0 +1,32 @@
+schema_version: 1
+name: Supplier Scorecard Scoring Criteria
+label: Supplier Scorecard Scoring Criteria
+istable: true
+fields:
+- fieldname: criteria_name
+  label: Criteria Name
+  fieldtype: Link
+  options: Supplier Scorecard Criteria
+  required: true
+  in_list_view: true
+- fieldname: score
+  label: Score
+  fieldtype: Percent
+  in_list_view: true
+  read_only: true
+  hidden: true
+- fieldname: weight
+  label: Criteria Weight
+  fieldtype: Percent
+  required: true
+  in_list_view: true
+- fieldname: max_score
+  label: Max Score
+  fieldtype: Number
+  read_only: true
+  hidden: true
+- fieldname: formula
+  label: Criteria Formula
+  fieldtype: LongText
+  read_only: true
+  hidden: true

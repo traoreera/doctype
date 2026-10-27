@@ -1,0 +1,11 @@
+schema_version: 1
+name: Shipping Rule Country
+label: Shipping Rule Country
+istable: true
+fields:
+- fieldname: country
+  label: Country
+  fieldtype: Link
+  options: Country
+  required: true
+  in_list_view: true

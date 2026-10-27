@@ -1,0 +1,16 @@
+schema_version: 1
+name: Service Level Priority
+label: Service Level Priority
+istable: true
+fields:
+- fieldname: priority
+  label: Priority
+  fieldtype: Link
+  options: Issue Priority
+  required: true
+  in_list_view: true
+- fieldname: default_priority
+  label: Default Priority
+  fieldtype: Boolean
+  in_list_view: true
+  default: false

@@ -1,0 +1,13 @@
+schema_version: 1
+name: Issue Type
+label: Issue Type
+module: support
+icon: tag
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+layout:
+- section: Description et notes
+  columns:
+  - - description

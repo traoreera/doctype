@@ -1,0 +1,16 @@
+schema_version: 1
+name: Project Template Task
+label: Project Template Task
+istable: true
+fields:
+- fieldname: task
+  label: Task
+  fieldtype: Link
+  options: Task
+  required: true
+  in_list_view: true
+- fieldname: subject
+  label: Subject
+  fieldtype: Text
+  in_list_view: true
+  read_only: true

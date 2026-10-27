@@ -1,0 +1,388 @@
+schema_version: 1
+name: Job Card
+label: Job Card
+module: manufacturing
+submittable: true
+icon: clipboard-list
+fields:
+- fieldname: work_order
+  label: Work Order
+  fieldtype: Link
+  options: Work Order
+  required: true
+  in_list_view: true
+- fieldname: bom_no
+  label: Final BOM
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: workstation
+  label: Workstation
+  fieldtype: Link
+  options: Workstation
+  required: true
+  in_list_view: true
+- fieldname: operation
+  label: Operation
+  fieldtype: Link
+  options: Operation
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  default: today
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: for_quantity
+  label: Qty to Manufacture
+  fieldtype: Number
+  in_list_view: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: wip_warehouse
+  label: WIP Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: time_logs
+  label: Time Logs
+  fieldtype: Table
+  options: Job Card Time Log
+- fieldname: total_completed_qty
+  label: Total Completed qty
+  fieldtype: Number
+  read_only: true
+- fieldname: total_time_in_mins
+  label: Total Time in Mins
+  fieldtype: Number
+  read_only: true
+- fieldname: items
+  label: Items
+  fieldtype: Table
+  options: Job Card Item
+- fieldname: operation_id
+  label: Operation ID
+  fieldtype: Text
+  read_only: true
+  hidden: true
+- fieldname: transferred_qty
+  label: Transferred Raw Materials
+  fieldtype: Number
+  read_only: true
+- fieldname: requested_qty
+  label: Requested Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: remarks
+  label: Remarks
+  fieldtype: LongText
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Work In Progress
+  - Partially Transferred
+  - Material Transferred
+  - On Hold
+  - Submitted
+  - To Manufacture
+  - Cancelled
+  - Completed
+  default: Open
+  read_only: true
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Job Card
+  read_only: true
+- fieldname: naming_series
+  label: Naming Series
+  fieldtype: Select
+  options:
+  - PO-JOB.#####
+  default: PO-JOB.#####
+  required: true
+- fieldname: production_item
+  label: Final Product
+  fieldtype: Link
+  options: Item
+  read_only: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: sequence_id
+  label: Sequence Id
+  fieldtype: Int
+  read_only: true
+- fieldname: quality_inspection
+  label: Quality Inspection
+  fieldtype: Link
+  options: Quality Inspection
+- fieldname: sub_operations
+  label: Sub Operations
+  fieldtype: Table
+  options: Job Card Operation
+  read_only: true
+- fieldname: hour_rate
+  label: Hour Rate
+  fieldtype: Currency
+  decimals: 2
+- fieldname: is_corrective_job_card
+  label: Is Corrective Job Card
+  fieldtype: Boolean
+  read_only: true
+- fieldname: for_job_card
+  label: For Job Card
+  fieldtype: Link
+  options: Job Card
+  read_only: true
+- fieldname: for_operation
+  label: For Operation
+  fieldtype: Link
+  options: Operation
+- fieldname: employee
+  label: Employee
+  fieldtype: Table
+  options: Job Card Time Log
+  read_only: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+  read_only: true
+  hidden: true
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+  read_only: true
+  hidden: true
+- fieldname: quality_inspection_template
+  label: Quality Inspection Template
+  fieldtype: Link
+  options: Quality Inspection Template
+- fieldname: workstation_type
+  label: Workstation Type
+  fieldtype: Link
+  options: Workstation Type
+- fieldname: expected_start_date
+  label: Expected Start Date
+  fieldtype: Datetime
+- fieldname: expected_end_date
+  label: Expected End Date
+  fieldtype: Datetime
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+  read_only: true
+- fieldname: process_loss_qty
+  label: Process Loss qty
+  fieldtype: Number
+  read_only: true
+- fieldname: time_required
+  label: Expected Time Required (In Mins)
+  fieldtype: Number
+- fieldname: scheduled_time_logs
+  label: Scheduled Time Logs
+  fieldtype: Table
+  options: Job Card Scheduled Time
+  read_only: true
+- fieldname: actual_start_date
+  label: Actual Start Date
+  fieldtype: Datetime
+  read_only: true
+- fieldname: actual_end_date
+  label: Actual End Date
+  fieldtype: Datetime
+  read_only: true
+- fieldname: finished_good
+  label: Item to Manufacture
+  fieldtype: Link
+  options: Item
+  read_only: true
+- fieldname: target_warehouse
+  label: Target Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: operation_row_id
+  label: Operation Row ID
+  fieldtype: Int
+- fieldname: source_warehouse
+  label: Source Warehouse
+  fieldtype: Link
+  options: Warehouse
+- fieldname: semi_fg_bom
+  label: Manufacturing BOM
+  fieldtype: Link
+  options: BOM
+  read_only: true
+- fieldname: batch_split
+  label: Batch Split
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: weight_per_piece
+  label: Weight Per Piece
+  fieldtype: Number
+  read_only: true
+- fieldname: is_subcontracted
+  label: Is Subcontracted
+  fieldtype: Boolean
+  read_only: true
+- fieldname: manufactured_qty
+  label: Manufactured Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: skip_material_transfer
+  label: Skip Material Transfer to WIP
+  fieldtype: Boolean
+  default: false
+- fieldname: backflush_from_wip_warehouse
+  label: Backflush Materials from WIP Warehouse
+  fieldtype: Boolean
+  default: false
+- fieldname: is_paused
+  label: Is Paused
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+- fieldname: track_semi_finished_goods
+  label: Produce Item per Operation
+  fieldtype: Boolean
+  read_only: true
+  hidden: true
+  description: Each operation produces its own output item and puts it in stock, for example Cut Sheet, then Painted
+    Sheet, then the final Box.
+- fieldname: secondary_items
+  label: Secondary Items
+  fieldtype: Table
+  options: Job Card Secondary Item
+- fieldname: pending_qty
+  label: Pending qty
+  fieldtype: Number
+title_field: item_name
+layout:
+- tab: General
+  section: Références
+  columns:
+  - - work_order
+    - operation
+    - for_quantity
+    - workstation
+  - - stock_uom
+    - production_item
+    - bom_no
+    - employee
+- tab: General
+  section: Dates et planification
+  columns:
+  - - company
+    - naming_series
+  - - posting_date
+- tab: General
+  section: Semi Finished Good / Finished Good
+  columns:
+  - - finished_good
+    - semi_fg_bom
+  - - weight_per_piece
+- tab: General
+  section: Warehouse
+  columns:
+  - - workstation_type
+    - source_warehouse
+  - - skip_material_transfer
+    - backflush_from_wip_warehouse
+    - wip_warehouse
+    - target_warehouse
+- tab: General
+  section: Progress
+  columns:
+  - - pending_qty
+    - process_loss_qty
+    - total_completed_qty
+- tab: General
+  section: Informations complémentaires 6
+  columns:
+  - - manufactured_qty
+    - transferred_qty
+- tab: Raw Materials
+  section: Références
+  columns:
+  - - items
+- tab: Raw Materials
+  section: Quality Inspection
+  columns:
+  - - quality_inspection_template
+  - - quality_inspection
+- tab: Time logs
+  section: Scheduled Time
+  columns:
+  - - expected_start_date
+    - time_required
+  - - expected_end_date
+- tab: Time logs
+  section: Dates et planification
+  columns:
+  - - scheduled_time_logs
+- tab: Time logs
+  section: Actual Time
+  columns:
+  - - actual_start_date
+    - total_time_in_mins
+  - - actual_end_date
+- tab: Time logs
+  section: Dates et planification
+  columns:
+  - - time_logs
+- tab: Sub Operations
+  section: Informations complémentaires 13
+  columns:
+  - - sub_operations
+- tab: Secondary Items
+  section: Références
+  columns:
+  - - secondary_items
+- tab: Corrective Operation
+  section: Comptabilité et montants
+  columns:
+  - - for_job_card
+    - is_corrective_job_card
+  - - hour_rate
+    - for_operation
+- tab: More Info
+  section: Références
+  columns:
+  - - item_name
+    - requested_qty
+    - is_subcontracted
+  - - project
+    - remarks
+- tab: More Info
+  section: Status and Reference
+  columns:
+  - - status
+    - operation_row_id
+    - amended_from
+  - - sequence_id
+- tab: More Info
+  section: Serial / Batch
+  columns:
+  - - serial_and_batch_bundle
+views:
+  calendar:
+    start: posting_date
+    title: item_name
+  tree:
+    parent: amended_from

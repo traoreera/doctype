@@ -1,0 +1,28 @@
+schema_version: 1
+name: "Stock Reconciliation Item"
+label: "Stock Reconciliation Item"
+istable: true
+fields:
+  - { fieldname: barcode, label: "Barcode", fieldtype: Text }
+  - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
+  - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", required: true, in_list_view: true }
+  - { fieldname: qty, label: "Quantity", fieldtype: Number, in_list_view: true }
+  - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", in_list_view: true, read_only: true }
+  - { fieldname: valuation_rate, label: "Valuation Rate", fieldtype: Currency, decimals: 2, in_list_view: true }
+  - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
+  - { fieldname: current_qty, label: "Current Qty", fieldtype: Number, read_only: true }
+  - { fieldname: current_serial_no, label: "Current Serial No", fieldtype: LongText, read_only: true }
+  - { fieldname: current_valuation_rate, label: "Current Valuation Rate", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: current_amount, label: "Current Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: quantity_difference, label: "Quantity Difference", fieldtype: Text, read_only: true }
+  - { fieldname: amount_difference, label: "Amount Difference", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }
+  - { fieldname: allow_zero_valuation_rate, label: "Allow Zero Valuation Rate", fieldtype: Boolean, default: false }
+  - { fieldname: has_item_scanned, label: "Has Item Scanned", fieldtype: Text, read_only: true }
+  - { fieldname: serial_and_batch_bundle, label: "Serial / Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle" }
+  - { fieldname: current_serial_and_batch_bundle, label: "Current Serial / Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle", read_only: true }
+  - { fieldname: item_group, label: "Item Group", fieldtype: Link, options: "Item Group" }
+  - { fieldname: use_serial_batch_fields, label: "Use Serial No / Batch Fields", fieldtype: Boolean, default: false }
+  - { fieldname: reconcile_all_serial_batch, label: "Reconcile All Serial Nos / Batches", fieldtype: Boolean, default: false }

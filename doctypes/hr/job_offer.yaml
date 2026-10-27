@@ -1,0 +1,261 @@
+schema_version: 1
+name: Job Offer
+label: Job Offer
+module: hr
+submittable: true
+icon: handshake
+fields:
+- fieldname: job_applicant
+  label: Job Applicant
+  fieldtype: Link
+  options: Job Applicant
+- fieldname: applicant_name
+  label: Applicant Name
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: applicant_email
+  label: Applicant Email Address
+  fieldtype: Text
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Draft
+  - Ready to Send
+  - Awaiting Response
+  - Accepted
+  - Rejected
+  - Cancelled
+  default: Draft
+- fieldname: offer_date
+  label: Offer Date
+  fieldtype: Date
+  required: true
+- fieldname: offer_valid_till
+  label: Offer Valid Till
+  fieldtype: Date
+- fieldname: designation
+  label: Designation
+  fieldtype: Link
+  options: Designation
+  required: true
+  in_list_view: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+- fieldname: grade
+  label: Employee Grade
+  fieldtype: Link
+  options: Employee Grade
+- fieldname: employment_type
+  label: Employment Type
+  fieldtype: Link
+  options: Employment Type
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+- fieldname: reports_to
+  label: Reports To
+  fieldtype: Link
+  options: Employee
+- fieldname: date_of_joining
+  label: Date of Joining
+  fieldtype: Date
+- fieldname: salary_structure
+  label: Salary Structure
+  fieldtype: Link
+  options: Salary Structure
+- fieldname: currency
+  label: Currency
+  fieldtype: Link
+  options: Devise
+  read_only: true
+- fieldname: calculate_component_amount_from
+  label: Calculate Component Amount From
+  fieldtype: Select
+  options:
+  - Base and Variable
+  - CTC
+- fieldname: base
+  label: Base
+  fieldtype: Currency
+  decimals: 2
+- fieldname: variable
+  label: Variable
+  fieldtype: Currency
+  decimals: 2
+- fieldname: ctc
+  label: Total Cost to Company (CTC)
+  fieldtype: Currency
+  decimals: 2
+- fieldname: gross
+  label: Gross Pay
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+  hidden: true
+  description: Gross earnings for one payroll cycle, before deductions. Shown as a row in the break-up; kept as
+    a field because statutory wage ceilings are drawn on it.
+- fieldname: ctc_breakup
+  label: CTC Break-up
+  fieldtype: Table
+  options: Job Offer Component
+- fieldname: weekly_off_days
+  label: Weekly Off
+  fieldtype: Text
+  description: 'Comma separated, for example: Saturday, Sunday'
+- fieldname: total_public_holidays
+  label: Public Holidays
+  fieldtype: Int
+  description: Holidays in the year other than weekly offs
+- fieldname: leave_allocations
+  label: Leave Allocations
+  fieldtype: Table
+  options: Leave Policy Detail
+  read_only: true
+- fieldname: leave_policy
+  label: Leave Policy
+  fieldtype: Link
+  options: Leave Policy
+- fieldname: holiday_list
+  label: Holiday List
+  fieldtype: Link
+  options: Holiday List
+- fieldname: probation_period_days
+  label: Probation Period (Days)
+  fieldtype: Int
+  default: 90
+- fieldname: notice_period_during_probation
+  label: Notice Period During Probation (Days)
+  fieldtype: Int
+- fieldname: notice_number_of_days
+  label: Notice Period (Days)
+  fieldtype: Int
+  default: 30
+- fieldname: working_hours
+  label: Working Hours
+  fieldtype: Number
+  default: 8.0
+- fieldname: job_offer_term_template
+  label: Job Offer Term Template
+  fieldtype: Link
+  options: Job Offer Term Template
+- fieldname: offer_terms
+  label: Job Offer Terms
+  fieldtype: Table
+  options: Job Offer Term
+- fieldname: select_terms
+  label: Select Terms and Conditions
+  fieldtype: Link
+  options: Terms and Conditions
+- fieldname: terms
+  label: Terms and Conditions
+  fieldtype: TextEditor
+- fieldname: letter_head
+  label: Letter Head
+  fieldtype: Link
+  options: Letter Head
+- fieldname: offer_letter_print_format
+  label: Print Format
+  fieldtype: Link
+  options: Print Format
+- fieldname: signature
+  label: Sign to show on offer letter
+  fieldtype: Image
+- fieldname: amended_from
+  label: Amended From
+  fieldtype: Link
+  options: Job Offer
+  read_only: true
+title_field: applicant_name
+layout:
+- tab: Role & Joining
+  section: Informations principales
+  columns:
+  - - job_applicant
+    - applicant_name
+    - applicant_email
+  - - offer_date
+    - offer_valid_till
+    - status
+- tab: Role & Joining
+  section: Role
+  columns:
+  - - company
+    - department
+    - reports_to
+  - - designation
+    - branch
+  - - date_of_joining
+    - employment_type
+- tab: Leave & Holidays
+  section: Leave
+  columns:
+  - - leave_policy
+  - - leave_allocations
+- tab: Leave & Holidays
+  section: Holidays
+  columns:
+  - - holiday_list
+  - - weekly_off_days
+    - total_public_holidays
+- tab: Compensation
+  section: Salary Details
+  columns:
+  - - salary_structure
+    - currency
+    - calculate_component_amount_from
+    - base
+  - - grade
+    - variable
+    - ctc
+- tab: Compensation
+  section: Informations complémentaires 6
+  columns:
+  - - ctc_breakup
+- tab: Employment Policy
+  section: Informations complémentaires 7
+  columns:
+  - - probation_period_days
+    - notice_number_of_days
+  - - working_hours
+    - notice_period_during_probation
+- tab: Employment Policy
+  section: Informations complémentaires 8
+  columns:
+  - - select_terms
+    - terms
+- tab: Employment Policy
+  section: Additional Terms
+  columns:
+  - - job_offer_term_template
+    - offer_terms
+- tab: Print & Email
+  section: Printing Details
+  columns:
+  - - offer_letter_print_format
+    - signature
+  - - letter_head
+- tab: Print & Email
+  section: Informations complémentaires 11
+  columns:
+  - - amended_from
+views:
+  kanban:
+    field: status
+    card_fields:
+    - applicant_name
+  calendar:
+    start: date_of_joining
+    title: applicant_name
+    color: status

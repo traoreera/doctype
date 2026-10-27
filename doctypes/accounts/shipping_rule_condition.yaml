@@ -1,0 +1,20 @@
+schema_version: 1
+name: Shipping Rule Condition
+label: Shipping Rule Condition
+istable: true
+fields:
+- fieldname: from_value
+  label: From Value
+  fieldtype: Number
+  required: true
+  in_list_view: true
+- fieldname: to_value
+  label: To Value
+  fieldtype: Number
+  in_list_view: true
+- fieldname: shipping_amount
+  label: Shipping Amount
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  in_list_view: true

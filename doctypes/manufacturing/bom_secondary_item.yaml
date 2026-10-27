@@ -1,0 +1,91 @@
+schema_version: 1
+name: BOM Secondary Item
+label: BOM Secondary Item
+istable: true
+fields:
+- fieldname: secondary_item_type
+  label: Type
+  fieldtype: Select
+  options:
+  - Co-Product
+  - By-Product
+  - Scrap
+  - Additional Finished Good
+  required: true
+  in_list_view: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: cost
+  label: Cost
+  fieldtype: Currency
+  decimals: 2
+  required: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: uom
+  label: UOM
+  fieldtype: Link
+  options: UOM
+  required: true
+  in_list_view: true
+- fieldname: conversion_factor
+  label: Conversion Factor
+  fieldtype: Number
+  required: true
+  default: 1.0
+- fieldname: stock_qty
+  label: Stock Qty
+  fieldtype: Number
+  read_only: true
+- fieldname: qty
+  label: Qty
+  fieldtype: Number
+  in_list_view: true
+- fieldname: cost_allocation_per
+  label: Cost Allocation %
+  fieldtype: Percent
+  required: true
+  default: 0.0
+- fieldname: process_loss_per
+  label: Process Loss %
+  fieldtype: Percent
+  required: true
+  default: 0.0
+- fieldname: description
+  label: Description
+  fieldtype: TextEditor
+- fieldname: base_cost
+  label: Base Cost (Company Currency)
+  fieldtype: Currency
+  decimals: 2
+  required: true
+  read_only: true
+  hidden: true
+- fieldname: valuation_type
+  label: Valuation Type
+  fieldtype: Select
+  options:
+  - Valuation Rate
+  - '% of Component Cost'
+  - Manual
+  default: Valuation Rate
+  required: true
+  description: Valuation Rate and Manual value this item on its own and deduct that cost from the raw material cost,
+    like the pre-v16 scrap items. % of Component Cost allocates a percentage of the remaining raw material cost.
+- fieldname: process_loss_qty
+  label: Process Loss Qty
+  fieldtype: Number
+  required: true
+  read_only: true

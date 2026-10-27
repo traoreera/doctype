@@ -1,0 +1,16 @@
+schema_version: 1
+name: Mode of Payment Account
+label: Mode of Payment Account
+istable: true
+fields:
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  in_list_view: true
+- fieldname: default_account
+  label: Default Account
+  fieldtype: Link
+  options: Account
+  in_list_view: true
+  description: Default account will be automatically updated in POS Invoice when this mode is selected.

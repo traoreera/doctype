@@ -1,0 +1,13 @@
+schema_version: 1
+name: Authorization Control
+label: Authorization Control
+module: setup
+icon: shield
+fields:
+- fieldname: description
+  label: Description
+  fieldtype: Text
+layout:
+- section: General
+  columns:
+  - - description

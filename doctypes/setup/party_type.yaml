@@ -1,0 +1,25 @@
+schema_version: 1
+name: Party Type
+label: Party Type
+module: setup
+icon: tag
+fields:
+- fieldname: party_type
+  label: Party Type
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: account_type
+  label: Account Type
+  fieldtype: Select
+  options:
+  - Payable
+  - Receivable
+  required: true
+  in_list_view: true
+title_field: party_type
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - party_type
+    - account_type

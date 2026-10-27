@@ -1,0 +1,38 @@
+schema_version: 1
+name: Appraisee
+label: Appraisee
+istable: true
+fields:
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  required: true
+  in_list_view: true
+- fieldname: employee_name
+  label: Employee Name
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: department
+  label: Department
+  fieldtype: Link
+  options: Department
+  in_list_view: true
+  read_only: true
+- fieldname: designation
+  label: Designation
+  fieldtype: Text
+  in_list_view: true
+  read_only: true
+- fieldname: branch
+  label: Branch
+  fieldtype: Link
+  options: Branch
+  in_list_view: true
+  read_only: true
+- fieldname: appraisal_template
+  label: Appraisal Template
+  fieldtype: Link
+  options: Appraisal Template
+  in_list_view: true

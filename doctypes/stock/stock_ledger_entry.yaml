@@ -1,0 +1,194 @@
+schema_version: 1
+name: Stock Ledger Entry
+label: Stock Ledger Entry
+module: stock
+submittable: true
+icon: book-open
+fields:
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  in_list_view: true
+  read_only: true
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: LongText
+  read_only: true
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Text
+  read_only: true
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+  read_only: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  in_list_view: true
+  read_only: true
+- fieldname: posting_time
+  label: Posting Time
+  fieldtype: Time
+  read_only: true
+- fieldname: voucher_type
+  label: Voucher Type
+  fieldtype: Text
+  read_only: true
+- fieldname: voucher_no
+  label: Voucher No
+  fieldtype: DynamicLink
+  in_list_view: true
+  read_only: true
+  options: voucher_type
+- fieldname: voucher_detail_no
+  label: Voucher Detail No
+  fieldtype: Text
+  read_only: true
+- fieldname: actual_qty
+  label: Qty Change
+  fieldtype: Number
+  in_list_view: true
+  read_only: true
+- fieldname: incoming_rate
+  label: Incoming Rate
+  fieldtype: Currency
+  decimals: 2
+  in_list_view: true
+  read_only: true
+- fieldname: outgoing_rate
+  label: Outgoing Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: stock_uom
+  label: Stock UOM
+  fieldtype: Link
+  options: UOM
+  read_only: true
+- fieldname: qty_after_transaction
+  label: Qty After Transaction
+  fieldtype: Number
+  read_only: true
+- fieldname: valuation_rate
+  label: Average Rate
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: stock_value
+  label: Balance Stock Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: stock_value_difference
+  label: Change in Stock Value
+  fieldtype: Currency
+  decimals: 2
+  read_only: true
+- fieldname: stock_queue
+  label: FIFO Stock Queue (qty, rate)
+  fieldtype: LongText
+  read_only: true
+- fieldname: project
+  label: Project
+  fieldtype: Link
+  options: Project
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  read_only: true
+- fieldname: fiscal_year
+  label: Fiscal Year
+  fieldtype: Text
+  read_only: true
+- fieldname: is_cancelled
+  label: Is Cancelled
+  fieldtype: Boolean
+  default: false
+- fieldname: to_rename
+  label: To Rename
+  fieldtype: Boolean
+  hidden: true
+  default: true
+- fieldname: dependant_sle_voucher_detail_no
+  label: Dependant SLE Voucher Detail No
+  fieldtype: Text
+- fieldname: recalculate_rate
+  label: Recalculate Incoming/Outgoing Rate
+  fieldtype: Boolean
+  read_only: true
+- fieldname: serial_and_batch_bundle
+  label: Serial and Batch Bundle
+  fieldtype: Link
+  options: Serial and Batch Bundle
+- fieldname: has_batch_no
+  label: Has Batch No
+  fieldtype: Boolean
+  default: false
+- fieldname: has_serial_no
+  label: Has Serial No
+  fieldtype: Boolean
+  default: false
+- fieldname: is_adjustment_entry
+  label: Is Adjustment Entry
+  fieldtype: Boolean
+  default: false
+- fieldname: auto_created_serial_and_batch_bundle
+  label: Auto Created Serial and Batch Bundle
+  fieldtype: Boolean
+  default: false
+- fieldname: posting_datetime
+  label: Posting Datetime
+  fieldtype: Datetime
+title_field: item_code
+layout:
+- section: Dates et planification
+  columns:
+  - - item_code
+    - warehouse
+    - posting_date
+    - posting_time
+    - posting_datetime
+    - is_adjustment_entry
+    - auto_created_serial_and_batch_bundle
+  - - voucher_type
+    - voucher_no
+    - voucher_detail_no
+    - serial_and_batch_bundle
+    - dependant_sle_voucher_detail_no
+- section: Comptabilité et montants
+  columns:
+  - - recalculate_rate
+    - actual_qty
+    - qty_after_transaction
+    - incoming_rate
+    - outgoing_rate
+  - - valuation_rate
+    - stock_value
+    - stock_value_difference
+    - stock_queue
+- section: Références
+  columns:
+  - - company
+    - stock_uom
+    - project
+  - - fiscal_year
+    - has_batch_no
+    - has_serial_no
+    - is_cancelled
+    - serial_no
+    - batch_no
+views:
+  calendar:
+    start: posting_date
+    title: item_code
+permissions:
+  write: []
+  create: []
+  delete: []
+  submit: []
+  cancel: []

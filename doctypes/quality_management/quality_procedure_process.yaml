@@ -1,0 +1,15 @@
+schema_version: 1
+name: Quality Procedure Process
+label: Quality Procedure Process
+istable: true
+fields:
+- fieldname: process_description
+  label: Process Description
+  fieldtype: TextEditor
+  in_list_view: true
+- fieldname: procedure
+  label: Sub Procedure
+  fieldtype: Link
+  options: Quality Procedure
+  in_list_view: true
+  description: Link existing Quality Procedure.

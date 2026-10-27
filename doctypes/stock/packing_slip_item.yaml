@@ -1,0 +1,16 @@
+schema_version: 1
+name: "Packing Slip Item"
+label: "Packing Slip Item"
+istable: true
+fields:
+  - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, in_list_view: true, read_only: true }
+  - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }
+  - { fieldname: description, label: "Description", fieldtype: TextEditor }
+  - { fieldname: qty, label: "Quantity", fieldtype: Number, required: true, in_list_view: true }
+  - { fieldname: net_weight, label: "Net Weight", fieldtype: Number, in_list_view: true }
+  - { fieldname: stock_uom, label: "UOM", fieldtype: Link, options: "UOM", read_only: true }
+  - { fieldname: weight_uom, label: "Weight UOM", fieldtype: Link, options: "UOM" }
+  - { fieldname: page_break, label: "Page Break", fieldtype: Boolean, in_list_view: true, default: false }
+  - { fieldname: dn_detail, label: "Delivery Note Item", fieldtype: Text, in_list_view: true, read_only: true, hidden: true }
+  - { fieldname: pi_detail, label: "Delivery Note Packed Item", fieldtype: Text, read_only: true, hidden: true }

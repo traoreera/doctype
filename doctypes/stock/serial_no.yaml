@@ -1,0 +1,171 @@
+schema_version: 1
+name: Serial No
+label: Serial No
+module: stock
+icon: hash
+fields:
+- fieldname: serial_no
+  label: Serial No
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: item_code
+  label: Item Code
+  fieldtype: Link
+  options: Item
+  required: true
+  in_list_view: true
+- fieldname: item_name
+  label: Item Name
+  fieldtype: Text
+  read_only: true
+- fieldname: description
+  label: Description
+  fieldtype: LongText
+  read_only: true
+- fieldname: item_group
+  label: Item Group
+  fieldtype: Link
+  options: Item Group
+  read_only: true
+- fieldname: brand
+  label: Brand
+  fieldtype: Link
+  options: Brand
+  read_only: true
+- fieldname: asset
+  label: Asset
+  fieldtype: Link
+  options: Asset
+  read_only: true
+- fieldname: asset_status
+  label: Asset Status
+  fieldtype: Select
+  options:
+  - Issue
+  - Receipt
+  - Transfer
+  read_only: true
+- fieldname: location
+  label: Location
+  fieldtype: Link
+  options: Location
+  read_only: true
+- fieldname: employee
+  label: Employee
+  fieldtype: Link
+  options: Employee
+  read_only: true
+- fieldname: maintenance_status
+  label: Maintenance Status
+  fieldtype: Select
+  options:
+  - Under Warranty
+  - Out of Warranty
+  - Under AMC
+  - Out of AMC
+  read_only: true
+- fieldname: warranty_period
+  label: Warranty Period (Days)
+  fieldtype: Int
+  read_only: true
+- fieldname: warranty_expiry_date
+  label: Warranty Expiry Date
+  fieldtype: Date
+- fieldname: amc_expiry_date
+  label: AMC Expiry Date
+  fieldtype: Date
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+  in_list_view: true
+- fieldname: work_order
+  label: Work Order
+  fieldtype: Link
+  options: Work Order
+- fieldname: warehouse
+  label: Warehouse
+  fieldtype: Link
+  options: Warehouse
+  in_list_view: true
+  read_only: true
+- fieldname: batch_no
+  label: Batch No
+  fieldtype: Link
+  options: Batch
+  read_only: true
+- fieldname: purchase_rate
+  label: Incoming Rate
+  fieldtype: Number
+  read_only: true
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Active
+  - Inactive
+  - Consumed
+  - Delivered
+  - Expired
+  in_list_view: true
+  read_only: true
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  read_only: true
+- fieldname: reference_doctype
+  label: Source Document Type
+  fieldtype: Text
+  read_only: true
+- fieldname: reference_name
+  label: Source Document Name
+  fieldtype: DynamicLink
+  read_only: true
+  options: reference_doctype
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  read_only: true
+title_field: item_code
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - serial_no
+    - item_code
+    - batch_no
+    - warehouse
+    - purchase_rate
+    - customer
+  - - status
+    - item_name
+    - description
+    - item_group
+    - brand
+- section: Asset Details
+  columns:
+  - - asset
+    - asset_status
+  - - location
+    - employee
+- section: Warranty / AMC Details
+  columns:
+  - - warranty_expiry_date
+    - amc_expiry_date
+  - - maintenance_status
+    - warranty_period
+- section: More Information
+  columns:
+  - - company
+  - - work_order
+- section: Source Document
+  columns:
+  - - reference_doctype
+    - posting_date
+  - - reference_name
+views:
+  calendar:
+    start: posting_date
+    title: item_code

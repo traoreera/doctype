@@ -1,0 +1,81 @@
+schema_version: 1
+name: Loyalty Point Entry
+label: Loyalty Point Entry
+module: accounts
+icon: star
+fields:
+- fieldname: loyalty_program
+  label: Loyalty Program
+  fieldtype: Link
+  options: Loyalty Program
+  required: true
+- fieldname: loyalty_program_tier
+  label: Loyalty Program Tier
+  fieldtype: Text
+- fieldname: customer
+  label: Customer
+  fieldtype: Link
+  options: Customer
+  required: true
+  in_list_view: true
+- fieldname: redeem_against
+  label: Redeem Against
+  fieldtype: Link
+  options: Loyalty Point Entry
+- fieldname: loyalty_points
+  label: Loyalty Points
+  fieldtype: Int
+  required: true
+  in_list_view: true
+- fieldname: purchase_amount
+  label: Purchase Amount
+  fieldtype: Currency
+  decimals: 2
+- fieldname: expiry_date
+  label: Expiry Date
+  fieldtype: Date
+  required: true
+  in_list_view: true
+- fieldname: posting_date
+  label: Posting Date
+  fieldtype: Date
+  required: true
+- fieldname: company
+  label: Company
+  fieldtype: Link
+  options: Company
+  required: true
+- fieldname: invoice_type
+  label: Invoice Type
+  fieldtype: Text
+  required: true
+- fieldname: invoice
+  label: Invoice
+  fieldtype: DynamicLink
+  options: invoice_type
+  in_list_view: true
+- fieldname: discretionary_reason
+  label: Discretionary Reason
+  fieldtype: Text
+title_field: customer
+layout:
+- section: Comptabilité et montants
+  columns:
+  - - loyalty_program
+    - loyalty_program_tier
+    - customer
+    - invoice_type
+    - invoice
+    - redeem_against
+    - loyalty_points
+    - purchase_amount
+    - expiry_date
+    - posting_date
+    - company
+    - discretionary_reason
+views:
+  calendar:
+    start: posting_date
+    title: customer
+  tree:
+    parent: redeem_against

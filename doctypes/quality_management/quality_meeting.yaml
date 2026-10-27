@@ -1,0 +1,36 @@
+schema_version: 1
+name: Quality Meeting
+label: Quality Meeting
+module: quality_management
+icon: users
+fields:
+- fieldname: status
+  label: Status
+  fieldtype: Select
+  options:
+  - Open
+  - Closed
+  default: Open
+- fieldname: minutes
+  label: Minutes
+  fieldtype: Table
+  options: Quality Meeting Minutes
+- fieldname: agenda
+  label: Agenda
+  fieldtype: Table
+  options: Quality Meeting Agenda
+title_field: status
+layout:
+- section: État et options
+  columns:
+  - - status
+- section: Dates et planification
+  columns:
+  - - agenda
+- section: Informations complémentaires 3
+  columns:
+  - - minutes
+views:
+  kanban:
+    field: status
+    card_fields: null
