@@ -104,6 +104,24 @@ def test_no_field_duplicates_a_system_column(registry: DocTypeRegistry) -> None:
     assert offenders == []
 
 
+def test_the_declared_mapping_carries_what_it_needs_to_know_the_remainder(registry: DocTypeRegistry) -> None:
+    """`Material Request -> Stock Entry` (doc/mapper.md) : la chaîne complète, pas une recopie.
+
+    Le chargement a déjà validé la déclaration (`registry._check_mappings`). Ce qui est affirmé ici, c'est
+    qu'elle garde les trois pièces sans lesquelles le mapper reprendrait des quantités PLEINES : la référence de
+    ligne, le document source, et le couple de quantités.
+    """
+    mappings = registry.get("Stock Entry").definition.created_from or []
+    by_source = {m.source: m for m in mappings}
+    assert "Material Request" in by_source
+    m = by_source["Material Request"]
+    assert m.source_status == "submitted", "une source non figée rendrait l'indice de ligne instable"
+    lines = m.lines["items"]
+    assert lines.reference == "material_request_item"
+    assert lines.document == "material_request"
+    assert lines.quantity is not None and (lines.quantity.source, lines.quantity.target) == ("qty", "qty")
+
+
 def test_a_tree_view_points_at_a_real_hierarchy(registry: DocTypeRegistry) -> None:
     """La migration prenait tout auto-lien pour une arborescence (`return_against`, `amended_from`…).
 

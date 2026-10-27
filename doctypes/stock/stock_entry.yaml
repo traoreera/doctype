@@ -385,3 +385,15 @@ views:
   calendar:
     start: posting_date
     title: supplier_name
+created_from:
+- source: Material Request
+  label: Mouvement de stock
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: material_request_item
+      document: material_request
+      quantity:
+        source: qty
+        target: qty

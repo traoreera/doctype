@@ -1,6 +1,16 @@
 # « Créer depuis » : le mapper et le pré-remplissage
 
-**Conception, 27 oct. 2026.** Rien n'est implémenté à ce jour : ce fichier est le contrat à tenir.
+**Conception, 27 oct. 2026.** Ce fichier est le contrat à tenir.
+
+**Fait à ce jour :** le schéma (`schema.CreatedFrom`, `MappingLines`, `MappingQuantity`), ses refus au
+chargement (`registry._check_mappings`, §6), la logique PURE du préremplissage (`mapping.py`, §2/§5) et la
+déclaration réelle sur `Stock Entry` (§8). Tests : `tests/unit/test_mapping.py`, plus un invariant dans
+`tests/unit/test_erp_doctypes.py`.
+
+**Pas encore fait :** le calcul du reste contre la base (§5 : retrouver les documents cibles qui citent la
+source et sommer), les routes `/mappings` et `/map` avec leurs droits (§3), la vérification de la référence à
+l'écriture (§4), et le Desk (le menu « Créer > » et `?from=`). `mapping.py` reçoit déjà `done` en paramètre :
+c'est exactement la jointure qui reste à écrire.
 
 Le geste central d'un ERP, celui qu'aucune de nos briques ne couvre : *Demande de matériel → Mouvement de
 stock*, *Commande client → Bon de livraison → Facture*. Un bouton « Créer > » sur un document soumis ouvre un
