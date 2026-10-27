@@ -2,6 +2,8 @@ schema_version: 1
 name: Stock Reservation Entry
 label: Stock Reservation Entry
 module: stock
+naming:
+  series: SRE-{YYYY}-{#####}
 submittable: true
 icon: bookmark
 fields:
@@ -67,11 +69,6 @@ fields:
 - fieldname: delivered_qty
   label: Delivered Qty
   fieldtype: Number
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Stock Reservation Entry
   read_only: true
 - fieldname: available_qty
   label: Available Qty to Reserve
@@ -159,7 +156,3 @@ layout:
   - - company
   - - project
     - status
-    - amended_from
-views:
-  tree:
-    parent: amended_from

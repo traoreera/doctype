@@ -2,14 +2,11 @@ schema_version: 1
 name: Unreconcile Payment
 label: Unreconcile Payment
 module: accounts
+naming:
+  series: UP-{YYYY}-{#####}
 submittable: true
 icon: unlink
 fields:
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Unreconcile Payment
-  read_only: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -33,7 +30,3 @@ layout:
     - voucher_type
     - voucher_no
     - allocations
-    - amended_from
-views:
-  tree:
-    parent: amended_from

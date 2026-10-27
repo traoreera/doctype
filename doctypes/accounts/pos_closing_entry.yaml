@@ -2,6 +2,8 @@ schema_version: 1
 name: POS Closing Entry
 label: POS Closing Entry
 module: accounts
+naming:
+  series: PCE-{YYYY}-{#####}
 submittable: true
 icon: book-lock
 fields:
@@ -37,10 +39,10 @@ fields:
   read_only: true
 - fieldname: user
   label: Cashier
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
   read_only: true
+  format: email
 - fieldname: payment_reconciliation
   label: Payment Reconciliation
   fieldtype: Table
@@ -63,11 +65,6 @@ fields:
   label: Taxes
   fieldtype: Table
   options: POS Closing Entry Taxes
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: POS Closing Entry
   read_only: true
 - fieldname: pos_opening_entry
   label: POS Opening Entry
@@ -142,12 +139,7 @@ layout:
 - section: Failure Description
   columns:
   - - error_message
-- section: Dates et planification
-  columns:
-  - - amended_from
 views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from

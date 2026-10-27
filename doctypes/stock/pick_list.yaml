@@ -2,6 +2,8 @@ schema_version: 1
 name: Pick List
 label: Pick List
 module: stock
+naming:
+  series: PL-{YYYY}-{#####}
 submittable: true
 icon: list-checks
 fields:
@@ -34,11 +36,6 @@ fields:
   fieldtype: Number
   read_only: true
   description: Qty of raw materials will be decided based on the qty of the Finished Goods Item
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Pick List
-  read_only: true
 - fieldname: purpose
   label: Purpose
   fieldtype: Select
@@ -161,7 +158,3 @@ layout:
   - - work_order
     - customer_name
   - - material_request
-    - amended_from
-views:
-  tree:
-    parent: amended_from

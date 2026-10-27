@@ -2,6 +2,8 @@ schema_version: 1
 name: Repost Payment Ledger
 label: Repost Payment Ledger
 module: accounts
+naming:
+  series: RPL-{YYYY}-{#####}
 submittable: true
 icon: list-restart
 fields:
@@ -13,11 +15,6 @@ fields:
 - fieldname: voucher_type
   label: Voucher Type
   fieldtype: Text
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Repost Payment Ledger
-  read_only: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -59,10 +56,7 @@ layout:
 - section: Vouchers
   columns:
   - - repost_vouchers
-    - amended_from
 views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from

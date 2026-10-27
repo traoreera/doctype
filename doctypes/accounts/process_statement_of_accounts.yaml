@@ -61,7 +61,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: include_ageing
   label: Include Ageing Summary
   fieldtype: Boolean

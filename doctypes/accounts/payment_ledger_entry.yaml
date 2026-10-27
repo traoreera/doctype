@@ -2,6 +2,8 @@ schema_version: 1
 name: Payment Ledger Entry
 label: Payment Ledger Entry
 module: accounts
+naming:
+  series: PLE-{YYYY}-{#####}
 submittable: true
 icon: book-open
 fields:
@@ -49,7 +51,7 @@ fields:
 - fieldname: account_currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: amount_in_account_currency
   label: Amount in Account Currency
   fieldtype: Currency

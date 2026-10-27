@@ -33,7 +33,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   hidden: true
 - fieldname: exchange_rate
   label: Exchange Rate

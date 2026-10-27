@@ -2,10 +2,10 @@ schema_version: 1
 name: Batch
 label: Lot
 module: stock
-icon: layers
-title_field: batch_id
 naming:
   series: BATCH-{YYYY}-{#####}
+icon: layers
+title_field: batch_id
 fields:
 - fieldname: batch_id
   label: N° de lot
@@ -20,8 +20,8 @@ fields:
   required: true
   in_list_view: true
   link_filters:
-    has_batch_no: 1
-    is_stock_item: 1
+    has_batch_no: true
+    is_stock_item: true
 - fieldname: disabled
   label: Désactivé
   fieldtype: Boolean

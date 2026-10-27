@@ -2,6 +2,8 @@ schema_version: 1
 name: Project Update
 label: Project Update
 module: projects
+naming:
+  series: PU-{YYYY}-{#####}
 submittable: true
 icon: message-square
 fields:
@@ -31,11 +33,6 @@ fields:
   label: Users
   fieldtype: Table
   options: Project User
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Project Update
-  read_only: true
 title_field: project
 layout:
 - section: Dates et planification
@@ -47,10 +44,7 @@ layout:
 - section: Dates et planification
   columns:
   - - users
-    - amended_from
 views:
   calendar:
     start: date
     title: project
-  tree:
-    parent: amended_from

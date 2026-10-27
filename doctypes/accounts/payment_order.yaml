@@ -2,6 +2,8 @@ schema_version: 1
 name: Payment Order
 label: Payment Order
 module: accounts
+naming:
+  series: PO-{YYYY}-{#####}
 submittable: true
 icon: send
 fields:
@@ -31,11 +33,6 @@ fields:
   label: Payment Order Reference
   fieldtype: Table
   options: Payment Order Reference
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Payment Order
-  read_only: true
 - fieldname: payment_order_type
   label: Payment Order Type
   fieldtype: Select
@@ -72,10 +69,7 @@ layout:
 - section: Comptabilité et montants
   columns:
   - - references
-    - amended_from
 views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from

@@ -51,31 +51,22 @@ fields:
 - fieldname: value
   label: Authorized Value
   fieldtype: Number
-- fieldname: system_role
-  label: Applicable To (Role)
-  fieldtype: Link
-  options: Role
-  in_list_view: true
 - fieldname: to_emp
   label: Applicable To (Employee)
   fieldtype: Link
   options: Employee
 - fieldname: system_user
   label: Applicable To (User)
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: to_designation
   label: Applicable To (Designation)
   fieldtype: Link
   options: Designation
-- fieldname: approving_role
-  label: Approving Role (above authorized value)
-  fieldtype: Link
-  options: Role
 - fieldname: approving_user
   label: Approving User  (above authorized value)
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 title_field: transaction
 layout:
 - section: Références
@@ -89,11 +80,9 @@ layout:
   - - value
 - section: Références
   columns:
-  - - system_role
-    - to_emp
+  - - to_emp
   - - system_user
     - to_designation
 - section: Références
   columns:
-  - - approving_role
   - - approving_user

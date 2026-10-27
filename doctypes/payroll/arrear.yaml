@@ -2,14 +2,11 @@ schema_version: 1
 name: Arrear
 label: Arrear
 module: payroll
+naming:
+  series: ARRE-{YYYY}-{#####}
 submittable: true
 icon: rotate-ccw-clock
 fields:
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Arrear
-  read_only: true
 - fieldname: employee
   label: Employee
   fieldtype: Link
@@ -47,7 +44,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: earning_arrears
@@ -81,7 +78,3 @@ layout:
   - - earning_arrears
     - deduction_arrears
     - accrual_arrears
-- tab: Arrears
-  section: Informations complémentaires 3
-  columns:
-  - - amended_from

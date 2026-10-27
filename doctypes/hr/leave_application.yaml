@@ -2,6 +2,8 @@ schema_version: 1
 name: Leave Application
 label: Leave Application
 module: hr
+naming:
+  series: LEAP-{YYYY}-{#####}
 submittable: true
 icon: plane
 fields:
@@ -65,8 +67,8 @@ fields:
   fieldtype: LongText
 - fieldname: leave_approver
   label: Leave Approver
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: leave_approver_name
   label: Leave Approver Name
   fieldtype: Text
@@ -107,11 +109,6 @@ fields:
 - fieldname: color
   label: Color
   fieldtype: Color
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Leave Application
-  read_only: true
 title_field: employee_name
 layout:
 - section: Informations principales
@@ -143,7 +140,6 @@ layout:
   - - salary_slip
     - color
   - - letter_head
-    - amended_from
 views:
   kanban:
     field: status

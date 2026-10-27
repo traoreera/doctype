@@ -2,6 +2,8 @@ schema_version: 1
 name: Account Closing Balance
 label: Account Closing Balance
 module: accounts
+naming:
+  series: ACB-{YYYY}-{#####}
 submittable: true
 icon: scale
 fields:
@@ -30,7 +32,7 @@ fields:
 - fieldname: account_currency
   label: Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: debit_in_account_currency
   label: Debit Amount in Account Currency
   fieldtype: Currency

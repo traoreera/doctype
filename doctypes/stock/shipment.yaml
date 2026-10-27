@@ -2,6 +2,8 @@ schema_version: 1
 name: Shipment
 label: Shipment
 module: stock
+naming:
+  series: SHIP-{YYYY}-{#####}
 submittable: true
 icon: truck
 fields:
@@ -198,12 +200,6 @@ fields:
   label: Tracking Status Info
   fieldtype: Text
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Shipment
-  read_only: true
-  hidden: true
 - fieldname: incoterm
   label: Incoterm
   fieldtype: Link
@@ -214,8 +210,8 @@ fields:
   options: Shipment Delivery Note
 - fieldname: pickup_contact_person
   label: Pickup Contact Person
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: total_weight
   label: Total Weight (kg)
   fieldtype: Number

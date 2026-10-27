@@ -2,6 +2,8 @@ schema_version: 1
 name: Packing Slip
 label: Packing Slip
 module: stock
+naming:
+  series: PS-{YYYY}-{#####}
 submittable: true
 icon: package
 fields:
@@ -55,11 +57,6 @@ fields:
   label: Letter Head
   fieldtype: Link
   options: Letter Head
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Packing Slip
-  read_only: true
 title_field: delivery_note
 layout:
 - section: État et options
@@ -82,9 +79,3 @@ layout:
 - section: Letter Head
   columns:
   - - letter_head
-- section: Dates et planification
-  columns:
-  - - amended_from
-views:
-  tree:
-    parent: amended_from

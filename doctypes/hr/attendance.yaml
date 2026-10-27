@@ -2,6 +2,8 @@ schema_version: 1
 name: Attendance
 label: Attendance
 module: hr
+naming:
+  series: ATTE-{YYYY}-{#####}
 submittable: true
 icon: calendar-check
 fields:
@@ -69,11 +71,6 @@ fields:
   fieldtype: Link
   options: Attendance Request
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Attendance
-  read_only: true
 - fieldname: late_entry
   label: Late Entry
   fieldtype: Boolean
@@ -137,7 +134,6 @@ layout:
     - out_time
   - - late_entry
     - early_exit
-    - amended_from
 - section: Overtime
   columns:
   - - overtime_type

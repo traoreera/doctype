@@ -2,6 +2,8 @@ schema_version: 1
 name: Training Result
 label: Training Result
 module: hr
+naming:
+  series: TR-{YYYY}-{#####}
 submittable: true
 icon: award
 fields:
@@ -15,11 +17,6 @@ fields:
   label: Employees
   fieldtype: Table
   options: Training Result Employee
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Training Result
-  read_only: true
 - fieldname: employee_emails
   label: Employee Emails
   fieldtype: LongText
@@ -32,4 +29,3 @@ layout:
 - section: Informations complémentaires 2
   columns:
   - - employees
-    - amended_from

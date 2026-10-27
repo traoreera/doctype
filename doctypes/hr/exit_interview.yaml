@@ -2,6 +2,8 @@ schema_version: 1
 name: Exit Interview
 label: Exit Interview
 module: hr
+naming:
+  series: EXIN-{YYYY}-{#####}
 submittable: true
 icon: door-open
 fields:
@@ -90,11 +92,6 @@ fields:
   - Employee Retained
   - Exit Confirmed
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Exit Interview
-  read_only: true
 - fieldname: interview_summary
   label: Interview Summary
   fieldtype: TextEditor
@@ -128,7 +125,6 @@ layout:
 - section: Informations complémentaires 5
   columns:
   - - employee_status
-    - amended_from
 views:
   kanban:
     field: status

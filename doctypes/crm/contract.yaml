@@ -2,6 +2,8 @@ schema_version: 1
 name: Contract
 label: Contract
 module: crm
+naming:
+  series: CONT-{YYYY}-{#####}
 submittable: true
 icon: signature
 fields:
@@ -24,8 +26,8 @@ fields:
   options: party_type
 - fieldname: party_user
   label: Party User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: status
   label: Status
   fieldtype: Select
@@ -99,16 +101,11 @@ fields:
   fieldtype: DynamicLink
   options: document_type
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Contract
-  read_only: true
 - fieldname: signed_by_company
   label: Signed By (Company)
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   read_only: true
+  format: email
 - fieldname: party_full_name
   label: Party Full Name
   fieldtype: Text
@@ -146,4 +143,3 @@ layout:
   columns:
   - - document_type
   - - document_name
-    - amended_from

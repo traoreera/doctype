@@ -2,6 +2,8 @@ schema_version: 1
 name: Stock Reconciliation
 label: Stock Reconciliation
 module: stock
+naming:
+  series: STRE-{YYYY}-{#####}
 submittable: true
 icon: scale
 fields:
@@ -56,11 +58,6 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Stock Reconciliation
-  read_only: true
 - fieldname: scan_barcode
   label: Scan Barcode
   fieldtype: Text
@@ -101,7 +98,6 @@ layout:
   columns:
   - - expense_account
   - - difference_amount
-    - amended_from
 - section: Accounting Dimensions
   columns:
   - - cost_center
@@ -109,5 +105,3 @@ views:
   calendar:
     start: posting_date
     title: naming_series
-  tree:
-    parent: amended_from

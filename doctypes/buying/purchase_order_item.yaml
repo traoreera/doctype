@@ -171,10 +171,10 @@ fields:
   read_only: true
 - fieldname: supplier_quotation_item
   label: Supplier Quotation Item
-  fieldtype: Link
-  options: Supplier Quotation Item
+  fieldtype: Text
   read_only: true
   hidden: true
+  description: Référence de la ligne d'origine (Supplier Quotation Item).
 - fieldname: delivered_by_supplier
   label: To be Delivered to Customer
   fieldtype: Boolean

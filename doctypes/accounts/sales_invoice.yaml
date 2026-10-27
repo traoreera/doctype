@@ -2,6 +2,8 @@ schema_version: 1
 name: Sales Invoice
 label: Sales Invoice
 module: accounts
+naming:
+  series: SI-{YYYY}-{#####}
 submittable: true
 icon: receipt-text
 fields:
@@ -67,11 +69,6 @@ fields:
   label: Payment Due Date
   fieldtype: Date
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Sales Invoice
-  read_only: true
 - fieldname: return_against
   label: Return Against
   fieldtype: Link
@@ -152,7 +149,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -167,7 +164,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: plc_conversion_rate
@@ -503,7 +500,7 @@ fields:
 - fieldname: party_account_currency
   label: Party Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: is_opening
@@ -742,7 +739,6 @@ layout:
     - update_billed_amount_in_delivery_note
     - is_debit_note
     - apply_tds
-    - amended_from
 - tab: General
   section: Accounting Dimensions
   columns:
@@ -989,5 +985,3 @@ views:
     start: from_date
     end: to_date
     title: customer
-  tree:
-    parent: amended_from

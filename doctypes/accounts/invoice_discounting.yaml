@@ -2,6 +2,8 @@ schema_version: 1
 name: Invoice Discounting
 label: Invoice Discounting
 module: accounts
+naming:
+  series: ID-{YYYY}-{#####}
 submittable: true
 icon: ticket-percent
 fields:
@@ -80,11 +82,6 @@ fields:
   fieldtype: Link
   options: Account
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Invoice Discounting
-  read_only: true
 title_field: company
 layout:
 - section: Dates et planification
@@ -110,10 +107,7 @@ layout:
   - - accounts_receivable_credit
     - accounts_receivable_discounted
     - accounts_receivable_unpaid
-    - amended_from
 views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from

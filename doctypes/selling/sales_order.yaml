@@ -2,6 +2,8 @@ schema_version: 1
 name: Sales Order
 label: Sales Order
 module: selling
+naming:
+  series: SO-{YYYY}-{#####}
 submittable: true
 icon: shopping-cart
 fields:
@@ -29,12 +31,6 @@ fields:
   - Shopping Cart
   default: Sales
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Sales Order
-  read_only: true
-  hidden: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -129,7 +125,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -144,7 +140,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: plc_conversion_rate
@@ -344,7 +340,7 @@ fields:
 - fieldname: party_account_currency
   label: Party Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: language

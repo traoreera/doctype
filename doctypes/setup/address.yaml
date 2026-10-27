@@ -35,7 +35,7 @@ fields:
 - fieldname: country
   label: Country
   fieldtype: Link
-  options: Pays
+  options: Country
 - fieldname: email_id
   label: Email
   fieldtype: Text

@@ -2,6 +2,8 @@ schema_version: 1
 name: Process Payment Reconciliation
 label: Process Payment Reconciliation
 module: accounts
+naming:
+  series: PPR-{YYYY}-{#####}
 submittable: true
 icon: scale
 fields:
@@ -62,11 +64,6 @@ fields:
 - fieldname: error_log
   label: Error Log
   fieldtype: LongText
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Process Payment Reconciliation
-  read_only: true
 - fieldname: default_advance_account
   label: Default Advance Account
   fieldtype: Link
@@ -93,9 +90,3 @@ layout:
   columns:
   - - status
     - error_log
-- section: Dates et planification
-  columns:
-  - - amended_from
-views:
-  tree:
-    parent: amended_from

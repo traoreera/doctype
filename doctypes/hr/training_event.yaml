@@ -2,6 +2,8 @@ schema_version: 1
 name: Training Event
 label: Training Event
 module: hr
+naming:
+  series: TE-{YYYY}-{#####}
 submittable: true
 icon: presentation
 fields:
@@ -88,11 +90,6 @@ fields:
   label: Employees
   fieldtype: Table
   options: Training Event Employee
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Training Event
-  read_only: true
 - fieldname: employee_emails
   label: Employee Emails
   fieldtype: LongText
@@ -126,4 +123,3 @@ layout:
 - section: Attendees
   columns:
   - - employees
-    - amended_from

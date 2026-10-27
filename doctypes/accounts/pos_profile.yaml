@@ -63,7 +63,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: write_off_account
   label: Write Off Account

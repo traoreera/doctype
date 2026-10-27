@@ -2,6 +2,8 @@ schema_version: 1
 name: Share Transfer
 label: Share Transfer
 module: accounts
+naming:
+  series: ST-{YYYY}-{#####}
 submittable: true
 icon: arrow-right-left
 fields:
@@ -78,11 +80,6 @@ fields:
 - fieldname: remarks
   label: Remarks
   fieldtype: LongText
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Share Transfer
-  read_only: true
 title_field: company
 layout:
 - section: Dates et planification
@@ -113,10 +110,7 @@ layout:
 - section: Dates et planification
   columns:
   - - remarks
-    - amended_from
 views:
   calendar:
     start: date
     title: company
-  tree:
-    parent: amended_from

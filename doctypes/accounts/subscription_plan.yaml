@@ -12,7 +12,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: item
   label: Item

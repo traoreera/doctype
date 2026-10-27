@@ -38,8 +38,8 @@ fields:
   in_list_view: true
 - fieldname: process_owner
   label: Process Owner
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: process_owner_full_name
   label: Process Owner Full Name
   fieldtype: Text

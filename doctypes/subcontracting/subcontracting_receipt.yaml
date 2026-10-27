@@ -2,6 +2,8 @@ schema_version: 1
 name: Subcontracting Receipt
 label: Subcontracting Receipt
 module: subcontracting
+naming:
+  series: SURE-{YYYY}-{#####}
 submittable: true
 icon: package-check
 fields:
@@ -128,12 +130,6 @@ fields:
   default: Draft
   required: true
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Subcontracting Receipt
-  read_only: true
-  hidden: true
 - fieldname: range
   label: Range
   fieldtype: Text
@@ -322,5 +318,3 @@ views:
   calendar:
     start: posting_date
     title: title
-  tree:
-    parent: return_against

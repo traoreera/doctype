@@ -2,6 +2,8 @@ schema_version: 1
 name: Payment Entry
 label: Payment Entry
 module: accounts
+naming:
+  series: PE-{YYYY}-{#####}
 submittable: true
 icon: banknote
 fields:
@@ -66,7 +68,7 @@ fields:
 - fieldname: paid_from_account_currency
   label: Account Currency (From)
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: paid_from_bank_account
@@ -83,7 +85,7 @@ fields:
 - fieldname: paid_to_account_currency
   label: Account Currency (To)
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: paid_to_bank_account
@@ -190,11 +192,6 @@ fields:
   label: Auto Repeat
   fieldtype: Link
   options: Auto Repeat
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Payment Entry
   read_only: true
 - fieldname: title
   label: Title
@@ -418,7 +415,6 @@ layout:
     - bank_account_no
     - payment_order
     - in_words
-    - amended_from
 - section: Auto Repeat
   columns:
   - - auto_repeat
@@ -426,5 +422,3 @@ views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from

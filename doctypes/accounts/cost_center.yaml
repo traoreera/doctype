@@ -17,7 +17,6 @@ fields:
   label: Parent Cost Center
   fieldtype: Link
   options: Cost Center
-  required: true
   in_list_view: true
 - fieldname: company
   label: Company

@@ -550,6 +550,3 @@ layout:
   - - inspection_required_before_purchase
     - inspection_required_before_delivery
   - - quality_inspection_template
-views:
-  tree:
-    parent: variant_of

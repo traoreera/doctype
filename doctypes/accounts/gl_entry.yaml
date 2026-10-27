@@ -2,6 +2,8 @@ schema_version: 1
 name: GL Entry
 label: GL Entry
 module: accounts
+naming:
+  series: GE-{YYYY}-{#####}
 submittable: true
 icon: book-open
 fields:
@@ -41,7 +43,7 @@ fields:
 - fieldname: account_currency
   label: Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: debit_in_account_currency
   label: Debit Amount in Account Currency
   fieldtype: Currency
@@ -117,7 +119,7 @@ fields:
 - fieldname: transaction_currency
   label: Transaction Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: transaction_exchange_rate
   label: Transaction Exchange Rate
   fieldtype: Number

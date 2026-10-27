@@ -10,13 +10,9 @@ fields:
   in_list_view: true
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
-- fieldname: role
-  label: Role
-  fieldtype: Link
-  options: Role
+  format: email
 - fieldname: task
   label: Task
   fieldtype: Link

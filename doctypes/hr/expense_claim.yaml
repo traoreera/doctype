@@ -2,6 +2,8 @@ schema_version: 1
 name: Expense Claim
 label: Expense Claim
 module: hr
+naming:
+  series: EC-{YYYY}-{#####}
 submittable: true
 icon: receipt
 fields:
@@ -26,8 +28,8 @@ fields:
   options: Department
 - fieldname: expense_approver
   label: Expense Approver
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: approval_status
   label: Approval Status
   fieldtype: Select
@@ -117,11 +119,6 @@ fields:
   default: Draft
   in_list_view: true
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Expense Claim
-  read_only: true
 - fieldname: advances
   label: Advances
   fieldtype: Table
@@ -153,7 +150,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: exchange_rate
   label: Exchange Rate
@@ -265,7 +262,6 @@ layout:
   columns:
   - - status
     - task
-    - amended_from
   - - delivery_trip
     - vehicle_log
 views:

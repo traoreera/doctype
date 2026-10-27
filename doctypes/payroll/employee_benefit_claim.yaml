@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Benefit Claim
 label: Employee Benefit Claim
 module: payroll
+naming:
+  series: EBC-{YYYY}-{#####}
 submittable: true
 icon: receipt
 fields:
@@ -37,18 +39,13 @@ fields:
   decimals: 2
   required: true
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Benefit Claim
-  read_only: true
 - fieldname: attachments
   label: Attachments
   fieldtype: Attach
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: company
@@ -76,7 +73,6 @@ layout:
   - - payroll_date
     - currency
     - company
-    - amended_from
 - section: Benefits
   columns:
   - - earning_component

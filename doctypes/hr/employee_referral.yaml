@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Referral
 label: Employee Referral
 module: hr
+naming:
+  series: ER-{YYYY}-{#####}
 submittable: true
 icon: user-round-plus
 fields:
@@ -53,11 +55,6 @@ fields:
 - fieldname: work_references
   label: Work References
   fieldtype: TextEditor
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Referral
-  read_only: true
 - fieldname: for_designation
   label: 'For Designation '
   fieldtype: Link
@@ -125,7 +122,6 @@ layout:
   columns:
   - - qualification_reason
     - work_references
-    - amended_from
 views:
   calendar:
     start: date

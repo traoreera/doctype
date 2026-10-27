@@ -12,13 +12,13 @@ fields:
 - fieldname: from_currency
   label: From Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   in_list_view: true
 - fieldname: to_currency
   label: To Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   in_list_view: true
 - fieldname: exchange_rate

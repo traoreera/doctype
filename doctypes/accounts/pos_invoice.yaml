@@ -2,6 +2,8 @@ schema_version: 1
 name: POS Invoice
 label: POS Invoice
 module: accounts
+naming:
+  series: PI-{YYYY}-{#####}
 submittable: true
 icon: receipt-text
 fields:
@@ -56,11 +58,6 @@ fields:
 - fieldname: due_date
   label: Payment Due Date
   fieldtype: Date
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: POS Invoice
-  read_only: true
 - fieldname: return_against
   label: Return Against
   fieldtype: Link
@@ -134,7 +131,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -149,7 +146,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: plc_conversion_rate
@@ -482,7 +479,7 @@ fields:
 - fieldname: party_account_currency
   label: Party Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: is_opening
@@ -590,7 +587,6 @@ layout:
     - posting_time
     - set_posting_time
     - due_date
-    - amended_from
     - return_against
 - tab: General
   section: Accounting Dimensions
@@ -797,5 +793,3 @@ views:
     start: from_date
     end: to_date
     title: customer
-  tree:
-    parent: amended_from

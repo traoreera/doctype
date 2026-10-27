@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Grievance
 label: Employee Grievance
 module: hr
+naming:
+  series: EG-{YYYY}-{#####}
 submittable: true
 icon: message-square-warning
 fields:
@@ -37,8 +39,8 @@ fields:
   fieldtype: LongText
 - fieldname: resolved_by
   label: Resolved By
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: employee_responsible
   label: 'Employee Responsible '
   fieldtype: Link
@@ -58,11 +60,6 @@ fields:
   fieldtype: Link
   options: Employee
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Grievance
-  read_only: true
 - fieldname: designation
   label: Designation
   fieldtype: Link
@@ -123,7 +120,6 @@ layout:
     - resolution_date
     - employee_responsible
   - - resolution_detail
-    - amended_from
 views:
   kanban:
     field: status

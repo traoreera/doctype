@@ -2,6 +2,8 @@ schema_version: 1
 name: Asset Movement
 label: Asset Movement
 module: assets
+naming:
+  series: AM-{YYYY}-{#####}
 submittable: true
 icon: move
 fields:
@@ -33,11 +35,6 @@ fields:
   label: Reference Document Name
   fieldtype: DynamicLink
   options: reference_doctype
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset Movement
-  read_only: true
 - fieldname: assets
   label: Assets
   fieldtype: Table
@@ -56,7 +53,3 @@ layout:
   columns:
   - - reference_doctype
   - - reference_name
-    - amended_from
-views:
-  tree:
-    parent: amended_from

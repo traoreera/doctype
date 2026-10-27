@@ -2,6 +2,8 @@ schema_version: 1
 name: Timesheet
 label: Timesheet
 module: projects
+naming:
+  series: TIME-{YYYY}-{#####}
 submittable: true
 icon: clock
 fields:
@@ -52,9 +54,9 @@ fields:
   read_only: true
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   read_only: true
+  format: email
 - fieldname: start_date
   label: Start Date
   fieldtype: Date
@@ -103,11 +105,6 @@ fields:
 - fieldname: note
   label: Note
   fieldtype: TextEditor
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Timesheet
-  read_only: true
 - fieldname: parent_project
   label: Project
   fieldtype: Link
@@ -119,7 +116,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: base_total_costing_amount
   label: Base Total Costing Amount
   fieldtype: Currency
@@ -185,7 +182,6 @@ layout:
   section: Dates et planification
   columns:
   - - note
-    - amended_from
 views:
   calendar:
     start: start_date
@@ -194,5 +190,3 @@ views:
     start: start_date
     end: end_date
     title: status
-  tree:
-    parent: amended_from

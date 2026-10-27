@@ -2,6 +2,8 @@ schema_version: 1
 name: Maintenance Schedule
 label: Maintenance Schedule
 module: maintenance
+naming:
+  series: MS-{YYYY}-{#####}
 submittable: true
 icon: calendar-check
 fields:
@@ -83,11 +85,6 @@ fields:
   fieldtype: Link
   options: Company
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Maintenance Schedule
-  read_only: true
 title_field: customer_name
 layout:
 - section: Dates et planification
@@ -110,10 +107,7 @@ layout:
     - territory
     - customer_group
     - company
-    - amended_from
 views:
   calendar:
     start: transaction_date
     title: customer_name
-  tree:
-    parent: amended_from

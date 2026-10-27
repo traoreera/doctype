@@ -2,6 +2,8 @@ schema_version: 1
 name: Blanket Order
 label: Blanket Order
 module: manufacturing
+naming:
+  series: BO-{YYYY}-{#####}
 submittable: true
 icon: file-text
 fields:
@@ -61,7 +63,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -79,7 +81,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: plc_conversion_rate
   label: Price List Exchange Rate
@@ -89,11 +91,6 @@ fields:
   label: Item
   fieldtype: Table
   options: Blanket Order Item
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Blanket Order
-  read_only: true
 - fieldname: tc_name
   label: Terms
   fieldtype: Link
@@ -134,7 +131,6 @@ layout:
 - section: Dates et planification
   columns:
   - - items
-    - amended_from
 - section: Terms and Conditions
   columns:
   - - tc_name
@@ -147,5 +143,3 @@ views:
     start: from_date
     end: to_date
     title: customer
-  tree:
-    parent: amended_from

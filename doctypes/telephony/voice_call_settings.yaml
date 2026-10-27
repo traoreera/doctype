@@ -7,10 +7,10 @@ icon: phone-call
 fields:
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
   in_list_view: true
+  format: email
 - fieldname: greeting_message
   label: Greeting Message
   fieldtype: Text

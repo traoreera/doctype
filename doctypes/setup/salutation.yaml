@@ -2,6 +2,8 @@ schema_version: 1
 name: Salutation
 label: Salutation
 module: setup
+naming:
+  field: salutation
 icon: file-text
 fields:
 - fieldname: salutation

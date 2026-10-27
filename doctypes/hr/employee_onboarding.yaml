@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Onboarding
 label: Employee Onboarding
 module: hr
+naming:
+  series: EO-{YYYY}-{#####}
 submittable: true
 icon: user-plus
 fields:
@@ -74,11 +76,6 @@ fields:
   label: Activities
   fieldtype: Table
   options: Employee Boarding Activity
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Onboarding
-  read_only: true
 - fieldname: boarding_begins_on
   label: Onboarding Begins On
   fieldtype: Date
@@ -111,7 +108,6 @@ layout:
   columns:
   - - activities
     - notify_users_by_email
-    - amended_from
 views:
   calendar:
     start: date_of_joining

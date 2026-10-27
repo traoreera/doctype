@@ -2,6 +2,8 @@ schema_version: 1
 name: Staffing Plan
 label: Staffing Plan
 module: hr
+naming:
+  series: SP-{YYYY}-{#####}
 submittable: true
 icon: users
 fields:
@@ -32,11 +34,6 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Staffing Plan
-  read_only: true
 title_field: company
 layout:
 - section: Informations principales
@@ -51,7 +48,6 @@ layout:
 - section: Informations complémentaires 3
   columns:
   - - total_estimated_budget
-    - amended_from
 views:
   calendar:
     start: from_date

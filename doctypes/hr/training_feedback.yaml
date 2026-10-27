@@ -2,6 +2,8 @@ schema_version: 1
 name: Training Feedback
 label: Training Feedback
 module: hr
+naming:
+  series: TF-{YYYY}-{#####}
 submittable: true
 icon: message-square-text
 fields:
@@ -42,11 +44,6 @@ fields:
   label: Feedback
   fieldtype: LongText
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Training Feedback
-  read_only: true
 title_field: employee_name
 layout:
 - section: Informations principales
@@ -61,4 +58,3 @@ layout:
 - section: Informations complémentaires 2
   columns:
   - - feedback
-    - amended_from

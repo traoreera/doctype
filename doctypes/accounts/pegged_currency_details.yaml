@@ -6,7 +6,7 @@ fields:
 - fieldname: source_currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   in_list_view: true
 - fieldname: pegged_exchange_rate
   label: Exchange Rate
@@ -15,5 +15,5 @@ fields:
 - fieldname: pegged_against
   label: Pegged Against
   fieldtype: Link
-  options: Devise
+  options: Currency
   in_list_view: true

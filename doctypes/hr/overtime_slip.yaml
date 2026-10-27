@@ -2,14 +2,11 @@ schema_version: 1
 name: Overtime Slip
 label: Overtime Slip
 module: hr
+naming:
+  series: OS-{YYYY}-{#####}
 submittable: true
 icon: timer
 fields:
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Overtime Slip
-  read_only: true
 - fieldname: posting_date
   label: Posting Date
   fieldtype: Date
@@ -74,7 +71,6 @@ layout:
     - employee_name
   - - company
     - department
-    - amended_from
 - section: Informations complémentaires 2
   columns:
   - - start_date

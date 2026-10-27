@@ -37,7 +37,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   hidden: true
 - fieldname: difference_amount
   label: Difference Amount

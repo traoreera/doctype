@@ -2,6 +2,8 @@ schema_version: 1
 name: Payroll Entry
 label: Payroll Entry
 module: payroll
+naming:
+  series: PAEN-{YYYY}-{#####}
 submittable: true
 icon: wallet
 fields:
@@ -80,11 +82,6 @@ fields:
   fieldtype: Link
   options: Account
   description: Select Payment Account to make Bank Entry
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Payroll Entry
-  read_only: true
 - fieldname: salary_slips_created
   label: Salary Slips Created
   fieldtype: Boolean
@@ -102,7 +99,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   in_list_view: true
 - fieldname: exchange_rate
@@ -188,10 +185,6 @@ layout:
   section: Informations complémentaires 8
   columns:
   - - error_message
-- tab: Failure Details
-  section: Informations complémentaires 9
-  columns:
-  - - amended_from
 views:
   calendar:
     start: posting_date

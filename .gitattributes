@@ -1,0 +1,15 @@
+# GitHub (Linguist) : YAML est classé « langage de DONNÉES », et les langages de données sont
+# exclus des statistiques d'un dépôt. Or ici les définitions de DocTypes ne sont pas de la
+# configuration autour du produit : elles SONT le produit (un ERP décrit en 721 fichiers, voir
+# doc/erp-doctypes.md). On les rend donc détectables, pour qu'elles comptent dans la barre des
+# langages et soient indexées comme du code.
+doctypes/**/*.yaml linguist-detectable=true
+workspaces/*.yaml  linguist-detectable=true
+
+# Les mêmes définitions côté jeux d'essai et côté plugin `system` livré : même raison.
+tests/support/plugins/**/*.yaml           linguist-detectable=true
+src/xcore_doctype/system_plugin_dir/**/*.yaml linguist-detectable=true
+
+# Vecteurs de test : des données générées, lues par les tests Python ET TypeScript. Elles ne
+# disent rien du produit, elles ne doivent pas peser dans les statistiques.
+tests/vectors/*.json linguist-generated=true

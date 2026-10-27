@@ -50,9 +50,9 @@ fields:
   default: false
 - fieldname: assign_to
   label: Assign To
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email
 - fieldname: assign_to_name
   label: Assign to Name
   fieldtype: Text

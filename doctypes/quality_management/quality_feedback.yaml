@@ -18,7 +18,6 @@ fields:
   label: Type
   fieldtype: Select
   options:
-  - User
   - Customer
   required: true
   in_list_view: true

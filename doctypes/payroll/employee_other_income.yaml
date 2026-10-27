@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Other Income
 label: Employee Other Income
 module: payroll
+naming:
+  series: EOI-{YYYY}-{#####}
 submittable: true
 icon: coins
 fields:
@@ -36,18 +38,12 @@ fields:
   label: Employee Name
   fieldtype: Text
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Other Income
-  read_only: true
 title_field: employee_name
 layout:
 - section: Employee Details
   columns:
   - - employee
     - employee_name
-    - amended_from
   - - company
     - payroll_period
 - section: Income Source

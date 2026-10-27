@@ -2,6 +2,8 @@ schema_version: 1
 name: Purchase Receipt
 label: Purchase Receipt
 module: stock
+naming:
+  series: PURE-{YYYY}-{#####}
 submittable: true
 icon: package-check
 fields:
@@ -90,7 +92,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -108,7 +110,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: plc_conversion_rate
   label: Price List Exchange Rate
@@ -309,12 +311,6 @@ fields:
   default: Draft
   required: true
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Purchase Receipt
-  read_only: true
-  hidden: true
 - fieldname: range
   label: Range
   fieldtype: Text
@@ -606,5 +602,3 @@ views:
   calendar:
     start: posting_date
     title: supplier_name
-  tree:
-    parent: return_against

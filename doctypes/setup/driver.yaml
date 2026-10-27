@@ -55,9 +55,9 @@ fields:
   options: Address
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email
 title_field: status
 layout:
 - section: Références

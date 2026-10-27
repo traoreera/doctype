@@ -2,6 +2,8 @@ schema_version: 1
 name: Request for Quotation
 label: Request for Quotation
 module: buying
+naming:
+  series: RQ-{YYYY}-{#####}
 submittable: true
 icon: file-question-mark
 fields:
@@ -76,11 +78,6 @@ fields:
   required: true
   in_list_view: true
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Request for Quotation
-  read_only: true
 - fieldname: schedule_date
   label: Required Date
   fieldtype: Date
@@ -149,7 +146,6 @@ layout:
   - - transaction_date
     - schedule_date
     - status
-    - amended_from
 - tab: Général
   section: Références
   columns:
@@ -198,5 +194,3 @@ views:
   calendar:
     start: transaction_date
     title: title
-  tree:
-    parent: amended_from

@@ -2,6 +2,8 @@ schema_version: 1
 name: RQ Job
 label: RQ Job
 module: setup
+naming:
+  field: job_id
 icon: file-text
 fields:
 - fieldname: job_id

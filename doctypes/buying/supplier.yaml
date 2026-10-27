@@ -105,7 +105,7 @@ fields:
 - fieldname: default_currency
   label: Billing Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   in_list_view: true
 - fieldname: default_price_list
   label: Price List

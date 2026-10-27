@@ -22,8 +22,8 @@ fields:
   fieldtype: Text
 - fieldname: lead_owner
   label: Lead Owner
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: status
   label: Status
   fieldtype: Select
@@ -144,8 +144,8 @@ fields:
   fieldtype: Text
 - fieldname: qualified_by
   label: Qualified By
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: qualified_on
   label: Qualified on
   fieldtype: Date

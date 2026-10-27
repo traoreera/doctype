@@ -63,10 +63,6 @@ fields:
   - Warn
   default: Stop
   description: Configure the action to stop the transaction or just warn if the same rate is not maintained.
-- fieldname: role_to_override_stop_action
-  label: Role allowed to override stop action
-  fieldtype: Link
-  options: Role
 - fieldname: bill_for_rejected_quantity_in_purchase_invoice
   label: Bill for rejected quantity in Purchase Invoice
   fieldtype: Boolean
@@ -181,7 +177,6 @@ layout:
   - - maintain_same_rate
   - - set_landed_cost_based_on_purchase_invoice_rate
     - maintain_same_rate_action
-    - role_to_override_stop_action
 - tab: Transaction Settings
   section: Comptabilité et montants
   columns:

@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Promotion
 label: Employee Promotion
 module: hr
+naming:
+  series: EP-{YYYY}-{#####}
 submittable: true
 icon: trending-up
 fields:
@@ -32,15 +34,10 @@ fields:
   label: Promotion Details
   fieldtype: Table
   options: Employee Property History
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Promotion
-  read_only: true
 - fieldname: salary_currency
   label: Salary Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: current_ctc
   label: Current CTC
@@ -67,4 +64,3 @@ layout:
   columns:
   - - current_ctc
   - - revised_ctc
-    - amended_from

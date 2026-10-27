@@ -2,6 +2,8 @@ schema_version: 1
 name: Income Tax Slab
 label: Income Tax Slab
 module: payroll
+naming:
+  series: ITS-{YYYY}-{#####}
 submittable: true
 icon: badge-percent
 fields:
@@ -15,11 +17,6 @@ fields:
   fieldtype: Boolean
   description: If enabled, Tax Exemption Declaration will be considered for income tax calculation.
   default: false
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Income Tax Slab
-  read_only: true
 - fieldname: slabs
   label: Taxable Salary Slabs
   fieldtype: Table
@@ -43,7 +40,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: tax_relief_limit
   label: Taxable Income Relief Threshold Limit
@@ -62,7 +59,6 @@ layout:
   - - currency
     - standard_tax_exemption_amount
     - allow_tax_exemption
-    - amended_from
 - section: Taxable Salary Slabs
   columns:
   - - slabs

@@ -2,6 +2,8 @@ schema_version: 1
 name: Interview Feedback
 label: Interview Feedback
 module: hr
+naming:
+  series: IF-{YYYY}-{#####}
 submittable: true
 icon: message-square-text
 fields:
@@ -13,10 +15,10 @@ fields:
   in_list_view: true
 - fieldname: interviewer
   label: Interviewer
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
   in_list_view: true
+  format: email
 - fieldname: skill_assessment
   label: Skill Assessment
   fieldtype: Table
@@ -26,11 +28,6 @@ fields:
   fieldtype: Rating
   stars: 5
   in_list_view: true
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Interview Feedback
   read_only: true
 - fieldname: feedback
   label: Feedback
@@ -72,4 +69,3 @@ layout:
 - section: Feedback
   columns:
   - - feedback
-    - amended_from

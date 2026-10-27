@@ -48,8 +48,8 @@ fields:
   fieldtype: Text
 - fieldname: prospect_owner
   label: Prospect Owner
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: company
   label: Company
   fieldtype: Link

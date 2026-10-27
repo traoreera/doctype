@@ -2,6 +2,8 @@ schema_version: 1
 name: Cost Center Allocation
 label: Cost Center Allocation
 module: accounts
+naming:
+  series: CCA-{YYYY}-{#####}
 submittable: true
 icon: chart-pie
 fields:
@@ -26,11 +28,6 @@ fields:
   label: Cost Center Allocation Percentages
   fieldtype: Table
   options: Cost Center Allocation Percentage
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Cost Center Allocation
-  read_only: true
 title_field: company
 layout:
 - section: Comptabilité et montants
@@ -41,10 +38,7 @@ layout:
 - section: Comptabilité et montants
   columns:
   - - allocation_percentages
-    - amended_from
 views:
   calendar:
     start: valid_from
     title: company
-  tree:
-    parent: amended_from

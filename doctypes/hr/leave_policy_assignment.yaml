@@ -2,6 +2,8 @@ schema_version: 1
 name: Leave Policy Assignment
 label: Leave Policy Assignment
 module: hr
+naming:
+  series: LPA-{YYYY}-{#####}
 submittable: true
 icon: user-check
 fields:
@@ -44,11 +46,6 @@ fields:
   fieldtype: Link
   options: Company
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Leave Policy Assignment
-  read_only: true
 - fieldname: carry_forward
   label: Add unused leaves from previous allocations
   fieldtype: Boolean
@@ -71,4 +68,3 @@ layout:
     - leave_period
     - effective_from
     - effective_to
-    - amended_from

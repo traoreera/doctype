@@ -68,9 +68,9 @@ fields:
   read_only: true
 - fieldname: employee_user_id
   label: Employee User Id
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   hidden: true
+  format: email
 - fieldname: type_of_call
   label: Type Of Call
   fieldtype: Link

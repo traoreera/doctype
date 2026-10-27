@@ -2,6 +2,8 @@ schema_version: 1
 name: Journal Entry
 label: Journal Entry
 module: accounts
+naming:
+  series: JE-{YYYY}-{#####}
 submittable: true
 icon: notebook-pen
 fields:
@@ -91,7 +93,7 @@ fields:
 - fieldname: total_amount_currency
   label: Total Amount Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: total_amount
@@ -174,11 +176,6 @@ fields:
   fieldtype: Link
   options: Auto Repeat
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Journal Entry
-  read_only: true
 - fieldname: from_template
   label: From Template
   fieldtype: Link
@@ -255,7 +252,6 @@ layout:
     - apply_tds
     - tax_withholding_category
     - is_system_generated
-    - amended_from
 - tab: General
   section: Periodic Accounting
   columns:
@@ -328,5 +324,3 @@ views:
     start: posting_date
     end: due_date
     title: company
-  tree:
-    parent: inter_company_journal_entry_reference

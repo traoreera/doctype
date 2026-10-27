@@ -10,6 +10,6 @@ fields:
   default: false
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email

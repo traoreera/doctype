@@ -16,8 +16,3 @@ fields:
   label: Notes
   fieldtype: LongText
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Contract Fulfilment Checklist
-  read_only: true

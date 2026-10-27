@@ -2,6 +2,8 @@ schema_version: 1
 name: Sales Forecast
 label: Sales Forecast
 module: manufacturing
+naming:
+  series: SF-{YYYY}-{#####}
 submittable: true
 icon: trending-up
 fields:
@@ -43,11 +45,6 @@ fields:
   fieldtype: Date
   required: true
   default: today
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Sales Forecast
-  read_only: true
 - fieldname: demand_number
   label: Number of Weeks / Months
   fieldtype: Int
@@ -93,11 +90,8 @@ layout:
 - tab: General
   section: Dates et planification
   columns:
-  - - amended_from
   - - status
 views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from

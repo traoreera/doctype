@@ -60,7 +60,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: price_list_rate
   label: Rate

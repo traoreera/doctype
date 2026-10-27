@@ -2,6 +2,8 @@ schema_version: 1
 name: Quality Inspection
 label: Quality Inspection
 module: stock
+naming:
+  series: QI-{YYYY}-{#####}
 submittable: true
 icon: clipboard-check
 fields:
@@ -64,9 +66,9 @@ fields:
   fieldtype: LongText
 - fieldname: inspected_by
   label: Inspected By
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
+  format: email
 - fieldname: verified_by
   label: Verified By
   fieldtype: Text
@@ -78,11 +80,6 @@ fields:
 - fieldname: remarks
   label: Remarks
   fieldtype: LongText
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Quality Inspection
-  read_only: true
 - fieldname: quality_inspection_template
   label: Quality Inspection Template
   fieldtype: Link
@@ -147,7 +144,6 @@ layout:
   - - inspected_by
     - verified_by
   - - remarks
-    - amended_from
 - section: Print Settings
   columns:
   - - letter_head
@@ -156,5 +152,3 @@ views:
     field: status
     card_fields:
     - item_code
-  tree:
-    parent: amended_from

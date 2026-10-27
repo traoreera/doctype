@@ -2,14 +2,11 @@ schema_version: 1
 name: Asset Shift Allocation
 label: Asset Shift Allocation
 module: assets
+naming:
+  series: ASA-{YYYY}-{#####}
 submittable: true
 icon: clipboard-clock
 fields:
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset Shift Allocation
-  read_only: true
 - fieldname: asset
   label: Asset
   fieldtype: Link
@@ -44,11 +41,7 @@ layout:
   - - asset
     - naming_series
   - - finance_book
-    - amended_from
     - previous_depreciation_schedule
 - section: Depreciation Schedule
   columns:
   - - depreciation_schedule
-views:
-  tree:
-    parent: amended_from

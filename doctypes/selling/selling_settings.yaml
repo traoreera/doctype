@@ -96,10 +96,6 @@ fields:
   - Stop
   - Warn
   default: Stop
-- fieldname: role_to_override_stop_action
-  label: Role allowed to override stop action
-  fieldtype: Link
-  options: Role
 - fieldname: editable_bundle_item_rates
   label: Calculate Product Bundle price based on child Item's rates
   fieldtype: Boolean
@@ -238,7 +234,6 @@ layout:
   columns:
   - - maintain_same_sales_rate
   - - maintain_same_rate_action
-    - role_to_override_stop_action
 - tab: Pricing
   section: Comptabilité et montants
   columns:

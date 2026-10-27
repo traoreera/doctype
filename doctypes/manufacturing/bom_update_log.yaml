@@ -2,6 +2,8 @@ schema_version: 1
 name: BOM Update Log
 label: BOM Update Log
 module: manufacturing
+naming:
+  series: BUL-{YYYY}-{#####}
 submittable: true
 icon: file-clock
 fields:
@@ -31,11 +33,6 @@ fields:
   - Completed
   - Failed
   - Cancelled
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: BOM Update Log
-  read_only: true
 - fieldname: error_log
   label: Error Log
   fieldtype: Link
@@ -64,7 +61,3 @@ layout:
   columns:
   - - current_level
     - bom_batches
-    - amended_from
-views:
-  tree:
-    parent: amended_from

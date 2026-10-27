@@ -2,6 +2,8 @@ schema_version: 1
 name: Exchange Rate Revaluation
 label: Exchange Rate Revaluation
 module: accounts
+naming:
+  series: ERR-{YYYY}-{#####}
 submittable: true
 icon: arrow-right-left
 fields:
@@ -21,11 +23,6 @@ fields:
   label: Exchange Rate Revaluation Account
   fieldtype: Table
   options: Exchange Rate Revaluation Account
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Exchange Rate Revaluation
-  read_only: true
 - fieldname: gain_loss_unbooked
   label: Gain/Loss from Revaluation
   fieldtype: Currency
@@ -66,10 +63,7 @@ layout:
   - - gain_loss_unbooked
     - gain_loss_booked
   - - total_gain_loss
-    - amended_from
 views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from

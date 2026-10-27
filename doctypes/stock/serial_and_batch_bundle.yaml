@@ -2,6 +2,8 @@ schema_version: 1
 name: Serial and Batch Bundle
 label: Serial and Batch Bundle
 module: stock
+naming:
+  series: SBB-{YYYY}-{#####}
 submittable: true
 icon: layers
 fields:
@@ -46,11 +48,6 @@ fields:
 - fieldname: is_cancelled
   label: Is Cancelled
   fieldtype: Boolean
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Serial and Batch Bundle
   read_only: true
 - fieldname: avg_rate
   label: Avg Rate
@@ -144,7 +141,3 @@ layout:
   - - is_cancelled
     - is_packed
     - is_rejected
-    - amended_from
-views:
-  tree:
-    parent: amended_from

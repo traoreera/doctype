@@ -42,12 +42,11 @@ fields:
 - fieldname: account_currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: parent_account
   label: Parent Account
   fieldtype: Link
   options: Account
-  required: true
 - fieldname: account_type
   label: Account Type
   fieldtype: Select

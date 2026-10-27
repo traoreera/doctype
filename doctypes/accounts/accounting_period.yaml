@@ -33,11 +33,6 @@ fields:
   label: Closed Documents
   fieldtype: Table
   options: Closed Document
-- fieldname: exempted_role
-  label: Exempted Role
-  fieldtype: Link
-  options: Role
-  description: Role allowed to bypass period restrictions.
 title_field: company
 layout:
 - section: Dates et planification
@@ -47,7 +42,6 @@ layout:
     - end_date
   - - company
     - disabled
-    - exempted_role
 - section: Informations complémentaires 2
   columns:
   - - closed_documents

@@ -2,6 +2,8 @@ schema_version: 1
 name: Material Request
 label: Material Request
 module: stock
+naming:
+  series: MR-{YYYY}-{#####}
 submittable: true
 icon: clipboard-list
 fields:
@@ -40,11 +42,6 @@ fields:
   fieldtype: Link
   options: Company
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Material Request
-  read_only: true
 - fieldname: scan_barcode
   label: Scan Barcode
   fieldtype: Text
@@ -147,7 +144,6 @@ layout:
   - - transaction_date
     - schedule_date
     - buying_price_list
-    - amended_from
 - tab: General
   section: Items
   columns:
@@ -185,5 +181,3 @@ views:
   calendar:
     start: transaction_date
     title: status
-  tree:
-    parent: amended_from

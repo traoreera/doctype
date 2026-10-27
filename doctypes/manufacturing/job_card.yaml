@@ -2,6 +2,8 @@ schema_version: 1
 name: Job Card
 label: Job Card
 module: manufacturing
+naming:
+  series: JC-{YYYY}-{#####}
 submittable: true
 icon: clipboard-list
 fields:
@@ -100,11 +102,6 @@ fields:
   - Cancelled
   - Completed
   default: Open
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Job Card
   read_only: true
 - fieldname: naming_series
   label: Naming Series
@@ -374,7 +371,6 @@ layout:
   columns:
   - - status
     - operation_row_id
-    - amended_from
   - - sequence_id
 - tab: More Info
   section: Serial / Batch
@@ -384,5 +380,3 @@ views:
   calendar:
     start: posting_date
     title: item_name
-  tree:
-    parent: amended_from

@@ -121,7 +121,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: price_discount_slabs
   label: Promotional Scheme Price Discount
   fieldtype: Table

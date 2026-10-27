@@ -2,6 +2,8 @@ schema_version: 1
 name: Attendance Request
 label: Attendance Request
 module: hr
+naming:
+  series: ATRE-{YYYY}-{#####}
 submittable: true
 icon: calendar-plus
 fields:
@@ -53,11 +55,6 @@ fields:
 - fieldname: explanation
   label: Explanation
   fieldtype: LongText
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Attendance Request
-  read_only: true
 - fieldname: shift
   label: Shift
   fieldtype: Link
@@ -86,7 +83,6 @@ layout:
   columns:
   - - reason
   - - explanation
-    - amended_from
 views:
   calendar:
     start: from_date

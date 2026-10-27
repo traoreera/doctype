@@ -2,6 +2,8 @@ schema_version: 1
 name: Dunning
 label: Dunning
 module: accounts
+naming:
+  series: DUNN-{YYYY}-{#####}
 submittable: true
 icon: bell-ring
 fields:
@@ -43,11 +45,6 @@ fields:
   label: Letter Head
   fieldtype: Link
   options: Letter Head
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Dunning
-  read_only: true
 - fieldname: body_text
   label: Body Text
   fieldtype: TextEditor
@@ -149,7 +146,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: conversion_rate
   label: Conversion Rate
   fieldtype: Number
@@ -208,7 +205,6 @@ layout:
   columns:
   - - income_account
   - - cost_center
-    - amended_from
 - tab: Address & Contact
   section: Références
   columns:
@@ -227,5 +223,3 @@ views:
   calendar:
     start: posting_date
     title: customer
-  tree:
-    parent: amended_from

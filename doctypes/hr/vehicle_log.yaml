@@ -2,6 +2,8 @@ schema_version: 1
 name: Vehicle Log
 label: Vehicle Log
 module: hr
+naming:
+  series: VL-{YYYY}-{#####}
 submittable: true
 icon: car
 fields:
@@ -57,11 +59,6 @@ fields:
   label: Service Detail
   fieldtype: Table
   options: Vehicle Service
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Vehicle Log
-  read_only: true
 - fieldname: last_odometer
   label: 'Last Odometer Value '
   fieldtype: Int
@@ -90,7 +87,6 @@ layout:
 - section: Service Details
   columns:
   - - service_detail
-    - amended_from
 views:
   calendar:
     start: date

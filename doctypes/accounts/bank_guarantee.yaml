@@ -2,6 +2,8 @@ schema_version: 1
 name: Bank Guarantee
 label: Bank Guarantee
 module: accounts
+naming:
+  series: BG-{YYYY}-{#####}
 submittable: true
 icon: shield-check
 fields:
@@ -97,11 +99,6 @@ fields:
 - fieldname: fixed_deposit_number
   label: Fixed Deposit Number
   fieldtype: Text
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Bank Guarantee
-  read_only: true
 title_field: customer
 layout:
 - section: Comptabilité et montants
@@ -135,7 +132,6 @@ layout:
   - - margin_money
     - charges
     - fixed_deposit_number
-    - amended_from
 views:
   calendar:
     start: start_date
@@ -144,5 +140,3 @@ views:
     start: start_date
     end: end_date
     title: customer
-  tree:
-    parent: amended_from

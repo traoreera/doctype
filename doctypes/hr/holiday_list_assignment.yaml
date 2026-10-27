@@ -2,14 +2,11 @@ schema_version: 1
 name: Holiday List Assignment
 label: Holiday List Assignment
 module: hr
+naming:
+  series: HLA-{YYYY}-{#####}
 submittable: true
 icon: calendar-off
 fields:
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Holiday List Assignment
-  read_only: true
 - fieldname: holiday_list
   label: Holiday List
   fieldtype: Link
@@ -63,7 +60,6 @@ layout:
   - - naming_series
     - applicable_for
     - assigned_to
-    - amended_from
   - - holiday_list
     - from_date
     - holiday_list_start

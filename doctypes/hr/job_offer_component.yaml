@@ -21,7 +21,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: is_summary

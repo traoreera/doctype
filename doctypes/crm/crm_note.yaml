@@ -9,9 +9,9 @@ fields:
   in_list_view: true
 - fieldname: added_by
   label: Added By
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email
 - fieldname: added_on
   label: Added On
   fieldtype: Datetime

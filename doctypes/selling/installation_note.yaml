@@ -2,6 +2,8 @@ schema_version: 1
 name: Installation Note
 label: Installation Note
 module: selling
+naming:
+  series: IN-{YYYY}-{#####}
 submittable: true
 icon: wrench
 fields:
@@ -77,11 +79,6 @@ fields:
   fieldtype: Link
   options: Company
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Installation Note
-  read_only: true
 - fieldname: remarks
   label: Remarks
   fieldtype: LongText
@@ -112,11 +109,7 @@ layout:
     - status
     - company
     - project
-    - amended_from
     - remarks
 - section: Références
   columns:
   - - items
-views:
-  tree:
-    parent: amended_from

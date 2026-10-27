@@ -43,8 +43,8 @@ fields:
   hidden: true
 - fieldname: account_manager
   label: Account Manager
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: customer_group
   label: Customer Group
   fieldtype: Link
@@ -85,7 +85,7 @@ fields:
 - fieldname: default_currency
   label: Billing Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   in_list_view: true
   description: All invoices and orders for this customer will be created in this currency.
 - fieldname: default_price_list

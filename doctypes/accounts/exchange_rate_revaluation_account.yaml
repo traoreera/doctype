@@ -19,7 +19,7 @@ fields:
 - fieldname: account_currency
   label: Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: balance_in_account_currency
   label: Balance In Account Currency

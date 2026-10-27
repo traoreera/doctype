@@ -2,6 +2,8 @@ schema_version: 1
 name: POS Invoice Merge Log
 label: POS Invoice Merge Log
 module: accounts
+naming:
+  series: PIML-{YYYY}-{#####}
 submittable: true
 icon: merge
 fields:
@@ -20,11 +22,6 @@ fields:
   label: POS Invoices
   fieldtype: Table
   options: POS Invoice Reference
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: POS Invoice Merge Log
-  read_only: true
 - fieldname: consolidated_invoice
   label: Consolidated Sales Invoice
   fieldtype: Link
@@ -77,10 +74,7 @@ layout:
   columns:
   - - consolidated_invoice
   - - consolidated_credit_note
-    - amended_from
 views:
   calendar:
     start: posting_date
     title: customer
-  tree:
-    parent: amended_from

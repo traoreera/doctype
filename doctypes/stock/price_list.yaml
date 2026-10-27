@@ -15,7 +15,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   in_list_view: true
 - fieldname: buying
