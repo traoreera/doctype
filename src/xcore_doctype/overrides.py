@@ -8,7 +8,9 @@ Le YAML reste la source de vérité : un habillage s'y ajoute, par tenant, et se
   l'affichage, et `read_only`, `mandatory`, `default`, que le SERVEUR applique à l'écriture pour l'organisation : `form_rules` ; seul qui écrit
   TOUS les documents du type les règle, `changed_rules`) ;
 - `workspace_user`, `dashboard_user` : la disposition PERSONNELLE d'un utilisateur (même corps), qui passe avant celle de l'organisation ;
-- `dashboard` : le tableau de bord d'un DocType (`blocks`, comme `views.dashboard` de sa définition ; `doctype` y est implicite).
+- `dashboard` : le tableau de bord d'un DocType (`blocks`, comme `views.dashboard` de sa définition ; `doctype` y est implicite) ;
+- `workflow` : ce que l'organisation RESSERRE sur l'automate du YAML (`transitions` : fermer une transition, lui ajouter une condition,
+  imposer `not_owner`) — jamais un état ni une transition de plus (doc/programme.md §3.6).
 
 Un habillage se VALIDE à l'écriture avec les mêmes règles que le chargement d'un fichier (cibles connues, champs placés une fois,
 etc.). À la LECTURE on reste tolérant : un habillage devenu invalide (un DocType a disparu) est ignoré au profit de la définition
@@ -24,16 +26,18 @@ from typing import Any, Mapping, Sequence
 from pydantic import TypeAdapter, ValidationError
 
 from . import fieldtypes
-from .builder import NO_RULES, FormRules
+from .builder import NO_RULES, NO_WORKFLOW_RULES, FormRules, WorkflowRules
 from .dashboards import MAX_BLOCKS, DashboardBlock, check_measured
 from .decimals import canonical
 from .errors import ValidationFailed
+from .expr import ExprError, compile_expr, referenced_fields
 from .schema import DECIMAL_TYPES, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField, complete_layout, layout_tab_problems
 from .workspaces import WorkspaceDef, parse_workspace
 
 __all__ = [
     "KIND_WORKSPACE",
     "KIND_FORM",
+    "KIND_WORKFLOW",
     "KIND_DASHBOARD",
     "KIND_WORKSPACE_USER",
     "KIND_DASHBOARD_USER",
@@ -48,6 +52,9 @@ __all__ = [
     "form_rules",
     "form_base",
     "changed_rules",
+    "validate_workflow_override",
+    "workflow_rules",
+    "apply_workflow_override",
     "check_size",
     "MAX_FORM_TWEAKS",
     "MAX_OVERRIDE_BYTES",
@@ -56,6 +63,8 @@ __all__ = [
 KIND_WORKSPACE = "workspace"
 KIND_FORM = "form"
 KIND_DASHBOARD = "dashboard"
+# L'automate d'un type, resserré par l'organisation (jamais personnel : une approbation est partagée). Voir `validate_workflow_override`.
+KIND_WORKFLOW = "workflow"
 # Les mêmes, PERSONNELS : la disposition d'UN utilisateur, par-dessus celle de l'organisation (la sienne seulement ; voir `user_target`).
 KIND_WORKSPACE_USER = "workspace_user"
 KIND_DASHBOARD_USER = "dashboard_user"
@@ -504,6 +513,151 @@ def changed_rules(compiled: Any, before: Any, after: Any) -> list[str]:
         if type(x) is not type(y) or x != y:  # `1` et `1.0`, `0` et `false` : des valeurs différentes pour le JSON stocké
             names.add(name)
     return sorted(names)
+
+
+# Un habillage d'automate reste lisible : au plus une retouche par transition du YAML, et le YAML en borne déjà le nombre.
+MAX_WORKFLOW_TWEAKS = 100
+_TRANSITION_KEYS = ("closed", "condition", "not_owner")
+
+
+def _condition_problem(compiled: Any, source: str) -> str | None:
+    """Ce qui empêche cette condition de servir sur ce type : mêmes refus qu'une condition du YAML (`DocTypeDef._check_conditions_and_layout`)."""
+    fields = compiled.definition.field_map
+    try:
+        used = referenced_fields(compile_expr(source, list(fields)))
+    except ExprError as e:
+        return str(e)
+    opaque = sorted(n for n in used if fields[n].fieldtype in ("Table", "Password", "JSON", *DECIMAL_TYPES))
+    if opaque:
+        return f"{', '.join(opaque)} n'a pas de valeur comparable (table, secret, JSON ou décimal)"
+    return None
+
+
+def validate_workflow_override(compiled: Any, config: object) -> dict[str, Any]:
+    """Valide un habillage d'automate et rend sa forme canonique (`{"transitions": {"<action>": {...}}}`).
+
+    Une organisation ne fait que RESSERRER ce que le YAML déclare (doc/programme.md §3.6) : fermer une transition (`closed: true`),
+    lui ajouter une condition (`condition`, ET avec celle du YAML) ou imposer la séparation des pouvoirs (`not_owner: true`). Tout le
+    reste est refusé : une action inconnue, un desserrage (`closed: false`, `not_owner: false` sur une transition qui le porte déjà,
+    une condition vide), et surtout un CUL-DE-SAC — fermer la dernière sortie d'un état y échouerait des documents sans recours.
+    """
+    if not isinstance(config, dict):
+        raise ValidationFailed("habillage d'automate : le corps doit être un objet")
+    check_size(config, "habillage d'automate")
+    wf = compiled.definition.workflow
+    if wf is None:
+        raise ValidationFailed(f"{compiled.definition.name} n'a pas de workflow", code="no_workflow")
+    if unknown := sorted(set(config) - {"transitions"}):
+        raise ValidationFailed(f"habillage d'automate : clé inconnue {', '.join(unknown)} (seul `transitions` se retouche)")
+    tweaks = config.get("transitions") or {}
+    if not isinstance(tweaks, dict):
+        raise ValidationFailed("habillage d'automate : `transitions` doit être un objet {action: retouches}")
+    if len(tweaks) > MAX_WORKFLOW_TWEAKS:
+        raise ValidationFailed(f"habillage d'automate : {MAX_WORKFLOW_TWEAKS} transitions retouchées au plus", code="override_too_large")
+    by_action = {t.action: t for t in wf.transitions}
+    out: dict[str, dict[str, Any]] = {}
+    problems: list[str] = []
+    for action, spec in tweaks.items():
+        t = by_action.get(action) if isinstance(action, str) else None
+        if t is None:
+            problems.append(f"{action!r} n'est pas une transition de ce type")
+            continue
+        if not isinstance(spec, dict):
+            problems.append(f"{action}: les retouches doivent être un objet")
+            continue
+        if extra := sorted(set(spec) - set(_TRANSITION_KEYS)):
+            problems.append(f"{action}: {', '.join(extra)} ne se retouche pas (seuls {', '.join(_TRANSITION_KEYS)})")
+            continue
+        kept: dict[str, Any] = {}
+        for key in ("closed", "not_owner"):
+            if key not in spec:
+                continue
+            if spec[key] is not True:
+                # `false` n'est pas un retrait : pour rendre une transition, on retire la retouche. Et le YAML ne se desserre pas.
+                problems.append(f"{action}.{key}: seul `true` a un sens (pour revenir en arrière, retirez la retouche)")
+            elif key == "not_owner" and t.not_owner:
+                problems.append(f"{action}.not_owner: le type l'impose déjà")
+            else:
+                kept[key] = True
+        if "condition" in spec:
+            source = spec["condition"]
+            if not isinstance(source, str) or not source.strip():
+                problems.append(f"{action}.condition: une expression est attendue (pour la retirer, retirez la clé)")
+            elif (bad := _condition_problem(compiled, source)) is not None:
+                problems.append(f"{action}.condition: {bad}")
+            else:
+                kept["condition"] = source.strip()
+        if kept:
+            out[action] = kept
+    if problems:
+        raise ValidationFailed("habillage d'automate invalide : " + "; ".join(problems))
+    if dead := _dead_ends(wf, {a for a, k in out.items() if k.get("closed")}):
+        raise ValidationFailed(
+            f"Fermer ces transitions n'y laisserait aucune sortie : {', '.join(dead)} — un document s'y échouerait sans recours",
+            code="workflow_dead_end",
+        )
+    return {"transitions": out}
+
+
+def _dead_ends(wf: Any, closed: set[str]) -> list[str]:
+    """Les états qui avaient une sortie et n'en auraient plus. Une CONDITION peut bloquer de la même façon, mais cela ne se vérifie
+    pas sans évaluer des données : c'est une règle métier, pas une erreur de configuration (doc/programme.md §3.6)."""
+    out = []
+    for state in {t.from_ for t in wf.transitions}:
+        if all(t.action in closed for t in wf.transitions if t.from_ == state):
+            out.append(state)
+    return sorted(out)
+
+
+def workflow_rules(compiled: Any, config: Any) -> WorkflowRules:
+    """Ce que l'habillage stocké resserre, contre la définition ACTUELLE (`builder.WorkflowRules`).
+
+    Tolérante comme toute lecture d'habillage : une retouche qui vise une transition disparue du YAML, ou dont la condition ne compile
+    plus, est ignorée — le YAML reprend la main pour celle-là, jamais un type inutilisable.
+    """
+    tweaks = config.get("transitions") if isinstance(config, dict) else None
+    wf = compiled.definition.workflow
+    if not isinstance(tweaks, dict) or not tweaks or wf is None:
+        return NO_WORKFLOW_RULES
+    actions = {t.action for t in wf.transitions}
+    closed: set[str] = set()
+    not_owner: set[str] = set()
+    conditions = {}
+    for action, spec in tweaks.items():
+        if action not in actions or not isinstance(spec, dict):
+            continue
+        if spec.get("closed") is True:
+            closed.add(action)
+        if spec.get("not_owner") is True:
+            not_owner.add(action)
+        source = spec.get("condition")
+        if isinstance(source, str) and source.strip():
+            try:
+                conditions[action] = compile_expr(source, [f.fieldname for f in compiled.definition.fields])
+            except ExprError:
+                continue  # devenue invalide (un champ a disparu) : le YAML seul juge cette transition
+    if not (closed or not_owner or conditions):
+        return NO_WORKFLOW_RULES
+    return WorkflowRules(frozenset(closed), conditions, frozenset(not_owner))
+
+
+def apply_workflow_override(meta: dict[str, Any], rules: WorkflowRules) -> None:
+    """Montre l'automate TEL QUE l'organisation l'a resserré : une transition fermée disparaît de `/meta`, un `not_owner` imposé s'y voit.
+
+    Les ÉTATS restent ceux du YAML : un document peut se trouver dans chacun d'eux, et la liste doit pouvoir les filtrer tous.
+    """
+    wf = meta.get("workflow")
+    if not isinstance(wf, dict) or rules is NO_WORKFLOW_RULES:
+        return
+    kept = []
+    for t in wf.get("transitions", []):
+        action = t.get("action")
+        if action in rules.closed:
+            continue
+        if action in rules.not_owner:
+            t["not_owner"] = True
+        kept.append(t)
+    wf["transitions"] = kept
 
 
 _ABSENT = object()

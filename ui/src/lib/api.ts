@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, AvailableTransitions, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, AvailableTransitions, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -384,6 +384,20 @@ export class ApiClient {
 
   async removeFormOverride(doctype: string): Promise<void> {
     await this.call('DELETE', `/override/form/${encodeURIComponent(doctype)}`)
+  }
+
+  /** L'habillage d'automate du tenant pour ce type. `definition` : l'automate du YAML — `/meta` ne montre que celui RESSERRÉ, donc une
+   * transition fermée n'y figure plus : l'éditeur a besoin de l'original pour pouvoir la rouvrir (doc/programme.md §3.6). */
+  workflowOverride(doctype: string): Promise<{ doctype: string; config: WorkflowOverride; definition: WorkflowDef }> {
+    return this.call('GET', `/override/workflow/${encodeURIComponent(doctype)}`)
+  }
+
+  saveWorkflowOverride(doctype: string, config: WorkflowOverride): Promise<{ doctype: string; config: WorkflowOverride }> {
+    return this.call('PUT', `/override/workflow/${encodeURIComponent(doctype)}`, { body: { config } })
+  }
+
+  async removeWorkflowOverride(doctype: string): Promise<void> {
+    await this.call('DELETE', `/override/workflow/${encodeURIComponent(doctype)}`)
   }
 
   /** Le tableau de bord personnalisé d'un type (ses blocs, sans `doctype` : c'est implicite). */

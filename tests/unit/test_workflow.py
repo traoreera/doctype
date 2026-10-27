@@ -422,3 +422,135 @@ class TestTransitionConditions:
         boss = await svc_cond.available_transitions(who(APPROUVER, REFUSER, user="bob"), "Leave Request", doc["name"])
         assert [t["action"] for t in boss["transitions"]] == ["Refuser"]
         assert moved["workflow_state"] == "À approuver"
+
+
+class TestTheOrganisationLayer:
+    """Ce qu'une organisation RESSERRE sur l'automate du YAML (doc/programme.md §3.6) : jamais un état ni une transition de plus.
+
+    La raison du « jamais de plus » n'est pas le goût : un grant de transition est déclaré à auth au CHARGEMENT du plugin, donc
+    une transition inventée par un tenant porterait un grant que personne ne peut détenir — elle serait morte à la naissance.
+    """
+
+    async def test_an_organisation_closes_a_transition(self, svc):
+        doc = await demande(svc)
+        await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Refuser": {"closed": True}}})
+        moved = await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+
+        with pytest.raises(ValidationFailed) as e:
+            await svc.workflow_transition(who(REFUSER, user="bob"), "Leave Request", doc["name"], "Refuser", moved["version"])
+        assert e.value.code == "transition_closed"
+        # Et le Desk ne la propose pas : sinon l'utilisateur apprendrait la règle par un bouton qui échoue.
+        boss = await svc.available_transitions(who(APPROUVER, REFUSER, user="bob"), "Leave Request", doc["name"])
+        assert [t["action"] for t in boss["transitions"]] == ["Approuver"]
+
+    async def test_an_organisation_adds_a_condition_ANDed_with_the_yaml(self, svc):
+        doc = await demande(svc)
+        await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Soumettre": {"condition": "objet == 'Prêt'"}}})
+        with pytest.raises(ValidationFailed) as e:
+            await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        assert e.value.code == "transition_condition"
+
+        ready = await svc.update(who(), "Leave Request", doc["name"], {"objet": "Prêt"}, doc["version"])
+        moved = await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", ready["version"])
+        assert moved["workflow_state"] == "À approuver"
+
+    async def test_an_organisation_imposes_the_separation_of_powers(self, svc):
+        """« Soumettre » n'a pas de `not_owner` dans le YAML ; cette organisation en veut un."""
+        doc = await demande(svc, who(user="alice"))
+        await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Soumettre": {"not_owner": True}}})
+        with pytest.raises(DoctypeError) as e:
+            await svc.workflow_transition(who(SOUMETTRE, user="alice"), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        assert e.value.code == "not_owner"
+        moved = await svc.workflow_transition(who(SOUMETTRE, user="bob"), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        assert moved["workflow_state"] == "À approuver"
+
+    async def test_removing_the_override_gives_the_yaml_back(self, svc):
+        doc = await demande(svc)
+        await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Refuser": {"closed": True}}})
+        moved = await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        await svc.delete_workflow_override(who(), "Leave Request")
+        refused = await svc.workflow_transition(who(REFUSER, user="bob"), "Leave Request", doc["name"], "Refuser", moved["version"])
+        assert refused["workflow_state"] == "Refusé"
+
+    async def test_meta_announces_the_automaton_as_the_organisation_tightened_it(self, svc):
+        await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Refuser": {"closed": True}, "Soumettre": {"not_owner": True}}})
+        meta = await svc.fetch_meta(who(SOUMETTRE), "Leave Request")
+        shown = {t["action"]: t for t in meta["workflow"]["transitions"]}
+        assert "Refuser" not in shown
+        assert shown["Soumettre"]["not_owner"] is True
+        # Les ÉTATS restent ceux du YAML : des documents s'y trouvent, la liste doit tous les filtrer.
+        assert [st["name"] for st in meta["workflow"]["states"]] == [st["name"] for st in STATES]
+
+    async def test_what_an_organisation_cannot_do(self, svc):
+        async def refused(config):
+            with pytest.raises(ValidationFailed) as e:
+                await svc.save_workflow_override(who(), "Leave Request", config)
+            return e.value
+
+        # Inventer une transition ou un état : son grant n'existerait pas chez auth.
+        assert "Téléporter" in (await refused({"transitions": {"Téléporter": {"closed": True}}})).message
+        assert (await refused({"states": [{"name": "Visé"}]})).message
+        # Desserrer : on ne retire pas ce que le YAML impose, on ne vide pas une condition.
+        assert (await refused({"transitions": {"Approuver": {"not_owner": False}}})).message
+        assert (await refused({"transitions": {"Soumettre": {"condition": "   "}}})).message
+        assert (await refused({"transitions": {"Approuver": {"not_owner": True}}})).message  # déjà imposé par le YAML
+        # Changer autre chose qu'une retouche prévue.
+        assert (await refused({"transitions": {"Soumettre": {"to": "Approuvé"}}})).message
+        # Une condition qui ne compile pas, ou qui lit ce qui n'a pas de valeur comparable.
+        assert (await refused({"transitions": {"Soumettre": {"condition": "fantome == 1"}}})).message
+
+    async def test_closing_the_last_way_out_of_a_state_is_refused(self, svc):
+        """Sinon un document s'échoue dans cet état sans recours — et l'organisation découvre la panne sur un document réel."""
+        with pytest.raises(ValidationFailed) as e:
+            await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Soumettre": {"closed": True}}})
+        assert e.value.code == "workflow_dead_end" and "Brouillon" in e.value.message
+        # « À approuver » a deux sorties : en fermer une reste permis, les deux non.
+        saved = await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Approuver": {"closed": True}}})
+        assert set(saved["config"]["transitions"]) == {"Approuver"}
+        with pytest.raises(ValidationFailed) as both:
+            await svc.save_workflow_override(
+                who(), "Leave Request", {"transitions": {"Approuver": {"closed": True}, "Refuser": {"closed": True}}}
+            )
+        assert both.value.code == "workflow_dead_end" and "À approuver" in both.value.message
+
+    async def test_only_who_writes_every_document_tightens_the_automaton(self, db, tables):
+        """Une chaîne d'approbation lie tout le monde : qui n'écrit que ses propres documents ne lève pas l'approbation qui le gêne."""
+        reg = DocTypeRegistry()
+        reg.register(doctype(permissions={
+            "read": ["hr:leave_request:read"],
+            "write": [{"grant": "hr:leave_request:write", "if_owner": True}],
+            "create": ["hr:leave_request:write"],
+        }))
+        svc = DocumentService(reg, db, tables, Log())
+        with pytest.raises(ValidationFailed) as e:
+            await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Refuser": {"closed": True}}})
+        assert e.value.code == "workflow_reserved"
+
+    async def test_a_tweak_that_no_longer_applies_is_ignored_not_fatal(self, svc, db, tables):
+        """Lecture tolérante, comme tout habillage : le plugin a renommé sa transition, le YAML reprend la main pour celle-là."""
+        doc = await demande(svc)
+        await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Refuser": {"closed": True}}})
+
+        renamed = DocTypeRegistry()
+        renamed.register(doctype(workflow={"states": STATES, "transitions": [
+            {"action": "Soumettre", "from": "Brouillon", "to": "À approuver"},
+            {"action": "Approuver", "from": "À approuver", "to": "Approuvé", "not_owner": True},
+            {"action": "Rejeter", "from": "À approuver", "to": "Refusé", "not_owner": True},  # « Refuser » n'existe plus
+        ]}))
+        after = DocumentService(renamed, db, tables, Log())
+        moved = await after.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        rejected = await after.workflow_transition(
+            who("hr:leave_request:workflow_rejeter", user="bob"), "Leave Request", doc["name"], "Rejeter", moved["version"]
+        )
+        assert rejected["workflow_state"] == "Refusé"
+
+    async def test_a_type_without_workflow_has_nothing_to_tighten(self, db, tables):
+        reg = DocTypeRegistry()
+        reg.register(parse_definition({"schema_version": 1, "name": "Note", "module": "hr",
+                                       "fields": [{"fieldname": "texte", "fieldtype": "Text"}]}))
+        svc = DocumentService(reg, db, tables, Log())
+        ctx = make_ctx("acme", "alice", permissions=["hr:note:read", "hr:note:write"])
+        for call in (svc.workflow_override(ctx, "Note"), svc.save_workflow_override(ctx, "Note", {"transitions": {}})):
+            with pytest.raises(ValidationFailed) as e:
+                await call
+            assert e.value.code == "no_workflow"

@@ -504,6 +504,27 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.override.form.delete", op)
 
+    @action("doc.override.workflow.get")
+    async def doc_override_workflow_get(self, payload: dict) -> dict:
+        async def op(ctx):
+            return await self.documents.workflow_override(ctx, _need(payload, "doctype"))
+
+        return await self._run("doc.override.workflow.get", op)
+
+    @action("doc.override.workflow.save")
+    async def doc_override_workflow_save(self, payload: dict) -> dict:
+        async def op(ctx):
+            return await self.documents.save_workflow_override(ctx, _need(payload, "doctype"), payload.get("config"))
+
+        return await self._run("doc.override.workflow.save", op)
+
+    @action("doc.override.workflow.delete")
+    async def doc_override_workflow_delete(self, payload: dict) -> dict:
+        async def op(ctx):
+            return await self.documents.delete_workflow_override(ctx, _need(payload, "doctype"))
+
+        return await self._run("doc.override.workflow.delete", op)
+
     @action("doc.override.dashboard.save")
     async def doc_override_dashboard_save(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:

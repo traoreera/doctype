@@ -206,6 +206,34 @@ NO_RULES = FormRules()
 
 
 @dataclass(frozen=True, slots=True)
+class WorkflowRules:
+    """Ce que l'habillage de workflow d'une ORGANISATION resserre sur l'automate du YAML (`overrides.workflow_rules`, doc/programme.md §3.6).
+
+    Même doctrine que `FormRules` : on ne fait que RESSERRER. `closed` : des transitions qui n'existent pas dans cette organisation ;
+    `conditions` : une condition EN PLUS de celle du YAML (ET, jamais OU) ; `not_owner` : des transitions que l'auteur du document ne
+    fait pas, même si le YAML le lui permettait. Rien ici n'ajoute un état, une transition, ni ne desserre ce que le YAML impose — un
+    grant de transition est déclaré à auth au chargement du plugin, donc une transition inventée par un tenant serait inutilisable.
+
+    Jamais fusionné dans la définition : retirer une transition d'une `WorkflowDef` peut rendre un état injoignable, et le schéma
+    refuserait alors la définition entière. Ces retouches se consultent aux deux portes (`/transitions` et l'écriture).
+    """
+
+    closed: frozenset[str] = frozenset()
+    conditions: Mapping[str, Node] = dataclass_field(default_factory=dict)
+    not_owner: frozenset[str] = frozenset()
+
+    def allows(self, action: str, data: Mapping[str, Any]) -> bool:
+        """La transition est-elle ouverte par CETTE organisation sur ce document ? (la condition du YAML se juge à part)."""
+        if action in self.closed:
+            return False
+        tree = self.conditions.get(action)
+        return True if tree is None else evaluate(tree, data)
+
+
+NO_WORKFLOW_RULES = WorkflowRules()
+
+
+@dataclass(frozen=True, slots=True)
 class CompiledDocType:
     definition: DocTypeDef
     model: type[BaseModel]

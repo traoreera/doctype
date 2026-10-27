@@ -372,6 +372,18 @@ export interface FormOverride {
   fields?: Record<string, FieldTweak>
 }
 
+/** Ce qu'une organisation RESSERRE sur une transition (genre `workflow`, doc/programme.md §3.6) : jamais un desserrage. */
+export interface TransitionTweak {
+  closed?: boolean
+  condition?: string
+  not_owner?: boolean
+}
+
+/** Habillage d'automate : des retouches par ACTION, sur les transitions que le YAML déclare déjà. */
+export interface WorkflowOverride {
+  transitions?: Record<string, TransitionTweak>
+}
+
 /** Habillage d'un espace de travail (genre `workspace`) : le corps d'un espace, sans `name`/`schema_version` (ils viennent de la cible). */
 export interface WorkspaceOverride {
   label?: string

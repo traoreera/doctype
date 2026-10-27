@@ -560,6 +560,70 @@ Le nom du module d'un type d'organisation (et donc le premier segment de ses gra
 qu'il advient d'un type quand l'organisation qui l'a créé est supprimée, et comment on exporte/réimporte pour passer d'une
 organisation à l'autre.
 
+### 3.6 La couche par organisation d'un workflow (27 octobre 2026)
+
+Le point 4 du §3.2 était resté en attente : « l'automate vit dans le YAML, une couche par organisation seulement quand on saura
+la borner ». Voici la borne, et ce qu'elle permet.
+
+#### Ce qui interdit de rendre l'automate entièrement modifiable
+
+Trois obstacles, dont le premier est rédhibitoire et n'a rien d'une préférence de style :
+
+1. **Les grants sont déclarés au CHARGEMENT du plugin.** Une transition s'ouvre par un grant (`hr:leave_request:workflow_approuver`)
+   que le plugin annonce à xauth une fois, au démarrage, et qu'xauth distribue aux rôles. Une transition qu'une organisation
+   inventerait porterait un grant qu'xauth n'a jamais entendu : personne ne pourrait le détenir, donc personne ne pourrait faire
+   cette transition. Elle serait morte à la naissance.
+2. **Les hooks s'accrochent aux états.** `on_submit` / `before_cancel` / `on_cancel` tournent parce qu'un état impose un
+   `docstatus`. Renommer ou supprimer un état d'une organisation ferait tourner — ou plus tourner — du code du plugin sans que le
+   plugin le sache.
+3. **Les documents en vol.** Un état qui disparaît laisse des documents dans un état que l'automate ne connaît plus : ni
+   transition possible, ni retour en arrière.
+
+#### Ce qu'une organisation peut faire : RESSERRER, jamais inventer
+
+Exactement la doctrine des règles de formulaire (`form_rules` : « ils ne font que RESSERRER »). Sur une transition que le YAML
+déclare déjà, une organisation peut :
+
+| Retouche | Ce que ça dit | Pourquoi c'est sûr |
+|---|---|---|
+| `closed: true` | cette transition n'existe pas chez nous | ferme un chemin, n'en ouvre aucun |
+| `condition: <expr>` | en plus de la condition du YAML (ET, jamais OU) | une condition ne peut que refuser davantage |
+| `not_owner: true` | l'auteur ne fait pas cette transition | ajoute une séparation des pouvoirs, ne l'enlève jamais |
+
+Et rien d'autre : **pas de nouvel état, pas de nouvelle transition, pas de renommage, pas de changement de `docstatus`, pas de
+desserrage** (on ne retire pas le `not_owner` du YAML, on ne vide pas sa condition). Les trois obstacles ci-dessus tombent
+d'eux-mêmes : les grants restent ceux que le plugin a déclarés, les états et leurs `docstatus` sont intacts donc les hooks aussi,
+et aucun document ne se retrouve dans un état inconnu.
+
+Ce que ça ne permet donc pas : **ajouter une étape d'approbation qui n'est pas dans le YAML**. C'est le prix du point 1, et il est
+assumé — ajouter une étape suppose un grant, donc un passage par le plugin. Une organisation peut en revanche *durcir* la chaîne
+que le plugin lui donne, ce qui est la demande courante (« chez nous, un congé de plus de dix jours n'est approuvé que par
+quelqu'un d'autre que le demandeur, et seulement s'il porte un motif »).
+
+#### Les décisions d'implémentation
+
+- **Un genre d'habillage à part** (`kind: workflow`, cible = le nom du type), jamais PERSONNEL : un automate est partagé, une
+  « vue personnelle de l'approbation » n'a aucun sens. Il se range dans `xdt_layout_override` comme les autres, aucune migration.
+- **Jamais fusionné dans la définition.** Les champs ajoutés (§3.5) repassent par `parse_definition` ; un workflow, non. Retirer
+  une transition d'une `WorkflowDef` peut rendre un état injoignable, donc faire ÉCHOUER la validation du schéma : un habillage
+  stocké casserait alors toutes les requêtes du type. Les retouches vivent dans un objet à part (`builder.WorkflowRules`, comme
+  `FormRules`) que les DEUX portes consultent — `/transitions` et l'écriture — par le même interprète.
+- **Pas de cul-de-sac** : un état qui avait une sortie doit en garder une. Fermer la dernière transition qui part d'un état est
+  refusé à l'enregistrement (`workflow_dead_end`, en nommant l'état), sinon un document s'y échouerait sans recours. Une
+  *condition* qui ne serait jamais vraie produirait le même blocage, mais ça ne se vérifie pas sans évaluer des données : c'est
+  une règle métier, elle est de la responsabilité de qui l'écrit.
+- **Qui l'écrit** : qui peut modifier TOUS les documents du type (`scope.level == "all"`, 422 `workflow_reserved`), comme les
+  règles de formulaire et les champs ajoutés. Une chaîne d'approbation lie tout le monde ; quelqu'un qui n'écrit que ses propres
+  documents ne lève pas l'approbation qui le gêne.
+- **Lecture tolérante**, comme tout habillage : une retouche qui vise une transition disparue du YAML, ou dont la condition ne
+  compile plus, est ignorée — le YAML reprend la main pour celle-là, jamais une page cassée ni un type inutilisable.
+
+#### Ce qui reste hors de cette tranche
+
+Ajouter un état ou une transition (point 1 ci-dessus : il faudrait qu'xauth sache déclarer un grant après le chargement), et
+l'historique des retouches d'automate (qui a fermé quelle transition : `xdt_layout_override` ne garde que l'état courant et son
+auteur).
+
 ## 4. Ce qu'on vise
 
 Les sept éléments des groupes 1 et 2 valent **7 lignes** de l'inventaire élargi (4 des 87, 3 des angles morts) : de 59 % à ~65 %. Le

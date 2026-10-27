@@ -226,6 +226,18 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
         await _guard(documents.delete_form_override(ctx, doctype))
         return Response(status_code=204)
 
+    @router.get("/override/workflow/{doctype}")
+    async def workflow_override_get(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(documents.workflow_override(ctx, doctype))
+
+    @router.put("/override/workflow/{doctype}")
+    async def workflow_override_put(doctype: str, body: OverrideBody, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(documents.save_workflow_override(ctx, doctype, body.config))
+
+    @router.delete("/override/workflow/{doctype}", status_code=204)
+    async def workflow_override_delete(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
+        await _guard(documents.delete_workflow_override(ctx, doctype))
+
     @router.put("/override/dashboard/{doctype}")
     async def dashboard_override_put(doctype: str, body: OverrideBody, scope: str = Query("org"), ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.save_dashboard_override(ctx, doctype, body.config, scope))
