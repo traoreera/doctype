@@ -246,6 +246,26 @@ class TestCustomFields:
         with pytest.raises(ValidationFailed, match=why):
             await svc.save_form_override(WRITER, "Order", {"added": [spec]})
 
+    async def test_the_organisation_places_its_added_field_in_its_layout(self, db, tables):
+        """Le Form Builder du Desk range un champ ajouté où on le dépose : la disposition de l'organisation peut le citer, comme un champ du
+        type. Sans ça, il finissait toujours dans le dernier bloc, quoi qu'on fasse."""
+        svc = service(registry(), db, tables)
+        layout = [{"section": "Client", "columns": [["a", "custom_segment"], ["b"]]}]
+        await svc.save_form_override(WRITER, "Order", {"added": [SEGMENT], "layout": layout})
+        meta = await svc.fetch_meta(WRITER, "Order")
+        assert meta["layout"][0]["columns"] == [["a", "custom_segment"], ["b"]]
+        assert "custom_segment" not in [n for s in meta["layout"][1:] for col in s["columns"] for n in col]  # placé une fois, pas reversé en bas
+
+    async def test_only_the_fields_added_in_the_same_override_can_be_placed(self, db, tables):
+        svc = service(registry(), db, tables)
+        layout = [{"section": None, "columns": [["a", "custom_segment"]]}]
+        with pytest.raises(ValidationFailed, match="champ inconnu 'custom_segment'"):
+            await svc.save_form_override(WRITER, "Order", {"layout": layout})  # ajouté nulle part
+        with pytest.raises(ValidationFailed, match="caché"):
+            await svc.save_form_override(WRITER, "Order", {"added": [{**SEGMENT, "hidden": True}], "layout": layout})
+        with pytest.raises(ValidationFailed, match="clés inconnues|champ inconnu"):  # ses propriétés vivent dans `added`, pas dans `fields`
+            await svc.save_form_override(WRITER, "Order", {"added": [SEGMENT], "fields": {"custom_segment": {"label": "Segment client"}}})
+
     async def test_a_field_added_twice_is_refused(self, db, tables):
         svc = service(registry(), db, tables)
         with pytest.raises(ValidationFailed, match="deux fois"):

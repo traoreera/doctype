@@ -16,7 +16,6 @@ import ConnectionsPanel from '@/components/ConnectionsPanel.vue'
 import TagBar from '@/components/tags/TagBar.vue'
 import { supportsTags } from '@/lib/tags'
 import HistoryPanel from '@/components/HistoryPanel.vue'
-import OverrideEditor from '@/components/OverrideEditor.vue'
 import TableField from '@/components/TableField.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import ExtensionSlot from '@/extensions/ExtensionSlot.vue'
@@ -29,7 +28,7 @@ import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchS
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
-import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
+import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldMeta, type LayoutSection } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -69,14 +68,6 @@ const banner = ref<string | null>(null)
 const errors = ref<Record<string, string>>({})
 const collapsed = ref<Record<number, boolean>>({})
 const formId = `f${Math.random().toString(36).slice(2, 8)}`
-/** Éditeur d'habillage : disposition du formulaire, par-dessus le YAML du plugin. */
-const editingLayout = ref(false)
-const savingLayout = ref(false)
-const layoutDraft = ref<FormOverride>({})
-/** Ce que la définition impose à chaque champ, habillage à part : l'éditeur grise d'après lui ce qu'un habillage ne desserre pas. */
-const layoutBase = ref<Record<string, FieldBase> | null>(null)
-// Le refus du serveur au dernier enregistrement (ou retrait) de l'habillage : montré DANS la fenêtre, qui reste ouverte.
-const layoutProblem = ref<string | null>(null)
 
 const isNew = computed(() => props.name === null)
 const label = computed(() => meta.value?.label ?? props.doctype)
@@ -569,7 +560,8 @@ const moreItems = computed<MoreItem[]>(() => {
   const out: MoreItem[] = []
   if (canRename.value) out.push({ label: t.form.rename, icon: 'pi pi-pencil', testid: 'rename', command: openRename })
   if (canDuplicate.value) out.push({ label: t.form.duplicate, icon: 'pi pi-clone', testid: 'duplicate', command: duplicate })
-  if (writable.value) out.push({ label: t.override.edit, icon: 'pi pi-table', testid: 'form-layout-edit', command: () => void openLayout() })
+  // « Personnaliser » : le Form Builder, une page (onglets, sections, champs à glisser), à la manière de Frappe.
+  if (writable.value) out.push({ label: t.formBuilder.menu, icon: 'pi pi-objects-column', testid: 'form-layout-edit', command: () => void router.push({ name: 'customize', params: { doctype: props.doctype } }) })
   // Le circuit d'approbation (§3.2, §3.6) : son éditeur est une page (le graphe), que tout lecteur du type ouvre ; seul qui modifie
   // TOUS ses documents y adapte quelque chose (la page le dit et grise le reste).
   if (meta.value?.workflow) {
@@ -629,57 +621,11 @@ async function rename(): Promise<void> {
 }
 
 // ── Habillage du formulaire ────────────────────────────────
-async function openLayout(): Promise<void> {
-  if (!meta.value) return
-  let config: FormOverride = { layout: meta.value.layout }
-  layoutBase.value = null
-  layoutProblem.value = null
-  try {
-    const current = await api.formOverride(props.doctype)
-    config = { ...current.config, layout: current.config.layout ?? meta.value.layout }
-    layoutBase.value = current.definition ?? null
-  } catch {
-    // Un habillage illisible ne doit pas empêcher d'en écrire un : on part de la disposition affichée.
-  }
-  layoutDraft.value = config
-  editingLayout.value = true
-}
-
 /** Après un habillage, la disposition a changé côté serveur : on relit la définition SANS toucher à la saisie en cours. */
 async function reloadMeta(): Promise<void> {
   const m = await metaStore.refresh(props.doctype)
   meta.value = m
   collapsed.value = Object.fromEntries(m.layout.map((s, i) => [i, s.collapsible && s.collapsed]))
-}
-
-async function saveLayout(config: unknown): Promise<void> {
-  savingLayout.value = true
-  layoutProblem.value = null
-  try {
-    await api.saveFormOverride(props.doctype, config as FormOverride)
-    await reloadMeta()
-    editingLayout.value = false
-    notify.success(t.override.savedToast)
-  } catch (e) {
-    layoutProblem.value = describeError(e) // ce que le serveur refuse, et pourquoi (`form_rules_reserved`, champ mal placé…)
-  } finally {
-    savingLayout.value = false
-  }
-}
-
-async function resetLayout(): Promise<void> {
-  savingLayout.value = true
-  layoutProblem.value = null
-  try {
-    await api.removeFormOverride(props.doctype)
-    await reloadMeta()
-    editingLayout.value = false
-    notify.success(t.override.resetToast)
-  } catch (e) {
-    layoutProblem.value = describeError(e)
-  } finally {
-    savingLayout.value = false
-  }
 }
 
 // ── Garde des modifications ────────────────────────────────
@@ -907,22 +853,6 @@ onBeforeUnmount(() => {
           <Button :label="t.form.rename" icon="pi pi-check" :loading="renameBusy" data-testid="rename-confirm" @click="rename" />
         </template>
       </Dialog>
-
-      <OverrideEditor
-        v-model:visible="editingLayout"
-        :title="t.override.formTitle"
-        :initial="layoutDraft"
-        :fields="meta?.fields"
-        :definition="layoutBase"
-        :naming="meta ? namingField(meta) : null"
-        :rules="meta?.rights.write === 'all'"
-        :problem="layoutProblem"
-        :doctype="doctype"
-        :saving="savingLayout"
-        :workflow="!!meta?.workflow"
-        @save="saveLayout"
-        @reset="resetLayout"
-      />
 
       <p v-if="record" class="desk-muted" style="font-size: 0.8rem" data-testid="form-footer">
         <template v-if="record.amended_from">

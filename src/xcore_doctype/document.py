@@ -789,7 +789,14 @@ class DocumentService:
         self._scope(ctx, compiled, "read")
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
-        return {"doctype": doctype, "config": (found or {}).get("config", {}), "definition": form_base(compiled)}
+        return {
+            "doctype": doctype,
+            "config": (found or {}).get("config", {}),
+            "definition": form_base(compiled),
+            # Le libellé de chaque champ selon l'APPLICATION : le Form Builder le montre à côté de celui que l'organisation a pu donner (`/meta`
+            # ne sert plus que le second), et le rend quand on vide la retouche.
+            "labels": {f.fieldname: f.label or f.fieldname for f in compiled.definition.fields},
+        }
 
     async def save_form_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
         """Enregistre l'habillage d'un formulaire. Il faut pouvoir ÉCRIRE le type : cela change sa présentation pour tous. Ses règles d'écriture

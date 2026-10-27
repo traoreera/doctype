@@ -374,7 +374,8 @@ export class ApiClient {
   // ── Habillages (overrides) ─────────────────────────────────
   /** L'habillage de formulaire du tenant pour ce type (vide s'il n'y en a pas). */
   /** `definition` : ce que le YAML impose à chaque champ (l'éditeur grise d'après lui ce qu'un habillage ne desserre pas). */
-  formOverride(doctype: string): Promise<{ doctype: string; config: FormOverride; definition?: Record<string, FieldBase> }> {
+  /** `labels` : le libellé de chaque champ selon l'application, que `/meta` ne sert plus quand l'organisation en a donné un. */
+  formOverride(doctype: string): Promise<{ doctype: string; config: FormOverride; definition?: Record<string, FieldBase>; labels?: Record<string, string> }> {
     return this.call('GET', `/override/form/${encodeURIComponent(doctype)}`)
   }
 
