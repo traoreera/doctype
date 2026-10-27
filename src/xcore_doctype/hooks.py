@@ -107,8 +107,10 @@ class HookTransaction(Protocol):
     est en revanche validée comme n'importe quelle autre (types stricts, champs obligatoires, liens, numérotation), historisée
     au nom de l'utilisateur, et défaite avec la transaction si le hook, ou un hook suivant, refuse.
 
-    Les hooks du DocType écrit NE s'exécutent PAS : il ne peut donc pas en déclarer (`hook_not_supported`), plutôt que de se
-    laisser écrire sans la validation qu'il promet. Un document soumis est figé, il ne se modifie pas par ici non plus.
+    Le DocType écrit garde ses règles : ses hooks de confiance `validate`, `before_save` (et `before_insert` à la création) passent
+    dans la transaction — un refus défait tout —, `after_insert` / `after_save` après le commit. Ses hooks `action:` (sandboxés, hors
+    transaction) ne le peuvent pas : un tel type se refuse (`hook_not_supported`). Un hook manquant refuse l'écriture (503). Des hooks qui
+    s'écrivent en chaîne s'arrêtent au-delà de `MAX_TX_DEPTH` niveaux (`hook_recursion`).
     """
 
     @property
@@ -125,7 +127,9 @@ class HookTransaction(Protocol):
         """Crée le document s'il n'existe pas, atomiquement (vrai si c'est cet appel qui l'a créé). Ne modifie jamais l'existant."""
 
     async def update(self, doctype: str, name: str, data: Mapping[str, Any], version: int) -> dict[str, Any]:
-        """Remplace le contenu d'un BROUILLON, avec le contrôle de version habituel (409 si le document a changé)."""
+        """Remplace le contenu d'un document, avec le contrôle de version habituel (409 si le document a changé). Un document SOUMIS ne laisse
+        changer que ses champs `allow_on_submit` (un autre champ changé : 500 `hook_invalid_write`) et son `on_update_after_submit` tourne ;
+        annulé, il refuse (409 `document_locked`). C'est ainsi qu'un paiement soumis met à jour le reste dû de sa facture."""
 
 
 @dataclass(slots=True)

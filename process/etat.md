@@ -50,9 +50,12 @@ Par ordre de blocage, pas par ordre de taille.
 ### 2.1 Personne ne peut rien lire (bloquant absolu)
 
 Les DocTypes de l'ERP arrivent par `doctypes_dirs`, donc sans plugin propriétaire, donc **aucun grant n'est
-déclaré à xauth**. Les droits refusant par défaut, une instance réelle n'affiche rien du tout. Il faut un
-plugin minuscule par module (grants + espace de travail, une dizaine de lignes), soit 22. Mécanique, mais rien
-ne fonctionne avant.
+déclaré à xauth**. Les droits refusant par défaut, une instance réelle n'affiche rien du tout.
+
+**Levé côté moteur le 27 oct.** : un plugin par module est désormais possible malgré le cycle
+(`load_dir(…, peers=True)`, `erp-doctypes.md` §2). Chaque module devient un vrai plugin, propriétaire de ses
+DocTypes, qui déclare ses grants et porte sa logique. Reste à ÉCRIRE ces plugins (mécanique pour la déclaration,
+le métier ensuite).
 
 ### 2.2 Rien ne calcule
 
@@ -71,7 +74,9 @@ prendre avant d'écrire les 135 autres.
 Zéro `hooks:` dans les 721 fichiers. Un `Stock Entry` soumis n'écrit rien au grand livre et ne bouge aucun
 solde de `Bin` ; une facture n'écrit aucune écriture comptable. Et ce n'est pas qu'une affaire de YAML :
 déclarer `hooks:` **sans un plugin qui les enregistre** fait échouer toute sauvegarde du type en 503
-`hook_unavailable`. Il faut donc §2.1 d'abord, puis la logique : registre immuable, soldes maintenus, refus de
+`hook_unavailable`. Deux limites du moteur sont levées (27 oct.) : un hook peut écrire un type qui a ses propres
+hooks (ils tournent), et mettre à jour les champs `allow_on_submit` d'un document SOUMIS (le reste dû d'une facture
+quand un paiement est soumis). Il faut donc §2.1 d'abord, puis la logique : registre immuable, soldes maintenus, refus de
 négatif sous concurrence, contre-écritures à l'annulation. Le gabarit existe
 (`tests/support/plugins/stock/src/ledger.py`), c'est un module par domaine.
 

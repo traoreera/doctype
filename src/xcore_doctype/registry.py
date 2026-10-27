@@ -105,6 +105,11 @@ class DocTypeRegistry:
         self._extensions: dict[str, list[Extension]] = {}
         # Contributions d'espace (D27) : module visé -> [(plugin, contribution)], dans l'ordre de chargement. Gardées si le module visé part.
         self._contributions: dict[str, list[tuple[str, WorkspaceContribution]]] = {}
+        # Modules FRÈRES (`load_dir(…, peers=True)`) : des plugins qui se citent en cycle (accounts ↔ stock ↔ selling…) ne peuvent pas se
+        # charger l'un après l'autre. Un parent dont la table enfant vient d'un frère pas encore chargé ATTEND ici (invisible, aucune écriture),
+        # et s'enregistre à l'arrivée de cet enfant ; une définition dont un contrôle échoue à l'arrivée d'un frère est BRISÉE (écritures refusées).
+        self._waiting: dict[str, tuple[DocTypeDef, str, str | None]] = {}  # DocType -> (définition d'origine, source, propriétaire)
+        self._broken: dict[str, list[str]] = {}
 
     def register(self, defn: DocTypeDef, *, source: str = "<code>", owner: str | None = None) -> CompiledDocType:
         """Enregistre un DocType. Les DocTypes enfants qu'il cite (champs Table) doivent l'être AVANT lui.
@@ -112,7 +117,7 @@ class DocTypeRegistry:
         `owner` : le plugin qui l'apporte. Son `module` DOIT alors être le nom de ce plugin : c'est lui qui déclare les grants
         du module à auth (`doctype_grants.for_plugin`), un plugin ne peut donc pas écrire des DocTypes dans le module d'un autre.
         """
-        if defn.name in self._items:
+        if defn.name in self._items or (defn.name in self._waiting and self._waiting[defn.name][1] != source):
             raise InvalidDefinition(f"{source}: DocType {defn.name!r} déjà défini")
         # Un DocType enfant n'a pas de `module` (il hérite de son parent, voir schema._child_rules) : il appartient au plugin qui l'apporte.
         if owner is not None and not defn.istable and defn.module != owner:
@@ -185,7 +190,7 @@ class DocTypeRegistry:
                 raise InvalidDefinition(f"{source}: {defn.name}:\n" + "\n".join(f"  - {p}" for p in problems))
         return compiled
 
-    def load_dir(self, directory: Path, *, owner: str | None = None) -> list[str]:
+    def load_dir(self, directory: Path, *, owner: str | None = None, peers: bool = False) -> list[str]:
         """Charge `*.yaml|*.yml|*.json`, SOUS-DOSSIERS COMPRIS. Une définition invalide fait échouer tout le chargement, ET n'en laisse aucune.
 
         Les DocTypes enfants passent d'abord : un parent compile ses lignes avec la définition de leur DocType. Ce tri
@@ -196,7 +201,8 @@ class DocTypeRegistry:
 
         Tout fichier de l'arbre est lu comme un DocType : les espaces de travail d'un plugin vivent à côté de son dossier
         de DocTypes (`load_workspaces`), jamais dedans.
-        `owner` : voir `register`.
+        `owner` : voir `register`. `peers` : un parent dont la table enfant appartient à un module frère PAS ENCORE chargé attend
+        (`_waiting`) au lieu d'échouer, et s'enregistre à l'arrivée de l'enfant (`settle`). Rend les noms ENREGISTRÉS.
         """
         if owner is not None and not _OWNER_RE.match(owner):
             raise InvalidDefinition(
@@ -215,20 +221,127 @@ class DocTypeRegistry:
                 raise InvalidDefinition(f"{path}: illisible ({e})") from e
             parsed.append((parse_definition(raw, source=str(path)), str(path)))
         loaded: list[str] = []
+        parked: list[str] = []
         try:
             for defn, source in sorted(parsed, key=lambda item: not item[0].istable):  # tri stable : l'ordre des fichiers est gardé
+                if peers and self._missing_children(defn):
+                    self._park(defn, source, owner)
+                    parked.append(defn.name)
+                    continue
                 loaded.append(self.register(defn, source=source, owner=owner).definition.name)
         except Exception:
             for name in loaded:  # tout ou rien : un dossier à moitié chargé laisserait des DocTypes sans leurs voisins
                 self._remove(name)
+            for name in parked:
+                self._waiting.pop(name, None)
             raise
         return loaded
+
+    # ── Modules frères (un plugin par module, liens en cycle) ─────────────
+    def _missing_children(self, defn: DocTypeDef) -> list[str]:
+        return [str(f.options) for f in defn.fields if f.fieldtype == "Table" and str(f.options) not in self._items]
+
+    def _park(self, defn: DocTypeDef, source: str, owner: str | None) -> None:
+        if defn.name in self._items or defn.name in self._waiting:
+            raise InvalidDefinition(f"{source}: DocType {defn.name!r} déjà défini")
+        if owner is not None and not defn.istable and defn.module != owner:
+            raise InvalidDefinition(f"{source}: DocType {defn.name!r} : `module` doit être {owner!r} (le plugin qui l'apporte), pas {defn.module!r}")
+        self._waiting[defn.name] = (defn, source, owner)
+
+    def waiting(self) -> dict[str, list[str]]:
+        """Les DocTypes qui attendent la table enfant d'un module frère : DocType -> tables manquantes."""
+        return {name: self._missing_children(defn) for name, (defn, _, _) in sorted(self._waiting.items())}
+
+    def owner_waiting(self, name: str) -> str | None:
+        entry = self._waiting.get(name)
+        return entry[2] if entry else None
+
+    def waiting_definitions(self) -> list[DocTypeDef]:
+        """Leurs définitions : un plugin déclare les grants de TOUS ses DocTypes à son chargement, y compris ceux qui attendent encore."""
+        return [defn for defn, _, _ in self._waiting.values()]
+
+    def settle(self) -> tuple[list[str], dict[str, list[str]]]:
+        """Enregistre les parents dont toutes les tables sont maintenant chargées (jusqu'à ce que plus rien ne bouge). Un parent qui échoue
+        alors (sa définition ne compile pas avec l'enfant arrivé) est BRISÉ, pas levé : le frère qui vient d'arriver n'en répond pas.
+        Rend (enregistrés, brisés -> raisons)."""
+        done: list[str] = []
+        failed: dict[str, list[str]] = {}
+        progress = True
+        while progress:
+            progress = False
+            for name, (defn, source, owner) in list(self._waiting.items()):
+                if self._missing_children(defn):
+                    continue
+                del self._waiting[name]
+                progress = True
+                try:
+                    self.register(defn, source=source, owner=owner)
+                except InvalidDefinition as e:
+                    failed[name] = [str(e)]
+                    continue
+                done.append(name)
+        return done, failed
+
+    def citing(self, arrived: Sequence[str]) -> list[str]:
+        """Les DocTypes enregistrés qui citent l'un de ces DocTypes (Link, ligne, DynamicLink par Select, `created_from`) : leurs contrôles
+        dépendant de la cible (fetch_from, link_filters, unit_from, target_status, mappings) se refont à son arrivée."""
+        wanted = set(arrived)
+        out = []
+        for name, compiled in self._items.items():
+            if name in wanted:
+                continue
+            if self._cited_targets(compiled) & wanted:
+                out.append(name)
+        return sorted(out)
+
+    def _cited_targets(self, compiled: CompiledDocType) -> set[str]:
+        d = compiled.definition
+        targets: set[str] = {m.source for m in d.created_from or []}
+        for f in d.fields:
+            if f.fieldtype == "Link":
+                targets.add(str(f.options))
+            elif f.fieldtype == "DynamicLink":
+                holder = d.field_map.get(str(f.options))
+                targets.update((holder.options if holder is not None and holder.fieldtype == "Select" else None) or [])
+        return targets
+
+    def mark_broken(self, name: str, problems: list[str]) -> None:
+        """Pose (ou, vide, retire) la raison pour laquelle un DocType n'est plus écrivable depuis l'arrivée d'un frère."""
+        if problems:
+            self._broken[name] = problems
+        else:
+            self._broken.pop(name, None)
+
+    def incomplete(self, name: str) -> list[str]:
+        """Pourquoi on n'écrit pas encore ce DocType : les DocTypes qu'il cite et qui ne sont pas chargés (un module frère attendu), ou le
+        contrôle qui a échoué à l'arrivée d'un frère. Vide : il est complet. Toute écriture d'un type incomplet est refusée (fermé, 503)."""
+        if name in self._broken:
+            return list(self._broken[name])
+        compiled = self._items.get(name)
+        if compiled is None:
+            return []
+        missing = {t for t in self._cited_targets(compiled) if t not in self._items}
+        for child in compiled.children.values():
+            for cf in child.fields:
+                if cf.fieldtype == "Link" and str(cf.options) not in self._items:
+                    missing.add(str(cf.options))
+        return [f"DocType {t!r} pas encore chargé" for t in sorted(missing)]
 
     def unregister_owner(self, owner: str) -> list[str]:
         """Retire les DocTypes et les espaces de travail qu'un plugin a apportés (à son `on_unload`). Les documents, eux, restent en base."""
         mine = [name for name, who in self._owners.items() if who == owner]
         for name in mine:
             self._remove(name)
+        for name in [n for n, (_, _, who) in self._waiting.items() if who == owner]:
+            del self._waiting[name]
+        # Un parent d'un AUTRE plugin qui avait une table de celui-ci retourne en attente : il revient quand le plugin revient.
+        for name, compiled in list(self._items.items()):
+            if any(str(f.options) not in self._items for f in compiled.definition.fields if f.fieldtype == "Table"):
+                defn, source = self._origins[name]
+                who = self._owners.get(name)
+                self._remove(name)
+                self._waiting[name] = (defn, source, who)
+        self._broken = {n: why for n, why in self._broken.items() if n in self._items}
         self._drop_extensions(owner)
         for name in [n for n, who in self._workspace_owners.items() if who == owner]:
             self._workspaces.pop(name, None)
@@ -310,6 +423,8 @@ class DocTypeRegistry:
         problems = []
         for target in ws.doctypes():
             item = self._items.get(target)
+            if item is None and target in self._waiting:
+                continue  # attend la table d'un module frère : invisible jusqu'à son arrivée (comme un DocType non chargé)
             if item is None:
                 problems.append(f"bloc qui vise un DocType inconnu : {target!r}")
             elif item.definition.istable:
@@ -339,6 +454,7 @@ class DocTypeRegistry:
         self._items.pop(name, None)
         self._owners.pop(name, None)
         self._origins.pop(name, None)
+        self._broken.pop(name, None)
 
     # ── Extensions de DocType (D26) ───────────────────────────
     def load_extensions(self, directory: Path, *, owner: str) -> list[str]:
@@ -416,23 +532,37 @@ class DocTypeRegistry:
             for x in self._extensions.get(doctype, [])
         ]
 
-    def validate_links(self, only: list[str] | None = None) -> None:
+    def validate_links(self, only: list[str] | None = None, *, allow_missing: bool = False) -> None:
         """Toute cible de champ Link doit être un DocType chargé : sinon aucun document ne pourrait jamais la satisfaire.
 
         À appeler une fois TOUS les dossiers de l'opérateur chargés (une définition peut viser un DocType défini plus loin).
-        `only` limite le contrôle à ces DocTypes : un plugin qui arrive ne répond pas des défauts des autres.
+        `only` limite le contrôle à ces DocTypes : un plugin qui arrive ne répond pas des défauts des autres. `allow_missing` (modules frères) :
+        une cible pas encore chargée n'est pas une faute — le type reste incomplet (`incomplete`) jusqu'à son arrivée, où tout se refait.
         """
-        problems = []
+        problems: list[str] = []
+        self._link_problems(only, problems, allow_missing=allow_missing)
+        if problems:
+            raise InvalidDefinition("champs Link invalides :\n" + "\n".join(f"  - {p}" for p in problems))
+
+    def link_problems(self, name: str) -> list[str]:
+        """Les mêmes contrôles, pour UN DocType, rendus au lieu d'être levés (cibles absentes tolérées) : ce qu'on refait à l'arrivée d'un frère."""
+        problems: list[str] = []
+        self._link_problems([name], problems, allow_missing=True)
+        return problems
+
+    def _link_problems(self, only: list[str] | None, problems: list[str], *, allow_missing: bool) -> None:
         for name in (self.names() if only is None else sorted(only)):
             self._check_units(name, problems)
             self._check_fetch(name, problems)
             self._check_link_filters(name, problems)
-            self._check_dynamic(name, problems)
-            self._check_mappings(name, problems)
+            self._check_dynamic(name, problems, allow_missing=allow_missing)
+            self._check_mappings(name, problems, allow_missing=allow_missing)
             for f in self._items[name].definition.fields:
                 if f.fieldtype != "Link":
                     continue
                 target = self._items.get(str(f.options))
+                if target is None and allow_missing:
+                    continue
                 if target is None:
                     problems.append(f"{name}.{f.fieldname}: DocType cible inconnu {f.options!r}")
                 elif target.definition.istable:
@@ -441,12 +571,10 @@ class DocTypeRegistry:
                     problems.append(
                         f"{name}.{f.fieldname}: `target_status` vise {f.options!r}, qui n'est jamais soumettable : aucun document ne satisfera jamais cette contrainte"
                     )
-        if problems:
-            raise InvalidDefinition("champs Link invalides :\n" + "\n".join(f"  - {p}" for p in problems))
 
     # Les deux prédicats de type vivent dans `mapping.py`, avec la logique qu'ils gouvernent (import local : `mapping`
     # importe `schema`, et le registre n'a besoin d'eux qu'ici).
-    def _check_mappings(self, name: str, problems: list[str]) -> None:
+    def _check_mappings(self, name: str, problems: list[str], *, allow_missing: bool = False) -> None:
         """`created_from` (process/mapper.md §6) : tout ce qui rendrait un préremplissage impossible échoue ICI, au chargement.
 
         Rien n'est vérifié à la première saisie : une source inconnue, un champ absent d'un côté, deux quantités de genres
@@ -456,6 +584,8 @@ class DocTypeRegistry:
         for m in d.created_from or []:
             where = f"{name}.created_from[{m.source}]"
             src = self._items.get(m.source)
+            if src is None and allow_missing:
+                continue  # un module frère pas encore chargé : contrôlé à son arrivée
             if src is None:
                 problems.append(f"{where}: source inconnue {m.source!r} (chargez-la avant, ou nommez-la dans `requires`)")
                 continue
@@ -576,7 +706,7 @@ class DocTypeRegistry:
                 except ValidationFailed as e:
                     problems.append(f"{where} : {e.message or 'valeur refusée par le champ filtré'}")
 
-    def _check_dynamic(self, name: str, problems: list[str]) -> None:
+    def _check_dynamic(self, name: str, problems: list[str], *, allow_missing: bool = False) -> None:
         """Un DynamicLink dont le champ de type est un Select ne peut désigner que des DocTypes chargés (les options le disent d'avance)."""
         d = self._items[name].definition
         for f in d.fields:
@@ -585,6 +715,8 @@ class DocTypeRegistry:
             holder = d.field_map[str(f.options)]
             for option in (holder.options if holder.fieldtype == "Select" else None) or []:
                 target = self._items.get(option)
+                if target is None and allow_missing:
+                    continue
                 if target is None:
                     problems.append(f"{name}.{f.fieldname}: DynamicLink : l'option {option!r} de {holder.fieldname!r} n'est pas un DocType chargé")
                 elif target.definition.istable:
@@ -656,6 +788,8 @@ class DocTypeRegistry:
         return sorted(self._items)
 
     def clear(self) -> None:
+        self._waiting.clear()
+        self._broken.clear()
         self._items.clear()
         self._owners.clear()
         self._workspaces.clear()
@@ -689,14 +823,26 @@ class DocTypeChannel:
         self._desk = desk if desk is not None else DeskExtensions()
         self._checks: set[asyncio.Task[None]] = set()  # les contrôles `unique` rétroactifs en cours (gardés : une tâche orpheline serait ramassée)
 
-    def load_dir(self, owner: str, directory: str | Path) -> list[str]:
-        names = self._registry.load_dir(Path(directory), owner=owner)
+    def load_dir(self, owner: str, directory: str | Path, *, peers: bool = False) -> list[str]:
+        """`peers=True` : les DocTypes de ce plugin citent ceux de modules FRÈRES qui peuvent se charger APRÈS lui (les modules d'un ERP se
+        citent en cycle : accounts ↔ stock ↔ selling…, aucun ordre de `requires` n'existe). Une cible pas encore chargée n'est alors pas une
+        faute : le type reste INCOMPLET — lisible, mais toute écriture refusée (503 `doctype_incomplete`) — jusqu'à l'arrivée du frère, où les
+        contrôles qui dépendent de la cible se refont ; un parent dont la table enfant vient d'un frère attend, invisible, de pouvoir compiler.
+        Sans `peers`, une cible inconnue échoue ici comme avant (les fautes de frappe se voient au chargement)."""
+        names = self._registry.load_dir(Path(directory), owner=owner, peers=peers)
         # Tout ce que le dossier apporte doit pouvoir être lié : une cible de Link inconnue échoue ici, pas à la première saisie.
         try:
-            self._registry.validate_links(names)
+            self._registry.validate_links(names, allow_missing=peers)
         except InvalidDefinition:
             self._registry.unregister_owner(owner)
             raise
+        names += self._welcome(names)
+        if peers and (waiting := {n: m for n, m in self._registry.waiting().items() if self._registry.owner_waiting(n) == owner}):
+            if self._log is not None:
+                self._log.warning("doctypes waiting for a peer module", plugin=owner, waiting=waiting)
+        if peers and (incomplete := {n: why for n in names if (why := self._registry.incomplete(n))}):
+            if self._log is not None:
+                self._log.warning("doctypes incomplete until their peer modules load", plugin=owner, incomplete=incomplete)
         if self._unique_check is not None:
             # Un champ rendu `unique` après coup ne s'active pas sur des documents déjà en double (D25). Le contrôle lit la base (asynchrone)
             # alors que `load_dir` est appelé sans `await` par les plugins : il part en tâche, et un double RETIRE les DocTypes du plugin
@@ -714,6 +860,21 @@ class DocTypeChannel:
         if self._log is not None:
             self._log.info("doctypes registered by plugin", plugin=owner, doctypes=names)
         return names
+
+    def _welcome(self, arrived: list[str]) -> list[str]:
+        """Ce que l'arrivée de ces DocTypes débloque chez les autres : les parents qui attendaient l'une de ces tables s'enregistrent, et les
+        types qui les citent refont leurs contrôles dépendant de la cible. Une faute révélée ainsi BRISE le type qui cite (écritures refusées,
+        journalisé) au lieu de faire échouer le plugin qui arrive : il n'en répond pas. Rend les noms des parents enregistrés."""
+        registered, failed = self._registry.settle()
+        for name, why in failed.items():
+            if self._log is not None:
+                self._log.error("waiting doctype failed to compile when its peer arrived", doctype=name, reason=why)
+        for name in sorted(set(registered) | set(self._registry.citing(arrived + registered))):
+            problems = self._registry.link_problems(name)
+            self._registry.mark_broken(name, problems)
+            if problems and self._log is not None:
+                self._log.error("doctype broken by a peer module's definition", doctype=name, problems=problems)
+        return registered
 
     async def _check_unique(self, owner: str, compiled: list[CompiledDocType]) -> None:
         try:
