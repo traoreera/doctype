@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from tests.conftest import make_ctx
-from xcore_doctype.csv_import import MAX_ROWS, NAME, SKIP, cell_value, import_csv, map_columns, read_csv
+from xcore_doctype.csv_import import MAX_COLUMNS, MAX_ROWS, NAME, SKIP, cell_value, import_csv, map_columns, read_csv
 from xcore_doctype.document import DocumentService
 from xcore_doctype.errors import DocumentValidationError, PermissionDenied, ValidationFailed
 from xcore_doctype.hooks import HookRegistry
@@ -57,6 +57,10 @@ def _defs():
         {"schema_version": 1, "name": "Code", "module": "crm", "naming": "prompt", "fields": [{"fieldname": "t", "fieldtype": "Text"}]},
         {"schema_version": 1, "name": "Reglage", "module": "crm", "single": True, "fields": [{"fieldname": "t", "fieldtype": "Text"}]},
     ]
+
+
+async def _noop(event) -> None:
+    return None
 
 
 @pytest.fixture
@@ -129,6 +133,14 @@ class TestCells:
         ("Date", {}, "2026-13-01"),
         ("Datetime", {}, "2026-03-01T10:00:00"),  # sans fuseau : l'heure de qui ?
         ("Time", {}, "midi"),
+        ("Int", {}, "١٢"),  # chiffres arabes-indiens : int() de Python les accepte, l'API non
+        ("Number", {}, "１２.５"),  # chiffres pleine chasse
+        ("Decimal", {"decimals": 2}, "١٢"),
+        ("Date", {}, "٣١/١٢/٢٠٢٦"),
+        ("Date", {}, "２０２６-０１-０５"),
+        ("Time", {}, "٠٩:٠٥"),
+        ("Duration", {}, "١:٣٠:٠٠"),
+        ("Datetime", {}, "2026-03-01T10:00:00.5Z"),  # des microsecondes : jamais tronquées en silence
         ("Duration", {}, "1h"),
         ("JSON", {}, "{a"),
     ])
@@ -142,17 +154,40 @@ class TestCells:
             cell_value(field("Number"), "1,234.5")
 
 
+class TestRowsThatOverflow:
+    @pytest.mark.parametrize(("kind", "text"), [("Datetime", "0001-01-01T00:00:00+01:00"), ("Datetime", "9999-12-31T23:59:59-01:00"), ("JSON", "[" * 50_000 + "]" * 50_000)])
+    async def test_a_cell_that_overflows_is_the_error_of_its_row_only(self, svc, kind, text):
+        column = {"Datetime": "vu", "JSON": "notes"}[kind]
+        report = await import_csv(svc, ADA, "Client", f"nom,{column}\nA,{text}\nB,\n")
+        assert [r["ok"] for r in report["results"]] == [False, True]
+        assert report["results"][0]["details"][0] == {"field": column, "msg": "valeur hors limites", "type": "csv_value"}
+
+
 class TestFile:
     def test_semicolon_tab_and_comma_are_recognised_from_the_header(self):
-        assert read_csv("a;b\n1;2\n") == (["a", "b"], [["1", "2"]])
-        assert read_csv("a\tb\n1\t2\n") == (["a", "b"], [["1", "2"]])
-        assert read_csv('a,b\n"1,5",2\n') == (["a", "b"], [["1,5", "2"]])
+        assert read_csv("a;b\n1;2\n") == (["a", "b"], [(2, ["1", "2"])])
+        assert read_csv("a\tb\n1\t2\n") == (["a", "b"], [(2, ["1", "2"])])
+        assert read_csv('a,b\n"1,5",2\n') == (["a", "b"], [(2, ["1,5", "2"])])
 
     def test_bom_blank_lines_and_crlf_are_ignored(self):
-        assert read_csv("﻿a;b\r\n\r\n1;2\r\n;\r\n") == (["a", "b"], [["1", "2"]])
+        assert read_csv("\ufeffa;b\r\n\r\n1;2\r\n;\r\n") == (["a", "b"], [(3, ["1", "2"])])  # numéro de la ligne DU FICHIER
 
     def test_a_quoted_cell_keeps_its_line_breaks(self):
-        assert read_csv('a;b\n"x\ny";2\n')[1] == [["x\ny", "2"]]
+        assert read_csv('a;b\n"x\ny";2\n')[1] == [(2, ["x\ny", "2"])]
+
+    def test_row_numbers_are_the_files_lines_despite_blank_lines_and_multiline_cells(self):
+        rows = read_csv('a;b\n"x\ny\nz";1\n\n\nw;2\n')[1]
+        assert [n for n, _ in rows] == [2, 7]
+
+    def test_a_long_cell_is_read_not_refused(self):
+        big = "x" * 200_000  # au-delà des 131072 caractères par défaut du module csv
+        assert read_csv(f"a\n{big}\n")[1] == [(2, [big])]
+
+    def test_too_many_columns_are_refused_before_any_mapping(self):
+        with pytest.raises(ValidationFailed) as e:
+            read_csv("x" + ",name" * MAX_COLUMNS + "\n1\n")
+        assert e.value.code == "csv_too_large"
+        read_csv(",".join(["x"] * MAX_COLUMNS) + "\n1\n")
 
     @pytest.mark.parametrize(("content", "code"), [("", "csv_empty"), ("a;b\n", "csv_empty"), (None, "csv_invalid"), (12, "csv_invalid")])
     def test_nothing_to_import_is_refused(self, content, code):
@@ -191,6 +226,18 @@ class TestColumns:
             map_columns(twins, ["Code"], "insert")
         assert "plusieurs champs" in e.value.details[0]["msg"]
         assert [c.fieldname for c in map_columns(twins, ["b", "a"], "insert")] == ["b", "a"]
+
+    async def test_labels_the_organisation_gave_are_understood(self, svc):
+        # Le Desk montre (et exporte, et met dans son modèle) le libellé de l'habillage de l'organisation : l'import doit le comprendre.
+        await svc.save_form_override(ADA, "Client", {"fields": {"age": {"label": "Années"}}})
+        with pytest.raises(ValidationFailed) as e:  # le libellé du YAML reste compris : deux colonnes pour le même champ
+            await import_csv(svc, ADA, "Client", "Nom;Années;Âge\nA;3;\n")
+        assert e.value.details[0]["msg"] == "Colonne en double"
+        report = await import_csv(svc, ADA, "Client", "Nom;Années\nB;4\n")
+        made = await svc.get(ADA, "Client", report["results"][0]["name"])
+        assert made["data"]["age"] == 4
+        with pytest.raises(ValidationFailed):
+            await import_csv(svc, GLOBEX, "Client", "Nom;Années\nB;4\n")  # l'habillage d'une organisation ne vaut pas pour une autre
 
     def test_the_name_column(self, svc):
         with pytest.raises(ValidationFailed):
@@ -243,6 +290,45 @@ class TestImport:
         assert report["results"][1]["code"] == "document_not_found"
         after = await svc.get(ADA, "Client", made["name"])
         assert (after["data"]["age"], after["data"]["email"], after["data"]["statut"], after["version"]) == (37, "a@x.org", "Client", made["version"] + 1)
+
+    async def test_the_organisations_added_fields_import_and_survive_an_update(self, svc):
+        segment = {"fieldname": "custom_segment", "fieldtype": "Select", "label": "Segment", "options": ["PME", "Grand compte"]}
+        await svc.save_form_override(ADA, "Client", {"added": [segment]})
+        made = (await import_csv(svc, ADA, "Client", "Nom;Segment\nAda;PME\n"))["results"][0]
+        assert made["ok"], made
+        assert (await svc.get(ADA, "Client", made["name"]))["data"]["custom_segment"] == "PME"
+        report = await import_csv(svc, ADA, "Client", f"name;Âge\n{made['name']};41\n", "update")
+        assert report["results"][0]["ok"], report
+        after = (await svc.get(ADA, "Client", made["name"]))["data"]
+        assert (after["age"], after["custom_segment"]) == (41, "PME")  # le champ ajouté n'est pas perdu par la mise à jour
+        with pytest.raises(ValidationFailed):
+            await import_csv(svc, GLOBEX, "Client", "Nom;Segment\nG;PME\n")  # le champ d'une organisation n'existe pas chez une autre
+
+    async def test_update_ignores_stored_keys_the_type_no_longer_declares(self, svc, db, tables):
+        # Un champ retiré du YAML (ou d'une extension D26 disparue) reste dans les données enregistrées ; le formulaire ne le renvoie pas,
+        # l'import non plus : sinon CHAQUE ligne serait refusée (`extra_forbidden`).
+        defs = _defs()
+        defs[2]["fields"].append({"fieldname": "ancien", "fieldtype": "Text"})
+        reg = DocTypeRegistry()
+        for d in defs:
+            reg.register(parse_definition(d))
+        reg.validate_links()
+        hooks = HookRegistry()
+        hooks.register("crm.client", _noop)
+        before = DocumentService(reg, db, tables, _Log(), hooks=hooks)
+        made = await before.create(ADA, "Client", {"nom": "Ada", "ancien": "x"})
+        report = await import_csv(svc, ADA, "Client", f"name;Âge\n{made['name']};40\n", "update")
+        assert report["results"][0]["ok"], report
+        assert (await svc.get(ADA, "Client", made["name"]))["data"]["age"] == 40
+
+    async def test_past_the_time_limit_the_remaining_rows_are_reported_not_processed(self, svc, monkeypatch):
+        import xcore_doctype.csv_import as module
+
+        ticks = [0.0, 0.0, 0.0]  # l'échéance, la ligne 2, la ligne 3 ; ensuite le temps est écoulé
+        monkeypatch.setattr(module, "_clock", lambda: ticks.pop(0) if ticks else 999.0)
+        report = await import_csv(svc, ADA, "Client", "Nom\nA\nB\nC\nD\n")
+        assert [(r["row"], r["ok"], r.get("code")) for r in report["results"]] == [(2, True, None), (3, True, None), (4, False, "not_processed"), (5, False, "not_processed")]
+        assert len((await svc.list(ADA, "Client"))["items"]) == 2
 
     async def test_a_chosen_name_for_a_prompt_doctype(self, svc):
         report = await import_csv(svc, ADA, "Code", "name;t\nABC;x\n;y\n")

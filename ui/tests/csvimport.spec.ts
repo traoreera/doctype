@@ -38,6 +38,14 @@ describe('import CSV : préparer le fichier', () => {
     expect(templateCsv(CLIENT, 'insert')).toBe('﻿nom;Âge;a;b\r\n')
   })
 
+  it('un libellé que le serveur confondrait (casse à l’allemande, nom d’un autre champ) devient le nom du champ', () => {
+    const meta: DocTypeMeta = {
+      ...CLIENT,
+      fields: [field('rue', 'Text', { label: 'Straße' }), field('rue2', 'Text', { label: 'STRASSE' }), field('code', 'Text', { label: 'Code' }), field('ref', 'Text', { label: 'code' }), field('x', 'Text', { label: 'ref' })],
+    }
+    expect(templateHeaders(meta, 'insert')).toEqual(['rue', 'rue2', 'code', 'ref', 'x'])
+  })
+
   it('lit l’UTF-8 (avec BOM) et, à défaut, le Windows-1252 d’Excel', () => {
     expect(decodeCsv(new TextEncoder().encode('Nom;Âge\nÉva;3\n'))).toBe('Nom;Âge\nÉva;3\n')
     expect(decodeCsv(new Uint8Array([0x4e, 0x6f, 0x6d, 0x0a, 0xc9, 0x76, 0x61]))).toBe('Nom\nÉva') // 0xC9 seul n'est pas de l'UTF-8 : É en 1252
