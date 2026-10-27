@@ -703,6 +703,71 @@ Ajouter un état ou une transition (point 1 ci-dessus : il faudrait qu'xauth sac
 l'historique des retouches d'automate (qui a fermé quelle transition : `xdt_layout_override` ne garde que l'état courant et son
 auteur).
 
+### 3.7 Les automatisations dans le Desk : xflow comme moteur à la n8n (27 octobre 2026)
+
+L'utilisateur : « xflow peut être un vrai moteur de workflow, comme n8n ». Relu sur la version qu'il a fournie (`app/xflows`, hors
+dépôt) avant de conclure : c'est déjà un moteur complet — définitions versionnées, exécutions tracées par étape, réessais, file
+morte, déclencheurs événement / cron / webhook signé / manuel, étapes `action` `condition` `switch` `foreach` `parallel` `wait`
+`transform` `template` `ai`, nœuds composites, routes HTTP déjà cloisonnées par l'organisation du JETON et gardées par
+`xflow:workflows|runs|composites:read|write`. Il manquait l'éditeur, et quatre défauts empêchaient le reste de marcher.
+
+#### Ce qui a été corrigé dans xflow (livré à part, en zip : le dépôt n'en a pas de copie)
+
+1. **Un run lancé par un ÉVÉNEMENT ou un WEBHOOK partait sans identité** : seul le cron reprenait `deployed_by`. Tout step vers
+   `doc.*` échouait en `unauthenticated`. Une seule porte maintenant, `_start_run`, pour tous les déclencheurs : l'humain qui
+   déclenche signe le run, sinon celui qui a déployé. Prouvé de bout en bout avec le VRAI xauth : création d'un document →
+   événement → run → `doc.get` réussi ; la version d'origine échoue sur le même scénario.
+2. **`GET /registry` était public** (le catalogue des actions de tous les plugins) : il exige `xflow:workflows:read`.
+3. **Ses grants ne demandaient pas `default_roles`** : le propriétaire d'une organisation n'aurait pas vu l'éditeur avant qu'un
+   administrateur de la plateforme les lui délègue (la règle de la revue d'auth du 26 octobre). Les six grants délégables
+   demandent `tenant_admin` ; `xflow:admin` reste fermé.
+4. **La migration Alembic importait `app.xflows`** : elle ne marchait que pour un plugin posé exactement dans `app/xflows` et un
+   hôte lancé depuis le parent de `app/` ; ailleurs, xflow refusait de démarrer en production. `env.py` charge ses modèles par
+   leur chemin. S'y ajoute `jmespath`, importé mais absent de `requirements.txt`.
+
+Chaque correctif a son test dans la suite de xflow (`tests/test_run_identity.py`, `tests/test_migrations_installation.py`), qui
+échoue sur la version d'origine.
+
+#### Ce que le moteur ajoute
+
+- **Le contrat d'identité, prouvé** (`tests/integration/test_xflow_identity.py`) : un plugin qui appelle `doc.*` comme xflow le
+  fait (`ctx.caller(…, tenant_id=, principal={sub, permissions, user: {id, tenant_id}})`) est jugé comme n'importe qui — grants,
+  séparation des tâches (`not_owner` vaut aussi pour un automate), organisation couverte par l'identité, historique au nom de la
+  personne représentée. Sans identité : `unauthenticated`. Rien de spécial pour xflow dans le moteur.
+- **`doc.patch`** (`DocumentService.patch`, `PATCH /doc/{dt}/{name}`) : modifier QUELQUES champs. `doc.save` remplace `data`
+  entier, donc un nœud « Modifier » aurait effacé ce qu'il ne nommait pas. `patch` lit le document dans le périmètre de
+  l'appelant, garde les champs que l'organisation déclare aujourd'hui, pose ce qui est envoyé et repasse par `update` (version lue
+  ou courante : l'écriture reste conditionnelle, jamais d'écrasement silencieux). L'import CSV s'en sert au lieu de sa copie.
+
+#### Le Desk : `#/automations` (liste) et `#/automations/<nom>` (éditeur)
+
+Visible seulement si xflow est installé ET lisible (`stores/automations` : 404 sur `/flows` = absent, 403 = réservé). Le client
+(`lib/xflow.ts`) parle aux routes HTTP de xflow avec la session du Desk ; xflow répondant 200 même quand il refuse, le client en
+fait une `ApiError`. Ce qu'on édite EST la définition de xflow (`lib/automation.ts`, pur, testé) : un lien est un champ du step
+(`on_success`, `if_true`, `cases.x`, `branches[i][0]`, `steps[0]`), la position d'une carte voyage dans le step (`_x`, `_y`, que
+xflow garde). Les **nœuds Document** (lire, chercher, créer, modifier, faire avancer, soumettre, annuler, commenter, assigner,
+supprimer) sont des steps `action` vers `xcore-doctype`, présentés avec un type de document, ses champs (valeurs TYPÉES : un Int
+reste un entier, un gabarit entier reste un gabarit que xflow remplace par la valeur typée) et ses transitions. Le déclencheur
+« quand un document <Type> est enregistré / soumis / annulé / change d'état / est supprimé / renommé » devient l'événement que le
+moteur émet ; tout autre événement reste possible. Un bouton insère les variables (`{{ trigger.name }}`, `{{ steps.lire.result.doc.data.jours }}`) ;
+renommer une étape réécrit ses références. Les exécutions se posent sur le canevas (statut par étape, résultat ou erreur).
+
+Choix mesurés dans Chromium : le flux se lit de **haut en bas** (le canevas, entre la palette et le panneau, est plus haut que
+large : de gauche à droite, quatre étapes ne tenaient qu'à un zoom illisible) ; cadrage entre 55 % et 100 %, puis la vue suit la
+carte ajoutée une fois MESURÉE ; un lien s'accroche à 60 px de l'entrée ; une étape absente d'une exécution ne porte aucun statut
+(xflow ne trace pas une condition évaluée : « Sautée » aurait été faux). Preuve : `ui/e2e/automations.e2e.mjs` (le test pytest
+saute sans `app/xflows` ou sans `jmespath`) construit une automatisation au canevas, l'enregistre, la déclenche par une vraie
+transition, vérifie le commentaire écrit au nom d'alice et l'exécution allumée.
+
+#### Limites connues
+
+- **Une automatisation sur `after_save` qui modifie son propre document se redéclenche** (comme dans n8n) : il faut une
+  condition, ou un autre événement. Rien ne l'empêche encore.
+- **Un événement sans `tenant_id` déclenche les workflows de TOUTES les organisations** (`_on_any_event`, choix de xflow). Ceux du
+  moteur portent toujours le tenant ; ceux d'autres plugins non. Maintenant qu'un run a une identité, c'est à resserrer dans xflow.
+- **Les actions IPC de xflow prennent `tenant_id` dans la charge utile** (contraire à D3/D17) ; seul `xform` peut les appeler.
+- Pas encore dans l'éditeur : les nœuds composites, la génération par IA, le secret d'un webhook (à générer côté xflow).
+
 ## 4. Ce qu'on vise
 
 Les sept éléments des groupes 1 et 2 valent **7 lignes** de l'inventaire élargi (4 des 87, 3 des angles morts) : de 59 % à ~65 %. Le
