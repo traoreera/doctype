@@ -10,6 +10,7 @@ import pytest
 
 from xcore_doctype.errors import InvalidDefinition
 from xcore_doctype.printing import (
+    generated_template,
     PRINT_SPECIALS,
     parse_template,
     render_html,
@@ -240,3 +241,51 @@ class TestSubtotalsAreExact:
     def test_groups_keep_the_order_the_user_typed(self):
         out = html(self.grouped())
         assert out.index("Central") < out.index("Atelier")
+
+
+class TestTheGeneratedTemplate:
+    """Aucun document n'est jamais inimprimable : à défaut de gabarit, le moteur en fabrique un (§2)."""
+
+    def made(self, definition=INVOICE, children=CHILDREN):
+        return generated_template(definition, children)
+
+    def test_it_is_valid_by_construction(self):
+        assert template_fields_problems(self.made(), INVOICE, CHILDREN.get) == []
+
+    def test_it_prints_the_document_number(self):
+        out = render_html(self.made(), INVOICE, DATA, name="FA-1", children=CHILDREN)
+        assert "FA-1" in out
+
+    def test_it_never_prints_a_secret_or_a_file(self):
+        """Il choisit par TYPE, puisque le schéma n'a aucune propriété d'impression (§4)."""
+        placed = [n for b in self.made().blocks for n in getattr(b, "fields", [])]
+        assert "mot_de_passe" not in placed and "piece_jointe" not in placed
+
+    def test_the_amounts_become_the_totals_block(self):
+        totals = [b for b in self.made().blocks if b.type == "totals"]
+        assert totals and set(totals[0].fields) == {"total", "tva", "total_ttc"}
+
+    def test_a_table_becomes_a_table_block_with_its_printable_columns(self):
+        tables = [b for b in self.made().blocks if b.type == "table"]
+        assert len(tables) == 1 and tables[0].field == "lignes"
+        assert "secret" not in [c.field for c in tables[0].columns]
+
+    def test_a_numeric_column_is_aligned_right(self):
+        table = next(b for b in self.made().blocks if b.type == "table")
+        assert next(c for c in table.columns if c.field == "montant").align == "right"
+
+    def test_it_follows_the_layout_when_there_is_one(self):
+        """C'est l'ordre que l'utilisateur connaît déjà de sa fiche."""
+        definition = parse_definition({
+            "schema_version": 1, "name": "T", "module": "m",
+            "fields": [f("a"), f("b"), f("c")],
+            "layout": [{"section": "S", "columns": [["c", "a"]]}],
+        })
+        fields = next(b for b in generated_template(definition).blocks if b.type == "fields")
+        assert fields.fields == ["c", "a"]  # « b » n'est pas placé, donc pas imprimé
+
+    def test_a_hidden_field_is_not_printed(self):
+        definition = parse_definition({"schema_version": 1, "name": "T", "module": "m",
+                                       "fields": [f("a"), f("secret_interne", hidden=True)]})
+        placed = [n for b in generated_template(definition).blocks for n in getattr(b, "fields", [])]
+        assert placed == ["a"]

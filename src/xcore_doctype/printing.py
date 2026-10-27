@@ -424,3 +424,54 @@ def _stylesheet(page: PageSetup) -> str:
         ".left{text-align:left}.right{text-align:right}.center{text-align:center}td.r,th.r{text-align:right}"
         ".pb{page-break-before:always}"
     )
+
+
+# ── Le gabarit FABRIQUÉ ───────────────────────────────────────────────────────
+
+
+def generated_template(definition: DocTypeDef, children: Mapping[str, Any] | None = None) -> PrintTemplate:
+    """Le gabarit d'un DocType qui n'en déclare aucun : aucun document n'est jamais inimprimable.
+
+    Il suit le `layout` quand il y en a un (c'est l'ordre que l'utilisateur connaît), sinon l'ordre des champs,
+    et il CHOISIT par type — jamais par une propriété nouvelle du schéma (process/impression.md §4) : il saute
+    les secrets, les fichiers, les structures et les champs cachés. Les tables deviennent des blocs `table`,
+    les numériques de la fin un bloc `totals`.
+    """
+    placed: list[str] = []
+    for section in definition.layout or []:
+        for column in section.columns:
+            placed.extend(column)
+    order = placed or [f.fieldname for f in definition.fields]
+    seen: set[str] = set()
+    simple: list[str] = []
+    tables: list[str] = []
+    for name in order:
+        field = definition.field_map.get(name)
+        if field is None or name in seen:
+            continue
+        seen.add(name)
+        if field.hidden or field.fieldtype in UNPRINTABLE:
+            continue
+        (tables if field.fieldtype == "Table" else simple).append(name)
+    # Les montants de la fin font les totaux : c'est la forme d'une facture, et ils sont alignés à droite.
+    totals = [n for n in simple if definition.field_map[n].fieldtype in DECIMAL_TYPES]
+    head = [n for n in simple if n not in totals]
+
+    blocks: list[dict[str, Any]] = [{"type": "title", "text": f"{definition.label or definition.name} {{{{ name }}}}"}]
+    if head:
+        blocks.append({"type": "fields", "columns": 2, "fields": head[:MAX_PRINT_FIELDS]})
+    for table in tables:
+        child = (children or {}).get(table)
+        columns = [
+            {"field": c.fieldname, **({"align": "right"} if c.fieldtype in NUMERIC else {})}
+            for c in (child.fields if child is not None else [])
+            if not c.hidden and c.fieldtype not in UNPRINTABLE and c.fieldtype != "Table"
+        ][:MAX_PRINT_COLUMNS]
+        if columns:
+            blocks.append({"type": "table", "field": table, "columns": columns,
+                           "label": definition.field_map[table].label or table})
+    if totals:
+        blocks.append({"type": "totals", "fields": totals[:MAX_PRINT_FIELDS]})
+    return parse_template({"schema_version": 1, "doctype": definition.name, "name": "standard",
+                           "label": definition.label or definition.name, "blocks": blocks},
+                          source=f"gabarit fabriqué de {definition.name}")
