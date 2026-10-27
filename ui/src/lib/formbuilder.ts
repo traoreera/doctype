@@ -14,6 +14,8 @@
 import type { FieldTweak, FormOverride, LayoutSection } from './types'
 
 export const MAX_COLUMNS = 4
+/** Le type MIME d'une carte de champ qu'on glisse (canevas, palette) : un nom de champ. */
+export const DRAG_FIELD = 'text/x-xdt-field'
 export const MAX_TABS = 12
 export const MAX_TAB_NAME = 60
 

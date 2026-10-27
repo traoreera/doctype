@@ -129,6 +129,15 @@ class DocTypeRegistry:
             self._owners[defn.name] = owner
         return compiled
 
+    def origin(self, name: str) -> DocTypeDef:
+        """La définition D'ORIGINE d'un type (son YAML), sans les extensions d'autres plugins (D26) : le constructeur de DocTypes part de là."""
+        self.get(name)  # inconnu : la même erreur que partout
+        return self._origins[name][0]
+
+    def origins(self) -> list[tuple[DocTypeDef, str]]:
+        """Toutes les définitions d'origine chargées, avec leur source (le registre d'essai du mode développeur les recharge)."""
+        return list(self._origins.values())
+
     def with_custom_fields(self, name: str, added: Sequence[Mapping[str, Any]]) -> CompiledDocType:
         """Le DocType vu par UNE organisation : sa définition, plus les champs qu'elle a ajoutés (doc/programme.md §3.5).
 

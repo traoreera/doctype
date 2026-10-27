@@ -96,6 +96,8 @@ EXPECTED_ROUTES = sorted(
         ("POST", "/doc/{doctype}/{name}/rename"),
         ("POST", "/bulk/{doctype}"),
         ("POST", "/import/{doctype}"),
+        ("GET", "/devtools/doctype/{doctype}"),
+        ("POST", "/devtools/check"),
         ("DELETE", "/doc/{doctype}/{name}"),
     ]
 )

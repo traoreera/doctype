@@ -16,7 +16,7 @@ import { useWorkspaces } from '@/stores/workspaces'
 const open = defineModel<boolean>('open', { required: true })
 
 const router = useRouter()
-const { api } = useServices()
+const { api, config: deskConfig } = useServices()
 const meta = useMeta()
 const recents = useRecents()
 const workspaces = useWorkspaces()
@@ -29,7 +29,7 @@ const active = ref(0)
 const input = ref<HTMLInputElement | null>(null)
 
 const extensionCommands = computed(() => extensions.commandItems.map((c) => ({ ...c, run: () => extensions.run(c.extension, (tools) => c.run(tools)) })))
-const commands = computed(() => buildCommands({ workspaces: workspaces.items ?? [], summaries: meta.summaries ?? [], recents: recents.items, extensions: extensionCommands.value }))
+const commands = computed(() => buildCommands({ workspaces: workspaces.items ?? [], summaries: meta.summaries ?? [], recents: recents.items, extensions: extensionCommands.value, developer: deskConfig.developer === true }))
 
 // La recherche GLOBALE (documents, tous types confondus) s'ajoute aux commandes dès deux caractères saisis. Débouncée, et gardée
 // contre l'ordre d'arrivée : une réponse tardive ne doit pas écraser celle d'une saisie plus récente.

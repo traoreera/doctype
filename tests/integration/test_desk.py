@@ -34,7 +34,7 @@ async def test_the_desk_loads_without_any_credential(dh):
 
 
 async def test_the_desk_learns_the_api_prefix_from_where_xcore_mounted_it(dh):
-    assert (await public(dh, "/desk/config.json")).json() == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login", "extensions": []}
+    assert (await public(dh, "/desk/config.json")).json() == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login", "extensions": [], "developer": False}
 
 
 async def test_while_the_api_behind_it_still_demands_an_identity(dh):

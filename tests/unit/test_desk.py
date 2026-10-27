@@ -128,7 +128,7 @@ class TestFiles:
 class TestConfig:
     async def test_it_tells_the_desk_where_the_api_is_from_the_request_itself(self, c):
         r = await c.get(f"{PREFIX}/desk/config.json")
-        assert r.json() == {"api_base": PREFIX, "login_url": None, "extensions": []}
+        assert r.json() == {"api_base": PREFIX, "login_url": None, "extensions": [], "developer": False}
         assert r.headers["cache-control"] == "no-store"
 
     @pytest.mark.parametrize("prefix", ["/plugin/xcore-doctype", "/a/b/c/d", "/x"])
@@ -153,7 +153,7 @@ class TestConfig:
             assert (await client.get(f"{prefix}/desk/config.json")).json()["login_url"] == login
 
     async def test_it_contains_nothing_secret(self, c):
-        assert set((await c.get(f"{PREFIX}/desk/config.json")).json()) == {"api_base", "login_url", "extensions"}
+        assert set((await c.get(f"{PREFIX}/desk/config.json")).json()) == {"api_base", "login_url", "extensions", "developer"}
 
 
 class TestNotBuilt:
@@ -236,6 +236,27 @@ def ext_client(dist, extensions, **settings):
     app = FastAPI()
     app.include_router(build_desk_router(DeskSettings(dist_dir=dist, **settings), extensions), prefix=PREFIX)
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t")
+
+
+class TestDeveloperMode:
+    """Le constructeur de DocTypes (devtools.py) : fermé par défaut, ouvert par le manifeste, et le Desk le sait par `config.json`."""
+
+    def test_closed_by_default_and_a_boolean_only(self):
+        assert DeskSettings.from_plugin_config({}).developer_mode is False
+        assert DeskSettings.from_plugin_config({"doctype": {"desk": {"developer_mode": True}}}).developer_mode is True
+        for bad in ("true", 1, None):
+            with pytest.raises(ConfigurationError, match="developer_mode"):
+                DeskSettings.from_plugin_config({"doctype": {"desk": {"developer_mode": bad}}})
+
+    async def test_config_json_tells_the_desk(self, tmp_path):
+        dist = tmp_path / "dist"
+        dist.mkdir()
+        (dist / "index.html").write_text("<html></html>")
+        for flag in (False, True):
+            app = FastAPI()
+            app.include_router(build_desk_router(DeskSettings(dist_dir=dist, developer_mode=flag), DeskExtensions([])), prefix=PREFIX)
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t") as c:
+                assert (await c.get(f"{PREFIX}/desk/config.json")).json()["developer"] is flag
 
 
 class TestExtensions:

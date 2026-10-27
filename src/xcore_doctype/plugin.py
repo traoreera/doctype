@@ -33,6 +33,7 @@ from .files import BlobStore, LocalBlobStore, UrlSigner
 from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
 from .collaboration import CollaborationService
 from .csv_import import import_csv
+from . import devtools
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
@@ -65,6 +66,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     hook_registry: HookRegistry | None = None
     grant_catalog: GrantCatalog | None = None
     collaboration: CollaborationService | None = None
+    _developer: bool = False  # `doctype.desk.developer_mode` (devtools.py) : fermé tant que le manifeste ne l'ouvre pas
     file_library: FileLibrary | None = None
     documents: DocumentService | None = None
     _tables: SystemTables | None = None
@@ -187,9 +189,10 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         file_service = FileService(self.documents, self._blob_store(block.get("files")), self._url_signer(block.get("files")))
         self.documents.files = file_service  # pour libérer les fichiers qu'un document ne cite plus
         desk = DeskSettings.from_plugin_config(config)
+        self._developer = desk.developer_mode
         # Deux routeurs frères : l'API exige une identité sur chaque route, le Desk est public (fichiers statiques seulement).
         root = APIRouter()
-        root.include_router(build_router(self.documents, self._settings))
+        root.include_router(build_router(self.documents, self._settings, developer=desk.developer_mode))
         root.include_router(build_files_router(file_service, self._settings))  # téléverser, liens signés : une identité est exigée
         directory, notifier = self._directory(block.get("directory")), self._notifier(block.get("notifications"))
         collab = CollaborationService(self.documents, file_service, directory, notifier)
@@ -796,6 +799,15 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return await import_csv(self.documents, ctx, _need(payload, "doctype"), payload.get("content"), payload.get("mode", "insert"))
 
         return await self._run("doc.import", op)
+
+    @action("doc.devtools.check")
+    async def devtools_check(self, payload: dict) -> dict:
+        """Mode développeur : juger une définition de DocType comme au chargement, et rendre son YAML (rien n'est enregistré)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return devtools.check(self.documents, ctx, payload.get("definition"), enabled=self._developer)
+
+        return await self._run("doc.devtools.check", op)
 
     @action("doc.amend")
     async def doc_amend(self, payload: dict) -> dict:

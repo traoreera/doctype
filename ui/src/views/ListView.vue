@@ -56,7 +56,7 @@ import { useMeta } from '@/stores/meta'
  */
 const props = defineProps<{ doctype: string; view?: string | null; filters?: string | null }>()
 
-const { api } = useServices()
+const { api, config: deskConfig } = useServices()
 const metaStore = useMeta()
 const links = useLinks()
 const files = useFiles()
@@ -549,6 +549,7 @@ const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
 const moreItems = computed<MenuItem[]>(() => [
   { label: t.list.refresh, icon: 'pi pi-refresh', command: () => void fetchPage(), disabled: current.value !== 'list' },
   { label: t.sidebar.toggle, icon: 'pi pi-align-left', command: toggleSidebar, disabled: current.value !== 'list' },
+  { label: t.devBuilder.menuEdit, icon: 'pi pi-wrench', testid: 'list-dev-doctype', command: () => void router.push({ name: 'dev-doctype', params: { doctype: props.doctype } }), visible: deskConfig.developer === true && !!meta.value && !meta.value.virtual },
   { label: t.formBuilder.menu, icon: 'pi pi-objects-column', testid: 'list-customize', command: () => void router.push({ name: 'customize', params: { doctype: props.doctype } }), visible: !!meta.value && meta.value.rights.write !== 'none' && !meta.value.virtual },
   { label: t.workflowBuilder.menu, icon: 'pi pi-sitemap', testid: 'list-workflow', command: () => void router.push({ name: 'workflow', params: { doctype: props.doctype } }), visible: !!meta.value?.workflow },
   { label: t.importCsv.menu, icon: 'pi pi-upload', testid: 'import-csv', command: () => (importing.value = true), visible: canImport.value },

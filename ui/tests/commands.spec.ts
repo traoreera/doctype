@@ -24,6 +24,12 @@ describe('normalisation', () => {
 })
 
 describe('commandes proposées', () => {
+  it('« Nouveau type de document » n’est proposé qu’en mode développeur', () => {
+    expect(ids(buildCommands(src()))).not.toContain('dev-doctype')
+    expect(ids(buildCommands(src({ developer: true })))).toContain('dev-doctype')
+    expect(rank(buildCommands(src({ developer: true })), 'doctype')[0]?.id).toBe('dev-doctype')
+  })
+
   const all = buildCommands(src())
 
   it('un type = « aller à sa liste » ; « créer » seulement là où l’on peut créer', () => {

@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict
 
 from ..context import ContextSettings, RequestContext, http_context
 from ..csv_import import import_csv
+from .. import devtools
 from ..document import DEFAULT_PAGE, DocumentService
 from ..errors import DoctypeError
 
@@ -24,6 +25,11 @@ class CreateBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
     data: dict[str, Any]
     name: Any = None  # le nom choisi, pour un DocType `naming: prompt` (refusé pour tout autre nommage)
+
+
+class DefinitionBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    definition: Any
 
 
 class ImportBody(BaseModel):
@@ -99,7 +105,7 @@ def _guard_sync(fn: Callable[[], T]) -> T:
         _raise(e)
 
 
-def build_router(documents: DocumentService, settings: ContextSettings) -> APIRouter:
+def build_router(documents: DocumentService, settings: ContextSettings, *, developer: bool = False) -> APIRouter:
     ctx_dep = http_context(settings)
     router = APIRouter(dependencies=[Depends(ctx_dep)])
 
@@ -289,6 +295,15 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
     @router.post("/bulk/{doctype}")
     async def doc_bulk(doctype: str, body: BulkBody, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.bulk(ctx, doctype, body.action, body.names, data=body.data))
+
+    # ── Mode développeur (devtools.py) : fermé par défaut (`doctype.desk.developer_mode`), il ne fait que lire et juger, jamais enregistrer ──
+    @router.get("/devtools/doctype/{doctype}")
+    async def devtools_definition(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
+        return _guard_sync(lambda: devtools.definition(documents, ctx, doctype, enabled=developer))
+
+    @router.post("/devtools/check")
+    async def devtools_check(body: DefinitionBody, ctx: RequestContext = Depends(ctx_dep)):
+        return _guard_sync(lambda: devtools.check(documents, ctx, body.definition, enabled=developer))
 
     @router.post("/import/{doctype}")
     async def doc_import(doctype: str, body: ImportBody, ctx: RequestContext = Depends(ctx_dep)):
