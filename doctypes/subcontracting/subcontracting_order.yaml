@@ -2,6 +2,8 @@ schema_version: 1
 name: Subcontracting Order
 label: Subcontracting Order
 module: subcontracting
+naming:
+  series: SUOR-{YYYY}-{#####}
 submittable: true
 icon: shopping-bag
 fields:
@@ -48,11 +50,6 @@ fields:
 - fieldname: schedule_date
   label: Required By
   fieldtype: Date
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Subcontracting Order
   read_only: true
 - fieldname: supplier_address
   label: Job Worker Address
@@ -182,7 +179,7 @@ fields:
 - fieldname: supplier_currency
   label: Job Worker Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: conversion_rate
@@ -212,7 +209,6 @@ layout:
   - - company
     - transaction_date
     - schedule_date
-    - amended_from
 - tab: Général
   section: Accounting Dimensions
   columns:
@@ -275,5 +271,3 @@ views:
   calendar:
     start: transaction_date
     title: title
-  tree:
-    parent: amended_from

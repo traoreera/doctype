@@ -40,7 +40,7 @@ fields:
 - fieldname: account_currency
   label: Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   hidden: true
 title_field: company
 layout:

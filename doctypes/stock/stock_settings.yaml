@@ -80,12 +80,6 @@ fields:
   label: Freeze stocks older than (days)
   fieldtype: Int
   description: Stock transactions that are older than the mentioned days cannot be modified.
-- fieldname: stock_auth_role
-  label: Role allowed to edit frozen stock
-  fieldtype: Link
-  options: Role
-  description: The users with this Role are allowed to create/modify a stock transaction, even though the transaction
-    is frozen.
 - fieldname: use_naming_series
   label: Have default Naming Series for Batch ID?
   fieldtype: Boolean
@@ -95,23 +89,11 @@ fields:
   label: Naming Series Prefix
   fieldtype: Text
   default: BATCH-
-- fieldname: role_allowed_to_create_edit_back_dated_transactions
-  label: Role allowed to create/edit back-dated transactions
-  fieldtype: Link
-  options: Role
-  description: If mentioned, the system will allow only the users with this Role to create or modify any stock transaction
-    earlier than the latest stock transaction for a specific item and warehouse. If set as blank, it allows all
-    users to create/edit back-dated transactions.
 - fieldname: disable_serial_no_and_batch_selector
   label: Disable Serial No and Batch selector
   fieldtype: Boolean
   description: If enabled, users must enter Serial No. / Batch data manually instead of using the selector dialog.
   default: false
-- fieldname: role_allowed_to_over_deliver_receive
-  label: Role Allowed to Over Deliver/Receive
-  fieldtype: Link
-  options: Role
-  description: Users with this role are allowed to over deliver/receive against orders above the allowance percentage
 - fieldname: action_if_quality_inspection_is_rejected
   label: Action if Quality Inspection is rejected
   fieldtype: Select
@@ -306,7 +288,6 @@ layout:
   - - over_delivery_receipt_allowance
     - mr_qty_allowance
     - over_picking_allowance
-  - - role_allowed_to_over_deliver_receive
 - tab: Stock Validations
   section: Display & Data Formatting
   columns:
@@ -370,11 +351,6 @@ layout:
   columns:
   - - stock_frozen_upto_days
     - stock_frozen_upto
-  - - stock_auth_role
-- tab: Stock Closing
-  section: Dates et planification
-  columns:
-  - - role_allowed_to_create_edit_back_dated_transactions
 permissions:
   create: []
   delete: []

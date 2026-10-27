@@ -2,6 +2,8 @@ schema_version: 1
 name: Leave Ledger Entry
 label: Leave Ledger Entry
 module: hr
+naming:
+  series: LLE-{YYYY}-{#####}
 submittable: true
 icon: book-open
 fields:
@@ -18,11 +20,6 @@ fields:
   fieldtype: Link
   options: Leave Type
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Leave Ledger Entry
-  read_only: true
 - fieldname: transaction_type
   label: Transaction Type
   fieldtype: Text
@@ -79,7 +76,6 @@ layout:
     - is_carry_forward
     - is_expired
     - is_lwp
-    - amended_from
 views:
   calendar:
     start: from_date

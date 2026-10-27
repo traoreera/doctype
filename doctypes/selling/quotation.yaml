@@ -2,6 +2,8 @@ schema_version: 1
 name: Quotation
 label: Quotation
 module: selling
+naming:
+  series: QUOT-{YYYY}-{#####}
 submittable: true
 icon: file-text
 fields:
@@ -24,11 +26,6 @@ fields:
   fieldtype: Text
   read_only: true
   hidden: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Quotation
-  read_only: true
 - fieldname: revision_of
   label: Revision Of
   fieldtype: Link
@@ -112,7 +109,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -127,7 +124,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: plc_conversion_rate
@@ -425,7 +422,6 @@ layout:
     - is_active
   - - order_type
     - company
-    - amended_from
     - revision_of
 - tab: Général
   section: Currency and Price List
@@ -569,5 +565,3 @@ views:
   calendar:
     start: transaction_date
     title: title
-  tree:
-    parent: amended_from

@@ -2,6 +2,8 @@ schema_version: 1
 name: BOM
 label: BOM
 module: manufacturing
+naming:
+  series: BOM-{YYYY}-{#####}
 submittable: true
 icon: list-tree
 fields:
@@ -87,7 +89,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: rm_cost_as_per
   label: Rate of Materials based on
@@ -148,11 +150,6 @@ fields:
   label: Project
   fieldtype: Link
   options: Project
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: BOM
-  read_only: true
 - fieldname: description
   label: Item Description
   fieldtype: TextEditor
@@ -195,7 +192,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: has_variants
   label: Has variants
@@ -391,7 +388,3 @@ layout:
   columns:
   - - bom_creator
     - bom_creator_item
-  - - amended_from
-views:
-  tree:
-    parent: amended_from

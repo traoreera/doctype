@@ -2,6 +2,8 @@ schema_version: 1
 name: Asset Value Adjustment
 label: Asset Value Adjustment
 module: assets
+naming:
+  series: AVA-{YYYY}-{#####}
 submittable: true
 icon: sliders-horizontal
 fields:
@@ -54,11 +56,6 @@ fields:
   label: Cost Center
   fieldtype: Link
   options: Cost Center
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset Value Adjustment
-  read_only: true
 - fieldname: difference_account
   label: Difference Account
   fieldtype: Link
@@ -73,7 +70,6 @@ layout:
     - asset_category
   - - date
     - finance_book
-    - amended_from
 - section: Value Details
   columns:
   - - current_asset_value
@@ -88,5 +84,3 @@ views:
   calendar:
     start: date
     title: finance_book
-  tree:
-    parent: amended_from

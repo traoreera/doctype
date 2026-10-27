@@ -2,6 +2,8 @@ schema_version: 1
 name: Work Order
 label: Work Order
 module: manufacturing
+naming:
+  series: WO-{YYYY}-{#####}
 submittable: true
 icon: factory
 fields:
@@ -198,11 +200,6 @@ fields:
   fieldtype: Link
   options: Item
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Work Order
-  read_only: true
 - fieldname: source_warehouse
   label: Default source Warehouse
   fieldtype: Link
@@ -380,7 +377,3 @@ layout:
   section: Dates et planification
   columns:
   - - status
-  - - amended_from
-views:
-  tree:
-    parent: amended_from

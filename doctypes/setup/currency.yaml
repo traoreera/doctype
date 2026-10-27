@@ -1,0 +1,49 @@
+schema_version: 1
+name: Currency
+label: Devise
+module: setup
+naming:
+  field: currency_code
+icon: dollar
+fields:
+- fieldname: currency_code
+  label: Code ISO 4217
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  description: 'Trois lettres majuscules : EUR, XOF, USD. C''est le nom du document.'
+- fieldname: currency_name
+  label: Nom
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: symbol
+  label: Symbole
+  fieldtype: Text
+  in_list_view: true
+- fieldname: fraction
+  label: Fraction
+  fieldtype: Text
+  description: Centime, cent, pesewa…
+- fieldname: fraction_units
+  label: Unités par fraction
+  fieldtype: Int
+  default: 100
+- fieldname: enabled
+  label: Active
+  fieldtype: Boolean
+  default: true
+  in_list_view: true
+title_field: currency_name
+permissions:
+  read:
+  - '@authenticated'
+layout:
+- section: Devise
+  columns:
+  - - currency_code
+    - currency_name
+    - symbol
+  - - fraction
+    - fraction_units
+    - enabled

@@ -2,6 +2,8 @@ schema_version: 1
 name: BOM Creator
 label: BOM Creator
 module: manufacturing
+naming:
+  series: BC-{YYYY}-{#####}
 submittable: true
 icon: list-plus
 fields:
@@ -67,7 +69,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: plc_conversion_rate
   label: Price List Exchange Rate
@@ -83,7 +85,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Conversion Rate
@@ -167,11 +169,6 @@ fields:
   label: Error Log
   fieldtype: LongText
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: BOM Creator
-  read_only: true
 title_field: item_code
 layout:
 - tab: Design
@@ -214,7 +211,3 @@ layout:
     - previous_revision
     - error_log
   - - revision
-    - amended_from
-views:
-  tree:
-    parent: previous_revision

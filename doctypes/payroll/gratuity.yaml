@@ -2,6 +2,8 @@ schema_version: 1
 name: Gratuity
 label: Gratuity
 module: payroll
+naming:
+  series: GRAT-{YYYY}-{#####}
 submittable: true
 icon: piggy-bank
 fields:
@@ -69,11 +71,6 @@ fields:
   label: Designation
   fieldtype: Text
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Gratuity
-  read_only: true
 - fieldname: paid_amount
   label: Paid Amount
   fieldtype: Currency
@@ -112,7 +109,6 @@ layout:
     - gratuity_rule
     - status
     - company
-    - amended_from
 - tab: Payment and Accounting
   section: Informations complémentaires 2
   columns:

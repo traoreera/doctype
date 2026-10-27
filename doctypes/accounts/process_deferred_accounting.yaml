@@ -2,6 +2,8 @@ schema_version: 1
 name: Process Deferred Accounting
 label: Process Deferred Accounting
 module: accounts
+naming:
+  series: PDA-{YYYY}-{#####}
 submittable: true
 icon: list-clock
 fields:
@@ -13,11 +15,6 @@ fields:
   - Expense
   required: true
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Process Deferred Accounting
-  read_only: true
 - fieldname: start_date
   label: Service Start Date
   fieldtype: Date
@@ -53,7 +50,6 @@ layout:
   - - posting_date
     - start_date
     - end_date
-    - amended_from
 views:
   calendar:
     start: posting_date
@@ -62,5 +58,3 @@ views:
     start: start_date
     end: end_date
     title: company
-  tree:
-    parent: amended_from

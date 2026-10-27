@@ -28,7 +28,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: deal_owner
   label: Deal Owner
   fieldtype: Text

@@ -2,6 +2,8 @@ schema_version: 1
 name: Process Period Closing Voucher
 label: Process Period Closing Voucher
 module: accounts
+naming:
+  series: PPCV-{YYYY}-{#####}
 submittable: true
 icon: lock
 fields:
@@ -21,11 +23,6 @@ fields:
   - Completed
   - Cancelled
   default: Queued
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Process Period Closing Voucher
-  read_only: true
 - fieldname: p_l_closing_balance
   label: P&L Closing Balance
   fieldtype: JSON
@@ -47,7 +44,6 @@ layout:
   columns:
   - - parent_pcv
     - status
-    - amended_from
 - tab: Normal Balances
   section: Comptabilité et montants
   columns:
@@ -62,5 +58,3 @@ views:
   kanban:
     field: status
     card_fields: null
-  tree:
-    parent: amended_from

@@ -2,6 +2,8 @@ schema_version: 1
 name: Telephony Call Type
 label: Telephony Call Type
 module: telephony
+naming:
+  series: TCT-{YYYY}-{#####}
 submittable: true
 icon: tag
 fields:
@@ -10,17 +12,8 @@ fields:
   fieldtype: Text
   required: true
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Telephony Call Type
-  read_only: true
 title_field: call_type
 layout:
 - section: Dates et planification
   columns:
   - - call_type
-    - amended_from
-views:
-  tree:
-    parent: amended_from

@@ -2,6 +2,8 @@ schema_version: 1
 name: Advance Payment Ledger Entry
 label: Advance Payment Ledger Entry
 module: accounts
+naming:
+  series: APLE-{YYYY}-{#####}
 submittable: true
 icon: book-open
 fields:
@@ -31,7 +33,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: event
   label: Event

@@ -2,6 +2,8 @@ schema_version: 1
 name: Repost Accounting Ledger
 label: Repost Accounting Ledger
 module: accounts
+naming:
+  series: RAL-{YYYY}-{#####}
 submittable: true
 icon: list-restart
 fields:
@@ -10,11 +12,6 @@ fields:
   fieldtype: Link
   options: Company
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Repost Accounting Ledger
-  read_only: true
 - fieldname: vouchers
   label: Vouchers
   fieldtype: Table
@@ -58,9 +55,3 @@ layout:
 - section: Error
   columns:
   - - error_log
-- section: Miscellaneous
-  columns:
-  - - amended_from
-views:
-  tree:
-    parent: amended_from

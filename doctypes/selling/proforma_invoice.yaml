@@ -2,6 +2,8 @@ schema_version: 1
 name: Proforma Invoice
 label: Proforma Invoice
 module: selling
+naming:
+  series: PRIN-{YYYY}-{#####}
 submittable: true
 icon: file-text
 fields:
@@ -43,7 +45,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: based_on
   label: Based On
@@ -104,11 +106,6 @@ fields:
   label: Emailed To
   fieldtype: LongText
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Proforma Invoice
-  read_only: true
 title_field: customer_name
 layout:
 - section: Details
@@ -139,7 +136,3 @@ layout:
   - - status
     - sent_on
   - - emailed_to
-    - amended_from
-views:
-  tree:
-    parent: amended_from

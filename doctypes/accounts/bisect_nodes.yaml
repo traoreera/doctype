@@ -47,6 +47,3 @@ layout:
     - balance_sheet_summary
     - profit_loss_summary
     - generated
-views:
-  tree:
-    parent: root

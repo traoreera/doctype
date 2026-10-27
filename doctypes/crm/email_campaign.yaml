@@ -33,7 +33,6 @@ fields:
   options:
   - Lead
   - Contact
-  - Email Group
   default: Lead
   required: true
   in_list_view: true
@@ -43,8 +42,8 @@ fields:
   options: email_campaign_for
 - fieldname: sender
   label: Sender
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 title_field: campaign_name
 layout:
 - section: Dates et planification

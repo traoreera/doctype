@@ -2,6 +2,8 @@ schema_version: 1
 name: Delivery Trip
 label: Delivery Trip
 module: stock
+naming:
+  series: DT-{YYYY}-{#####}
 submittable: true
 icon: route
 fields:
@@ -61,11 +63,6 @@ fields:
   - Completed
   - Cancelled
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Delivery Trip
-  read_only: true
 - fieldname: driver_address
   label: Driver Address
   fieldtype: Link
@@ -103,7 +100,3 @@ layout:
 - section: Dates et planification
   columns:
   - - status
-  - - amended_from
-views:
-  tree:
-    parent: amended_from

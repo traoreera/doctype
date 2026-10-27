@@ -2,6 +2,8 @@ schema_version: 1
 name: Asset Capitalization
 label: Asset Capitalization
 module: assets
+naming:
+  series: AC-{YYYY}-{#####}
 submittable: true
 icon: trending-up
 fields:
@@ -49,11 +51,6 @@ fields:
   options:
   - ACC-ASC-.YYYY.-
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset Capitalization
-  read_only: true
 - fieldname: stock_items
   label: Stock Items
   fieldtype: Table
@@ -120,7 +117,6 @@ layout:
     - posting_date
     - posting_time
     - set_posting_time
-    - amended_from
 - section: Consumed Stock Items
   columns:
   - - stock_items
@@ -152,5 +148,3 @@ views:
   calendar:
     start: posting_date
     title: target_asset
-  tree:
-    parent: amended_from

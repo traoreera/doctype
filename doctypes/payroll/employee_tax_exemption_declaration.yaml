@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Tax Exemption Declaration
 label: Employee Tax Exemption Declaration
 module: payroll
+naming:
+  series: ETED-{YYYY}-{#####}
 submittable: true
 icon: file-pen-line
 fields:
@@ -30,11 +32,6 @@ fields:
   label: Company
   fieldtype: Link
   options: Company
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Tax Exemption Declaration
-  read_only: true
 - fieldname: declarations
   label: Declarations
   fieldtype: Table
@@ -52,7 +49,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 title_field: employee_name
 layout:
@@ -65,7 +62,6 @@ layout:
   - - company
     - payroll_period
     - currency
-    - amended_from
 - tab: Tax Exemption Declaration
   section: Informations complémentaires 2
   columns:

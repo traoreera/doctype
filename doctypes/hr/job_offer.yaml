@@ -2,6 +2,8 @@ schema_version: 1
 name: Job Offer
 label: Job Offer
 module: hr
+naming:
+  series: JO-{YYYY}-{#####}
 submittable: true
 icon: handshake
 fields:
@@ -78,7 +80,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: calculate_component_amount_from
   label: Calculate Component Amount From
@@ -172,11 +174,6 @@ fields:
 - fieldname: signature
   label: Sign to show on offer letter
   fieldtype: Image
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Job Offer
-  read_only: true
 title_field: applicant_name
 layout:
 - tab: Role & Joining
@@ -246,10 +243,6 @@ layout:
   - - offer_letter_print_format
     - signature
   - - letter_head
-- tab: Print & Email
-  section: Informations complémentaires 11
-  columns:
-  - - amended_from
 views:
   kanban:
     field: status

@@ -2,6 +2,8 @@ schema_version: 1
 name: Product Bundle
 label: Product Bundle
 module: selling
+naming:
+  series: PB-{YYYY}-{#####}
 submittable: true
 icon: boxes
 fields:
@@ -31,11 +33,6 @@ fields:
   fieldtype: Boolean
   description: A disabled Product Bundle cannot be selected in transactions.
   default: false
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Product Bundle
-  read_only: true
 title_field: new_item_code
 layout:
 - section: Dates et planification
@@ -44,10 +41,6 @@ layout:
     - description
   - - is_active
     - disabled
-    - amended_from
 - section: Items
   columns:
   - - items
-views:
-  tree:
-    parent: amended_from

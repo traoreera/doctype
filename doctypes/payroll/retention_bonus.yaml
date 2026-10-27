@@ -2,6 +2,8 @@ schema_version: 1
 name: Retention Bonus
 label: Retention Bonus
 module: payroll
+naming:
+  series: RB-{YYYY}-{#####}
 submittable: true
 icon: gem
 fields:
@@ -26,11 +28,6 @@ fields:
   fieldtype: Currency
   decimals: 2
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Retention Bonus
-  read_only: true
 - fieldname: employee_name
   label: Employee Name
   fieldtype: Text
@@ -52,7 +49,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 title_field: employee_name
@@ -70,4 +67,3 @@ layout:
     - bonus_amount
   - - bonus_payment_date
     - currency
-    - amended_from

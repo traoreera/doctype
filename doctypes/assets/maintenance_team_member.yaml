@@ -5,18 +5,12 @@ istable: true
 fields:
 - fieldname: team_member
   label: Team Member
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
   in_list_view: true
+  format: email
 - fieldname: full_name
   label: Full Name
   fieldtype: Text
   in_list_view: true
   read_only: true
-- fieldname: maintenance_role
-  label: Maintenance Role
-  fieldtype: Link
-  options: Role
-  required: true
-  in_list_view: true

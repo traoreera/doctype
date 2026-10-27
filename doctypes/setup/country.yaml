@@ -1,0 +1,44 @@
+schema_version: 1
+name: Country
+label: Pays
+module: setup
+naming:
+  field: country_code
+icon: globe
+fields:
+- fieldname: country_code
+  label: Code ISO 3166-1
+  fieldtype: Text
+  required: true
+  in_list_view: true
+  description: 'Deux lettres majuscules : CI, FR, SN. C''est le nom du document.'
+- fieldname: country_name
+  label: Nom
+  fieldtype: Text
+  required: true
+  in_list_view: true
+- fieldname: default_currency
+  label: Devise par défaut
+  fieldtype: Link
+  options: Currency
+  in_list_view: true
+- fieldname: phone_prefix
+  label: Indicatif téléphonique
+  fieldtype: Text
+- fieldname: enabled
+  label: Actif
+  fieldtype: Boolean
+  default: true
+  in_list_view: true
+title_field: country_name
+permissions:
+  read:
+  - '@authenticated'
+layout:
+- section: Pays
+  columns:
+  - - country_code
+    - country_name
+    - phone_prefix
+  - - default_currency
+    - enabled

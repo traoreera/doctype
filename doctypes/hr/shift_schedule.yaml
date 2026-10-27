@@ -2,6 +2,8 @@ schema_version: 1
 name: Shift Schedule
 label: Shift Schedule
 module: hr
+naming:
+  series: SHSC-{YYYY}-{#####}
 submittable: true
 icon: calendar-days
 fields:
@@ -25,11 +27,6 @@ fields:
   options: Shift Type
   required: true
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Shift Schedule
-  read_only: true
 title_field: frequency
 layout:
 - section: Informations principales
@@ -37,4 +34,3 @@ layout:
   - - shift_type
   - - frequency
     - repeat_on_days
-    - amended_from

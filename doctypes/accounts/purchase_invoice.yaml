@@ -2,6 +2,8 @@ schema_version: 1
 name: Purchase Invoice
 label: Purchase Invoice
 module: accounts
+naming:
+  series: PUIN-{YYYY}-{#####}
 submittable: true
 icon: receipt-text
 fields:
@@ -65,11 +67,6 @@ fields:
   label: Edit Posting Date and Time
   fieldtype: Boolean
   default: false
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Purchase Invoice
-  read_only: true
 - fieldname: on_hold
   label: Hold Invoice
   fieldtype: Boolean
@@ -136,7 +133,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: conversion_rate
   label: Exchange Rate
   fieldtype: Number
@@ -147,7 +144,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: plc_conversion_rate
   label: Price List Exchange Rate
@@ -429,7 +426,7 @@ fields:
 - fieldname: party_account_currency
   label: Party Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: is_opening
@@ -614,7 +611,6 @@ layout:
     - update_billed_amount_in_purchase_order
     - update_billed_amount_in_purchase_receipt
     - apply_tds
-    - amended_from
 - tab: General
   section: Supplier Invoice
   columns:
@@ -838,5 +834,3 @@ views:
     end: to_date
     title: supplier
     color: status
-  tree:
-    parent: amended_from

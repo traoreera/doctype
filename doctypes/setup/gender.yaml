@@ -1,8 +1,10 @@
 schema_version: 1
 name: Gender
 label: Gender
-module: hr
-icon: file-text
+module: setup
+naming:
+  field: gender
+icon: users
 fields:
 - fieldname: gender
   label: Gender
@@ -18,5 +20,8 @@ title_field: gender
 layout:
 - section: Informations principales
   columns:
-    - gender
+  - - gender
     - enabled
+permissions:
+  read:
+  - '@authenticated'

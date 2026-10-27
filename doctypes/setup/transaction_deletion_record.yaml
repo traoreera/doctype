@@ -2,6 +2,8 @@ schema_version: 1
 name: Transaction Deletion Record
 label: Transaction Deletion Record
 module: setup
+naming:
+  series: TDR-{YYYY}-{#####}
 submittable: true
 icon: trash
 fields:
@@ -25,11 +27,6 @@ fields:
   fieldtype: Table
   options: Transaction Deletion Record Item
   description: DocTypes that will NOT be deleted.
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Transaction Deletion Record
-  read_only: true
 - fieldname: status
   label: Status
   fieldtype: Select
@@ -124,7 +121,3 @@ layout:
   - - doctypes
     - doctypes_to_delete
     - doctypes_to_be_ignored
-    - amended_from
-views:
-  tree:
-    parent: amended_from

@@ -2,6 +2,8 @@ schema_version: 1
 name: Additional Salary
 label: Additional Salary
 module: payroll
+naming:
+  series: AS-{YYYY}-{#####}
 submittable: true
 icon: circle-plus
 fields:
@@ -61,11 +63,6 @@ fields:
   label: Salary Component Type
   fieldtype: Text
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Additional Salary
-  read_only: true
 - fieldname: is_recurring
   label: Is Recurring
   fieldtype: Boolean
@@ -88,7 +85,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: disabled
@@ -109,7 +106,6 @@ layout:
     - from_date
     - to_date
     - payroll_date
-    - amended_from
 - section: Salary
   columns:
   - - salary_component

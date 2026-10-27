@@ -44,7 +44,7 @@ fields:
   in_list_view: true
 - fieldname: item_reference
   label: Item Reference
-  fieldtype: Link
-  options: Maintenance Schedule Item
+  fieldtype: Text
   read_only: true
   hidden: true
+  description: Référence de la ligne d'origine (Maintenance Schedule Item).

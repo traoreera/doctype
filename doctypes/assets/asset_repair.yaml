@@ -2,6 +2,8 @@ schema_version: 1
 name: Asset Repair
 label: Asset Repair
 module: assets
+naming:
+  series: AR-{YYYY}-{#####}
 submittable: true
 icon: wrench
 fields:
@@ -41,11 +43,6 @@ fields:
   label: Repair Cost
   fieldtype: Currency
   decimals: 2
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset Repair
   read_only: true
 - fieldname: asset
   label: Asset
@@ -111,7 +108,6 @@ layout:
     - failure_date
     - completion_date
     - downtime
-    - amended_from
 - tab: Général
   section: Description
   columns:
@@ -144,6 +140,3 @@ layout:
   columns:
   - - cost_center
   - - project
-views:
-  tree:
-    parent: amended_from

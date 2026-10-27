@@ -2,6 +2,8 @@ schema_version: 1
 name: Budget
 label: Budget
 module: accounts
+naming:
+  series: BUDG-{YYYY}-{#####}
 submittable: true
 icon: piggy-bank
 fields:
@@ -28,11 +30,6 @@ fields:
   label: Project
   fieldtype: Link
   options: Project
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Budget
-  read_only: true
 - fieldname: applicable_on_material_request
   label: Applicable on Material Request
   fieldtype: Boolean
@@ -185,8 +182,7 @@ layout:
     - cost_center
     - project
     - account
-  - - amended_from
-    - from_fiscal_year
+  - - from_fiscal_year
     - to_fiscal_year
     - distribution_frequency
     - budget_amount
@@ -220,6 +216,3 @@ layout:
 - section: Informations complémentaires 8
   columns:
   - - revision_of
-views:
-  tree:
-    parent: amended_from

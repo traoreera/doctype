@@ -2,6 +2,8 @@ schema_version: 1
 name: Salary Withholding
 label: Salary Withholding
 module: payroll
+naming:
+  series: SW-{YYYY}-{#####}
 submittable: true
 icon: hand
 fields:
@@ -66,11 +68,6 @@ fields:
   fieldtype: Table
   options: Salary Withholding Cycle
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Salary Withholding
-  read_only: true
 - fieldname: status
   label: Status
   fieldtype: Select
@@ -105,7 +102,6 @@ layout:
 - section: Informations complémentaires 4
   columns:
   - - cycles
-    - amended_from
 views:
   calendar:
     start: posting_date

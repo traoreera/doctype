@@ -2,6 +2,8 @@ schema_version: 1
 name: Full and Final Statement
 label: Full and Final Statement
 module: hr
+naming:
+  series: FFS-{YYYY}-{#####}
 submittable: true
 icon: file-check
 fields:
@@ -33,11 +35,6 @@ fields:
   label: Department
   fieldtype: Link
   options: Department
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Full and Final Statement
   read_only: true
 - fieldname: assets_allocated
   label: Assets Allocated
@@ -95,7 +92,6 @@ layout:
     - transaction_date
   - - company
     - status
-    - amended_from
 - section: Employee Details
   columns:
   - - date_of_joining

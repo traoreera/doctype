@@ -2,6 +2,8 @@ schema_version: 1
 name: Asset Maintenance Log
 label: Asset Maintenance Log
 module: assets
+naming:
+  series: AML-{YYYY}-{#####}
 submittable: true
 icon: file-clock
 fields:
@@ -29,8 +31,8 @@ fields:
   read_only: true
 - fieldname: task
   label: Task
-  fieldtype: Link
-  options: Asset Maintenance Task
+  fieldtype: Text
+  description: Référence de la ligne d'origine (Asset Maintenance Task).
 - fieldname: maintenance_type
   label: Maintenance Type
   fieldtype: Text
@@ -75,11 +77,6 @@ fields:
 - fieldname: actions_performed
   label: Actions performed
   fieldtype: TextEditor
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset Maintenance Log
-  read_only: true
 - fieldname: task_name
   label: Task Name
   fieldtype: Text
@@ -114,7 +111,3 @@ layout:
 - section: Dates et planification
   columns:
   - - actions_performed
-    - amended_from
-views:
-  tree:
-    parent: amended_from

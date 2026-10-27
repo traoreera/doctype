@@ -82,7 +82,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: total_debits
   label: Total Debits

@@ -2,6 +2,8 @@ schema_version: 1
 name: Asset
 label: Asset
 module: assets
+naming:
+  series: ASSE-{YYYY}-{#####}
 submittable: true
 icon: building
 fields:
@@ -187,11 +189,6 @@ fields:
   options: Finance Book
   read_only: true
   hidden: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset
-  read_only: true
 - fieldname: split_from
   label: Split From
   fieldtype: Link
@@ -336,7 +333,3 @@ layout:
     - department
   - - journal_entry_for_scrap
     - split_from
-    - amended_from
-views:
-  tree:
-    parent: amended_from

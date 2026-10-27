@@ -2,6 +2,8 @@ schema_version: 1
 name: Stock Entry
 label: Stock Entry
 module: stock
+naming:
+  series: SE-{YYYY}-{#####}
 submittable: true
 icon: arrow-left-right
 fields:
@@ -231,11 +233,6 @@ fields:
   fieldtype: Link
   options: Job Card
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Stock Entry
-  read_only: true
 - fieldname: credit_note
   label: Credit Note
   fieldtype: Link
@@ -384,10 +381,7 @@ layout:
     - remarks
   - - per_transferred
     - total_amount
-    - amended_from
 views:
   calendar:
     start: posting_date
     title: supplier_name
-  tree:
-    parent: outgoing_stock_entry

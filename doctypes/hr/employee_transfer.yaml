@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Transfer
 label: Employee Transfer
 module: hr
+naming:
+  series: ET-{YYYY}-{#####}
 submittable: true
 icon: arrow-right-left
 fields:
@@ -50,11 +52,6 @@ fields:
   fieldtype: Link
   options: Employee
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Transfer
-  read_only: true
 title_field: employee_name
 layout:
 - section: Informations principales
@@ -70,4 +67,3 @@ layout:
   - - transfer_details
     - create_new_employee_id
     - new_employee_id
-    - amended_from

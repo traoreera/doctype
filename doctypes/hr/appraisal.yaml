@@ -2,6 +2,8 @@ schema_version: 1
 name: Appraisal
 label: Appraisal
 module: hr
+naming:
+  series: APPR-{YYYY}-{#####}
 submittable: true
 icon: star
 fields:
@@ -67,11 +69,6 @@ fields:
   label: Appraisal Template
   fieldtype: Link
   options: Appraisal Template
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Appraisal
-  read_only: true
 - fieldname: reflections
   label: Reflections
   fieldtype: TextEditor
@@ -155,7 +152,6 @@ layout:
   section: Reflections
   columns:
   - - reflections
-    - amended_from
 views:
   calendar:
     start: start_date

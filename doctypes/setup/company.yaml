@@ -57,7 +57,7 @@ fields:
 - fieldname: default_currency
   label: Default Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   in_list_view: true
 - fieldname: default_letter_head
@@ -230,10 +230,6 @@ fields:
   label: Asset Received But Not Billed
   fieldtype: Link
   options: Account
-- fieldname: exception_budget_approver_role
-  label: Exception Budget Approver Role
-  fieldtype: Link
-  options: Role
 - fieldname: date_of_incorporation
   label: Date of Incorporation
   fieldtype: Date
@@ -368,7 +364,7 @@ fields:
 - fieldname: reporting_currency
   label: Reporting Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: purchase_expense_account
   label: Purchase Expense Account
@@ -427,10 +423,6 @@ fields:
   fieldtype: Date
   description: Accounting entries are frozen up to this date. Only users with the specified role can create or modify
     entries before this date.
-- fieldname: role_allowed_for_frozen_entries
-  label: Roles Allowed to Set and Edit Frozen Account Entries
-  fieldtype: Link
-  options: Role
 - fieldname: default_letter_head_report
   label: Default Letter Head (Report)
   fieldtype: Link
@@ -538,10 +530,6 @@ layout:
     - auto_err_frequency
     - submit_err_jv
 - tab: Accounts
-  section: Budget Detail
-  columns:
-  - - exception_budget_approver_role
-- tab: Accounts
   section: Fixed Asset Defaults
   columns:
   - - accumulated_depreciation_account
@@ -555,7 +543,6 @@ layout:
   section: Comptabilité et montants
   columns:
   - - accounts_frozen_till_date
-  - - role_allowed_for_frozen_entries
 - tab: Buying and Selling
   section: Buying & Selling Settings
   columns:

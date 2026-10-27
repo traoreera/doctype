@@ -2,6 +2,8 @@ schema_version: 1
 name: Item Standard Cost
 label: Item Standard Cost
 module: stock
+naming:
+  series: ISC-{YYYY}-{#####}
 submittable: true
 icon: coins
 fields:
@@ -43,11 +45,6 @@ fields:
   read_only: true
   description: 'Stock Reconciliation that revalues on-hand stock to this standard rate: auto-created when the rate
     is changed here, or the reconciliation that captured this rate (opening entry or rate change).'
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Item Standard Cost
-  read_only: true
 title_field: item_code
 layout:
 - section: Comptabilité et montants
@@ -60,7 +57,3 @@ layout:
 - section: Revaluation
   columns:
   - - revaluation_entry
-    - amended_from
-views:
-  tree:
-    parent: amended_from

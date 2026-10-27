@@ -41,11 +41,6 @@ fields:
   label: Description
   fieldtype: TextEditor
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Training Program
-  read_only: true
 title_field: status
 layout:
 - section: Informations principales
@@ -62,7 +57,6 @@ layout:
 - section: Informations complémentaires 3
   columns:
   - - description
-    - amended_from
 views:
   kanban:
     field: status

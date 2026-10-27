@@ -37,7 +37,7 @@ fields:
   label: Agents
   fieldtype: Table
   options: Assignment Rule User
-  multiselect: true
+  description: Un agent par ligne (adresse e-mail du membre).
 - fieldname: enable_scheduling
   label: Enable Appointment Scheduling
   fieldtype: Boolean

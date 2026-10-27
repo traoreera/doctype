@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Separation
 label: Employee Separation
 module: hr
+naming:
+  series: ES-{YYYY}-{#####}
 submittable: true
 icon: user-minus
 fields:
@@ -71,11 +73,6 @@ fields:
 - fieldname: exit_interview
   label: Exit Interview Summary
   fieldtype: TextEditor
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Separation
-  read_only: true
 - fieldname: boarding_begins_on
   label: Separation Begins On
   fieldtype: Date
@@ -102,4 +99,3 @@ layout:
 - section: Informations complémentaires 3
   columns:
   - - exit_interview
-    - amended_from

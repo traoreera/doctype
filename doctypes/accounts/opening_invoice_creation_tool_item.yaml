@@ -33,7 +33,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   in_list_view: true
   description: Currency of the outstanding amount. Defaults to the Company currency.
 - fieldname: outstanding_amount

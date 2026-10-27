@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Incentive
 label: Employee Incentive
 module: payroll
+naming:
+  series: EI-{YYYY}-{#####}
 submittable: true
 icon: badge-dollar-sign
 fields:
@@ -20,11 +22,6 @@ fields:
   label: Payroll Date
   fieldtype: Date
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Incentive
-  read_only: true
 - fieldname: employee_name
   label: Employee Name
   fieldtype: Text
@@ -42,7 +39,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: company
@@ -56,7 +53,6 @@ layout:
   columns:
   - - employee
     - employee_name
-    - amended_from
   - - company
     - department
 - section: Incentive

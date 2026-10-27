@@ -2,6 +2,8 @@ schema_version: 1
 name: Shift Assignment
 label: Shift Assignment
 module: hr
+naming:
+  series: SA-{YYYY}-{#####}
 submittable: true
 icon: user-check
 fields:
@@ -34,11 +36,6 @@ fields:
   label: Shift Request
   fieldtype: Link
   options: Shift Request
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Shift Assignment
   read_only: true
 - fieldname: start_date
   label: Start Date
@@ -86,7 +83,6 @@ layout:
     - end_date
     - shift_request
     - shift_schedule_assignment
-    - amended_from
 views:
   kanban:
     field: status

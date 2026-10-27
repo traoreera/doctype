@@ -2,6 +2,8 @@ schema_version: 1
 name: Compensatory Leave Request
 label: Compensatory Leave Request
 module: hr
+naming:
+  series: CLR-{YYYY}-{#####}
 submittable: true
 icon: calendar-plus-2
 fields:
@@ -48,11 +50,6 @@ fields:
   label: Reason
   fieldtype: LongText
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Compensatory Leave Request
-  read_only: true
 title_field: employee_name
 layout:
 - section: Informations principales
@@ -69,4 +66,3 @@ layout:
     - half_day
     - half_day_date
   - - reason
-    - amended_from

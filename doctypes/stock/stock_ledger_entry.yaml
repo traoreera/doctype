@@ -2,6 +2,8 @@ schema_version: 1
 name: Stock Ledger Entry
 label: Stock Ledger Entry
 module: stock
+naming:
+  series: SLE-{YYYY}-{#####}
 submittable: true
 icon: book-open
 fields:

@@ -53,7 +53,7 @@ fields:
 - fieldname: country
   label: Country
   fieldtype: Link
-  options: Pays
+  options: Country
 - fieldname: resume_link
   label: Link
   fieldtype: Text
@@ -73,7 +73,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: employee_referral
   label: Employee Referral
   fieldtype: Link

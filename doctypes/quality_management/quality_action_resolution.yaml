@@ -20,9 +20,9 @@ fields:
   in_list_view: true
 - fieldname: responsible
   label: Responsible
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email
 - fieldname: completion_by
   label: Completion By
   fieldtype: Date

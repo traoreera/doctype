@@ -6,14 +6,14 @@ icon: bell
 fields:
 - fieldname: from_user
   label: From User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email
 - fieldname: to_user
   label: To User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email
 - fieldname: message
   label: Message
   fieldtype: TextEditor

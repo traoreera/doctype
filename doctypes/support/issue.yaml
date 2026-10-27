@@ -179,5 +179,3 @@ views:
     field: status
     card_fields:
     - subject
-  tree:
-    parent: issue_split_from

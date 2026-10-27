@@ -2,6 +2,8 @@ schema_version: 1
 name: Salary Structure
 label: Salary Structure
 module: payroll
+naming:
+  series: SAST-{YYYY}-{#####}
 submittable: true
 icon: layout-list
 fields:
@@ -101,15 +103,10 @@ fields:
   label: Payment Account
   fieldtype: Link
   options: Account
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Salary Structure
-  read_only: true
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: employee_benefits
   label: Flexible Benefits
@@ -125,7 +122,6 @@ layout:
     - letter_head
   - - is_active
     - currency
-    - amended_from
 - tab: Général
   section: Informations complémentaires 2
   columns:

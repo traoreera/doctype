@@ -32,7 +32,7 @@ fields:
 - fieldname: inventory_account_currency
   label: Inventory Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: vf_default_warehouse
   label: Warehouse

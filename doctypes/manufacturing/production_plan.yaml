@@ -2,6 +2,8 @@ schema_version: 1
 name: Production Plan
 label: Production Plan
 module: manufacturing
+naming:
+  series: PP-{YYYY}-{#####}
 submittable: true
 icon: calendar-check
 fields:
@@ -108,11 +110,6 @@ fields:
   - Material Requested
   default: Draft
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Production Plan
-  read_only: true
 - fieldname: for_warehouse
   label: For Warehouse
   fieldtype: Link
@@ -205,7 +202,6 @@ layout:
   columns:
   - - total_planned_qty
     - total_produced_qty
-  - - amended_from
 - tab: Demand
   section: Références
   columns:
@@ -268,5 +264,3 @@ views:
     start: from_date
     end: to_date
     title: item_code
-  tree:
-    parent: amended_from

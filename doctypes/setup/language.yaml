@@ -2,6 +2,8 @@ schema_version: 1
 name: Language
 label: Language
 module: setup
+naming:
+  field: language_code
 icon: file-text
 fields:
 - fieldname: language_name

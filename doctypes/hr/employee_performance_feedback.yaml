@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Performance Feedback
 label: Employee Performance Feedback
 module: hr
+naming:
+  series: EPF-{YYYY}-{#####}
 submittable: true
 icon: message-square-text
 fields:
@@ -70,14 +72,9 @@ fields:
   options: Employee Feedback Rating
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Performance Feedback
-  read_only: true
+  format: email
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -110,4 +107,3 @@ layout:
   section: Informations complémentaires 3
   columns:
   - - feedback
-    - amended_from

@@ -11,8 +11,8 @@ fields:
   in_list_view: true
 - fieldname: maintenance_manager
   label: Maintenance Manager
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: maintenance_manager_name
   label: Maintenance Manager Name
   fieldtype: Text

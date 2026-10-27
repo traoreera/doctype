@@ -24,11 +24,11 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: payment_schedule
   label: Payment Schedule
-  fieldtype: Link
-  options: Payment Schedule
+  fieldtype: Text
   read_only: true
+  description: Référence de la ligne d'origine (Payment Schedule).

@@ -62,8 +62,8 @@ fields:
   options: Shift Type
 - fieldname: approver
   label: Approver
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: from_date
   label: From Date
   fieldtype: Date

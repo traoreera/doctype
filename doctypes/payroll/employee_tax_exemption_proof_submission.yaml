@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Tax Exemption Proof Submission
 label: Employee Tax Exemption Proof Submission
 module: payroll
+naming:
+  series: ETEPS-{YYYY}-{#####}
 submittable: true
 icon: file-check
 fields:
@@ -54,15 +56,10 @@ fields:
 - fieldname: attachments
   label: Attachments
   fieldtype: Attach
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Tax Exemption Proof Submission
-  read_only: true
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 title_field: employee_name
 layout:
@@ -73,7 +70,6 @@ layout:
     - employee_name
     - department
     - currency
-    - amended_from
   - - submission_date
     - payroll_period
     - company

@@ -2,6 +2,8 @@ schema_version: 1
 name: Web Form
 label: Web Form
 module: setup
+naming:
+  field: route
 icon: file-text
 fields:
 - fieldname: title

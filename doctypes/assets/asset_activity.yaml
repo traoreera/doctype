@@ -25,11 +25,11 @@ fields:
   read_only: true
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
   in_list_view: true
   read_only: true
+  format: email
 title_field: asset
 layout:
 - section: Dates et planification

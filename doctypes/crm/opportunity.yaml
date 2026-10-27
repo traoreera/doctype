@@ -62,7 +62,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: opportunity_amount
   label: Opportunity Amount
   fieldtype: Currency
@@ -121,11 +121,6 @@ fields:
   fieldtype: Date
   required: true
   default: today
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Opportunity
-  read_only: true
 - fieldname: lost_reasons
   label: Lost Reasons
   fieldtype: Table
@@ -182,8 +177,8 @@ fields:
   options: Market Segment
 - fieldname: opportunity_owner
   label: Opportunity Owner
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
+  format: email
 - fieldname: website
   label: Website
   fieldtype: Text
@@ -276,7 +271,6 @@ layout:
   - - company
     - transaction_date
   - - language
-    - amended_from
 - tab: Général
   section: Lost Reasons
   columns:

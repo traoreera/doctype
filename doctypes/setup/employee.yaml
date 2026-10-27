@@ -78,9 +78,9 @@ fields:
   fieldtype: Text
 - fieldname: user_id
   label: User ID
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   description: System User (login) ID. If set, it will become default for all HR forms.
+  format: email
 - fieldname: create_user_permission
   label: Create User Permission
   fieldtype: Boolean
@@ -289,7 +289,7 @@ fields:
 - fieldname: salary_currency
   label: Salary Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: ctc
   label: Cost to Company (CTC)
   fieldtype: Currency

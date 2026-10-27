@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Advance
 label: Employee Advance
 module: hr
+naming:
+  series: EA-{YYYY}-{#####}
 submittable: true
 icon: hand-coins
 fields:
@@ -68,11 +70,6 @@ fields:
   options: Company
   required: true
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Advance
-  read_only: true
 - fieldname: advance_account
   label: Advance Account
   fieldtype: Link
@@ -100,7 +97,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: base_paid_amount
   label: Paid Amount (Company Currency)
@@ -144,7 +141,6 @@ layout:
 - section: More Info
   columns:
   - - status
-  - - amended_from
 views:
   calendar:
     start: posting_date

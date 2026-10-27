@@ -2,6 +2,8 @@ schema_version: 1
 name: Leave Policy
 label: Leave Policy
 module: hr
+naming:
+  series: LP-{YYYY}-{#####}
 submittable: true
 icon: scroll-text
 fields:
@@ -9,11 +11,6 @@ fields:
   label: Leave Policy Details
   fieldtype: Table
   options: Leave Policy Detail
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Leave Policy
-  read_only: true
 - fieldname: title
   label: Leave Policy Name
   fieldtype: Text
@@ -27,4 +24,3 @@ layout:
 - section: Leave Allocations
   columns:
   - - leave_policy_details
-    - amended_from

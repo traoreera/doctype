@@ -80,11 +80,6 @@ fields:
 - fieldname: doors
   label: Doors
   fieldtype: Int
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Vehicle
-  read_only: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -119,7 +114,6 @@ layout:
   - - color
     - wheels
     - doors
-    - amended_from
 views:
   calendar:
     start: start_date
@@ -128,5 +122,3 @@ views:
     start: start_date
     end: end_date
     title: model
-  tree:
-    parent: amended_from

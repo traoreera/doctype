@@ -2,6 +2,8 @@ schema_version: 1
 name: Employee Benefit Application
 label: Employee Benefit Application
 module: payroll
+naming:
+  series: EBA-{YYYY}-{#####}
 submittable: true
 icon: gift
 fields:
@@ -41,11 +43,6 @@ fields:
   fieldtype: Link
   options: Department
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Employee Benefit Application
-  read_only: true
 - fieldname: employee_benefits
   label: Flexible Benefits
   fieldtype: Table
@@ -58,7 +55,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: company
@@ -76,7 +73,6 @@ layout:
   - - date
     - payroll_period
     - company
-    - amended_from
 - section: Benefits
   columns:
   - - currency

@@ -95,6 +95,35 @@ class TestAllOrNothing:
             reg.load_dir(tmp_path / "nope", owner="sales")
 
 
+class TestSubdirectories:
+    """`load_dir` descend dans les sous-dossiers : un jeu de DocTypes se range par module pour la lecture."""
+
+    def test_a_doctype_in_a_subdirectory_is_loaded(self, reg, tmp_path):
+        d = write(tmp_path / "d", top=dt("Top"))
+        write(d / "accounts", account=dt("Account"))
+        write(d / "stock" / "deep", item=dt("Item"))
+        assert sorted(reg.load_dir(d, owner="sales")) == ["Account", "Item", "Top"]
+
+    def test_a_parent_cites_a_child_of_another_subdirectory(self, reg, tmp_path):
+        """Le tri « enfants d'abord » porte sur TOUT l'arbre : l'ordre des sous-dossiers n'a donc pas à être trouvé.
+
+        C'est ce qui permet à deux modules de se citer mutuellement (une facture de vente dont la ligne vit dans
+        le module des achats, et l'inverse) : aucun ordre de dossiers ne pourrait satisfaire un tel cycle.
+        """
+        d = write(tmp_path / "d")
+        # Le parent est dans le dossier qui passe EN PREMIER par ordre alphabétique, l'enfant dans le dernier.
+        write(d / "a_selling", invoice=dt("Invoice", fields=[{"fieldname": "items", "fieldtype": "Table", "options": "Invoice Line"}]))
+        write(d / "z_lines", line=dt("Invoice Line", module=None, istable=True))
+        assert sorted(reg.load_dir(d, owner="sales")) == ["Invoice", "Invoice Line"]
+
+    def test_a_bad_file_in_a_subdirectory_leaves_none_of_the_tree(self, reg, tmp_path):
+        d = write(tmp_path / "d", top=dt("Top"))
+        write(d / "broken", bad=dt("Bad", module="stock"))
+        with pytest.raises(InvalidDefinition):
+            reg.load_dir(d, owner="sales")
+        assert reg.names() == []
+
+
 class TestUnregister:
     def test_a_plugin_takes_back_only_its_own(self, reg, tmp_path):
         reg.register(parse_definition(dt("Ops", module="ops")))

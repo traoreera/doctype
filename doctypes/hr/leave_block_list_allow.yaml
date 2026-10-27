@@ -5,7 +5,7 @@ istable: true
 fields:
 - fieldname: allow_user
   label: Allow User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
   in_list_view: true
+  format: email

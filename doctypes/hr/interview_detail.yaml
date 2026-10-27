@@ -5,6 +5,6 @@ istable: true
 fields:
 - fieldname: interviewer
   label: Interviewer
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email

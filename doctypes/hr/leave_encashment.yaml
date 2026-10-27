@@ -2,6 +2,8 @@ schema_version: 1
 name: Leave Encashment
 label: Leave Encashment
 module: hr
+naming:
+  series: LE-{YYYY}-{#####}
 submittable: true
 icon: banknote
 fields:
@@ -41,11 +43,6 @@ fields:
   label: Leave Balance
   fieldtype: Number
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Leave Encashment
-  read_only: true
 - fieldname: encashment_amount
   label: Encashment Amount
   fieldtype: Currency
@@ -64,7 +61,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: company
@@ -149,8 +146,7 @@ layout:
   - - additional_salary
 - section: More Info
   columns:
-  - - amended_from
-    - status
+  - - status
 views:
   calendar:
     start: posting_date

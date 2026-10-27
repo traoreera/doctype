@@ -59,7 +59,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: lower_range
   label: Lower Range
   fieldtype: Currency

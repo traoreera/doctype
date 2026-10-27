@@ -2,6 +2,8 @@ schema_version: 1
 name: Delivery Note
 label: Delivery Note
 module: stock
+naming:
+  series: DN-{YYYY}-{#####}
 submittable: true
 icon: truck
 fields:
@@ -20,11 +22,6 @@ fields:
 - fieldname: customer_name
   label: Customer Name
   fieldtype: Text
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Delivery Note
   read_only: true
 - fieldname: company
   label: Company
@@ -130,7 +127,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -145,7 +142,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: plc_conversion_rate
@@ -511,7 +508,6 @@ layout:
     - posting_time
     - set_posting_time
   - - company
-    - amended_from
     - is_return
     - issue_credit_note
     - return_against
@@ -694,5 +690,3 @@ views:
   calendar:
     start: posting_date
     title: customer_name
-  tree:
-    parent: amended_from

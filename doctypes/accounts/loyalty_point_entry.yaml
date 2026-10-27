@@ -77,5 +77,3 @@ views:
   calendar:
     start: posting_date
     title: customer
-  tree:
-    parent: redeem_against

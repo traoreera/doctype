@@ -2,6 +2,8 @@ schema_version: 1
 name: Supplier Scorecard Period
 label: Supplier Scorecard Period
 module: buying
+naming:
+  series: SSP-{YYYY}-{#####}
 submittable: true
 icon: calendar-range
 fields:
@@ -45,11 +47,6 @@ fields:
   fieldtype: Link
   options: Supplier Scorecard
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Supplier Scorecard Period
-  read_only: true
 title_field: supplier
 layout:
 - section: Comptabilité et montants
@@ -66,7 +63,6 @@ layout:
 - section: Reference
   columns:
   - - scorecard
-    - amended_from
 views:
   calendar:
     start: start_date
@@ -75,5 +71,3 @@ views:
     start: start_date
     end: end_date
     title: supplier
-  tree:
-    parent: amended_from

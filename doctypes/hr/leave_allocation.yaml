@@ -2,6 +2,8 @@ schema_version: 1
 name: Leave Allocation
 label: Leave Allocation
 module: hr
+naming:
+  series: LEAL-{YYYY}-{#####}
 submittable: true
 icon: calendar-range
 fields:
@@ -82,11 +84,6 @@ fields:
   fieldtype: Boolean
   read_only: true
   hidden: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Leave Allocation
-  read_only: true
 - fieldname: description
   label: Description
   fieldtype: LongText
@@ -133,7 +130,6 @@ layout:
     - leave_period
     - leave_policy_assignment
     - carry_forwarded_leaves_count
-    - amended_from
 - section: Earned Leave Schedule
   columns:
   - - earned_leave_schedule

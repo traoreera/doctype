@@ -5,6 +5,6 @@ istable: true
 fields:
 - fieldname: cc
   label: CC
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   in_list_view: true
+  format: email

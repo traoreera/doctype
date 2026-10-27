@@ -2,6 +2,8 @@ schema_version: 1
 name: Stock Closing Entry
 label: Stock Closing Entry
 module: stock
+naming:
+  series: SCE-{YYYY}-{#####}
 submittable: true
 icon: lock
 fields:
@@ -39,11 +41,6 @@ fields:
   label: To Date
   fieldtype: Date
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Stock Closing Entry
-  read_only: true
 title_field: status
 layout:
 - section: Dates et planification
@@ -53,7 +50,6 @@ layout:
     - status
   - - from_date
     - to_date
-    - amended_from
 views:
   calendar:
     start: from_date
@@ -62,5 +58,3 @@ views:
     start: from_date
     end: to_date
     title: status
-  tree:
-    parent: amended_from

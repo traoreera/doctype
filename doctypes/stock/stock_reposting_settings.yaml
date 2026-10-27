@@ -29,10 +29,6 @@ fields:
   label: Use Item based reposting
   fieldtype: Boolean
   default: true
-- fieldname: notify_reposting_error_to_role
-  label: Notify Reposting Error to Role
-  fieldtype: Link
-  options: Role
 - fieldname: enable_parallel_reposting
   label: Enable Parallel Reposting
   fieldtype: Boolean
@@ -72,9 +68,6 @@ layout:
   - - enable_parallel_reposting
     - no_of_parallel_reposting
   - - enable_separate_reposting_for_gl
-- section: Errors Notification
-  columns:
-  - - notify_reposting_error_to_role
 - section: Auto Reposting of Incorrect Valuation
   columns:
   - - repost_incorrect_valuation_entries

@@ -185,9 +185,16 @@ class DocTypeRegistry:
         return compiled
 
     def load_dir(self, directory: Path, *, owner: str | None = None) -> list[str]:
-        """Charge `*.yaml|*.yml|*.json`. Une définition invalide fait échouer tout le chargement, ET n'en laisse aucune.
+        """Charge `*.yaml|*.yml|*.json`, SOUS-DOSSIERS COMPRIS. Une définition invalide fait échouer tout le chargement, ET n'en laisse aucune.
 
-        Les DocTypes enfants passent d'abord : un parent compile ses lignes avec la définition de leur DocType.
+        Les DocTypes enfants passent d'abord : un parent compile ses lignes avec la définition de leur DocType. Ce tri
+        porte sur TOUT l'arbre, et il suffit toujours : un enfant ne peut pas avoir de champ Table (tables imbriquées
+        refusées, voir `schema`), c'est donc une feuille du graphe parent→enfant, qui ne peut pas avoir de cycle. Un jeu de
+        DocTypes rangé en sous-dossiers (un par module, pour la lecture) se charge ainsi d'un seul appel, et un parent peut
+        citer l'enfant d'un autre dossier sans que l'ordre des dossiers compte.
+
+        Tout fichier de l'arbre est lu comme un DocType : les espaces de travail d'un plugin vivent à côté de son dossier
+        de DocTypes (`load_workspaces`), jamais dedans.
         `owner` : voir `register`.
         """
         if owner is not None and not _OWNER_RE.match(owner):
@@ -199,7 +206,7 @@ class DocTypeRegistry:
         if not directory.is_dir():
             raise InvalidDefinition(f"dossier de DocTypes introuvable : {directory}")
         parsed = []
-        for path in sorted(p for p in directory.iterdir() if p.suffix in _SUFFIXES):
+        for path in sorted(p for p in directory.rglob("*") if p.suffix in _SUFFIXES and p.is_file()):
             try:
                 text = path.read_text(encoding="utf-8")
                 raw = json.loads(text) if path.suffix == ".json" else yaml.safe_load(text)

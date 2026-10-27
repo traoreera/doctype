@@ -13,7 +13,7 @@ fields:
 - fieldname: account_currency
   label: Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   hidden: true
 - fieldname: from_date
   label: From Date

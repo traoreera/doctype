@@ -46,11 +46,6 @@ fields:
 - fieldname: description
   label: Coupon Description
   fieldtype: TextEditor
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Coupon Code
-  read_only: true
 - fieldname: from_external_ecomm_platform
   label: From External Ecomm Platform
   fieldtype: Boolean
@@ -72,10 +67,7 @@ layout:
     - maximum_use
     - used
   - - description
-    - amended_from
 views:
   calendar:
     start: valid_from
     title: customer
-  tree:
-    parent: amended_from

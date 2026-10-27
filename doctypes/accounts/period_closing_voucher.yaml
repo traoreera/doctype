@@ -2,6 +2,8 @@ schema_version: 1
 name: Period Closing Voucher
 label: Period Closing Voucher
 module: accounts
+naming:
+  series: PCV-{YYYY}-{#####}
 submittable: true
 icon: folder-lock
 fields:
@@ -15,11 +17,6 @@ fields:
   options: Fiscal Year
   required: true
   in_list_view: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Period Closing Voucher
-  read_only: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -70,7 +67,6 @@ layout:
     - fiscal_year
     - period_start_date
     - period_end_date
-    - amended_from
   - - closing_account_head
     - stock_value_difference
     - gle_processing_status
@@ -80,5 +76,3 @@ views:
   calendar:
     start: transaction_date
     title: company
-  tree:
-    parent: amended_from

@@ -2,6 +2,8 @@ schema_version: 1
 name: Salary Slip
 label: Salary Slip
 module: payroll
+naming:
+  series: SS-{YYYY}-{#####}
 submittable: true
 icon: receipt-text
 fields:
@@ -149,11 +151,6 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Salary Slip
-  read_only: true
 - fieldname: absent_days
   label: Absent Days
   fieldtype: Number
@@ -165,7 +162,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: total_deduction
@@ -435,7 +432,6 @@ layout:
   section: Informations complémentaires 13
   columns:
   - - journal_entry
-    - amended_from
   - - bank_name
     - bank_account_no
 - tab: Leaves

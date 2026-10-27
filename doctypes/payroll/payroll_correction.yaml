@@ -2,14 +2,11 @@ schema_version: 1
 name: Payroll Correction
 label: Payroll Correction
 module: payroll
+naming:
+  series: PC-{YYYY}-{#####}
 submittable: true
 icon: file-diff
 fields:
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Payroll Correction
-  read_only: true
 - fieldname: employee
   label: Employee
   fieldtype: Link
@@ -30,7 +27,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: payroll_period
   label: Payroll Period
   fieldtype: Link
@@ -86,8 +83,7 @@ title_field: employee_name
 layout:
 - section: Informations principales
   columns:
-  - - amended_from
-    - employee
+  - - employee
     - employee_name
     - payroll_date
   - - company

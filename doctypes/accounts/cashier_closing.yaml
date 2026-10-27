@@ -2,6 +2,8 @@ schema_version: 1
 name: Cashier Closing
 label: Cashier Closing
 module: accounts
+naming:
+  series: CC-{YYYY}-{#####}
 submittable: true
 icon: lock
 fields:
@@ -14,11 +16,11 @@ fields:
   read_only: true
 - fieldname: user
   label: User
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
   in_list_view: true
   read_only: true
+  format: email
 - fieldname: date
   label: Date
   fieldtype: Date
@@ -56,11 +58,6 @@ fields:
   fieldtype: Number
   in_list_view: true
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Cashier Closing
-  read_only: true
 title_field: user
 layout:
 - section: Comptabilité et montants
@@ -76,10 +73,7 @@ layout:
     - outstanding_amount
     - payments
     - net_amount
-    - amended_from
 views:
   calendar:
     start: date
     title: user
-  tree:
-    parent: amended_from

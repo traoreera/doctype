@@ -2,6 +2,8 @@ schema_version: 1
 name: Travel Request
 label: Travel Request
 module: hr
+naming:
+  series: TRRE-{YYYY}-{#####}
 submittable: true
 icon: plane-takeoff
 fields:
@@ -86,11 +88,6 @@ fields:
 - fieldname: other_details
   label: Other Details
   fieldtype: LongText
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Travel Request
-  read_only: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -133,4 +130,3 @@ layout:
   - - name_of_organizer
     - address_of_organizer
     - other_details
-    - amended_from

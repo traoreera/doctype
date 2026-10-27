@@ -2,6 +2,8 @@ schema_version: 1
 name: Maintenance Visit
 label: Maintenance Visit
 module: maintenance
+naming:
+  series: MV-{YYYY}-{#####}
 submittable: true
 icon: wrench
 fields:
@@ -84,11 +86,6 @@ fields:
   default: Draft
   required: true
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Maintenance Visit
-  read_only: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -117,9 +114,9 @@ fields:
   read_only: true
 - fieldname: maintenance_schedule_detail
   label: Maintenance Schedule Detail
-  fieldtype: Link
-  options: Maintenance Schedule Detail
+  fieldtype: Text
   hidden: true
+  description: Référence de la ligne d'origine (Maintenance Schedule Detail).
 title_field: status
 layout:
 - section: Dates et planification
@@ -140,7 +137,6 @@ layout:
   columns:
   - - customer_feedback
   - - status
-    - amended_from
     - company
 - section: Contact Info
   columns:
@@ -148,6 +144,3 @@ layout:
     - contact_person
   - - territory
     - customer_group
-views:
-  tree:
-    parent: amended_from

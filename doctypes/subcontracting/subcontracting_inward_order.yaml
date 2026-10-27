@@ -2,6 +2,8 @@ schema_version: 1
 name: Subcontracting Inward Order
 label: Subcontracting Inward Order
 module: subcontracting
+naming:
+  series: SIO-{YYYY}-{#####}
 submittable: true
 icon: package-plus
 fields:
@@ -41,11 +43,6 @@ fields:
   required: true
   in_list_view: true
   default: today
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Subcontracting Inward Order
-  read_only: true
 - fieldname: items
   label: Items
   fieldtype: Table
@@ -117,7 +114,7 @@ fields:
 - fieldname: currency
   label: Customer Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: secondary_items
@@ -136,7 +133,6 @@ layout:
   - - company
     - transaction_date
     - customer_warehouse
-    - amended_from
 - tab: Général
   section: Items
   columns:
@@ -172,5 +168,3 @@ views:
   calendar:
     start: transaction_date
     title: title
-  tree:
-    parent: amended_from

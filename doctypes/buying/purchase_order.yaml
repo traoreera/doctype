@@ -2,6 +2,8 @@ schema_version: 1
 name: Purchase Order
 label: Purchase Order
 module: buying
+naming:
+  series: PUOR-{YYYY}-{#####}
 submittable: true
 icon: shopping-cart
 fields:
@@ -44,11 +46,6 @@ fields:
 - fieldname: order_confirmation_date
   label: Order Confirmation Date
   fieldtype: Date
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Purchase Order
-  read_only: true
 - fieldname: customer
   label: Customer
   fieldtype: Link
@@ -108,7 +105,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -121,7 +118,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: plc_conversion_rate
   label: Price List Exchange Rate
@@ -335,7 +332,7 @@ fields:
 - fieldname: party_account_currency
   label: Party Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
   hidden: true
 - fieldname: inter_company_order_reference
@@ -638,7 +635,6 @@ layout:
   - - title
     - represents_company
     - ref_sq
-    - amended_from
   - - mps
     - is_internal_supplier
     - inter_company_order_reference
@@ -651,5 +647,3 @@ views:
     start: from_date
     end: to_date
     title: title
-  tree:
-    parent: amended_from

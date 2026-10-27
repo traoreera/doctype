@@ -47,11 +47,6 @@ fields:
   label: Material Requests
   fieldtype: Table
   options: Production Plan Material Request
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Master Production Schedule
-  read_only: true
 - fieldname: sales_forecast
   label: Sales Forecast
   fieldtype: Link
@@ -88,7 +83,6 @@ layout:
   section: Forecast Demand
   columns:
   - - sales_forecast
-    - amended_from
 views:
   calendar:
     start: posting_date
@@ -97,5 +91,3 @@ views:
     start: from_date
     end: to_date
     title: company
-  tree:
-    parent: amended_from

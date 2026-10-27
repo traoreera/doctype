@@ -19,7 +19,7 @@ fields:
 - fieldname: default_currency
   label: Default Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   in_list_view: true
 - fieldname: hide_currency_symbol

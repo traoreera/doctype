@@ -2,6 +2,8 @@ schema_version: 1
 name: Module Def
 label: Module Def
 module: setup
+naming:
+  field: module_name
 icon: file-text
 fields:
 - fieldname: module_name

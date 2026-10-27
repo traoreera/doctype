@@ -2,14 +2,11 @@ schema_version: 1
 name: Leave Adjustment
 label: Leave Adjustment
 module: hr
+naming:
+  series: LA-{YYYY}-{#####}
 submittable: true
 icon: sliders-horizontal
 fields:
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Leave Adjustment
-  read_only: true
 - fieldname: employee
   label: Employee
   fieldtype: Link
@@ -85,7 +82,6 @@ layout:
     - employee
     - employee_name
     - company
-    - amended_from
   - - leave_type
     - adjustment_type
     - leaves_to_adjust

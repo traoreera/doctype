@@ -88,7 +88,7 @@ fields:
 - fieldname: account_currency
   label: Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: net_amount
   label: Net Amount

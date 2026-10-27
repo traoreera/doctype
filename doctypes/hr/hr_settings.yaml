@@ -33,10 +33,6 @@ fields:
   label: Auto Leave Encashment
   fieldtype: Boolean
   default: false
-- fieldname: role_allowed_to_create_backdated_leave_application
-  label: Role Allowed to Create Backdated Leave Application
-  fieldtype: Link
-  options: Role
 - fieldname: standard_working_hours
   label: Standard Working Hours
   fieldtype: Number
@@ -164,7 +160,6 @@ layout:
     - prevent_self_leave_approval
     - show_leaves_of_all_department_members_in_calendar
   - - restrict_backdated_leave_application
-    - role_allowed_to_create_backdated_leave_application
 - tab: Expenses
   section: Expenses Settings
   columns:

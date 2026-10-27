@@ -2,6 +2,8 @@ schema_version: 1
 name: Asset Depreciation Schedule
 label: Asset Depreciation Schedule
 module: assets
+naming:
+  series: ADS-{YYYY}-{#####}
 submittable: true
 icon: trending-down
 fields:
@@ -16,11 +18,6 @@ fields:
   fieldtype: Select
   options:
   - ACC-ADS-.YYYY.-
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Asset Depreciation Schedule
-  read_only: true
 - fieldname: finance_book
   label: Finance Book
   fieldtype: Link
@@ -133,7 +130,3 @@ layout:
 - section: Details
   columns:
   - - notes
-    - amended_from
-views:
-  tree:
-    parent: amended_from

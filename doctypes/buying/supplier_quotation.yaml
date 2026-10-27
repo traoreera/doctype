@@ -2,6 +2,8 @@ schema_version: 1
 name: Supplier Quotation
 label: Supplier Quotation
 module: buying
+naming:
+  series: SQ-{YYYY}-{#####}
 submittable: true
 icon: file-text
 fields:
@@ -29,12 +31,6 @@ fields:
   required: true
   in_list_view: true
   default: today
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Supplier Quotation
-  read_only: true
-  hidden: true
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -67,7 +63,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
 - fieldname: conversion_rate
   label: Exchange Rate
@@ -80,7 +76,7 @@ fields:
 - fieldname: price_list_currency
   label: Price List Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: plc_conversion_rate
   label: Price List Exchange Rate

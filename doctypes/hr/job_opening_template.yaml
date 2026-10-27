@@ -32,7 +32,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
 - fieldname: upper_range
   label: Upper Range
   fieldtype: Currency

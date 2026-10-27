@@ -2,6 +2,8 @@ schema_version: 1
 name: Salary Structure Assignment
 label: Salary Structure Assignment
 module: payroll
+naming:
+  series: SSA-{YYYY}-{#####}
 submittable: true
 icon: user-check
 fields:
@@ -58,11 +60,6 @@ fields:
   label: Variable
   fieldtype: Currency
   decimals: 2
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Salary Structure Assignment
-  read_only: true
 - fieldname: income_tax_slab
   label: Income Tax Slab
   fieldtype: Link
@@ -70,7 +67,7 @@ fields:
 - fieldname: currency
   label: Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   required: true
   read_only: true
 - fieldname: payroll_payable_account
@@ -127,7 +124,6 @@ layout:
     - annual_gross_earning
   - - variable
     - ctc
-    - amended_from
   - - leave_encashment_amount_per_day
 - section: Opening Balances
   columns:

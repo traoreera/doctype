@@ -2,6 +2,8 @@ schema_version: 1
 name: Repost Item Valuation
 label: Repost Item Valuation
 module: stock
+naming:
+  series: RIV-{YYYY}-{#####}
 submittable: true
 icon: refresh-cw
 fields:
@@ -32,11 +34,6 @@ fields:
   - Cancelled
   default: Queued
   in_list_view: true
-  read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Repost Item Valuation
   read_only: true
 - fieldname: error_log
   label: Error Log
@@ -154,12 +151,9 @@ layout:
     - reposting_data_file
 - section: Reposting Vouchers
   columns:
-  - - amended_from
-    - total_vouchers
+  - - total_vouchers
   - - vouchers_posted
 views:
   calendar:
     start: posting_date
     title: item_code
-  tree:
-    parent: amended_from

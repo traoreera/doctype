@@ -2,6 +2,8 @@ schema_version: 1
 name: Payment Request
 label: Payment Request
 module: accounts
+naming:
+  series: PR-{YYYY}-{#####}
 submittable: true
 icon: hand-coins
 fields:
@@ -56,7 +58,7 @@ fields:
 - fieldname: currency
   label: Transaction Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: subscription_plans
   label: Subscription Plans
@@ -162,11 +164,6 @@ fields:
   fieldtype: Link
   options: Payment Order
   read_only: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: Payment Request
-  read_only: true
 - fieldname: failed_reason
   label: Reason for Failure
   fieldtype: Text
@@ -186,7 +183,7 @@ fields:
 - fieldname: party_account_currency
   label: Party Account Currency
   fieldtype: Link
-  options: Devise
+  options: Currency
   read_only: true
 - fieldname: party_name
   label: Party Name
@@ -256,12 +253,9 @@ layout:
     - payment_account
     - payment_channel
     - payment_order
-    - amended_from
   - - payment_url
   - - phone_number
 views:
   calendar:
     start: transaction_date
     title: company
-  tree:
-    parent: amended_from

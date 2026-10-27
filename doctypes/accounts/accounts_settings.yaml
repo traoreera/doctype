@@ -13,11 +13,6 @@ fields:
   - Shipping Address
   default: Billing Address
   description: Address used to determine Tax Category in transactions
-- fieldname: credit_controller
-  label: Role allowed to bypass credit limit
-  fieldtype: Link
-  options: Role
-  in_list_view: true
 - fieldname: check_supplier_invoice_uniqueness
   label: Check Supplier invoice number uniqueness
   fieldtype: Boolean
@@ -106,22 +101,12 @@ fields:
   label: Delete Accounting and Stock Ledger entries on deletion of transaction
   fieldtype: Boolean
   default: false
-- fieldname: role_allowed_to_over_bill
-  label: 'Role Allowed to over bill '
-  fieldtype: Link
-  options: Role
-  description: Users with this role are allowed to over bill above the allowance percentage
 - fieldname: enable_overdue_billing_threshold
   label: Prevent Sales Invoice when Customer is Overdue
   fieldtype: Boolean
   description: Enabling this option prevents the creation of a new Sales Invoice when the customer has an overdue
     limit set and their outstanding overdue amount exceeds that limit.
   default: false
-- fieldname: role_allowed_to_bypass_overdue_billing
-  label: Role Allowed to Bypass Over Billing Restriction
-  fieldtype: Link
-  options: Role
-  description: Users with this role can still submit invoices for customers who have crossed their Overdue Limit.
 - fieldname: enable_common_party_accounting
   label: Enable Common Party Accounting
   fieldtype: Boolean
@@ -247,10 +232,6 @@ fields:
   - Stop
   - Warn
   default: Stop
-- fieldname: role_to_override_stop_action
-  label: Role allowed to override stop action
-  fieldtype: Link
-  options: Role
 - fieldname: confirm_before_resetting_posting_date
   label: Confirm before resetting posting date
   fieldtype: Boolean
@@ -289,11 +270,6 @@ fields:
   fieldtype: Int
   description: Timeout (in seconds) for each background job enqueued by Process Period Closing Voucher
   default: 3600
-- fieldname: role_to_notify_on_depreciation_failure
-  label: Role to Notify on Depreciation Failure
-  fieldtype: Link
-  options: Role
-  description: Users with this role will be notified if the asset depreciation gets failed
 - fieldname: default_ageing_range
   label: Default Ageing Range
   fieldtype: Text
@@ -351,7 +327,6 @@ fields:
   label: Disable "Consider Accounting Dimension" Filter
   fieldtype: Boolean
   default: false
-title_field: credit_controller
 layout:
 - tab: Invoice and Billing
   section: Invoice Cancellation
@@ -410,7 +385,6 @@ layout:
   - - maintain_same_internal_transaction_rate
     - fetch_valuation_rate_for_internal_transaction
   - - maintain_same_rate_action
-    - role_to_override_stop_action
 - tab: Invoice and Billing
   section: Currency Exchange Settings
   columns:
@@ -437,16 +411,12 @@ layout:
   section: Comptabilité et montants
   columns:
   - - over_billing_allowance
-    - credit_controller
-    - role_allowed_to_over_bill
     - enable_overdue_billing_threshold
-    - role_allowed_to_bypass_overdue_billing
 - tab: Assets
   section: Asset Settings
   columns:
   - - book_asset_depreciation_entry_automatically
     - calculate_depr_using_total_days
-    - role_to_notify_on_depreciation_failure
 - tab: Accounts Closing
   section: Comptabilité et montants
   columns:

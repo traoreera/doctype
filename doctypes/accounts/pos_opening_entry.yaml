@@ -2,6 +2,8 @@ schema_version: 1
 name: POS Opening Entry
 label: POS Opening Entry
 module: accounts
+naming:
+  series: POE-{YYYY}-{#####}
 submittable: true
 icon: folder-open
 fields:
@@ -34,14 +36,9 @@ fields:
   in_list_view: true
 - fieldname: user
   label: Cashier
-  fieldtype: Link
-  options: Member
+  fieldtype: Text
   required: true
-- fieldname: amended_from
-  label: Amended From
-  fieldtype: Link
-  options: POS Opening Entry
-  read_only: true
+  format: email
 - fieldname: set_posting_date
   label: Set Posting Date
   fieldtype: Boolean
@@ -82,12 +79,7 @@ layout:
 - section: Comptabilité et montants
   columns:
   - - balance_details
-- section: Dates et planification
-  columns:
-  - - amended_from
 views:
   calendar:
     start: posting_date
     title: company
-  tree:
-    parent: amended_from
