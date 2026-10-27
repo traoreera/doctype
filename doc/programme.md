@@ -584,8 +584,29 @@ natif du navigateur (sans dépendance) et a son équivalent au clavier dans le p
 retirer) ; un champ déposé sur le TITRE d'un onglet va à la fin de cet onglet. Preuve dans Chromium : `ui/e2e/formbuilder.e2e.mjs`
 (un vrai glisser-déposer, un champ ajouté, la fiche qui suit la nouvelle disposition, téléphone, thème sombre, retour à l'application).
 
-Reste, décidé avec l'utilisateur : le même constructeur en **mode développeur**, pour créer ou modifier un type ENTIER et le
-télécharger en YAML à poser dans un plugin (jamais stocké en base : §3.5 option A tient).
+#### Le Desk : le mode développeur (27 octobre 2026)
+
+Le même constructeur, pour un type ENTIER, à la manière du DocType de Frappe en developer mode — et la même réponse au « où vit une
+définition faite à l'écran ? » : **dans un plugin, jamais en base**. On bâtit le type, le serveur le juge, on télécharge le YAML et on
+le pose dans le dossier `doctypes/` du plugin. Rien n'est enregistré : §3.5 option A tient.
+
+- **Fermé par défaut** : `doctype.desk.developer_mode: true` dans le manifeste (une ligne commentée l'y montre), servi au Desk par
+  `config.json` (`developer`). Fermé, les deux routes répondent 404 `developer_mode_off`, comme une route qui n'existe pas.
+- **Deux routes, aucune écriture** (`devtools.py`) : `GET /devtools/doctype/<Type>` rend la définition D'ORIGINE (le YAML du plugin,
+  sans extension D26 ni champ d'organisation ; il faut pouvoir lire le type) ; `POST /devtools/check` (et l'action `doc.devtools.check`)
+  juge une définition COMME AU CHARGEMENT — schéma, compilation, puis liens, tables, `fetch_from`, filtres et unités dans un registre
+  d'essai qui contient tous les autres types (enfants d'abord) — et rend son YAML (sans les valeurs par défaut, dans l'ordre du schéma)
+  et les grants que le plugin devra déclarer ; un refus est rendu ligne par ligne (`fields.1.options : …`).
+- **Le Desk** (`#/dev/doctype/<Type>?`, `DoctypeBuilderView`) : la palette des 24 types de champ, le canevas partagé avec
+  « Personnaliser » (`FormCanvas`, `SectionPanel`), le panneau de TOUTES les propriétés d'un champ (`DevFieldPanel` : type, valeurs,
+  cible d'un lien, conditions, `fetch_from`, unique, fixé à la création…) et celui du type (nom, module, nommage, champ titre, table
+  enfant, soumettable…). Renommer un champ le renomme partout (disposition, titre, nommage, `fetch_from`, DynamicLink) ; masquer un champ
+  le retire du formulaire (le schéma refuse un champ masqué placé). Ce que le constructeur n'édite pas — hooks, permissions, workflow,
+  vues — voyage tel quel. Entrées : la palette de commandes (« Nouveau type de document ») et le menu « ⋯ » d'une liste (« Modifier le
+  type »).
+- **Preuve de bout en bout** (`ui/e2e/devbuilder.e2e.mjs`) : un type bâti dans Chromium (une liste de choix, un lien vers `Customer`
+  glissé dans une nouvelle section), téléchargé, puis CHARGÉ par `xcore-doctype check` comme un plugin le chargerait ; un refus lu ligne
+  par ligne ; `Customer` rouvert garde son bloc `permissions`.
 
 #### Ce qui reste à trancher si on vise B un jour
 

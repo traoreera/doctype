@@ -59,4 +59,7 @@ doctype:
     # Les plugins dont l'extension JavaScript du Desk est chargée (doc/extensions.md, D28) : du code de CONFIANCE dans la page de chaque
     # utilisateur. Des noms de plugins, ou ["*"] pour tous ; vide : aucune.
     extensions: ["*"]
+    # Le constructeur de DocTypes (mode développeur, devtools.py) : bâtir un type à l'écran et le télécharger en YAML pour un plugin.
+    # Il n'enregistre rien, mais c'est un outil de DÉVELOPPEMENT : laissez-le fermé en production.
+    # developer_mode: true
 

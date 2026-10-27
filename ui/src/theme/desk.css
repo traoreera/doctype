@@ -3976,3 +3976,37 @@ a.p-button:hover {
 .fb-moves { display: flex; flex-wrap: wrap; align-items: center; gap: 0.125rem; margin-bottom: 0.5rem; }
 .fb-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; }
 .fb-panel-body .props-live { font-size: 0.875rem; }
+
+/* ── Constructeur de DocTypes (mode développeur, DoctypeBuilderView) ── */
+.fb-type-button { width: 100%; justify-content: flex-start; margin-bottom: 0.5rem; }
+.fb-type-active { background: var(--desk-hover); }
+.fb-group { margin-bottom: 0.6rem; }
+.fb-group-label { display: block; font-size: 0.72rem; color: var(--p-text-muted-color); margin-bottom: 0.25rem; }
+.fb-type-grid { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.fb-type {
+  padding: 0.2rem 0.5rem;
+  min-height: 26px;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 999px;
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.fb-type:hover { border-color: var(--p-primary-color); color: var(--p-primary-color); }
+.fb-type:focus-visible { outline: 2px solid var(--p-primary-color); outline-offset: 2px; }
+.fb-error { color: var(--desk-danger); }
+.fb-verdict { margin-top: 1rem; }
+.fb-grant { margin-right: 0.4rem; }
+.fb-refusals { margin: 0.25rem 0 0; padding-left: 1.2rem; font-size: 0.875rem; }
+.fb-yaml {
+  max-height: 420px;
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--desk-radius);
+  background: var(--desk-subtle);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}

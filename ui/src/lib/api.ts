@@ -1,5 +1,6 @@
 import type { AssignmentItem, AssignmentStatus, AvailableTransitions, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
+import type { DevDefinition } from './doctypebuilder'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
 export class ApiError extends Error {
@@ -220,6 +221,16 @@ export class ApiClient {
   /** `name` : le nom choisi, pour un DocType dont les noms se saisissent (`naming: prompt`). */
   create(doctype: string, data: DocData, name?: string): Promise<DocRecord> {
     return this.call('POST', `/doc/${encodeURIComponent(doctype)}`, { body: name === undefined ? { data } : { data, name } })
+  }
+
+  /** Mode développeur : la définition D'ORIGINE d'un type (son YAML), pour la modifier dans le constructeur. */
+  devDefinition(doctype: string): Promise<{ doctype: string; owner: string | null; definition: DevDefinition; yaml: string }> {
+    return this.call('GET', `/devtools/doctype/${encodeURIComponent(doctype)}`)
+  }
+
+  /** Mode développeur : juger une définition comme au chargement d'un plugin (rien n'est enregistré) ; rend son YAML et les grants qu'elle cite. */
+  devCheck(definition: DevDefinition): Promise<{ doctype: string; yaml: string; grants: string[] }> {
+    return this.call('POST', '/devtools/check', { body: { definition } })
   }
 
   /** Import CSV : un document par ligne (`insert` crée, `update` met à jour par la colonne `name`), compte rendu ligne à ligne. */

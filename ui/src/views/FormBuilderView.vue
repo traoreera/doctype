@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
-import Checkbox from 'primevue/checkbox'
 import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
@@ -8,12 +7,11 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, onBeforeRouteLeave } from 'vue-router'
 import FieldCard from '@/components/formbuilder/FieldCard.vue'
 import FieldPanel from '@/components/formbuilder/FieldPanel.vue'
+import FormCanvas, { type Selection } from '@/components/formbuilder/FormCanvas.vue'
+import SectionPanel from '@/components/formbuilder/SectionPanel.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
-import {
-  MAX_COLUMNS, addSection, addTab, boardProblems, fromLayout, isTabbed, locate, moveField, moveSection, nudge, placed, removeSection, removeTab,
-  renameTab, setColumns, toLayout, unplace, updateSection, type Board, type Nudge,
-} from '@/lib/formbuilder'
+import { DRAG_FIELD, boardProblems, fromLayout, locate, moveField, nudge, placed, toLayout, unplace, type Board, type Nudge } from '@/lib/formbuilder'
 import { ADDED_TYPES, addedFields, customName, propRows, withAddedField, withoutAddedField, type AddedField } from '@/lib/overrideprops'
 import { useServices } from '@/lib/services'
 import type { DocTypeMeta, FieldBase, FieldMeta, FormOverride } from '@/lib/types'
@@ -48,7 +46,6 @@ const failure = ref('')
 const problem = ref<string | null>(null)
 const saving = ref(false)
 const activeTab = ref(0)
-type Selection = { kind: 'field'; name: string } | { kind: 'section'; tab: number; section: number } | null
 const selected = ref<Selection>(null)
 
 const label = computed(() => meta.value?.label || props.doctype)
@@ -148,20 +145,12 @@ async function reset(): Promise<void> {
   }
 }
 
-// ── Choisir ──
-function chooseField(name: string): void {
-  selected.value = selected.value?.kind === 'field' && selected.value.name === name ? null : { kind: 'field', name }
-}
-function chooseSection(tab: number, section: number): void {
-  selected.value = { kind: 'section', tab, section }
-}
+// ── Choisir, placer (au clavier comme à la souris) ──
 const chosenField = computed(() => (selected.value?.kind === 'field' ? selected.value.name : null))
-const chosenSection = computed(() => {
-  const s = selected.value
-  return s?.kind === 'section' ? board.value.tabs[s.tab]?.sections[s.section] ?? null : null
-})
-
-// ── Placer, au clavier comme à la souris ──
+function chooseField(name: string): void {
+  selected.value = { kind: 'field', name }
+}
+/** Où placer un champ non placé : la section choisie, sinon la dernière de l'onglet ouvert. */
 function where(): { tab: number; section: number } {
   const s = selected.value
   if (s?.kind === 'section') return { tab: s.tab, section: s.section }
@@ -189,81 +178,15 @@ function removeAdded(): void {
   selected.value = null
 }
 
-// ── Glisser-déposer (HTML natif) : un champ vers une colonne ou la palette, une section vers une autre place ──
-const FIELD = 'text/x-xdt-field'
-const SECTION = 'text/x-xdt-section'
-const over = ref<string | null>(null)
-const accepts = (e: DragEvent, kind: string): boolean => !!canEdit.value && !!e.dataTransfer?.types.includes(kind)
-
-function overColumn(e: DragEvent, id: string): void {
-  if (!accepts(e, FIELD)) return
-  e.preventDefault()
-  over.value = id
-}
-function dropOnColumn(e: DragEvent, tab: number, section: number, column: number): void {
-  over.value = null
-  const name = e.dataTransfer?.getData(FIELD)
-  if (!name) return
-  e.preventDefault()
-  // Sur une carte : avant elle. Ailleurs dans la colonne : à la fin.
-  const card = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-field]')
-  const col = board.value.tabs[tab]!.sections[section]!.columns[column]!
-  const index = card?.dataset.field ? col.indexOf(card.dataset.field) : col.length
-  board.value = moveField(board.value, name, { tab, section, column, index: index < 0 ? col.length : index })
-  selected.value = { kind: 'field', name }
-}
+// La palette reçoit une carte qu'on y dépose : le champ quitte le formulaire (le canevas, lui, gère ses propres dépôts).
+const overPalette = ref(false)
+const dragsField = (e: DragEvent): boolean => canEdit.value && !!e.dataTransfer?.types.includes(DRAG_FIELD)
 function dropOnPalette(e: DragEvent): void {
-  over.value = null
-  const name = e.dataTransfer?.getData(FIELD)
+  overPalette.value = false
+  const name = e.dataTransfer?.getData(DRAG_FIELD)
   if (!name) return
   e.preventDefault()
   board.value = unplace(board.value, name)
-}
-/** Sur le titre d'un onglet : une section y passe à la fin ; un champ, à la fin de sa dernière section (on ne voit pas les autres onglets). */
-function dropOnTab(e: DragEvent, tab: number): void {
-  const name = e.dataTransfer?.getData(FIELD)
-  if (!name) return dropSection(e, tab, board.value.tabs[tab]!.sections.length)
-  e.preventDefault()
-  const last = board.value.tabs[tab]!.sections.length - 1
-  board.value = moveField(board.value, name, { tab, section: last, column: 0, index: Infinity })
-  activeTab.value = tab
-  selected.value = { kind: 'field', name }
-}
-function startSection(e: DragEvent, tab: number, section: number): void {
-  e.dataTransfer?.setData(SECTION, `${tab}:${section}`)
-  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
-}
-function dropSection(e: DragEvent, tab: number, index: number): void {
-  over.value = null
-  const raw = e.dataTransfer?.getData(SECTION)
-  if (!raw) return
-  e.preventDefault()
-  const [ft, fs] = raw.split(':').map(Number) as [number, number]
-  board.value = moveSection(board.value, { tab: ft, section: fs }, { tab, index })
-  activeTab.value = tab
-}
-function sectionBy(tab: number, section: number, delta: number): void {
-  board.value = moveSection(board.value, { tab, section }, { tab, index: section + (delta > 0 ? 2 : -1) })
-  selected.value = { kind: 'section', tab, section: Math.max(0, Math.min(section + delta, board.value.tabs[tab]!.sections.length - 1)) }
-}
-
-// ── Onglets et sections ──
-function newTab(): void {
-  board.value = addTab(board.value, t.formBuilder.newTab(board.value.tabs.length + (isTabbed(board.value) ? 1 : 2)), t.formBuilder.firstTab)
-  activeTab.value = board.value.tabs.length - 1
-}
-function dropTab(index: number): void {
-  board.value = removeTab(board.value, index)
-  activeTab.value = Math.max(0, Math.min(activeTab.value, board.value.tabs.length - 1))
-  selected.value = null
-}
-function newSection(): void {
-  board.value = addSection(board.value, activeTab.value)
-  selected.value = { kind: 'section', tab: activeTab.value, section: board.value.tabs[activeTab.value]!.sections.length - 1 }
-}
-function dropSectionAt(tab: number, section: number): void {
-  board.value = removeSection(board.value, tab, section)
-  selected.value = null
 }
 
 // ── Ajouter un champ (l'organisation, §3.5) ──
@@ -310,11 +233,11 @@ onMounted(load)
         <!-- Palette : les champs non placés, et l'ajout d'un champ. Y déposer une carte la retire du formulaire. -->
         <aside
           class="fb-palette"
-          :class="{ 'fb-drop': over === 'palette' }"
+          :class="{ 'fb-drop': overPalette }"
           :aria-label="t.formBuilder.palette"
           data-testid="fb-palette"
-          @dragover="accepts($event, FIELD) && ($event.preventDefault(), (over = 'palette'))"
-          @dragleave="over = null"
+          @dragover="dragsField($event) && ($event.preventDefault(), (overPalette = true))"
+          @dragleave="overPalette = false"
           @drop="dropOnPalette"
         >
           <h2 class="fb-side-title">{{ t.formBuilder.unplacedTitle }}</h2>
@@ -355,91 +278,7 @@ onMounted(load)
         </aside>
 
         <!-- Le formulaire : onglets, sections, colonnes. -->
-        <section class="fb-canvas" :aria-label="t.formBuilder.canvas" data-testid="fb-canvas">
-          <div class="fb-tabs" role="tablist" :aria-label="t.formBuilder.tabs">
-            <template v-if="isTabbed(board)">
-              <button
-                v-for="(tab, ti) in board.tabs"
-                :key="tab.key"
-                type="button"
-                role="tab"
-                class="fb-tab"
-                :class="{ 'fb-tab-active': ti === activeTab }"
-                :aria-selected="ti === activeTab ? 'true' : 'false'"
-                :data-testid="`fb-tab-${ti}`"
-                @click="activeTab = ti"
-                @dragover="(accepts($event, SECTION) || accepts($event, FIELD)) && $event.preventDefault()"
-                @drop="dropOnTab($event, ti)"
-              >
-                {{ tab.name || t.formBuilder.unnamed }}
-              </button>
-            </template>
-            <span class="desk-spacer" />
-            <Button v-if="canEdit" :label="t.formBuilder.addTab" icon="pi pi-plus" text size="small" data-testid="fb-add-tab" @click="newTab" />
-          </div>
-
-          <div v-if="isTabbed(board) && canEdit" class="fb-tab-edit">
-            <label :for="`fb-tab-name`" class="visually-hidden">{{ t.formBuilder.tabName }}</label>
-            <InputText
-              id="fb-tab-name"
-              :model-value="board.tabs[activeTab]?.name ?? ''"
-              size="small"
-              :placeholder="t.formBuilder.tabName"
-              data-testid="fb-tab-name"
-              @update:model-value="board = renameTab(board, activeTab, $event ?? '')"
-            />
-            <Button :label="t.formBuilder.removeTab" icon="pi pi-trash" text severity="secondary" size="small" data-testid="fb-remove-tab" @click="dropTab(activeTab)" />
-          </div>
-
-          <div
-            v-for="(sec, si) in board.tabs[activeTab]?.sections ?? []"
-            :key="sec.key"
-            class="fb-section"
-            :class="{ 'fb-section-selected': selected?.kind === 'section' && selected.tab === activeTab && selected.section === si }"
-            :data-testid="`fb-section-${si}`"
-            @dragover="accepts($event, SECTION) && $event.preventDefault()"
-            @drop="dropSection($event, activeTab, si)"
-          >
-            <div class="fb-section-head">
-              <span
-                v-if="canEdit"
-                class="pi pi-arrows-alt fb-grip"
-                draggable="true"
-                :title="t.formBuilder.dragSection"
-                aria-hidden="true"
-                @dragstart="startSection($event, activeTab, si)"
-              />
-              <button type="button" class="fb-section-title" :data-testid="`fb-section-title-${si}`" @click="chooseSection(activeTab, si)">
-                {{ sec.section || t.formBuilder.untitled }}
-                <span class="desk-muted fb-section-meta">· {{ t.formBuilder.columnsCount(sec.columns.length) }}<template v-if="sec.collapsible"> · {{ t.formBuilder.collapsible }}</template></span>
-              </button>
-            </div>
-            <div class="fb-columns" :style="{ gridTemplateColumns: `repeat(${sec.columns.length}, minmax(0, 1fr))` }">
-              <div
-                v-for="(col, ci) in sec.columns"
-                :key="ci"
-                class="fb-column"
-                :class="{ 'fb-drop': over === `${sec.key}:${ci}` }"
-                :data-testid="`fb-column-${si}-${ci}`"
-                @dragover="overColumn($event, `${sec.key}:${ci}`)"
-                @dragleave="over = null"
-                @drop="dropOnColumn($event, activeTab, si, ci)"
-              >
-                <FieldCard
-                  v-for="name in col"
-                  :key="name"
-                  v-bind="display(name)"
-                  :name="name"
-                  :selected="chosenField === name"
-                  :draggable="canEdit"
-                  @choose="chooseField"
-                />
-                <p v-if="!col.length" class="fb-empty">{{ t.formBuilder.dropHere }}</p>
-              </div>
-            </div>
-          </div>
-          <Button v-if="canEdit" :label="t.formBuilder.addSection" icon="pi pi-plus" text size="small" class="fb-add-section" data-testid="fb-add-section" @click="newSection" />
-        </section>
+        <FormCanvas v-model:board="board" v-model:selected="selected" v-model:active-tab="activeTab" :display="display" :can-edit="canEdit" />
 
         <!-- Propriétés de ce qu'on a choisi. -->
         <aside class="fb-props" :aria-label="t.workflowBuilder.properties" data-testid="fb-panel">
@@ -458,51 +297,14 @@ onMounted(load)
             @place="place(chosenField)"
             @remove="removeAdded"
           />
-          <div v-else-if="chosenSection && selected?.kind === 'section'" class="fb-panel-body" data-testid="fb-section-panel">
-            <p class="wf-kicker">{{ t.formBuilder.section }}</p>
-            <h2 class="wf-panel-title">{{ chosenSection.section || t.formBuilder.untitled }}</h2>
-            <label class="wf-field" for="fb-section-name">
-              <span>{{ t.formBuilder.sectionTitle }}</span>
-              <InputText
-                id="fb-section-name"
-                :model-value="chosenSection.section ?? ''"
-                :disabled="!canEdit"
-                size="small"
-                data-testid="fb-section-name"
-                @update:model-value="board = updateSection(board, selected.tab, selected.section, { section: $event || null })"
-              />
-            </label>
-            <div class="wf-field">
-              <span>{{ t.formBuilder.columns }}</span>
-              <div class="fb-inline" role="group" :aria-label="t.formBuilder.columns">
-                <Button
-                  v-for="n in MAX_COLUMNS"
-                  :key="n"
-                  :label="String(n)"
-                  size="small"
-                  :outlined="chosenSection.columns.length !== n"
-                  :disabled="!canEdit"
-                  :aria-pressed="chosenSection.columns.length === n ? 'true' : 'false'"
-                  :data-testid="`fb-columns-${n}`"
-                  @click="board = setColumns(board, selected.tab, selected.section, n)"
-                />
-              </div>
-            </div>
-            <label class="wf-check">
-              <Checkbox :model-value="chosenSection.collapsible" binary input-id="fb-collapsible" :disabled="!canEdit" @update:model-value="board = updateSection(board, selected.tab, selected.section, { collapsible: $event === true })" />
-              <span>{{ t.formBuilder.collapsible }}</span>
-            </label>
-            <label class="wf-check">
-              <Checkbox :model-value="chosenSection.collapsed" binary input-id="fb-collapsed" :disabled="!canEdit || !chosenSection.collapsible" @update:model-value="board = updateSection(board, selected.tab, selected.section, { collapsed: $event === true })" />
-              <span>{{ t.formBuilder.collapsed }}</span>
-            </label>
-            <div v-if="canEdit" class="fb-inline">
-              <Button icon="pi pi-arrow-up" text rounded severity="secondary" size="small" :aria-label="t.formBuilder.up" :title="t.formBuilder.up" @click="sectionBy(selected.tab, selected.section, -1)" />
-              <Button icon="pi pi-arrow-down" text rounded severity="secondary" size="small" :aria-label="t.formBuilder.down" :title="t.formBuilder.down" data-testid="fb-section-down" @click="sectionBy(selected.tab, selected.section, 1)" />
-              <Button :label="t.formBuilder.removeSection" icon="pi pi-trash" text severity="secondary" size="small" data-testid="fb-remove-section" @click="dropSectionAt(selected.tab, selected.section)" />
-            </div>
-            <p class="desk-muted wf-help">{{ t.formBuilder.removeSectionHint }}</p>
-          </div>
+          <SectionPanel
+            v-else-if="selected?.kind === 'section'"
+            v-model:board="board"
+            v-model:selected="selected"
+            :tab="selected.tab"
+            :section="selected.section"
+            :can-edit="canEdit"
+          />
           <div v-else class="fb-panel-body">
             <h2 class="wf-panel-title">{{ t.formBuilder.overview }}</h2>
             <p class="desk-muted">{{ t.formBuilder.pick }}</p>

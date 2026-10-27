@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { t } from '@/i18n'
+import { DRAG_FIELD } from '@/lib/formbuilder'
 
 /**
  * Un champ dans le Form Builder : une carte qu'on glisse (souris) ou qu'on choisit (clavier, c'est un BOUTON) pour ouvrir ses propriétés.
@@ -21,7 +22,7 @@ defineProps<{
 const emit = defineEmits<{ (e: 'choose', name: string): void }>()
 
 function start(e: DragEvent, name: string): void {
-  e.dataTransfer?.setData('text/x-xdt-field', name)
+  e.dataTransfer?.setData(DRAG_FIELD, name)
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
 }
 </script>

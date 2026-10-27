@@ -36,11 +36,13 @@ export interface CommandSources {
   workspaces: readonly Workspace[]
   summaries: readonly DocTypeSummary[]
   recents: readonly Recent[]
+  /** Le mode développeur est ouvert : « Nouveau type de document » se propose. */
+  developer?: boolean
   /** Les commandes que les extensions ajoutent (D28). */
   extensions?: readonly { extension: string; label: string; icon?: string; keywords?: string; run: () => unknown }[]
 }
 
-export function buildCommands({ workspaces, summaries, recents, extensions = [] }: CommandSources): Command[] {
+export function buildCommands({ workspaces, summaries, recents, extensions = [], developer = false }: CommandSources): Command[] {
   const out: Command[] = []
   const labelOf = (doctype: string) => summaries.find((d) => d.name === doctype)?.label ?? doctype
   for (const r of recents) {
@@ -64,6 +66,7 @@ export function buildCommands({ workspaces, summaries, recents, extensions = [] 
   extensions.forEach((c, i) => {
     out.push(make({ id: `ext:${c.extension}:${i}`, label: c.label, hint: t.extensions.palette, icon: c.icon ?? 'bolt', group: 'extension', extension: { name: c.extension, run: c.run } }, `${c.keywords ?? ''} ${c.extension}`))
   })
+  if (developer) out.push(make({ id: 'dev-doctype', label: t.devBuilder.menuNew, icon: 'wrench', group: 'go', to: { name: 'dev-doctype' } }, 'creer doctype type document yaml developpeur constructeur'))
   out.push(make({ id: 'theme-light', label: t.palette.themeLight, icon: 'sun', group: 'action', action: 'theme-light' }, 'theme clair'))
   out.push(make({ id: 'theme-dark', label: t.palette.themeDark, icon: 'moon', group: 'action', action: 'theme-dark' }, 'theme sombre nuit'))
   out.push(make({ id: 'theme-system', label: t.palette.themeSystem, icon: 'desktop', group: 'action', action: 'theme-system' }, 'theme systeme automatique'))

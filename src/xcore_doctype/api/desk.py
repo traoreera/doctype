@@ -65,13 +65,16 @@ class DeskSettings:
     dist_dir: Path = DEFAULT_DIST
     # Les plugins dont l'extension JavaScript est servie (D28) : des noms, ou `*` pour tous. Vide : aucune (fermé par défaut).
     extensions: tuple[str, ...] = field(default=())
+    # Le constructeur de DocTypes (mode développeur, devtools.py) : il ne fait que juger une définition et en rendre le YAML, mais c'est
+    # un outil de développement — fermé par défaut, comme le developer mode de Frappe.
+    developer_mode: bool = False
 
     @classmethod
     def from_plugin_config(cls, config: Mapping[str, Any]) -> "DeskSettings":
         block = ((config or {}).get("doctype") or {}).get("desk") or {}
         if not isinstance(block, Mapping):
             raise ConfigurationError("doctype.desk doit être un objet")
-        unknown = sorted(set(block) - {"enabled", "login_url", "dist_dir", "extensions"})
+        unknown = sorted(set(block) - {"enabled", "login_url", "dist_dir", "extensions", "developer_mode"})
         if unknown:
             raise ConfigurationError(f"doctype.desk: clé(s) inconnue(s) {unknown}")
         out: dict[str, Any] = {}
@@ -94,6 +97,10 @@ class DeskSettings:
             if not isinstance(block["dist_dir"], str) or not block["dist_dir"]:
                 raise ConfigurationError("doctype.desk.dist_dir doit être un chemin")
             out["dist_dir"] = Path(block["dist_dir"]).expanduser()
+        if "developer_mode" in block:
+            if not isinstance(block["developer_mode"], bool):
+                raise ConfigurationError("doctype.desk.developer_mode doit être un booléen")
+            out["developer_mode"] = block["developer_mode"]
         if block.get("extensions") is not None:
             names = block["extensions"]
             if not isinstance(names, list) or not all(isinstance(n, str) and (n == "*" or re.fullmatch(r"[a-z0-9_]+", n)) for n in names):
@@ -197,6 +204,7 @@ def build_desk_router(settings: DeskSettings, extensions: DeskExtensions | None 
                 "api_base": api_base,
                 "login_url": _login_url(settings.login_url, api_base),
                 "extensions": [{"name": e.name, "url": e.url} for e in extensions.served()],
+                "developer": settings.developer_mode,  # le Desk n'offre le constructeur de DocTypes que si l'opérateur l'a ouvert
             },
             headers={**common, "Cache-Control": "no-store"},
         )

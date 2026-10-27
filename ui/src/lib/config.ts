@@ -7,6 +7,8 @@ export interface DeskConfig {
   loginUrl: string | null
   /** Les extensions JavaScript que l'opérateur autorise (D28), URL absolues sur la même origine que le Desk. */
   extensions?: { name: string; url: string }[]
+  /** Le mode développeur (constructeur de DocTypes) est ouvert par l'opérateur (`doctype.desk.developer_mode`). */
+  developer?: boolean
 }
 
 declare global {
@@ -70,12 +72,13 @@ export async function loadConfig(
 
   try {
     const res = await transport.request({ method: 'GET', url: new URL('config.json', where.href).toString(), headers: { Accept: 'application/json' } })
-    const body = res.json as { api_base?: unknown; login_url?: unknown; extensions?: unknown } | null
+    const body = res.json as { api_base?: unknown; login_url?: unknown; extensions?: unknown; developer?: unknown } | null
     if (res.status === 200 && body && typeof body.api_base === 'string') {
       return {
         baseUrl: trimSlash(body.api_base),
         loginUrl: typeof body.login_url === 'string' ? body.login_url : null,
         extensions: readExtensions(body.extensions, where.href),
+        developer: body.developer === true,
       }
     }
   } catch {

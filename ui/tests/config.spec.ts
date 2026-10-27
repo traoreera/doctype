@@ -24,7 +24,16 @@ describe('configuration', () => {
     const t = transport({ status: 200, json: { api_base: '/app/xcore-doctype/', login_url: '/app/auth/login' } })
     const cfg = await loadConfig(t, at('/app/xcore-doctype/desk/'))
     expect(t.urls).toEqual(['http://host:8000/app/xcore-doctype/desk/config.json'])
-    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login', extensions: [] })
+    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login', extensions: [], developer: false })
+  })
+
+  it('le mode développeur n’est ouvert que si le serveur dit exactement `true`', async () => {
+    const open = await loadConfig(transport({ status: 200, json: { api_base: '/p', developer: true } }), at('/p/desk/'))
+    expect(open.developer).toBe(true)
+    for (const developer of ['true', 1, null, undefined]) {
+      const cfg = await loadConfig(transport({ status: 200, json: { api_base: '/p', developer } }), at('/p/desk/'))
+      expect(cfg.developer).toBe(false)
+    }
   })
 
   it('sans login_url : jeton collé', async () => {

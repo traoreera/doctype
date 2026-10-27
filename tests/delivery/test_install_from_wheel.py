@@ -213,7 +213,7 @@ class TestRunningInstance:
         asset = next(part for part in index.text.split('"') if part.startswith("./assets/") and part.endswith(".js"))
         js = httpx.get(f"{running}/desk/{asset[2:]}")
         assert js.status_code == 200 and js.headers["content-type"].startswith("text/javascript")
-        assert httpx.get(f"{running}/desk/config.json").json() == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login", "extensions": []}  # xauth est l'authentification par défaut
+        assert httpx.get(f"{running}/desk/config.json").json() == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login", "extensions": [], "developer": False}  # xauth est l'authentification par défaut
 
     def test_the_api_needs_an_identity(self, running):
         assert httpx.get(f"{running}/meta").status_code == 401

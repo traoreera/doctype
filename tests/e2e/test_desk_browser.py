@@ -70,6 +70,7 @@ def host(tmp_path, request):
 
     Paramètre indirect `{"extensions": [...]}` : les plugins dont l'opérateur laisse servir l'extension du Desk (D28)."""
     extensions = getattr(request, "param", {}).get("extensions")
+    developer = getattr(request, "param", {}).get("developer", False)
     config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["services"]["databases"]["default"]["url"] = f"sqlite+aiosqlite:///{tmp_path / 'e2e.db'}"
     config["tenancy"] = {"enabled": True, "isolate_db": False}
@@ -88,6 +89,10 @@ def host(tmp_path, request):
     shutil.copytree(PLUGIN_DIR, tmp_path / "app" / "xcore-doctype", ignore=shutil.ignore_patterns("__pycache__"))
     manifest = tmp_path / "app" / "xcore-doctype" / "plugin.yaml"
     manifest.write_text(re.sub(r"^(\s*)login_url:.*$", r"\1login_url: null", manifest.read_text(), flags=re.M))
+    if developer:
+        data = yaml.safe_load(manifest.read_text())
+        data.setdefault("doctype", {}).setdefault("desk", {})["developer_mode"] = True
+        manifest.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
     if extensions is not None:
         data = yaml.safe_load(manifest.read_text())
         data.setdefault("doctype", {}).setdefault("desk", {})["extensions"] = extensions
@@ -130,7 +135,7 @@ def host(tmp_path, request):
         log.close()
 
 
-def _scenario(host: str, script: str) -> subprocess.CompletedProcess:
+def _scenario(host: str, script: str, **extra_env: str) -> subprocess.CompletedProcess:
     missing = _chromium_missing()
     if missing:
         pytest.skip(missing)
@@ -147,6 +152,7 @@ def _scenario(host: str, script: str) -> subprocess.CompletedProcess:
         "DESK_TOKEN": token,
         "DESK_TENANT": tenant,
         "SHOTS_DIR": os.environ.get("XCORE_DOCTYPE_E2E_SHOTS", ""),
+        **extra_env,
     }
     return subprocess.run(["node", script], cwd=UI, env=env, capture_output=True, text=True, timeout=300)
 
@@ -185,3 +191,18 @@ def test_the_form_builder_rearranges_and_adds_fields_in_the_browser(host):
     """« Personnaliser le formulaire » sous la vraie CSP : un vrai glisser-déposer, un champ ajouté, la fiche qui suit, le retour à l'application."""
     run = _scenario(host, "e2e/formbuilder.e2e.mjs")
     assert run.returncode == 0, f"scénario du Form Builder en échec :\n{run.stdout}\n{run.stderr}"
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"developer": True}], indirect=True)
+def test_the_developer_builder_makes_a_yaml_that_a_plugin_loads(host, tmp_path):
+    """Mode développeur : un type bâti dans le navigateur, téléchargé en YAML, puis CHARGÉ comme un plugin le ferait (`xcore-doctype check`)."""
+    from xcore_doctype.cli import check
+
+    plugin = tmp_path / "support" / "doctypes"
+    plugin.mkdir(parents=True)
+    out = plugin / "support_ticket.yaml"
+    run = _scenario(host, "e2e/devbuilder.e2e.mjs", DEV_YAML_OUT=str(out))
+    assert run.returncode == 0, f"scénario du constructeur en échec :\n{run.stdout}\n{run.stderr}"
+    _, findings = check([plugin], owner="support", needs=[FIXTURES / "geo" / "doctypes", FIXTURES / "stock" / "doctypes", FIXTURES / "sales" / "doctypes"])
+    assert not [f for f in findings if f.level == "error"], findings
