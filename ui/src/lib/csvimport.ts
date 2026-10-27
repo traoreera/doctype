@@ -30,9 +30,16 @@ export function decodeCsv(bytes: ArrayBuffer | Uint8Array): string {
 export function templateHeaders(meta: DocTypeMeta, mode: ImportMode): string[] {
   const fields = meta.fields.filter(importable)
   const count = new Map<string, number>()
-  for (const f of meta.fields) if (f.label) count.set(f.label.toLowerCase(), (count.get(f.label.toLowerCase()) ?? 0) + 1)
-  const heads = fields.map((f) => (f.label && count.get(f.label.toLowerCase()) === 1 && !['name', 'nom'].includes(f.label.toLowerCase()) ? f.label : f.fieldname))
+  for (const f of meta.fields) if (f.label) count.set(fold(f.label), (count.get(fold(f.label)) ?? 0) + 1)
+  const names = new Set(meta.fields.map((f) => f.fieldname))
+  // Le libellé seulement s'il désigne CE champ et lui seul pour le serveur : unique, pas le nom d'un autre champ (le serveur lit les noms
+  // d'abord), pas « name »/« Nom » (le nom du document) ; sinon le nom du champ, toujours compris.
+  const usable = (f: FieldMeta) => !!f.label && count.get(fold(f.label)) === 1 && !names.has(f.label.trim()) && !['name', 'nom'].includes(fold(f.label))
+  const heads = fields.map((f) => (usable(f) ? f.label! : f.fieldname))
   return mode === 'update' || meta.naming === 'prompt' ? ['name', ...heads] : heads
 }
+
+/** Au plus près du `str.casefold` du serveur : `toUpperCase` déplie « ß » en « SS », puis tout en minuscules (« Straße » = « STRASSE »). */
+export const fold = (text: string): string => text.trim().toUpperCase().toLowerCase()
 
 export const templateCsv = (meta: DocTypeMeta, mode: ImportMode): string => buildCsv(templateHeaders(meta, mode), [], [])

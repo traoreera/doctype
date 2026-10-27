@@ -163,8 +163,19 @@ périmètre(utilisateur, action) = (rôles ET permissions utilisateur) OU docume
   refusé ; un décimal de trop : refusé ; une date-heure sans fuseau : refusée ; un nombre infini : refusé). L'apostrophe que l'export pose
   devant une formule est retirée au retour. Séparateur `;`, `,` ou tabulation lu sur l'en-tête ; BOM retiré. Le Desk lit le fichier en
   UTF-8, à défaut en Windows-1252 (ce qu'Excel écrit en « CSV » simple), et propose un modèle (les libellés des champs importables).
-- **Bornes** : 1000 lignes, 2 millions de caractères par import ; un import ne part PAS en tâche de fond (il attend l'ordonnanceur et
-  ses travaux identifiés, §3.1 et §3.4) : au-delà, on découpe le fichier.
+- **Bornes** : 1000 lignes, 300 colonnes, 2 millions de caractères par import ; un import ne part PAS en tâche de fond (il attend
+  l'ordonnanceur et ses travaux identifiés, §3.1 et §3.4) : au-delà, on découpe le fichier. Après 120 s de traitement, les lignes restantes
+  ne sont pas écrites et le rapport les marque `not_processed` (des hooks `action:` lents ne font pas durer une requête des heures).
+- **Relecture adversariale** (cinq défauts reproduits, tous corrigés avec leur test, chacun vérifié par mutation) : une date-heure hors
+  bornes une fois en UTC ou un JSON trop profond faisait tomber TOUT l'import en erreur interne (c'est maintenant l'erreur de sa ligne) ;
+  la mise à jour renvoyait les clés d'un champ retiré du YAML ou d'une extension disparue et TOUTES les lignes étaient refusées (seuls les
+  champs déclarés aujourd'hui sont renvoyés, comme le fait le formulaire) ; un en-tête de centaines de milliers de colonnes bloquait le
+  serveur (temps quadratique ; compté une fois, borné à 300) ; les libellés donnés par l'habillage de l'organisation, ceux que le Desk
+  montre et exporte, n'étaient pas compris (ils le sont, en plus de ceux du YAML). Aussi : chiffres ASCII seulement (`١٢` n'est plus 12),
+  une date-heure à microsecondes refusée au lieu d'être tronquée, les numéros du rapport sont ceux des lignes du FICHIER (lignes vides
+  et cellules sur plusieurs lignes comprises), une cellule de plus de 131 072 caractères est lue, et le modèle du Desk écrit le nom du
+  champ quand son libellé serait compris autrement par le serveur. Depuis les champs personnalisés (§3.5), l'import lit le type tel que l'ORGANISATION le
+  voit : ses champs ajoutés s'importent, et une mise à jour ne les efface pas.
 
 ## 3. Groupe 3 — l'étude avant le code
 
