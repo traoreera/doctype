@@ -30,11 +30,19 @@ class TestForPlugin:
     def test_returns_the_conventional_grants_of_the_plugins_doctypes_in_the_format_of_rbac_declare(self):
         c = catalog(doctype("Customer", module="xsales", label="Client"))
         decl = c.for_plugin("xsales")
+        # `default_roles` : un grant délégable va AUSSI au rôle du propriétaire d'une organisation. Sans lui, auth ne le verse
+        # qu'au rôle `admin` de la PLATEFORME, et celui qui crée son organisation ne peut rien y lire ni y écrire.
         assert decl == [
-            {"name": "xsales:customer:delete", "description": "Supprimer Client", "group": "xsales-customer", "tenant_grantable": True},
-            {"name": "xsales:customer:read", "description": "Consulter Client", "group": "xsales-customer", "tenant_grantable": True},
-            {"name": "xsales:customer:write", "description": "Créer/modifier Client", "group": "xsales-customer", "tenant_grantable": True},
+            {"name": "xsales:customer:delete", "description": "Supprimer Client", "group": "xsales-customer", "tenant_grantable": True, "default_roles": ["tenant_admin"]},
+            {"name": "xsales:customer:read", "description": "Consulter Client", "group": "xsales-customer", "tenant_grantable": True, "default_roles": ["tenant_admin"]},
+            {"name": "xsales:customer:write", "description": "Créer/modifier Client", "group": "xsales-customer", "tenant_grantable": True, "default_roles": ["tenant_admin"]},
         ]
+
+    def test_a_closed_grant_is_never_given_to_the_owner_by_default(self):
+        """Ce qu'un tenant ne peut pas déléguer (le journal de stock, les soldes), il ne l'obtient pas d'office non plus."""
+        c = catalog(doctype("Bin", module="xstock", permissions={"read": [{"grant": "xstock:bin:read", "tenant_grantable": False}], "write": [], "create": [], "delete": []}))
+        (spec,) = c.for_plugin("xstock")
+        assert spec["tenant_grantable"] is False and "default_roles" not in spec
 
     def test_only_the_namespace_of_the_asking_plugin(self):
         c = catalog(doctype("Customer", module="xsales"), doctype("Item", module="xstock"))

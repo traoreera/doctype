@@ -267,7 +267,11 @@ async def test_the_owner_plugin_declares_the_grants_derived_from_its_doctypes(hh
         "sales:invoice:delete", "sales:invoice:read", "sales:invoice:write",
     ]
     assert all(xauth_accepts("sales", n) for n in names)
-    assert all(set(g) == {"name", "description", "group", "tenant_grantable"} for g in event["grants"])
+    # Un grant délégable porte en plus `default_roles` : auth le verse aussi au rôle du propriétaire de l'organisation, sans
+    # quoi celui qui crée son organisation n'aurait aucun droit sur ses propres documents (revue d'auth du 26 oct.).
+    base = {"name", "description", "group", "tenant_grantable"}
+    assert all(set(g) == (base | {"default_roles"} if g["tenant_grantable"] else base) for g in event["grants"])
+    assert all(g["default_roles"] == ["tenant_admin"] for g in event["grants"] if g["tenant_grantable"])
     by_name = {g["name"]: g for g in event["grants"]}
     assert by_name["sales:customer:read"]["description"] == "Consulter Client"  # libellé du DocType (label: Client)
     assert by_name["sales:invoice:write"]["group"] == "sales-invoice"

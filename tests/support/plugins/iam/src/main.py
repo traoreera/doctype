@@ -28,6 +28,10 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         registry = self.get_service("doctype_registry")
         registry.load_dir(me, BASE / "doctypes")
         registry.load_workspaces(me, BASE / "workspaces")
+        # Le moteur demande déjà `default_roles: [tenant_admin]` pour les grants DÉLÉGABLES (`GrantSpec.as_declaration`).
+        # `iam` va plus loin, et c'est voulu : gérer les accès ne se DÉLÈGUE pas (`iam:role:write` n'est pas
+        # `tenant_grantable` — on ne confie pas l'écriture des rôles à n'importe quel membre), mais le PROPRIÉTAIRE de
+        # l'organisation doit l'avoir, sinon il ne peut pas ouvrir ses propres écrans d'accès. Deux notions distinctes.
         grants = [{**g, "default_roles": ["tenant_admin"]} for g in self.get_service("doctype_grants").for_plugin(me)]
         await self.ctx.events.emit("rbac.declare", {"plugin": me, "grants": grants}, source=me)
 

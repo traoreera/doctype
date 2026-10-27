@@ -74,6 +74,9 @@ LINK_FILTER_REF = "$"
 # Le grant spécial `@authenticated` : tout utilisateur IDENTIFIÉ, sans rien lui déclarer. Pour ce que chacun fait de soi-même (son profil) : aucun rôle n'est
 # nécessaire, un membre sans le moindre grant peut donc modifier le sien. Il n'est jamais déclaré à auth (voir `grant_specs`). Jamais pour le contexte anonyme.
 AUTHENTICATED = "@authenticated"
+# Le rôle d'auth que porte le PROPRIÉTAIRE d'une organisation (xauth : `tenant_admin`, posé à la création du tenant). Les grants
+# délégables lui sont demandés d'office (`GrantSpec.as_declaration`), sans quoi un propriétaire n'aurait aucun droit chez lui.
+TENANT_OWNER_ROLE = "tenant_admin"
 _Grant = Annotated[str, StringConstraints(pattern=r"^(@authenticated|[a-z0-9_]+:[a-z0-9_]+(:[a-z0-9_]+)*)$", max_length=140)]
 # `module` est le NAMESPACE des grants déduits : nom du plugin propriétaire, forme imposée par auth (`[a-z0-9_]+`).
 _Module = Annotated[str, StringConstraints(pattern=r"^[a-z0-9_]+$", max_length=63)]
@@ -461,12 +464,24 @@ class GrantSpec:
         return self.name.split(":", 1)[0]
 
     def as_declaration(self) -> dict[str, Any]:
-        return {
+        """Le grant au format de `rbac.declare`.
+
+        `default_roles` (revue d'authentification du 26 oct. 2026) : auth verse d'office tout grant déclaré au rôle `admin` de la
+        PLATEFORME, et à personne d'autre. Sans cette ligne, celui qui crée une organisation en est propriétaire — il invite, il
+        lit le journal — mais ne peut ni lire ni créer un seul document chez lui : il faut qu'un administrateur plateforme le
+        débloque. On demande donc que les grants DÉLÉGABLES aillent aussi à `tenant_admin`, le rôle du propriétaire. Un grant
+        fermé (`tenant_grantable: false` — le journal de stock, les soldes) n'y va pas : ce qu'un tenant ne peut pas déléguer,
+        il ne l'obtient pas d'office non plus.
+        """
+        out: dict[str, Any] = {
             "name": self.name,
             "description": self.description,
             "group": self.group,
             "tenant_grantable": self.tenant_grantable,
         }
+        if self.tenant_grantable:
+            out["default_roles"] = [TENANT_OWNER_ROLE]
+        return out
 
 
 class LayoutSection(BaseModel):

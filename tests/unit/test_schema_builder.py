@@ -192,7 +192,9 @@ class TestGrantSpecs:
     def test_declaration_matches_what_auth_reads(self):
         """`PluginGrantService.reconcile_plugin_grants` lit name, description, group et tenant_grantable."""
         d = self.specs()["xsales:customer:read"].as_declaration()
-        assert set(d) == {"name", "description", "group", "tenant_grantable"} and d["name"] == "xsales:customer:read"
+        # `default_roles` accompagne un grant DÉLÉGABLE : auth le verse alors aussi au rôle du propriétaire d'une organisation.
+        assert set(d) == {"name", "description", "group", "tenant_grantable", "default_roles"} and d["name"] == "xsales:customer:read"
+        assert d["default_roles"] == ["tenant_admin"]
 
 
 class TestFrozenMatch:
