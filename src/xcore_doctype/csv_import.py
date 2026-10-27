@@ -267,7 +267,6 @@ async def import_csv(documents: "DocumentService", ctx: "RequestContext", doctyp
     # Le type tel que CETTE organisation le voit (§3.5) : ses champs ajoutés s'importent et une mise à jour ne les perd pas.
     view, _ = await documents._tenant_view(ctx, compiled)
     columns = map_columns(view.definition, header, mode, await _organisation_labels(documents, ctx, doctype))
-    known = view.definition.field_map
     results: list[dict[str, Any]] = []
     deadline = _clock() + MAX_SECONDS
     for number, row in rows:
@@ -282,11 +281,8 @@ async def import_csv(documents: "DocumentService", ctx: "RequestContext", doctyp
             if mode == "insert":
                 made = await documents.create(ctx, doctype, data, name=name)
             else:
-                current = await documents.get(ctx, doctype, name or "")
-                # Seulement les champs que le type déclare AUJOURD'HUI (comme le formulaire) : un champ retiré du YAML ou d'une extension
-                # disparue reste dans les données enregistrées, et le renvoyer ferait refuser toute ligne (`extra_forbidden`).
-                stored = {k: v for k, v in current["data"].items() if k in known}
-                made = await documents.update(ctx, doctype, current["name"], {**stored, **data}, current["version"])
+                # Les champs que la ligne ne nomme pas restent ce qu'ils sont (`DocumentService.patch`) ; une ligne sans valeur ne change rien.
+                made = await documents.patch(ctx, doctype, name or "", data)
             results.append({"row": number, "ok": True, "name": made["name"]})
         except DoctypeError as e:
             results.append({"row": number, "ok": False, "code": e.code, "message": e.message, **({"details": e.details} if e.details else {})})

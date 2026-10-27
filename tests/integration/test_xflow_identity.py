@@ -96,3 +96,24 @@ async def test_the_run_s_organisation_must_be_covered_by_the_identity(tmp_path):
         intruder = principal("mallory", [*READ, "flux:demande:workflow_approuver"], tenant="globex")
         out = await _as_xflow(h, "doc.get", {"doctype": "Demande", "name": doc["name"]}, intruder, tenant="acme")
         assert out["status"] == "error" and out["code"] in ("tenant_mismatch", "forbidden_tenant"), out
+
+
+async def test_an_orchestrator_changes_one_field_without_erasing_the_others(tmp_path):
+    # `doc.save` remplace `data` entier : un nœud « Modifier » d'automatisation passe par `doc.patch`, qui garde ce qu'il ne nomme pas.
+    async with await _host(tmp_path) as h:
+        doc = await _submitted(h)
+        draft = (await h.action("doc.save", {"doctype": "Demande", "data": {"objet": "Formation", "jours": 2}}, token=h.token("alice", permissions=READ)))["doc"]
+        out = await _as_xflow(h, "doc.patch", {"doctype": "Demande", "name": draft["name"], "data": {"commentaire": "vu"}}, principal("alice", READ))
+        assert out["status"] == "ok", out
+        assert out["doc"]["data"] == {"objet": "Formation", "jours": 2, "commentaire": "vu"}
+        alice = h.token("alice", permissions=READ)
+        r = await h.http("PATCH", f"/doc/Demande/{draft['name']}", token=alice, json={"data": {"jours": 4}, "version": out["doc"]["version"]})
+        assert r.status_code == 200, r.text
+        assert r.json()["data"] == {"objet": "Formation", "jours": 4, "commentaire": "vu"}
+        stale = await h.http("PATCH", f"/doc/Demande/{draft['name']}", token=alice, json={"data": {"jours": 5}, "version": out["doc"]["version"]})
+        assert stale.status_code == 409, stale.text
+        bob = principal("bob", [*READ, "flux:demande:workflow_approuver"])
+        approved = await _as_xflow(h, "doc.transition", {"doctype": "Demande", "name": doc["name"], "action": "Approuver", "version": doc["version"]}, bob)
+        assert approved["doc"]["docstatus"] == 1
+        locked = await _as_xflow(h, "doc.patch", {"doctype": "Demande", "name": doc["name"], "data": {"jours": 9}}, principal("alice", READ))
+        assert (locked["status"], locked["code"]) == ("error", "document_locked")  # un document approuvé (soumis) est figé, patch comme update
