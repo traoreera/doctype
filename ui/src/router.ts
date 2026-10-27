@@ -36,6 +36,7 @@ export function createDeskRouter(pinia: Pinia): Router {
       // Les fichiers des documents que je peux lire (champs Image/Attach, pièces jointes) : lister, télécharger, détacher.
       { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
       { path: '/api/:doctype?', name: 'api-docs', component: () => import('@/views/ApiDocsView.vue'), props: true },
+      { path: '/workflow/:doctype', name: 'workflow', component: () => import('@/views/WorkflowBuilderView.vue'), props: true },
       { path: '/settings/:doctype?', name: 'settings', component: () => import('@/views/SettingsView.vue'), props: true },
       { path: '/w/:name', name: 'workspace', component: () => import('@/views/WorkspaceView.vue'), props: true },
       {

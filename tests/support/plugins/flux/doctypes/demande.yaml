@@ -1,0 +1,22 @@
+# Le circuit de la demande de congé de `hr` (leave_request.yaml), sans le lien vers un employé.
+schema_version: 1
+name: Demande
+label: Demande
+module: flux
+submittable: true
+title_field: objet
+fields:
+  - { fieldname: objet, label: Objet, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: jours, label: Jours, fieldtype: Int, in_list_view: true }
+  - { fieldname: commentaire, label: Commentaire, fieldtype: LongText }
+workflow:
+  states:
+    - { name: Brouillon }
+    - { name: À approuver }
+    - { name: Approuvée, docstatus: submitted }
+    - { name: Refusée, docstatus: cancelled }
+  transitions:
+    - { action: Soumettre, from: Brouillon, to: À approuver, description: "Envoyer la demande au responsable" }
+    - { action: Approuver, from: À approuver, to: Approuvée, not_owner: true }
+    - { action: Refuser, from: À approuver, to: Refusée, not_owner: true }
+    - { action: Reprendre, from: À approuver, to: Brouillon, condition: commentaire }

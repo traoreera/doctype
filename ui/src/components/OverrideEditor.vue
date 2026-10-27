@@ -7,14 +7,12 @@ import Dialog from 'primevue/dialog'
 import Message from 'primevue/message'
 import Textarea from 'primevue/textarea'
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import CellValue from '@/components/CellValue.vue'
 import FieldInput from '@/components/FieldInput.vue'
-import WorkflowEditor from '@/components/WorkflowEditor.vue'
-import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ADDED_TYPES, addedFields, customName, liveDefault, propRows, withAddedField, withoutAddedField, withProp, type AddedField, type LockReason, type PropKey, type PropRow } from '@/lib/overrideprops'
-import { useServices } from '@/lib/services'
-import type { FieldBase, FieldMeta, FormOverride, WorkflowDef, WorkflowOverride } from '@/lib/types'
+import type { FieldBase, FieldMeta, FormOverride } from '@/lib/types'
 
 /**
  * Éditeur d'habillage : du JSON validé par le SERVEUR (le Desk n'invente aucune règle de disposition). Pour un formulaire (`fields` fourni),
@@ -39,26 +37,17 @@ const props = withDefaults(
     problem?: string | null
     /** Afficher le bouton pour configurer le circuit d'approbation (quand le DocType a un workflow). */
     workflow?: boolean
-    /** Droits d'écriture totaux sur le type (requis pour l'habillage du workflow). */
-    canEditWorkflow?: boolean
   }>(),
-  { rules: true, workflow: false, canEditWorkflow: false },
+  { rules: true, workflow: false },
 )
 const emit = defineEmits<{ (e: 'update:visible', value: boolean): void; (e: 'save', config: unknown): void; (e: 'reset'): void }>()
 
-const { api } = useServices()
-const notify = useNotify()
+const router = useRouter()
 
 const text = ref('{}')
 const parseError = ref<string | null>(null)
 const uid = `ov${Math.random().toString(36).slice(2, 8)}`
 
-// Circuit d'approbation
-const editingFlow = ref(false)
-const flowDefinition = ref<WorkflowDef | null>(null)
-const flowDraft = ref<WorkflowOverride>({})
-const flowProblem = ref<string | null>(null)
-const savingFlow = ref(false)
 
 watch(
   () => [props.visible, props.initial] as const,
@@ -163,48 +152,11 @@ function submit(): void {
   emit('save', parsedNow)
 }
 
-async function openFlow(): Promise<void> {
+/** Le circuit d'approbation a sa page (le graphe, façon Frappe) : on y va, cette fenêtre se ferme. */
+function openFlow(): void {
   if (!props.doctype || !props.workflow) return
-  flowProblem.value = null
-  try {
-    const current = await api.workflowOverride(props.doctype)
-    flowDefinition.value = current.definition
-    flowDraft.value = current.config ?? {}
-    editingFlow.value = true
-  } catch (e) {
-    notify.error(e)
-  }
-}
-
-async function saveFlow(): Promise<void> {
-  if (!props.doctype) return
-  savingFlow.value = true
-  flowProblem.value = null
-  try {
-    await api.saveWorkflowOverride(props.doctype, flowDraft.value)
-    editingFlow.value = false
-    notify.success(t.flowOverride.savedToast)
-  } catch (e) {
-    flowProblem.value = describeError(e)
-  } finally {
-    savingFlow.value = false
-  }
-}
-
-async function resetFlow(): Promise<void> {
-  if (!props.doctype) return
-  savingFlow.value = true
-  flowProblem.value = null
-  try {
-    await api.removeWorkflowOverride(props.doctype)
-    flowDraft.value = {}
-    editingFlow.value = false
-    notify.success(t.flowOverride.resetToast)
-  } catch (e) {
-    flowProblem.value = describeError(e)
-  } finally {
-    savingFlow.value = false
-  }
+  emit('update:visible', false)
+  void router.push({ name: 'workflow', params: { doctype: props.doctype } })
 }
 </script>
 
@@ -213,12 +165,10 @@ async function resetFlow(): Promise<void> {
     <p class="desk-muted" style="margin-top: 0">{{ t.override.hint }}</p>
     <div v-if="workflow && doctype" style="margin-bottom: 0.75rem">
       <Button
-        :label="t.flowOverride.open"
+        :label="t.workflowBuilder.menu"
         icon="pi pi-sitemap"
         size="small"
         outlined
-        :disabled="!canEditWorkflow"
-        :title="!canEditWorkflow ? t.flowOverride.reserved : ''"
         data-testid="override-flow-open"
         @click="openFlow"
       />
@@ -381,16 +331,6 @@ async function resetFlow(): Promise<void> {
     </template>
   </Dialog>
 
-  <WorkflowEditor
-    v-model:visible="editingFlow"
-    v-model:config="flowDraft"
-    :definition="flowDefinition"
-    :allowed="canEditWorkflow"
-    :problem="flowProblem"
-    :saving="savingFlow"
-    @save="saveFlow"
-    @reset="resetFlow"
-  />
 </template>
 
 <style scoped>

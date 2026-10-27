@@ -549,6 +549,7 @@ const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
 const moreItems = computed<MenuItem[]>(() => [
   { label: t.list.refresh, icon: 'pi pi-refresh', command: () => void fetchPage(), disabled: current.value !== 'list' },
   { label: t.sidebar.toggle, icon: 'pi pi-align-left', command: toggleSidebar, disabled: current.value !== 'list' },
+  { label: t.workflowBuilder.menu, icon: 'pi pi-sitemap', testid: 'list-workflow', command: () => void router.push({ name: 'workflow', params: { doctype: props.doctype } }), visible: !!meta.value?.workflow },
   { label: t.importCsv.menu, icon: 'pi pi-upload', testid: 'import-csv', command: () => (importing.value = true), visible: canImport.value },
   { separator: true },
   { label: t.apiDocs.title, icon: 'pi pi-code', command: () => void router.push(`/api/${encodeURIComponent(props.doctype)}`) },

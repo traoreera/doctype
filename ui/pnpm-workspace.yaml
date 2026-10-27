@@ -1,0 +1,4 @@
+# pnpm 11 refuse d'installer quand un paquet a un script d'installation non tranché.
+# vue-demi (dépendance de @vue-flow/core) publie déjà sa version Vue 3 dans lib/ : son script, qui choisit entre Vue 2 et 3, est inutile.
+allowBuilds:
+  vue-demi: false
