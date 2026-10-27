@@ -1,0 +1,8 @@
+schema_version: 1
+contributes_to: setup
+blocks:
+- type: header
+  text: Traitements en lot
+- type: shortcut
+  doctype: Bulk Transaction Log
+  new: true

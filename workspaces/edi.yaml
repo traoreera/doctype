@@ -1,0 +1,11 @@
+schema_version: 1
+contributes_to: setup
+blocks:
+- type: header
+  text: Codes
+- type: shortcut
+  doctype: Code List
+  new: true
+- type: shortcut
+  doctype: Common Code
+  new: true

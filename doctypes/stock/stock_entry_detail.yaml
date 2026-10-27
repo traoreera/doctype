@@ -129,6 +129,7 @@ fields:
   read_only: true
   hidden: true
   description: Material Request used to make this Stock Entry
+  target_status: submitted
 - fieldname: material_request_item
   label: Material Request Item
   fieldtype: Text

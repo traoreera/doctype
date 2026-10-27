@@ -1,0 +1,45 @@
+schema_version: 1
+name: projects
+label: Projets
+icon: briefcase
+order: 70
+blocks:
+- type: header
+  text: Vue d'ensemble
+- type: number_card
+  label: Project Update en brouillon
+  doctype: Project Update
+  filters:
+    docstatus: 0
+  color: orange
+- type: number_card
+  label: Project Update soumis
+  doctype: Project Update
+  filters:
+    docstatus: 1
+  color: green
+- type: header
+  text: Suivi
+- type: shortcut
+  doctype: Project
+  new: true
+- type: shortcut
+  doctype: Task
+  new: true
+- type: shortcut
+  doctype: Timesheet
+  new: true
+- type: shortcut
+  doctype: Project Update
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Project Template
+  new: true
+- type: shortcut
+  doctype: Project Type
+  new: true
+- type: shortcut
+  doctype: Activity Type
+  new: true

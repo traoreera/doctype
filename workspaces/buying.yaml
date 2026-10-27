@@ -1,0 +1,45 @@
+schema_version: 1
+name: buying
+label: Achats
+icon: shopping-bag
+order: 15
+blocks:
+- type: header
+  text: Vue d'ensemble
+- type: number_card
+  label: Purchase Order en brouillon
+  doctype: Purchase Order
+  filters:
+    docstatus: 0
+  color: orange
+- type: number_card
+  label: Purchase Order soumis
+  doctype: Purchase Order
+  filters:
+    docstatus: 1
+  color: green
+- type: header
+  text: Opérations
+- type: shortcut
+  doctype: Material Request
+  new: true
+- type: shortcut
+  doctype: Request for Quotation
+  new: true
+- type: shortcut
+  doctype: Supplier Quotation
+  new: true
+- type: shortcut
+  doctype: Purchase Order
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Supplier
+  new: true
+- type: shortcut
+  doctype: Supplier Group
+  new: true
+- type: shortcut
+  doctype: Supplier Scorecard
+  new: true

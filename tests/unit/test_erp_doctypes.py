@@ -134,3 +134,39 @@ def test_a_tree_view_points_at_a_real_hierarchy(registry: DocTypeRegistry) -> No
         and not (views.tree.parent.startswith("parent_") or views.tree.parent == "reports_to")
     ]
     assert wrong == []
+
+
+def test_no_child_doctype_is_orphaned(registry: DocTypeRegistry) -> None:
+    """Un `istable` qu'aucun champ `Table` ne cite ne peut servir à rien : il charge et se compte pour rien.
+
+    Les 17 qu'avait laissés la migration étaient des vestiges de parents non migrés, dont cinq de portail web —
+    un périmètre explicitement exclu (`process/palier70.md`).
+    """
+    cited = {
+        str(f.options)
+        for name in registry.names()
+        for f in registry.get(name).definition.fields
+        if f.fieldtype == "Table"
+    }
+    orphans = [name for name in registry.names() if registry.get(name).definition.istable and name not in cited]
+    assert orphans == []
+
+
+def test_a_document_link_of_a_mapping_demands_a_submitted_target(registry: DocTypeRegistry) -> None:
+    """Le champ `document` d'un mapping désigne la pièce d'origine : elle doit être SOUMISE, jamais annulée.
+
+    Sans cette contrainte, une facture pouvait citer une commande annulée — le mapper exige une source soumise
+    pour préremplir, mais rien ne l'imposait à l'écriture ni à la soumission du document citant (D23).
+    """
+    loose = []
+    for name in registry.names():
+        definition = registry.get(name).definition
+        for mapping in definition.created_from or []:
+            for table, lines in mapping.lines.items():
+                if lines.document is None:
+                    continue
+                child = registry.get(str(definition.field_map[table].options)).definition
+                field = child.field_map[lines.document]
+                if field.target_status != "submitted":
+                    loose.append(f"{child.name}.{field.fieldname}")
+    assert sorted(set(loose)) == []

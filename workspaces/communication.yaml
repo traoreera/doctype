@@ -1,0 +1,14 @@
+schema_version: 1
+contributes_to: setup
+blocks:
+- type: header
+  text: Messagerie
+- type: shortcut
+  doctype: Email Account
+  new: true
+- type: shortcut
+  doctype: Email Template
+  new: true
+- type: shortcut
+  doctype: Communication Medium
+  new: true

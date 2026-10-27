@@ -1,0 +1,50 @@
+schema_version: 1
+name: assets
+label: Immobilisations
+icon: building
+order: 80
+blocks:
+- type: header
+  text: Vue d'ensemble
+- type: number_card
+  label: Asset en brouillon
+  doctype: Asset
+  filters:
+    docstatus: 0
+  color: orange
+- type: number_card
+  label: Asset soumis
+  doctype: Asset
+  filters:
+    docstatus: 1
+  color: green
+- type: header
+  text: Opérations
+- type: shortcut
+  doctype: Asset
+  new: true
+- type: shortcut
+  doctype: Asset Movement
+  new: true
+- type: shortcut
+  doctype: Asset Repair
+  new: true
+- type: shortcut
+  doctype: Asset Value Adjustment
+  new: true
+- type: header
+  text: Maintenance
+- type: shortcut
+  doctype: Asset Maintenance
+  new: true
+- type: shortcut
+  doctype: Asset Maintenance Log
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Asset Category
+  new: true
+- type: shortcut
+  doctype: Location
+  new: true

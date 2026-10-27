@@ -182,6 +182,7 @@ fields:
   fieldtype: Link
   options: Quotation
   read_only: true
+  target_status: submitted
 - fieldname: brand
   label: Brand Name
   fieldtype: Link

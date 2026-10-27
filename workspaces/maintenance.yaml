@@ -1,0 +1,11 @@
+schema_version: 1
+contributes_to: support
+blocks:
+- type: header
+  text: Maintenance
+- type: shortcut
+  doctype: Maintenance Schedule
+  new: true
+- type: shortcut
+  doctype: Maintenance Visit
+  new: true

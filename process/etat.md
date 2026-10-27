@@ -65,9 +65,12 @@ la valeur d'un document lié. Or sur une facture, `amount`, `net_amount`, `total
 rien ne les remplit. **Une facture de vente ne peut donc pas avoir de total** — ce n'est pas une imprécision,
 c'est structurel.
 
-Deux voies, et le choix n'est pas fait : des hooks par type (répéter `amount = qty × rate` dans 136 types), ou
-**un champ calculé déclaratif dans le moteur**. La seconde évite un cauchemar d'entretien ; c'est la décision à
-prendre avant d'écrire les 135 autres.
+**Tranché le 27 octobre** (`programme.md` §3.7) : un `compute:` déclaratif à vocabulaire FERMÉ — trois formes,
+pas un langage — plutôt que des hooks répétant `amount = qty × rate` dans 136 types, et plutôt qu'une
+arithmétique dans `expr.py`, qui est minuscule et jumelé au navigateur. Et les **quantités passent en `Decimal`**
+(274 champs) : multiplier un flottant par un décimal exact pour produire de l'argent exigerait une règle
+d'arrondi, qui est une question métier. Ordre imposé : la migration des quantités, puis `compute:`, puis les
+hooks — sinon les 136 pièces s'écrivent deux fois.
 
 ### 2.3 Rien ne comptabilise
 
@@ -90,6 +93,8 @@ Trois modules seulement en ont besoin — `accounts`, `stock`, `manufacturing` �
 trois extensions JavaScript (ce serait l'erreur qu'on vient d'éviter avec le mapper) mais **un `group_by` à
 deux champs et un type de vue « rapport mesuré »** dans le moteur. Après quoi ces états sont du YAML. Resteraient
 en JS trois écrans, pas trois plugins : le lettrage des paiements, l'explosion de nomenclature, la téléphonie.
+
+**Tranché le 27 octobre** (`programme.md` §3.7) : ce sera dans le moteur. Indépendant des deux décisions ci-dessus.
 
 ### 2.5 Le reste, connu et chiffré
 

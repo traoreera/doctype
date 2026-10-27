@@ -258,6 +258,9 @@ class TestService:
 
     async def test_hash_naming_is_unchanged(self, db, tables, customer):
         reg = DocTypeRegistry()
+        # `Customer.country` cite `Country` : sans lui le type est incomplet et l'écriture serait refusée (503).
+        reg.register(parse_definition({"schema_version": 1, "name": "Country", "module": "geo",
+                                       "fields": [{"fieldname": "country_name", "fieldtype": "Text"}]}))
         reg.register(customer.definition)
         s = DocumentService(reg, db, tables, Log())
         name = (await s.create(make_ctx(), "Customer", {"customer_name": "x"}))["name"]

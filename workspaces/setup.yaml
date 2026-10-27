@@ -1,0 +1,48 @@
+schema_version: 1
+name: setup
+label: Configuration
+icon: cog
+order: 200
+blocks:
+- type: header
+  text: Vue d'ensemble
+- type: number_card
+  label: Transaction Deletion Record en brouillon
+  doctype: Transaction Deletion Record
+  filters:
+    docstatus: 0
+  color: orange
+- type: number_card
+  label: Transaction Deletion Record soumis
+  doctype: Transaction Deletion Record
+  filters:
+    docstatus: 1
+  color: green
+- type: header
+  text: Organisation
+- type: shortcut
+  doctype: Company
+  new: true
+- type: shortcut
+  doctype: Address
+  new: true
+- type: shortcut
+  doctype: Branch
+  new: true
+- type: shortcut
+  doctype: Department
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Item Group
+  new: true
+- type: shortcut
+  doctype: Currency
+  new: true
+- type: shortcut
+  doctype: Country
+  new: true
+- type: shortcut
+  doctype: UOM
+  new: true

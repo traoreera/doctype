@@ -1,0 +1,28 @@
+schema_version: 1
+name: quality_management
+label: Qualité
+icon: check-circle
+order: 100
+blocks:
+- type: header
+  text: Suivi
+- type: shortcut
+  doctype: Non Conformance
+  new: true
+- type: shortcut
+  doctype: Quality Action
+  new: true
+- type: shortcut
+  doctype: Quality Review
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Quality Goal
+  new: true
+- type: shortcut
+  doctype: Quality Procedure
+  new: true
+- type: shortcut
+  doctype: Quality Feedback Template
+  new: true

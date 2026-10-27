@@ -150,6 +150,7 @@ fields:
   fieldtype: Link
   options: Material Request
   read_only: true
+  target_status: submitted
 - fieldname: material_request_item
   label: Material Request Item
   fieldtype: Text
@@ -169,6 +170,7 @@ fields:
   fieldtype: Link
   options: Supplier Quotation
   read_only: true
+  target_status: submitted
 - fieldname: supplier_quotation_item
   label: Supplier Quotation Item
   fieldtype: Text

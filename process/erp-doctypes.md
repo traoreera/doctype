@@ -1,6 +1,6 @@
 # Le jeu de DocTypes d'ERP (`doctypes/`)
 
-**État au 27 oct. 2026.** 721 DocTypes répartis en 23 modules, migrés d'ERPNext (commit `b39a542`), puis réadaptés
+**État au 27 oct. 2026.** 704 DocTypes répartis en 22 modules, migrés d'ERPNext (commit `b39a542`), puis réadaptés
 pour être réellement chargeables par le moteur. Les 5 espaces de travail vivent à côté, dans `workspaces/`.
 
 Ce fichier dit **comment ce jeu se charge**, **ce qui a été changé et pourquoi**, et **ce qui reste à faire**.
@@ -121,14 +121,20 @@ Dans l'ordre de valeur :
    `accounts` et `stock` d'abord, les autres s'appuient dessus. C'est l'essentiel du travail restant.
 2. **Les plugins de module** (§2) : un par module, propriétaire de ses DocTypes (`load_dir(…, peers=True)`), qui déclare ses
    grants, son espace et enregistre ses hooks — sans quoi aucun grant n'est déclaré à xauth.
-3. **`target_status` sur les liens entre pièces.** Rien n'empêche aujourd'hui une facture de citer une commande
-   annulée.
+3. ~~**`target_status` sur les liens entre pièces.**~~ **Fait** : les 10 champs `document` des mappings portent
+   `target_status: submitted`, donc une facture ne peut plus citer une commande annulée — jugé à l'écriture ET à
+   la soumission du document citant (D23). Invariant dans `tests/unit/test_erp_doctypes.py`.
 4. **Les workflows.** Zéro `workflow:` : aucun circuit d'approbation. Le constructeur existe
    (`process/programme.md` §3.6).
-5. **17 espaces de travail manquants** (5 modules sur 22 en ont un ; le moteur en fabrique un à défaut).
+5. ~~**17 espaces de travail manquants**~~ **Fait** : 9 espaces métier écrits (libellé français, icône, `order`
+   métier, raccourcis CHOISIS sous des en-têtes — ce sont les en-têtes qui font les sous-groupes dépliables de la
+   barre latérale) et 7 modules de PLOMBERIE rattachés par `contributes_to` (D27) là où leurs types servent :
+   maintenance → support, telephony → crm, regional → accounts, communication/edi/utilities/bulk_transaction →
+   setup. Sept groupes pour quinze types n'étaient pas des domaines métier. Les 21 fichiers chargent ensemble.
 6. **`depends_on` et `fetch_from`** : absents partout. ERPNext s'en sert beaucoup pour alléger les formulaires.
-7. **17 enfants orphelins** (`istable` qu'aucun champ `Table` ne cite) : `Budget Account`,
-   `Subscription Invoice`… Vestiges de parents non migrés.
+7. ~~**17 enfants orphelins**~~ **Fait** : retirés (704 DocTypes au lieu de 721). C'étaient des vestiges de
+   parents non migrés, dont cinq de portail web — un périmètre explicitement exclu (`palier70.md`). Aucun `Link`
+   ne pouvait les citer (le schéma l'interdit), le retrait est donc sans effet sur le reste. Invariant posé.
 
 ## 5. Le garde-fou
 

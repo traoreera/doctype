@@ -1,7 +1,0 @@
-schema_version: 1
-name: "Item Variant"
-label: "Item Variant"
-istable: true
-fields:
-  - { fieldname: item_attribute, label: "Item Attribute", fieldtype: Link, options: "Item Attribute", required: true, in_list_view: true }
-  - { fieldname: item_attribute_value, label: "Item Attribute Value", fieldtype: Text, required: true, in_list_view: true }
