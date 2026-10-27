@@ -156,6 +156,13 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
     fields = {f.fieldname: f for f in definition.fields}
     hidden = {f.fieldname for f in definition.fields if f.hidden}
     out: dict[str, Any] = {}
+    # Les champs que l'organisation AJOUTE se placent dans SA disposition comme les autres (le Form Builder du Desk les range où on les
+    # dépose) ; sans ça, ils finiraient toujours dans le dernier bloc. Leurs propriétés vivent dans leur propre définition (`added`), pas
+    # dans `fields` : seuls les champs du type se retouchent.
+    added = config.get("added")
+    cleaned_added = _clean_added(added, fields) if added is not None else None
+    placeable = set(fields) | {a["fieldname"] for a in cleaned_added or []}
+    placeable_hidden = hidden | {a["fieldname"] for a in cleaned_added or [] if a.get("hidden") is True}
 
     layout = config.get("layout")
     if layout is not None:
@@ -190,9 +197,9 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
                     problems.append(f"layout.{i}.columns.{ci}: une liste de champs non vide")
                     continue
                 for name in col:
-                    if not isinstance(name, str) or name not in fields:
+                    if not isinstance(name, str) or name not in placeable:
                         problems.append(f"layout.{i}: champ inconnu {name!r}")
-                    elif name in hidden:
+                    elif name in placeable_hidden:
                         problems.append(f"layout.{i}: le champ caché {name!r} ne peut pas être placé")
                     elif name in placed:
                         problems.append(f"layout.{i}: champ placé deux fois {name!r}")
@@ -248,9 +255,8 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
             raise ValidationFailed("habillage de formulaire invalide : " + "; ".join(problems))
         out["fields"] = clean
 
-    added = config.get("added")
-    if added is not None:
-        out["added"] = _clean_added(added, fields)
+    if cleaned_added is not None:
+        out["added"] = cleaned_added
     return out
 
 

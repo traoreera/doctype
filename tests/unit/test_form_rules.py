@@ -413,6 +413,8 @@ class TestMeta:
         base = got["definition"]
         assert base["title"] == {"required": True} and base["ref"] == {"read_only": True} and base["note"] == {"hidden": True}
         assert base["status"] == {"default": "Ouvert"} and "prio" not in base
+        # Le libellé de l'application, que `/meta` ne montre plus quand l'organisation en a donné un : le Form Builder dit les deux.
+        assert got["labels"]["note"] != "Note interne" and set(got["labels"]) >= {"title", "prio", "note", "status"}
 
 
 class TestMandatory:

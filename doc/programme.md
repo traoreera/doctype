@@ -565,6 +565,28 @@ plus dans l'écran « Personnaliser » qui existe déjà — ajouter un champ, s
 les mêmes garde-fous que les règles de formulaire actuelles (périmètre d'écriture total exigé, taille bornée, types opaques
 refusés).
 
+#### Le Desk : le Form Builder (27 octobre 2026)
+
+Décision de l'utilisateur : « à la manière de Frappe ». La boîte « Habiller » (un JSON à éditer et un tableau de cases) devient une
+page, `#/customize/<Type>` (« Personnaliser le formulaire », menus « ⋯ » de la fiche et de la liste) : à gauche les champs non placés
+et « Ajouter un champ » ; au centre le formulaire tel qu'on le verra — onglets, sections, colonnes, champs en CARTES qu'on glisse ; à
+droite les propriétés de ce qu'on a choisi. Elle écrit EXACTEMENT le même habillage qu'avant (`layout`, `fields`, `added`) : aucune
+règle nouvelle côté serveur, deux ajouts seulement —
+
+- la disposition de l'organisation peut **placer les champs qu'elle ajoute** (avant, ils tombaient toujours dans le dernier bloc, quoi
+  qu'on fasse) ; leurs propriétés restent dans leur propre définition (`added`), jamais dans `fields` ;
+- `GET /override/form` rend `labels`, le libellé de chaque champ selon l'APPLICATION, que le panneau montre à côté de celui de
+  l'organisation (`/meta` ne sert plus que le second).
+
+Les règles du serveur sont tenues AVANT l'enregistrement par le modèle pur (`lib/formbuilder.ts`) : une colonne ou une section vide
+n'est jamais envoyée, 1 à 4 colonnes, des onglets pour toutes les sections ou aucune, nommés et distincts. Le glisser-déposer est le
+natif du navigateur (sans dépendance) et a son équivalent au clavier dans le panneau (monter, descendre, colonne, section, placer,
+retirer) ; un champ déposé sur le TITRE d'un onglet va à la fin de cet onglet. Preuve dans Chromium : `ui/e2e/formbuilder.e2e.mjs`
+(un vrai glisser-déposer, un champ ajouté, la fiche qui suit la nouvelle disposition, téléphone, thème sombre, retour à l'application).
+
+Reste, décidé avec l'utilisateur : le même constructeur en **mode développeur**, pour créer ou modifier un type ENTIER et le
+télécharger en YAML à poser dans un plugin (jamais stocké en base : §3.5 option A tient).
+
 #### Ce qui reste à trancher si on vise B un jour
 
 Le nom du module d'un type d'organisation (et donc le premier segment de ses grants), qui déclare ces grants à auth et quand, ce

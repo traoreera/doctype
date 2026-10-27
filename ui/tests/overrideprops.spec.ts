@@ -1,24 +1,13 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { createPinia } from 'pinia'
-import Checkbox from 'primevue/checkbox'
 import PrimeVue from 'primevue/config'
-import ConfirmationService from 'primevue/confirmationservice'
 import Textarea from 'primevue/textarea'
-import ToastService from 'primevue/toastservice'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, h } from 'vue'
-import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
-import FieldInput from '@/components/FieldInput.vue'
+import { afterEach, describe, expect, it } from 'vitest'
 import OverrideEditor from '@/components/OverrideEditor.vue'
 import { addedFields, customName, withAddedField, withoutAddedField } from '@/lib/overrideprops'
-import { ApiError } from '@/lib/api'
 import type { ExprNode } from '@/lib/expr'
 import { fieldStates, validate } from '@/lib/form'
 import { propRows, withProp } from '@/lib/overrideprops'
-import { SERVICES } from '@/lib/services'
 import type { DocTypeMeta, FieldBase, FieldMeta, FormOverride } from '@/lib/types'
-import FormView from '@/views/FormView.vue'
-import { menuItem, openMore } from './menu'
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
   fieldname, label: fieldname.toUpperCase(), fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
@@ -177,114 +166,12 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-async function open(initial: FormOverride = SAVED, definition: Record<string, FieldBase> | null = DEFINITION, extra: { rules?: boolean; problem?: string } = {}) {
-  const w = mount(OverrideEditor, {
-    props: { visible: true, title: 'Disposition', initial, fields: FIELDS, definition, naming: 'sku', doctype: 'Ticket', ...extra },
-    attachTo: document.body,
-    global: {
-      plugins: [PrimeVue, createPinia()],
-      provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api: {} } },
-    },
-  })
-  mounted.push(w)
-  await flushPromises()
-  return w
-}
-const json = (w: VueWrapper) => JSON.parse(String(w.findComponent(Textarea).props('modelValue')))
-const box = (w: VueWrapper, testid: string) => w.findAllComponents(Checkbox).find((c) => c.attributes('data-testid') === testid)!
 const cell = (testid: string) => document.body.querySelector(`[data-testid="${testid}"]`)
 
-describe('l’éditeur d’habillage d’un formulaire', () => {
-  it('une case cochée écrit la propriété dans le JSON, qui part tel quel à l’enregistrement', async () => {
-    const w = await open()
-    box(w, 'prop-read_only-due').vm.$emit('update:modelValue', true)
-    await flushPromises()
-    expect(json(w).fields.due).toEqual({ read_only: true })
-    ;(cell('override-save') as HTMLButtonElement).click()
-    await flushPromises()
-    expect(w.emitted('save')?.[0]?.[0]).toEqual({ ...SAVED, fields: { ...SAVED.fields, due: { read_only: true } } })
-  })
-
-  it('ce que la définition impose est coché et grisé ; ce que l’habillage a posé se décoche', async () => {
-    const w = await open()
-    expect(box(w, 'prop-mandatory-title').props('modelValue')).toBe(true)
-    expect(box(w, 'prop-mandatory-title').props('disabled')).toBe(true)
-    expect(box(w, 'prop-mandatory-prio').props('disabled')).toBe(false)
-    box(w, 'prop-mandatory-prio').vm.$emit('update:modelValue', false)
-    await flushPromises()
-    expect(json(w).fields.prio).toEqual({ label: 'Priorité' })
-    expect(box(w, 'prop-mandatory-note').props('disabled')).toBe(true) // masqué par la définition
-  })
-
-  it('un champ que le serveur écrit à sa façon dit pourquoi ses cases sont grisées', async () => {
-    const w = await open()
-    expect(box(w, 'prop-mandatory-lines').props('disabled')).toBe(true)
-    expect(box(w, 'prop-read_only-secret').props('disabled')).toBe(true)
-    expect(cell('prop-mandatory-photo')?.closest('td')?.getAttribute('title')).toContain('à sa façon')
-    expect(cell('prop-mandatory-title')?.closest('td')?.getAttribute('title')).toContain('définition')
-  })
-
-  it('la valeur par défaut se saisit avec le champ du formulaire, « Aujourd’hui » pose le défaut vivant, la croix le retire', async () => {
-    const w = await open()
-    const prio = w.findAllComponents(FieldInput).find((c) => (c.props('field') as FieldMeta).fieldname === 'prio')!
-    prio.vm.$emit('update:modelValue', 3)
-    await flushPromises()
-    expect(json(w).fields.prio).toEqual({ mandatory: true, label: 'Priorité', default: 3 })
-    ;(cell('prop-live-due') as HTMLButtonElement).click()
-    await flushPromises()
-    expect(json(w).fields.due).toEqual({ default: 'today' })
-    expect(cell('prop-default-due')?.textContent).toContain('Aujourd’hui')
-    ;(cell('prop-clear-due') as HTMLButtonElement).click()
-    await flushPromises()
-    expect(json(w).fields.due).toBeUndefined()
-    // Ni table, ni secret, ni fichier, ni fetch_from, ni valeur unique, ni le champ qui nomme : pas de saisie de défaut du tout.
-    for (const name of ['lines', 'secret', 'photo', 'city', 'code', 'sku']) {
-      expect(document.body.querySelector(`[data-testid="prop-default-${name}"] input`)).toBeNull()
-    }
-  })
-
-  it('le défaut de la définition se lit tant que l’habillage n’en pose pas', async () => {
-    const w = await open()
-    expect(cell('prop-default-status')?.querySelector('[data-testid="prop-base-default"]')?.textContent).toContain('Ouvert')
-    const status = w.findAllComponents(FieldInput).find((c) => (c.props('field') as FieldMeta).fieldname === 'status')!
-    status.vm.$emit('update:modelValue', 'Fermé')
-    await flushPromises()
-    expect(json(w).fields.status).toEqual({ default: 'Fermé' })
-    expect(cell('prop-default-status')?.querySelector('[data-testid="prop-base-default"]')).toBeNull()
-  })
-
-  it('sans le droit d’écrire tous les documents, les règles se lisent sans se régler ; libellés et masquage restent', async () => {
-    const w = await open(withProp(SAVED, 'due', 'default', 'today'), DEFINITION, { rules: false })
-    expect(cell('override-props-reserved')?.textContent).toContain('tous les documents de ce type')
-    for (const id of ['prop-mandatory-due', 'prop-read_only-due', 'prop-mandatory-prio']) expect(box(w, id).props('disabled')).toBe(true)
-    expect(box(w, 'prop-mandatory-prio').props('modelValue')).toBe(true) // la règle de l'organisation reste visible
-    expect(box(w, 'prop-hidden-due').props('disabled')).toBe(false)
-    expect(cell('prop-mandatory-due')?.closest('td')?.getAttribute('title')).toContain('Réservé')
-    expect(document.body.querySelector('[data-testid="prop-default-due"] input')).toBeNull() // pas de saisie...
-    expect(cell('prop-default-value')?.textContent).toContain('Aujourd’hui') // ... mais le défaut posé se lit
-    expect(cell('prop-default-value')?.getAttribute('title')).toContain('Réservé')
-    box(w, 'prop-hidden-due').vm.$emit('update:modelValue', true)
-    await flushPromises()
-    expect(json(w).fields.due).toEqual({ default: 'today', hidden: true }) // le JSON garde la règle telle quelle : le serveur l'accepte
-    const allowed = await open(SAVED, DEFINITION)
-    expect(allowed.find('[data-testid="override-props-reserved"]').exists()).toBe(false)
-  })
-
-  it('le refus du serveur se lit dans la fenêtre', async () => {
-    await open(SAVED, DEFINITION, { problem: 'Obligatoire, lecture seule et valeur par défaut s’imposent à tous (champs : prio)' })
-    expect(cell('override-problem')?.textContent).toContain('champs : prio')
-  })
-
-  it('un JSON illisible grise le tableau sans rien perdre de ce qu’on a tapé', async () => {
-    const w = await open()
-    w.findComponent(Textarea).vm.$emit('update:modelValue', '{ "fields": ')
-    await flushPromises()
-    expect(cell('override-props-blocked')).not.toBeNull()
-    expect(box(w, 'prop-read_only-due').props('disabled')).toBe(true)
-    expect(w.findComponent(Textarea).props('modelValue')).toBe('{ "fields": ')
-  })
-
-  it('sans champs (un espace de travail), il reste un simple éditeur de JSON', async () => {
+// Les écrans qui RÉGLAIENT ces propriétés (la boîte « Habiller » d'un formulaire) sont devenus le Form Builder : leurs tests vivent dans
+// `formbuilderview.spec.ts`. Reste l'éditeur de JSON, qui sert à l'habillage d'un espace de travail.
+describe('l’éditeur d’habillage en JSON (espaces de travail)', () => {
+  it('montre l’habillage en JSON et renvoie ce qu’on a tapé ; un JSON illisible est dit, rien n’est envoyé', async () => {
     const w = mount(OverrideEditor, {
       props: { visible: true, title: 'Espace', initial: { label: 'Stock' } },
       attachTo: document.body,
@@ -292,120 +179,20 @@ describe('l’éditeur d’habillage d’un formulaire', () => {
     })
     mounted.push(w)
     await flushPromises()
-    expect(cell('override-props')).toBeNull()
-    expect(json(w)).toEqual({ label: 'Stock' })
+    expect(JSON.parse(String(w.findComponent(Textarea).props('modelValue')))).toEqual({ label: 'Stock' })
+    w.findComponent(Textarea).vm.$emit('update:modelValue', '{ "label": ')
+    await flushPromises()
+    ;(cell('override-save') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(cell('override-parse-error')).not.toBeNull()
+    expect(w.emitted('save')).toBeUndefined()
+    w.findComponent(Textarea).vm.$emit('update:modelValue', '{ "label": "Magasin" }')
+    await flushPromises()
+    ;(cell('override-save') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(w.emitted('save')?.[0]?.[0]).toEqual({ label: 'Magasin' })
   })
 })
-
-describe('la fiche ouvre l’éditeur avec ce que le serveur dit de la définition', () => {
-  const SKU: DocTypeMeta = {
-    name: 'Sku', label: 'Sku', naming: { field: 'code' }, list_columns: [],
-    fields: [field('code', 'Text', { required: true }), field('label', 'Text', { required: true })],
-    layout: [{ section: null, collapsible: false, collapsed: false, columns: [['code', 'label']] }],
-    rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
-  }
-
-  async function form(meta: DocTypeMeta, api: Record<string, unknown>) {
-    const router = createRouter({
-      history: createMemoryHistory(),
-      routes: [{ path: '/app/:doctype/:name', name: 'form', component: FormView, props: true }],
-    })
-    const w = mount(defineComponent({ render: () => h(RouterView) }), {
-      attachTo: document.body,
-      global: {
-        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
-        provide: {
-          [SERVICES as symbol]: {
-            transport: {},
-            config: { baseUrl: '', loginUrl: null },
-            api: {
-              meta: vi.fn(async () => meta),
-              doctypes: vi.fn(async () => []),
-              get: vi.fn(async () => ({ doctype: meta.name, name: 'A', owner: 'u', creation: '', modified: '', version: 1, docstatus: 0, amended_from: null, data: { code: 'A', label: 'a' } })),
-              history: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })),
-              list: vi.fn(async () => ({ items: [], total: 0, limit: 1, offset: 0 })),
-              ...api,
-            },
-          },
-        },
-      },
-    })
-    mounted.push(w)
-    await router.push(`/app/${meta.name}/A`)
-    await flushPromises()
-    await openMore(w)
-    menuItem('form-layout-edit')!.click()
-    await flushPromises()
-    return w
-  }
-
-  it('qui n’écrit pas TOUS les documents (`rights.write` de /meta) n’a pas les règles ; le refus du serveur se lit dans la fenêtre', async () => {
-    const restricted: DocTypeMeta = { ...SKU, rights: { ...SKU.rights, write: 'restricted' } }
-    const refusal = new ApiError(422, 'form_rules_reserved', 'Obligatoire, lecture seule et valeur par défaut s’imposent à tous : seul qui peut modifier TOUS les documents de Sku les règle (champs : label)')
-    const saveFormOverride = vi.fn(async () => {
-      throw refusal
-    })
-    const removeFormOverride = vi.fn(async () => {
-      throw refusal
-    })
-    const w = await form(restricted, {
-      formOverride: vi.fn(async () => ({ doctype: 'Sku', config: {}, definition: { code: { required: true } } })),
-      saveFormOverride,
-      removeFormOverride,
-    })
-    const editor = w.findComponent(OverrideEditor)
-    expect(editor.props('rules')).toBe(false)
-    expect(box(w, 'prop-mandatory-label').props('disabled')).toBe(true)
-    ;(document.body.querySelector('[data-testid="override-save"]') as HTMLButtonElement).click()
-    await flushPromises()
-    expect(saveFormOverride).toHaveBeenCalledTimes(1)
-    expect(editor.props('visible')).toBe(true) // la fenêtre reste ouverte...
-    expect(cell('override-problem')?.textContent).toContain('TOUS les documents de Sku') // ... avec le motif du serveur, en clair
-    ;(document.body.querySelector('[data-testid="override-reset"]') as HTMLButtonElement).click()
-    await flushPromises()
-    expect(removeFormOverride).toHaveBeenCalledTimes(1)
-    expect(cell('override-problem')?.textContent).toContain('champs : label')
-    const full = await form(SKU, { formOverride: vi.fn(async () => ({ doctype: 'Sku', config: {}, definition: {} })) })
-    expect(full.findComponent(OverrideEditor).props('rules')).toBe(true)
-  })
-
-  it('« Disposition » passe la définition et le champ qui nomme le document à l’éditeur', async () => {
-    const config: FormOverride = { fields: { label: { mandatory: true } } }
-    const api = {
-      meta: vi.fn(async () => SKU),
-      doctypes: vi.fn(async () => []),
-      get: vi.fn(async () => ({ doctype: 'Sku', name: 'A', owner: 'u', creation: '', modified: '', version: 1, docstatus: 0, amended_from: null, data: { code: 'A', label: 'a' } })),
-      history: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })),
-      list: vi.fn(async () => ({ items: [], total: 0, limit: 1, offset: 0 })),
-      formOverride: vi.fn(async () => ({ doctype: 'Sku', config, definition: { code: { required: true }, label: { required: true } } })),
-    }
-    const router = createRouter({
-      history: createMemoryHistory(),
-      routes: [{ path: '/app/:doctype/:name', name: 'form', component: FormView, props: true }],
-    })
-    const w = mount(defineComponent({ render: () => h(RouterView) }), {
-      attachTo: document.body,
-      global: {
-        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
-        provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api } },
-      },
-    })
-    mounted.push(w)
-    await router.push('/app/Sku/A')
-    await flushPromises()
-    await openMore(w)
-    menuItem('form-layout-edit')!.click()
-    await flushPromises()
-    const editor = w.findComponent(OverrideEditor)
-    expect(editor.props('definition')).toEqual({ code: { required: true }, label: { required: true } })
-    expect(editor.props('naming')).toBe('code')
-    // `label` : obligatoire par le YAML ET par l'habillage. La définition du serveur garde sa case grisée (la déduction la croirait retirable).
-    expect(box(w, 'prop-mandatory-label').props('disabled')).toBe(true)
-    expect(document.body.querySelector('[data-testid="prop-default-code"] input')).toBeNull() // le champ qui nomme : pas de défaut
-  })
-})
-
-// ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ────────────────────────────────────────────────
 
 describe('customName : le nom qu’exige le serveur', () => {
   it('préfixe, met en minuscules et remplace ce qui n’est pas permis', () => {
@@ -428,39 +215,5 @@ describe('withAddedField / withoutAddedField', () => {
     expect(addedFields(cfg)).toHaveLength(1)
     expect(addedFields(cfg)[0]!.fieldtype).toBe('Int')
     expect('added' in withoutAddedField(cfg, 'custom_a')).toBe(false)
-  })
-})
-
-describe('l’onglet « Champs ajoutés »', () => {
-  // La fenêtre est téléportée dans `body` : on passe par les composants (comme `box`) et par `cell` pour le DOM.
-  const field = (w: VueWrapper, testid: string) =>
-    w.findAllComponents({ name: 'InputText' }).find((c) => c.attributes('data-testid') === testid)!
-  const select = (w: VueWrapper, testid: string) =>
-    w.findAllComponents({ name: 'Select' }).find((c) => c.attributes('data-testid') === testid)!
-
-  it('ajouter un champ l’écrit dans le MÊME JSON, qui part tel quel à l’enregistrement', async () => {
-    const w = await open({})
-    field(w, 'added-name').vm.$emit('update:modelValue', 'Segment client')
-    field(w, 'added-label').vm.$emit('update:modelValue', 'Segment')
-    await flushPromises()
-    expect(cell('added-name-hint')!.textContent).toContain('custom_segment_client')
-    ;(cell('added-add') as HTMLButtonElement).click()
-    await flushPromises()
-    expect(addedFields(json(w))).toEqual([{ fieldname: 'custom_segment_client', fieldtype: 'Text', label: 'Segment' }])
-    expect(cell('added-custom_segment_client')).not.toBeNull()
-  })
-
-  it('un Select sans valeurs ne s’ajoute pas : le serveur le refuserait', async () => {
-    const w = await open({})
-    field(w, 'added-name').vm.$emit('update:modelValue', 'Segment')
-    select(w, 'added-type').vm.$emit('update:modelValue', 'Select')
-    await flushPromises()
-    expect((cell('added-add') as HTMLButtonElement).disabled).toBe(true)
-  })
-
-  it('sans le droit d’écrire tous les documents, l’onglet est grisé et le dit', async () => {
-    await open({}, DEFINITION, { rules: false })
-    expect(cell('added-reserved')).not.toBeNull()
-    expect((cell('added-name') as HTMLInputElement).disabled).toBe(true)
   })
 })
