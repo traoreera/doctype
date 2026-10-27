@@ -32,6 +32,13 @@ export interface FlowStep {
   [key: string]: unknown
 }
 
+/** Une étape avant qu'elle ne soit posée : son identifiant n'est qu'une suggestion (`addStep` le rend unique). */
+export interface NewStep {
+  type: StepType
+  id?: string
+  [key: string]: unknown
+}
+
 export interface FlowDefinition {
   name: string
   version?: string
@@ -40,6 +47,8 @@ export interface FlowDefinition {
   steps: FlowStep[]
   entry_step?: string | null
   tags?: string[]
+  /** Posé par xflow : qui a déployé (ses droits du moment servent les déclenchements sans humain). Jamais renvoyé par le client. */
+  deployed_by?: string | null
   [key: string]: unknown
 }
 
@@ -200,7 +209,7 @@ export function blankStep(type: StepType, id: string): FlowStep {
   }
 }
 
-export function addStep(def: FlowDefinition, step: Omit<FlowStep, 'id'> & { id?: string }, at?: { x: number; y: number }): { def: FlowDefinition; id: string } {
+export function addStep(def: FlowDefinition, step: NewStep, at?: { x: number; y: number }): { def: FlowDefinition; id: string } {
   const id = uniqueId(step.id ?? step.type, def.steps.map((s) => s.id))
   const placed: FlowStep = { ...step, id, ...(at ? { _x: Math.round(at.x), _y: Math.round(at.y) } : {}) } as FlowStep
   return { def: { ...def, steps: [...def.steps, placed] }, id }
@@ -385,7 +394,7 @@ export function docPayload(action: DocAction, doctype: string): Record<string, u
   }
 }
 
-export function docStep(action: DocAction, doctype: string): Omit<FlowStep, 'id'> & { id: string } {
+export function docStep(action: DocAction, doctype: string): NewStep {
   const base = { 'doc.get': 'lire', 'doc.list': 'lister', 'doc.save': 'creer', 'doc.patch': 'modifier', 'doc.transition': 'faire_avancer', 'doc.submit': 'soumettre', 'doc.cancel': 'annuler', 'doc.delete': 'supprimer', 'doc.comment.add': 'commenter', 'doc.assign': 'assigner' }[action]
   return { id: base, type: 'action', plugin: ENGINE, action, payload: docPayload(action, doctype) }
 }
@@ -498,4 +507,49 @@ export function emptyFlow(name = ''): FlowDefinition {
 export function forDeploy(def: FlowDefinition): FlowDefinition {
   const { deployed_by: _ignored, ...rest } = def
   return rest as FlowDefinition
+}
+
+// ── Présentation (icônes PrimeIcons, vérifiées dans primeicons 7) ────────────────────────────────────────────────────────────────
+
+const DOC_ICONS: Record<DocAction, string> = {
+  'doc.get': 'pi-file', 'doc.list': 'pi-search', 'doc.save': 'pi-plus', 'doc.patch': 'pi-pencil', 'doc.transition': 'pi-forward',
+  'doc.submit': 'pi-send', 'doc.cancel': 'pi-ban', 'doc.delete': 'pi-trash', 'doc.comment.add': 'pi-comment', 'doc.assign': 'pi-user-plus',
+}
+const TYPE_ICONS: Record<StepType, string> = {
+  action: 'pi-bolt', condition: 'pi-question-circle', switch: 'pi-directions', foreach: 'pi-replay', parallel: 'pi-share-alt', wait: 'pi-clock',
+  transform: 'pi-sliders-h', template: 'pi-align-left', ai: 'pi-sparkles',
+}
+const TRIGGER_ICONS: Record<TriggerType, string> = { manual: 'pi-play', event: 'pi-bolt', webhook: 'pi-globe', schedule: 'pi-calendar' }
+
+export function stepIcon(step: FlowStep): string {
+  const doc = docActionOf(step)
+  return `pi ${doc ? DOC_ICONS[doc] : TYPE_ICONS[step.type] ?? 'pi-bolt'}`
+}
+
+export function triggerIcon(trigger: FlowTrigger): string {
+  return `pi ${TRIGGER_ICONS[trigger.type] ?? 'pi-play'}`
+}
+
+// ── Valeurs tapées dans un nœud Document ─────────────────────────────────────────────────────────────────────────────────────────
+
+const WHOLE_TEMPLATE = /^\{\{\s*[\w.]+\s*\}\}$/
+
+/**
+ * Le texte tapé pour un champ devient la valeur que le moteur attend (il refuse `"3"` pour un entier, `"true"` pour un booléen). Un
+ * gabarit ENTIER (`{{ steps.lire.result.doc.data.jours }}`) reste tel quel : xflow le remplace par la valeur elle-même, avec son type.
+ * Un Decimal reste une chaîne exacte ; ce qui ne se lit pas comme le type voulu reste du texte, le moteur dira pourquoi.
+ */
+export function typedValue(fieldtype: string, text: string): unknown {
+  const v = text.trim()
+  if (WHOLE_TEMPLATE.test(v)) return v
+  if (['Int', 'Rating', 'Duration'].includes(fieldtype) && /^-?[0-9]+$/.test(v)) return Number(v)
+  if (['Number', 'Percent'].includes(fieldtype) && /^-?([0-9]+\.?[0-9]*|\.[0-9]+)$/.test(v)) return Number(v)
+  if (fieldtype === 'Boolean' && (v === 'true' || v === 'false')) return v === 'true'
+  return text
+}
+
+/** L'inverse, pour réafficher une valeur dans son champ de saisie. */
+export function shownValue(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  return typeof value === 'string' ? value : JSON.stringify(value)
 }

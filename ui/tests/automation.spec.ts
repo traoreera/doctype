@@ -136,3 +136,17 @@ describe('le modèle d’une automatisation xflow', () => {
     expect('deployed_by' in forDeploy({ ...FLOW, deployed_by: 'alice' })).toBe(false)
   })
 })
+
+describe('les valeurs tapées dans un nœud Document', () => {
+  it('prennent le type du champ ; un gabarit entier reste un gabarit (xflow le remplace par la valeur typée)', async () => {
+    const { typedValue, shownValue } = await import('@/lib/automation')
+    expect(typedValue('Int', ' 12 ')).toBe(12)
+    expect(typedValue('Number', '2.5')).toBe(2.5)
+    expect(typedValue('Boolean', 'true')).toBe(true)
+    expect(typedValue('Decimal', '12.50')).toBe('12.50')
+    expect(typedValue('Int', '{{ steps.lire.result.doc.data.jours }}')).toBe('{{ steps.lire.result.doc.data.jours }}')
+    expect(typedValue('Int', 'deux')).toBe('deux') // le moteur dira pourquoi
+    expect(typedValue('Text', 'Bonjour {{ trigger.name }}')).toBe('Bonjour {{ trigger.name }}')
+    expect([shownValue(12), shownValue(true), shownValue('x'), shownValue(undefined)]).toEqual(['12', 'true', 'x', ''])
+  })
+})

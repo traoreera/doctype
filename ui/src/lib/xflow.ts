@@ -138,3 +138,17 @@ export class XflowClient extends ApiClient {
 export function xflowBase(apiBase: string): string {
   return pluginBase(apiBase, 'xflow')
 }
+
+/** Le ton d'un statut (la pastille) : réussi, échoué, en cours, le reste neutre. */
+export function statusTone(status: string): 'ok' | 'bad' | 'warn' | 'neutral' {
+  return status === 'success' ? 'ok' : status === 'failed' ? 'bad' : ['running', 'pending', 'retrying'].includes(status) ? 'warn' : 'neutral'
+}
+
+/**
+ * Une date de xflow, lisible par `Date` : xflow écrit en UTC (`datetime.now(timezone.utc)`) mais sa base rend des dates SANS fuseau
+ * (`2026-10-27T16:45:37.227984`), que le navigateur lirait comme une heure LOCALE. Sans fuseau, c'est donc de l'UTC.
+ */
+export function xflowTime(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  return /(?:Z|[+-]\d\d:?\d\d)$/.test(iso) ? iso : `${iso}Z`
+}
