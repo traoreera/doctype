@@ -101,17 +101,22 @@ export function parseFiltersParam(raw: unknown): Filters {
 
 /**
  * Les filtres de l'API → les lignes de la barre de filtres, pour que l'utilisateur VOIE ce qui filtre la liste que sa carte a ouverte.
- * `docstatus` n'est pas un champ : c'est le sélecteur d'état (`status`) ; `_tag` non plus : c'est le filtre d'étiquette (`tag`, voir
- * `lib/tags.TagFilter`). Un filtre que la barre ne sait pas montrer est écarté.
+ * `docstatus` et `workflow_state` ne sont pas des champs : ce sont le sélecteur d'état (`status`, un nombre pour l'un, le nom de l'état
+ * pour l'autre) ; `_tag` non plus : c'est le filtre d'étiquette (`tag`, voir `lib/tags.TagFilter`). Un filtre que la barre ne sait pas
+ * montrer est écarté.
  */
-export function rowsFromFilters(filters: Filters, fields: readonly FieldMeta[], nextId: () => number): { rows: FilterRow[]; status: number | null; tag: TagFilter | null } {
+export function rowsFromFilters(filters: Filters, fields: readonly FieldMeta[], nextId: () => number): { rows: FilterRow[]; status: number | string | null; tag: TagFilter | null } {
   const byName = new Map(fields.map((f) => [f.fieldname, f]))
   const rows: FilterRow[] = []
-  let status: number | null = null
+  let status: number | string | null = null
   let tag: TagFilter | null = null
   for (const [name, spec] of Object.entries(filters)) {
     if (name === 'docstatus') {
       if (typeof spec === 'number' && [0, 1, 2].includes(spec)) status = spec
+      continue
+    }
+    if (name === 'workflow_state') {
+      if (typeof spec === 'string') status = spec
       continue
     }
     if (name === TAG_FILTER) {

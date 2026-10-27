@@ -285,3 +285,43 @@ class TestWhatTheDeskNeeds:
         blind = make_ctx("acme", "carl", permissions=[])
         with pytest.raises((PermissionDenied, NotFound)):
             await svc.available_transitions(blind, "Leave Request", doc["name"])
+
+
+class TestListsSeeTheState:
+    """L'état est une colonne : on filtre et on trie dessus comme sur `docstatus`, dans le périmètre de lecture habituel."""
+
+    async def test_filter_a_list_by_state(self, svc):
+        a = await demande(svc)
+        b = await demande(svc)
+        await svc.workflow_transition(who(SOUMETTRE), "Leave Request", b["name"], "Soumettre", b["version"])
+
+        drafts = await svc.list(who(), "Leave Request", filters={"workflow_state": "Brouillon"})
+        assert [d["name"] for d in drafts["items"]] == [a["name"]]
+        waiting = await svc.list(who(), "Leave Request", filters={"workflow_state": "À approuver"})
+        assert [d["name"] for d in waiting["items"]] == [b["name"]]
+        assert (await svc.list(who(), "Leave Request", filters={"workflow_state": ["!=", "Brouillon"]}))["total"] == 1
+        assert (await svc.list(who(), "Leave Request", filters={"workflow_state": ["in", ["Brouillon", "À approuver"]]}))["total"] == 2
+
+    async def test_sort_a_list_by_state(self, svc):
+        a = await demande(svc)
+        b = await demande(svc)
+        await svc.workflow_transition(who(SOUMETTRE), "Leave Request", b["name"], "Soumettre", b["version"])
+        listed = await svc.list(who(), "Leave Request", order_by="workflow_state", descending=False)
+        assert [d["workflow_state"] for d in listed["items"]] == ["Brouillon", "À approuver"]
+
+    async def test_counting_by_state(self, svc):
+        """Un bloc d'espace (« À approuver : 3 ») compte comme n'importe quel agrégat."""
+        doc = await demande(svc)
+        await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        got = await svc.aggregate(who(), "Leave Request", filters={"workflow_state": "À approuver"})
+        assert got["rows"][0]["values"][0] == 1
+
+    async def test_a_type_without_workflow_says_so(self, db, tables):
+        reg = DocTypeRegistry()
+        reg.register(parse_definition({"schema_version": 1, "name": "Note", "module": "hr",
+                                       "fields": [{"fieldname": "texte", "fieldtype": "Text"}]}))
+        svc = DocumentService(reg, db, tables, Log())
+        with pytest.raises(ValidationFailed) as e:
+            await svc.list(make_ctx("acme", "alice", permissions=["hr:note:read"]), "Note", filters={"workflow_state": "x"})
+        assert e.value.code == "no_workflow"
+

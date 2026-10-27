@@ -85,7 +85,7 @@ const filterRows = ref<FilterRow[]>([])
 const showFilters = ref(false)
 const selection = ref<DocRecord[]>([])
 /** Documents soumettables : `null` tous, sinon 0 brouillons, 1 soumis, 2 annulés. */
-const status = ref<number | null>(null)
+const status = ref<number | string | null>(null)
 /** Les filtres EN VIGUEUR (ce que les vues demandent au serveur) : ce que l'utilisateur a validé, pas ce qu'il est en train de taper. */
 const applied = ref<Filters>({})
 /** L'étiquette filtrée (`_tag`), hors de la barre de filtres : une pastille dans la barre d'outils la montre et la retire. */
@@ -98,10 +98,20 @@ const hasTags = ref(false)
 const rowTags = ref<Record<string, string[]>>({})
 /** Change quand des étiquettes ont été posées depuis la liste : la barre latérale recompte. */
 const tagStamp = ref(0)
-const statusChoices = computed(() => [
-  { label: t.list.allStatuses, value: null },
-  ...[0, 1, 2].map((v) => ({ label: statusLabel(v), value: v })),
-])
+// Un type à WORKFLOW se filtre par son état métier : « Brouillon / Soumis / Annulé » n'en dit pas assez (plusieurs états
+// peuvent partager le même `docstatus`). Le filtre porte alors sur la colonne `workflow_state`.
+/** L'état de départ d'une vue ou d'une adresse : un nom d'état pour un type à workflow, un `docstatus` pour un type soumettable, sinon rien. */
+function startStatus(m: DocTypeMeta, value: number | string | null): number | string | null {
+  if (m.workflow) return typeof value === 'string' ? value : null
+  return m.submittable && typeof value === 'number' ? value : null
+}
+
+const flowStates = computed(() => meta.value?.workflow?.states.map((st) => st.name) ?? [])
+const statusChoices = computed(() =>
+  flowStates.value.length
+    ? [{ label: t.list.allStatuses, value: null }, ...flowStates.value.map((name) => ({ label: name, value: name }))]
+    : [{ label: t.list.allStatuses, value: null }, ...[0, 1, 2].map((v) => ({ label: statusLabel(v), value: v }))],
+)
 
 // ── Vues sauvegardées (phase C) : une configuration de liste, privée à l'utilisateur ─────────
 const savedViews = ref<SavedView[]>([])
@@ -181,7 +191,7 @@ function applyView(v: SavedView): void {
   if (!m) return
   const start = rowsFromFilters(v.config.filters ?? {}, m.fields, () => ++seq)
   filterRows.value = start.rows
-  status.value = m.submittable ? start.status : null
+  status.value = startStatus(m, start.status)
   tagFilter.value = supportsTags(m) ? start.tag : null
   quick.value = ''
   showFilters.value = start.rows.length > 0
@@ -292,7 +302,10 @@ function built(): Filters {
   const m = meta.value
   if (!m) return {}
   const filters = buildFilters(filterRows.value, m.fields, { field: quickField.value, text: quick.value })
-  if (m.submittable && status.value !== null) filters.docstatus = status.value
+  if (status.value !== null) {
+    if (flowStates.value.length) filters.workflow_state = status.value
+    else if (m.submittable) filters.docstatus = status.value
+  }
   if (tagFilter.value !== null) filters[TAG_FILTER] = tagFilter.value
   return filters
 }
@@ -432,7 +445,7 @@ async function open(): Promise<void> {
   // Les filtres de départ de l'adresse (une carte de chiffres) apparaissent dans la barre : on VOIT ce qui filtre, et on peut le retirer.
   const start = rowsFromFilters(parseFiltersParam(props.filters), meta.value.fields, () => ++seq)
   filterRows.value = start.rows
-  status.value = meta.value.submittable ? start.status : null
+  status.value = startStatus(meta.value, start.status)
   tagFilter.value = supportsTags(meta.value) ? start.tag : null
   showFilters.value = start.rows.length > 0
   applied.value = built()
@@ -491,7 +504,7 @@ function onSort(e: DataTableSortEvent): void {
   }
 }
 
-function pickStatus(value: number | null): void {
+function pickStatus(value: number | string | null): void {
   status.value = value
   commit()
 }
@@ -554,8 +567,8 @@ function pickValue(field: string, value: string | number | boolean): void {
 
 /** Un groupe du rapport a été cliqué : on filtre sur sa valeur (la barre de filtres la montre) et on revient à la liste des documents. */
 function drill(field: string, value: string | number | boolean): void {
-  if (field === 'docstatus') {
-    if (typeof value === 'number') status.value = value
+  if (field === 'docstatus' || field === 'workflow_state') {
+    if (meta.value) status.value = startStatus(meta.value, value as number | string)
   } else {
     filterRows.value = [...filterRows.value.filter((r) => r.field !== field), { id: ++seq, field, op: '=', value }]
     showFilters.value = true
@@ -617,7 +630,7 @@ function title(r: DocRecord): string {
             @click="showFilters = !showFilters"
           />
           <SelectButton
-            v-if="meta.submittable"
+            v-if="meta.submittable || flowStates.length"
             :model-value="status"
             :options="statusChoices"
             option-label="label"
@@ -736,9 +749,17 @@ function title(r: DocRecord): string {
               <CellValue v-else :field="f" :value="data.data[f.fieldname]" :text="cell(f, data)" />
             </template>
           </Column>
-          <Column v-if="meta.submittable" field="docstatus" sort-field="docstatus" :header="t.list.status" sortable>
+          <Column
+            v-if="meta.submittable || flowStates.length"
+            :field="flowStates.length ? 'workflow_state' : 'docstatus'"
+            :sort-field="flowStates.length ? 'workflow_state' : 'docstatus'"
+            :header="t.list.status"
+            sortable
+          >
             <template #body="{ data }">
-              <span :class="['status-pill', statusTone(data.docstatus)]" :data-testid="`status-${data.name}`">{{ statusLabel(data.docstatus) }}</span>
+              <span :class="['status-pill', statusTone(data.docstatus)]" :data-testid="`status-${data.name}`" :data-state="data.workflow_state">
+                {{ flowStates.length ? data.workflow_state : statusLabel(data.docstatus) }}
+              </span>
             </template>
           </Column>
           <Column v-if="!meta.virtual" field="modified" sort-field="modified" :header="t.list.modified" sortable>

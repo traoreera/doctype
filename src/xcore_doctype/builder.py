@@ -166,12 +166,15 @@ FILTER_OPS: dict[str, frozenset[str]] = {
     "Boolean": frozenset({"=", "!="}),
 }
 # Colonnes système filtrables, avec le type dont elles empruntent les opérateurs. `docstatus` : 0 brouillon, 1 soumis, 2 annulé.
-SYSTEM_FILTERS: dict[str, str] = {"name": "Text", "docstatus": "Number"}
+# `workflow_state` : une colonne, comme `docstatus`. Filtrable en Text (égal, différent, contient, parmi : jamais d'ordre,
+# un état n'en a pas), triable, et refusée sur un type qui n'a pas de workflow (voir `aggregation.validate_filters`).
+SYSTEM_FILTERS: dict[str, str] = {"name": "Text", "docstatus": "Number", "workflow_state": "Text"}
 MAX_IN = 100
 MAX_LIKE = 100
 _SYSTEM_ADAPTERS: dict[str, TypeAdapter] = {
     "name": TypeAdapter(str),
     "docstatus": TypeAdapter(Annotated[int, Field(ge=0, le=2, strict=True)]),
+    "workflow_state": TypeAdapter(str),
 }
 
 

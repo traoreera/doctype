@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
+import SelectButton from 'primevue/selectbutton'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -25,6 +26,21 @@ afterEach(() => {
 
 const PLAIN: DocTypeMeta = { ...CUSTOMER, name: 'Plain' }
 const ORDER: DocTypeMeta = { ...TASK, name: 'Order', submittable: true }
+
+// Un type à workflow : le sélecteur d'état doit offrir les ÉTATS MÉTIER, pas « Brouillon / Soumis / Annulé ».
+const LEAVE: DocTypeMeta = {
+  ...TASK,
+  name: 'Leave',
+  submittable: true,
+  workflow: {
+    states: [
+      { name: 'Brouillon', docstatus: 'draft' },
+      { name: 'À approuver', docstatus: 'draft' },
+      { name: 'Approuvé', docstatus: 'submitted' },
+    ],
+    transitions: [{ action: 'Soumettre', from: 'Brouillon', to: 'À approuver' }],
+  },
+}
 
 async function open(path: string, metas: Record<string, DocTypeMeta> = { Task: TASK }, api: Record<string, unknown> = {}) {
   // Les routes de l'application, avec la fonction qui transmet `?view=` et `?filters=` à la page : celle de `router.ts`, pas une copie.
@@ -269,5 +285,51 @@ describe('la page d’un type : importer un CSV', () => {
     await openMore(reader.w)
     expect(menuItem('import-csv')).toBeNull()
     expect(document.body.querySelector('[data-testid="import-dialog"]')).toBeNull()
+  })
+})
+
+/** Le sélecteur d'état, pris parmi les `SelectButton` de la page (celui des vues en est un aussi). */
+function statusFilter(w: ReturnType<typeof mount>) {
+  const found = w.findAllComponents(SelectButton).find((c) => c.attributes('data-testid') === 'status-filter')
+  if (!found) throw new Error('pas de sélecteur d’état')
+  return found
+}
+
+describe('la liste d’un type à workflow', () => {
+  it('propose les états du workflow et filtre sur `workflow_state`', async () => {
+    const { w, list } = await open('/app/Leave', { Leave: LEAVE })
+    const selector = statusFilter(w)
+    expect((selector.props('options') as { label: string }[]).map((o) => o.label)).toEqual([
+      'Tous', 'Brouillon', 'À approuver', 'Approuvé',
+    ])
+
+    list.mockClear()
+    selector.vm.$emit('update:model-value', 'Approuvé')
+    await flushPromises()
+    expect(list.mock.calls.at(-1)?.[1]).toMatchObject({ filters: { workflow_state: 'Approuvé' } })
+    // Jamais les deux : `docstatus` dirait « soumis » là où l'état métier est plus précis.
+    expect(list.mock.calls.at(-1)?.[1]).not.toHaveProperty('filters.docstatus')
+  })
+
+  it('montre l’état métier dans la colonne d’état', async () => {
+    const api = { list: vi.fn(async () => page([doc('l1', { title: 'Congé' }, { docstatus: 1, workflow_state: 'Approuvé' })], 1)) }
+    const { w } = await open('/app/Leave', { Leave: LEAVE }, api)
+    expect(w.find('[data-testid="status-l1"]').text()).toBe('Approuvé')
+    expect(w.find('[data-testid="status-l1"]').attributes('data-state')).toBe('Approuvé')
+  })
+
+  it('un état venu de l’adresse (une tuile, une vue) reste appliqué et se voit dans le sélecteur', async () => {
+    const filters = encodeURIComponent(JSON.stringify({ workflow_state: 'À approuver' }))
+    const { w, list } = await open(`/app/Leave?filters=${filters}`, { Leave: LEAVE })
+    expect(list.mock.calls.at(-1)?.[1]).toMatchObject({ filters: { workflow_state: 'À approuver' } })
+    expect(statusFilter(w).props('modelValue')).toBe('À approuver')
+  })
+
+  it('un type soumettable SANS workflow garde les états de document', async () => {
+    const { w } = await open('/app/Order', { Order: ORDER })
+    const selector = statusFilter(w)
+    expect((selector.props('options') as { label: string }[]).map((o) => o.label)).toEqual([
+      'Tous', 'Brouillon', 'Soumis', 'Annulé',
+    ])
   })
 })

@@ -259,6 +259,9 @@ def validate_filters(compiled: Any, filters: Mapping[str, Any] | None) -> dict[s
         raise ValidationFailed(f"filtre impossible sur un champ Table : {sorted(tables & set(filters))}")
     # `_tag` : les étiquettes du document (`tags.py`), là seulement où un document peut en porter.
     tagged = {TAG_FILTER} if supports_tags(defn) else set()
+    # Filtrer par état sur un type sans workflow ne rendrait jamais rien : mieux vaut le dire que de servir une liste vide.
+    if "workflow_state" in filters and defn.workflow is None:
+        raise ValidationFailed(f"{defn.name} n'a pas de workflow : filtrer par état n'a pas de sens", code="no_workflow")
     unknown = sorted(set(filters) - set(compiled.adapters) - set(SYSTEM_FILTERS) - tagged)
     if unknown:
         raise ValidationFailed(f"filtre sur des champs inconnus : {unknown}")

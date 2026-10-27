@@ -39,7 +39,7 @@ from .versions import KEPT_ACTIONS
 
 # Colonnes système triables. Les champs d'un DocType s'y ajoutent, jamais l'inverse
 # (leurs noms réservés interdisent toute collision, voir schema.RESERVED_FIELDNAMES).
-SYSTEM_SORTABLE = ("name", "creation", "modified", "owner", "docstatus")
+SYSTEM_SORTABLE = ("name", "creation", "modified", "owner", "docstatus", "workflow_state")
 
 # États d'un document soumettable (colonne `docstatus`).
 DRAFT, SUBMITTED, CANCELLED = 0, 1, 2

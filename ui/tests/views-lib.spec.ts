@@ -40,6 +40,12 @@ describe('les filtres portés par l’adresse', () => {
     expect(rows.map((r) => r.value)).toEqual(['Réception,Sortie', '1.000;2.500'])
   })
 
+  it('l’état d’un workflow est le sélecteur d’état, pas une ligne de filtre', () => {
+    const { rows, status } = rowsFromFilters({ workflow_state: 'Approuvé', purpose: 'Sortie' }, fields, id)
+    expect(status).toBe('Approuvé')
+    expect(rows.map((r) => r.field)).toEqual(['purpose'])
+  })
+
   it('un filtre que la barre ne sait pas montrer est écarté : champ inconnu, table, opérateur impossible, état hors 0-2', () => {
     const { rows, status } = rowsFromFilters({ ghost: 1, lines: 2, purpose: ['>', 'a'], docstatus: 7 }, fields, id)
     expect(rows).toEqual([])
