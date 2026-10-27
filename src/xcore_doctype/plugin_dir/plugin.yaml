@@ -58,5 +58,5 @@ doctype:
     login_url: auth # « auth » : xauth sur le MÊME préfixe que le plugin (`<préfixe>/auth/login`), quel qu'il soit. Un chemin ou une URL absolue force une autre adresse ; null : jeton collé.
     # Les plugins dont l'extension JavaScript du Desk est chargée (doc/extensions.md, D28) : du code de CONFIANCE dans la page de chaque
     # utilisateur. Des noms de plugins, ou ["*"] pour tous ; vide : aucune.
-    extensions: []
+    extensions: ["*"]
 

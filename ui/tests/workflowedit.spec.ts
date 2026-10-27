@@ -45,7 +45,7 @@ describe('poser et retirer une retouche', () => {
 
   it('une condition vide (ou blanche) retire la clé au lieu d’en poser une vide', () => {
     const withCond = withTweak({}, 'Soumettre', 'condition', '  objet == 1  ')
-    expect(withCond.transitions?.Soumettre.condition).toBe('objet == 1') // rognée
+    expect(withCond.transitions?.['Soumettre']?.condition).toBe('objet == 1') // rognée
     expect(withTweak(withCond, 'Soumettre', 'condition', '   ')).toEqual({})
   })
 

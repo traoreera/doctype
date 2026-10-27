@@ -30,7 +30,7 @@ import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchS
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
-import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
+import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection, type WorkflowDef, type WorkflowOverride } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -734,7 +734,7 @@ async function resetFlowOverride(): Promise<void> {
 async function afterFlowChange(): Promise<void> {
   editingFlow.value = false
   await reloadMeta()
-  await loadTransitions()
+  await loadFlow()
 }
 
 // ── Garde des modifications ────────────────────────────────
@@ -974,6 +974,8 @@ onBeforeUnmount(() => {
         :problem="layoutProblem"
         :doctype="doctype"
         :saving="savingLayout"
+        :workflow="!!meta?.workflow"
+        :can-edit-workflow="meta?.rights.write === 'all'"
         @save="saveLayout"
         @reset="resetLayout"
       />
