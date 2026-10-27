@@ -32,6 +32,7 @@ from .file_service import FileService
 from .files import BlobStore, LocalBlobStore, UrlSigner
 from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
 from .collaboration import CollaborationService
+from .csv_import import import_csv
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
@@ -750,6 +751,15 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return await self.documents.bulk(ctx, _need(payload, "doctype"), payload.get("action"), payload.get("names"), data=payload.get("data"))
 
         return await self._run("doc.bulk", op)
+
+    @action("doc.import")
+    async def doc_import(self, payload: dict) -> dict:
+        """Import CSV : `content` (le texte du fichier), `mode` (`insert` | `update`) ; un document par ligne, rapport ligne à ligne."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await import_csv(self.documents, ctx, _need(payload, "doctype"), payload.get("content"), payload.get("mode", "insert"))
+
+        return await self._run("doc.import", op)
 
     @action("doc.amend")
     async def doc_amend(self, payload: dict) -> dict:
