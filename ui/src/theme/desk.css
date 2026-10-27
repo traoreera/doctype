@@ -3688,3 +3688,37 @@ a.p-button:hover {
 .p-menu .danger-item span {
   color: var(--desk-danger);
 }
+
+/* « Personnaliser » > champs ajoutés par l'organisation (doc/programme.md §3.5). */
+.added-list {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.added-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid var(--desk-line);
+}
+
+.added-form {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.added-form > .added-flags,
+.added-form > p,
+.added-form > button {
+  grid-column: 1 / -1;
+}
+
+.added-flags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

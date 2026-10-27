@@ -137,3 +137,65 @@ export function withProp(config: FormOverride | null | undefined, fieldname: str
   else delete out.fields
   return out
 }
+
+
+// ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ────────────────────────────────────────────────
+
+/** Le préfixe réservé, imposé par le serveur : un champ d'organisation ne masque jamais un champ du type. */
+export const CUSTOM_PREFIX = 'custom_'
+
+/** Les types qu'une organisation peut ajouter (miroir de `overrides.ADDED_TYPES` ; le serveur refuse le reste). */
+export const ADDED_TYPES = [
+  'Text', 'LongText', 'Select', 'Number', 'Int', 'Percent', 'Decimal', 'Currency', 'Rating',
+  'Date', 'Datetime', 'Time', 'Duration', 'Boolean', 'Color', 'Code', 'JSON', 'TextEditor',
+] as const
+
+export interface AddedField {
+  fieldname: string
+  fieldtype: string
+  label?: string
+  description?: string
+  required?: boolean
+  options?: string[]
+  decimals?: number
+  in_list_view?: boolean
+}
+
+export const addedFields = (config: FormOverride | null | undefined): AddedField[] =>
+  Array.isArray((config as { added?: unknown } | null)?.added) ? ((config as { added: AddedField[] }).added) : []
+
+/** Le nom tel que le serveur l'exige : préfixé, en minuscules, sans rien d'autre que lettres, chiffres et soulignés. */
+export function customName(typed: string): string {
+  const body = typed
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/^custom_/, '')
+  return body ? `${CUSTOM_PREFIX}${body}` : ''
+}
+
+/** Ajoute un champ (ou remplace celui du même nom). Les clés vides ne sont pas écrites : un habillage reste lisible. */
+export function withAddedField(config: FormOverride | null | undefined, field: AddedField): FormOverride {
+  const out: FormOverride = { ...(config ?? {}) }
+  const clean: AddedField = { fieldname: field.fieldname, fieldtype: field.fieldtype }
+  if (field.label?.trim()) clean.label = field.label.trim()
+  if (field.description?.trim()) clean.description = field.description.trim()
+  if (field.required) clean.required = true
+  if (field.in_list_view) clean.in_list_view = true
+  if (field.options?.length) clean.options = field.options
+  if (typeof field.decimals === 'number') clean.decimals = field.decimals
+  const list = addedFields(out).filter((f) => f.fieldname !== field.fieldname)
+  ;(out as { added?: AddedField[] }).added = [...list, clean]
+  return out
+}
+
+/** Retire un champ ajouté. Les valeurs déjà saisies restent dans les documents : le serveur ne les efface pas. */
+export function withoutAddedField(config: FormOverride | null | undefined, fieldname: string): FormOverride {
+  const out: FormOverride = { ...(config ?? {}) }
+  const list = addedFields(out).filter((f) => f.fieldname !== fieldname)
+  if (list.length) (out as { added?: AddedField[] }).added = list
+  else delete (out as { added?: AddedField[] }).added
+  return out
+}

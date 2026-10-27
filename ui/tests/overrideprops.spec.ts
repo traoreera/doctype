@@ -10,6 +10,7 @@ import { defineComponent, h } from 'vue'
 import { createMemoryHistory, createRouter, RouterView } from 'vue-router'
 import FieldInput from '@/components/FieldInput.vue'
 import OverrideEditor from '@/components/OverrideEditor.vue'
+import { addedFields, customName, withAddedField, withoutAddedField } from '@/lib/overrideprops'
 import { ApiError } from '@/lib/api'
 import type { ExprNode } from '@/lib/expr'
 import { fieldStates, validate } from '@/lib/form'
@@ -401,5 +402,65 @@ describe('la fiche ouvre l’éditeur avec ce que le serveur dit de la définiti
     // `label` : obligatoire par le YAML ET par l'habillage. La définition du serveur garde sa case grisée (la déduction la croirait retirable).
     expect(box(w, 'prop-mandatory-label').props('disabled')).toBe(true)
     expect(document.body.querySelector('[data-testid="prop-default-code"] input')).toBeNull() // le champ qui nomme : pas de défaut
+  })
+})
+
+// ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ────────────────────────────────────────────────
+
+describe('customName : le nom qu’exige le serveur', () => {
+  it('préfixe, met en minuscules et remplace ce qui n’est pas permis', () => {
+    expect(customName('Segment client')).toBe('custom_segment_client')
+    expect(customName('Référence N°2')).toBe('custom_reference_n_2')
+    expect(customName('custom_deja')).toBe('custom_deja') // on ne préfixe pas deux fois
+    expect(customName('   ')).toBe('')
+  })
+})
+
+describe('withAddedField / withoutAddedField', () => {
+  it('écrit un champ propre, sans les clés vides', () => {
+    const out = withAddedField({}, { fieldname: 'custom_a', fieldtype: 'Text', label: '  ', required: false })
+    expect(addedFields(out)).toEqual([{ fieldname: 'custom_a', fieldtype: 'Text' }])
+  })
+
+  it('remplace un champ du même nom au lieu de le dupliquer, et sait le retirer', () => {
+    let cfg = withAddedField({}, { fieldname: 'custom_a', fieldtype: 'Text', label: 'A' })
+    cfg = withAddedField(cfg, { fieldname: 'custom_a', fieldtype: 'Int', label: 'A' })
+    expect(addedFields(cfg)).toHaveLength(1)
+    expect(addedFields(cfg)[0]!.fieldtype).toBe('Int')
+    expect('added' in withoutAddedField(cfg, 'custom_a')).toBe(false)
+  })
+})
+
+describe('l’onglet « Champs ajoutés »', () => {
+  // La fenêtre est téléportée dans `body` : on passe par les composants (comme `box`) et par `cell` pour le DOM.
+  const field = (w: VueWrapper, testid: string) =>
+    w.findAllComponents({ name: 'InputText' }).find((c) => c.attributes('data-testid') === testid)!
+  const select = (w: VueWrapper, testid: string) =>
+    w.findAllComponents({ name: 'Select' }).find((c) => c.attributes('data-testid') === testid)!
+
+  it('ajouter un champ l’écrit dans le MÊME JSON, qui part tel quel à l’enregistrement', async () => {
+    const w = await open({})
+    field(w, 'added-name').vm.$emit('update:modelValue', 'Segment client')
+    field(w, 'added-label').vm.$emit('update:modelValue', 'Segment')
+    await flushPromises()
+    expect(cell('added-name-hint')!.textContent).toContain('custom_segment_client')
+    ;(cell('added-add') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(addedFields(json(w))).toEqual([{ fieldname: 'custom_segment_client', fieldtype: 'Text', label: 'Segment' }])
+    expect(cell('added-custom_segment_client')).not.toBeNull()
+  })
+
+  it('un Select sans valeurs ne s’ajoute pas : le serveur le refuserait', async () => {
+    const w = await open({})
+    field(w, 'added-name').vm.$emit('update:modelValue', 'Segment')
+    select(w, 'added-type').vm.$emit('update:modelValue', 'Select')
+    await flushPromises()
+    expect((cell('added-add') as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('sans le droit d’écrire tous les documents, l’onglet est grisé et le dit', async () => {
+    await open({}, DEFINITION, { rules: false })
+    expect(cell('added-reserved')).not.toBeNull()
+    expect((cell('added-name') as HTMLInputElement).disabled).toBe(true)
   })
 })

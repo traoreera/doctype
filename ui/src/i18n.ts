@@ -1018,6 +1018,23 @@ export const t = {
     readOnlyBadge: 'Lecture seule',
   },
   // C4.3 : les propriétés d'écriture d'un champ, réglées par l'habillage de l'organisation et appliquées par le serveur.
+  // « Personnaliser » > champs ajoutés par l'organisation (doc/programme.md §3.5).
+  addedFields: {
+    title: 'Champs ajoutés par votre organisation',
+    hint: 'Ils s’ajoutent à ce type pour votre organisation seulement. Leur nom commence par « custom_ » pour ne jamais entrer en collision avec un champ du logiciel.',
+    name: 'Nom technique',
+    label: 'Libellé',
+    type: 'Type',
+    options: 'Valeurs (une par ligne)',
+    required: 'Obligatoire',
+    inList: 'Dans la liste',
+    add: 'Ajouter le champ',
+    remove: (label: string) => `Retirer ${label}`,
+    removed: 'Les valeurs déjà saisies restent dans les documents : elles cessent simplement d’être affichées.',
+    none: 'Aucun champ ajouté.',
+    nameHint: (name: string) => `Sera enregistré sous « ${name} »`,
+    reserved: 'Ajouter un champ exige de pouvoir écrire tous les documents de ce type.',
+  },
   overrideProps: {
     title: 'Propriétés des champs',
     hint: 'Pour votre organisation. Obligatoire, lecture seule et valeur par défaut (à la création) : le serveur les applique à chaque enregistrement ; Masqué ne change que l’affichage. Une case grisée et cochée vient de la définition : un habillage ne peut que resserrer.',
