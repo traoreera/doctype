@@ -834,3 +834,26 @@ views:
     end: to_date
     title: supplier
     color: status
+created_from:
+- source: Purchase Order
+  label: Facture d'achat
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: po_detail
+      document: purchase_order
+      quantity:
+        source: qty
+        target: qty
+- source: Purchase Receipt
+  label: Facture d'achat
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: pr_detail
+      document: purchase_receipt
+      quantity:
+        source: qty
+        target: qty

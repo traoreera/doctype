@@ -1098,6 +1098,9 @@ export const t = {
     dynamicFirst: 'Choisissez d’abord le type de document',
     nameHint: 'Le nom du document, tel qu’il apparaîtra dans les liens',
     duplicate: 'Dupliquer',
+    // « Créer depuis » (doc/mapper.md) : le bouton n'apparaît que si le serveur offre au moins une cible.
+    createFrom: 'Créer',
+    mappedFrom: (doctype: string, name: string) => `Prérempli depuis ${doctype} ${name} : vérifiez les quantités puis enregistrez`,
     duplicatedFrom: (name: string) => `Copie de ${name} : vérifiez-la puis enregistrez`,
     rename: 'Renommer',
     renameTitle: 'Renommer ce document',

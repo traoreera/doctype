@@ -92,6 +92,24 @@ export interface AvailableTransitions {
   transitions: AvailableTransition[]
 }
 
+/** Un type que l'on peut créer DEPUIS le document ouvert (doc/mapper.md). Le Desk ne juge rien : une source
+ *  entièrement servie n'est simplement pas dans la réponse du serveur, donc le bouton n'existe pas. */
+export interface AvailableMapping {
+  doctype: string
+  label: string
+}
+
+export interface AvailableMappings {
+  mappings: AvailableMapping[]
+}
+
+/** Les valeurs d'un brouillon prérempli depuis un autre document. Rien n'est écrit : le client enregistre ensuite. */
+export interface MappedDraft {
+  doctype: string
+  from: { doctype: string; name: string }
+  values: Record<string, unknown>
+}
+
 /** Les préférences d'affichage de l'organisation (nom, logo, couleur, format de date), servies à tout utilisateur identifié. */
 export interface OrgPreferences {
   organization_name?: string

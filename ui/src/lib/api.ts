@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, AvailableTransitions, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, AvailableMappings, AvailableTransitions, MappedDraft, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 import type { DevDefinition } from './doctypebuilder'
 
@@ -320,6 +320,17 @@ export class ApiClient {
    *  grants, et `not_owner` dépend du document. */
   transitions(doctype: string, name: string): Promise<AvailableTransitions> {
     return this.call('GET', `/transitions/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
+  }
+
+  /** Ce que l'utilisateur peut CRÉER depuis ce document (le menu « Créer > »). Le Desk ne juge rien : une source
+   *  entièrement servie, ou une cible qu'il ne peut pas créer, n'est pas dans la réponse. */
+  mappings(doctype: string, name: string): Promise<AvailableMappings> {
+    return this.call('GET', `/mappings/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
+  }
+
+  /** Les valeurs d'un brouillon de `doctype` prérempli depuis `source`/`name`. N'écrit RIEN : la fiche s'ouvre non enregistrée. */
+  mapped(doctype: string, source: string, name: string): Promise<MappedDraft> {
+    return this.call('GET', `/map/${encodeURIComponent(doctype)}/${encodeURIComponent(source)}/${encodeURIComponent(name)}`)
   }
 
   /** Joue une transition du workflow. Remplace `submit`/`cancel` sur un type qui en a un (le serveur les y refuse). */

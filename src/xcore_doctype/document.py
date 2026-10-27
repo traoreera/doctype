@@ -37,6 +37,7 @@ import re
 import secrets
 from collections import Counter
 from contextlib import asynccontextmanager
+from decimal import Decimal
 from dataclasses import replace
 from datetime import UTC, date, datetime, tzinfo
 from types import MappingProxyType
@@ -67,7 +68,8 @@ from .files import ATTACHMENT_FIELD
 from .permissions import ACTIONS, Action, Facts, Scope, require, scope_for, stored_kind, within_restrictions
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
-from .schema import FILE_TYPES, LINK_FILTER_REF, TODAY, DocTypeDef, FieldDef, NamingField
+from .mapping import already_done, map_document, nothing_left
+from .schema import FILE_TYPES, LINK_FILTER_REF, MAX_MAPPING_SOURCES, TODAY, DocTypeDef, FieldDef, NamingField
 from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer, kept
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
@@ -1087,6 +1089,7 @@ class DocumentService:
                 raise PermissionDenied()
             clean = self._seal(compiled, clean, None)
             await self._check_links(ctx, q, compiled, clean, None, copied=copied)
+            await self._check_mapping_rows(ctx, q, compiled, clean, None)
             # D29 : à la création comme à la modification ; un amendement recopie ses liens, qui ne se rejugent pas (comme leur état).
             await self._check_link_filters(ctx, q, compiled, clean, copied)
             await self._check_files(q, compiled, clean, None)
@@ -1158,6 +1161,7 @@ class DocumentService:
                 clean = await self._fetched(ctx, q, compiled, clean, current.data, finalize)
             clean = self._seal(compiled, clean, current.data)
             await self._check_links(ctx, q, compiled, clean, current.data)
+            await self._check_mapping_rows(ctx, q, compiled, clean, current.data)
             await self._check_link_filters(ctx, q, compiled, clean, current.data)
             await self._check_files(q, compiled, clean, current.data)
             # Le périmètre et la version sont dans le WHERE : une modification concurrente échoue en 409.
@@ -1367,6 +1371,116 @@ class DocumentService:
             return NO_WORKFLOW_RULES
         found = await q.get_override(KIND_WORKFLOW, doctype)
         return workflow_rules(compiled, (found or {}).get("config"))
+
+    def _mappings_from(self, source: str) -> list[tuple[Any, Any]]:
+        """`(type cible compilé, déclaration)` pour tout type qui dit se créer depuis `source`.
+
+        La déclaration vit sur la CIBLE (doc/mapper.md §1) : on parcourt donc le registre. Il n'y a pas d'index, mais
+        l'appel est rare (ouverture d'une fiche) et le registre tient en mémoire.
+        """
+        out = []
+        for name in self._registry.names():
+            compiled = self._registry.get(name)
+            for m in compiled.definition.created_from or []:
+                if m.source == source:
+                    out.append((compiled, m))
+        return out
+
+    @staticmethod
+    def _status_allows(m: Any, docstatus: int) -> bool:
+        return m.source_status == "any" or docstatus == (SUBMITTED if m.source_status == "submitted" else DRAFT)
+
+    async def _mapping_done(self, q: Any, target: Any, m: Any, source_name: str) -> dict[str, dict[int, Decimal]]:
+        """Ce qui a déjà été fait pour chaque ligne de la source, par table de la cible.
+
+        La lecture ignore DÉLIBÉRÉMENT le périmètre de l'appelant (`Query.cited_rows`) : un document cible qu'il ne peut
+        pas voir a tout de même consommé la quantité, et l'ignorer ferait préremplir — donc livrer — deux fois. Rien de ce
+        qui est lu ne ressort : il n'obtient qu'une quantité.
+        """
+        done: dict[str, dict[int, Decimal]] = {}
+        for table, lines in m.lines.items():
+            if lines.quantity is None or lines.document is None:
+                continue
+            rows = await q.cited_rows(target.definition.name, table, lines.document, source_name, limit=MAX_MAPPING_SOURCES)
+            if len(rows) > MAX_MAPPING_SOURCES:
+                raise ValidationFailed(
+                    f"plus de {MAX_MAPPING_SOURCES} {target.definition.name} citent déjà {source_name!r} : le reste à faire n'est plus calculable",
+                    code="mapping_too_many_sources",
+                )
+            done[table] = already_done(rows, lines, source_name)
+        return done
+
+    def _mapping_children(self, target: Any, source: Any, m: Any) -> dict[str, tuple[Any, Any]]:
+        """Par champ Table de la cible : (DocType de ses lignes, DocType des lignes de la source). Validé au chargement."""
+        out = {}
+        for table, lines in m.lines.items():
+            tf, sf = target.definition.field_map.get(table), source.definition.field_map.get(lines.from_)
+            if tf is None or sf is None:
+                continue
+            out[table] = (self._registry.get(str(tf.options)).definition, self._registry.get(str(sf.options)).definition)
+        return out
+
+    async def available_mappings(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
+        """Ce que CET appelant peut créer depuis CE document, maintenant (le menu « Créer > » de la fiche).
+
+        Comme `/transitions`, le Desk ne peut pas en juger seul : le jeton ne porte pas les grants, l'état de la source
+        compte, et une source entièrement servie n'offre plus rien. Une cible soldée est donc ABSENTE de la réponse —
+        c'est ce qui évite le double transfert, que la seule recopie ne peut pas empêcher.
+        """
+        self._enter(ctx, "doc.mappings", doctype, name)
+        source = self._doctype(doctype)
+        candidates = self._mappings_from(doctype)
+        if not candidates:
+            return {"mappings": []}
+        async with self._query(ctx) as q:
+            doc = await q.get(doctype, name, scope=self._scope(ctx, source, "read", single=True))
+            if doc is None:
+                raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+            out = []
+            for target, m in candidates:
+                # `scope_for` et non `self._scope` : ici un droit absent ÉCARTE l'entrée, il ne refuse pas la requête.
+                if not self._status_allows(m, doc.docstatus) or not scope_for(target.definition, ctx, "create").granted:
+                    continue
+                entry = {"doctype": target.definition.name, "label": m.label or target.definition.label or target.definition.name}
+                if any(lines.quantity is not None for lines in m.lines.values()):
+                    values = map_document(
+                        target.definition, source.definition, m, doc.data, source_name=name,
+                        children=self._mapping_children(target, source, m),
+                        done=await self._mapping_done(q, target, m, name),
+                    )
+                    if nothing_left(values, m):
+                        continue  # tout est servi : le bouton n'a plus lieu d'être
+                out.append(entry)
+        return {"mappings": out}
+
+    async def mapped_values(self, ctx: RequestContext, target_doctype: str, source_doctype: str, name: str) -> dict[str, Any]:
+        """Les valeurs d'un brouillon prérempli depuis `source_doctype`/`name`. N'ÉCRIT RIEN.
+
+        L'utilisateur doit pouvoir ajuster les quantités avant d'enregistrer, et la validation ordinaire s'applique
+        ensuite : pas de chemin d'écriture parallèle (la leçon de `csv_import.py`). Il faut lire la source avec son
+        propre périmètre et pouvoir créer la cible.
+        """
+        self._enter(ctx, "doc.map", target_doctype, name)
+        target, source = self._doctype(target_doctype), self._doctype(source_doctype)
+        m = next((d for d in target.definition.created_from or [] if d.source == source_doctype), None)
+        if m is None:
+            raise NotFound("mapping_not_found", f"{target_doctype} ne se crée pas depuis {source_doctype!r}")
+        self._scope(ctx, target, "create")  # lève 403 si l'appelant ne peut pas créer la cible
+        async with self._query(ctx) as q:
+            doc = await q.get(source_doctype, name, scope=self._scope(ctx, source, "read", single=True))
+            if doc is None:
+                raise NotFound("document_not_found", f"{source_doctype} {name!r} introuvable")
+            if not self._status_allows(m, doc.docstatus):
+                raise InvalidDocStatus(
+                    f"{source_doctype} {name!r} est {STATUS_WORDS[doc.docstatus]} : il faut qu'il soit "
+                    f"{'soumis' if m.source_status == 'submitted' else 'brouillon'} pour en créer un {target_doctype}"
+                )
+            values = map_document(
+                target.definition, source.definition, m, doc.data, source_name=name,
+                children=self._mapping_children(target, source, m),
+                done=await self._mapping_done(q, target, m, name),
+            )
+        return {"doctype": target_doctype, "from": {"doctype": source_doctype, "name": name}, "values": values}
 
     async def available_transitions(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
         """Les transitions que CET appelant peut faire sur CE document, maintenant (pour les boutons de la fiche).
@@ -1975,6 +2089,80 @@ class DocumentService:
                 await check(row, previous[i] if i < len(previous) else None, child.fields, f"{fieldname}.{i}.")
         if errors:
             raise ValidationFailed("un lien ne satisfait pas les filtres de son champ", details=errors)
+
+    async def _check_mapping_rows(
+        self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None
+    ) -> None:
+        """La provenance qu'une ligne revendique (`reference`, `document`) doit être VRAIE (doc/mapper.md §4).
+
+        C'est ce qui rend le reste à faire digne de confiance. Sans ce contrôle, n'importe quel client pourrait inventer
+        une référence et faire baisser la quantité restante d'une source — `read_only` ne protège rien dans une table
+        (il n'est appliqué qu'aux champs de haut niveau, et seulement contre la valeur stockée).
+
+        Jugé comme un Link : seules les provenances CHANGÉES sont contrôlées, une source devenue illisible n'empêche donc
+        pas de corriger autre chose dans le document. « Introuvable » couvre « illisible » : on ne révèle pas l'existence
+        d'un document hors périmètre.
+
+        Ce qui N'EST PAS vérifié, volontairement : que la somme servie ne dépasse pas la quantité commandée. Sur-livrer
+        est une décision métier (ERPNext en fait un réglage de tolérance), pas une faute d'intégrité ; un hook la refusera
+        si l'entreprise le veut.
+        """
+        for m in compiled.definition.created_from or []:
+            source = self._registry.get(m.source) if self._registry.has(m.source) else None
+            if source is None:
+                continue
+            seen: dict[str, Any] = {}
+            for table, lines in m.lines.items():
+                if lines.reference is None and lines.document is None:
+                    continue
+                rows = clean.get(table)
+                if not isinstance(rows, list):
+                    continue
+                before = {self._provenance(r, lines) for r in ((old or {}).get(table) or []) if isinstance(r, Mapping)}
+                for index, row in enumerate(rows):
+                    if not isinstance(row, Mapping):
+                        continue
+                    claim = self._provenance(row, lines)
+                    if claim == (None, None) or claim in before:
+                        continue  # aucune provenance revendiquée, ou déjà là : rien à juger
+                    await self._check_one_provenance(ctx, q, m, lines, source, table, index, claim, seen)
+
+    @staticmethod
+    def _provenance(row: Mapping[str, Any], lines: Any) -> tuple[Any, Any]:
+        ref = row.get(lines.reference) if lines.reference else None
+        doc = row.get(lines.document) if lines.document else None
+        return (ref or None, doc or None)
+
+    async def _check_one_provenance(
+        self, ctx: RequestContext, q: Query, m: Any, lines: Any, source: CompiledDocType,
+        table: str, index: int, claim: tuple[Any, Any], seen: dict[str, Any],
+    ) -> None:
+        ref, doc_name = claim
+        at = f"{table}.{index}.{lines.reference or lines.document}"
+
+        def refuse(msg: str) -> None:
+            raise ValidationFailed(details=[{"field": at, "msg": msg, "type": "mapping_reference"}])
+
+        # Une provenance est un COUPLE : une moitié seule ne désigne rien.
+        if lines.reference and lines.document and (ref is None or doc_name is None):
+            refuse(f"provenance incomplète : {lines.reference!r} et {lines.document!r} vont ensemble")
+        if doc_name is not None:
+            if doc_name not in seen:
+                seen[doc_name] = await q.get(source.definition.name, str(doc_name), scope=self._scope(ctx, source, "read", single=True))
+            stored = seen[doc_name]
+            if stored is None:
+                refuse(f"{source.definition.name} {doc_name!r} introuvable")
+            if not self._status_allows(m, stored.docstatus):
+                refuse(f"{source.definition.name} {doc_name!r} est {STATUS_WORDS[stored.docstatus]} : la provenance exige un document "
+                       f"{'soumis' if m.source_status == 'submitted' else 'brouillon'}")
+        if ref is None:
+            return
+        if not isinstance(ref, str) or not ref.isdigit():
+            refuse(f"{ref!r} n'est pas un indice de ligne")
+        if doc_name is not None:
+            rows = (seen[doc_name].data or {}).get(lines.from_)
+            if not isinstance(rows, list) or int(ref) >= len(rows):
+                refuse(f"la ligne {ref} n'existe pas dans {source.definition.name} {doc_name!r}")
 
     async def _check_links(
         self, ctx: RequestContext, q: Query, compiled: CompiledDocType, clean: Mapping[str, Any], old: Mapping[str, Any] | None,

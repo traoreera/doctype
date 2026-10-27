@@ -464,6 +464,30 @@ class Query:
                 used.append(ref)
         return used
 
+    async def cited_rows(self, doctype: str, table: str, field: str, name: str, *, limit: int) -> list[list[Any]]:
+        """Les LIGNES de `table` des documents de `doctype` dont au moins une ligne a `field == name`, les annulées exclues.
+
+        C'est la matière du « reste à faire » du mapper (doc/mapper.md §5) : ce qui a déjà été émis pour une source. La somme
+        se fait en Python, avec `Decimal`, parce qu'elle doit rester EXACTE : PostgreSQL ne sait tester la contenance d'un
+        tableau JSONB que par `@>` (une existence, pas une somme), et côté SQLite une somme de `Decimal` passerait par des
+        doubles. Les documents qui citent UNE source étant peu nombreux, on les lit et on somme soi-même.
+
+        VOLONTAIREMENT sans périmètre de permission, comme `references_to` : un document cible que l'appelant ne peut pas
+        lire a tout de même consommé la quantité, et l'ignorer ferait préremplir — donc livrer — deux fois. Rien de ce qui
+        est lu ici ne ressort : l'appelant n'obtient qu'une quantité, jamais la liste des documents. Le tenant, lui, reste
+        imposé par `_scope`.
+
+        `limit` borne la lecture : au-delà, l'appelant doit refuser de prétendre connaître le reste plutôt que d'en annoncer
+        un faux (voir `MAX_MAPPING_SOURCES`). On en lit un de plus pour que le dépassement soit détectable.
+        """
+        stmt = (
+            select(self._t.c.data[table].as_json())
+            .where(self._scope(self._t.c.doctype == doctype, self._points_to(field, name, table), self._t.c.docstatus != CANCELLED))
+            .order_by(self._t.c.name)  # déterministe : le plafond doit couper toujours au même endroit
+            .limit(limit + 1)
+        )
+        return [rows if isinstance(rows, list) else [] for (rows,) in (await self._session.execute(stmt)).all()]
+
     async def connections(
         self, target: str, name: str, referrers: Sequence[tuple[Any, ...]], scopes: Mapping[str, Scope]
     ) -> list[tuple[Any, ...]]:

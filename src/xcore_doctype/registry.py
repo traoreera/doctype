@@ -17,6 +17,7 @@ from .desk_extensions import DeskExtensions
 from .errors import InvalidDefinition, NotFound, ValidationFailed
 from .expr import ExprError
 from .extensions import Extension, merge, parse_extension, target_problem
+from .mapping import mappable_types, same_number_kind
 from .schema import LINK_FILTER_REF, DocTypeDef, parse_definition
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
 
@@ -427,6 +428,7 @@ class DocTypeRegistry:
             self._check_fetch(name, problems)
             self._check_link_filters(name, problems)
             self._check_dynamic(name, problems)
+            self._check_mappings(name, problems)
             for f in self._items[name].definition.fields:
                 if f.fieldtype != "Link":
                     continue
@@ -441,6 +443,89 @@ class DocTypeRegistry:
                     )
         if problems:
             raise InvalidDefinition("champs Link invalides :\n" + "\n".join(f"  - {p}" for p in problems))
+
+    # Les deux prédicats de type vivent dans `mapping.py`, avec la logique qu'ils gouvernent (import local : `mapping`
+    # importe `schema`, et le registre n'a besoin d'eux qu'ici).
+    def _check_mappings(self, name: str, problems: list[str]) -> None:
+        """`created_from` (doc/mapper.md §6) : tout ce qui rendrait un préremplissage impossible échoue ICI, au chargement.
+
+        Rien n'est vérifié à la première saisie : une source inconnue, un champ absent d'un côté, deux quantités de genres
+        différents sont des fautes de DÉFINITION, et le moteur refuse de charger plutôt que de servir un brouillon faux.
+        """
+        d = self._items[name].definition
+        for m in d.created_from or []:
+            where = f"{name}.created_from[{m.source}]"
+            src = self._items.get(m.source)
+            if src is None:
+                problems.append(f"{where}: source inconnue {m.source!r} (chargez-la avant, ou nommez-la dans `requires`)")
+                continue
+            s = src.definition
+            if s.istable:
+                problems.append(f"{where}: {m.source!r} est un DocType enfant, il n'a pas de documents à copier")
+                continue
+            if s.single or s.source is not None:
+                problems.append(f"{where}: {m.source!r} est {'un document unique' if s.single else 'un DocType virtuel'}, il ne peut pas être une source")
+                continue
+            if m.source_status == "submitted" and not s.submittable:
+                problems.append(
+                    f"{where}: `source_status: submitted` mais {m.source!r} n'est jamais soumettable : aucun document ne serait jamais mappable"
+                )
+            self._check_mapped_fields(where, d, s, m.fields, m.exclude, problems)
+            for target_table, lines in m.lines.items():
+                self._check_mapped_lines(where, d, s, target_table, lines, problems)
+
+    def _check_mapped_fields(self, where: str, d: Any, s: Any, mapped: Mapping[str, str], exclude: Sequence[str], problems: list[str]) -> None:
+        """Les exceptions de recopie : les deux champs existent, et la valeur de l'un sera acceptée par l'autre."""
+        for target_field, source_field in mapped.items():
+            tf, sf = d.field_map.get(target_field), s.field_map.get(source_field)
+            if tf is None:
+                problems.append(f"{where}: fields: {target_field!r} n'est pas un champ de {d.name}")
+            if sf is None:
+                problems.append(f"{where}: fields: {source_field!r} n'est pas un champ de {s.name}")
+            if tf is not None and sf is not None and not mappable_types(sf, tf):
+                problems.append(
+                    f"{where}: fields: {source_field!r} ({sf.fieldtype}) ne peut pas remplir {target_field!r} ({tf.fieldtype})"
+                )
+        for field in exclude:
+            if field not in d.field_map:
+                problems.append(f"{where}: exclude: {field!r} n'est pas un champ de {d.name}")
+
+    def _check_mapped_lines(self, where: str, d: Any, s: Any, target_table: str, lines: Any, problems: list[str]) -> None:
+        """Une table se remplit depuis une table, et les champs de trace sont du bon genre sur la LIGNE cible."""
+        at = f"{where}.lines.{target_table}"
+        tfield, sfield = d.field_map.get(target_table), s.field_map.get(lines.from_)
+        if tfield is None or tfield.fieldtype != "Table":
+            problems.append(f"{at}: {target_table!r} n'est pas un champ Table de {d.name}")
+            return
+        if sfield is None or sfield.fieldtype != "Table":
+            problems.append(f"{at}: from: {lines.from_!r} n'est pas un champ Table de {s.name}")
+            return
+        target_child, source_child = self._items.get(str(tfield.options)), self._items.get(str(sfield.options))
+        if target_child is None or source_child is None:
+            return  # le DocType de lignes manquant est déjà signalé par la compilation
+        tc, sc = target_child.definition, source_child.definition
+        self._check_mapped_fields(at, tc, sc, lines.fields, lines.exclude, problems)
+        if lines.reference is not None:
+            ref = tc.field_map.get(lines.reference)
+            if ref is None or ref.fieldtype != "Text":
+                problems.append(f"{at}: reference: {lines.reference!r} doit être un champ Text de {tc.name} (il porte l'indice de la ligne source)")
+        if lines.document is not None:
+            doc = tc.field_map.get(lines.document)
+            if doc is None or doc.fieldtype != "Link":
+                problems.append(f"{at}: document: {lines.document!r} doit être un champ Link de {tc.name}")
+            elif str(doc.options) != s.name:
+                problems.append(f"{at}: document: {lines.document!r} vise {doc.options!r}, pas la source {s.name!r}")
+        if lines.quantity is not None:
+            sq, tq = sc.field_map.get(lines.quantity.source), tc.field_map.get(lines.quantity.target)
+            if sq is None:
+                problems.append(f"{at}: quantity.source: {lines.quantity.source!r} n'est pas un champ de {sc.name}")
+            if tq is None:
+                problems.append(f"{at}: quantity.target: {lines.quantity.target!r} n'est pas un champ de {tc.name}")
+            if sq is not None and tq is not None and not same_number_kind(sq, tq):
+                problems.append(
+                    f"{at}: quantity: {lines.quantity.source!r} ({sq.fieldtype}) et {lines.quantity.target!r} ({tq.fieldtype}) ne sont pas "
+                    "des nombres du même genre : la soustraction du reste à faire doit rester exacte"
+                )
 
     def _check_fetch(self, name: str, problems: list[str]) -> None:
         """`fetch_from: lien.champ` : le Link vise un DocType chargé qui a ce champ, et la valeur copiée sera acceptée par le champ qui la reçoit."""

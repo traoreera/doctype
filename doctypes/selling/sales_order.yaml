@@ -740,3 +740,15 @@ views:
     start: from_date
     end: to_date
     title: title
+created_from:
+- source: Quotation
+  label: Commande client
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: quotation_item
+      document: prevdoc_docname
+      quantity:
+        source: qty
+        target: qty

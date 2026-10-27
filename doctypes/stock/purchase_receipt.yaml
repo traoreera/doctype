@@ -602,3 +602,15 @@ views:
   calendar:
     start: posting_date
     title: supplier_name
+created_from:
+- source: Purchase Order
+  label: Réception d'achat
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: purchase_order_item
+      document: purchase_order
+      quantity:
+        source: qty
+        target: qty

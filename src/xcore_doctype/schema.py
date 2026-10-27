@@ -71,6 +71,12 @@ MAX_WORKFLOW_STATES = 20
 MAX_WORKFLOW_TRANSITIONS = 50
 # Onglets d'une fiche : un `tab` par section (le même pour les sections qui se suivent). Au-delà, une fiche n'est plus lisible.
 MAX_TABS = 12
+# « Créer depuis » (doc/mapper.md) : le nombre de sources depuis lesquelles un type se préremplit. Au-delà, le menu « Créer > »
+# de la source n'est plus un geste mais un annuaire.
+MAX_MAPPINGS = 10
+# Combien de documents déjà émis pour UNE source le moteur accepte de lire pour calculer le reste à faire. Au-delà, il refuse
+# de prétendre le connaître plutôt que d'annoncer un reste faux (doc/mapper.md §5).
+MAX_MAPPING_SOURCES = 200
 LINK_FILTER_REF = "$"
 # Même forme que les grants d'auth (`plugin:ressource:action`, voir xauth `_GRANT_NAME_RE`). Les NOMS DE RÔLE sont des
 # données d'auth, libres et propres à chaque tenant : un fichier de DocType ne peut pas les connaître. Un grant, si.
@@ -703,6 +709,81 @@ class NamingSeries(BaseModel):
         return self
 
 
+class MappingQuantity(BaseModel):
+    """Le couple de quantités qui fait le « reste à faire » : le champ de la ligne SOURCE, celui de la ligne CIBLE.
+
+    Sans lui, le mapper recopie des quantités pleines et rien n'empêche de transférer deux fois. Avec lui,
+    `restant = quantité source − somme des quantités déjà citées` (doc/mapper.md §5).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source: _Fieldname
+    target: _Fieldname
+
+
+class MappingLines(BaseModel):
+    """Comment les lignes d'une table de la source remplissent une table de la cible.
+
+    `reference` et `document` nomment les deux champs de la ligne CIBLE qui gardent la trace de son origine (l'indice
+    de la ligne source, et le document source). Ils sont normalement `read_only` — l'utilisateur ne doit pas les
+    retoucher — et le moteur les écrit lui-même, puis les VÉRIFIE à l'écriture (doc/mapper.md §4).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+    from_: _Fieldname = PydanticField(alias="from")
+    reference: _Fieldname | None = None
+    document: _Fieldname | None = None
+    quantity: MappingQuantity | None = None
+    # Comme au niveau du document : seulement les EXCEPTIONS à la recopie par même nom (`champ cible: champ source`).
+    fields: dict[_Fieldname, _Fieldname] = PydanticField(default_factory=dict)
+    exclude: list[_Fieldname] = PydanticField(default_factory=list)
+
+    @model_validator(mode="after")
+    def _check(self) -> "MappingLines":
+        if self.quantity is not None and self.reference is None:
+            raise ValueError("quantity: exige `reference` (sans elle, on ne sait pas quelle ligne source a déjà été servie)")
+        if self.quantity is not None and self.document is None:
+            raise ValueError(
+                "quantity: exige `document` (c'est par ce champ que le moteur retrouve les documents déjà émis pour cette source ; "
+                "sans lui il faudrait parcourir tout le type)"
+            )
+        if self.document is not None and self.document == self.reference:
+            raise ValueError("`document` et `reference` ne peuvent pas être le même champ")
+        for target_field in self.fields:
+            if target_field in self.exclude:
+                raise ValueError(f"fields: {target_field!r} est aussi dans `exclude`")
+        return self
+
+
+class CreatedFrom(BaseModel):
+    """« Ce type se crée depuis celui-là » : de quoi préremplir un brouillon (doc/mapper.md).
+
+    Déclaré sur la CIBLE : son plugin possède ses champs et sait les remplir, un module nouveau se branche sans
+    toucher au YAML de la source, et le droit en jeu est son propre `create`. Le bouton, lui, s'affiche sur la source.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source: _DocTypeName
+    label: Annotated[str, StringConstraints(min_length=1, max_length=140)] | None = None
+    # L'état qu'il faut à la source. `submitted` par défaut : on ne transfère pas un brouillon, et un document soumis
+    # est FIGÉ, ce qui rend l'indice de ses lignes stable — toute la référence de ligne en dépend.
+    source_status: Literal["submitted", "draft", "any"] = "submitted"
+    fields: dict[_Fieldname, _Fieldname] = PydanticField(default_factory=dict)
+    exclude: list[_Fieldname] = PydanticField(default_factory=list)
+    # `champ Table de la cible: comment le remplir`.
+    lines: dict[_Fieldname, MappingLines] = PydanticField(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _check(self) -> "CreatedFrom":
+        for target_field in self.fields:
+            if target_field in self.exclude:
+                raise ValueError(f"fields: {target_field!r} est aussi dans `exclude`")
+        return self
+
+
 class DocTypeDef(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -752,6 +833,22 @@ class DocTypeDef(BaseModel):
     # Les vues du type dans le Desk : la liste et le rapport existent toujours, le tableau de bord est généré ; on déclare ici le Kanban,
     # le Calendrier, le Gantt (ils exigent des champs précis) ou un tableau de bord à soi. Voir `dashboards.py`.
     views: ViewsDef | None = None
+    # « Créer depuis » (doc/mapper.md) : les types depuis lesquels CE type se préremplit. Le bouton s'affiche sur la source,
+    # mais la déclaration vit ici. Une seule par source. Vérifié au CHARGEMENT (`registry._check_mappings`).
+    created_from: Annotated[list[CreatedFrom], PydanticField(max_length=MAX_MAPPINGS)] | None = None
+
+    @model_validator(mode="after")
+    def _one_mapping_per_source(self) -> "DocTypeDef":
+        sources = [m.source for m in self.created_from or []]
+        if len(set(sources)) != len(sources):
+            raise ValueError("created_from: deux déclarations pour la même source")
+        if self.created_from and self.istable:
+            raise ValueError("created_from: un DocType enfant ne se crée pas, il est une ligne de son parent")
+        if self.created_from and self.single:
+            raise ValueError("created_from: un document unique ne se crée pas depuis un autre")
+        if self.created_from and self.source is not None:
+            raise ValueError("created_from: un DocType virtuel n'est pas écrit par le moteur")
+        return self
 
     @model_validator(mode="after")
     def _module_is_declarable(self) -> "DocTypeDef":

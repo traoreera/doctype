@@ -41,6 +41,8 @@ EXPECTED_ROUTES = sorted(
         ("GET", "/search"),
         ("GET", "/search/{doctype}"),
         ("GET", "/history/{doctype}/{name}"),
+        ("GET", "/mappings/{doctype}/{name}"),
+        ("GET", "/map/{doctype}/{source}/{name}"),
         ("POST", "/upload/{doctype}/{fieldname}"),
         ("POST", "/file-links"),
         ("GET", "/preferences"),

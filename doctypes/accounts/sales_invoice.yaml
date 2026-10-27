@@ -985,3 +985,26 @@ views:
     start: from_date
     end: to_date
     title: customer
+created_from:
+- source: Sales Order
+  label: Facture de vente
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: so_detail
+      document: sales_order
+      quantity:
+        source: qty
+        target: qty
+- source: Delivery Note
+  label: Facture de vente
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: dn_detail
+      document: delivery_note
+      quantity:
+        source: qty
+        target: qty

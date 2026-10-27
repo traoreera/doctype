@@ -283,6 +283,16 @@ def build_router(documents: DocumentService, settings: ContextSettings, *, devel
         """Ce que l'appelant peut faire maintenant sur ce document : l'état courant et les transitions ouvertes."""
         return await _guard(documents.available_transitions(ctx, doctype, name))
 
+    @router.get("/mappings/{doctype}/{name}")
+    async def doc_mappings(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):
+        """Ce que l'appelant peut CRÉER depuis ce document (le menu « Créer > »). Une source entièrement servie n'offre rien."""
+        return await _guard(documents.available_mappings(ctx, doctype, name))
+
+    @router.get("/map/{doctype}/{source}/{name}")
+    async def doc_map(doctype: str, source: str, name: str, ctx: RequestContext = Depends(ctx_dep)):
+        """Les valeurs d'un brouillon de `doctype` prérempli depuis `source`/`name`. N'ÉCRIT RIEN : le client enregistre ensuite."""
+        return await _guard(documents.mapped_values(ctx, doctype, source, name))
+
     @router.post("/doc/{doctype}/{name}/transition")
     async def doc_workflow_transition(doctype: str, name: str, body: WorkflowBody, ctx: RequestContext = Depends(ctx_dep)):
         """Fait passer le document à l'état suivant du workflow. C'est ce qui remplace `/submit` sur un type qui en a un."""
