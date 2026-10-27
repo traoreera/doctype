@@ -363,6 +363,7 @@ class DocumentService:
     def get_meta(
         self, ctx: RequestContext, doctype: str, *, override: Mapping[str, Any] | None = None, dashboard: Mapping[str, Any] | None = None,
         dashboard_layer: str | None = None, shared: str | None = None, restricted: bool = False,
+        compiled: CompiledDocType | None = None,
     ) -> dict[str, Any]:
         """Définition + droits effectifs (`all` | `restricted` | `none` par action). Les règles ne sont jamais exposées.
 
@@ -370,7 +371,8 @@ class DocumentService:
         du tableau de bord, qui remplace `views.dashboard`.
         """
         self._enter(ctx, "meta.get", doctype)
-        compiled = self._doctype(doctype)
+        # `compiled` : le type tel qu'une organisation le voit (ses champs ajoutés compris, §3.5) ; sinon celui du registre.
+        compiled = compiled or self._doctype(doctype)
         d = compiled.definition
         rights = {a: scope_for(d, ctx, a).level for a in ACTIONS}
         if all(level == "none" for level in rights.values()):
@@ -763,8 +765,11 @@ class DocumentService:
             shared = await q.share_level(doctype, ctx.user_id) if no_role and ctx.user_id is not None and stored_kind(compiled.definition) else None
             restricted = await q.restricted(scope_for(compiled.definition, ctx, "read"))
         board, layer = (board_mine, "user") if board_mine else (board_org, "org") if board_org else (None, None)
+        config = (found or {}).get("config")
+        # Les champs que l'organisation a ajoutés font partie du type qu'on sert : sans cela le Desk ne les afficherait pas.
+        compiled = self._registry.with_custom_fields(doctype, (config or {}).get("added") or [])
         return self.get_meta(
-            ctx, doctype, override=(found or {}).get("config"), dashboard=(board or {}).get("config"), dashboard_layer=layer, shared=shared, restricted=restricted
+            ctx, doctype, override=config, dashboard=(board or {}).get("config"), dashboard_layer=layer, shared=shared, restricted=restricted, compiled=compiled
         )
 
     async def form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
@@ -785,6 +790,13 @@ class DocumentService:
         compiled = self._doctype(doctype)
         write = self._scope(ctx, compiled, "write")
         cleaned = validate_form_override(compiled, config)
+        if added := cleaned.get("added"):
+            # La fusion est faite ICI pour qu'une définition fautive (un Select sans `options`) soit refusée à l'enregistrement
+            # et non à la première saisie — et parce qu'un habillage qu'on ne peut pas compiler rendrait le type inutilisable.
+            try:
+                self._registry.with_custom_fields(doctype, added)
+            except InvalidDefinition as e:
+                raise ValidationFailed(f"champ ajouté invalide : {e.message}", code="invalid_custom_field") from None
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
             self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned, restricted=await q.restricted(write))
@@ -811,6 +823,14 @@ class DocumentService:
         gardent la règle commune : un habillage qui les change en laissant les règles telles quelles passe."""
         if write.level == "all" and not restricted:  # une permission utilisateur le borne : il n'écrit pas TOUT (`Query.restricted`)
             return
+        # Ajouter ou retirer un champ lie tout le monde autant qu'une règle : un champ ajouté OBLIGATOIRE s'impose à chaque
+        # saisie, et le retirer fait disparaître ce que les autres y mettaient. Même périmètre exigé, même refus (§3.5).
+        if (wanted or {}).get("added") != (stored or {}).get("added"):
+            raise ValidationFailed(
+                f"Ajouter ou retirer un champ change ce que tous saisissent : réservé à qui peut modifier TOUS les documents de {compiled.definition.name}",
+                code="form_rules_reserved",
+                details=[{"field": "added", "msg": "Réservé à qui peut modifier tous les documents du type", "type": "form_rules_reserved"}],
+            )
         changed = changed_rules(compiled, stored, wanted)
         if changed:
             name = compiled.definition.name
@@ -963,13 +983,13 @@ class DocumentService:
         """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType. `requested` : le nom que le client demande (`naming: prompt`).
         `copied` : les valeurs recopiées d'un document annulé (un amendement), dont les liens ne se jugent pas sur l'état de leur cible (`_check_links`)."""
         doctype = compiled.definition.name
+        compiled, rules = await self._tenant_view(ctx, compiled)  # les champs ajoutés par l'organisation font partie du type ici
         naming = compiled.definition.naming
         if name is None:
             name = self._requested_name(compiled, requested)
         facts = await self._facts(ctx, scope, None)
         finalize = self._finalizer(compiled, scope, ctx.owner_id, facts)
         chosen = name is not None and amended_from is None  # un nom que le CLIENT choisit (`naming: prompt`) ; un nom tiré d'un champ l'est aussi
-        rules = await self._form_rules(ctx, compiled)
         if amended_from is not None:
             # Un amendement est la copie qu'on va CORRIGER : ce que l'organisation exige depuis s'y saisira (la mise à jour et la soumission
             # l'exigent). L'exiger ici rendrait l'amendement impossible, la copie se faisant sans saisie. Ses défauts, eux, s'appliquent.
@@ -1046,8 +1066,8 @@ class DocumentService:
         if (source := self._source(compiled)) is not None:
             return await self._update_virtual(ctx, compiled, write, current, data, version, source)
         self._require_hooks(compiled)
+        compiled, rules = await self._tenant_view(ctx, compiled)
         finalize = self._finalizer(compiled, write, current.owner, await self._facts(ctx, write, name), name)
-        rules = await self._form_rules(ctx, compiled)
         if after_submit:
             # Soumis, seuls ses champs `allow_on_submit` se changent encore : l'obligation de l'habillage ne vaut que pour eux. Un champ figé
             # qu'on a rendu obligatoire après la soumission ne se remplira plus, le document resterait sinon immodifiable.
@@ -1480,6 +1500,19 @@ class DocumentService:
                 value = fieldtypes.format_instant(self._clock())
             out[name] = value
         return {**out, **data}
+
+    async def _tenant_view(self, ctx: RequestContext, compiled: CompiledDocType) -> tuple[CompiledDocType, FormRules]:
+        """Le type tel que CETTE organisation le voit — ses champs ajoutés compris (§3.5) — et ce que son habillage resserre.
+
+        Une seule lecture pour les deux : l'habillage porte les retouches d'écriture ET les champs ajoutés. Le type fusionné
+        repasse par le schéma (`registry.with_custom_fields`), donc tout ce qui suit — validation stricte, conditions, historique,
+        hooks — travaille sur une définition ordinaire et ignore qu'un champ vient d'une organisation.
+        """
+        async with self._query(ctx) as q:
+            found = await q.get_override(KIND_FORM, compiled.definition.name)
+        config = (found or {}).get("config")
+        merged = self._registry.with_custom_fields(compiled.definition.name, (config or {}).get("added") or [])
+        return merged, form_rules(merged, config)
 
     async def _form_rules(self, ctx: RequestContext, compiled: CompiledDocType) -> FormRules:
         """Ce que l'habillage de formulaire de l'ORGANISATION resserre à l'écriture (`overrides.form_rules`) : lu à chaque écriture d'un client,

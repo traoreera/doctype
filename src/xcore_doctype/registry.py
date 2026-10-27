@@ -7,7 +7,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Mapping, Sequence
 
 import yaml
 
@@ -128,6 +128,20 @@ class DocTypeRegistry:
         if owner is not None:
             self._owners[defn.name] = owner
         return compiled
+
+    def with_custom_fields(self, name: str, added: Sequence[Mapping[str, Any]]) -> CompiledDocType:
+        """Le DocType vu par UNE organisation : sa définition, plus les champs qu'elle a ajoutés (doc/programme.md §3.5).
+
+        La fusion repasse par `parse_definition` puis par la compilation, comme une extension de plugin (D26) : toutes les règles
+        du schéma s'appliquent au résultat, et le reste du moteur n'a pas à savoir qu'un champ vient d'une organisation. Une
+        faute de définition sort donc ici, en `InvalidDefinition`, et l'appelant la rend à celui qui a enregistré l'habillage.
+        """
+        compiled = self.get(name)
+        if not added:
+            return compiled
+        raw = compiled.definition.model_dump(mode="json", exclude_none=True)
+        raw["fields"] = [*raw["fields"], *[dict(f) for f in added]]
+        return self._compile(parse_definition(raw, source=f"habillage de {name}"), f"habillage de {name}")
 
     def _compile(self, defn: DocTypeDef, source: str) -> CompiledDocType:
         """Compile une définition (l'origine, ou sa fusion avec des extensions) : lignes de tables, conditions, tableau de bord."""

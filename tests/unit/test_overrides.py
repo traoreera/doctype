@@ -193,3 +193,79 @@ class TestWorkspaceOverrideService:
         svc = service(registry(), db, tables)
         with pytest.raises(PermissionDenied):
             await svc.save_workspace_override(READER, "shop", WS_BODY)
+
+
+# ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ──────────────────────────────────────────────
+
+SEGMENT = {"fieldname": "custom_segment", "fieldtype": "Select", "label": "Segment", "options": ["PME", "Grand compte"]}
+
+
+class TestCustomFields:
+    """Une organisation ajoute un champ à un type existant. Il vit dans son habillage de formulaire — en base, par
+    organisation — et jamais dans un fichier : le registre est global au processus, un YAML déposé par l'une créerait le
+    champ pour toutes les autres."""
+
+    async def test_an_added_field_is_served_written_and_read_back(self, db, tables):
+        svc = service(registry(), db, tables)
+        await svc.save_form_override(WRITER, "Order", {"added": [SEGMENT]})
+
+        meta = await svc.fetch_meta(WRITER, "Order")
+        assert [f["fieldname"] for f in meta["fields"]][-1] == "custom_segment"
+
+        doc = await svc.create(WRITER, "Order", {"a": "x", "custom_segment": "PME"})
+        assert doc["data"]["custom_segment"] == "PME"
+        assert (await svc.get(WRITER, "Order", doc["name"]))["data"]["custom_segment"] == "PME"
+
+    async def test_it_is_validated_like_any_field(self, db, tables):
+        """Le type fusionné repasse par le schéma : la valeur subit les mêmes règles strictes que si le YAML portait le champ."""
+        svc = service(registry(), db, tables)
+        await svc.save_form_override(WRITER, "Order", {"added": [SEGMENT]})
+        with pytest.raises(ValidationFailed):
+            await svc.create(WRITER, "Order", {"custom_segment": "Hors liste"})
+
+    async def test_another_organisation_does_not_see_it(self, db, tables):
+        """Le registre reste intact : c'est tout l'intérêt de le ranger en base, par organisation."""
+        svc = service(registry(), db, tables)
+        await svc.save_form_override(WRITER, "Order", {"added": [SEGMENT]})
+        elsewhere = make_ctx("globex", "carl", permissions=["shop:order:write", "shop:order:read"])
+        assert "custom_segment" not in [f["fieldname"] for f in (await svc.fetch_meta(elsewhere, "Order"))["fields"]]
+        with pytest.raises(ValidationFailed):  # chez elle, la clé reste inconnue
+            await svc.create(elsewhere, "Order", {"custom_segment": "PME"})
+
+    @pytest.mark.parametrize(
+        "spec, why",
+        [
+            ({"fieldname": "segment", "fieldtype": "Text"}, "custom_"),
+            ({"fieldname": "custom_a", "fieldtype": "Link", "options": "Return"}, "ne peut pas être ajouté"),
+            ({"fieldname": "custom_t", "fieldtype": "Table", "options": "Line"}, "ne peut pas être ajouté"),
+            ({"fieldname": "a", "fieldtype": "Text"}, "custom_"),
+        ],
+    )
+    async def test_what_an_organisation_may_not_add(self, db, tables, spec, why):
+        svc = service(registry(), db, tables)
+        with pytest.raises(ValidationFailed, match=why):
+            await svc.save_form_override(WRITER, "Order", {"added": [spec]})
+
+    async def test_a_field_added_twice_is_refused(self, db, tables):
+        svc = service(registry(), db, tables)
+        with pytest.raises(ValidationFailed, match="deux fois"):
+            await svc.save_form_override(WRITER, "Order", {"added": [SEGMENT, SEGMENT]})
+
+    async def test_a_broken_definition_is_refused_at_save_time(self, db, tables):
+        """Un Select sans `options` ne passe pas : la faute sort à l'enregistrement de l'habillage, pas à la première saisie."""
+        svc = service(registry(), db, tables)
+        with pytest.raises((ValidationFailed, Exception)):
+            await svc.save_form_override(WRITER, "Order", {"added": [{"fieldname": "custom_x", "fieldtype": "Select"}]})
+
+    async def test_adding_a_field_needs_a_total_write_scope(self, db, tables):
+        """Un champ ajouté obligatoire s'impose à chaque saisie, et le retirer fait disparaître ce que les autres y mettaient :
+        même exigence que les règles de formulaire."""
+        reg = registry()
+        reg.register(parse_definition({"schema_version": 1, "name": "Ticket", "module": "shop",
+                                       "permissions": {"write": [{"grant": "shop:ticket:write", "if_owner": True}], "read": ["shop:ticket:read"]},
+                                       "fields": [{"fieldname": "a", "fieldtype": "Text"}]}))
+        svc = service(reg, db, tables)
+        partial = make_ctx("acme", "zoe", permissions=["shop:ticket:write", "shop:ticket:read"])  # n'écrit que SES documents
+        with pytest.raises(ValidationFailed) as e:
+            await svc.save_form_override(partial, "Ticket", {"added": [{"fieldname": "custom_x", "fieldtype": "Text"}]})
+        assert e.value.code == "form_rules_reserved"

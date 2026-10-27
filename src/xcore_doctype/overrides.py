@@ -140,7 +140,7 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
     if not isinstance(config, dict):
         raise ValidationFailed("habillage de formulaire : le corps doit être un objet")
     check_size(config, "habillage de formulaire")
-    unknown = set(config) - {"layout", "fields"}
+    unknown = set(config) - {"layout", "fields", "added"}  # `added` : les champs que l'organisation ajoute au type (§3.5)
     if unknown:
         raise ValidationFailed(f"habillage de formulaire : clés inconnues {sorted(unknown)}")
     definition = compiled.definition
@@ -238,6 +238,69 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
         if problems:
             raise ValidationFailed("habillage de formulaire invalide : " + "; ".join(problems))
         out["fields"] = clean
+
+    added = config.get("added")
+    if added is not None:
+        out["added"] = _clean_added(added, fields)
+    return out
+
+
+# ── Champs ajoutés par l'organisation (doc/programme.md §3.5) ────────────────────────────────────────────────
+# Le préfixe réservé : un champ ajouté par une organisation ne peut jamais entrer en collision avec un champ que le plugin
+# ajoutera plus tard à son YAML, et on voit d'où il vient en le lisant. Même raison que le `<plugin>_` des extensions (D26).
+CUSTOM_PREFIX = "custom_"
+
+# Ce qu'une organisation peut ajouter. Les types ABSENTS le sont pour une raison, pas par prudence :
+#  - `Link` / `DynamicLink` : le registre ne connaît pas ces champs (ils sont par organisation), donc `references_to` ne les
+#    verrait pas — on pourrait supprimer un document encore cité. L'intégrité des liens passe avant la souplesse.
+#  - `Table` : il faudrait un DocType de lignes, qui n'existe pas par organisation.
+#  - `Password` : le scellement se règle sur la définition compilée du type, pas sur celle d'une organisation.
+#  - `Image` / `Attach` : un fichier se rattache à une place (type, champ) que l'écran « Fichiers » construit depuis le type.
+ADDED_TYPES = (
+    "Text", "LongText", "Select", "Number", "Int", "Percent", "Decimal", "Currency", "Rating",
+    "Date", "Datetime", "Time", "Duration", "Boolean", "Color", "Code", "JSON", "TextEditor",
+)
+_ADDED_KEYS = ("fieldname", "fieldtype", "label", "description", "required", "default", "options", "decimals", "stars", "in_list_view", "hidden")
+
+
+def _clean_added(added: Any, existing: Mapping[str, Any]) -> list[dict[str, Any]]:
+    """Les champs qu'une organisation ajoute à ce type : leur forme canonique, ou un refus qui dit pourquoi.
+
+    On ne valide ici que ce qui est PROPRE à l'habillage (préfixe réservé, type permis, pas de collision) : le reste — un défaut
+    compatible, des `options` pour un Select, des `decimals` pour un Decimal — est vérifié par `parse_definition` quand la
+    définition fusionnée repasse par le schéma, exactement comme pour une extension de plugin (D26).
+    """
+    if not isinstance(added, list):
+        raise ValidationFailed("habillage de formulaire : `added` doit être une liste")
+    if len(added) > MAX_FORM_TWEAKS:
+        raise ValidationFailed(f"habillage de formulaire trop volumineux : au plus {MAX_FORM_TWEAKS} champs ajoutés", code="override_too_large")
+    out: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    problems: list[str] = []
+    for i, spec in enumerate(added):
+        if not isinstance(spec, dict):
+            problems.append(f"added.{i}: doit être un objet")
+            continue
+        if bad := sorted(set(spec) - set(_ADDED_KEYS)):
+            problems.append(f"added.{i}: clés inconnues {bad}")
+            continue
+        name, ftype = spec.get("fieldname"), spec.get("fieldtype")
+        if not isinstance(name, str) or not name.startswith(CUSTOM_PREFIX) or len(name) <= len(CUSTOM_PREFIX):
+            problems.append(f"added.{i}.fieldname: doit commencer par `{CUSTOM_PREFIX}` (un champ ajouté par une organisation ne masque jamais un champ du type)")
+            continue
+        if name in existing:
+            problems.append(f"added.{i}: {name!r} existe déjà dans ce type")
+            continue
+        if name in seen:
+            problems.append(f"added.{i}: {name!r} ajouté deux fois")
+            continue
+        if ftype not in ADDED_TYPES:
+            problems.append(f"added.{i}.fieldtype: {ftype!r} ne peut pas être ajouté par une organisation (permis : {', '.join(ADDED_TYPES)})")
+            continue
+        seen.add(name)
+        out.append({k: v for k, v in spec.items() if v is not None})
+    if problems:
+        raise ValidationFailed("habillage de formulaire invalide : " + "; ".join(problems))
     return out
 
 

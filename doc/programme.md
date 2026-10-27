@@ -170,8 +170,7 @@ périmètre(utilisateur, action) = (rôles ET permissions utilisateur) OU docume
 
 Rien ne commence ici avant une étude écrite qui réponde, pour chaque élément, à sa question structurante :
 
-- **Éditeur de DocType dans le Desk** (déplacé ici) : où vivent les définitions créées à l'écran, qui les possède, quel `module` porte
-  leurs grants, que devient une définition quand le plugin qui la citait s'en va, et comment elle survit à une livraison.
+- **Éditeur de DocType dans le Desk** (déplacé ici) : étude faite, voir §3.5.
 - **Workflow** : étude faite, voir §3.2 (et §3.3 : `xflow` ne le couvre pas, il est complémentaire).
 - **Tâches planifiées et webhooks** : étude faite, voir §3.1 — **et largement répondue par `xflow`, voir §3.3**.
 - **Temps réel** : canal (SSE ou WebSocket), autorisation par tenant, et ce qu'on pousse (jamais le contenu d'un document, comme pour
@@ -496,6 +495,54 @@ xflow devient, c'est l'exécuteur des conséquences — et le déclencheur plani
 #### Avant d'y toucher
 
 `orchestra-backend` est un dépôt voisin, en lecture seule pour moi jusqu'ici. Rien n'y sera modifié sans accord explicite.
+
+### 3.5 Étude — l'éditeur de DocTypes : où vit une définition faite à l'écran ? (27 octobre 2026)
+
+La question que le §0 avait laissée ouverte, et sans laquelle aucun écran ne peut être dessiné.
+
+#### Trois contraintes, vérifiées dans le code
+
+1. **Le registre est GLOBAL au processus** (`DocTypeRegistry._items`), pas par organisation. Un DocType est le même pour tout le
+   monde. Une définition créée par une organisation serait donc visible par toutes.
+2. **Les habillages, eux, sont par organisation** : `xdt_layout_override`, clé `(tenant_id, kind, target)`. Et les règles de
+   formulaire qu'ils portent sont APPLIQUÉES à l'écriture par le serveur — il existe donc déjà un chemin où la validation d'un
+   document dépend de l'organisation.
+3. **Les grants se déclarent au démarrage, par plugin, en UN appel** (`rbac.declare` ; auth désactive ce qui manque de la liste).
+   Rien ne permet aujourd'hui d'ajouter un grant à 14 h parce qu'une organisation vient de créer un type.
+
+#### La réponse à « où résident les fichiers » : nulle part
+
+**Une définition faite à l'écran ne doit pas être un fichier.** Un fichier n'a ni organisation ni propriétaire ; le moteur
+n'écrit jamais sur le disque ; un conteneur peut avoir un système de fichiers en lecture seule ; et comme le registre est global,
+le YAML déposé par une organisation créerait le type pour toutes les autres. Les fichiers ne reviennent que comme **export** —
+télécharger un type pour le rejouer ailleurs — jamais comme source de vérité.
+
+Elle vit donc **en base, par organisation**. Reste à savoir ce qu'on y met.
+
+#### Deux ambitions, très différentes
+
+| | Ce que l'utilisateur fait | Ce que ça coûte |
+|---|---|---|
+| **A. Champs personnalisés** | ajouter un champ à un type existant, depuis « Personnaliser » | l'habillage `form` existe déjà, par organisation, avec application serveur ; le type garde ses grants (un champ n'en demande pas) ; pas de registre par organisation à construire |
+| **B. Types personnalisés** | créer un type entier depuis le Desk | le registre doit devenir **par organisation** (couche tenant au-dessus de la couche plugin, avec son cache et son invalidation) ; il faut une histoire de **grants dynamiques** (soit un jeu générique figé déclaré par `system`, soit une déclaration dynamique côté xauth) ; pas de hooks (aucun code derrière) ; un type de plugin ne pourra jamais citer un type d'organisation (il se charge avant) ; et la livraison ne l'emporte pas |
+
+#### Ce que je recommande
+
+**A d'abord, B seulement s'il le faut.** « Un non-développeur ajoute un champ » est le besoin réel derrière l'éditeur, et il
+tient dans une mécanique qui existe : l'habillage de formulaire, déjà par organisation, déjà appliqué à l'écriture. Créer des
+types entiers est un autre produit — il demande un registre par organisation et une refonte de la déclaration des grants, et il
+amène des types qu'aucune livraison ne transporte.
+
+Conséquence pour le front, qui est ta question suivante : **il n'y a pas d'« éditeur de DocType » à dessiner**, mais un onglet de
+plus dans l'écran « Personnaliser » qui existe déjà — ajouter un champ, son type, son libellé, son caractère obligatoire —, avec
+les mêmes garde-fous que les règles de formulaire actuelles (périmètre d'écriture total exigé, taille bornée, types opaques
+refusés).
+
+#### Ce qui reste à trancher si on vise B un jour
+
+Le nom du module d'un type d'organisation (et donc le premier segment de ses grants), qui déclare ces grants à auth et quand, ce
+qu'il advient d'un type quand l'organisation qui l'a créé est supprimée, et comment on exporte/réimporte pour passer d'une
+organisation à l'autre.
 
 ## 4. Ce qu'on vise
 
