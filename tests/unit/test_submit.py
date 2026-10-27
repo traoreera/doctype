@@ -395,11 +395,10 @@ class TestTransactionHandle:
         with pytest.raises(DocumentValidationError):
             await self.run(env, body)
 
-    async def test_a_doctype_with_hooks_cannot_be_written_from_a_hook(self, env):
-        """Ses hooks (totaux, validations…) ne tourneraient pas : on refuse plutôt que d'écrire sans la validation promise."""
-        with pytest.raises(DoctypeError) as e:
-            await self.run(env, lambda tx, ev: tx.create("Voucher", {"title": "x"}))
-        assert e.value.code == "hook_not_supported"
+    async def test_a_doctype_with_hooks_written_from_a_hook_runs_them(self, env):
+        """Ses hooks tournent (`test_tx_hooked.py` détaille le contrat) : un `Voucher` créé par un hook n'est pas soumis, rien n'est posté."""
+        await self.run(env, lambda tx, ev: tx.create("Voucher", {"title": "x"}, name="V-from-hook"))
+        assert (await env.svc.get(ALICE, "Voucher", "V-from-hook"))["docstatus"] == 0
 
     async def test_the_handle_knows_today_in_the_organisation_timezone(self, env):
         got = []

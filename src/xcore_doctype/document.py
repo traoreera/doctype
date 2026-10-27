@@ -38,7 +38,7 @@ import secrets
 from collections import Counter
 from contextlib import asynccontextmanager
 from decimal import Decimal
-from dataclasses import replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, tzinfo
 from types import MappingProxyType
 from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, Sequence
@@ -55,6 +55,7 @@ from .errors import (
     DoctypeError,
     DocumentInUse,
     DocumentLocked,
+    DocumentValidationError,
     InvalidDefinition,
     InvalidDocStatus,
     NotFound,
@@ -1168,9 +1169,9 @@ class DocumentService:
             doc = await q.update(doctype, name, clean, version, scope=write, docstatus=current.docstatus)
             await self._sync_unique(q, compiled, doc)
             await self._record(q, ctx, compiled, doc, "update", current.data, doc.data)
-            written = await self._tx_hooks(ctx, compiled, q, doc, "on_update_after_submit", old=current.data) if after_submit else []
+            written = await self._tx_hooks(ctx, compiled, q, doc, "on_update_after_submit", old=current.data) if after_submit else _TxWrites()
         await self._after_save(ctx, compiled, doc, current.data)
-        self._dispatch(written)
+        await self._settle(ctx, written)
         await self._release_files(ctx, compiled, current.data, doc.data)  # un fichier remplacé ou retiré n'a plus de raison d'exister
         return self._present(doc)
 
@@ -1207,7 +1208,7 @@ class DocumentService:
             assignees = tuple(a["assignee"] for a in await q.assignments(doctype, name) if a.get("status") == "open") if self.notifications else None
             attached = await q.remove_collaboration(doctype, name)  # commentaires, assignations et pièces jointes disparaissent avec lui
         await self._after_delete(ctx, compiled, current, assignees=assignees)
-        self._dispatch(written)
+        await self._settle(ctx, written)
         await self._release_files(ctx, compiled, current.data, None)
         if attached and self.files is not None:
             try:
@@ -1586,20 +1587,20 @@ class DocumentService:
             # telle (ces entrées-là ne se purgent jamais), les autres sont des modifications de l'état.
             recorded = "submit" if after == SUBMITTED and before != SUBMITTED else "cancel" if after == CANCELLED and before != CANCELLED else "update"
             await self._record(q, ctx, compiled, doc, recorded, {"workflow_state": state}, {"workflow_state": transition.to})
-            written: list[DocEvent] = []
+            written = _TxWrites()
             if after == CANCELLED and before != CANCELLED:
                 await q.drop_unique(doctype, name)
-                written += await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
-                written += await self._tx_hooks(ctx, compiled, q, doc, "on_cancel")
+                written.extend(await self._tx_hooks(ctx, compiled, q, doc, "before_cancel"))
+                written.extend(await self._tx_hooks(ctx, compiled, q, doc, "on_cancel"))
             elif after == SUBMITTED and before != SUBMITTED:
-                written += await self._tx_hooks(ctx, compiled, q, doc, "on_submit")
+                written.extend(await self._tx_hooks(ctx, compiled, q, doc, "on_submit"))
         await self._emit(
             f"doctype.{doctype}.after_transition",
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version, "user": ctx.user_id,
              "action": transition.action, "from": state, "to": transition.to, "docstatus": doc.docstatus},
         )
         self._rules(ctx, compiled, doc, recorded, None)
-        self._dispatch(written)
+        await self._settle(ctx, written)
         return self._present(doc)
 
     async def _transition(self, ctx: RequestContext, doctype: str, name: str, version: Any, action: str) -> dict[str, Any]:
@@ -1640,35 +1641,40 @@ class DocumentService:
                 except ValidationFailed as e:
                     raise ValidationFailed("Ce brouillon cite un document dans un état que son lien refuse : corrigez-le avant de le soumettre", details=e.details) from None
             await self._record(q, ctx, compiled, doc, action, {"docstatus": source}, {"docstatus": target})
-            written: list[DocEvent] = []
+            written = _TxWrites()
             if action == "cancel":
                 await q.drop_unique(doctype, name)  # un document annulé ne retient plus ses valeurs : son amendement peut les reprendre
-                written += await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
-            written += await self._tx_hooks(ctx, compiled, q, doc, hook)
+                written.extend(await self._tx_hooks(ctx, compiled, q, doc, "before_cancel"))
+            written.extend(await self._tx_hooks(ctx, compiled, q, doc, hook))
         await self._emit(
             f"doctype.{doctype}.after_{action}",
             {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version, "user": ctx.user_id, "docstatus": doc.docstatus},
         )
         self._rules(ctx, compiled, doc, action, None)
-        self._dispatch(written)
+        await self._settle(ctx, written)
         return self._present(doc)
 
     async def _tx_hooks(
-        self, ctx: RequestContext, compiled: CompiledDocType, q: Query, doc: StoredDoc, event: str, *, old: Mapping[str, Any] | None = None
-    ) -> list[DocEvent]:
+        self, ctx: RequestContext, compiled: CompiledDocType, q: Query, doc: StoredDoc, event: str, *,
+        old: Mapping[str, Any] | None = None, depth: int = 0,
+    ) -> _TxWrites:
         """`on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit`, `on_trash` : dans la transaction, avec le droit d'écrire d'autres documents. Un refus défait tout.
 
         Rend ce que les hooks ont écrit : l'appelant le donne aux règles de notification APRÈS le commit (`_dispatch`), jamais si la transaction échoue."""
         refs = compiled.definition.hooks.for_event(event)
         if not refs:
-            return []
+            return _TxWrites()
+        if depth > MAX_TX_DEPTH:
+            # Un hook écrit un document dont le hook en écrit un autre… : au-delà, c'est une boucle (A met à jour B qui met à jour A).
+            self._log.error("hook recursion", doctype=compiled.definition.name, hook_event=event, depth=depth)
+            raise DoctypeError("hook_recursion", f"des hooks s'appellent en chaîne au-delà de {MAX_TX_DEPTH} niveaux", status=500)
         doctype = compiled.definition.name
 
         async def get(dt: str, nm: str) -> dict[str, Any] | None:
             found = await q.get(dt, nm, scope=Scope.everything("read"))
             return self._present(found) if found else None
 
-        tx = _Transaction(self, ctx, q, event)
+        tx = _Transaction(self, ctx, q, event, depth=depth)
         view = MappingProxyType(self._mask_data(compiled, doc.data) or {})
         old_view = MappingProxyType(self._mask_data(compiled, old) or {}) if old is not None else None
         for ref in refs:
@@ -1676,7 +1682,14 @@ class DocumentService:
             if fn is None:  # désenregistré entre le contrôle initial et maintenant
                 raise DoctypeError("hook_unavailable", "des hooks de ce DocType sont indisponibles", status=503)
             await self._call_trusted(ref, fn(HookEvent(event, ctx, doctype, doc.name, view, old_view, get, tx)))  # type: ignore[arg-type]
-        return tx.written
+        return tx.writes
+
+    async def _settle(self, ctx: RequestContext, writes: _TxWrites) -> None:
+        """Après le commit, ce que les hooks ont écrit dans la transaction : les règles de notification le voient, et les hooks `after_insert` /
+        `after_save` des documents écrits s'exécutent (journalisés en cas d'échec, comme ceux d'une écriture ordinaire). Jamais si la transaction échoue."""
+        self._dispatch(writes.events)
+        for compiled, doc, old in writes.saved:
+            await self._after_hooks(ctx, compiled, doc, old)
 
     # ── Interne ───────────────────────────────────────────────
     def _with_today(self, compiled: CompiledDocType, data: Any) -> Any:
@@ -2403,6 +2416,19 @@ class DocumentService:
     ) -> None:
         """Après le commit : rien ne peut défaire l'écriture. Les erreurs sont journalisées, jamais levées (D2)."""
         doctype = compiled.definition.name
+        await self._after_hooks(ctx, compiled, doc, old)
+        await self._emit(
+            f"doctype.{doctype}.after_save",
+            {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version,
+             "user": ctx.user_id, "created": old is None},
+        )
+        self._rules(ctx, compiled, doc, "create" if old is None else "update", old)
+
+    async def _after_hooks(
+        self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, old: Mapping[str, Any] | None
+    ) -> None:
+        """Les hooks `after_insert` (création) puis `after_save`, après le commit. Les erreurs sont journalisées, jamais levées (D2)."""
+        doctype = compiled.definition.name
 
         async def get(dt: str, nm: str) -> dict[str, Any] | None:
             async with self._query(ctx) as q:
@@ -2421,12 +2447,6 @@ class DocumentService:
                     await asyncio.wait_for(fn(event), timeout=self._hook_settings.timeout_seconds)
                 except Exception as e:  # noqa: BLE001 - y compris TimeoutError
                     self._log.error(f"{kind} hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
-        await self._emit(
-            f"doctype.{doctype}.after_save",
-            {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version,
-             "user": ctx.user_id, "created": old is None},
-        )
-        self._rules(ctx, compiled, doc, "create" if old is None else "update", old)
 
     async def _after_delete(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, *, assignees: tuple[str, ...] | None = None) -> None:
         """Après le commit de la suppression : `after_delete` reçoit ce que le document contenait. Les erreurs sont journalisées, jamais levées."""
@@ -2788,19 +2808,42 @@ def _amended_name(source: StoredDoc) -> str:
     return f"{m['root']}-{int(m['n']) + 1}" if m else f"{source.name}-1"
 
 
+MAX_TX_DEPTH = 5  # profondeur des hooks en chaîne (un hook écrit un document soumis dont `on_update_after_submit` en écrit un autre…)
+
+
+@dataclass
+class _TxWrites:
+    """Ce que les hooks ont écrit dans une transaction, pour l'après-commit (`DocumentService._settle`) : les événements des règles de notification,
+    et les documents dont les hooks `after_insert` / `after_save` restent à appeler."""
+
+    events: list[DocEvent] = field(default_factory=list)
+    saved: list[tuple[CompiledDocType, StoredDoc, Mapping[str, Any] | None]] = field(default_factory=list)
+
+    def extend(self, other: _TxWrites) -> None:
+        self.events += other.events
+        self.saved += other.saved
+
+
 class _Transaction:
-    """`HookTransaction` : les écritures d'un hook `on_submit` / `on_cancel`, dans la transaction ouverte par le service.
+    """`HookTransaction` : les écritures d'un hook transactionnel (`on_submit`, `on_cancel`…), dans la transaction ouverte par le service.
 
     Le service les a toutes sous la main (validation, liens, historique) : cette classe ne fait que les enchaîner dans l'ordre de
-    `DocumentService._create` / `update`, sans permission (code de confiance) et sans hooks (voir le protocole).
+    `DocumentService._create` / `update`, sans permission (code de confiance). Le DocType écrit garde ses règles : ses hooks de confiance
+    `validate`, `before_save` (et `before_insert` à la création) passent dans la transaction, `after_insert` / `after_save` après le commit,
+    et `on_update_after_submit` quand on change un champ `allow_on_submit` d'un document soumis. Ses hooks `action:` (plugins sandboxés,
+    hors transaction par construction) ne le peuvent pas : un tel type se refuse (`hook_not_supported`), plutôt que de s'écrire sans eux.
     """
 
-    def __init__(self, service: DocumentService, ctx: RequestContext, q: Query, event: str) -> None:
-        self._svc, self._ctx, self._q = service, ctx, q
-        self.written: list[DocEvent] = []  # ce que le hook a écrit : les règles de notification le voient APRÈS le commit, jamais avant
+    def __init__(self, service: DocumentService, ctx: RequestContext, q: Query, event: str, *, depth: int = 0) -> None:
+        self._svc, self._ctx, self._q, self._depth = service, ctx, q, depth
+        self.writes = _TxWrites()  # ce que le hook a écrit : les règles de notification et les hooks `after_*` le voient APRÈS le commit, jamais avant
         # Les liens se vérifient comme le ferait le système : la cible doit exister, pas être lisible par celui qui soumet
         # (un magasinier soumet une sortie sans avoir le droit de lire les articles).
         self._system = RequestContext.system(ctx.tenant_id, f"hook:{event}")
+
+    @property
+    def written(self) -> list[DocEvent]:
+        return self.writes.events
 
     @property
     def today(self) -> date:
@@ -2816,28 +2859,26 @@ class _Transaction:
 
     async def create(self, doctype: str, data: Mapping[str, Any], *, name: str | None = None) -> dict[str, Any]:
         compiled = self._writable(doctype)
-        clean = self._svc._seal(compiled, await self._valid(compiled, self._svc._with_today(compiled, data), None), None)
         series = compiled.definition.series
-        if name is None and series:
-            now = self._svc._clock().astimezone(self._svc._timezone)
-            name = series.render(now, await self._q.next_number(doctype, series.key(now)))
         owner_named = compiled.definition.naming == "owner"
-        doc = await self._q.insert(doctype, name or (self._ctx.owner_id if owner_named else secrets.token_hex(6)), clean)
-        await self._unique(compiled, doc)
-        await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
-        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "create", None))
+        # Le nom que les hooks du type voient : celui qu'on impose, sinon aucun pour une série (il n'existe qu'à l'insertion), comme pour un client.
+        known = name or (self._ctx.owner_id if owner_named else None if series else secrets.token_hex(6))
+        clean = await self._prepare(compiled, self._svc._with_today(compiled, data), None, known)
+        if known is None and series:
+            now = self._svc._clock().astimezone(self._svc._timezone)
+            known = series.render(now, await self._q.next_number(doctype, series.key(now)))
+        doc = await self._q.insert(doctype, known or secrets.token_hex(6), clean)
+        await self._done(compiled, doc, None, "create")
         return self._svc._present(doc)
 
     async def ensure(self, doctype: str, name: str, data: Mapping[str, Any]) -> bool:
         compiled = self._writable(doctype)
-        clean = self._svc._seal(compiled, await self._valid(compiled, self._svc._with_today(compiled, data), None), None)
+        clean = await self._prepare(compiled, self._svc._with_today(compiled, data), None, name)
         if not await self._q.insert_if_absent(doctype, name, clean):
             return False
         doc = await self._q.get(doctype, name, scope=Scope.everything("read"))
         assert doc is not None  # insérée à l'instant, dans cette transaction
-        await self._unique(compiled, doc)
-        await self._svc._record(self._q, self._ctx, compiled, doc, "create", None, doc.data)
-        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "create", None))
+        await self._done(compiled, doc, None, "create")
         return True
 
     async def update(self, doctype: str, name: str, data: Mapping[str, Any], version: int) -> dict[str, Any]:
@@ -2847,12 +2888,25 @@ class _Transaction:
         current = await self._q.get(doctype, name, scope=Scope.everything("read"))
         if current is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
-        clean = self._svc._seal(compiled, await self._valid(compiled, data, current.data), current.data)
-        doc = await self._q.update(doctype, name, clean, version, scope=Scope.everything("write"))
-        await self._unique(compiled, doc)
-        await self._svc._record(self._q, self._ctx, compiled, doc, "update", current.data, doc.data)
-        self.written.append(self._svc._doc_event(self._ctx, compiled, doc, "update", current.data))
+        # Soumis, un document ne laisse changer que ses champs `allow_on_submit` (le reste d'une facture est figé, son reste dû non) ; annulé, rien.
+        after_submit = current.docstatus == SUBMITTED and bool(compiled.definition.editable_after_submit)
+        if current.docstatus != DRAFT and not after_submit:
+            raise DocumentLocked(f"{doctype} {name!r} est {STATUS_WORDS[current.docstatus]} : il n'est plus modifiable")
+        clean = await self._prepare(compiled, data, current.data, name, frozen=after_submit)
+        doc = await self._q.update(doctype, name, clean, version, scope=Scope.everything("write"), docstatus=current.docstatus)
+        await self._done(compiled, doc, current.data, "update")
+        if after_submit:
+            self.writes.extend(
+                await self._svc._tx_hooks(self._ctx, compiled, self._q, doc, "on_update_after_submit", old=current.data, depth=self._depth + 1)
+            )
         return self._svc._present(doc)
+
+    async def _done(self, compiled: CompiledDocType, doc: StoredDoc, old: Mapping[str, Any] | None, action: str) -> None:
+        """Ce qui suit toute écriture : valeurs uniques, historique, et l'après-commit (règles de notification, hooks `after_*` du type)."""
+        await self._unique(compiled, doc)
+        await self._svc._record(self._q, self._ctx, compiled, doc, action, old, doc.data)
+        self.writes.events.append(self._svc._doc_event(self._ctx, compiled, doc, action, old))
+        self.writes.saved.append((compiled, doc, old))
 
     async def _unique(self, compiled: CompiledDocType, doc: StoredDoc) -> None:
         """Les valeurs `unique` d'un document écrit par un hook : une valeur déjà prise est un défaut du hook (500), comme tout document invalide écrit d'ici."""
@@ -2862,19 +2916,33 @@ class _Transaction:
             self._svc._log.error("hook wrote a duplicate", doctype=compiled.definition.name, errors=e.details)
             raise DoctypeError("hook_invalid_write", f"un hook a écrit un {compiled.definition.name} en double", status=500, details=e.details) from None
 
-    async def _valid(self, compiled: CompiledDocType, data: Mapping[str, Any], old: Mapping[str, Any] | None) -> dict[str, Any]:
-        """Schéma strict, puis liens. Un document invalide ici est un défaut du HOOK, pas une saisie de l'utilisateur : 500, pas 422."""
+    async def _prepare(
+        self, compiled: CompiledDocType, data: Mapping[str, Any], old: Mapping[str, Any] | None, name: str | None, *, frozen: bool = False,
+    ) -> dict[str, Any]:
+        """Schéma strict, hooks de confiance du type écrit, puis liens et fichiers ; le secret scellé à la fin. Un document invalide ici est un
+        défaut du HOOK qui écrit, pas une saisie de l'utilisateur : 500, pas 422. Un REFUS d'un hook du type écrit (`DocumentValidationError`)
+        reste ce qu'il est : il défait toute la transaction, comme ailleurs. `frozen` : un document soumis, dont seuls les champs `allow_on_submit`
+        changent et qui ne relit plus ses liens (`fetch_from`), comme `DocumentService.update`."""
+        def schema(d: Any, **_: Any) -> dict[str, Any]:
+            return compiled.validate_data(dict(d))
+
         try:
-            clean = compiled.validate_data(dict(data))
-            clean = await self._svc._fetched(self._system, self._q, compiled, clean, old)
+            clean = schema(data)
+            clean = await self._svc._trusted_phase(self._ctx, compiled, self._q, name, clean, old, schema)
+            if frozen:
+                self._svc._check_frozen(compiled, clean, old or {})  # après ses hooks : ni l'appelant ni un hook du type ne dégèle rien
+            else:
+                clean = await self._svc._fetched(self._system, self._q, compiled, clean, old)
             await self._svc._check_links(self._system, self._q, compiled, clean, old)
             await self._svc._check_files(self._q, compiled, clean, old)
+        except DocumentValidationError:
+            raise
         except ValidationFailed as e:
             self._svc._log.error("hook wrote an invalid document", doctype=compiled.definition.name, errors=e.details)
             raise DoctypeError(
                 "hook_invalid_write", f"un hook a écrit un {compiled.definition.name} invalide", status=500, details=e.details
             ) from None
-        return clean
+        return self._svc._seal(compiled, clean, old)
 
     def _writable(self, doctype: str) -> CompiledDocType:
         compiled = self._svc._doctype(doctype)
@@ -2884,12 +2952,13 @@ class _Transaction:
                 f"{doctype} est un DocType virtuel (source externe) : un hook n'y écrit pas dans sa transaction, écrivez-le par l'API",
                 status=500,
             )
-        if compiled.definition.hooks.all_refs():
+        if any(ref.startswith("action:") for ref in compiled.definition.hooks.all_refs()):
             raise DoctypeError(
                 "hook_not_supported",
-                f"{doctype} déclare des hooks, qui ne s'exécutent pas pour une écriture faite depuis un hook : écrivez-le par l'API",
+                f"{doctype} déclare des hooks `action:` (plugins sandboxés, hors transaction) : un hook ne l'écrit pas dans sa transaction, écrivez-le par l'API",
                 status=500,
             )
+        self._svc._require_hooks(compiled)  # un hook du type écrit indisponible refuse l'écriture (503), jamais ne la laisse passer sans lui
         return compiled
 
 
