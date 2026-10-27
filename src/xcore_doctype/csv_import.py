@@ -12,7 +12,10 @@ et pourquoi le reste a été refusé (comme l'action en lot). Bornes : `MAX_ROWS
   pas (table, mot de passe, fichier, champ calculé `fetch_from`) refuse TOUT l'import avant la première ligne : rien n'est à moitié compris.
 - **Cellules** : du texte, converti selon le champ (`cell_value`) ; une cellule vide n'est pas envoyée (à la création le défaut s'applique,
   à la mise à jour la valeur enregistrée reste). Un nombre français (`1 234,5`) et une date française (`31/12/2026`) sont acceptés ; rien
-  n'est arrondi ni deviné au-delà (un décimal de trop est refusé comme par l'API).
+  n'est arrondi ni deviné au-delà (un décimal de trop est refusé comme par l'API). Chiffres ASCII seulement : `١٢` n'est pas 12.
+- **Ce qui ne doit jamais faire tomber l'import** : une cellule qui fait déborder la conversion (date-heure hors bornes, JSON trop
+  profond) est une erreur de SA ligne ; l'en-tête est borné (`MAX_COLUMNS`) avant tout travail ; au-delà de `MAX_SECONDS`, les lignes
+  restantes ne sont pas traitées et le rapport le dit ligne par ligne (`not_processed` : réimportez-les), une requête ne dure pas des heures.
 """
 
 from __future__ import annotations
@@ -22,11 +25,14 @@ import io
 import json
 import math
 import re
+import time
+from collections import Counter
 from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING, Any
 
 from .decimals import canonical
 from .errors import DoctypeError, ValidationFailed
+from .overrides import KIND_FORM
 from .schema import DECIMAL_TYPES, FILE_TYPES, FieldDef
 
 if TYPE_CHECKING:
@@ -35,6 +41,9 @@ if TYPE_CHECKING:
 
 MAX_ROWS = 1000
 MAX_CHARS = 2_000_000
+MAX_COLUMNS = 300  # au-delà, ce n'est pas un export d'un type (500 champs au plus par habillage) : refusé avant toute correspondance
+MAX_SECONDS = 120.0  # temps de traitement d'un import ; les lignes au-delà sont rendues `not_processed`
+_clock = time.monotonic  # remplaçable par un test
 MODES = ("insert", "update")
 NAME_COLUMNS = ("name", "nom")  # « Nom » : l'en-tête que l'export du Desk donne au nom du document
 # Les colonnes système qu'un export du Desk contient (nom technique ou libellé) : lues, jamais écrites, donc ignorées à l'import.
@@ -43,8 +52,11 @@ NAME, SKIP = "name", "skip"
 _NEUTRALISED = re.compile(r"^'[=+\-@\t\r]")  # l'export du Desk désamorce une formule par une apostrophe : on la retire au retour
 NOT_IMPORTED = ("Table", "Password", *FILE_TYPES)
 _SPACES = re.compile(r"[\s\u00a0\u202f]")
-_FR_DATE = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})$")
-_TIME = re.compile(r"^(\d{1,2}):(\d{2})(?::(\d{2}))?$")
+_FR_DATE = re.compile(r"^([0-9]{1,2})/([0-9]{1,2})/([0-9]{4})$")
+_TIME = re.compile(r"^([0-9]{1,2}):([0-9]{2})(?::([0-9]{2}))?$")
+_INT = re.compile(r"-?[0-9]+")
+_FLOAT = re.compile(r"-?([0-9]+\.?[0-9]*|\.[0-9]+)")
+_CLOCK = re.compile(r"([0-9]+):([0-5][0-9])(?::([0-5][0-9]))?")  # [0-9], jamais \d : `\d` et `int()` acceptent « ١٢ » (12)
 TRUE_WORDS = frozenset({"1", "oui", "vrai", "true", "yes", "o", "y", "x"})
 FALSE_WORDS = frozenset({"0", "non", "faux", "false", "no", "n"})
 
@@ -52,9 +64,10 @@ FALSE_WORDS = frozenset({"0", "non", "faux", "false", "no", "n"})
 # ── Lire le fichier ─────────────────────────────────────────────────────────────────────────────
 
 
-def read_csv(content: str) -> tuple[list[str], list[list[str]]]:
-    """L'en-tête et les lignes. Le séparateur est celui de l'en-tête (`,`, `;` — celui d'Excel en français — ou tabulation) ; le BOM qu'Excel
-    ajoute est retiré ; une ligne entièrement vide est ignorée."""
+def read_csv(content: str) -> tuple[list[str], list[tuple[int, list[str]]]]:
+    """L'en-tête et les lignes, chacune avec le numéro de la ligne du FICHIER où elle commence (une ligne vide sautée ou une cellule sur
+    plusieurs lignes ne décale pas les numéros du rapport). Le séparateur est celui de l'en-tête (`,`, `;` — celui d'Excel en français — ou
+    tabulation) ; le BOM qu'Excel ajoute est retiré ; une ligne entièrement vide est ignorée."""
     if not isinstance(content, str):
         raise ValidationFailed("content : le texte du fichier CSV", code="csv_invalid")
     if len(content) > MAX_CHARS:
@@ -62,13 +75,22 @@ def read_csv(content: str) -> tuple[list[str], list[list[str]]]:
     content = content.lstrip("\ufeff")
     first = content.split("\n", 1)[0]
     delimiter = max((";", ",", "\t"), key=first.count) if any(d in first for d in ";,\t") else ","
+    csv.field_size_limit(MAX_CHARS)  # une cellule peut être longue (texte, JSON) : seule la borne du fichier compte (131072 par défaut)
+    records: list[tuple[int, list[str]]] = []
+    reader = csv.reader(io.StringIO(content, newline=""), delimiter=delimiter)
+    start = 1
     try:
-        records = [r for r in csv.reader(io.StringIO(content, newline=""), delimiter=delimiter) if any(c.strip() for c in r)]
+        for record in reader:
+            if any(c.strip() for c in record):
+                records.append((start, record))
+            start = reader.line_num + 1
     except csv.Error as e:
-        raise ValidationFailed(f"CSV illisible : {e}", code="csv_invalid") from None
+        raise ValidationFailed(f"CSV illisible (ligne {reader.line_num}) : {e}", code="csv_invalid") from None
     if not records:
         raise ValidationFailed("Le fichier est vide : il faut au moins un en-tête et une ligne", code="csv_empty")
-    header, rows = [c.strip() for c in records[0]], records[1:]
+    header, rows = [c.strip() for c in records[0][1]], records[1:]
+    if len(header) > MAX_COLUMNS:
+        raise ValidationFailed(f"{len(header)} colonnes : {MAX_COLUMNS} au plus", code="csv_too_large")
     if not rows:
         raise ValidationFailed("Le fichier n'a que son en-tête : aucune ligne à importer", code="csv_empty")
     if len(rows) > MAX_ROWS:
@@ -76,13 +98,16 @@ def read_csv(content: str) -> tuple[list[str], list[list[str]]]:
     return header, rows
 
 
-def map_columns(definition: Any, header: list[str], mode: str) -> list[FieldDef | str]:
-    """Chaque colonne -> son champ, `NAME` (le nom du document) ou `SKIP` (une colonne système, ignorée). Un champ passe avant tout. Tout problème d'en-tête refuse l'import entier, colonne par colonne."""
+def map_columns(definition: Any, header: list[str], mode: str, labels: dict[str, str] | None = None) -> list[FieldDef | str]:
+    """Chaque colonne -> son champ, `NAME` (le nom du document) ou `SKIP` (une colonne système, ignorée). Un champ passe avant tout. Tout
+    problème d'en-tête refuse l'import entier, colonne par colonne. `labels` : les libellés que l'habillage de l'ORGANISATION donne aux champs
+    (ceux que le Desk montre, donc ceux de son export et de son modèle), reconnus en plus de ceux du YAML."""
     by_name = {f.fieldname: f for f in definition.fields}
     by_label: dict[str, list[FieldDef]] = {}
     for f in definition.fields:
-        if f.label:
-            by_label.setdefault(f.label.casefold(), []).append(f)
+        for label in {x.casefold() for x in (f.label, (labels or {}).get(f.fieldname)) if isinstance(x, str) and x}:
+            by_label.setdefault(label, []).append(f)
+    occurrences = Counter(c.strip().casefold() for c in header)
     out: list[FieldDef | str] = []
     seen: set[str] = set()
     seen_names: set[str] = set()
@@ -91,7 +116,7 @@ def map_columns(definition: Any, header: list[str], mode: str) -> list[FieldDef 
         column = raw.strip()
         where = f"colonne {i + 1} ({column or 'sans titre'})"
         found = [by_name[column]] if column in by_name else by_label.get(column.casefold(), [])
-        if column.casefold() in NAME_COLUMNS and [c.strip().casefold() for c in header].count(column.casefold()) > 1 and column.casefold() not in seen_names:
+        if column.casefold() in NAME_COLUMNS and occurrences[column.casefold()] > 1 and column.casefold() not in seen_names:
             found = []  # « Nom » deux fois (le nom du document puis un champ libellé « Nom », comme l'export l'écrit) : le premier est le nom
         seen_names.add(column.casefold())
         if len(found) > 1:
@@ -140,19 +165,19 @@ def cell_value(field: FieldDef, text: str) -> Any:
     """La valeur API d'une cellule de texte non vide, ou `ValueError` (message pour un humain). Le service revalide tout ensuite."""
     kind = field.fieldtype
     if kind == "Duration":
-        clock = re.fullmatch(r"(\d+):([0-5]\d)(?::([0-5]\d))?", text.strip())  # « 1:30:00 », la forme de l'export
+        clock = _CLOCK.fullmatch(text.strip())  # « 1:30:00 », la forme de l'export
         if clock:
             return int(clock[1]) * 3600 + int(clock[2]) * 60 + int(clock[3] or 0)
     if kind in ("Int", "Rating", "Duration"):
         cleaned = _number_text(text)
-        if not re.fullmatch(r"-?\d+", cleaned):
+        if not _INT.fullmatch(cleaned):
             raise ValueError("durée attendue (secondes ou h:mm:ss)" if kind == "Duration" else "nombre entier attendu")
         return int(cleaned)
     if kind in ("Number", "Percent"):
         cleaned = _number_text(text)
-        if re.fullmatch(r"-?\d+", cleaned):
+        if _INT.fullmatch(cleaned):
             return int(cleaned)
-        if not re.fullmatch(r"-?(\d+\.?\d*|\.\d+)", cleaned):
+        if not _FLOAT.fullmatch(cleaned):
             raise ValueError("nombre attendu")
         number = float(cleaned)
         if not math.isfinite(number):
@@ -181,6 +206,8 @@ def cell_value(field: FieldDef, text: str) -> Any:
             raise ValueError("date-heure ISO attendue (AAAA-MM-JJThh:mm:ssZ)") from None
         if moment.tzinfo is None:
             raise ValueError("précisez le fuseau (Z pour UTC, ou +01:00…)")
+        if moment.microsecond:
+            raise ValueError("secondes entières attendues (la date-heure est stockée à la seconde)")
         return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     if kind == "Time":
         found = _TIME.match(text.strip())
@@ -216,6 +243,8 @@ def row_data(columns: list[FieldDef | str], row: list[str]) -> tuple[str | None,
             data[field.fieldname] = cell_value(field, cell)
         except ValueError as e:
             errors.append({"field": field.fieldname, "msg": str(e), "type": "csv_value"})
+        except (OverflowError, RecursionError):  # date-heure hors bornes une fois en UTC, JSON trop profond : l'erreur de CETTE ligne
+            errors.append({"field": field.fieldname, "msg": "valeur hors limites", "type": "csv_value"})
     return name, data, errors
 
 
@@ -235,10 +264,16 @@ async def import_csv(documents: "DocumentService", ctx: "RequestContext", doctyp
         raise ValidationFailed(f"{doctype} est un document unique : rien à importer", code="single_document")
     documents._scope(ctx, compiled, "create" if mode == "insert" else "write")
     header, rows = read_csv(content)
-    columns = map_columns(definition, header, mode)
+    # Le type tel que CETTE organisation le voit (§3.5) : ses champs ajoutés s'importent et une mise à jour ne les perd pas.
+    view, _ = await documents._tenant_view(ctx, compiled)
+    columns = map_columns(view.definition, header, mode, await _organisation_labels(documents, ctx, doctype))
+    known = view.definition.field_map
     results: list[dict[str, Any]] = []
-    for index, row in enumerate(rows):
-        number = index + 2
+    deadline = _clock() + MAX_SECONDS
+    for number, row in rows:
+        if _clock() > deadline:
+            results.append({"row": number, "ok": False, "code": "not_processed", "message": "Non traitée : l'import a atteint sa durée maximale, réimportez cette ligne"})
+            continue
         name, data, errors = row_data(columns, row)
         if errors:
             results.append({"row": number, "ok": False, "code": "invalid_value", "message": "Valeur illisible", "details": errors})
@@ -248,7 +283,10 @@ async def import_csv(documents: "DocumentService", ctx: "RequestContext", doctyp
                 made = await documents.create(ctx, doctype, data, name=name)
             else:
                 current = await documents.get(ctx, doctype, name or "")
-                made = await documents.update(ctx, doctype, current["name"], {**current["data"], **data}, current["version"])
+                # Seulement les champs que le type déclare AUJOURD'HUI (comme le formulaire) : un champ retiré du YAML ou d'une extension
+                # disparue reste dans les données enregistrées, et le renvoyer ferait refuser toute ligne (`extra_forbidden`).
+                stored = {k: v for k, v in current["data"].items() if k in known}
+                made = await documents.update(ctx, doctype, current["name"], {**stored, **data}, current["version"])
             results.append({"row": number, "ok": True, "name": made["name"]})
         except DoctypeError as e:
             results.append({"row": number, "ok": False, "code": e.code, "message": e.message, **({"details": e.details} if e.details else {})})
@@ -257,3 +295,14 @@ async def import_csv(documents: "DocumentService", ctx: "RequestContext", doctyp
             results.append({"row": number, "ok": False, "code": "internal_error", "message": "Erreur interne"})
     done = sum(1 for r in results if r["ok"])
     return {"results": results, "done": done, "failed": len(results) - done}
+
+
+async def _organisation_labels(documents: "DocumentService", ctx: "RequestContext", doctype: str) -> dict[str, str]:
+    """Les libellés que l'habillage de formulaire de l'organisation donne aux champs : le Desk les montre, les exporte et les met dans son
+    modèle, l'import doit donc les reconnaître. Pas d'habillage : aucun."""
+    async with documents._query(ctx) as q:
+        found = await q.get_override(KIND_FORM, doctype)
+    tweaks = ((found or {}).get("config") or {}).get("fields")
+    if not isinstance(tweaks, dict):
+        return {}
+    return {name: spec["label"] for name, spec in tweaks.items() if isinstance(spec, dict) and isinstance(spec.get("label"), str)}
