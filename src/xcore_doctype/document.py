@@ -1004,7 +1004,9 @@ class DocumentService:
                 now = self._clock().astimezone(self._timezone)
                 name = series.render(now, await q.next_number(doctype, series.key(now)))
             try:
-                doc = await q.insert(doctype, name, clean, amended_from=amended_from)
+                # Un document naît dans le PREMIER état de son workflow : sans état initial, aucune transition ne partirait.
+                wf = compiled.definition.workflow
+                doc = await q.insert(doctype, name, clean, amended_from=amended_from, workflow_state=wf.initial if wf else None)
             except AlreadyExists:
                 if amended_from is None:
                     raise
@@ -1258,9 +1260,123 @@ class DocumentService:
         # la soumission de l'amendement, elle, les rejugera.
         return await self._create(ctx, compiled, create, carried, name=new_name, amended_from=source.name, copied=carried)
 
+    async def available_transitions(self, ctx: RequestContext, doctype: str, name: str) -> dict[str, Any]:
+        """Les transitions que CET appelant peut faire sur CE document, maintenant (pour les boutons de la fiche).
+
+        Le Desk ne peut pas en décider seul : le jeton d'xauth ne porte pas les grants, et `not_owner` dépend du document. Le
+        serveur répond donc avec l'état courant et la liste des actions ouvertes — il revérifie tout à l'écriture de toute façon.
+        """
+        self._enter(ctx, "doc.transitions", doctype, name)
+        compiled = self._doctype(doctype)
+        wf = compiled.definition.workflow
+        if wf is None:
+            return {"state": None, "transitions": []}
+        async with self._query(ctx) as q:
+            doc = await q.get(doctype, name, scope=self._scope(ctx, compiled, "read"))
+        if doc is None:
+            raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+        state = doc.workflow_state or wf.initial
+        out = []
+        for t in wf.transitions:
+            if t.from_ != state:
+                continue
+            grant = compiled.definition.transition_grant(t)
+            if grant is None or grant not in ctx.permissions:
+                continue
+            if t.not_owner and doc.owner == ctx.owner_id:
+                continue
+            out.append({"action": t.action, "to": t.to, "docstatus": wf.docstatus_of(t.to),
+                        **({"description": t.description} if t.description else {})})
+        return {"state": state, "docstatus": doc.docstatus, "version": doc.version, "transitions": out}
+
+    async def workflow_transition(self, ctx: RequestContext, doctype: str, name: str, action: Any, version: Any) -> dict[str, Any]:
+        """Fait passer un document d'un état de workflow à l'autre (doc/programme.md §3.2).
+
+        Ce qui est vérifié, dans cet ordre : le document est LISIBLE (hors périmètre = introuvable, comme partout), la
+        transition existe et part de l'état où le document se trouve, l'appelant détient le GRANT de cette transition (jamais un
+        rôle), et `not_owner` écarte celui qui a créé le document — on n'approuve pas sa propre demande.
+
+        Puis UNE écriture conditionnelle sur (version, état) : c'est elle qui rend la transition unique sous concurrence. Si
+        l'état d'arrivée change le `docstatus`, le document est soumis ou annulé PAR LA MÊME écriture — un seul automate — et
+        les hooks `on_submit` / `before_cancel` / `on_cancel` tournent dans la transaction, exactement comme pour `/submit`.
+        """
+        self._enter(ctx, "doc.transition", doctype, name)
+        compiled = self._doctype(doctype)
+        wf = compiled.definition.workflow
+        if wf is None:
+            raise ValidationFailed(f"{doctype} n'a pas de workflow", code="no_workflow")
+        if not isinstance(action, str) or not action.strip():
+            raise ValidationFailed("`action` est obligatoire", code="missing_field")
+        if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+            raise ValidationFailed("`version` (entier >= 1) est obligatoire", code="version_required")
+        transition = wf.transition(action.strip())
+        if transition is None:
+            raise ValidationFailed(f"{action!r} n'est pas une transition de {doctype}", code="unknown_transition")
+
+        read = self._scope(ctx, compiled, "read")
+        async with self._query(ctx) as q:
+            current = await q.get(doctype, name, scope=read)
+        if current is None:
+            raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+        state = current.workflow_state or wf.initial
+        if state != transition.from_:
+            raise InvalidDocStatus(f"{doctype} {name!r} est dans l'état {state!r}, pas {transition.from_!r}")
+        grant = compiled.definition.transition_grant(transition)
+        if grant is None or grant not in ctx.permissions:
+            raise PermissionDenied()
+        if transition.not_owner and current.owner == ctx.owner_id:
+            # Séparation des pouvoirs. Le dire n'apprend rien de secret (l'appelant détient le grant, il voit le document) et
+            # évite de laisser croire à un droit manquant : c'est la règle du workflow, pas une permission à demander.
+            raise DoctypeError("not_owner", "Vous ne pouvez pas faire cette transition sur un document dont vous êtes l'auteur", status=403)
+        if current.version != version:
+            raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {version})")
+
+        before, after = wf.docstatus_of(state), wf.docstatus_of(transition.to)
+        self._require_hooks(compiled)
+        if after == SUBMITTED and before != SUBMITTED:
+            try:  # figer, c'est écrire : la définition a pu changer depuis la saisie
+                compiled.validate_data(current.data, rules=await self._form_rules(ctx, compiled))
+            except ValidationFailed as e:
+                raise ValidationFailed("Ce document ne respecte plus la définition : corrigez-le avant cette transition", details=e.details) from None
+
+        async with self._query(ctx) as q:
+            doc = await q.workflow_transition(
+                doctype, name,
+                source_state=current.workflow_state, target_state=transition.to,
+                target_status=after, expected_version=version, scope=read,
+            )
+            # L'historique parle le vocabulaire fermé des versions : une transition qui soumet ou annule s'y inscrit comme
+            # telle (ces entrées-là ne se purgent jamais), les autres sont des modifications de l'état.
+            recorded = "submit" if after == SUBMITTED and before != SUBMITTED else "cancel" if after == CANCELLED and before != CANCELLED else "update"
+            await self._record(q, ctx, compiled, doc, recorded, {"workflow_state": state}, {"workflow_state": transition.to})
+            written: list[DocEvent] = []
+            if after == CANCELLED and before != CANCELLED:
+                await q.drop_unique(doctype, name)
+                written += await self._tx_hooks(ctx, compiled, q, doc, "before_cancel")
+                written += await self._tx_hooks(ctx, compiled, q, doc, "on_cancel")
+            elif after == SUBMITTED and before != SUBMITTED:
+                written += await self._tx_hooks(ctx, compiled, q, doc, "on_submit")
+        await self._emit(
+            f"doctype.{doctype}.after_transition",
+            {"doctype": doctype, "name": doc.name, "tenant_id": ctx.tenant_id, "version": doc.version, "user": ctx.user_id,
+             "action": transition.action, "from": state, "to": transition.to, "docstatus": doc.docstatus},
+        )
+        self._rules(ctx, compiled, doc, recorded, None)
+        self._dispatch(written)
+        return self._present(doc)
+
     async def _transition(self, ctx: RequestContext, doctype: str, name: str, version: Any, action: str) -> dict[str, Any]:
         self._enter(ctx, f"doc.{action}", doctype, name)
         compiled = self._submittable(doctype)
+        if (wf := compiled.definition.workflow) is not None:
+            # Un seul automate : sur un type à workflow, c'est une TRANSITION qui soumet ou annule. Laisser `/submit` passer
+            # ici reviendrait à contourner l'étape d'approbation — et à poser un `docstatus` qu'aucun état ne porte.
+            wanted = [t.action for t in wf.transitions if wf.docstatus_of(t.to) == (SUBMITTED if action == "submit" else CANCELLED)]
+            raise DoctypeError(
+                "workflow_transition_required",
+                f"{doctype} suit un workflow : employez une transition" + (f" ({', '.join(wanted)})" if wanted else ""),
+                status=409,
+            )
         if not isinstance(version, int) or isinstance(version, bool) or version < 1:
             raise ValidationFailed("`version` (entier >= 1) est obligatoire", code="version_required")
         current, scope = await self._load_for_change(ctx, compiled, name, action)  # type: ignore[arg-type]

@@ -80,6 +80,7 @@ class StoredDoc:
     version: int
     docstatus: int = DRAFT
     amended_from: str | None = None
+    workflow_state: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -91,6 +92,7 @@ class StoredDoc:
             "version": self.version,
             "docstatus": self.docstatus,
             "amended_from": self.amended_from,
+            **({"workflow_state": self.workflow_state} if self.workflow_state is not None else {}),
             "data": self.data,
         }
 
@@ -244,8 +246,8 @@ class Query:
         return [self._doc(r) for r in (await self._session.execute(stmt)).mappings().all()]
 
     # ── Écriture ──────────────────────────────────────────────
-    async def insert(self, doctype: str, name: str, data: dict[str, Any], *, amended_from: str | None = None) -> StoredDoc:
-        values = self._new_row(doctype, name, data, amended_from)
+    async def insert(self, doctype: str, name: str, data: dict[str, Any], *, amended_from: str | None = None, workflow_state: str | None = None) -> StoredDoc:
+        values = self._new_row(doctype, name, data, amended_from, workflow_state)
         try:
             await self._session.execute(insert(self._t).values(**values))
         except IntegrityError as e:
@@ -265,7 +267,7 @@ class Query:
         )
         return (await self._session.execute(stmt)).rowcount > 0
 
-    def _new_row(self, doctype: str, name: str, data: dict[str, Any], amended_from: str | None) -> dict[str, Any]:
+    def _new_row(self, doctype: str, name: str, data: dict[str, Any], amended_from: str | None, workflow_state: str | None = None) -> dict[str, Any]:
         now = datetime.now(UTC)
         return {
             "tenant_id": self._tenant,
@@ -278,6 +280,7 @@ class Query:
             "version": 1,
             "docstatus": DRAFT,
             "amended_from": amended_from,
+            "workflow_state": workflow_state,
         }
 
     async def update(
@@ -305,6 +308,48 @@ class Query:
         if result.rowcount == 0:
             await self._explain_miss(doctype, name, expected_version, locked=True, expected_status=docstatus)
         return await self._reload(doctype, name)
+
+    async def workflow_transition(
+        self,
+        doctype: str,
+        name: str,
+        *,
+        source_state: str | None,
+        target_state: str,
+        target_status: int,
+        expected_version: int,
+        scope: Scope,
+    ) -> StoredDoc:
+        """Fait passer le document d'un état de workflow à l'autre, `data` inchangé (doc/programme.md §3.2).
+
+        Même principe que `transition` pour la soumission : UN `UPDATE` conditionnel sur l'ÉTAT et la version. C'est lui qui rend
+        la transition unique — deux personnes qui approuvent en même temps, une seule passe, l'autre voit le document déjà
+        approuvé — et sur SQLite c'est cette écriture qui prend le verrou de la base avant que les hooks ne lisent quoi que ce
+        soit. `target_status` suit l'état : un seul automate, les deux bougent ensemble.
+        """
+        stmt = (
+            update(self._t)
+            .where(
+                self._scope(
+                    self._t.c.doctype == doctype,
+                    self._t.c.name == name,
+                    self._t.c.version == expected_version,
+                    self._t.c.workflow_state.is_(None) if source_state is None else self._t.c.workflow_state == source_state,
+                    scope=scope,
+                )
+            )
+            .values(workflow_state=target_state, docstatus=target_status, modified=datetime.now(UTC), version=self._t.c.version + 1)
+        )
+        if (await self._session.execute(stmt)).rowcount == 0:
+            found = await self.get(doctype, name, scope=scope)
+            if found is None:
+                raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
+            if found.version != expected_version:
+                raise VersionConflict(f"{doctype} {name!r} a été modifié (version attendue {expected_version})")
+            raise InvalidDocStatus(f"{doctype} {name!r} est dans l'état {found.workflow_state!r}")
+        doc = await self.get(doctype, name, scope=scope)
+        assert doc is not None
+        return doc
 
     async def transition(
         self, doctype: str, name: str, *, source: int, target: int, expected_version: int, scope: Scope
@@ -1405,4 +1450,5 @@ class Query:
             version=row["version"],
             docstatus=row["docstatus"],
             amended_from=row["amended_from"],
+            workflow_state=row.get("workflow_state"),
         )

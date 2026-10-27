@@ -66,6 +66,9 @@ _Fieldname = Annotated[str, StringConstraints(pattern=_FIELDNAME_RE.pattern)]
 
 # `link_filters` (D29) : au plus ce nombre de champs filtrés, et le préfixe qui désigne un champ du document au lieu d'une valeur.
 MAX_LINK_FILTERS = 10
+# Un workflow (doc/programme.md §3.2) reste lisible d'un coup d'œil : au-delà, c'est un moteur de processus, pas un document.
+MAX_WORKFLOW_STATES = 20
+MAX_WORKFLOW_TRANSITIONS = 50
 # Onglets d'une fiche : un `tab` par section (le même pour les sections qui se suivent). Au-delà, une fiche n'est plus lisible.
 MAX_TABS = 12
 LINK_FILTER_REF = "$"
@@ -484,6 +487,85 @@ class GrantSpec:
         return out
 
 
+class WorkflowState(BaseModel):
+    """Un état du workflow, et l'état de document (`docstatus`) qu'il porte.
+
+    C'est la décision centrale (doc/programme.md §3.2) : un document a UN automate, pas deux. Un état déclare donc dans quel
+    `docstatus` il met le document, et c'est la transition qui fait passer les deux ensemble — plutôt qu'un champ d'état
+    parallèle à `docstatus`, qui autoriserait « Approuvé » sur un document annulé.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: Annotated[str, StringConstraints(min_length=1, max_length=60, strip_whitespace=True)]
+    docstatus: Literal["draft", "submitted", "cancelled"] = "draft"
+
+
+class WorkflowTransition(BaseModel):
+    """Le passage d'un état à un autre, et qui a le droit de le faire.
+
+    Le droit est un GRANT, jamais un rôle : un nom de rôle est du texte libre propre à chaque organisation chez auth, et aucune
+    règle de DocType ne s'y fie (`PermissionEntry._not_a_role`). Sans `grant`, la convention s'applique :
+    `<module>:<doctype>:workflow_<action>`.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    action: Annotated[str, StringConstraints(min_length=1, max_length=60, strip_whitespace=True)]
+    from_: Annotated[str, StringConstraints(min_length=1, max_length=60, strip_whitespace=True)] = PydanticField(alias="from")
+    to: Annotated[str, StringConstraints(min_length=1, max_length=60, strip_whitespace=True)]
+    grant: _Grant | None = None
+    # Séparation des pouvoirs : celui qui a créé le document ne peut pas faire cette transition (approuver sa propre demande).
+    not_owner: StrictBool = False
+    description: Annotated[str, StringConstraints(min_length=1, max_length=500)] | None = None
+
+
+class WorkflowDef(BaseModel):
+    """L'automate d'un DocType : des états, des transitions, et rien d'exécutable.
+
+    Le PREMIER état est celui d'un document qui vient d'être créé. Dès qu'un état porte un `docstatus` autre que `draft`, le
+    DocType doit être `submittable` : c'est le workflow qui soumet et annule, et `/submit` et `/cancel` lui laissent la place.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+    states: Annotated[list[WorkflowState], PydanticField(min_length=2, max_length=MAX_WORKFLOW_STATES)]
+    transitions: Annotated[list[WorkflowTransition], PydanticField(min_length=1, max_length=MAX_WORKFLOW_TRANSITIONS)]
+
+    @model_validator(mode="after")
+    def _check(self) -> "WorkflowDef":
+        names = [st.name for st in self.states]
+        if len(set(names)) != len(names):
+            raise ValueError("workflow.states: deux états portent le même nom")
+        known = set(names)
+        actions: set[str] = set()
+        for t in self.transitions:
+            if t.action in actions:
+                raise ValueError(f"workflow.transitions: deux transitions s'appellent {t.action!r}")
+            actions.add(t.action)
+            for where, state in (("from", t.from_), ("to", t.to)):
+                if state not in known:
+                    raise ValueError(f"workflow.transitions[{t.action}].{where}: état inconnu {state!r}")
+            if t.from_ == t.to:
+                raise ValueError(f"workflow.transitions[{t.action}]: `from` et `to` sont le même état")
+        reachable = {self.states[0].name} | {t.to for t in self.transitions}
+        if orphans := known - reachable:
+            raise ValueError(f"workflow.states: {', '.join(sorted(orphans))} : aucun chemin n'y mène (ni état initial, ni cible d'une transition)")
+        return self
+
+    @property
+    def initial(self) -> str:
+        return self.states[0].name
+
+    def docstatus_of(self, state: str) -> int:
+        """Le `docstatus` que cet état impose (0 brouillon, 1 soumis, 2 annulé)."""
+        word = next(st.docstatus for st in self.states if st.name == state)
+        return {"draft": 0, "submitted": 1, "cancelled": 2}[word]
+
+    def transition(self, action: str) -> WorkflowTransition | None:
+        return next((t for t in self.transitions if t.action == action), None)
+
+
 class LayoutSection(BaseModel):
     """Une section du formulaire : des colonnes de champs (doc/doctype.md §12), rangée dans un onglet quand la fiche en a (`tab`, voir
     `layout_tab_problems`)."""
@@ -630,6 +712,9 @@ class DocTypeDef(BaseModel):
     naming: Literal["hash", "owner", "prompt"] | NamingField | NamingSeries = "hash"
     # Renommer un document (`POST …/rename`) : son nom change et tous les Link qui le citent le suivent. Pas pour un nom qui n'est pas libre (`owner`, `field`, série).
     allow_rename: StrictBool = False
+    # L'automate métier du document (doc/programme.md §3.2) : des états, des transitions, et qui a le droit de les faire.
+    # Il PILOTE `docstatus` au lieu de s'y ajouter : un document a un seul état. `/submit` et `/cancel` lui cèdent la place.
+    workflow: WorkflowDef | None = None
     # DocType « enfant » : ses documents sont les LIGNES d'un champ Table d'un autre DocType (tableau JSON dans le parent).
     # Il n'a ni route, ni droits, ni hooks, ni nom propre : voir `_child_rules`.
     istable: StrictBool = False
@@ -773,6 +858,22 @@ class DocTypeDef(BaseModel):
                     raise ValueError(f"{f.fieldname}: `link_filters.{key}` : {value!r} ne nomme aucun champ de ce DocType")
                 if source.fieldtype in ("Table", "Password", *FILE_TYPES):
                     raise ValueError(f"{f.fieldname}: `link_filters.{key}` : un champ {source.fieldtype} ne peut pas servir de valeur de filtre")
+        if (wf := self.workflow) is not None:
+            if self.istable or self.single or self.source is not None:
+                raise ValueError("workflow: pas de sens pour un DocType enfant, unique ou virtuel")
+            if not self.track_changes:
+                raise ValueError("workflow: exige `track_changes` (qui a fait passer le document d'un état à l'autre est le sujet même)")
+            if any(st.docstatus != "draft" for st in wf.states) and not self.submittable:
+                raise ValueError("workflow: un état `submitted` ou `cancelled` exige `submittable: true` (c'est le workflow qui soumet)")
+            for t in wf.transitions:
+                if t.grant is None:
+                    continue
+                if t.grant == AUTHENTICATED:
+                    raise ValueError(f"workflow.transitions[{t.action}].grant: `@authenticated` n'ouvre pas une transition (il faut un grant)")
+                # Même règle que partout ailleurs (`PermissionEntry._not_a_role`) : un nom de rôle est du texte libre, propre à
+                # chaque organisation chez auth. Une transition s'ouvre par un grant, qu'auth compose depuis les rôles.
+                if t.grant.split(":", 1)[0] == "role":
+                    raise ValueError(f"workflow.transitions[{t.action}].grant: les rôles ne sont pas pris en charge, citez un grant")
         if "max_versions" in self.model_fields_set and not self.track_changes:
             raise ValueError("max_versions: exige `track_changes: true` (sans historique, rien à purger)")
         naming = self.naming
@@ -1036,6 +1137,16 @@ class DocTypeDef(BaseModel):
                     defaults[e.grant] = (
                         _CONVENTION_LABEL[CONVENTION[action]].format(label=label) if conventional else f"{label} : {e.grant}"
                     )
+        # Les transitions du workflow ouvrent leurs propres grants : sans eux, auth ne les connaît pas et personne ne peut
+        # jamais faire passer un document d'un état à l'autre. Un grant par transition dit exactement qui fait quoi.
+        for t in self.workflow.transitions if self.workflow is not None else ():
+            grant = self.transition_grant(t)
+            if grant is None:
+                continue
+            defaults.setdefault(grant, f"{t.action} {label}")
+            mine = explicit.setdefault(grant, {})  # tout nom de `defaults` doit aussi exister ici (voir la construction ci-dessous)
+            if t.description is not None:
+                mine.setdefault("description", t.description)
         return {
             name: GrantSpec(
                 name=name,
@@ -1045,6 +1156,14 @@ class DocTypeDef(BaseModel):
             )
             for name in sorted(defaults)
         }
+
+    def transition_grant(self, t: "WorkflowTransition") -> str | None:
+        """Le grant qui ouvre cette transition : celui que le YAML nomme, sinon la convention `<module>:<doctype>:workflow_<action>`."""
+        if t.grant is not None:
+            return t.grant
+        if self.module is None:
+            return None
+        return f"{self.module}:{slugify(self.name)}:workflow_{slugify(t.action)}"
 
     @property
     def unique_fields(self) -> tuple[str, ...]:

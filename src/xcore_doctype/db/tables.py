@@ -75,6 +75,10 @@ def build_system_tables() -> SystemTables:
         # `server_default` : les lignes d'une base antérieure à cette colonne sont des brouillons (db/access.py l'ajoute).
         Column("docstatus", SmallInteger, nullable=False, server_default="0"),
         Column("amended_from", String(140), nullable=True),  # le document annulé dont celui-ci est l'amendement
+        # L'état du workflow (doc/programme.md §3.2), quand le DocType en a un. Une COLONNE, et pas un champ de `data` :
+        # la transition est un UPDATE conditionnel sur cet état, ce qui fait que deux approbations simultanées n'en passent
+        # qu'une. Nullable : les types sans workflow n'en ont pas, et les bases antérieures s'en accommodent.
+        Column("workflow_state", String(60), nullable=True),
         # D13 : unicité composite, un `name` identique chez deux tenants n'est pas un conflit.
         PrimaryKeyConstraint("tenant_id", "doctype", "name", name="pk_xdt_document"),
         Index("ix_xdt_document_list", "tenant_id", "doctype", "modified"),

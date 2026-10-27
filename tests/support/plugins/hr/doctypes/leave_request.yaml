@@ -18,6 +18,23 @@ layout:
   - section: Demande
     columns: [[employee, leave_type, reason], [from_date, to_date]]
   - columns: [[comment]]
+# L'automate métier vit ICI, dans le YAML du DocType, à côté des champs (doc/programme.md §3.2). Il PILOTE `docstatus` au lieu
+# de s'y ajouter : un état dit dans quel état de document il met la demande, et c'est la transition qui fait passer les deux
+# ensemble. `/submit` et `/cancel` sont alors refusés sur ce type — on passe par une transition, sinon on contournerait
+# l'approbation. Chaque transition ouvre son grant (`hr:leave_request:workflow_approuver`…), jamais un rôle.
+workflow:
+  states:
+    - { name: Brouillon }
+    - { name: À approuver }
+    - { name: Approuvée, docstatus: submitted }
+    - { name: Refusée, docstatus: cancelled }
+  transitions:
+    - { action: Soumettre, from: Brouillon, to: À approuver, description: "Envoyer sa demande au responsable" }
+    # `not_owner` : on n'approuve pas sa propre demande. C'est la séparation des pouvoirs, vérifiée par le serveur.
+    - { action: Approuver, from: À approuver, to: Approuvée, not_owner: true }
+    - { action: Refuser, from: À approuver, to: Refusée, not_owner: true }
+    - { action: Reprendre, from: À approuver, to: Brouillon, description: "Rendre la demande à son auteur pour correction" }
+
 views:
   calendar: { start: from_date, end: to_date, title: employee, color: leave_type }
   gantt: { start: from_date, end: to_date, title: employee, color: leave_type }

@@ -366,6 +366,19 @@ async def scenario_transition(env: Env):
         assert await q.delete("Customer", "shared", scope=ALL) is False  # ...ni supprimable
 
 
+async def scenario_workflow_transition(env: Env):
+    """Une transition de workflow ne touche que le document de B, et ne passe qu'UNE fois (état + version dans le WHERE)."""
+    async with env.q(B) as q:
+        with pytest.raises(NotFound):  # n'existe que chez A
+            await q.workflow_transition("Customer", "only-a", source_state=None, target_state="Approuvé", target_status=1, expected_version=1, scope=ALL)
+    async with env.q(B) as q:
+        doc = await q.workflow_transition("Customer", "shared", source_state=None, target_state="Approuvé", target_status=1, expected_version=1, scope=ALL)
+        assert (doc.workflow_state, doc.docstatus, doc.version) == ("Approuvé", 1, 2)
+    async with env.q(B) as q:
+        with pytest.raises(InvalidDocStatus):  # l'état a changé : rejouer ne passe pas
+            await q.workflow_transition("Customer", "shared", source_state=None, target_state="Approuvé", target_status=1, expected_version=2, scope=ALL)
+
+
 async def scenario_delete(env: Env):
     async with env.q(B) as q:
         assert await q.delete("Customer", "only-a", scope=ALL) is False
@@ -857,6 +870,7 @@ SCENARIOS = {
     "delete": scenario_delete,
     "insert_if_absent": scenario_insert_if_absent,
     "transition": scenario_transition,
+    "workflow_transition": scenario_workflow_transition,
 }
 
 

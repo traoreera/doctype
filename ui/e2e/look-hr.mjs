@@ -61,7 +61,11 @@ if (!exists) {
   const types = ['Congé payé', 'Maladie', 'Formation', 'Congé payé', 'Sans solde']
   for (let i = 0; i < 7; i++) {
     const lr = log(await post('/doc/Leave Request', { employee: ids[1 + (i % 6)], leave_type: types[i % 5], from_date: day(i * 4 - 6), to_date: day(i * 4 - 3), reason: 'Demande' }), 'leave')
-    if (i % 2 === 0) log(await api(cfg, 'POST', `/doc/Leave Request/${encodeURIComponent(lr.name)}/submit`, { version: 1 }), 'submit')
+    // Demande de congé suit un workflow : on passe par ses transitions (soumettre, puis approuver), jamais par `/submit`.
+    if (i % 2 === 0) {
+      const sent = log(await api(cfg, 'POST', `/doc/Leave Request/${encodeURIComponent(lr.name)}/transition`, { action: 'Soumettre', version: 1 }), 'soumettre')
+      log(await api(cfg, 'POST', `/doc/Leave Request/${encodeURIComponent(lr.name)}/transition`, { action: 'Approuver', version: sent.json?.version ?? 2 }), 'approuver')
+    }
   }
   const s = (await api(cfg, 'GET', '/doc/HR Settings/HR Settings')).json
   log(await api(cfg, 'PUT', '/doc/HR Settings/HR Settings', { version: s.version, data: { ...s.data, hr_email: 'rh@exemple.fr', annual_leave_days: 27 } }), 'settings')

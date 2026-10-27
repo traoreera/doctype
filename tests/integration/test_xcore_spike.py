@@ -86,6 +86,8 @@ EXPECTED_ROUTES = sorted(
         ("GET", "/doc/{doctype}/{name}"),
         ("PUT", "/doc/{doctype}/{name}"),
         ("POST", "/doc/{doctype}/{name}/submit"),
+        ("POST", "/doc/{doctype}/{name}/transition"),  # workflow : la transition remplace /submit sur un type qui en a un
+        ("GET", "/transitions/{doctype}/{name}"),
         ("POST", "/doc/{doctype}/{name}/cancel"),
         ("POST", "/doc/{doctype}/{name}/amend"),
         ("POST", "/doc/{doctype}/{name}/rename"),

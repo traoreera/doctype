@@ -722,6 +722,21 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.submit", op)
 
+    @action("doc.transitions")
+    async def doc_transitions(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.documents.available_transitions(ctx, _need(payload, "doctype"), _need(payload, "name"))
+
+        return await self._run("doc.transitions", op)
+
+    @action("doc.transition")
+    async def doc_workflow_transition(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return {"doc": await self.documents.workflow_transition(
+                ctx, _need(payload, "doctype"), _need(payload, "name"), payload.get("action"), payload.get("version"))}
+
+        return await self._run("doc.transition", op)
+
     @action("doc.cancel")
     async def doc_cancel(self, payload: dict) -> dict:
         async def op(ctx: RequestContext) -> dict:

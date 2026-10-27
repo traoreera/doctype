@@ -57,6 +57,12 @@ class TransitionBody(BaseModel):
     version: int
 
 
+class WorkflowBody(TransitionBody):
+    """Une transition de workflow : son nom, et la version lue — le serveur refuse si le document a bougé depuis."""
+
+    action: str
+
+
 class SaveViewBody(BaseModel):
     """Vue sauvegardée (phase C) : configuration d'une liste, privée à son propriétaire."""
 
@@ -253,6 +259,16 @@ def build_router(documents: DocumentService, settings: ContextSettings) -> APIRo
     @router.post("/doc/{doctype}/{name}/submit")
     async def doc_submit(doctype: str, name: str, body: TransitionBody, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.submit(ctx, doctype, name, body.version))
+
+    @router.get("/transitions/{doctype}/{name}")
+    async def doc_transitions(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):
+        """Ce que l'appelant peut faire maintenant sur ce document : l'état courant et les transitions ouvertes."""
+        return await _guard(documents.available_transitions(ctx, doctype, name))
+
+    @router.post("/doc/{doctype}/{name}/transition")
+    async def doc_workflow_transition(doctype: str, name: str, body: WorkflowBody, ctx: RequestContext = Depends(ctx_dep)):
+        """Fait passer le document à l'état suivant du workflow. C'est ce qui remplace `/submit` sur un type qui en a un."""
+        return await _guard(documents.workflow_transition(ctx, doctype, name, body.action, body.version))
 
     @router.post("/doc/{doctype}/{name}/cancel")
     async def doc_cancel(doctype: str, name: str, body: TransitionBody, ctx: RequestContext = Depends(ctx_dep)):
