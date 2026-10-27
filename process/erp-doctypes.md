@@ -40,8 +40,26 @@ Deux conséquences qui décident de toute la forme :
   propriétaire). Les 22 namespaces de grants cohabitent donc dans un seul chargement.
 - **Les Link peuvent être mutuels.** `validate_links()` n'est appelé qu'une fois, tout est enregistré. C'est
   indispensable ici : les modules forment un **cycle de 15** (`accounts ↔ setup ↔ stock ↔ selling ↔ buying…`),
-  et les relations Table en forment un de 5. Aucun ordre de chargement n'existe, donc **« un plugin par module »
-  est impossible** — `requires` ordonne, il ne dénoue pas un cycle.
+  et les relations Table en forment un de 5. Aucun ordre de chargement n'existe — `requires` ordonne, il ne
+  dénoue pas un cycle.
+
+**Mise à jour du 27 octobre : « un plugin par module » est possible** (`DocTypeChannel.load_dir(…, peers=True)`,
+`tests/unit/test_peer_modules.py`). Chaque module devient un vrai plugin, propriétaire de ses DocTypes (`module` ==
+nom du plugin, ses grants, son espace, ses hooks), chargé dans N'IMPORTE QUEL ordre :
+
+- un Link vers un module frère pas encore chargé n'est pas une faute : le type est **incomplet** — il se lit, mais
+  toute écriture est refusée (503 `doctype_incomplete`, qui nomme le frère attendu) — jusqu'à l'arrivée du frère ;
+- un parent dont la table enfant vient d'un frère pas encore chargé **attend**, invisible, et s'enregistre à son
+  arrivée ; ses grants sont déclarés dès le chargement de son plugin (`GrantCatalog` compte les types en attente) ;
+- à l'arrivée d'un frère, les contrôles qui dépendent de lui (`fetch_from`, `link_filters`, `unit_from`,
+  `target_status`, `created_from`) se refont chez ceux qui le citent ; une faute révélée ainsi **brise** le type qui
+  cite (écritures refusées, journalisé), pas le chargement du frère ;
+- un frère qui part remet en attente ce qui dépendait de ses tables ; il revient, tout revient.
+
+Mesuré : les 23 dossiers de `doctypes/`, chargés comme 23 plugins en ordre alphabétique, inverse et mélangé, donnent
+exactement le registre d'un chargement unique, chaque plugin ne déclarant que les grants de son namespace. Sans
+`peers`, une cible inconnue reste une erreur de chargement (une faute de frappe se voit tout de suite) ; avec, elle
+reste « incomplète » et le dit.
 
 **Grants et espaces.** `rbac.declare` doit être émis par un plugin portant le nom du namespace, et
 `load_workspaces` exige `name == nom du plugin`. Un module se dote donc d'un plugin minuscule, qui n'apporte
@@ -101,7 +119,8 @@ Dans l'ordre de valeur :
    écrire**. Pas de comptabilisation au grand livre, pas de solde de stock. Le moteur a ce qu'il faut
    (`on_submit` + `event.tx` dans la transaction du document), tout est à écrire — module par module,
    `accounts` et `stock` d'abord, les autres s'appuient dessus. C'est l'essentiel du travail restant.
-2. **Les 22 plugins déclarants** (§2), sans quoi aucun grant n'est déclaré à xauth.
+2. **Les plugins de module** (§2) : un par module, propriétaire de ses DocTypes (`load_dir(…, peers=True)`), qui déclare ses
+   grants, son espace et enregistre ses hooks — sans quoi aucun grant n'est déclaré à xauth.
 3. **`target_status` sur les liens entre pièces.** Rien n'empêche aujourd'hui une facture de citer une commande
    annulée.
 4. **Les workflows.** Zéro `workflow:` : aucun circuit d'approbation. Le constructeur existe

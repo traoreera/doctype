@@ -31,8 +31,10 @@ class GrantCatalog:
         """Tous les grants cités. Un grant partagé par plusieurs DocTypes garde le premier libellé (ordre alphabétique) et
         n'est délégable par un tenant que si TOUS les DocTypes qui le citent l'acceptent : le plus restrictif l'emporte."""
         merged: dict[str, GrantSpec] = {}
-        for name in self._registry.names():
-            for grant, spec in self._registry.get(name).definition.grant_specs().items():
+        # Les DocTypes qui attendent la table d'un module frère comptent : leur plugin déclare ses grants UNE fois, à son chargement.
+        definitions = [self._registry.get(name).definition for name in self._registry.names()] + self._registry.waiting_definitions()
+        for definition in sorted(definitions, key=lambda d: d.name):
+            for grant, spec in definition.grant_specs().items():
                 prev = merged.get(grant)
                 if prev is None:
                     merged[grant] = spec

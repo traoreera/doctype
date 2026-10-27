@@ -2342,6 +2342,11 @@ class DocumentService:
         Après un reload d'xcore-doctype, le registre est vide jusqu'à ce que les plugins dépendants se
         réenregistrent ; ignorer le hook reviendrait à sauvegarder SANS la validation que la définition promet.
         """
+        if why := self._registry.incomplete(compiled.definition.name):
+            # Un module frère (`load_dir(…, peers=True)`) qu'il cite n'est pas (encore) là, ou sa définition contredit celle-ci : on n'écrit
+            # pas un document dont on ne peut pas vérifier les liens. Il se lit ; il s'écrit dès que le frère est chargé.
+            self._log.error("doctype incomplete, save refused", doctype=compiled.definition.name, why=why)
+            raise DoctypeError("doctype_incomplete", f"{compiled.definition.name} attend un autre module : " + "; ".join(why), status=503)
         refs = compiled.definition.hooks.all_refs()
         missing = [r for r in refs if not r.startswith("action:") and self._hooks.get(r) is None]
         if any(r.startswith("action:") for r in refs) and self._actions is None:
