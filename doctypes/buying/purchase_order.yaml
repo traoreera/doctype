@@ -647,3 +647,26 @@ views:
     start: from_date
     end: to_date
     title: title
+created_from:
+- source: Material Request
+  label: Commande d'achat
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: material_request_item
+      document: material_request
+      quantity:
+        source: qty
+        target: qty
+- source: Supplier Quotation
+  label: Commande d'achat
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: supplier_quotation_item
+      document: supplier_quotation
+      quantity:
+        source: qty
+        target: qty

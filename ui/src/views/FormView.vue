@@ -28,7 +28,7 @@ import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchS
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
-import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldMeta, type LayoutSection } from '@/lib/types'
+import { SUBMITTED, type AvailableMapping, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldMeta, type LayoutSection } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -115,6 +115,25 @@ async function loadFlow(): Promise<void> {
   }
 }
 watch(() => [record.value?.name, record.value?.version, meta.value?.name] as const, () => void loadFlow(), { immediate: true })
+
+/** Relu à chaque version du document : ce qu'il reste à faire change dès qu'un document cible est enregistré. */
+let mapTicket = 0
+async function loadMappings(): Promise<void> {
+  const rec = record.value
+  if (!rec || isNew.value) {
+    mappings.value = []
+    return
+  }
+  const mine = ++mapTicket
+  const target = { doctype: props.doctype, name: rec.name }
+  try {
+    const answer = await api.mappings(target.doctype, target.name)
+    if (mine === mapTicket && props.doctype === target.doctype && record.value?.name === target.name) mappings.value = answer.mappings
+  } catch {
+    if (mine === mapTicket) mappings.value = [] // pas de bouton plutôt qu'un bouton qui échouera
+  }
+}
+watch(() => [record.value?.name, record.value?.version, meta.value?.name] as const, () => void loadMappings(), { immediate: true })
 // Le document que le serveur vient de rendre est la source la plus fraîche (une transition le met à jour avant que la
 // relecture des actions ouvertes n'arrive) ; l'état des transitions ne sert que de repli.
 const flowState = computed(() => record.value?.workflow_state ?? flow.value?.state ?? null)
@@ -184,6 +203,23 @@ async function load(): Promise<void> {
     const m = await metaStore.get(doctype)
     if (mine !== loadTicket) return
     if (name === null) {
+      // « Créer depuis » (doc/mapper.md) : `?from=<Type>/<nom>`. Les valeurs viennent du SERVEUR (il seul connaît le
+      // reste à faire), pas de l'URL : un rechargement les retrouve.
+      const mapFrom = typeof route.query.from === 'string' ? route.query.from : ''
+      if (mapFrom) {
+        const cut = mapFrom.indexOf('/')
+        const [srcType, srcName] = cut < 0 ? ['', ''] : [mapFrom.slice(0, cut), mapFrom.slice(cut + 1)]
+        if (!srcType || !srcName) return init(m, null)
+        try {
+          const draft = await api.mapped(doctype, srcType, srcName)
+          if (mine !== loadTicket) return
+          init(m, null, draft.values as Values)
+          mappedFrom.value = { doctype: srcType, name: srcName }
+        } catch (e) {
+          if (mine === loadTicket) { init(m, null); notify.error(e) }
+        }
+        return
+      }
       const from = typeof route.query.copy === 'string' ? route.query.copy : ''
       if (!from) return init(m, null)
       try {
@@ -556,6 +592,20 @@ function runExtension(action: Owned<FormAction>): void {
   if (ctx) void extensions.run(action.extension, (tools) => action.run({ ...ctx, ...tools, reload: reloadRecord }))
 }
 
+/** Les types que l'on peut créer depuis CE document : lus au serveur, qui seul sait ce qu'il reste à faire. */
+const mappings = ref<AvailableMapping[]>([])
+const mappedFrom = ref<{ doctype: string; name: string } | null>(null)
+const createMenu = ref<InstanceType<typeof Menu> | null>(null)
+
+const createItems = computed<MoreItem[]>(() =>
+  mappings.value.map((m) => ({
+    label: m.label,
+    icon: 'pi pi-arrow-right',
+    testid: `map-${m.doctype}`,
+    command: () => void router.push({ name: 'form', params: { doctype: m.doctype, name: 'new' }, query: { from: `${props.doctype}/${record.value?.name ?? ""}` } }),
+  })),
+)
+
 const moreItems = computed<MoreItem[]>(() => {
   const out: MoreItem[] = []
   if (canRename.value) out.push({ label: t.form.rename, icon: 'pi pi-pencil', testid: 'rename', command: openRename })
@@ -730,6 +780,18 @@ onBeforeUnmount(() => {
           :data-testid="`ext-action-${a.extension}-${a.label}`"
           @click="runExtension(a)"
         />
+        <Button
+          v-if="createItems.length"
+          :label="t.form.createFrom"
+          icon="pi pi-plus"
+          text
+          severity="secondary"
+          size="small"
+          aria-haspopup="menu"
+          data-testid="create-from"
+          @click="createMenu?.toggle($event)"
+        />
+        <Menu ref="createMenu" :model="createItems" popup />
         <Button v-if="moreItems.length" icon="pi pi-ellipsis-h" text severity="secondary" size="small" :aria-label="t.list.more" :title="t.list.more" aria-haspopup="menu" data-testid="more-actions" @click="moreMenu?.toggle($event)" />
         <Menu ref="moreMenu" :model="moreItems" popup>
           <template #item="{ item, props: slot }">
@@ -755,6 +817,7 @@ onBeforeUnmount(() => {
       </Message>
       <Message v-if="frozen && submittable" severity="info" class="banner-error" data-testid="form-frozen">{{ editableAfterSubmit ? t.form.frozenEditable : t.form.frozen }}</Message>
       <Message v-if="copiedFrom" severity="info" class="banner-error" data-testid="form-copy">{{ t.form.duplicatedFrom(copiedFrom) }}</Message>
+      <Message v-if="mappedFrom" severity="info" class="banner-error" data-testid="form-mapped">{{ t.form.mappedFrom(mappedFrom.doctype, mappedFrom.name) }}</Message>
 
       <form @submit.prevent="save">
         <!-- `naming: prompt` : le nom du document se choisit à la création (il sert d'identifiant dans les liens). -->

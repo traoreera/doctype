@@ -14,8 +14,29 @@ Exposé : `GET /mappings/{doctype}/{name}` et `GET /map/{doctype}/{source}/{name
 `doc.map` (le manifeste ouvre déjà `doc.*`). La provenance est vérifiée à l'écriture
 (`DocumentService._check_mapping_rows`, §4).
 
-**Pas encore fait : le Desk** (le menu « Créer > » et `?from=`). Et le mapper ne fait pas bouger le stock : un
-`Stock Entry` soumis n'écrit toujours rien au grand livre, l'ERP n'ayant aucun hook (voir doc/erp-doctypes.md §4).
+Desk : bouton **« Créer »** sur la fiche (`FormView`, `createItems`, `data-testid="create-from"`), qui n'apparaît
+que si le serveur offre au moins une cible ; route `#/app/<Cible>/new?from=<Type>/<nom>` dont les valeurs sont
+demandées au SERVEUR (lui seul connaît le reste à faire), donc un rechargement les retrouve ; bandeau de
+provenance ; relecture à chaque version du document, le reste à faire changeant dès qu'une cible est enregistrée.
+
+Déclarations dans l'ERP : **10 couples** (`doctypes/`), de Devis → Commande → Livraison → Facture côté vente,
+Demande de matériel → Commande d'achat → Réception → Facture côté achat, et Demande de matériel → Mouvement de
+stock.
+
+**Pas fait : les hooks.** Un `Stock Entry` soumis n'écrit toujours rien au grand livre et ne bouge aucun solde.
+Et ce n'est pas qu'il reste à écrire du YAML : déclarer `hooks:` sans un plugin qui les ENREGISTRE
+(`doctype_hooks`) fait échouer **toute sauvegarde** du type en 503 `hook_unavailable`
+(`document.py`). Or les DocTypes de l'ERP arrivent par `doctypes_dirs`, sans plugin propriétaire. Il faut donc
+d'abord un plugin `stock` (grants, espace, enregistrement des hooks), puis la comptabilisation elle-même —
+registre immuable, soldes de `Bin`, refus de stock négatif sous concurrence, contre-écritures à l'annulation.
+C'est un module entier : voir `tests/support/plugins/stock/src/ledger.py`, qui le fait pour le jeu d'essai.
+
+**`read_only` dans une ligne : non réparable en l'état.** Une ligne ne porte que ses champs déclarés, sans
+aucune identité (vérifié) : « la même ligne » avant et après une modification est indécidable, et une
+vérification positionnelle refuserait à tort dès qu'une ligne est supprimée, puisque tout décale. Le correctif
+est de donner une identité aux lignes — un changement de conception, pas un correctif. Le risque concret est
+clos autrement : `_check_mapping_rows` compare l'ENSEMBLE des provenances, il est donc insensible au
+réordonnancement et refuse toute provenance nouvelle ou modifiée.
 
 **Correction à la conception (§4).** L'exemption `read_only` prévue est INUTILE, et pour une raison qu'il faut
 connaître : `read_only` n'est pas appliqué à la création (rien de stocké à comparer) et **ne l'est jamais sur un

@@ -690,3 +690,15 @@ views:
   calendar:
     start: posting_date
     title: customer_name
+created_from:
+- source: Sales Order
+  label: Bon de livraison
+  source_status: submitted
+  lines:
+    items:
+      from: items
+      reference: so_detail
+      document: against_sales_order
+      quantity:
+        source: qty
+        target: qty
