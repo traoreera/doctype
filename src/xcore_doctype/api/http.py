@@ -56,12 +56,6 @@ class UpdateBody(BaseModel):
     data: dict[str, Any]
 
 
-class PatchBody(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    version: int | None = None
-    data: dict[str, Any]
-
-
 class TransitionBody(BaseModel):
     """Soumettre ou annuler : la version lue par le client, comme pour une modification (D15)."""
 
@@ -279,11 +273,6 @@ def build_router(documents: DocumentService, settings: ContextSettings, *, devel
     @router.put("/doc/{doctype}/{name}")
     async def doc_update(doctype: str, name: str, body: UpdateBody, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.update(ctx, doctype, name, body.data, body.version))
-
-    @router.patch("/doc/{doctype}/{name}")
-    async def doc_patch(doctype: str, name: str, body: PatchBody, ctx: RequestContext = Depends(ctx_dep)):
-        """Quelques champs seulement : les autres restent ce qu'ils sont (`DocumentService.patch`)."""
-        return await _guard(documents.patch(ctx, doctype, name, body.data, body.version))
 
     @router.post("/doc/{doctype}/{name}/submit")
     async def doc_submit(doctype: str, name: str, body: TransitionBody, ctx: RequestContext = Depends(ctx_dep)):

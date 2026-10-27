@@ -1108,27 +1108,6 @@ class DocumentService:
         await self._after_save(ctx, compiled, doc, None)
         return self._present(doc)
 
-    async def patch(
-        self, ctx: RequestContext, doctype: str, name: str, data: Any, version: Any = None
-    ) -> dict[str, Any]:
-        """Modifier QUELQUES champs : les autres restent ce qu'ils sont. `update` remplace `data` entier (D15) ; un automate, un import
-        ou un appel d'API qui ne connaît que les champs qu'il change effacerait les autres.
-
-        Rien de neuf côté règles : on lit le document avec le périmètre de l'appelant, on garde les champs que CETTE organisation déclare
-        aujourd'hui (comme le formulaire : un champ retiré du YAML ou d'une extension disparue ferait refuser l'écriture, `extra_forbidden`),
-        on y pose ce qui est envoyé, et tout repasse par `update`. Un secret lu se lit `********`, ce qui veut dire « inchangé ».
-        `version` : celle que l'appelant a lue (un changement entre-temps donne 409) ; absente, celle qu'on vient de lire — l'écriture
-        reste conditionnelle à CETTE version, donc deux modifications simultanées ne s'écrasent jamais en silence. `{}` ne change aucun
-        champ mais juge quand même le droit d'écrire CE document, comme un `update` qui renvoie le document tel quel.
-        """
-        if not isinstance(data, dict):
-            raise ValidationFailed("data : un objet, les champs à modifier", code="patch_data")
-        current = await self.get(ctx, doctype, name)
-        view, _ = await self._tenant_view(ctx, self._doctype(doctype))
-        known = view.definition.field_map
-        stored = {k: v for k, v in current["data"].items() if k in known}
-        return await self.update(ctx, doctype, current["name"], {**stored, **data}, current["version"] if version is None else version)
-
     async def update(
         self, ctx: RequestContext, doctype: str, name: str, data: Any, version: Any
     ) -> dict[str, Any]:
