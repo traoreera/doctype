@@ -29,7 +29,7 @@ import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchS
 import { formatTimestamp, relativeTime } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
-import { SUBMITTED, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
+import { SUBMITTED, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldBase, type FieldMeta, type FormOverride, type LayoutSection } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -102,6 +102,31 @@ const canDuplicate = computed(
 )
 const canRename = computed(() => !isNew.value && !frozen.value && !props.embedded && !!meta.value?.allow_rename && meta.value?.rights.write !== 'none')
 const transitions = computed(() => transitionsFor(meta.value, record.value))
+
+// ── Workflow : ce que CET utilisateur peut faire sur CE document, demandé au serveur ───────────────────────────────
+// Le Desk ne peut pas en juger : le jeton d'xauth ne porte pas les grants, et `not_owner` dépend du document. On relit donc
+// à chaque version (après un enregistrement comme après une transition), et jamais sur un document neuf.
+const flow = ref<AvailableTransitions | null>(null)
+let flowTicket = 0
+async function loadFlow(): Promise<void> {
+  const rec = record.value
+  if (!meta.value?.workflow || !rec || isNew.value) {
+    flow.value = null
+    return
+  }
+  const mine = ++flowTicket
+  const target = { doctype: props.doctype, name: rec.name }
+  try {
+    const answer = await api.transitions(target.doctype, target.name)
+    if (mine === flowTicket && props.doctype === target.doctype && record.value?.name === target.name) flow.value = answer
+  } catch {
+    if (mine === flowTicket) flow.value = null // pas de boutons plutôt qu'un bouton qui échouera
+  }
+}
+watch(() => [record.value?.name, record.value?.version, meta.value?.name] as const, () => void loadFlow(), { immediate: true })
+// Le document que le serveur vient de rendre est la source la plus fraîche (une transition le met à jour avant que la
+// relecture des actions ouvertes n'arrive) ; l'état des transitions ne sert que de repli.
+const flowState = computed(() => record.value?.workflow_state ?? flow.value?.state ?? null)
 const submittable = computed(() => !!meta.value?.submittable && !isNew.value)
 
 const heading = computed(() => {
@@ -434,6 +459,37 @@ function confirmTransition(kind: 'submit' | 'cancel'): void {
   })
 }
 
+function confirmFlow(action: AvailableTransition): void {
+  confirm.require({
+    header: action.action,
+    message: t.form.confirmTransition(action.action, action.to, action.docstatus !== 0),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: action.action,
+    rejectLabel: t.cancel,
+    acceptProps: { severity: action.docstatus === 2 ? 'danger' : 'primary' },
+    rejectProps: { severity: 'secondary', text: true },
+    accept: () => void runFlow(action),
+  })
+}
+
+async function runFlow(action: AvailableTransition): Promise<void> {
+  const rec = record.value
+  if (!rec || saving.value) return
+  banner.value = null
+  saving.value = true
+  try {
+    const moved = await api.transition(props.doctype, rec.name, action.action, rec.version)
+    if (meta.value) init(meta.value, moved, undefined, true)
+    notify.success(action.action)
+    await loadFlow()
+  } catch (e) {
+    banner.value = describeError(e) // le serveur reste l'autorité : état changé entre-temps, droit retiré, document figé
+    notify.error(e)
+  } finally {
+    saving.value = false
+  }
+}
+
 async function amend(): Promise<void> {
   const current = record.value
   if (!current || saving.value) return
@@ -674,6 +730,11 @@ onBeforeUnmount(() => {
         <FileThumb v-if="meta?.image_field && saved?.[meta.image_field]" :id="saved[meta.image_field]" :size="44" round :alt="heading" />
         <h1 data-testid="form-title">{{ heading }}</h1>
         <span v-if="isNew || touched" class="status-pill warn" data-testid="status">{{ t.form.notSaved }}</span>
+        <!-- Avec un workflow, l'état métier dit plus que « Brouillon / Soumis » : c'est lui qu'on montre, avec la teinte de
+             l'état de document qu'il porte (gris en cours, vert soumis, rouge annulé). -->
+        <span v-else-if="flowState && record" :class="['status-pill', statusTone(record.docstatus)]" data-testid="status" :data-docstatus="record.docstatus" :data-state="flowState">
+          {{ flowState }}
+        </span>
         <span v-else-if="submittable && record" :class="['status-pill', statusTone(record.docstatus)]" data-testid="status" :data-docstatus="record.docstatus">
           {{ statusLabel(record.docstatus) }}
         </span>
@@ -690,6 +751,20 @@ onBeforeUnmount(() => {
           :title="touched ? t.form.saveFirst : undefined"
           data-testid="submit"
           @click="confirmTransition('submit')"
+        />
+        <Button
+          v-for="a in flow?.transitions ?? []"
+          :key="a.action"
+          :label="a.action"
+          :icon="a.docstatus === 2 ? 'pi pi-ban' : a.docstatus === 1 ? 'pi pi-check' : 'pi pi-send'"
+          :severity="a.docstatus === 2 ? 'danger' : undefined"
+          :outlined="a.docstatus === 2"
+          size="small"
+          :loading="saving"
+          :disabled="touched"
+          :title="touched ? t.form.saveFirst : a.description"
+          :data-testid="`flow-${a.action}`"
+          @click="confirmFlow(a)"
         />
         <Button v-if="transitions.cancel" :label="t.form.cancelDocument" icon="pi pi-ban" severity="danger" outlined size="small" :loading="saving" data-testid="cancel-doc" @click="confirmTransition('cancel')" />
         <Button v-if="transitions.amend" :label="t.form.amend" icon="pi pi-copy" size="small" :loading="saving" data-testid="amend" @click="amend" />

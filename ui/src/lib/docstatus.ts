@@ -23,6 +23,11 @@ export function transitionsFor(meta: DocTypeMeta | null, rec: DocRecord | null):
   const none = { submit: false, cancel: false, amend: false }
   if (!meta?.submittable || !rec) return none
   const rights = meta.rights
+  // Un type à WORKFLOW ne se soumet ni ne s'annule directement : le serveur y refuse `/submit` et `/cancel` (409), c'est une
+  // transition qui fait passer le document. Offrir ces boutons serait un piège. Amender reste possible : c'est une création.
+  if (meta.workflow) {
+    return { ...none, amend: statusOf(rec) === CANCELLED && rights.create !== 'none' }
+  }
   return {
     submit: statusOf(rec) === DRAFT && rights.submit !== 'none',
     cancel: statusOf(rec) === SUBMITTED && rights.cancel !== 'none',

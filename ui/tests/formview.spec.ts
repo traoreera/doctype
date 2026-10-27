@@ -422,3 +422,76 @@ describe('FormView : saisie', () => {
     expect(localStorage.getItem(recentsKey(null, ''))).toBeNull()
   })
 })
+
+// ── Workflow : les boutons viennent du SERVEUR, pas d'une déduction du Desk ────────────────────────────────────────
+const FLOW: DocTypeMeta = {
+  ...CUSTOMER,
+  name: 'Leave Request',
+  label: 'Demande de congé',
+  submittable: true,
+  workflow: {
+    states: [{ name: 'Brouillon' }, { name: 'À approuver' }, { name: 'Approuvée', docstatus: 'submitted' }],
+    transitions: [
+      { action: 'Soumettre', from: 'Brouillon', to: 'À approuver' },
+      { action: 'Approuver', from: 'À approuver', to: 'Approuvée', not_owner: true },
+    ],
+  },
+}
+
+function flowSetup(transitions: { action: string; to: string; docstatus: number }[], state = 'Brouillon') {
+  const doc = rec('Leave Request', 'CG-1', { customer_name: 'Congés d’août' })
+  // Les mocks sont tenus ici : `setup` ne les expose pas dans son type (il infère celui de son littéral).
+  const play = vi.fn(async (_d: string, _n: string, action: string) => ({
+    ...doc, version: 2, workflow_state: transitions.find((t) => t.action === action)?.to ?? state,
+    docstatus: transitions.find((t) => t.action === action)?.docstatus ?? 0,
+  }))
+  const ctx = setup({
+    meta: vi.fn(async () => FLOW),
+    get: vi.fn(async () => ({ ...doc, workflow_state: state })),
+    transitions: vi.fn(async () => ({ state, docstatus: 0, version: 1, transitions })),
+    transition: play,
+  })
+  return { ...ctx, play }
+}
+
+describe('FormView : workflow', () => {
+  beforeEach(() => { asked.length = 0 })
+
+  it('affiche un bouton par transition ouverte, et JAMAIS « Soumettre »', async () => {
+    const { w, router } = flowSetup([{ action: 'Soumettre', to: 'À approuver', docstatus: 0 }])
+    await router.push('/app/Leave Request/CG-1')
+    await flushPromises()
+    expect(w.find('[data-testid="flow-Soumettre"]').exists()).toBe(true)
+    // `/submit` est refusé par le serveur sur un type à workflow : offrir le bouton serait un piège.
+    expect(w.find('[data-testid="submit"]').exists()).toBe(false)
+  })
+
+  it('n’offre que ce que le serveur autorise : l’auteur ne voit pas « Approuver »', async () => {
+    const { w, router } = flowSetup([], 'À approuver') // le serveur a écarté la transition (not_owner)
+    await router.push('/app/Leave Request/CG-1')
+    await flushPromises()
+    expect(w.find('[data-testid="flow-Approuver"]').exists()).toBe(false)
+    expect(w.find('[data-testid="status"]').text()).toBe('À approuver')
+  })
+
+  it('la pastille montre l’état métier, pas « Brouillon »', async () => {
+    const { w, router } = flowSetup([], 'À approuver')
+    await router.push('/app/Leave Request/CG-1')
+    await flushPromises()
+    const pill = w.find('[data-testid="status"]')
+    expect(pill.text()).toBe('À approuver')
+    expect(pill.attributes('data-state')).toBe('À approuver')
+  })
+
+  it('jouer une transition : confirmation, appel du serveur, état relu', async () => {
+    const { w, play, router } = flowSetup([{ action: 'Soumettre', to: 'À approuver', docstatus: 0 }])
+    await router.push('/app/Leave Request/CG-1')
+    await flushPromises()
+    await w.find('[data-testid="flow-Soumettre"]').trigger('click')
+    expect(asked).toHaveLength(1) // on confirme toujours : une transition n'est pas annulable
+    await asked[0]!.accept!()
+    await flushPromises()
+    expect(play).toHaveBeenCalledWith('Leave Request', 'CG-1', 'Soumettre', 1)
+    expect(w.find('[data-testid="status"]').text()).toBe('À approuver')
+  })
+})

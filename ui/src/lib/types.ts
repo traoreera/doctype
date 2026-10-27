@@ -55,6 +55,41 @@ export interface DocTypeSummary {
   settings_group?: 'general'
 }
 
+/** Un état du workflow et l'état de document qu'il impose (0 brouillon, 1 soumis, 2 annulé). */
+export interface WorkflowState {
+  name: string
+  docstatus?: 'draft' | 'submitted' | 'cancelled'
+}
+
+/** Une transition déclarée. Le Desk ne juge PAS qui peut la faire : il demande au serveur (`api.transitions`). */
+export interface WorkflowTransition {
+  action: string
+  from: string
+  to: string
+  not_owner?: boolean
+  description?: string
+}
+
+export interface WorkflowDef {
+  states: WorkflowState[]
+  transitions: WorkflowTransition[]
+}
+
+/** Ce que l'utilisateur peut faire sur CE document, maintenant : le serveur seul le sait (grants hors du jeton, `not_owner`). */
+export interface AvailableTransition {
+  action: string
+  to: string
+  docstatus: number
+  description?: string
+}
+
+export interface AvailableTransitions {
+  state: string | null
+  docstatus?: number
+  version?: number
+  transitions: AvailableTransition[]
+}
+
 /** Les préférences d'affichage de l'organisation (nom, logo, couleur, format de date), servies à tout utilisateur identifié. */
 export interface OrgPreferences {
   organization_name?: string
@@ -375,6 +410,8 @@ export interface DocTypeMeta {
   source?: string
   /** Brouillon -> soumis -> annulé : un document soumis est figé (voir `docstatus`). */
   submittable?: boolean
+  /** L'automate métier du type : c'est lui qui soumet et annule, `/submit` est alors refusé par le serveur. */
+  workflow?: WorkflowDef
   /** Fuseau de l'organisation : « aujourd'hui » (défaut `today` des dates) s'y lit, comme sur le serveur. */
   timezone?: string
   /** `"hash"` : un identifiant aléatoire (sans sens pour un humain) ; `{series}` : un numéro lisible (`FA-2026-00001`). */
@@ -398,6 +435,8 @@ export interface DocRecord {
   docstatus: number
   /** Le document annulé dont celui-ci est l'amendement. */
   amended_from: string | null
+  /** L'état du workflow, pour un type qui en a un (absent sinon). */
+  workflow_state?: string | null
   data: DocData
 }
 

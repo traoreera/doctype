@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { SERVICES } from '@/lib/services'
 import type { HttpRequest, Transport } from '@/lib/transport'
+import { t } from '@/i18n'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 
@@ -31,14 +32,16 @@ function mountView(component: unknown, reply: { status: number; json: unknown })
 }
 const posts = (sent: HttpRequest[], suffix: string) => sent.filter((r) => r.method === 'POST' && r.url.endsWith(suffix))
 
-describe('Connexion par e-mail', () => {
-  it('demande une adresse e-mail', async () => {
+describe('Connexion par identifiant', () => {
+  it('demande un identifiant libre : nom d’utilisateur OU adresse', async () => {
+    // Le champ n'est PAS un `type="email"` : depuis la connexion par nom d'utilisateur, il accepte les deux formes et c'est
+    // `session.login` qui envoie `{username}` ou `{email}` selon la présence d'un `@` (doc/xauth.md § « Se connecter »).
     const { w } = mountView(LoginView, { status: 401, json: {} })
     await flushPromises()
     const field = w.find('#login-email')
-    expect(field.attributes('type')).toBe('email')
-    expect(field.attributes('autocomplete')).toBe('email')
-    expect(w.find('label[for="login-email"]').text()).toBe('Adresse e-mail')
+    expect(field.attributes('type')).toBe('text')
+    expect(field.attributes('autocomplete')).toBe('username')
+    expect(w.find('label[for="login-email"]').text()).toBe(t.login.identifier)
   })
 
   it('envoie l’adresse et le mot de passe à xauth', async () => {

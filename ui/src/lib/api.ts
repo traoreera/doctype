@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, AvailableTransitions, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 
 /** Une réponse d'erreur du serveur, normalisée : le Desk ne voit jamais les quatre formes que xcore peut renvoyer. */
@@ -305,6 +305,17 @@ export class ApiClient {
   }
 
   /** Soumettre : brouillon -> soumis. `version` : celle que le client a lue (comme une modification). */
+  /** Ce que l'utilisateur peut faire sur CE document maintenant. Le Desk ne peut pas le deviner : le jeton ne porte pas les
+   *  grants, et `not_owner` dépend du document. */
+  transitions(doctype: string, name: string): Promise<AvailableTransitions> {
+    return this.call('GET', `/transitions/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`)
+  }
+
+  /** Joue une transition du workflow. Remplace `submit`/`cancel` sur un type qui en a un (le serveur les y refuse). */
+  transition(doctype: string, name: string, action: string, version: number): Promise<DocRecord> {
+    return this.call('POST', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}/transition`, { body: { action, version } })
+  }
+
   submit(doctype: string, name: string, version: number): Promise<DocRecord> {
     return this.call('POST', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}/submit`, { body: { version } })
   }

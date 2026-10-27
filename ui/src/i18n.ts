@@ -929,6 +929,10 @@ export const t = {
     amend: 'Amender',
     saveFirst: 'Enregistrez vos modifications avant de soumettre',
     confirmSubmit: 'Soumettre ce document ? Il ne pourra plus être modifié.',
+    // Workflow : le libellé du bouton EST le nom de la transition, tel que le YAML le dit. On n'ajoute que la confirmation,
+    // qui annonce où le document va — et, quand la transition le fige, qu'il n'en reviendra pas.
+    confirmTransition: (action: string, state: string, freezes: boolean) =>
+      `${action} ? Le document passera à l'état « ${state} »${freezes ? ", et ne pourra plus être modifié" : ''}.`,
     confirmCancel: 'Annuler ce document ? Ses effets seront inversés, il restera consultable mais figé.',
     submittedToast: 'Document soumis',
     cancelledToast: 'Document annulé',
