@@ -1,6 +1,14 @@
 # Impression et PDF : spécification
 
-**Spécification, 27 oct. 2026.** Rien n'est implémenté : ce fichier est le contrat à tenir.
+**Spécification, 27 oct. 2026.** Ce fichier est le contrat à tenir.
+
+**Fait à ce jour :** le vocabulaire des blocs et le rendu HTML pur (`printing.py`, §3/§4), les refus au
+chargement (§8), le gabarit FABRIQUÉ (§2), le chargement des gabarits livrés par un plugin
+(`registry.load_print_templates`, exposé au canal `doctype_registry`) et la validation de l'habillage
+d'organisation (`overrides.validate_print_override`, `KIND_PRINT`). Tests : `tests/unit/test_printing.py`.
+
+**Pas encore fait :** les routes et les actions (§7), les deux extras optionnels et le test fumigène, le Desk,
+`Letter Head`, et l'éditeur (§10). L'ordre de §11 tient.
 
 Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
 obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos

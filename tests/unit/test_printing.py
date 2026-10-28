@@ -7,6 +7,9 @@ rend une chaîne. C'est ce découpage qui rend le rendu testable à la ligne pr�
 from __future__ import annotations
 
 import pytest
+import yaml
+
+from xcore_doctype.registry import DocTypeRegistry
 
 from xcore_doctype.errors import InvalidDefinition
 from xcore_doctype.printing import (
@@ -289,3 +292,62 @@ class TestTheGeneratedTemplate:
                                        "fields": [f("a"), f("secret_interne", hidden=True)]})
         placed = [n for b in generated_template(definition).blocks for n in getattr(b, "fields", [])]
         assert placed == ["a"]
+
+
+class TestTemplatesShippedByAPlugin:
+    """Le chargement des gabarits livrés (§2) : tout ou rien, et les fautes sortent ICI."""
+
+    def shipped(self, tmp_path, **tpl):
+        d = tmp_path / "print"
+        d.mkdir(exist_ok=True)
+        base = {"schema_version": 1, "doctype": "Facture",
+                "blocks": [{"type": "title", "text": "Facture {{ name }}"}]}
+        base.update(tpl)
+        (d / f"{base.get('name', 'standard')}.yaml").write_text(yaml.safe_dump(base, allow_unicode=True), encoding="utf-8")
+        return d
+
+    def reg(self):
+        r = DocTypeRegistry()
+        r.register(LINE)
+        r.register(INVOICE)
+        return r
+
+    def test_a_template_is_loaded_and_listed(self, tmp_path):
+        r = self.reg()
+        assert r.load_print_templates(self.shipped(tmp_path), owner="ventes") == ["Facture:standard"]
+        assert [t.name for t in r.print_templates("Facture")] == ["standard"]
+        assert r.print_template("Facture", "standard") is not None
+
+    def test_it_goes_away_with_its_plugin(self, tmp_path):
+        r = self.reg()
+        r.load_print_templates(self.shipped(tmp_path), owner="ventes")
+        r.unregister_owner("ventes")
+        assert r.print_templates("Facture") == []
+
+    def test_an_unknown_doctype_is_refused(self, tmp_path):
+        r = self.reg()
+        with pytest.raises(InvalidDefinition, match="inconnu"):
+            r.load_print_templates(self.shipped(tmp_path, doctype="Nope"), owner="ventes")
+
+    def test_a_child_doctype_cannot_be_printed(self, tmp_path):
+        """Une ligne n'est pas un document : elle vit dans le JSON de son parent."""
+        r = self.reg()
+        with pytest.raises(InvalidDefinition, match="enfant"):
+            r.load_print_templates(self.shipped(tmp_path, doctype="Facture Ligne"), owner="ventes")
+
+    def test_two_plugins_cannot_ship_the_same_template(self, tmp_path):
+        r = self.reg()
+        r.load_print_templates(self.shipped(tmp_path), owner="ventes")
+        with pytest.raises(InvalidDefinition, match="déjà livré"):
+            r.load_print_templates(self.shipped(tmp_path), owner="autre")
+
+    def test_a_bad_block_fails_the_whole_load(self, tmp_path):
+        """Tout ou nothing : un dossier à moitié chargé laisserait un gabarit sans ses voisins."""
+        d = self.shipped(tmp_path)
+        (d / "casse.yaml").write_text(yaml.safe_dump(
+            {"schema_version": 1, "doctype": "Facture", "name": "casse",
+             "blocks": [{"type": "fields", "fields": ["nope"]}]}), encoding="utf-8")
+        r = self.reg()
+        with pytest.raises(InvalidDefinition, match="nope"):
+            r.load_print_templates(d, owner="ventes")
+        assert r.print_templates("Facture") == []

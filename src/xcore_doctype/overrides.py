@@ -29,7 +29,7 @@ from . import fieldtypes
 from .builder import NO_RULES, NO_WORKFLOW_RULES, FormRules, WorkflowRules
 from .dashboards import MAX_BLOCKS, DashboardBlock, check_measured
 from .decimals import canonical
-from .errors import ValidationFailed
+from .errors import InvalidDefinition, ValidationFailed
 from .expr import ExprError, compile_expr, referenced_fields
 from .schema import DECIMAL_TYPES, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField, complete_layout, layout_tab_problems
 from .workspaces import WorkspaceDef, parse_workspace
@@ -39,6 +39,8 @@ __all__ = [
     "KIND_FORM",
     "KIND_WORKFLOW",
     "KIND_DASHBOARD",
+    "KIND_PRINT",
+    "validate_print_override",
     "KIND_WORKSPACE_USER",
     "KIND_DASHBOARD_USER",
     "user_target",
@@ -65,6 +67,9 @@ KIND_FORM = "form"
 KIND_DASHBOARD = "dashboard"
 # L'automate d'un type, resserré par l'organisation (jamais personnel : une approbation est partagée). Voir `validate_workflow_override`.
 KIND_WORKFLOW = "workflow"
+# Gabarit d'impression de l'ORGANISATION (process/impression.md §2) : cible `<DocType>` ou `<DocType>:<nom>`.
+# Pas de couche PERSONNELLE : imprimer est institutionnel, pas personnel.
+KIND_PRINT = "print"
 # Les mêmes, PERSONNELS : la disposition d'UN utilisateur, par-dessus celle de l'organisation (la sienne seulement ; voir `user_target`).
 KIND_WORKSPACE_USER = "workspace_user"
 KIND_DASHBOARD_USER = "dashboard_user"
@@ -699,6 +704,33 @@ def validate_dashboard_override(compiled: Any, config: object) -> dict[str, Any]
     if problems:
         raise ValidationFailed("habillage de tableau de bord invalide : " + "; ".join(problems))
     return {"blocks": [b.model_dump(mode="json", exclude_none=True) for b in blocks]}
+
+
+def validate_print_override(compiled: Any, config: object) -> dict[str, Any]:
+    """Valide le gabarit d'impression d'une ORGANISATION et rend sa forme canonique (process/impression.md §2).
+
+    Les mêmes règles qu'un gabarit livré par un plugin, à la lettre : un seul contrôle, `printing`. C'est ce qui
+    garantit qu'un gabarit édité à l'écran ne peut pas être moins sûr qu'un gabarit versionné — en particulier le
+    refus des URL externes et des champs qui ne s'impriment pas (§6, §8).
+    """
+    from .printing import parse_template, template_fields_problems
+
+    if not isinstance(config, dict):
+        raise ValidationFailed("gabarit d'impression : le corps doit être un objet")
+    check_size(config, "gabarit d'impression")
+    definition = compiled.definition
+    # Le `doctype` n'est pas celui que le client dit : c'est celui de la cible, sinon on imprimerait un autre type.
+    raw = {**config, "schema_version": 1, "doctype": definition.name}
+    try:
+        template = parse_template(raw, source="gabarit d'impression")
+    except InvalidDefinition as e:
+        raise ValidationFailed(str(e)) from None
+    problems = template_fields_problems(
+        template, definition, lambda f: compiled.children.get(str(definition.field_map[f].options))
+    )
+    if problems:
+        raise ValidationFailed("gabarit d'impression invalide : " + "; ".join(problems[:5]))
+    return template.model_dump(mode="json", exclude_none=True)
 
 
 def apply_dashboard_override(meta: dict[str, Any], config: Any, doctype: str) -> bool:
