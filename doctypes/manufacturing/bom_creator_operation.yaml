@@ -37,5 +37,6 @@ fields:
   in_list_view: true
 - fieldname: output_quantity
   label: Output Quantity
-  fieldtype: Number
-  default: 1.0
+  fieldtype: Decimal
+  decimals: 3
+  default: "1.000"

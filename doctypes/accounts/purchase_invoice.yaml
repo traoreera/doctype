@@ -189,8 +189,10 @@ fields:
   options: Purchase Receipt Item Supplied
 - fieldname: total_qty
   label: Total Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
+  compute: sum(items.qty)
 - fieldname: base_total
   label: Total (Company Currency)
   fieldtype: Currency
@@ -206,11 +208,13 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
+  compute: sum(items.amount)
 - fieldname: net_total
   label: Net Total
   fieldtype: Currency
   decimals: 2
   read_only: true
+  compute: sum(items.net_amount)
 - fieldname: total_net_weight
   label: Total Net Weight
   fieldtype: Number
@@ -309,6 +313,7 @@ fields:
   decimals: 2
   in_list_view: true
   read_only: true
+  compute: total + total_taxes_and_charges
 - fieldname: rounding_adjustment
   label: Rounding Adjustment
   fieldtype: Currency
@@ -333,6 +338,7 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
+  compute: grand_total - total_advance - paid_amount - write_off_amount
 - fieldname: disable_rounded_total
   label: Disable Rounded Total
   fieldtype: Boolean

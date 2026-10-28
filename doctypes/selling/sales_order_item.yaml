@@ -36,7 +36,8 @@ fields:
   in_list_view: true
 - fieldname: qty
   label: Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: stock_uom
@@ -56,7 +57,8 @@ fields:
   read_only: true
 - fieldname: stock_qty
   label: Qty as per Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: price_list_rate
   label: Price List Rate
@@ -105,6 +107,7 @@ fields:
   decimals: 2
   in_list_view: true
   read_only: true
+  compute: qty * rate
 - fieldname: base_rate
   label: Basic Rate (Company Currency)
   fieldtype: Currency
@@ -134,6 +137,7 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
+  compute: amount - discount_amount
 - fieldname: base_net_rate
   label: Net Rate (Company Currency)
   fieldtype: Currency
@@ -225,27 +229,33 @@ fields:
   read_only: true
 - fieldname: projected_qty
   label: Projected Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: actual_qty
   label: Qty (Warehouse)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: ordered_qty
   label: Ordered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: delivered_qty
   label: Delivered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: work_order_qty
   label: Work Order Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: returned_qty
   label: Returned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: item_tax_template
   label: Item Tax Template
@@ -257,13 +267,15 @@ fields:
   default: false
 - fieldname: planned_qty
   label: Planned Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   hidden: true
   description: For Production
 - fieldname: produced_qty
   label: Produced Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   hidden: true
   description: For Production
@@ -300,7 +312,8 @@ fields:
   read_only: true
 - fieldname: picked_qty
   label: Picked Qty (in Stock UOM)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: purchase_order
   label: Purchase Order
@@ -329,11 +342,13 @@ fields:
   default: true
 - fieldname: stock_reserved_qty
   label: Stock Reserved Qty (in Stock UOM)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: production_plan_qty
   label: Production Plan Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: is_stock_item
   label: Is Stock Item
@@ -364,7 +379,8 @@ fields:
   options: Project
 - fieldname: subcontracted_qty
   label: Subcontracted Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: fg_item
   label: Finished Good
@@ -372,8 +388,10 @@ fields:
   options: Item
 - fieldname: fg_item_qty
   label: Finished Good Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 - fieldname: requested_qty
   label: Requested Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true

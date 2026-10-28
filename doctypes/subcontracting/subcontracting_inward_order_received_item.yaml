@@ -34,25 +34,30 @@ fields:
   read_only: true
 - fieldname: required_qty
   label: Required Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: received_qty
   label: Received Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: consumed_qty
   label: Consumed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: returned_qty
   label: Returned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: work_order_qty
   label: Work Order Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: is_customer_provided_item
   label: Is Customer Provided Item
@@ -66,7 +71,8 @@ fields:
   read_only: true
 - fieldname: billed_qty
   label: Billed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: is_additional_item
   label: Is Additional Item

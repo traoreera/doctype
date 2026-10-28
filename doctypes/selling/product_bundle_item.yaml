@@ -11,7 +11,8 @@ fields:
   in_list_view: true
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: description

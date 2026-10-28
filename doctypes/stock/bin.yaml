@@ -20,38 +20,46 @@ fields:
   read_only: true
 - fieldname: reserved_qty
   label: Reserved Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: actual_qty
   label: Actual Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: ordered_qty
   label: Ordered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: indented_qty
   label: Requested Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: planned_qty
   label: Planned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: projected_qty
   label: Projected Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: reserved_qty_for_production
   label: Reserved Qty for Production
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: reserved_qty_for_sub_contract
   label: Reserved Qty for Subcontract
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: stock_uom
   label: UOM
@@ -73,7 +81,8 @@ fields:
   read_only: true
 - fieldname: reserved_qty_for_production_plan
   label: Reserved Qty for Production Plan
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: reserved_stock
   label: Reserved Stock

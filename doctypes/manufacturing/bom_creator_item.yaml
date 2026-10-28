@@ -12,12 +12,14 @@ fields:
   fieldtype: Text
 - fieldname: qty
   label: Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
-  default: 1.0
+  default: "1.000"
 - fieldname: design_quantity
   label: Design Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   description: Quantity from the design file.
 - fieldname: node_id
@@ -85,7 +87,8 @@ fields:
   in_list_view: true
 - fieldname: stock_qty
   label: Stock Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: conversion_factor
   label: Conversion Factor

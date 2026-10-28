@@ -34,10 +34,11 @@ fields:
   default: false
 - fieldname: qty
   label: Finished Good Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   description: The BOM of the finished good is made for this quantity. Part quantities are for one finished good.
-  default: 1.0
+  default: "1.000"
 - fieldname: items
   label: Items
   fieldtype: Table

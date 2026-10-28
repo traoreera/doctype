@@ -17,9 +17,10 @@ fields:
   in_list_view: true
 - fieldname: completed_qty
   label: Completed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
-  default: 0.0
+  default: "0.000"
 - fieldname: employee
   label: Employee
   fieldtype: Link

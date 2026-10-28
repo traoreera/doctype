@@ -66,7 +66,8 @@ fields:
   options: Proforma Invoice Item
 - fieldname: total_qty
   label: Total Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: grand_total
   label: Grand Total

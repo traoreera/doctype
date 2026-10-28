@@ -715,7 +715,7 @@ dans sa grammaire : « pas d'arithmétique »). `fetch_from` ne sait que COPIER 
 Ce n'est donc pas une imprécision à corriger plus tard : c'est structurel, et cela conditionne la façon d'écrire les 136
 pièces soumettables. D'où trois décisions, prises avant d'écrire le moindre hook.
 
-**Décision 1 — les quantités passent en `Decimal`.** Le cas canonique est `amount` (Currency, 2 décimales) `= qty × rate`,
+**Décision 1 — les quantités passent en `Decimal`. FAIT le 28 oct.** (T14 d'`erp-doctypes.md` : 273 champs, 92 types, 27 défauts canonisés, `scripts/qty_to_decimal.py`, invariants dans `tests/unit/test_erp_doctypes.py` ; les 10 mappings à quantité vérifiés exacts par `same_number_kind`.) Le cas canonique est `amount` (Currency, 2 décimales) `= qty × rate`,
 or `qty` est aujourd'hui un `Number`, un flottant (274 champs de quantité dans ce cas ; le jeu compte 915 Currency pour
 663 Number). Multiplier un flottant par un décimal exact pour produire de l'argent exigerait une règle d'arrondi — et
 arrondir de l'argent est une question métier, pas technique. Le moteur refusant déjà un flottant pour un montant, on ne
@@ -724,7 +724,7 @@ migration du YAML est mécanique (même forme que les T1-T13 d'`erp-doctypes.md`
 faire » du mapper (`mapper.md` §5) devient exact pour les quantités aussi, et `same_number_kind` y reste satisfait
 puisque les deux côtés bougent ensemble.
 
-**Décision 2 — un `compute:` à vocabulaire FERMÉ, et non une arithmétique dans `expr.py`.** `expr.py` vaut par deux
+**Décision 2 — un `compute:` à vocabulaire FERMÉ, et non une arithmétique dans `expr.py`. FAIT le 28 oct.** (`compute.py` : 62 tests purs, 13 contre une base ; jeu d'ERP : T15, 44 champs.) `expr.py` vaut par deux
 choses : il est minuscule, et il est JUMELÉ au navigateur (même arbre, même sémantique, vecteurs partagés). Y ajouter
 l'arithmétique, ce serait la grammaire, l'évaluateur Python, son jumeau TypeScript, les vecteurs, et des règles de
 promotion numérique — en risquant d'embrouiller la sémantique volontairement stricte des conditions (`1 == true` est
@@ -751,6 +751,15 @@ nomenclature, la téléphonie.
 
 **Ordre imposé par ces décisions.** La migration des quantités (1) précède `compute:` (2), qui précède les hooks de
 comptabilisation — sinon les 136 pièces s'écrivent deux fois. Le rapport mesuré (3) est indépendant.
+
+**État au 28 octobre** : (1) et (2) sont faites. Une facture de `doctypes/` a désormais son total, exact et prouvé sur
+la vraie définition. Les trois points que cette décision laissait « à préciser » sont tranchés et vérifiés dans
+`compute.py` : l'échelle du résultat est celle du champ qui reçoit ; un PRODUIT arrondit (`ROUND_HALF_UP`, le seul
+arrondi du moteur — c'est ce que déclarer `decimals: 2` veut dire) tandis qu'une ADDITION ne perd jamais de précision
+(refusée au chargement) ; une somme de table vide vaut zéro. Et une chose que la décision n'avait pas prévue : un calcul
+LIT un autre calcul (`grand_total = total + taxes` où `total = sum(items.amount)`), donc l'ordre se calcule par tri
+topologique et seule la BOUCLE est refusée — l'interdire aurait rendu `compute:` inutile pour le cas qui l'a fait naître.
+Reste (3), le rapport mesuré, et surtout les hooks eux-mêmes, qui attendent encore un plugin de module pour les héberger.
 
 ## 4. Ce qu'on vise
 

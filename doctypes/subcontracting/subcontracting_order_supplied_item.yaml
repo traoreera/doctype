@@ -50,28 +50,34 @@ fields:
   read_only: true
 - fieldname: required_qty
   label: Required Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: supplied_qty
   label: Supplied Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: consumed_qty
   label: Consumed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: returned_qty
   label: Returned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: total_supplied_qty
   label: Total Supplied Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   hidden: true
 - fieldname: stock_reserved_qty
   label: Reserved Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true

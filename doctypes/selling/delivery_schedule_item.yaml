@@ -11,7 +11,8 @@ fields:
   read_only: true
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: conversion_factor
@@ -20,7 +21,8 @@ fields:
   read_only: true
 - fieldname: stock_qty
   label: Stock Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: delivery_date
   label: Delivery Date

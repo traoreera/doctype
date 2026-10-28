@@ -41,7 +41,8 @@ fields:
   required: true
 - fieldname: for_quantity
   label: Qty to Manufacture
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: stock_uom
   label: Stock UOM
@@ -58,7 +59,8 @@ fields:
   options: Job Card Time Log
 - fieldname: total_completed_qty
   label: Total Completed qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: total_time_in_mins
   label: Total Time in Mins
@@ -75,11 +77,13 @@ fields:
   hidden: true
 - fieldname: transferred_qty
   label: Transferred Raw Materials
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: requested_qty
   label: Requested Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: project
   label: Project
@@ -186,7 +190,8 @@ fields:
   read_only: true
 - fieldname: process_loss_qty
   label: Process Loss qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: time_required
   label: Expected Time Required (In Mins)
@@ -240,7 +245,8 @@ fields:
   read_only: true
 - fieldname: manufactured_qty
   label: Manufactured Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: skip_material_transfer
   label: Skip Material Transfer to WIP
@@ -268,7 +274,8 @@ fields:
   options: Job Card Secondary Item
 - fieldname: pending_qty
   label: Pending qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 title_field: item_name
 layout:
 - tab: General

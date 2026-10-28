@@ -16,7 +16,8 @@ fields:
   in_list_view: true
 - fieldname: qty
   label: Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: rate
@@ -49,9 +50,10 @@ fields:
   required: true
 - fieldname: fg_item_qty
   label: Finished Good Item Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
-  default: 1.0
+  default: "1.000"
 - fieldname: purchase_order_item
   label: Purchase Order Item
   fieldtype: Text

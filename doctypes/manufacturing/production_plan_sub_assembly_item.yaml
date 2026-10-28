@@ -9,7 +9,8 @@ fields:
   read_only: true
 - fieldname: qty
   label: Qty to Order
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: purchase_order
@@ -19,7 +20,8 @@ fields:
   read_only: true
 - fieldname: received_qty
   label: Received Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: bom_no
   label: BOM No
@@ -81,28 +83,34 @@ fields:
   fieldtype: Datetime
 - fieldname: actual_qty
   label: Actual Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: projected_qty
   label: Projected Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: wo_produced_qty
   label: Produced Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: required_qty
   label: Required Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: stock_reserved_qty
   label: Stock Reserved Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: ordered_qty
   label: Ordered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: sales_order
   label: Sales Order

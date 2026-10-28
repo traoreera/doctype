@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError, type ApiErrorDetail } from '@/lib/api'
-import { fieldStates, isDirty, isEmpty, isValidIsoDate, mapServerErrors, newValues, recordValues, resolveLinkFilters, toPayload, validate } from '@/lib/form'
-import type { DocRecord } from '@/lib/types'
+import { duplicateValues, fieldStates, isDirty, isEmpty, isValidIsoDate, mapServerErrors, newValues, quickEntryFields, recordValues, resolveLinkFilters, toPayload, validate } from '@/lib/form'
+import type { DocRecord, DocTypeMeta } from '@/lib/types'
 import { CUSTOMER, STOCK_ENTRY } from './fixtures'
 
 const rec = (data: Record<string, unknown>): DocRecord => ({
@@ -229,5 +229,51 @@ describe('filtres d’un champ Link (D29)', () => {
 
   it('un champ sans filtres n’en a pas', () => {
     expect(resolveLinkFilters(link(), { pays: 'CI' })).toBeNull()
+  })
+})
+
+describe('un champ calculé (`compute:`) est écrit par le serveur', () => {
+  // Le même DocType que celui des tests Python : la facture dont les montants ne se saisissent pas.
+  const LINE: DocTypeMeta = {
+    name: 'Ligne', label: 'Ligne', module: 'sales', timezone: 'UTC',
+    fields: [
+      { fieldname: 'qty', fieldtype: 'Decimal', decimals: 3, required: false, hidden: false, in_list_view: true },
+      { fieldname: 'rate', fieldtype: 'Currency', decimals: 2, required: false, hidden: false, in_list_view: true },
+      { fieldname: 'amount', fieldtype: 'Currency', decimals: 2, compute: 'qty * rate', read_only: true, required: false, hidden: false, in_list_view: true },
+    ],
+    layout: [], list_columns: [], rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
+  }
+  const INVOICE: DocTypeMeta = {
+    name: 'Facture', label: 'Facture', module: 'sales', timezone: 'UTC',
+    fields: [
+      { fieldname: 'client', fieldtype: 'Text', required: true, hidden: false, in_list_view: true },
+      { fieldname: 'items', fieldtype: 'Table', options: 'Ligne', required: false, hidden: false, in_list_view: false },
+      { fieldname: 'total', fieldtype: 'Currency', decimals: 2, compute: 'sum(items.amount)', read_only: true, required: false, hidden: false, in_list_view: true },
+    ],
+    children: { Ligne: LINE },
+    layout: [], list_columns: [], rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
+  }
+
+  it('est verrouillé : le Desk ne calcule rien, il montre ce que le serveur a écrit', () => {
+    const states = fieldStates(INVOICE, { client: 'Durand', items: [], total: '0.00' }, null)
+    expect(states.total).toMatchObject({ visible: true, readOnly: true, required: false })
+    expect(states.client!.readOnly).toBe(false)
+  })
+
+  it('n’est pas recopié par « Dupliquer » : le serveur le recalcule', () => {
+    const copy = duplicateValues(INVOICE, {
+      doctype: 'Facture', name: 'FA-1', owner: 'u', creation: '2026-01-01T00:00:00+00:00', modified: '2026-01-01T00:00:00+00:00',
+      version: 1, docstatus: 0, amended_from: null,
+      data: { client: 'Durand', total: '500.00', items: [{ qty: '2.000', rate: '250.00', amount: '500.00' }] },
+    })
+    expect(copy.client).toBe('Durand')
+    expect(copy.total).toBeNull()
+    expect((copy.items as Record<string, unknown>[])[0]).toMatchObject({ qty: '2.000', rate: '250.00' })
+    expect((copy.items as Record<string, unknown>[])[0]!.amount).toBeUndefined()
+  })
+
+  it('n’est jamais proposé à la saisie rapide', () => {
+    const fields = quickEntryFields(INVOICE)
+    expect(fields?.map((f) => f.fieldname) ?? []).not.toContain('total')
   })
 })

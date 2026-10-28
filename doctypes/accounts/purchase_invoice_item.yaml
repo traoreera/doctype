@@ -17,16 +17,19 @@ fields:
   fieldtype: TextEditor
 - fieldname: received_qty
   label: Received Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: qty
   label: Accepted Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: rejected_qty
   label: Rejected Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 - fieldname: stock_uom
   label: Stock UOM
   fieldtype: Link
@@ -44,7 +47,8 @@ fields:
   read_only: true
 - fieldname: stock_qty
   label: Accepted Qty in Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   read_only: true
 - fieldname: price_list_rate
@@ -73,9 +77,9 @@ fields:
   label: Amount
   fieldtype: Currency
   decimals: 2
-  required: true
   in_list_view: true
   read_only: true
+  compute: qty * rate
 - fieldname: base_rate
   label: Rate (Company Currency)
   fieldtype: Currency
@@ -107,6 +111,7 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
+  compute: amount - discount_amount
 - fieldname: base_net_rate
   label: Net Rate (Company Currency)
   fieldtype: Currency

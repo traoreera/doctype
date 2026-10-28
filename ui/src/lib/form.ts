@@ -160,19 +160,19 @@ export function recordValues(meta: DocTypeMeta, rec: DocRecord): Values {
 /**
  * Les valeurs d'une COPIE de `rec` (« Dupliquer ») : tout ce qui se recopie. Ne partent pas : un champ `no_copy`, un champ `unique` (la copie le
  * dupliquerait : l'utilisateur en choisit un autre), un secret, un fichier (un fichier appartient à UN document), un champ rempli par `fetch_from`
- * (le serveur le relit) et le champ qui nomme le document.
+ * ou calculé par `compute` (le serveur le relit ou le recalcule) et le champ qui nomme le document.
  */
 export function duplicateValues(meta: DocTypeMeta, rec: DocRecord): Values {
   const source = recordValues(meta, rec)
   const out = newValues(meta)
   const naming = namingField(meta)
   const skip = (f: FieldMeta): boolean =>
-    !!f.no_copy || !!f.unique || !!f.fetch_from || f.fieldtype === 'Password' || f.fieldtype === 'Image' || f.fieldtype === 'Attach' || f.fieldname === naming
+    !!f.no_copy || !!f.unique || !!f.fetch_from || !!f.compute || f.fieldtype === 'Password' || f.fieldtype === 'Image' || f.fieldtype === 'Attach' || f.fieldname === naming
   for (const f of meta.fields) {
     if (skip(f)) continue
     const child = childOf(meta, f)
     out[f.fieldname] = child
-      ? (source[f.fieldname] as Row[]).map((row) => Object.fromEntries(Object.entries(row).filter(([k]) => { const cf = child.fields.find((c) => c.fieldname === k); return !cf || !(cf.fetch_from || cf.fieldtype === 'Image' || cf.fieldtype === 'Attach') })))
+      ? (source[f.fieldname] as Row[]).map((row) => Object.fromEntries(Object.entries(row).filter(([k]) => { const cf = child.fields.find((c) => c.fieldname === k); return !cf || !(cf.fetch_from || cf.compute || cf.fieldtype === 'Image' || cf.fieldtype === 'Attach') })))
       : source[f.fieldname]
   }
   return out
@@ -187,9 +187,9 @@ const OPAQUE_FOR_QUICK_ENTRY = ['Table', 'Image', 'Attach', 'Password', 'Dynamic
 export function quickEntryFields(meta: DocTypeMeta): FieldMeta[] | null {
   const shown = meta.fields.filter((f) => !f.hidden)
   if (shown.some((f) => f.mandatory_depends_on)) return null
-  const wanted = shown.filter((f) => !f.read_only && !f.fetch_from && (f.required || f.fieldname === meta.title_field))
+  const wanted = shown.filter((f) => !f.read_only && !f.fetch_from && !f.compute && (f.required || f.fieldname === meta.title_field))
   if (wanted.some((f) => OPAQUE_FOR_QUICK_ENTRY.includes(f.fieldtype) || f.depends_on)) return null
-  if (shown.some((f) => f.required && (f.read_only || f.fetch_from))) return null // obligatoire mais jamais saisi ici
+  if (shown.some((f) => f.required && (f.read_only || f.fetch_from || f.compute))) return null // obligatoire mais jamais saisi ici
   return wanted
 }
 
@@ -271,7 +271,8 @@ export function fieldStates(meta: DocTypeMeta, values: Values, saved: Values | n
     const lockedOnce = saved !== null && (f.set_only_once === true || f.fieldname === naming) && !isEmpty(saved[f.fieldname])
     const frozenField = status === SUBMITTED && f.allow_on_submit !== true
     // Un document existant : le serveur évalue la lecture seule sur l'état d'AVANT. Un nouveau : l'interface suit les valeurs.
-    const readOnly = f.read_only === true || !!f.fetch_from || lockedOnce || frozenField || (f.read_only_depends_on ? evaluate(f.read_only_depends_on, saved ?? values) : false)
+    // `compute` comme `fetch_from` : le serveur écrit la valeur, le champ se lit et ne se saisit pas.
+    const readOnly = f.read_only === true || !!f.fetch_from || !!f.compute || lockedOnce || frozenField || (f.read_only_depends_on ? evaluate(f.read_only_depends_on, saved ?? values) : false)
     // Figé (soumis, hors `allow_on_submit`), un champ ne se remplit plus : l'exiger bloquerait toute modification du document. Le serveur
     // n'exige d'ailleurs l'obligation d'un habillage, rendue après la soumission, que des champs encore modifiables.
     const required = !frozenField && ((f.required && conditionVisible) || mandatory)

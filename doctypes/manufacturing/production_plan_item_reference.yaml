@@ -14,7 +14,8 @@ fields:
   in_list_view: true
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: item_reference
   label: Item Reference

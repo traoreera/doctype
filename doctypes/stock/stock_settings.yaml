@@ -103,7 +103,8 @@ fields:
   default: Stop
 - fieldname: mr_qty_allowance
   label: Over Transfer Allowance (%)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   description: The percentage you are allowed to transfer more against the quantity ordered. For example, if you
     have ordered 100 units, and your Allowance is 10%, then you are allowed transfer 110 units.
 - fieldname: update_existing_price_list_rate

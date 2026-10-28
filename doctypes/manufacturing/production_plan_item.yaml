@@ -21,7 +21,8 @@ fields:
   in_list_view: true
 - fieldname: planned_qty
   label: Planned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: warehouse
@@ -36,15 +37,18 @@ fields:
   in_list_view: true
 - fieldname: pending_qty
   label: Pending Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: ordered_qty
   label: Ordered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: produced_qty
   label: Produced Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: description
   label: Description

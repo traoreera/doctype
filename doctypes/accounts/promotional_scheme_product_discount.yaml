@@ -13,14 +13,16 @@ fields:
   required: true
 - fieldname: min_qty
   label: Min Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
-  default: 0.0
+  default: "0.000"
 - fieldname: max_qty
   label: Max Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
-  default: 0.0
+  default: "0.000"
 - fieldname: min_amount
   label: Min Amount
   fieldtype: Currency
@@ -42,7 +44,8 @@ fields:
   in_list_view: true
 - fieldname: free_qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: free_item_uom
   label: UOM

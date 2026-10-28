@@ -11,6 +11,7 @@ liste dans `doctype.doctypes_dirs` : un `load_dir` récursif, puis UN `validate_
 from __future__ import annotations
 
 import collections
+import re
 from pathlib import Path
 
 import pytest
@@ -20,6 +21,10 @@ from xcore_doctype.registry import DocTypeRegistry
 from xcore_doctype.schema import RESERVED_GRANT_NAMESPACES
 
 ERP_DIR = Path(__file__).resolve().parents[2] / "doctypes"
+
+# Un champ de QUANTITÉ, et l'échelle unique du jeu : la même règle que `scripts/qty_to_decimal.py` (T14).
+QTY_FIELD = re.compile(r"(^|_)(qty|quantity)($|_)")
+QTY_DECIMALS = 3
 
 pytestmark = pytest.mark.skipif(not ERP_DIR.is_dir(), reason="doctypes/ absent")
 
@@ -170,3 +175,104 @@ def test_a_document_link_of_a_mapping_demands_a_submitted_target(registry: DocTy
                 if field.target_status != "submitted":
                     loose.append(f"{child.name}.{field.fieldname}")
     assert sorted(set(loose)) == []
+
+
+def test_every_quantity_is_an_exact_decimal(registry: DocTypeRegistry) -> None:
+    """Une quantité est un `Decimal` exact, jamais un `Number` flottant (T14, décision 1 de `programme.md` §3.7).
+
+    Le cas canonique est `amount = qty × rate` : multiplier un flottant par un décimal exact pour produire de
+    l'argent exigerait une règle d'arrondi, et arrondir de l'argent est une question métier. Le moteur refuse
+    déjà un flottant pour un montant ; on ne le fait pas entrer par la porte du calcul.
+
+    L'échelle est la MÊME partout (3), et ce n'est pas une préférence : `mapping.same_number_kind` exige, pour
+    deux `Decimal`, le même nombre de décimales de part et d'autre d'un mapping — et dix mappings recopient une
+    quantité. Une échelle uniforme satisfait la règle sans table d'exceptions.
+    """
+    floats = []
+    scales = collections.Counter()
+    for name in registry.names():
+        for field in registry.get(name).definition.fields:
+            if not QTY_FIELD.search(field.fieldname):
+                continue
+            if field.fieldtype == "Number":
+                floats.append(f"{name}.{field.fieldname}")
+            elif field.fieldtype == "Decimal":
+                scales[field.decimals] += 1
+    assert floats == [], f"quantités encore flottantes : {floats[:10]}"
+    assert set(scales) == {QTY_DECIMALS}, f"échelles de quantité trouvées : {dict(scales)}"
+    assert scales[QTY_DECIMALS] > 250  # le jeu en compte 273 : un dossier vidé par erreur ne passerait pas
+
+
+def test_a_quantity_default_is_a_canonical_string(registry: DocTypeRegistry) -> None:
+    """Un `Decimal` n'accepte pas un nombre JSON : son défaut est une chaîne à l'échelle EXACTE du champ.
+
+    C'est le moteur qui l'exige (`decimals.canonical` : ni `1`, ni `1.0`, ni `"1.0"` pour 3 décimales), donc un
+    défaut mal écrit casserait le chargement — mais seulement à la création d'un document, pas au chargement du
+    type. Ce test le dit tout de suite.
+    """
+    from xcore_doctype.decimals import canonical
+
+    wrong = []
+    for name in registry.names():
+        for field in registry.get(name).definition.fields:
+            if field.fieldtype != "Decimal" or field.default is None or not QTY_FIELD.search(field.fieldname):
+                continue
+            if not isinstance(field.default, str) or canonical(field.default, field.decimals) != field.default:
+                wrong.append(f"{name}.{field.fieldname} = {field.default!r}")
+    assert wrong == []
+
+
+def test_a_sales_invoice_totals_itself(registry: DocTypeRegistry) -> None:
+    """Le point de tout le chantier : une facture de l'ERP a un total, et il est EXACT (T15, `compute:`).
+
+    Mesuré avant d'écrire : les 129 champs de montant clés du jeu étaient `read_only` et rien ne les
+    remplissait — une facture ne pouvait donc pas avoir de total, et un hook de comptabilisation aurait posté
+    des montants vides. Ce test est la preuve que ce n'est plus vrai, sur la VRAIE définition de `doctypes/`.
+    """
+    from xcore_doctype.compute import apply_computes
+
+    compiled = registry.get("Sales Invoice")
+    out = apply_computes(compiled.definition, compiled.children_by_field.get, {
+        "items": [
+            {"qty": "2.000", "rate": "250.00", "discount_amount": "0.00"},
+            {"qty": "1.000", "rate": "300.00", "discount_amount": "50.00"},
+        ],
+        "total_taxes_and_charges": "110.00",
+        "total_advance": "0.00", "paid_amount": "60.00", "write_off_amount": "0.00",
+    })
+    assert [r["amount"] for r in out["items"]] == ["500.00", "300.00"]
+    assert [r["net_amount"] for r in out["items"]] == ["500.00", "250.00"]
+    assert out["total_qty"] == "3.000"
+    assert out["total"] == "800.00"
+    assert out["net_total"] == "750.00"
+    assert out["grand_total"] == "910.00"
+    assert out["outstanding_amount"] == "850.00"
+
+
+def test_the_computed_documents_cover_the_sales_and_purchase_chain(registry: DocTypeRegistry) -> None:
+    """Les pièces qui portent un montant au client ou au fournisseur ont toutes leur total (T15).
+
+    Pas une règle automatique sur les noms : une TABLE vérifiée pièce par pièce (`scripts/add_computes.py`).
+    `base_*` en est absent à dessein — c'est un montant en devise de la société, obtenu par un taux de change
+    qui est un flottant, donc hors du vocabulaire fermé de `compute:` (et un flottant ne produit pas d'argent).
+    """
+    expected = {
+        "Sales Invoice", "Purchase Invoice", "Sales Order", "Quotation",
+        "Purchase Order", "Delivery Note", "Purchase Receipt",
+    }
+    for name in sorted(expected):
+        fields = registry.get(name).definition.field_map
+        assert fields["grand_total"].compute == "total + total_taxes_and_charges", name
+        assert fields["total"].compute == "sum(items.amount)", name
+        assert fields["grand_total"].required is False, f"{name}: un champ calculé ne s'exige pas du client"
+
+
+def test_no_computed_field_is_demanded_from_the_client(registry: DocTypeRegistry) -> None:
+    """Le schéma le refuse déjà type par type ; ici on le dit de TOUT le jeu, d'un coup."""
+    wrong = [
+        f"{name}.{f.fieldname}"
+        for name in registry.names()
+        for f in registry.get(name).definition.fields
+        if f.compute is not None and (f.required or f.default is not None or f.fetch_from is not None)
+    ]
+    assert wrong == []

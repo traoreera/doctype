@@ -16,7 +16,8 @@ fields:
   in_list_view: true
 - fieldname: target_qty
   label: Target Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: target_amount
   label: Target  Amount

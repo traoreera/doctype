@@ -175,8 +175,9 @@ function remove(i: number): void {
                 <template v-else>{{ formatCell(c, row[c.fieldname]) || t.form.noValue }}</template>
                 <span v-if="unit(c, row) && row[c.fieldname]" class="unit">{{ unit(c, row) }}</span>
               </template>
-              <!-- Une cellule remplie par le serveur (`fetch_from`) se lit, elle ne se saisit pas. -->
-              <span v-else-if="c.fetch_from" class="value" :data-testid="`fetched-${i}-${c.fieldname}`">{{ formatCell(c, row[c.fieldname]) || t.form.noValue }}</span>
+              <!-- Une cellule remplie par le SERVEUR — copiée (`fetch_from`) ou calculée (`compute`) — se lit,
+                   elle ne se saisit pas. Un montant de ligne (`qty * rate`) est de ceux-là. -->
+              <span v-else-if="c.fetch_from || c.compute" class="value" :data-testid="`fetched-${i}-${c.fieldname}`">{{ formatCell(c, row[c.fieldname]) || t.form.noValue }}</span>
               <template v-else>
                 <div class="cell-input">
                   <FieldInput

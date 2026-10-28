@@ -116,7 +116,8 @@ fields:
   options: BOM
 - fieldname: fg_completed_qty
   label: 'Finished Good Quantity '
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   description: As per Stock UOM
 - fieldname: use_multi_level_bom
   label: Use Multi-Level BOM
@@ -259,7 +260,8 @@ fields:
   hidden: true
 - fieldname: process_loss_qty
   label: Process Loss Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: process_loss_percentage
   label: '% Process Loss'

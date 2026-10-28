@@ -159,6 +159,10 @@ class FieldDef(BaseModel):
     allow_on_submit: StrictBool = False
     # `lien.champ` : la valeur est LUE du document que le Link `lien` désigne, à chaque enregistrement (jamais saisie : la valeur envoyée est écrasée). Le Desk la montre en lecture seule.
     fetch_from: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}\.[a-z][a-z0-9_]{0,62}$")] | None = None
+    # Calcul déclaratif à vocabulaire FERMÉ (compute.py, programme.md §3.7) : `a * b`, `a + b - c`,
+    # `sum(table.champ)`. Écrit par le SERVEUR à chaque écriture, comme `fetch_from` : la valeur envoyée est
+    # écrasée. Les noms de champs sont vérifiés par DocTypeDef, les types et la précision au chargement.
+    compute: str | None = None
     # Lecture seule : le document le MONTRE mais un client ne peut pas le changer (une mise à jour qui le modifie est refusée, `read_only`). Un hook de
     # confiance et la source d'un DocType virtuel l'écrivent, eux. Sans condition, contrairement à `read_only_depends_on`.
     read_only: StrictBool = False
@@ -244,6 +248,24 @@ class FieldDef(BaseModel):
             raise ValueError(f"{name}: `fetch_from` ne peut pas viser le champ lui-même")
         if self.fetch_from is not None and (self.required or self.mandatory_depends_on is not None):
             raise ValueError(f"{name}: un champ `fetch_from` est rempli par le serveur, il ne peut pas être obligatoire (le lien qui le fournit, lui, peut l'être)")
+        if self.compute is not None:
+            # Les mêmes refus que `fetch_from`, et pour la même raison : le serveur écrit ce champ à chaque
+            # écriture, donc un défaut ne servirait jamais et une obligation porterait sur ce que l'utilisateur
+            # ne saisit pas. S'y ajoute le cumul avec `fetch_from` : deux sources pour une valeur, dont l'ordre
+            # déciderait du résultat.
+            from .compute import parse_compute  # import tardif : `compute` lit DECIMAL_TYPES de ce module
+
+            if self.fetch_from is not None:
+                raise ValueError(f"{name}: `compute` et `fetch_from` remplissent tous deux le champ : choisissez-en un")
+            if self.default is not None:
+                raise ValueError(f"{name}: un champ `compute` est calculé par le serveur, il n'a pas de `default`")
+            if self.required or self.mandatory_depends_on is not None:
+                raise ValueError(f"{name}: un champ `compute` est calculé par le serveur, il ne peut pas être obligatoire")
+            if self.unique:
+                raise ValueError(f"{name}: `unique` sur un champ calculé n'aurait aucun sens (sa valeur suit celle des autres)")
+            if self.set_only_once:
+                raise ValueError(f"{name}: `set_only_once` sur un champ calculé l'empêcherait d'être recalculé")
+            parse_compute(self.compute)  # la forme ; les noms et les types sont vérifiés plus haut dans la pile
         if self.multiselect and ftype != "Table":
             raise ValueError(f"{name}: `multiselect` n'a de sens que pour un champ Table")
         if ftype in NO_DEFAULT_TYPES and self.default is not None:

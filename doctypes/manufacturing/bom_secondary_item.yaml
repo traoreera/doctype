@@ -47,11 +47,13 @@ fields:
   default: 1.0
 - fieldname: stock_qty
   label: Stock Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: cost_allocation_per
   label: Cost Allocation %
@@ -86,6 +88,7 @@ fields:
     like the pre-v16 scrap items. % of Component Cost allocates a percentage of the remaining raw material cost.
 - fieldname: process_loss_qty
   label: Process Loss Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   read_only: true

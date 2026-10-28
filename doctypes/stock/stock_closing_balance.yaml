@@ -31,7 +31,8 @@ fields:
   read_only: true
 - fieldname: actual_qty
   label: Qty Change
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: valuation_rate

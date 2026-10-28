@@ -34,7 +34,8 @@ fields:
   fieldtype: TextEditor
 - fieldname: qty
   label: Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: stock_uom
   label: Stock UOM
@@ -52,7 +53,8 @@ fields:
   required: true
 - fieldname: stock_qty
   label: Qty as per Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: price_list_rate
   label: Price List Rate
@@ -100,9 +102,9 @@ fields:
   label: Amount
   fieldtype: Currency
   decimals: 2
-  required: true
   in_list_view: true
   read_only: true
+  compute: qty * rate
 - fieldname: base_rate
   label: Rate (Company Currency)
   fieldtype: Currency
@@ -134,6 +136,7 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
+  compute: amount - discount_amount
 - fieldname: base_net_rate
   label: Net Rate (Company Currency)
   fieldtype: Currency
@@ -238,11 +241,13 @@ fields:
   hidden: true
 - fieldname: actual_batch_qty
   label: Available Batch Qty at Warehouse
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: actual_qty
   label: Qty (Warehouse)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: sales_order
   label: Sales Order
@@ -268,7 +273,8 @@ fields:
   hidden: true
 - fieldname: delivered_qty
   label: Delivered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: is_fixed_asset
   label: Is Fixed Asset

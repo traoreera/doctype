@@ -95,6 +95,8 @@ Chaque ligne a été appliquée par programme sur la mesure, jamais à la devine
 | T11 | `link_filters` sur un Boolean : `1` → `true` | 2 filtres | Le moteur est strict ; `0/1` vient d'ERPNext |
 | T12 | Options d'un `DynamicLink` limitées aux DocTypes chargés | 2 options | `Email Group`, `User` n'existent pas ici |
 | T13 | Vues `tree` fallacieuses retirées, 15 vraies gardées | 81 vues | La migration prenait **tout auto-lien** pour une arborescence : 72 pointaient `amended_from`, d'autres `return_against` |
+| T15 | `compute:` sur les totaux des 7 pièces de vente/achat et de leurs lignes (`required` retiré de ce que le serveur écrit) | 44 champs, 14 fichiers | Décision 2 de `programme.md` §3.7, **deuxième marche des hooks** : 129 champs de montant clés étaient `read_only` et rien ne les remplissait, donc une facture ne pouvait pas avoir de total. Une TABLE vérifiée pièce par pièce (`scripts/add_computes.py`), pas une règle sur les noms : `base_*` en est exclu (devise de la société, obtenue par un taux de change flottant — hors du vocabulaire fermé) et `rounded_total` demande un arrondi que `compute:` ne fait pas |
+| T14 | Les quantités `Number` → `Decimal` à **3 décimales** (défauts canonisés : `1.0` → `"1.000"`) | 273 champs, 92 types, 27 défauts | Décision 1 de `programme.md` §3.7, et la **première marche des hooks** : `amount = qty × rate` ; multiplier un flottant par un décimal exact pour produire de l'argent exigerait une règle d'arrondi, qui est une question métier. Échelle UNIFORME parce que `mapping.same_number_kind` exige le même nombre de décimales des deux côtés d'un mapping, et dix mappings recopient une quantité (`scripts/qty_to_decimal.py`, idempotent) |
 
 Bilan : **809 insertions, 1597 suppressions**. La base a maigri, ce qui est la bonne direction — l'essentiel du
 retrait est de la redondance (T9) et des vues inventées (T13).
@@ -115,10 +117,29 @@ retrait est de la redondance (T9) et des vues inventées (T13).
 
 Dans l'ordre de valeur :
 
-1. **Les hooks.** Zéro `hooks:` sur 721 définitions : les 136 pièces passent brouillon → soumis **sans rien
+1. **Les hooks.** Zéro `hooks:` sur 704 définitions : les 136 pièces passent brouillon → soumis **sans rien
    écrire**. Pas de comptabilisation au grand livre, pas de solde de stock. Le moteur a ce qu'il faut
    (`on_submit` + `event.tx` dans la transaction du document), tout est à écrire — module par module,
    `accounts` et `stock` d'abord, les autres s'appuient dessus. C'est l'essentiel du travail restant.
+
+   **Trois marches, dans cet ordre, et l'ordre n'est pas négociable** (`programme.md` §3.7 : sinon les 136
+   pièces s'écrivent deux fois).
+
+   - **1a. Les quantités en décimal exact — FAIT** (T14 ci-dessus). Mesuré avant : 273 champs de quantité
+     étaient des flottants.
+   - **1b. `compute:` — FAIT** (moteur : `compute.py` ; jeu : T15 ci-dessus). Mesuré avant d'écrire :
+     **129 champs de montant clés étaient `read_only`** (`grand_total` ×17, `amount` ×40, `total` ×16, `net_amount` ×13,
+     `total_taxes_and_charges` ×13, `base_total` ×13, `base_grand_total` ×10, `outstanding_amount` ×7) et
+     **aucun mécanisme de calcul n'existait**. Une facture de `doctypes/` a désormais son total, prouvé sur la
+     vraie définition (`test_erp_doctypes.test_a_sales_invoice_totals_itself`). Restent sans calcul, à dessein,
+     les `base_*` (taux de change flottant) et `rounded_total` (arrondi au franc).
+   - **1c. Les hooks eux-mêmes**, `accounts` et `stock` d'abord.
+
+   **Et un prérequis d'hébergement**, orthogonal aux trois : un hook est une coroutine enregistrée PAR NOM dans
+   le registre d'un plugin (D16), et un hook cité mais non enregistré refuse l'écriture (503 `hook_unavailable`,
+   jamais ignoré). Or `doctypes/` se charge aujourd'hui en DocTypes d'opérateur (`doctypes_dirs`, sans
+   propriétaire) : personne n'enregistre rien. Les hooks exigent donc le point 2 ci-dessous, au moins pour le
+   module qu'on traite.
 2. **Les plugins de module** (§2) : un par module, propriétaire de ses DocTypes (`load_dir(…, peers=True)`), qui déclare ses
    grants, son espace et enregistre ses hooks — sans quoi aucun grant n'est déclaré à xauth.
 3. ~~**`target_status` sur les liens entre pièces.**~~ **Fait** : les 10 champs `document` des mappings portent

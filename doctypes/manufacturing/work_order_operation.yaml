@@ -23,7 +23,8 @@ fields:
   fieldtype: TextEditor
 - fieldname: completed_qty
   label: Completed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   description: Operation completed for how many finished goods?
 - fieldname: status
   label: Status
@@ -95,7 +96,8 @@ fields:
   options: Workstation Type
 - fieldname: process_loss_qty
   label: Process Loss Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: bom_no
   label: Output Item BOM
@@ -110,7 +112,8 @@ fields:
   read_only: true
 - fieldname: output_qty
   label: Output Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   description: Quantity of the output item this operation makes for the whole Work Order
 - fieldname: wip_warehouse
@@ -153,5 +156,6 @@ fields:
   default: false
 - fieldname: pending_qty
   label: Pending Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
