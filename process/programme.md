@@ -724,7 +724,7 @@ migration du YAML est mécanique (même forme que les T1-T13 d'`erp-doctypes.md`
 faire » du mapper (`mapper.md` §5) devient exact pour les quantités aussi, et `same_number_kind` y reste satisfait
 puisque les deux côtés bougent ensemble.
 
-**Décision 2 — un `compute:` à vocabulaire FERMÉ, et non une arithmétique dans `expr.py`.** `expr.py` vaut par deux
+**Décision 2 — un `compute:` à vocabulaire FERMÉ, et non une arithmétique dans `expr.py`. FAIT le 28 oct.** (`compute.py` : 62 tests purs, 13 contre une base ; jeu d'ERP : T15, 44 champs.) `expr.py` vaut par deux
 choses : il est minuscule, et il est JUMELÉ au navigateur (même arbre, même sémantique, vecteurs partagés). Y ajouter
 l'arithmétique, ce serait la grammaire, l'évaluateur Python, son jumeau TypeScript, les vecteurs, et des règles de
 promotion numérique — en risquant d'embrouiller la sémantique volontairement stricte des conditions (`1 == true` est
@@ -752,9 +752,14 @@ nomenclature, la téléphonie.
 **Ordre imposé par ces décisions.** La migration des quantités (1) précède `compute:` (2), qui précède les hooks de
 comptabilisation — sinon les 136 pièces s'écrivent deux fois. Le rapport mesuré (3) est indépendant.
 
-**État au 28 octobre** : (1) est faite. (2) reste le verrou, et la mesure du jour le chiffre : **129 champs de montant
-clés du jeu sont `read_only`** et rien ne les calcule, donc un hook de comptabilisation écrit maintenant posterait des
-totaux vides. (3) n'est pas commencé.
+**État au 28 octobre** : (1) et (2) sont faites. Une facture de `doctypes/` a désormais son total, exact et prouvé sur
+la vraie définition. Les trois points que cette décision laissait « à préciser » sont tranchés et vérifiés dans
+`compute.py` : l'échelle du résultat est celle du champ qui reçoit ; un PRODUIT arrondit (`ROUND_HALF_UP`, le seul
+arrondi du moteur — c'est ce que déclarer `decimals: 2` veut dire) tandis qu'une ADDITION ne perd jamais de précision
+(refusée au chargement) ; une somme de table vide vaut zéro. Et une chose que la décision n'avait pas prévue : un calcul
+LIT un autre calcul (`grand_total = total + taxes` où `total = sum(items.amount)`), donc l'ordre se calcule par tri
+topologique et seule la BOUCLE est refusée — l'interdire aurait rendu `compute:` inutile pour le cas qui l'a fait naître.
+Reste (3), le rapport mesuré, et surtout les hooks eux-mêmes, qui attendent encore un plugin de module pour les héberger.
 
 ## 4. Ce qu'on vise
 

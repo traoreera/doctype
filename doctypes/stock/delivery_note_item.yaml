@@ -108,6 +108,7 @@ fields:
   decimals: 2
   in_list_view: true
   read_only: true
+  compute: qty * rate
 - fieldname: base_rate
   label: Rate (Company Currency)
   fieldtype: Currency
@@ -137,6 +138,7 @@ fields:
   fieldtype: Currency
   decimals: 2
   read_only: true
+  compute: amount - discount_amount
 - fieldname: base_net_rate
   label: Net Rate (Company Currency)
   fieldtype: Currency
