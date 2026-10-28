@@ -33,7 +33,8 @@ fields:
   options: Pick List Item
 - fieldname: for_qty
   label: Qty of Finished Goods Item
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   description: Qty of raw materials will be decided based on the qty of the Finished Goods Item
 - fieldname: purpose

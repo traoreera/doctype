@@ -47,7 +47,8 @@ fields:
   hidden: true
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   hidden: true
 - fieldname: operating_component

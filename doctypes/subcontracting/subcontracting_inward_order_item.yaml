@@ -17,10 +17,11 @@ fields:
   read_only: true
 - fieldname: qty
   label: Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
-  default: 1.0
+  default: "1.000"
 - fieldname: stock_uom
   label: Stock UOM
   fieldtype: Link
@@ -44,12 +45,14 @@ fields:
   default: false
 - fieldname: delivered_qty
   label: Delivered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: returned_qty
   label: Returned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: sales_order_item
   label: Sales Order Item
@@ -63,11 +66,13 @@ fields:
   hidden: true
 - fieldname: produced_qty
   label: Produced Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: process_loss_qty
   label: Process Loss Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: delivery_warehouse
   label: Delivery Warehouse

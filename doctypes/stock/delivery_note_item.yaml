@@ -35,7 +35,8 @@ fields:
   fieldtype: TextEditor
 - fieldname: qty
   label: Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: stock_uom
@@ -57,7 +58,8 @@ fields:
   read_only: true
 - fieldname: stock_qty
   label: Qty in Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: price_list_rate
   label: Price List Rate
@@ -172,11 +174,13 @@ fields:
   options: Quality Inspection
 - fieldname: actual_qty
   label: Qty (Warehouse)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: actual_batch_qty
   label: Available Batch Qty at From Warehouse
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: item_group
   label: Item Group
@@ -234,7 +238,8 @@ fields:
   hidden: true
 - fieldname: installed_qty
   label: Installed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: billed_amt
   label: Billed Amt
@@ -260,7 +265,8 @@ fields:
   hidden: true
 - fieldname: returned_qty
   label: Returned Qty in Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: incoming_rate
   label: Incoming Rate
@@ -303,11 +309,13 @@ fields:
   fieldtype: Text
 - fieldname: received_qty
   label: Received Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: packed_qty
   label: Packed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: serial_and_batch_bundle
   label: Serial and Batch Bundle

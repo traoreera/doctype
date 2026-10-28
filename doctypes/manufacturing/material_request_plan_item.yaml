@@ -36,21 +36,25 @@ fields:
   in_list_view: true
 - fieldname: quantity
   label: Required Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: projected_qty
   label: Projected Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: actual_qty
   label: Qty In Stock
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: min_order_qty
   label: Minimum Order Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: sales_order
@@ -60,7 +64,8 @@ fields:
   read_only: true
 - fieldname: requested_qty
   label: Requested Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: description
   label: Description
@@ -80,15 +85,18 @@ fields:
   read_only: true
 - fieldname: ordered_qty
   label: Ordered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: reserved_qty_for_production
   label: Reserved Qty for Production
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: required_bom_qty
   label: Reqd Qty (BOM)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: conversion_factor
@@ -101,7 +109,8 @@ fields:
   in_list_view: true
 - fieldname: stock_reserved_qty
   label: Stock Reserved Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: from_bom
   label: From BOM

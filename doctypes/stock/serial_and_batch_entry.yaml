@@ -5,14 +5,14 @@ istable: true
 fields:
   - { fieldname: serial_no, label: "Serial No", fieldtype: Link, options: "Serial No", in_list_view: true }
   - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch", in_list_view: true }
-  - { fieldname: qty, label: "Qty", fieldtype: Number, in_list_view: true, default: 1.0 }
+  - { fieldname: qty, label: "Qty", fieldtype: Decimal, decimals: 3, in_list_view: true, default: "1.000" }
   - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true }
   - { fieldname: incoming_rate, label: "Valuation Rate", fieldtype: Number, read_only: true }
   - { fieldname: outgoing_rate, label: "Outgoing Rate", fieldtype: Number, read_only: true, hidden: true }
   - { fieldname: stock_value_difference, label: "Change in Stock Value", fieldtype: Number, read_only: true }
   - { fieldname: is_outward, label: "Is Outward", fieldtype: Boolean, read_only: true, hidden: true }
   - { fieldname: stock_queue, label: "FIFO Stock Queue (qty, rate)", fieldtype: LongText, read_only: true }
-  - { fieldname: delivered_qty, label: "Delivered Qty", fieldtype: Number, read_only: true }
+  - { fieldname: delivered_qty, label: "Delivered Qty", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: reference_for_reservation, label: "Reference for Reservation", fieldtype: Text, read_only: true, hidden: true }
   - { fieldname: posting_datetime, label: "Posting Datetime", fieldtype: Datetime, read_only: true }
   - { fieldname: voucher_type, label: "Voucher Type", fieldtype: Text, read_only: true }

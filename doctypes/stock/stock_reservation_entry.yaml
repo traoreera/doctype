@@ -49,7 +49,8 @@ fields:
   read_only: true
 - fieldname: reserved_qty
   label: Reserved Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: status
@@ -68,15 +69,18 @@ fields:
   read_only: true
 - fieldname: delivered_qty
   label: Delivered Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: available_qty
   label: Available Qty to Reserve
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: voucher_qty
   label: Voucher Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: has_serial_no
   label: Has Serial No
@@ -113,10 +117,12 @@ fields:
   options: from_voucher_type
 - fieldname: consumed_qty
   label: Consumed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 - fieldname: transferred_qty
   label: Transferred Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 title_field: item_code
 layout:
 - tab: General

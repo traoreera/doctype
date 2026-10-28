@@ -59,7 +59,8 @@ fields:
   read_only: true
 - fieldname: total_qty
   label: Total Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: warehouse
   label: Warehouse

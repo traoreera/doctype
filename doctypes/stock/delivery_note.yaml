@@ -176,7 +176,8 @@ fields:
   options: Packed Item
 - fieldname: total_qty
   label: Total Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: base_total
   label: Total (Company Currency)

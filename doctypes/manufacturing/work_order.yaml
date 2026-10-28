@@ -72,17 +72,19 @@ fields:
   required: true
 - fieldname: qty
   label: Qty To Manufacture
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
-  default: 1.0
+  default: "1.000"
 - fieldname: material_transferred_for_manufacturing
   label: Material Transferred for Manufacturing
   fieldtype: Number
   read_only: true
 - fieldname: produced_qty
   label: Manufactured Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: sales_order
   label: Sales Order
@@ -235,7 +237,8 @@ fields:
   hidden: true
 - fieldname: process_loss_qty
   label: Process Loss Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: track_semi_finished_goods
   label: Produce Item per Operation
@@ -250,7 +253,8 @@ fields:
   default: false
 - fieldname: disassembled_qty
   label: Disassembled Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: mps
   label: MPS
@@ -259,7 +263,8 @@ fields:
   read_only: true
 - fieldname: additional_transferred_qty
   label: Additional Transferred Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: subcontracting_inward_order
   label: Subcontracting Inward Order
@@ -273,7 +278,8 @@ fields:
   hidden: true
 - fieldname: max_producible_qty
   label: Max Producible Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   hidden: true
 - fieldname: non_stock_items

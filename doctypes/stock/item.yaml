@@ -224,9 +224,10 @@ fields:
   options: UOM
 - fieldname: min_order_qty
   label: Minimum Order Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   description: Minimum quantity should be as per Stock UOM
-  default: 0.0
+  default: "0.000"
 - fieldname: safety_stock
   label: Safety Stock
   fieldtype: Number
@@ -337,7 +338,8 @@ fields:
   hidden: true
 - fieldname: total_projected_qty
   label: Total Projected Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   hidden: true
 - fieldname: over_delivery_receipt_allowance

@@ -43,7 +43,8 @@ fields:
   required: true
 - fieldname: fuel_qty
   label: Fuel Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 - fieldname: price
   label: Fuel Price
   fieldtype: Currency

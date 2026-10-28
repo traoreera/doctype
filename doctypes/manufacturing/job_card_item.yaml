@@ -28,7 +28,8 @@ fields:
   read_only: true
 - fieldname: required_qty
   label: Required Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: allow_alternative_item
   label: Allow Alternative Item
@@ -45,9 +46,11 @@ fields:
   options: UOM
 - fieldname: transferred_qty
   label: Transferred Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: consumed_qty
   label: Consumed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true

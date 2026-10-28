@@ -20,9 +20,10 @@ fields:
   in_list_view: true
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
-  default: 1.0
+  default: "1.000"
 - fieldname: uom
   label: UOM
   fieldtype: Link

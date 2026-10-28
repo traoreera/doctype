@@ -14,7 +14,8 @@ fields:
   fieldtype: LongText
 - fieldname: qty
   label: Installed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: description

@@ -6,7 +6,7 @@ fields:
   - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
   - { fieldname: item_name, label: "Item Name", fieldtype: Text }
   - { fieldname: description, label: "Description", fieldtype: TextEditor }
-  - { fieldname: qty, label: "Quantity", fieldtype: Number, required: true, in_list_view: true }
+  - { fieldname: qty, label: "Quantity", fieldtype: Decimal, decimals: 3, required: true, in_list_view: true }
   - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", required: true, in_list_view: true }
   - { fieldname: conversion_factor, label: "UOM Conversion Factor", fieldtype: Number, required: true }
   - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", required: true, read_only: true }
@@ -14,7 +14,7 @@ fields:
   - { fieldname: schedule_date, label: "Required By", fieldtype: Date, required: true, in_list_view: true }
   - { fieldname: rate, label: "Rate", fieldtype: Currency, decimals: 2 }
   - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, read_only: true }
-  - { fieldname: stock_qty, label: "Stock Qty", fieldtype: Number, read_only: true }
+  - { fieldname: stock_qty, label: "Stock Qty", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: item_group, label: "Item Group", fieldtype: Link, options: "Item Group", read_only: true }
   - { fieldname: brand, label: "Brand", fieldtype: Link, options: "Brand", read_only: true }
   - { fieldname: lead_time_date, label: "Lead Time Date", fieldtype: Date, read_only: true }
@@ -23,14 +23,14 @@ fields:
   - { fieldname: project, label: "Project", fieldtype: Link, options: "Project" }
   - { fieldname: production_plan, label: "Production Plan", fieldtype: Link, options: "Production Plan", read_only: true }
   - { fieldname: material_request_plan_item, label: "Material Request Plan Item", fieldtype: Text, read_only: true }
-  - { fieldname: min_order_qty, label: "Min Order Qty", fieldtype: Number, read_only: true }
-  - { fieldname: projected_qty, label: "Projected Qty", fieldtype: Number, read_only: true }
-  - { fieldname: actual_qty, label: "Actual Qty", fieldtype: Number, read_only: true }
-  - { fieldname: ordered_qty, label: "Completed Qty", fieldtype: Number, read_only: true }
+  - { fieldname: min_order_qty, label: "Min Order Qty", fieldtype: Decimal, decimals: 3, read_only: true }
+  - { fieldname: projected_qty, label: "Projected Qty", fieldtype: Decimal, decimals: 3, read_only: true }
+  - { fieldname: actual_qty, label: "Actual Qty", fieldtype: Decimal, decimals: 3, read_only: true }
+  - { fieldname: ordered_qty, label: "Completed Qty", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: expense_account, label: "Expense Account", fieldtype: Link, options: "Account" }
   - { fieldname: cost_center, label: "Cost Center", fieldtype: Link, options: "Cost Center" }
   - { fieldname: page_break, label: "Page Break", fieldtype: Boolean, default: false }
-  - { fieldname: received_qty, label: "Received Qty", fieldtype: Number, read_only: true }
+  - { fieldname: received_qty, label: "Received Qty", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: manufacturer, label: "Manufacturer", fieldtype: Link, options: "Manufacturer" }
   - { fieldname: manufacturer_part_no, label: "Manufacturer Part Number", fieldtype: Text, read_only: true }
   - { fieldname: from_warehouse, label: "Source Warehouse", fieldtype: Link, options: "Warehouse" }
@@ -39,7 +39,7 @@ fields:
   - { fieldname: wip_composite_asset, label: "WIP Composite Asset", fieldtype: Link, options: "Asset" }
   - { fieldname: price_list_rate, label: "Price List Rate", fieldtype: Currency, decimals: 2, read_only: true, hidden: true }
   - { fieldname: reorder_level, label: "Reorder Level", fieldtype: Number, read_only: true }
-  - { fieldname: reorder_qty, label: "Reorder Qty", fieldtype: Number, read_only: true }
+  - { fieldname: reorder_qty, label: "Reorder Qty", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: projected_on_hand, label: "Projected On Hand", fieldtype: Number, read_only: true, description: "If the reorder check is set at the Group warehouse level, the available quantity becomes the sum of the projected quantities of all its child warehouses." }
-  - { fieldname: picked_qty, label: "Picked Qty", fieldtype: Number, read_only: true, hidden: true }
+  - { fieldname: picked_qty, label: "Picked Qty", fieldtype: Decimal, decimals: 3, read_only: true, hidden: true }
   - { fieldname: packed_item, label: "Packed Item", fieldtype: Text, read_only: true, hidden: true }

@@ -90,11 +90,13 @@ fields:
   options: Material Request Plan Item
 - fieldname: total_planned_qty
   label: Total Planned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: total_produced_qty
   label: Total Produced Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: status
   label: Status

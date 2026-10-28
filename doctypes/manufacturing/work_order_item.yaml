@@ -27,20 +27,24 @@ fields:
   read_only: true
 - fieldname: required_qty
   label: Required Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: transferred_qty
   label: Transferred Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: requested_qty
   label: Requested Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: picked_qty
   label: Picked Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: allow_alternative_item
   label: Allow Alternative Item
@@ -52,16 +56,19 @@ fields:
   default: false
 - fieldname: consumed_qty
   label: Consumed Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: available_qty_at_source_warehouse
   label: Available Qty at Source Warehouse
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: available_qty_at_wip_warehouse
   label: Available Qty at WIP Warehouse
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: rate
   label: Rate
@@ -75,12 +82,14 @@ fields:
   read_only: true
 - fieldname: returned_qty
   label: 'Returned Qty '
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
   read_only: true
 - fieldname: subcontracted_qty
   label: Subcontracted Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: operation_row_id
   label: Operation Row Id
@@ -93,7 +102,8 @@ fields:
   read_only: true
 - fieldname: stock_reserved_qty
   label: Stock Reserved Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: is_additional_item
   label: Is Additional Item

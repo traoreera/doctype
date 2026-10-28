@@ -26,16 +26,19 @@ fields:
   fieldtype: TextEditor
 - fieldname: received_qty
   label: Received Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   read_only: true
 - fieldname: qty
   label: Accepted Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: rejected_qty
   label: Rejected Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: uom
   label: UOM
@@ -167,7 +170,8 @@ fields:
   read_only: true
 - fieldname: stock_qty
   label: Accepted Qty in Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: item_tax_template
   label: Item Tax Template
@@ -292,11 +296,13 @@ fields:
   read_only: true
 - fieldname: returned_qty
   label: Returned Qty in Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: received_stock_qty
   label: Received Qty in Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: stock_uom_rate
   label: Rate of Stock UOM

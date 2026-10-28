@@ -3,8 +3,8 @@ name: "Pick List Item"
 label: "Pick List Item"
 istable: true
 fields:
-  - { fieldname: qty, label: "Qty", fieldtype: Number, required: true, in_list_view: true, default: 1.0 }
-  - { fieldname: picked_qty, label: "Picked Qty (in Stock UOM)", fieldtype: Number, in_list_view: true }
+  - { fieldname: qty, label: "Qty", fieldtype: Decimal, decimals: 3, required: true, in_list_view: true, default: "1.000" }
+  - { fieldname: picked_qty, label: "Picked Qty (in Stock UOM)", fieldtype: Decimal, decimals: 3, in_list_view: true }
   - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true, read_only: true }
   - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
   - { fieldname: description, label: "Description", fieldtype: LongText, read_only: true }
@@ -13,7 +13,7 @@ fields:
   - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", read_only: true }
   - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM" }
   - { fieldname: conversion_factor, label: "UOM Conversion Factor", fieldtype: Number, read_only: true }
-  - { fieldname: stock_qty, label: "Qty (in Stock UOM)", fieldtype: Number, in_list_view: true, read_only: true }
+  - { fieldname: stock_qty, label: "Qty (in Stock UOM)", fieldtype: Decimal, decimals: 3, in_list_view: true, read_only: true }
   - { fieldname: item_code, label: "Item", fieldtype: Link, options: "Item", required: true, in_list_view: true }
   - { fieldname: sales_order, label: "Sales Order", fieldtype: Link, options: "Sales Order", read_only: true }
   - { fieldname: sales_order_item, label: "Sales Order Item", fieldtype: Text, read_only: true, hidden: true }
@@ -22,9 +22,9 @@ fields:
   - { fieldname: item_group, label: "Item Group", fieldtype: Text, read_only: true }
   - { fieldname: product_bundle_item, label: "Product Bundle Item", fieldtype: Text, read_only: true, hidden: true, description: "product bundle item row's name in sales order. Also indicates that picked item is to be used for a product bundle" }
   - { fieldname: serial_and_batch_bundle, label: "Serial and Batch Bundle", fieldtype: Link, options: "Serial and Batch Bundle" }
-  - { fieldname: stock_reserved_qty, label: "Stock Reserved Qty (in Stock UOM)", fieldtype: Number, read_only: true }
+  - { fieldname: stock_reserved_qty, label: "Stock Reserved Qty (in Stock UOM)", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: use_serial_batch_fields, label: "Use Serial No / Batch Fields", fieldtype: Boolean, default: false }
-  - { fieldname: delivered_qty, label: "Delivered Qty (in Stock UOM)", fieldtype: Number, read_only: true }
-  - { fieldname: transferred_qty, label: "Transferred Qty (in Stock UOM)", fieldtype: Number, read_only: true }
-  - { fieldname: actual_qty, label: "Qty (Warehouse)", fieldtype: Number, read_only: true }
+  - { fieldname: delivered_qty, label: "Delivered Qty (in Stock UOM)", fieldtype: Decimal, decimals: 3, read_only: true }
+  - { fieldname: transferred_qty, label: "Transferred Qty (in Stock UOM)", fieldtype: Decimal, decimals: 3, read_only: true }
+  - { fieldname: actual_qty, label: "Qty (Warehouse)", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: company_total_stock, label: "Qty (Company)", fieldtype: Number, read_only: true }

@@ -98,7 +98,8 @@ fields:
   options: Subcontracting Receipt Supplied Item
 - fieldname: total_qty
   label: Total Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: total
   label: Total

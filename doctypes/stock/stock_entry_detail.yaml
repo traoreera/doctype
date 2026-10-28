@@ -31,7 +31,8 @@ fields:
   fieldtype: TextEditor
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: basic_rate
@@ -76,7 +77,8 @@ fields:
   read_only: true
 - fieldname: transfer_qty
   label: Qty as per Stock UOM
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: retain_sample
   label: Retain Sample
@@ -110,7 +112,8 @@ fields:
   default: false
 - fieldname: actual_qty
   label: Actual Qty (at source/target)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: bom_no
   label: BOM No
@@ -163,7 +166,8 @@ fields:
   read_only: true
 - fieldname: transferred_qty
   label: Transferred Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: item_group
   label: Item Group

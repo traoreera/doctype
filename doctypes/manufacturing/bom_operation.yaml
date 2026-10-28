@@ -87,9 +87,10 @@ fields:
     with Add Raw Materials.
 - fieldname: finished_good_qty
   label: Output Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
-  default: 1.0
+  default: "1.000"
 - fieldname: is_final_finished_good
   label: Last Step
   fieldtype: Boolean

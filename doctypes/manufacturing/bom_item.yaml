@@ -39,7 +39,8 @@ fields:
   in_list_view: true
 - fieldname: qty
   label: Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
 - fieldname: uom
@@ -50,7 +51,8 @@ fields:
   in_list_view: true
 - fieldname: stock_qty
   label: Stock Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: stock_uom
   label: Stock UOM
@@ -84,7 +86,8 @@ fields:
   read_only: true
 - fieldname: qty_consumed_per_unit
   label: Qty Consumed Per Unit
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
   hidden: true
 - fieldname: allow_alternative_item

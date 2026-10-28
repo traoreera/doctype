@@ -127,10 +127,12 @@ fields:
   options: Supplier Group
 - fieldname: min_qty
   label: Min Qty (As Per Stock UOM)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 - fieldname: max_qty
   label: Max Qty (As Per Stock UOM)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
 - fieldname: min_amt
   label: Min Amt
   fieldtype: Currency
@@ -206,8 +208,9 @@ fields:
   options: Item
 - fieldname: free_qty
   label: Qty
-  fieldtype: Number
-  default: 0.0
+  fieldtype: Decimal
+  decimals: 3
+  default: "0.000"
 - fieldname: free_item_uom
   label: UOM
   fieldtype: Link

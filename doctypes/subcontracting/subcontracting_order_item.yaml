@@ -26,10 +26,11 @@ fields:
   fieldtype: TextEditor
 - fieldname: qty
   label: Quantity
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   in_list_view: true
-  default: 1.0
+  default: "1.000"
 - fieldname: stock_uom
   label: Stock UOM
   fieldtype: Link
@@ -103,11 +104,13 @@ fields:
   default: false
 - fieldname: received_qty
   label: Received Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: returned_qty
   label: Returned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: cost_center
   label: Cost Center

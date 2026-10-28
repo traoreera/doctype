@@ -17,16 +17,19 @@ fields:
   fieldtype: TextEditor
 - fieldname: received_qty
   label: Qty (As per BOM)
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   required: true
   read_only: true
 - fieldname: qty
   label: Accepted Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: rejected_qty
   label: Rejected Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   in_list_view: true
 - fieldname: stock_uom
   label: Stock UOM
@@ -149,7 +152,8 @@ fields:
   default: false
 - fieldname: returned_qty
   label: Returned Qty
-  fieldtype: Number
+  fieldtype: Decimal
+  decimals: 3
   read_only: true
 - fieldname: serial_and_batch_bundle
   label: Serial and Batch Bundle
@@ -226,5 +230,6 @@ fields:
   hidden: true
 - fieldname: process_loss_qty
   label: Process Loss Qty
-  fieldtype: Number
-  default: 0.0
+  fieldtype: Decimal
+  decimals: 3
+  default: "0.000"

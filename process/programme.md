@@ -715,7 +715,7 @@ dans sa grammaire : « pas d'arithmétique »). `fetch_from` ne sait que COPIER 
 Ce n'est donc pas une imprécision à corriger plus tard : c'est structurel, et cela conditionne la façon d'écrire les 136
 pièces soumettables. D'où trois décisions, prises avant d'écrire le moindre hook.
 
-**Décision 1 — les quantités passent en `Decimal`.** Le cas canonique est `amount` (Currency, 2 décimales) `= qty × rate`,
+**Décision 1 — les quantités passent en `Decimal`. FAIT le 28 oct.** (T14 d'`erp-doctypes.md` : 273 champs, 92 types, 27 défauts canonisés, `scripts/qty_to_decimal.py`, invariants dans `tests/unit/test_erp_doctypes.py` ; les 10 mappings à quantité vérifiés exacts par `same_number_kind`.) Le cas canonique est `amount` (Currency, 2 décimales) `= qty × rate`,
 or `qty` est aujourd'hui un `Number`, un flottant (274 champs de quantité dans ce cas ; le jeu compte 915 Currency pour
 663 Number). Multiplier un flottant par un décimal exact pour produire de l'argent exigerait une règle d'arrondi — et
 arrondir de l'argent est une question métier, pas technique. Le moteur refusant déjà un flottant pour un montant, on ne
@@ -751,6 +751,10 @@ nomenclature, la téléphonie.
 
 **Ordre imposé par ces décisions.** La migration des quantités (1) précède `compute:` (2), qui précède les hooks de
 comptabilisation — sinon les 136 pièces s'écrivent deux fois. Le rapport mesuré (3) est indépendant.
+
+**État au 28 octobre** : (1) est faite. (2) reste le verrou, et la mesure du jour le chiffre : **129 champs de montant
+clés du jeu sont `read_only`** et rien ne les calcule, donc un hook de comptabilisation écrit maintenant posterait des
+totaux vides. (3) n'est pas commencé.
 
 ## 4. Ce qu'on vise
 

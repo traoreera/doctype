@@ -7,12 +7,12 @@ fields:
   - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
   - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
   - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", required: true, in_list_view: true }
-  - { fieldname: qty, label: "Quantity", fieldtype: Number, in_list_view: true }
+  - { fieldname: qty, label: "Quantity", fieldtype: Decimal, decimals: 3, in_list_view: true }
   - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", in_list_view: true, read_only: true }
   - { fieldname: valuation_rate, label: "Valuation Rate", fieldtype: Currency, decimals: 2, in_list_view: true }
   - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, read_only: true }
   - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
-  - { fieldname: current_qty, label: "Current Qty", fieldtype: Number, read_only: true }
+  - { fieldname: current_qty, label: "Current Qty", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: current_serial_no, label: "Current Serial No", fieldtype: LongText, read_only: true }
   - { fieldname: current_valuation_rate, label: "Current Valuation Rate", fieldtype: Currency, decimals: 2, read_only: true }
   - { fieldname: current_amount, label: "Current Amount", fieldtype: Currency, decimals: 2, read_only: true }
