@@ -11,9 +11,11 @@ IPC** (`print_service.py`, `api/print.py`, §7) avec la résolution des images e
 `tests/unit/test_printing.py` (le pur), `tests/unit/test_print_service.py` (la base), et
 `tests/integration/test_print_api.py` (un vrai hôte, un vrai plugin qui livre ses gabarits).
 
-**Pas encore fait :** les deux extras optionnels déclarés dans `pyproject.toml` et le test fumigène, le Desk,
-le DocType `Letter Head` dans le plugin `system` (le mécanisme est là, pas encore le YAML livré), et l'éditeur
-(§10). L'ordre de §11 tient.
+Et l'étape 4 : les extras `[pdf]` et le test fumigène (`tests/unit/test_pdf_engine.py`), que la CI installe
+toujours pour qu'il tourne au moins là.
+
+**Pas encore fait :** le Desk (bouton « Imprimer », aperçu, choix du gabarit), le DocType `Letter Head` dans le
+plugin `system` (le mécanisme est là, pas encore le YAML livré), et l'éditeur (§10). L'ordre de §11 tient.
 
 Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
 obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos
@@ -43,7 +45,7 @@ tableaux, aucun CSS grid) — pas seulement lu dans la documentation de Frappe :
 | Installation sur notre Python | wheel **`cp314`** manylinux, `pip install` sans build — **20,5 Mo** (moteur embarqué), `pypdf` 409 Ko |
 | Répétition de l'en-tête de tableau | **oui** : 300 lignes, 11 pages, en-tête présent sur les 10 pages de tableau et sur elles seules |
 | Saut de page explicite (`page-break-before`) | **oui** |
-| Interdiction du réseau | **oui**, par `Book.custom_resource_fetcher` : notre `fetch_url` lève, PlutoPrint avertit et **continue le rendu sans la ressource** |
+| Interdiction du réseau | **oui**, par `Book.custom_resource_fetcher` : notre `fetch_url` lève, PlutoPrint avertit et **continue le rendu sans la ressource** (et le 28 oct. : **sans** ce récupérateur le moteur fait vraiment la requête — voir §6) |
 | Superposition d'un fond PDF (`pypdf`) | **oui** : fond sous le contenu, sur toutes les pages, pied du fond conservé |
 
 **Deux mesures de plus, le 28 oct.**, faites en écrivant les routes (plutoprint 0.23.0, pypdf 6.21.3) — les deux
@@ -85,7 +87,29 @@ Elle ne sert qu'à superposer des pages ; absente, un gabarit à fond PDF répon
 autres impriment normalement.
 
 Réserve assumée : PlutoPrint est en **0.23.0**, un projet jeune. La dépendance optionnelle et la séparation
-HTML/PDF (§3) sont la précaution — pas un accident.
+HTML/PDF (§3) sont la précaution — pas un accident. D'où l'épinglage au MINEUR dans `pyproject.toml`
+(`>=0.23.0,<0.24.0`) : chaque 0.x+1 doit être re-mesuré, pas adopté à l'aveugle, parce que trois faits dont la
+conception dépend sont des comportements du moteur et non des garanties contractuelles.
+
+**L'extra, et pourquoi la CI l'installe toujours** (étape 4). `pip install "xcore-doctype[pdf]"` ou
+`make install-pdf` ; hors de `make install` à dessein (le moteur embarqué pèse une vingtaine de méga-octets, et
+une instance qui n'imprime pas ne les porte pas). Mais la CI fait `poetry install --extras pdf` : un test
+fumigène qui s'ignore PARTOUT ne vérifie rien, et celui-ci est précisément ce qui détectera qu'une version du
+moteur a changé un de ces comportements.
+
+**Ce que le test fumigène a attrapé en s'écrivant**, et qui justifie sa forme :
+
+- un PNG tapé à la main était **invalide** (libpng le refusait) et l'image était perdue **silencieusement** :
+  PlutoPrint avertit et continue, donc le PDF amputé sort quand même. La vérification « le PDF avec image est
+  plus gros » l'avait laissé passer — à six octets près, le document sans image était même plus gros. Le test
+  lit maintenant l'**XObject image** du PDF produit, par le dictionnaire `/Resources` et non par `page.images`
+  (qui exigerait Pillow). Leçon générale : contre un moteur qui dégrade au lieu d'échouer, une mesure indirecte
+  ne prouve rien.
+- un `page_break` en **dernier** bloc n'ouvre **aucune** page — il n'y a rien à y mettre. C'est le bon
+  comportement (pas de page blanche à la fin d'une facture), et il est désormais écrit comme tel.
+- `pdf.overlay` **plantait** sur un fond illisible (vide ou tronqué), parce que le garde-fou venait après la
+  lecture. Un fond abîmé rend maintenant le contenu inchangé : la règle du papier à en-tête absent, pour la
+  même raison. Le contenu, lui, vient de notre moteur — son illisibilité serait un défaut et remonte.
 
 ## 2. Décision — un gabarit vit sur DEUX niveaux, comme un formulaire
 
@@ -203,14 +227,28 @@ grant nouveau. Un droit d'impression par DocType est une autre affaire (`palier7
 **Le rendu n'accède pas au réseau.** C'est le point de sécurité central : un moteur HTML qui suit les URL d'un
 gabarit est une faille SSRF, et le gabarit vient de l'organisation.
 
-Deux verrous, et le second est meilleur que ce que j'avais prévu :
+Deux verrous — et **l'ordre d'importance que j'avais écrit était faux**, la mesure du 28 oct. l'a renversé :
 
 1. toute URL externe est refusée au CHARGEMENT du gabarit (§8), et une image est résolue par NOUS — seulement
    un fichier `xdt_file` du même tenant, lu par le service de fichiers ;
 2. et à l'exécution, `Book.custom_resource_fetcher` donne la main sur CHAQUE résolution : notre `fetch_url`
-   refuse tout ce qui n'est pas déjà incorporé. **Vérifié** (§0) : la ressource n'est pas récupérée, et le
-   document se rend quand même sans elle. C'est une ceinture en plus de la bretelle — on ne dépend pas de
-   l'exhaustivité du contrôle au chargement.
+   refuse tout ce qui n'est pas déjà incorporé.
+
+J'avais présenté le second comme « une ceinture en plus de la bretelle ». **C'est l'inverse : c'est lui la
+barrière.** Mesuré en écrivant l'étape 4 — le binaire de PlutoPrint embarque **libcurl** et toute sa pile TLS
+(openssl, krb5, nghttp2, libpsl, libssh…), et **sans** notre récupérateur il effectue réellement la requête :
+un serveur d'essai sur `127.0.0.1` la reçoit. Avec lui, aucune. Le refus au chargement est un contrôle STATIQUE
+sur ce qu'un gabarit déclare ; le récupérateur voit chaque URL que le HTML contient au moment du rendu. Les deux
+restent, mais c'est le second qu'il ne faut jamais retirer, et il est désormais prouvé par un test qui COMPTE
+les requêtes reçues par un serveur local (`test_pdf_engine.TestTheRendererHasNoNetwork`, rien ne sort de la
+machine : on ne sonde pas un hôte distant pour vérifier une règle de sécurité).
+
+**Conséquence de licence, et deuxième bénéfice imprévu de la dépendance optionnelle.** Ce binaire embarque des
+bibliothèques sous copyleft faible (libidn2 et libunistring en LGPL-3+, libssh en LGPL-2.1) à côté des MIT/BSD.
+Nous n'en redistribuons **rien** : notre wheel ne contient pas plutoprint, il déclare l'extra, et c'est
+l'opérateur qui l'installe depuis PyPI (vérifié dans les métadonnées du wheel : `Provides-Extra: pdf`,
+`Requires-Dist: plutoprint … ; extra == "pdf"`). Notre posture de licence est donc inchangée — ce qui n'était
+pas la raison du choix optionnel, mais en est un effet heureux.
 
 **Rien n'est écrit.** `GET` ne stocke pas. L'archivage du PDF (obligation légale sur une facture) est un geste
 distinct, explicite, et reste dehors en v1 (§8).
@@ -321,8 +359,9 @@ bloc déplacé, une colonne ajoutée, un aperçu qui suit, un retour à l'origin
 3. ~~Les routes et les actions, avec le droit de lecture et la résolution des images en `data:`.~~ **fait** —
    et le papier à en-tête est venu avec, parce que c'est lui qui porte les images à résoudre : l'étape 6 n'a plus
    qu'à livrer le YAML du DocType `Letter Head` dans le plugin `system`, le mécanisme est écrit et testé.
-4. `plutoprint` et `pypdf` en extras optionnels, et le test fumigène qui s'ignore sans eux (le banc d'essai du
-   27 oct. en est le point de départ : il vérifie déjà les quatre comportements de §0).
+4. ~~`plutoprint` et `pypdf` en extras optionnels, et le test fumigène qui s'ignore sans eux.~~ **fait** —
+   extra `[pdf]` (`pyproject.toml`), `make install-pdf`, `tests/unit/test_pdf_engine.py` (21 tests). La CI
+   l'installe TOUJOURS (`poetry install --extras pdf`) : un test fumigène qui s'ignore partout ne vérifie rien.
 5. Desk : bouton « Imprimer », aperçu, choix du gabarit.
 6. `Letter Head` dans le plugin `system`.
 7. L'éditeur (§10) : le modèle pur d'abord et ses tests, puis la page, puis la route d'aperçu.

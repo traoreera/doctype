@@ -22,8 +22,15 @@ hooks: { before_save: [sales.invoice_totals] }
 
 ```bash
 pip install xcore-doctype            # le wheel embarque le Desk ; extra [postgres] pour asyncpg
+pip install "xcore-doctype[pdf]"     # + l'impression PDF (plutoprint, pypdf) : optionnelle, voir plus bas
 xcore-doctype install ./app          # pose le plugin dans l'instance xcore et la vérifie
 ```
+
+**L'impression PDF est une dépendance optionnelle** (`process/impression.md`). Sans l'extra `[pdf]`, tout
+fonctionne sauf la génération du fichier : l'aperçu HTML d'un document (`GET /print/{type}/{nom}`) répond
+normalement, et seule la route PDF répond `503 pdf_engine_missing` en nommant le paquet à installer. C'est
+délibéré : le moteur embarqué pèse une vingtaine de méga-octets, et une instance qui n'imprime pas ne les porte
+pas.
 
 xcore ne découvre aujourd'hui que des **dossiers** de plugins : `install` dépose `app/xcore-doctype/` (manifeste + shim) et lit votre
 `integration.yaml` pour signaler ce qui empêcherait le plugin de répondre. Sur une instance neuve (`xcli init`), il relève :

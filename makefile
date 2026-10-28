@@ -54,6 +54,12 @@ install-py: ## Installer les dépendances Pythont-of-the-Box System Endpoint
 
 install-ui: $(UI)/node_modules ## Installer les dépendances du Desk
 
+# Hors de `make install` à dessein : c'est une dépendance OPTIONNELLE (process/impression.md §1), et plutoprint
+# pèse ~20 Mo (moteur embarqué). Sans elle, l'aperçu HTML marche, la route PDF répond 503 et le test fumigène
+# `tests/unit/test_pdf_engine.py` s'ignore avec sa raison. La CI, elle, l'installe toujours.
+install-pdf: ## Installer l'extra d'impression PDF (plutoprint + pypdf) et activer son test fumigène
+	@poetry install --extras pdf
+
 # Réinstalle seulement quand package.json ou le verrou changent.
 $(UI)/node_modules: $(UI)/package.json $(UI)/pnpm-lock.yaml
 	@pnpm -C $(UI) install --frozen-lockfile

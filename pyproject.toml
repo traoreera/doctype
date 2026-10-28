@@ -33,6 +33,15 @@ xcore-doctype = "xcore_doctype:plugin_dir"
 [project.optional-dependencies]
 # L'extra [postgres] d'xcore apporte psycopg2 (synchrone) : il faut asyncpg pour l'accès async (D11)
 postgres = ["asyncpg (>=0.31.0,<1.0.0)"]
+# Impression PDF (process/impression.md §1). OPTIONNEL par décision : sans l'extra, l'aperçu HTML fonctionne et
+# seule la route PDF répond `503 pdf_engine_missing` en nommant le paquet. C'est ce qui rend l'engagement
+# réversible — rien d'autre dans le moteur ne dépend de PlutoPrint.
+#   plutoprint : MIT, wheels précompilés (cp314 manylinux), moteur embarqué, ~20,5 Mo, aucun binaire système.
+#     Épinglé au MINEUR parce qu'il est en 0.x : chaque 0.x+1 doit être re-mesuré (le `@page` suivi, l'URL
+#     `data:` qui échappe au récupérateur de ressources, l'en-tête de tableau répété), pas adopté à l'aveugle.
+#   pypdf : BSD-3, Python pur, 409 Ko. Ne sert QU'au fond PDF d'un papier à en-tête (§5) ; son absence
+#     n'empêche pas les autres gabarits d'imprimer, le code sonde les deux paquets séparément.
+pdf = ["plutoprint (>=0.23.0,<0.24.0)", "pypdf (>=6.21.3,<7.0.0)"]
 
 [tool.poetry]
 packages = [{include = "xcore_doctype", from = "src"}]

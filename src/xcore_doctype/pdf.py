@@ -80,20 +80,29 @@ def overlay(content: bytes, background: bytes, *, every_page: bool) -> bytes:
     `every_page` : le fond sur toutes les pages ou sur la première seulement. Un fond de plusieurs pages
     s'aligne page à page tant qu'il en reste, puis sa DERNIÈRE page se répète — le cas réel est une page unique,
     et cette règle la couvre sans cas particulier.
+
+    Un fond ILLISIBLE (vide, tronqué, pas un PDF) rend le contenu INCHANGÉ : c'est la règle du papier à en-tête
+    absent (`print_service._letterhead`), et pour la même raison — une facture ne devient pas inimprimable parce
+    que le fichier de fond est abîmé. Le contenu, lui, vient de notre moteur : son illisibilité serait un défaut
+    et doit remonter, donc elle n'est pas rattrapée.
     """
     pypdf = _module("pypdf")
     if pypdf is None:
         raise PdfEngineMissing("pypdf")
     front = pypdf.PdfReader(io.BytesIO(content))
-    back = pypdf.PdfReader(io.BytesIO(background))
-    if not back.pages:
+    try:
+        back = pypdf.PdfReader(io.BytesIO(background))
+        pages_behind = len(back.pages)
+    except Exception:  # noqa: BLE001 - pypdf lève des types variés selon l'abîmure ; aucune ne doit empêcher d'imprimer
+        return content
+    if not pages_behind:
         return content
     writer = pypdf.PdfWriter()
     for i, page in enumerate(front.pages):
         if i and not every_page:
             writer.add_page(page)
             continue
-        under = back.pages[min(i, len(back.pages) - 1)]
+        under = back.pages[min(i, pages_behind - 1)]
         merged = pypdf.PageObject.create_blank_page(width=under.mediabox.width, height=under.mediabox.height)
         merged.merge_page(under)  # le fond dessous...
         merged.merge_page(page)  # ...notre contenu dessus

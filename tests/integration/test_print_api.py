@@ -9,9 +9,17 @@ from __future__ import annotations
 
 import base64
 
+import pytest
 import yaml
 
 from tests.integration.conftest import boot_host
+from xcore_doctype import pdf as engine
+
+# Les paquets d'impression sont OPTIONNELS (process/impression.md §1) : les deux cas sont des tests SÉPARÉS,
+# chacun ignoré avec sa raison, plutôt qu'un `if/else` dans un seul — sinon le rapport ne dit pas lequel des
+# deux comportements a réellement été vérifié.
+needs_engine = pytest.mark.skipif(not engine.engine_available(), reason="plutoprint absent : `make install-pdf`")
+needs_no_engine = pytest.mark.skipif(engine.engine_available(), reason="plutoprint présent : le 503 ne peut pas se produire")
 
 # Un shim qui charge ses DocTypes PUIS ses gabarits d'impression : l'ordre de §2 (un gabarit vise un type chargé).
 MAIN = '''
@@ -125,35 +133,47 @@ async def test_printing_is_reading_and_nothing_else(tmp_path):
         assert (await h.http("GET", f"/print/Bill/{name}", token=None)).status_code == 401  # aucune identité
 
 
-async def test_the_pdf_route_answers_bytes_or_names_the_missing_package(tmp_path):
+@needs_engine
+async def test_the_pdf_route_answers_real_bytes_with_the_right_headers(tmp_path):
     async with boot_host(tmp_path, inline_plugins=plugins()) as h:
-        from xcore_doctype import pdf as engine
-
         ada = h.token(sub="ada", permissions=GRANTS)
         name = await bill(h, ada)
         r = await h.http("GET", f"/print/Bill/{name}/pdf", token=ada)
-        if engine.engine_available():
-            assert r.status_code == 200 and r.headers["content-type"] == "application/pdf"
-            assert r.content.startswith(b"%PDF") and "attachment" in r.headers["content-disposition"]
-            assert r.headers["cache-control"] == "private, no-store" and r.headers["x-content-type-options"] == "nosniff"
-        else:
-            assert r.status_code == 503 and r.json()["detail"]["code"] == "pdf_engine_missing"
-            assert "plutoprint" in r.json()["detail"]["msg"]
+        assert r.status_code == 200, r.text
+        assert r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
+        assert "attachment" in r.headers["content-disposition"] and "Facture" in r.headers["content-disposition"]
+        # Le document d'une organisation ne se met en cache nulle part ailleurs que chez son lecteur.
+        assert r.headers["cache-control"] == "private, no-store" and r.headers["x-content-type-options"] == "nosniff"
+
+
+@needs_no_engine
+async def test_without_the_package_the_pdf_route_names_it_and_the_preview_still_works(tmp_path):
+    async with boot_host(tmp_path, inline_plugins=plugins()) as h:
+        ada = h.token(sub="ada", permissions=GRANTS)
+        name = await bill(h, ada)
+        r = await h.http("GET", f"/print/Bill/{name}/pdf", token=ada)
+        assert r.status_code == 503 and r.json()["detail"]["code"] == "pdf_engine_missing"
+        assert "plutoprint" in r.json()["detail"]["msg"]
+        assert (await h.http("GET", f"/print/Bill/{name}", token=ada)).status_code == 200  # l'aperçu, lui, marche
 
 
 async def test_the_ipc_actions_mirror_the_routes(tmp_path):
     async with boot_host(tmp_path, inline_plugins=plugins()) as h:
-        from xcore_doctype import pdf as engine
-
         ada = h.token(sub="ada", permissions=GRANTS)
         name = await bill(h, ada)
         listed = await h.action("doc.print.templates", {"doctype": "Bill"}, token=ada)
         assert [t["name"] for t in listed["templates"]] == ["duplicata", "standard"]
         shown = await h.action("doc.print", {"doctype": "Bill", "name": name}, token=ada)
         assert "Durand" in shown["html"]
-        if engine.engine_available():
-            # L'IPC transporte du JSON : le PDF voyage en base64, jamais en octets bruts.
-            made = await h.action("doc.print.pdf", {"doctype": "Bill", "name": name}, token=ada)
-            content = base64.b64decode(made["pdf_base64"])
-            assert content.startswith(b"%PDF") and made["size"] == len(content)
-            assert made["filename"].endswith(".pdf") and made["content_type"] == "application/pdf"
+
+
+@needs_engine
+async def test_the_pdf_travels_base64_over_ipc(tmp_path):
+    """Un canal IPC transporte du JSON, pas des octets : d'où `pdf_base64`, et `size` pour vérifier l'arrivée."""
+    async with boot_host(tmp_path, inline_plugins=plugins()) as h:
+        ada = h.token(sub="ada", permissions=GRANTS)
+        name = await bill(h, ada)
+        made = await h.action("doc.print.pdf", {"doctype": "Bill", "name": name}, token=ada)
+        content = base64.b64decode(made["pdf_base64"])
+        assert content.startswith(b"%PDF") and made["size"] == len(content)
+        assert made["filename"].endswith(".pdf") and made["content_type"] == "application/pdf"

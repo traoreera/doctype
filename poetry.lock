@@ -1918,6 +1918,39 @@ files = [
 ]
 
 [[package]]
+name = "plutoprint"
+version = "0.23.0"
+description = "Paged HTML rendering library"
+optional = true
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "extra == \"pdf\""
+files = [
+    {file = "plutoprint-0.23.0-cp310-cp310-macosx_15_0_arm64.whl", hash = "sha256:458b76a7cfd02cc9b15acaf0e298507bb7865ca285997d4fe943215936f29612"},
+    {file = "plutoprint-0.23.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:898e1928b24750970f53ac02224650f3a65f8a77d6d70e75a6785a1a4050e005"},
+    {file = "plutoprint-0.23.0-cp310-cp310-win_amd64.whl", hash = "sha256:03999bb58208fb025a45d9b26bfbc54c27e54775e8d4dc7480a3b4820fe44d93"},
+    {file = "plutoprint-0.23.0-cp311-cp311-macosx_15_0_arm64.whl", hash = "sha256:3b9bba16ad3e99f7ae1d9e18a01a7c3b67966d80257283e68915756ff8b20bfe"},
+    {file = "plutoprint-0.23.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:5ce62e38728b2978e812e9abcc06340aaef10970c5c1a295be8efab8030b5124"},
+    {file = "plutoprint-0.23.0-cp311-cp311-win_amd64.whl", hash = "sha256:418872d36f68af7314d7ac1e0dc3f99e4631b4286b5e7ebb68a7cce5b249aeb9"},
+    {file = "plutoprint-0.23.0-cp312-cp312-macosx_15_0_arm64.whl", hash = "sha256:a9171b5e7a34b88d26efadc106711699898feaae3bab905b72df95c61c1a65c8"},
+    {file = "plutoprint-0.23.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:3ac2b17a921be6da2fc59ebbcac394638d787b3696e03b9c185c86be445a1aef"},
+    {file = "plutoprint-0.23.0-cp312-cp312-win_amd64.whl", hash = "sha256:eb552e4b249b43b9c566ed19ec4a0d957a0f589b8085e0c9e498ff6ee5433919"},
+    {file = "plutoprint-0.23.0-cp313-cp313-macosx_15_0_arm64.whl", hash = "sha256:04a3170f58b2cd2b8be1f830a8efc66a3f45deeeac49171c23393d0396b06243"},
+    {file = "plutoprint-0.23.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:45818b9c6fe3627364932bbd8764b8e433c6ccc2f3198e066a42cb3c671e502c"},
+    {file = "plutoprint-0.23.0-cp313-cp313-win_amd64.whl", hash = "sha256:ea55276811673c5b737f23101579064db9885dd56c14ca7cca8b27a6a4dad97e"},
+    {file = "plutoprint-0.23.0-cp314-cp314-macosx_15_0_arm64.whl", hash = "sha256:731182bea4e592a765d206c63b423a3ac020af096d90b0b84bc50926b2d9f56b"},
+    {file = "plutoprint-0.23.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:a1af93ac49e266667199e4847049351ea8d72c4e27ea54896a319cf5ca9be279"},
+    {file = "plutoprint-0.23.0-cp314-cp314-win_amd64.whl", hash = "sha256:9a06159258e1b48d6785fd68f4c0ecd8fe28a40bf6d6b705ffa2f5741e15f129"},
+    {file = "plutoprint-0.23.0-cp315-cp315-macosx_15_0_arm64.whl", hash = "sha256:e94f29be36df06cfceb158a5b0ad4c078c47fd4823b57a2bdbe6f332567eadb5"},
+    {file = "plutoprint-0.23.0-cp315-cp315-manylinux_2_28_x86_64.whl", hash = "sha256:f6cff622609e7b656ad528fd5ef56ef1f497c32f772d23fc994c69ceed8e6ed8"},
+    {file = "plutoprint-0.23.0-cp315-cp315-win_amd64.whl", hash = "sha256:dbeffb1f50ee06736aa58a55dd660b04de66fabaf9beff472dc18ff2bc704141"},
+    {file = "plutoprint-0.23.0.tar.gz", hash = "sha256:6240e645599f08953fe0296b5b1955c6a978b212a05b878c2ba652a8ce7a0c82"},
+]
+
+[package.extras]
+test = ["pytest", "pytest-cov"]
+
+[[package]]
 name = "protobuf"
 version = "7.36.2"
 description = ""
@@ -2248,6 +2281,30 @@ files = [
 
 [package.extras]
 test = ["coverage", "mypy", "ruff", "wheel"]
+
+[[package]]
+name = "pypdf"
+version = "6.21.3"
+description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
+optional = true
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "extra == \"pdf\""
+files = [
+    {file = "pypdf-6.21.3-py3-none-any.whl", hash = "sha256:c8ca4d9a360dbd5d4b9bb7a8389e2a9ae6a106bee722b496f918040ba2daa17e"},
+    {file = "pypdf-6.21.3.tar.gz", hash = "sha256:11e1ca6d6cc8ca322558a3a974078d5ebc0f3a2104b8e673eee25621ee97abd8"},
+]
+
+[package.extras]
+brotli = ["brotli (>=1.2.0)"]
+crypto = ["cryptography (>3.0)"]
+cryptodome = ["PyCryptodome"]
+dev = ["flit", "pip-tools", "pre-commit", "pytest-cov", "pytest-socket", "pytest-timeout", "pytest-xdist", "wheel"]
+docs = ["myst_parser", "sphinx", "sphinx_rtd_theme"]
+fonts = ["fonttools"]
+full = ["Pillow (>=8.0.0)", "arabic-reshaper", "brotli (>=1.2.0)", "cryptography (>3.0)", "fonttools", "python-bidi"]
+image = ["Pillow (>=8.0.0)"]
+rtl-text = ["arabic-reshaper", "python-bidi"]
 
 [[package]]
 name = "pytest"
@@ -3489,9 +3546,10 @@ worker = ["celery (>=5.6.3,<6.0.0)"]
 xcli = ["xcorecli (>=1.1.0)"]
 
 [extras]
+pdf = ["plutoprint", "pypdf"]
 postgres = ["asyncpg"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14,<4.0"
-content-hash = "b3b70a28ae6fe200406e6712dae5d09f8d7875bdce7a2cc7f8809526f9ad8bfb"
+content-hash = "b6aba4539bdfbfb9ed05bbf972153191b2cab6649955d66dde0012a44a386f4c"
