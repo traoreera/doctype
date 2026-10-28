@@ -14,8 +14,11 @@ IPC** (`print_service.py`, `api/print.py`, §7) avec la résolution des images e
 Et l'étape 4 : les extras `[pdf]` et le test fumigène (`tests/unit/test_pdf_engine.py`), que la CI installe
 toujours pour qu'il tourne au moins là.
 
-**Pas encore fait :** le Desk (bouton « Imprimer », aperçu, choix du gabarit), le DocType `Letter Head` dans le
-plugin `system` (le mécanisme est là, pas encore le YAML livré), et l'éditeur (§10). L'ordre de §11 tient.
+Et l'étape 5 : le Desk (`PrintDialog.vue`, entrée « Imprimer… » du menu « ⋯ » de la fiche), avec sa preuve en
+Chromium (`ui/e2e/print.e2e.mjs`).
+
+**Pas encore fait :** le DocType `Letter Head` dans le plugin `system` (le mécanisme est là, pas encore le YAML
+livré), et l'éditeur (§10). L'ordre de §11 tient.
 
 Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
 obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos
@@ -279,6 +282,41 @@ distinct, explicite, et reste dehors en v1 (§8).
    d'impasse. C'est le choix déjà fait pour `login_url: auth` dans `api/desk.py`. La requête peut remplacer ce
    que le gabarit dit (`?letterhead=`), et `none` imprime sans en-tête.
 
+## 7 bis. Le Desk (étape 5), et deux bugs que seul un vrai navigateur a montrés
+
+`PrintDialog.vue`, ouvert par « Imprimer… » dans le menu « ⋯ » de la FICHE. Pas depuis la liste : imprimer
+plusieurs documents d'un coup est un rendu MULTI-documents, donc une autre fonctionnalité (§9), pas une case à
+cocher. Deux sorties, délibérément différentes :
+
+- **« Imprimer »** passe par le navigateur (`contentWindow.print()` sur l'iframe). Il marche TOUJOURS, même sans
+  le moteur serveur, parce que l'aperçu est du HTML ordinaire — c'est la promesse de §1 rendue utilisable.
+- **« Télécharger le PDF »** demande le PDF du SERVEUR, et pas celui du navigateur qui saurait aussi le faire :
+  une facture sort de l'entreprise, et deux utilisateurs sur deux navigateurs produiraient deux fichiers
+  différents. Celui du serveur est la référence, le même qu'un traitement joindrait à un e-mail. Le bouton
+  n'existe pas quand le moteur manque, et le dialogue le DIT plutôt que d'offrir un bouton qui échoue.
+
+**Le PDF a demandé d'étendre le contrat de transport** (`HttpRequest.binary`, `HttpResponse.bytes`), parce que
+ce contrat est la seule chose qui touche le réseau et qu'un portage Tauri doit servir ce cas aussi. L'autre voie
+était une URL signée publique, comme pour les fichiers — écartée : une URL publique qui RESTITUE un document
+rendu est une surface bien plus grande qu'un champ de plus (§6, rien n'est public).
+
+**Deux bugs trouvés en lançant le scénario dans Chromium** (`ui/e2e/print.e2e.mjs`), invisibles au vitest parce
+que jsdom n'applique pas l'isolation d'origine d'une iframe :
+
+1. `sandbox="allow-modals"` seul donne au cadre une **origine opaque**, et `contentWindow.print` lève alors un
+   `SecurityError` depuis la page parente : le bouton « Imprimer » aurait échoué sans rien dire. Le bac à sable
+   est donc `allow-same-origin allow-modals`. Ce qui compte, et qui reste absent, c'est **`allow-scripts`** :
+   rien ne s'exécute dans ce cadre, et le scénario le prouve en y plaçant un script.
+2. Un `ReferenceError` **préexistant** dans `FormView.vue`, que l'impression n'a fait que révéler : son `watch`
+   des « créer depuis » est `immediate`, donc `loadMappings` tourne pendant le `setup` et écrit `mappings.value`
+   sans attendre — mais `mappings` était déclaré 460 lignes plus bas. Zone morte temporelle, à CHAQUE ouverture
+   de fiche. Le `flow` juste au-dessus était, lui, déclaré correctement : la convention existait, une
+   déclaration s'en était éloignée.
+
+Leçon générale, la même que celle du test fumigène (§1) : une vérification indirecte ne prouve rien. Le premier
+test de fuite de ce scénario cherchait le nom du client dans la page et trouvait le titre de la fiche ; il
+mesure maintenant les classes de notre feuille d'impression, qui n'existent nulle part ailleurs.
+
 ## 8. Refus au CHARGEMENT
 
 Comme partout : une faute de gabarit échoue au chargement, jamais à la première impression.
@@ -362,7 +400,9 @@ bloc déplacé, une colonne ajoutée, un aperçu qui suit, un retour à l'origin
 4. ~~`plutoprint` et `pypdf` en extras optionnels, et le test fumigène qui s'ignore sans eux.~~ **fait** —
    extra `[pdf]` (`pyproject.toml`), `make install-pdf`, `tests/unit/test_pdf_engine.py` (21 tests). La CI
    l'installe TOUJOURS (`poetry install --extras pdf`) : un test fumigène qui s'ignore partout ne vérifie rien.
-5. Desk : bouton « Imprimer », aperçu, choix du gabarit.
+5. ~~Desk : bouton « Imprimer », aperçu, choix du gabarit.~~ **fait** — `PrintDialog.vue`, entrée « Imprimer… »
+   dans le menu « ⋯ » de la FICHE seulement (imprimer plusieurs documents d'un coup est une autre affaire, qui
+   demanderait un rendu multi-documents : hors périmètre, §9). Preuve en Chromium : `ui/e2e/print.e2e.mjs`.
 6. `Letter Head` dans le plugin `system`.
 7. L'éditeur (§10) : le modèle pur d'abord et ses tests, puis la page, puis la route d'aperçu.
 

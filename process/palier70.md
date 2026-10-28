@@ -135,7 +135,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Formulaire personnalisable (écran) | ◐ (« Habiller » ; recompte du 22 oct. : le chemin de la fiche n'a aucun test dans le Desk) |
 | Éditeur de DocType dans le Desk | L |
 | Formats d'impression et papier à en-tête | ◐ (`process/impression.md` : vocabulaire de blocs fermé, gabarit livré par un plugin, celui de l'organisation, le fabriqué à défaut ; papier à en-tête image ou fond PDF. Pas encore : l'éditeur à l'écran, le DocType `Letter Head` livré) |
-| Impression PDF | ◐ (routes `/print/…` et `/print/…/pdf`, actions IPC, moteur PlutoPrint par l'extra `[pdf]` et son test fumigène en CI. Reste ◐ parce que le Desk n'a pas de bouton « Imprimer » : rien n'est atteignable par un utilisateur) |
+| Impression PDF | ✔ (routes `/print/…` et `/print/…/pdf`, actions IPC, moteur PlutoPrint par l'extra `[pdf]` ; Desk : « Imprimer… » du menu « ⋯ » de la fiche, aperçu, choix du gabarit, téléchargement du PDF du serveur. Preuve en Chromium : `ui/e2e/print.e2e.mjs`) |
 | Traductions (écran, import/export) | M |
 | Scripts serveur ou client saisis dans le Desk | ✖ (sécurité : le code vit dans les plugins) |
 
@@ -163,18 +163,18 @@ que « DocType virtuel » (bonus). Dénominateur : **87**.
 
 | État | éléments | part de 87 |
 |---|---:|---:|
-| ✔ fait en entier | 63 | 72 % |
-| ◐ fait en partie | 10 | 11 % |
+| ✔ fait en entier | 64 | 74 % |
+| ◐ fait en partie | 9 | 10 % |
 | non fait | 14 | 16 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **68** | **78 %** |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **68,5** | **79 %** |
 
-**28 octobre** : deux lignes passent de « non fait » à ◐ — « Formats d'impression et papier à en-tête » et
-« Impression PDF » (`process/impression.md`, étapes 1 à 3 de son §11 : le vocabulaire, les gabarits sur deux
-niveaux, les routes et les actions, le papier à en-tête). Elles restent ◐ et non ✔, pour deux raisons que je
-préfère écrire que faire oublier : le Desk n'a aucun bouton « Imprimer », donc rien de tout cela n'est
-atteignable par un utilisateur ; et l'éditeur de gabarits à l'écran n'existe pas, donc une organisation ne peut
-pas encore faire SA facture sans écrire du YAML. (L'étape 4 a depuis déclaré l'extra `[pdf]` : la route PDF rend
-un vrai fichier dès que l'opérateur l'installe.) Le 26 octobre : 63 ✔, 8 ◐, 67 lignes, 77 %.
+**28 octobre** : les deux lignes d'impression quittent « non fait » (`process/impression.md`, étapes 1 à 5 de
+son §11). « Impression PDF » passe à ✔ : les routes, les actions, l'extra `[pdf]` avec son test fumigène en CI,
+et le Desk — « Imprimer… » dans le menu « ⋯ » de la fiche, l'aperçu, le choix du gabarit, le téléchargement du
+PDF du serveur, prouvés dans Chromium (`ui/e2e/print.e2e.mjs`). « Formats d'impression et papier à en-tête »
+reste ◐, et pour une raison que je préfère écrire que faire oublier : **une organisation ne peut pas encore
+faire SA facture sans écrire du YAML** — l'éditeur de gabarits à l'écran (§10) n'existe pas, et le DocType
+`Letter Head` n'est pas encore livré dans le plugin `system` (son mécanisme, lui, est écrit et testé). Le 26 octobre : 63 ✔, 8 ◐, 67 lignes, 77 %.
 
 **26 octobre** : les étiquettes passent à ✔ (programme groupe 1, élément 3), puis les permissions utilisateur et le partage (groupe 2, élément 4), puis l'import CSV (élément 5), chacun après relecture adversariale. Le 23 : 59 ✔, 8 ◐, 63 lignes, 72 %.
 

@@ -13,6 +13,7 @@ import FileThumb from '@/components/FileThumb.vue'
 import FormTabs from '@/components/FormTabs.vue'
 import CollabPanel from '@/components/collab/CollabPanel.vue'
 import ConnectionsPanel from '@/components/ConnectionsPanel.vue'
+import PrintDialog from '@/components/PrintDialog.vue'
 import TagBar from '@/components/tags/TagBar.vue'
 import { supportsTags } from '@/lib/tags'
 import HistoryPanel from '@/components/HistoryPanel.vue'
@@ -92,6 +93,10 @@ const canDuplicate = computed(
   () => !isNew.value && !props.embedded && !meta.value?.single && !meta.value?.virtual && meta.value?.naming !== 'owner' && meta.value?.rights.create !== 'none',
 )
 const canRename = computed(() => !isNew.value && !frozen.value && !props.embedded && !!meta.value?.allow_rename && meta.value?.rights.write !== 'none')
+// Imprimer, c'est LIRE (process/impression.md §6) : aucun droit à vérifier, l'ouverture de la fiche l'a déjà
+// prouvé. Mais un document NEUF n'a rien à imprimer, et un type unique ou virtuel ne s'imprime pas du tout
+// (le serveur le refuse : `print_service._printable`), donc on n'offre pas un bouton qui échouerait.
+const canPrint = computed(() => !isNew.value && !!record.value && !meta.value?.single && !meta.value?.virtual)
 const transitions = computed(() => transitionsFor(meta.value, record.value))
 
 // ── Workflow : ce que CET utilisateur peut faire sur CE document, demandé au serveur ───────────────────────────────
@@ -115,6 +120,14 @@ async function loadFlow(): Promise<void> {
   }
 }
 watch(() => [record.value?.name, record.value?.version, meta.value?.name] as const, () => void loadFlow(), { immediate: true })
+
+/** Les types que l'on peut créer depuis CE document : lus au serveur, qui seul sait ce qu'il reste à faire.
+ *
+ * DÉCLARÉ ICI, au-dessus de son chargeur : le `watch` ci-dessous est `immediate`, donc `loadMappings` tourne
+ * pendant le `setup`, et sa première branche écrit `mappings.value` SANS attendre. Tant que cette référence
+ * vivait 460 lignes plus bas, cela levait un `ReferenceError` (zone morte temporelle) à chaque ouverture de
+ * fiche — invisible au vitest, trouvé dans un vrai navigateur par le scénario d'impression. */
+const mappings = ref<AvailableMapping[]>([])
 
 /** Relu à chaque version du document : ce qu'il reste à faire change dès qu'un document cible est enregistré. */
 let mapTicket = 0
@@ -592,8 +605,6 @@ function runExtension(action: Owned<FormAction>): void {
   if (ctx) void extensions.run(action.extension, (tools) => action.run({ ...ctx, ...tools, reload: reloadRecord }))
 }
 
-/** Les types que l'on peut créer depuis CE document : lus au serveur, qui seul sait ce qu'il reste à faire. */
-const mappings = ref<AvailableMapping[]>([])
 const mappedFrom = ref<{ doctype: string; name: string } | null>(null)
 const createMenu = ref<InstanceType<typeof Menu> | null>(null)
 
@@ -608,6 +619,7 @@ const createItems = computed<MoreItem[]>(() =>
 
 const moreItems = computed<MoreItem[]>(() => {
   const out: MoreItem[] = []
+  if (canPrint.value) out.push({ label: t.print.menu, icon: 'pi pi-print', testid: 'print', command: () => (printing.value = true) })
   if (canRename.value) out.push({ label: t.form.rename, icon: 'pi pi-pencil', testid: 'rename', command: openRename })
   if (canDuplicate.value) out.push({ label: t.form.duplicate, icon: 'pi pi-clone', testid: 'duplicate', command: duplicate })
   // « Personnaliser » : le Form Builder, une page (onglets, sections, champs à glisser), à la manière de Frappe.
@@ -633,6 +645,8 @@ function duplicate(): void {
   const current = record.value
   if (current) void router.push({ name: 'new', params: { doctype: props.doctype }, query: { copy: current.name } })
 }
+
+const printing = ref(false)
 
 const renaming = ref(false)
 const renameDraft = ref('')
@@ -903,6 +917,9 @@ onBeforeUnmount(() => {
       <!-- Un document ordinaire : son activité (commentaires + modifications), ses assignations et ses pièces jointes. Un réglage (document unique) garde l'historique seul. -->
       <CollabPanel v-else-if="record && record.doctype === doctype && !meta.single" :meta="meta" :doctype="doctype" :name="record.name" :version="record.version" />
       <HistoryPanel v-else-if="record && meta.track_changes !== false" :meta="meta" :doctype="doctype" :name="record.name" :version="record.version" />
+
+      <!-- Imprimer : l'aperçu du document et, si le serveur a le moteur, son PDF (process/impression.md §7). -->
+      <PrintDialog v-if="record && canPrint" v-model:visible="printing" :doctype="doctype" :name="record.name" :label="`${meta.label || doctype} ${record.name}`" />
 
       <Dialog v-model:visible="renaming" modal :header="t.form.renameTitle" :style="{ width: '28rem', maxWidth: '95vw' }" data-testid="rename-dialog">
         <div class="form-field">

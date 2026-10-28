@@ -495,3 +495,33 @@ describe('FormView : workflow', () => {
     expect(w.find('[data-testid="status"]').text()).toBe('À approuver')
   })
 })
+
+describe('imprimer depuis la fiche', () => {
+  const templates = { doctype: 'Invoice', default: 'standard', pdf: true, templates: [{ name: 'standard', label: 'Facture', source: 'plugin' as const }] }
+  const printed = { doctype: 'Invoice', name: 'FA-1', template: 'standard', html: '<html><body>FA-1</body></html>', background: false }
+
+  it('propose « Imprimer » dans le menu « ⋯ » et ouvre l’aperçu', async () => {
+    const printTemplates = vi.fn(async () => templates)
+    const print = vi.fn(async () => printed)
+    const { w, router } = setup({ get: vi.fn(async (d: string, name: string) => rec(d, name, { customer: 'c' })), printTemplates, print })
+    await router.push('/app/Invoice/FA-1')
+    await flushPromises()
+    await openMore(w)
+    expect(menuItem('print')).not.toBeNull()
+    menuItem('print')!.click()
+    await flushPromises()
+    await flushPromises()
+    expect(printTemplates).toHaveBeenCalledWith('Invoice')
+    expect(print).toHaveBeenCalledWith('Invoice', 'FA-1', { template: 'standard', letterhead: undefined })
+  })
+
+  it('ne propose rien sur un document NEUF : il n’y a rien à imprimer', async () => {
+    const { w, router } = setup()
+    await router.push('/app/Invoice/new')
+    await flushPromises()
+    if (w.find('[data-testid="more-actions"]').exists()) {
+      await openMore(w)
+      expect(menuItem('print')).toBeNull()
+    }
+  })
+})

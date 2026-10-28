@@ -110,6 +110,31 @@ export interface MappedDraft {
   values: Record<string, unknown>
 }
 
+// ── Impression (process/impression.md) ─────────────────────
+/** Un gabarit d'impression proposé pour un type. `source` dit d'où il vient : seul « organisation » s'édite. */
+export interface PrintTemplateChoice {
+  name: string
+  label: string
+  source: 'organisation' | 'plugin' | 'fabriqué'
+}
+
+/** Ce que le menu « Imprimer » propose. `pdf` : le moteur est installé côté serveur (sinon, l'aperçu seul). */
+export interface PrintTemplates {
+  doctype: string
+  default: string
+  pdf: boolean
+  templates: PrintTemplateChoice[]
+}
+
+/** Le document rendu en HTML. `background` : un fond PDF complète ce rendu, mais seulement dans le PDF. */
+export interface PrintedDocument {
+  doctype: string
+  name: string
+  template: string
+  html: string
+  background: boolean
+}
+
 /** Les préférences d'affichage de l'organisation (nom, logo, couleur, format de date), servies à tout utilisateur identifié. */
 export interface OrgPreferences {
   organization_name?: string
