@@ -18,6 +18,7 @@ from .errors import InvalidDefinition, NotFound, ValidationFailed
 from .expr import ExprError
 from .extensions import Extension, merge, parse_extension, target_problem
 from .mapping import mappable_types, same_number_kind
+from .compute import compute_order, compute_problems, parse_compute
 from .printing import parse_template, template_fields_problems
 from .schema import LINK_FILTER_REF, DocTypeDef, parse_definition
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
@@ -609,6 +610,7 @@ class DocTypeRegistry:
     def _link_problems(self, only: list[str] | None, problems: list[str], *, allow_missing: bool) -> None:
         for name in (self.names() if only is None else sorted(only)):
             self._check_units(name, problems)
+            self._check_compute(name, problems)
             self._check_fetch(name, problems)
             self._check_link_filters(name, problems)
             self._check_dynamic(name, problems, allow_missing=allow_missing)
@@ -805,6 +807,27 @@ class DocTypeRegistry:
                     problems.append(f"{where} : le DocType {holder.options!r} n'a pas de champ {rest!r}")
                 elif unit is not None and unit.fieldtype not in ("Text", "Select"):
                     problems.append(f"{where} : {holder.options}.{rest} doit être un texte (Text ou Select), pas un {unit.fieldtype}")
+
+    def _check_compute(self, name: str, problems: list[str]) -> None:
+        """`compute:` doit nommer des champs qui existent, du même genre numérique, sans perdre de précision (compute.py).
+
+        Vérifié au CHARGEMENT comme tout le reste : un calcul qui cite un champ disparu doit échouer là, et pas
+        à la première facture. Ne dépend d'aucun autre DocType — les lignes d'une table sont enregistrées avant
+        leur parent — mais vit ici avec les autres contrôles structurels, par cohérence.
+        """
+        compiled = self._items[name]
+        for f in compiled.definition.fields:
+            if f.compute is None:
+                continue
+            try:
+                parsed = parse_compute(f.compute)
+            except ValueError as e:  # la forme est déjà vérifiée par le schéma : ceci est une ceinture
+                problems.append(f"{name}.{f.fieldname}: {e}")
+                continue
+            problems += [f"{name}.{p}" for p in compute_problems(f, parsed, compiled.definition, compiled.children_by_field.get)]
+        # La BOUCLE est une propriété de l'ENSEMBLE des champs calculés, pas d'un champ : vérifiée une fois par
+        # conteneur (le document, puis chaque DocType de lignes est lui-même vérifié quand son tour vient).
+        problems += [f"{name}: {p}" for p in compute_order(compiled.definition.fields)[1]]
 
     def referrers(self, target: str) -> list[Referrer]:
         """Les champs Link qui visent `target`, dans les documents ET dans les lignes de leurs tables (le sien compris).

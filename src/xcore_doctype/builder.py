@@ -347,6 +347,13 @@ class CompiledDocType:
                 errors.append({"field": f.fieldname, "msg": "Champ obligatoire", "type": "missing"})
             if old is None:
                 continue
+            # Un champ que le SERVEUR écrit lui-même (`compute`, `fetch_from`) n'est pas comparé : sa valeur
+            # n'appartient pas au client, et elle est de toute façon réécrite juste après ce contrôle. Exiger
+            # qu'un client renvoie un total qu'il n'a pas le droit de poser serait une cérémonie — et un piège
+            # pour qui écrit un script, qui verrait « champ en lecture seule » pour un champ OMIS. C'est la même
+            # position que celle tenue pour les habillages, qui refusent de poser une règle sur ces champs.
+            if f.compute is not None or f.fetch_from is not None:
+                continue
             # Sur un secret, le masque renvoyé tel qu'on l'a lu est « inchangé » (`sealing.kept`), jamais comparé au secret chiffré.
             new, before = clean.get(f.fieldname), old.get(f.fieldname)
             changed = new != before and not (f.fieldname in secrets and kept(new, before))

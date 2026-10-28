@@ -368,6 +368,12 @@ export interface FieldMeta {
   allow_on_submit?: boolean
   /** `lien.champ` : la valeur est LUE du document que le Link désigne (jamais saisie). */
   fetch_from?: string
+  /**
+   * Calcul déclaratif écrit par le SERVEUR à chaque enregistrement (`a * b`, `a + b - c`, `sum(table.champ)`).
+   * Le Desk ne calcule rien : il montre la valeur enregistrée et verrouille le champ. L'aperçu en direct, comme
+   * pour `fetch_from`, reste à faire — en attendant, le total apparaît à l'enregistrement.
+   */
+  compute?: string
   /** Link, DynamicLink : l'état que doit avoir la cible (D23) ; le serveur refuse les autres (`link_status`). Voir `lib/docstatus.allowedDocstatus`. */
   target_status?: TargetStatus
   /** Arbres compilés par le serveur : le navigateur ne parse jamais de chaîne. */

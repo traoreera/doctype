@@ -43,7 +43,7 @@ from datetime import UTC, date, datetime, tzinfo
 from types import MappingProxyType
 from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, Sequence
 
-from . import aggregation, fieldtypes, integrity, memory
+from . import aggregation, compute, fieldtypes, integrity, memory
 from .builder import NO_RULES, NO_WORKFLOW_RULES, CompiledDocType, FormRules, WorkflowRules
 from .expr import evaluate
 from .decimals import canonical
@@ -1828,7 +1828,11 @@ class DocumentService:
         """
         d = compiled.definition
         has_rows = any(f.fieldtype == "Table" and any(cf.fetch_from for cf in compiled.children[str(f.options)].fields) for f in d.fields)
-        if not has_rows and not any(f.fetch_from for f in d.fields):
+        # Les champs CALCULÉS (`compute:`) sont écrits ici aussi, et après les copies : un calcul peut lire une
+        # valeur que `fetch_from` vient de poser (`amount = qty * rate` où `rate` est copié de l'article). Les
+        # deux mécanismes partagent donc leurs points d'appel — c'est structurel, pas à retenir.
+        computes = compute.has_computes(d, compiled.children_by_field.get)
+        if not has_rows and not computes and not any(f.fetch_from for f in d.fields):
             return clean
         cache: dict[tuple[str, str], StoredDoc | None] = {}
 
@@ -1874,14 +1878,18 @@ class DocumentService:
                 await fill(row, child.fields, previous[i] if i < len(previous) else None)
                 rows.append(row)
             out[f.fieldname] = rows
+        if computes:
+            out = compute.apply_computes(d, compiled.children_by_field.get, out)
         if out == clean:
             return clean
         if finalize is not None:
             try:
                 return finalize(out)
             except ValidationFailed as e:  # une copie refusée par le champ qui la reçoit : défaut de la définition, pas une saisie
-                self._log.error("fetch_from produced an invalid value", doctype=d.name, errors=e.details)
-                raise DoctypeError("fetch_from_invalid", f"un champ rempli par fetch_from de {d.name} est invalide", status=500, details=e.details) from None
+                self._log.error("server-written field is invalid", doctype=d.name, errors=e.details)
+                raise DoctypeError(
+                    "computed_field_invalid", f"un champ rempli par le serveur (fetch_from ou compute) de {d.name} est invalide", status=500, details=e.details
+                ) from None
         return out
 
     # ── Secrets (champs Password : sealing.py) ────────────────
