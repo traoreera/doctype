@@ -56,6 +56,10 @@ _TOKEN = re.compile(r"\{\{([^{}]*)\}\}")
 # Une image d'impression est INCORPORÉE : c'est le verrou de §6, et il se vérifie ici, dans le code pur.
 _DATA_URI = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$")
 
+# Les titres des documents que les LIENS du gabarit désignent : `(DocType cible, nom) -> titre`. Résolus par
+# l'appelant (lui seul a les droits et la base) ; un lien absent de la table garde son identifiant.
+Titles = Mapping[tuple[str, str], str] | None
+
 
 class _Model(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -262,12 +266,23 @@ def _label(field: Any, fallback: str) -> str:
     return escape(getattr(field, "label", None) or fallback)
 
 
-def _cell(value: Any, field: Any) -> str:
-    """La valeur d'un champ, en texte ÉCHAPPÉ. Un Decimal garde sa chaîne canonique : il ne passe pas par un float."""
+def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None = None) -> str:
+    """La valeur d'un champ, en texte ÉCHAPPÉ. Un Decimal garde sa chaîne canonique : il ne passe pas par un float.
+
+    Un LIEN montre le TITRE de ce qu'il désigne, jamais son identifiant : sur une facture, « Société Durand »
+    et non « c99464b32801 ». C'est la convention du reste du moteur (`document.py` le dit en ces termes pour un
+    refus de suppression) et sans elle un document imprimé est illisible — c'est ce que le premier PDF de bout
+    en bout a montré. L'appelant résout les titres (lui seul a les droits et la base) ; ici on ne fait que les
+    employer, et un titre absent laisse l'identifiant, qui vaut mieux qu'un vide.
+    """
     if value is None or isinstance(value, (list, dict)):
         return ""
     if isinstance(value, bool):
         return "Oui" if value else "Non"
+    if titles and field is not None and isinstance(value, str) and field.fieldtype in ("Link", "DynamicLink"):
+        found = titles.get((str(field.options), value))
+        if found:
+            return escape(found)
     return escape(str(value))
 
 
@@ -299,6 +314,7 @@ def render_html(
     letterhead_html: str = "",
     footer_html: str = "",
     css_extra: str = "",
+    titles: Titles = None,
 ) -> str:
     """Le document, en HTML prêt pour le moteur PDF. Pur : rien n'est lu ni écrit.
 
@@ -311,7 +327,7 @@ def render_html(
     values = {"doctype": definition.label or definition.name, "name": name}
     body: list[str] = []
     for block in template.blocks:
-        body.append(_render_block(block, definition, data, fields, children or {}, values))
+        body.append(_render_block(block, definition, data, fields, children or {}, values, titles))
     return (
         "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>"
         + escape(f"{definition.label or definition.name} {name}")
@@ -324,6 +340,46 @@ def render_html(
         + footer_html
         + "</body></html>"
     )
+
+
+def linked_values(
+    template: PrintTemplate, definition: DocTypeDef, data: Mapping[str, Any], children: Mapping[str, Any] | None = None
+) -> dict[str, set[str]]:
+    """`{DocType cible: {noms cités}}` pour les LIENS que ce gabarit va imprimer. Pur : rien n'est lu.
+
+    L'appelant s'en sert pour résoudre les titres en une lecture par type visé, et SEULEMENT ce que le gabarit
+    montre : un document a cent champs, une facture en imprime dix. Un DynamicLink dit sa cible dans un champ
+    voisin, lu ici sur la donnée.
+    """
+    wanted: dict[str, set[str]] = {}
+
+    def note(field: Any, container: Mapping[str, Any]) -> None:
+        if field is None or field.fieldtype not in ("Link", "DynamicLink"):
+            return
+        value = container.get(field.fieldname)
+        if not isinstance(value, str) or not value:
+            return
+        target = str(field.options) if field.fieldtype == "Link" else container.get(str(field.options))
+        if isinstance(target, str) and target:
+            wanted.setdefault(target, set()).add(value)
+
+    fields = definition.field_map
+    for block in template.blocks:
+        if isinstance(block, (FieldsBlock, TotalsBlock)):
+            for name in block.fields:
+                note(fields.get(name), data)
+        elif isinstance(block, TableBlock):
+            child = (children or {}).get(block.field)
+            rows = data.get(block.field)
+            if child is None or not isinstance(rows, list):
+                continue
+            columns = [c.field for c in block.columns] + ([block.group_by] if block.group_by else [])
+            for row in rows:
+                if not isinstance(row, Mapping):
+                    continue
+                for name in columns:
+                    note(child.field_map.get(name), row)
+    return wanted
 
 
 def letterhead_markup(image: str | None) -> str:
@@ -365,7 +421,8 @@ def reserved_margins_css(page: PageSetup, *, top: int = 0, bottom: int = 0) -> s
 
 
 def _render_block(block: PrintBlock, definition: DocTypeDef, data: Mapping[str, Any],
-                  fields: Mapping[str, Any], children: Mapping[str, Any], values: Mapping[str, str]) -> str:
+                  fields: Mapping[str, Any], children: Mapping[str, Any], values: Mapping[str, str],
+                  titles: Titles = None) -> str:
     if isinstance(block, TitleBlock):
         return f"<h1>{escape(render_text(block.text, values, data))}</h1>"
     if isinstance(block, TextBlock):
@@ -375,17 +432,17 @@ def _render_block(block: PrintBlock, definition: DocTypeDef, data: Mapping[str, 
     if isinstance(block, PageBreakBlock):
         return '<div class="pb"></div>'
     if isinstance(block, FieldsBlock):
-        return _render_fields(block, data, fields)
+        return _render_fields(block, data, fields, titles)
     if isinstance(block, TotalsBlock):
-        return _render_totals(block, data, fields)
+        return _render_totals(block, data, fields, titles)
     if isinstance(block, TableBlock):
-        return _render_table(block, data, children.get(block.field))
+        return _render_table(block, data, children.get(block.field), titles)
     return ""
 
 
-def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[str, Any]) -> str:
+def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles) -> str:
     cells = [
-        f"<td><span class=k>{_label(fields.get(n), n)}</span><br>{_cell(data.get(n), fields.get(n))}</td>"
+        f"<td><span class=k>{_label(fields.get(n), n)}</span><br>{_cell(data.get(n), fields.get(n), titles)}</td>"
         for n in block.fields
     ]
     rows = [cells[i : i + block.columns] for i in range(0, len(cells), block.columns)]
@@ -394,16 +451,16 @@ def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[
     return head + '<table class="fields">' + "".join(f"<tr>{''.join(pad(r))}</tr>" for r in rows) + "</table>"
 
 
-def _render_totals(block: TotalsBlock, data: Mapping[str, Any], fields: Mapping[str, Any]) -> str:
+def _render_totals(block: TotalsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles) -> str:
     last = len(block.fields) - 1
     rows = []
     for i, n in enumerate(block.fields):
         strong = ' class="grand"' if i == last else ""
-        rows.append(f"<tr{strong}><td>{_label(fields.get(n), n)}</td><td class=r>{_cell(data.get(n), fields.get(n))}</td></tr>")
+        rows.append(f"<tr{strong}><td>{_label(fields.get(n), n)}</td><td class=r>{_cell(data.get(n), fields.get(n), titles)}</td></tr>")
     return '<table class="totaux">' + "".join(rows) + "</table>"
 
 
-def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any) -> str:
+def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles: Titles) -> str:
     rows = data.get(block.field)
     rows = [r for r in rows if isinstance(r, Mapping)] if isinstance(rows, list) else []
     child_fields = child.field_map if child is not None else {}
@@ -425,10 +482,10 @@ def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any) -> str
     out: list[str] = []
     for key, members in groups:
         if block.group_by is not None:
-            out.append(f'<tr class="grp"><td colspan={len(block.columns)}>{_cell(key, child_fields.get(block.group_by))}</td></tr>')
+            out.append(f'<tr class="grp"><td colspan={len(block.columns)}>{_cell(key, child_fields.get(block.group_by), titles)}</td></tr>')
         for row in members:
             out.append("<tr>" + "".join(
-                f"<td class={c.align or 'left'}>{_cell(row.get(c.field), child_fields.get(c.field))}</td>"
+                f"<td class={c.align or 'left'}>{_cell(row.get(c.field), child_fields.get(c.field), titles)}</td>"
                 for c in block.columns) + "</tr>")
         if block.subtotal:
             cells = []

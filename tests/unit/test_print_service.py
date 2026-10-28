@@ -437,3 +437,81 @@ class TestTheOverrideTarget:
         """Une seule orthographe : `<DocType>:<nom>`, pour qu'un second gabarit ne demande pas de reprise de données."""
         assert target_of("Facture", "standard") == "Facture:standard"
         assert target_of("Facture", "duplicata") == "Facture:duplicata"
+
+
+class TestALinkPrintsItsTitle:
+    """« Société Durand », jamais « c99464b32801 » — ce qu'un premier PDF de bout en bout a révélé.
+
+    La convention est celle du reste du moteur (`document.py` la dit en ces termes pour un refus de suppression),
+    et sans elle un document imprimé est illisible : c'est un défaut de correction, pas un confort.
+    """
+
+    CLIENT = {
+        "schema_version": 1, "name": "Client", "module": "sales", "title_field": "nom",
+        "fields": [{"fieldname": "nom", "fieldtype": "Text", "required": True}],
+    }
+    ARTICLE = {
+        "schema_version": 1, "name": "Article", "module": "sales", "title_field": "libelle",
+        "fields": [{"fieldname": "libelle", "fieldtype": "Text", "required": True}],
+    }
+    LIGNE = {
+        "schema_version": 1, "name": "Ligne Titree", "istable": True,
+        "fields": [{"fieldname": "article", "fieldtype": "Link", "options": "Article"},
+                   {"fieldname": "qte", "fieldtype": "Number"}],
+    }
+    PIECE = {
+        "schema_version": 1, "name": "Piece", "module": "sales",
+        "fields": [{"fieldname": "client", "fieldtype": "Link", "options": "Client"},
+                   {"fieldname": "lignes", "fieldtype": "Table", "options": "Ligne Titree"}],
+    }
+    TPL = {
+        "schema_version": 1, "doctype": "Piece", "name": "standard",
+        "blocks": [{"type": "fields", "fields": ["client"]},
+                   {"type": "table", "field": "lignes", "columns": [{"field": "article"}, {"field": "qte"}]}],
+    }
+
+    @pytest.fixture
+    def env2(self, db, tables):
+        reg = DocTypeRegistry()
+        for raw in (self.CLIENT, self.ARTICLE, self.LIGNE, self.PIECE):
+            reg.register(parse_definition(raw))
+        reg.validate_links()
+        docs = DocumentService(reg, db, tables, Log())
+        files = FileService(docs, MemoryStore(), F.UrlSigner("s" * 32))
+        docs.files = files
+        from xcore_doctype.printing import parse_template
+
+        template = parse_template(self.TPL)
+        reg._print_templates[("Piece", "standard")] = (template, "<test>", "sales")
+        return type("E", (), {"reg": reg, "docs": docs, "printer": PrintService(docs, files)})
+
+    GRANTS = [f"sales:{n}:{a}" for n in ("client", "article", "piece") for a in ("read", "write")]
+
+    async def piece(self, env2, ctx):
+        client = await env2.docs.create(ctx, "Client", {"nom": "Société Durand & Fils"})
+        article = await env2.docs.create(ctx, "Article", {"libelle": "Chaise en hêtre"})
+        doc = await env2.docs.create(ctx, "Piece", {"client": client["name"], "lignes": [{"article": article["name"], "qte": 2.0}]})
+        return doc, client, article
+
+    async def test_the_title_is_printed_not_the_identifier(self, env2):
+        ctx = make_ctx("acme", "alice", permissions=self.GRANTS)
+        doc, client, article = await self.piece(env2, ctx)
+        html = (await env2.printer.render(ctx, "Piece", doc["name"]))["html"]
+        assert "Société Durand &amp; Fils" in html and "Chaise en hêtre" in html
+        # Et l'identifiant n'y est plus : c'est le point du correctif.
+        assert client["name"] not in html and article["name"] not in html
+
+    async def test_an_unreadable_target_keeps_its_identifier(self, env2):
+        """Imprimer ne contourne aucun droit (§6) : un titre n'est pas une fuite qu'on s'autorise parce qu'il est pratique."""
+        ctx = make_ctx("acme", "alice", permissions=self.GRANTS)
+        doc, client, _ = await self.piece(env2, ctx)
+        partial = make_ctx("acme", "alice", permissions=["sales:piece:read"])  # ne lit NI Client NI Article
+        html = (await env2.printer.render(partial, "Piece", doc["name"]))["html"]
+        assert client["name"] in html and "Société Durand" not in html
+
+    async def test_a_type_without_a_title_field_keeps_its_name(self, env2):
+        """Un code devise ou un code pays EST son nom lisible : rien à résoudre."""
+        env2.reg.register(parse_definition({"schema_version": 1, "name": "Devise", "module": "sales",
+                                            "naming": {"field": "code"},
+                                            "fields": [{"fieldname": "code", "fieldtype": "Text", "required": True, "unique": True}]}))
+        assert env2.reg.get("Devise").definition.title_field is None

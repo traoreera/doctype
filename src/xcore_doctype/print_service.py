@@ -41,6 +41,9 @@ DEFAULT_LETTERHEAD = "default"  # le sentinelle : « celui que l'organisation a 
 NO_LETTERHEAD = "none"  # ce que le gabarit (§4) et la requête (§7) disent pour imprimer sans en-tête
 # Ce qu'un <img> incorporé peut porter. Le reste (un SVG, un PDF) n'entre pas dans une balise image.
 EMBEDDABLE = ("image/png", "image/jpeg", "image/gif", "image/webp")
+# Autant de titres par DocType visé que le filtre `in` en accepte (`FILTER_OPS` : 100). Au-delà, les liens
+# restants gardent leur identifiant : un document qui cite cent articles différents est déjà hors du cas usuel.
+MAX_TITLES = 100
 
 # D'où vient un gabarit, dans la réponse de `/print-templates` : le Desk le dit à l'utilisateur, et l'éditeur
 # (§10) s'en sert pour savoir ce qu'il peut modifier (seul `organisation` l'est).
@@ -153,6 +156,7 @@ class PrintService:
         if wanted not in chosen:
             raise NotFound("print_template_not_found", f"Gabarit {wanted!r} introuvable pour {doctype}")
         found = chosen[wanted][0]
+        titles = await self._titles(ctx, found, compiled, record["data"])
         head, foot, background = await self._letterhead(ctx, found, letterhead)
         extra = "" if background is None else printing.reserved_margins_css(found.page, top=background.top, bottom=background.bottom)
         html = printing.render_html(
@@ -164,8 +168,44 @@ class PrintService:
             letterhead_html=head,
             footer_html=foot,
             css_extra=extra,
+            titles=titles,
         )
         return html, found, background
+
+    async def _titles(self, ctx: RequestContext, template: PrintTemplate, compiled: Any, data: Mapping[str, Any]) -> dict[tuple[str, str], str]:
+        """Les TITRES des documents que les liens du gabarit désignent : « Société Durand », pas « c99464b32801 ».
+
+        Sans cela un document imprimé est illisible — c'est ce que le premier PDF de bout en bout a montré. Une
+        lecture par DocType visé, et seulement ce que le gabarit MONTRE (`printing.linked_values`) : un document
+        a cent champs, une facture en imprime dix.
+
+        Lu avec le périmètre de l'APPELANT, comme `fetch_from` : une cible qu'il ne peut pas lire garde son
+        identifiant sur le papier. Imprimer ne contourne aucun droit (§6), et un titre n'est pas une fuite qu'on
+        s'autorise parce qu'il est pratique.
+        """
+        wanted = printing.linked_values(template, compiled.definition, data, compiled.children_by_field)
+        if not wanted:
+            return {}
+        out: dict[tuple[str, str], str] = {}
+        for doctype, names in wanted.items():
+            try:
+                target = self._docs._registry.get(doctype)
+            except DoctypeError:
+                continue  # un DynamicLink peut nommer un type parti : l'identifiant reste
+            field = target.definition.title_field
+            if not field:
+                continue  # pas de titre déclaré : l'identifiant EST le nom lisible (un code devise, un pays)
+            try:
+                page = await self._docs.list(
+                    ctx, doctype, filters={"name": ["in", sorted(names)[:MAX_TITLES]]}, limit=MAX_TITLES
+                )
+            except DoctypeError:
+                continue  # illisible pour cet appelant : on n'insiste pas
+            for item in page["items"]:
+                title = item["data"].get(field)
+                if isinstance(title, str) and title:
+                    out[(doctype, item["name"])] = title
+        return out
 
     # ── Le PDF ────────────────────────────────────────────────
     async def pdf(self, ctx: RequestContext, doctype: str, name: str, *, template: Any = None, letterhead: Any = None) -> tuple[bytes, str]:
