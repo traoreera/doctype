@@ -4,11 +4,16 @@
 
 **Fait à ce jour :** le vocabulaire des blocs et le rendu HTML pur (`printing.py`, §3/§4), les refus au
 chargement (§8), le gabarit FABRIQUÉ (§2), le chargement des gabarits livrés par un plugin
-(`registry.load_print_templates`, exposé au canal `doctype_registry`) et la validation de l'habillage
-d'organisation (`overrides.validate_print_override`, `KIND_PRINT`). Tests : `tests/unit/test_printing.py`.
+(`registry.load_print_templates`, exposé au canal `doctype_registry`), la validation de l'habillage
+d'organisation (`overrides.validate_print_override`, `KIND_PRINT`), **les trois routes et les trois actions
+IPC** (`print_service.py`, `api/print.py`, §7) avec la résolution des images en `data:`, le papier à en-tête
+(`Letter Head` lu en contexte système, fond PDF superposé) et la couche mince du moteur (`pdf.py`). Tests :
+`tests/unit/test_printing.py` (le pur), `tests/unit/test_print_service.py` (la base), et
+`tests/integration/test_print_api.py` (un vrai hôte, un vrai plugin qui livre ses gabarits).
 
-**Pas encore fait :** les routes et les actions (§7), les deux extras optionnels et le test fumigène, le Desk,
-`Letter Head`, et l'éditeur (§10). L'ordre de §11 tient.
+**Pas encore fait :** les deux extras optionnels déclarés dans `pyproject.toml` et le test fumigène, le Desk,
+le DocType `Letter Head` dans le plugin `system` (le mécanisme est là, pas encore le YAML livré), et l'éditeur
+(§10). L'ordre de §11 tient.
 
 Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
 obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos
@@ -40,6 +45,21 @@ tableaux, aucun CSS grid) — pas seulement lu dans la documentation de Frappe :
 | Saut de page explicite (`page-break-before`) | **oui** |
 | Interdiction du réseau | **oui**, par `Book.custom_resource_fetcher` : notre `fetch_url` lève, PlutoPrint avertit et **continue le rendu sans la ressource** |
 | Superposition d'un fond PDF (`pypdf`) | **oui** : fond sous le contenu, sur toutes les pages, pied du fond conservé |
+
+**Deux mesures de plus, le 28 oct.**, faites en écrivant les routes (plutoprint 0.23.0, pypdf 6.21.3) — les deux
+changent la conception, c'est pourquoi elles sont ici et pas seulement dans `pdf.py` :
+
+| Question | Résultat mesuré | Conséquence |
+|---|---|---|
+| `@page{size:…;margin:…}` de NOTRE feuille de style est-il suivi ? | **oui**, format et marges (A5, Letter, `landscape`, et 5 pages contre 7 selon la marge) | `Book()` n'a aucun réglage de géométrie : `printing.py` reste la SEULE source de la mise en page. Piège : `Book.get_page_size()` rend le défaut du livre et non la taille résolue — seuls `get_page_size_at(0)` et la `mediabox` du PDF disent vrai |
+| une URL `data:` passe-t-elle par le récupérateur de ressources ? | **non** : PlutoPrint la décode lui-même, `fetch_url` n'est jamais appelé | refuser TOUT dans `fetch_url` et incorporer les images **cohabitent**. Ce n'était pas acquis : le verrou de §6 aurait pu interdire le logo du papier à en-tête |
+
+Et surtout, le 28 oct., **le HTML que NOTRE générateur produit** (plus une facsimilé écrite à la main comme le
+27) a été imprimé pour de vrai : une facture de 139 lignes groupées en 3 dépôts avec sous-totaux, un bloc
+`totals`, un `page_break` et un pied de page. Résultat : **6 pages A4**, l'en-tête du tableau répété sur les
+**5** pages de tableau et **pas** sur la 6e (celle d'après le saut), les sous-totaux par groupe, le pied présent,
+et **aucune ressource externe demandée** (`fetch_url` jamais appelé). La chaîne complète est donc vérifiée, pas
+seulement ses morceaux.
 
 Le code du framework étant MIT, en reprendre est permis en conservant la notice de copyright dans les portions
 reprises. Ce n'est pourtant pas ce qui est proposé ici : voir §9.
@@ -75,7 +95,8 @@ Exactement la séparation déjà en place pour les formulaires et les espaces (�
   `doctype_registry.load_print_templates(self.ctx.name, dir)` APRÈS `load_dir` (les blocs visent ses champs).
   Non modifiable à l'écran, versionné avec le plugin.
 - **celui de l'organisation** : un habillage en base, nouveau `kind` `print` de `xdt_layout_override`, cible
-  `<DocType>` (ou `<DocType>:<nom du gabarit>` pour en avoir plusieurs). Il PRIME sur celui du plugin.
+  `<DocType>:<nom du gabarit>` (une seule orthographe : voir la précision 1 de §7). Il PRIME sur celui du
+  plugin, à nom de gabarit égal ; sous un autre nom, les deux niveaux coexistent dans le menu.
 
 Et **à défaut, un gabarit est FABRIQUÉ** à partir du `layout` du DocType, comme le moteur fabrique déjà un
 espace de travail ou un tableau de bord : aucun document n'est jamais inimprimable.
@@ -203,6 +224,23 @@ distinct, explicite, et reste dehors en v1 (§8).
   filtrés par les droits, pour que le Desk peuple son menu « Imprimer ».
 - Actions IPC jumelles : `doc.print`, `doc.print.pdf`, `doc.print.templates`.
 
+**Trois précisions que l'écriture a imposées** (28 oct., `print_service.py`) :
+
+1. **La cible d'un habillage est toujours `<DocType>:<nom du gabarit>`** (`print_service.target_of`), jamais
+   `<DocType>` seul. §2 offrait les deux orthographes ; en garder deux voulait dire qu'une organisation ajoutant
+   un « duplicata » à côté de son « standard » n'aurait plus la même cible pour les deux, donc une reprise de
+   données le jour où un second gabarit apparaît. Une seule orthographe, dès maintenant.
+2. **Le papier à en-tête se lit en contexte SYSTÈME, sur une liste FERMÉE de champs** (`LETTERHEAD_FIELDS`) —
+   le précédent exact de `preferences.py`. Autrement, un commercial qui lit les factures mais n'a aucun grant
+   sur `Letter Head` imprimerait sans en-tête : l'en-tête est de la présentation d'entreprise, pas un document
+   métier. Et un en-tête absent, désactivé, ou un plugin `system` pas encore installé **n'est jamais une
+   erreur** : on imprime sans. Une facture ne devient pas inimprimable parce qu'une ligne d'en-tête a été
+   supprimée — les mentions obligatoires sont dans les BLOCS.
+3. **`name: default` est un sentinelle** (« celui que l'organisation a marqué par défaut »), avec repli sur un
+   document nommé littéralement « default » s'il n'y en a aucun de marqué : le sentinelle ne crée donc pas
+   d'impasse. C'est le choix déjà fait pour `login_url: auth` dans `api/desk.py`. La requête peut remplacer ce
+   que le gabarit dit (`?letterhead=`), et `none` imprime sans en-tête.
+
 ## 8. Refus au CHARGEMENT
 
 Comme partout : une faute de gabarit échoue au chargement, jamais à la première impression.
@@ -278,9 +316,11 @@ bloc déplacé, une colonne ajoutée, un aperçu qui suit, un retour à l'origin
 
 ## 11. Ordre de réalisation
 
-1. `printing.py` : les blocs, le rendu HTML pur, ses refus. Testable seul, sans base ni paquet.
-2. Le chargement des gabarits livrés + l'habillage d'organisation, et le gabarit fabriqué à défaut.
-3. Les routes et les actions, avec le droit de lecture et la résolution des images en `data:`.
+1. ~~`printing.py` : les blocs, le rendu HTML pur, ses refus. Testable seul, sans base ni paquet.~~ **fait.**
+2. ~~Le chargement des gabarits livrés + l'habillage d'organisation, et le gabarit fabriqué à défaut.~~ **fait.**
+3. ~~Les routes et les actions, avec le droit de lecture et la résolution des images en `data:`.~~ **fait** —
+   et le papier à en-tête est venu avec, parce que c'est lui qui porte les images à résoudre : l'étape 6 n'a plus
+   qu'à livrer le YAML du DocType `Letter Head` dans le plugin `system`, le mécanisme est écrit et testé.
 4. `plutoprint` et `pypdf` en extras optionnels, et le test fumigène qui s'ignore sans eux (le banc d'essai du
    27 oct. en est le point de départ : il vérifie déjà les quatre comportements de §0).
 5. Desk : bouton « Imprimer », aperçu, choix du gabarit.

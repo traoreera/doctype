@@ -119,6 +119,24 @@ class FileService:
         exp, sig = self._signer.sign(tenant, file_id)
         return {"path": f"files/{tenant}/{file_id}?exp={exp}&sig={sig}", "filename": row["filename"], "content_type": row["content_type"], "size": row["size"], "expires": exp}
 
+    async def content(self, tenant: str, file_id: str, *, reason: str) -> tuple[bytes, str, str] | None:
+        """Le contenu d'un fichier DE CE TENANT : `(octets, type, nom)`, ou `None` s'il n'existe pas ici.
+
+        Pour un rendu INTERNE qui doit incorporer les octets — l'impression (process/impression.md §6), dont le
+        moteur n'a pas d'accès réseau et ne peut donc pas suivre un lien signé. Aucun droit n'est jugé ici :
+        l'appelant a déjà décidé que ce fichier est montrable (comme `public_link`), et `reason` journalise au
+        nom de quoi (D20). Jamais appelé avec un identifiant venu d'un client.
+        """
+        if not F.FILE_ID_RE.match(file_id):
+            return None
+        sys = RequestContext.system(tenant, reason)
+        async with self._docs._query(sys) as q:
+            row = (await q.get_files({file_id})).get(file_id)
+        if row is None:
+            return None
+        blob = await self._store.read(row["blob_id"], row["namespace"], row["stored_name"])
+        return None if blob is None else (blob, row["content_type"], row["filename"])
+
     async def _may_read(self, ctx: RequestContext, q: Any, row: Mapping[str, Any], scopes: dict[str, Scope]) -> bool:
         if row["owner"] == ctx.owner_id:
             return True  # celui qui l'a déposé le voit, même avant d'enregistrer le document

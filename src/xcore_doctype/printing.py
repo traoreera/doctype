@@ -53,6 +53,8 @@ _Text = Annotated[str, StringConstraints(min_length=1, max_length=MAX_TEXT)]
 PRINT_SPECIALS = ("doctype", "name")
 _OUT_OF_PLACE = tuple(s for s in SPECIALS if s not in PRINT_SPECIALS)
 _TOKEN = re.compile(r"\{\{([^{}]*)\}\}")
+# Une image d'impression est INCORPORÉE : c'est le verrou de §6, et il se vérifie ici, dans le code pur.
+_DATA_URI = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$")
 
 
 class _Model(BaseModel):
@@ -295,12 +297,15 @@ def render_html(
     name: str,
     children: Mapping[str, Any] | None = None,
     letterhead_html: str = "",
+    footer_html: str = "",
     css_extra: str = "",
 ) -> str:
     """Le document, en HTML prêt pour le moteur PDF. Pur : rien n'est lu ni écrit.
 
     `children` : par champ Table, la définition du DocType de ses lignes (pour les libellés et les échelles).
-    `letterhead_html` : l'en-tête déjà rendu par l'appelant (lui seul sait lire un fichier du tenant).
+    `letterhead_html` / `footer_html` : le papier à en-tête déjà rendu par l'appelant (lui seul sait lire un
+    fichier du tenant) ; `css_extra` : ce qui passe APRÈS la feuille de style, donc ce qui gagne (les marges
+    réservées par un fond PDF, `reserved_margins_css`).
     """
     fields = definition.field_map
     values = {"doctype": definition.label or definition.name, "name": name}
@@ -316,8 +321,47 @@ def render_html(
         + "</style></head><body>"
         + letterhead_html
         + "".join(body)
+        + footer_html
         + "</body></html>"
     )
+
+
+def letterhead_markup(image: str | None) -> str:
+    """L'en-tête du papier à en-tête, en HTML (process/impression.md §5).
+
+    Nommée `_markup` et non `_html` pour ne pas porter le nom du PARAMÈTRE de `render_html` : un paramètre
+    masque la fonction homonyme dans tout le corps, et le prochain qui voudrait l'appeler de là obtiendrait une
+    chaîne. Pur : l'appelant a déjà LU le fichier.
+
+    `image` est une URL `data:` — jamais une URL distante (§6 : le moteur n'accède pas au réseau, et c'est NOUS
+    qui résolvons un fichier du tenant). Elle n'est pas échappée parce que rien n'en vient d'un client : le
+    service la fabrique depuis les octets qu'il a lus, et `_DATA_URI` la vérifie.
+
+    L'image est posée EN TÊTE DU FLUX, donc sur la première page. Un en-tête qui se répète à chaque page est le
+    travail du FOND PDF (`letterhead.pdf`, `pages: all`), mesuré et fiable, pas celui d'une boîte `@page` : une
+    seule voie par besoin.
+    """
+    if not image:
+        return ""
+    if not _DATA_URI.match(image):  # une URL distante dans un <img> serait exactement la faille que §6 ferme
+        raise ValueError("l'image d'un papier à en-tête doit être incorporée (data:)")
+    return f'<div class=lh><img src="{image}" alt=""></div>'
+
+
+def footer_markup(text: str | None) -> str:
+    """Le pied du papier à en-tête : du texte, échappé, en fin de flux (le gabarit ne le place pas, il n'est pas un bloc)."""
+    return f"<div class=lf>{escape(text)}</div>" if text else ""
+
+
+def reserved_margins_css(page: PageSetup, *, top: int = 0, bottom: int = 0) -> str:
+    """La règle `@page` qui RÉSERVE les zones qu'un fond PDF occupe : le contenu s'y interdit (process/impression.md §5).
+
+    Elle s'ajoute aux marges du gabarit et passe après la feuille de style, donc elle gagne (cascade CSS). Vide
+    quand il n'y a rien à réserver, pour que le HTML d'un aperçu ordinaire ne change pas d'un caractère.
+    """
+    if not top and not bottom:
+        return ""
+    return f"@page{{margin-top:{page.top + top}mm;margin-bottom:{page.bottom + bottom}mm}}"
 
 
 def _render_block(block: PrintBlock, definition: DocTypeDef, data: Mapping[str, Any],
@@ -405,6 +449,8 @@ def _stylesheet(page: PageSetup) -> str:
         f"@page{{size:{size};margin:{page.top}mm {page.right}mm {page.bottom}mm {page.left}mm}}"
         "body{font-family:sans-serif;font-size:10pt;color:#000;margin:0}"
         "h1{font-size:16pt;margin:0 0 5mm}h2{font-size:11pt;margin:5mm 0 2mm}"
+        "div.lh{margin:0 0 6mm}div.lh img{max-width:100%}"
+        "div.lf{margin:8mm 0 0;font-size:8pt;color:#555;white-space:pre-wrap}"
         "p.t{margin:2mm 0;white-space:pre-wrap}"
         "span.k{font-size:8pt;color:#555}"
         "table.fields{width:100%;border-collapse:collapse;margin-bottom:4mm}"

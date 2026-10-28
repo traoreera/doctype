@@ -186,7 +186,9 @@ Rien ne commence ici avant une étude écrite qui réponde, pour chaque élémen
 - **Tâches planifiées et webhooks** : étude faite, voir §3.1 — **et largement répondue par `xflow`, voir §3.3**.
 - **Temps réel** : canal (SSE ou WebSocket), autorisation par tenant, et ce qu'on pousse (jamais le contenu d'un document, comme pour
   les événements du bus).
-- **Formats d'impression et PDF** : moteur de rendu, polices, et la surface d'attaque d'un gabarit écrit par un utilisateur.
+- **Formats d'impression et PDF** : étude faite ET en cours de réalisation, voir `process/impression.md` (moteur PlutoPrint en
+  dépendance optionnelle, vocabulaire de blocs fermé, rendu HTML pur, et la surface d'attaque fermée par deux verrous : aucune URL
+  externe au chargement, et un récupérateur de ressources qui refuse tout à l'exécution). Fait : les étapes 1 à 3 de son §11.
 
 ### 3.1 Étude — l'ordonnanceur (22 octobre 2026)
 

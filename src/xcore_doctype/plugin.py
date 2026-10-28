@@ -6,6 +6,7 @@ au reload, xcore ne purge de `sys.modules` que le shim `xcore_plugin_xcore-docty
 
 from __future__ import annotations
 
+import base64
 import os
 import secrets
 from datetime import UTC, datetime
@@ -22,6 +23,7 @@ from .desk_extensions import DeskExtensions
 from .api.collab import build_collab_router
 from .api.files import build_file_library_router, build_files_router, build_preferences_router, build_public_files_router
 from .api.http import build_router
+from .api.print import build_print_router
 from .context import ContextSettings, RequestContext, ipc_operator
 from .db.access import create_system_tables, ensure_async_database
 from .db.rls import ensure_rls
@@ -29,6 +31,7 @@ from .db.tables import SystemTables, build_system_tables
 from .document import DocumentService, SystemReaders
 from .file_library import FileLibrary
 from .file_service import FileService
+from .print_service import PrintService
 from .files import BlobStore, LocalBlobStore, UrlSigner
 from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
 from .collaboration import CollaborationService
@@ -68,6 +71,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     collaboration: CollaborationService | None = None
     _developer: bool = False  # `doctype.desk.developer_mode` (devtools.py) : fermé tant que le manifeste ne l'ouvre pas
     file_library: FileLibrary | None = None
+    printer: PrintService | None = None
     documents: DocumentService | None = None
     _tables: SystemTables | None = None
     _settings: ContextSettings | None = None
@@ -208,6 +212,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         self.file_library = FileLibrary(self.documents, collab)
         root.include_router(build_file_library_router(self.file_library, self._settings))  # l'écran « Fichiers » : lister, détacher
         root.include_router(build_preferences_router(Preferences(self.documents, file_service), self._settings))  # nom, logo, couleur de l'organisation
+        self.printer = PrintService(self.documents, file_service)
+        root.include_router(build_print_router(self.printer, self._settings))  # imprimer : aperçu HTML et PDF (process/impression.md)
         root.include_router(build_public_files_router(file_service))  # servir : la signature de l'URL fait foi (pas de jeton dans une balise <img>)
         desk_extensions = DeskExtensions(desk.extensions, self.logger)  # D28 : ce que les plugins livrent au Desk, filtré par l'opérateur
         if desk.enabled:
@@ -308,7 +314,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             self.ctx.services.pop(GRANTS_SERVICE, None)
             self.ctx.services.pop(REGISTRY_SERVICE, None)
             self.ctx.services.pop(DOCUMENTS_SERVICE, None)
-        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = None
+        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = self.printer = None
 
     def get_router(self) -> APIRouter | None:
         return self._router
@@ -725,6 +731,41 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return await self.file_library.detach(ctx, **{k: payload.get(k) for k in known})
 
         return await self._run("doc.files.detach", op)
+
+    @action("doc.print.templates")
+    async def doc_print_templates(self, payload: dict) -> dict:
+        """Les gabarits d'impression d'un type, et si le moteur PDF est installé (voir `print_service.py`)."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.printer.templates(ctx, _need(payload, "doctype"))
+
+        return await self._run("doc.print.templates", op)
+
+    @action("doc.print")
+    async def doc_print(self, payload: dict) -> dict:
+        """L'aperçu HTML d'un document. Imprimer, c'est LIRE : aucun grant d'impression, le périmètre de lecture suffit."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.printer.render(
+                ctx, _need(payload, "doctype"), _need(payload, "name"),
+                template=payload.get("template"), letterhead=payload.get("letterhead"),
+            )
+
+        return await self._run("doc.print", op)
+
+    @action("doc.print.pdf")
+    async def doc_print_pdf(self, payload: dict) -> dict:
+        """Le PDF, en base64 — un canal IPC transporte du JSON, pas des octets. `503 pdf_engine_missing` sans le paquet."""
+
+        async def op(ctx: RequestContext) -> dict:
+            content, filename = await self.printer.pdf(
+                ctx, _need(payload, "doctype"), _need(payload, "name"),
+                template=payload.get("template"), letterhead=payload.get("letterhead"),
+            )
+            return {"filename": filename, "content_type": "application/pdf", "size": len(content),
+                    "pdf_base64": base64.b64encode(content).decode("ascii")}
+
+        return await self._run("doc.print.pdf", op)
 
     @action("doc.save")
     async def doc_save(self, payload: dict) -> dict:

@@ -134,8 +134,8 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | Propriétés modifiées par site (« property setter ») | ✔ (C4 : libellé, description, masqué, disposition ; obligatoire, lecture seule et défaut APPLIQUÉS par le serveur, réservés à qui écrit tout le type ; pas les options d'un Select ni les propriétés de liste) |
 | Formulaire personnalisable (écran) | ◐ (« Habiller » ; recompte du 22 oct. : le chemin de la fiche n'a aucun test dans le Desk) |
 | Éditeur de DocType dans le Desk | L |
-| Formats d'impression et papier à en-tête | F / L |
-| Impression PDF | F |
+| Formats d'impression et papier à en-tête | ◐ (`process/impression.md` : vocabulaire de blocs fermé, gabarit livré par un plugin, celui de l'organisation, le fabriqué à défaut ; papier à en-tête image ou fond PDF. Pas encore : l'éditeur à l'écran, le DocType `Letter Head` livré) |
+| Impression PDF | ◐ (routes `/print/…` et `/print/…/pdf`, actions IPC ; moteur PlutoPrint en dépendance OPTIONNELLE, donc `503 pdf_engine_missing` tant que les extras ne sont pas déclarés — l'aperçu HTML, lui, marche) |
 | Traductions (écran, import/export) | M |
 | Scripts serveur ou client saisis dans le Desk | ✖ (sécurité : le code vit dans les plugins) |
 
@@ -164,9 +164,16 @@ que « DocType virtuel » (bonus). Dénominateur : **87**.
 | État | éléments | part de 87 |
 |---|---:|---:|
 | ✔ fait en entier | 63 | 72 % |
-| ◐ fait en partie | 8 | 9 % |
-| non fait | 16 | 18 % |
-| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **67** | **77 %** |
+| ◐ fait en partie | 10 | 11 % |
+| non fait | 14 | 16 % |
+| **Avancement, en comptant une ligne partielle pour une demi-ligne** | **68** | **78 %** |
+
+**28 octobre** : deux lignes passent de « non fait » à ◐ — « Formats d'impression et papier à en-tête » et
+« Impression PDF » (`process/impression.md`, étapes 1 à 3 de son §11 : le vocabulaire, les gabarits sur deux
+niveaux, les routes et les actions, le papier à en-tête). Elles restent ◐ et non ✔, pour deux raisons que je
+préfère écrire que faire oublier : les extras `plutoprint`/`pypdf` ne sont pas encore déclarés, donc sur une
+installation nue la route PDF répond 503 ; et le Desk n'a aucun bouton « Imprimer », donc rien de tout cela n'est
+atteignable par un utilisateur. Le 26 octobre : 63 ✔, 8 ◐, 67 lignes, 77 %.
 
 **26 octobre** : les étiquettes passent à ✔ (programme groupe 1, élément 3), puis les permissions utilisateur et le partage (groupe 2, élément 4), puis l'import CSV (élément 5), chacun après relecture adversariale. Le 23 : 59 ✔, 8 ◐, 63 lignes, 72 %.
 
