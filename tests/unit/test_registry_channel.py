@@ -170,7 +170,10 @@ class TestChannel:
 
     def test_the_channel_exposes_no_way_to_read_or_edit_the_registry(self, reg):
         public = {n for n in dir(DocTypeChannel(reg)) if not n.startswith("_")}
-        assert public == {"load_dir", "load_workspaces", "load_extensions", "load_desk", "unregister_owner", "settled"}
+        # `load_print_templates` : des gabarits d'impression livrés par un plugin (process/impression.md §2). Le canal
+        # ne sait toujours que DÉPOSER et RETIRER — jamais lire ni modifier le registre.
+        assert public == {"load_dir", "load_workspaces", "load_print_templates", "load_extensions", "load_desk",
+                          "unregister_owner", "settled"}
 
 
 class TestLiveRegistry:

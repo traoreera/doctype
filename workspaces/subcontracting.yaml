@@ -1,0 +1,36 @@
+schema_version: 1
+name: subcontracting
+label: Sous-traitance
+icon: sitemap
+order: 110
+blocks:
+- type: header
+  text: Vue d'ensemble
+- type: number_card
+  label: Subcontracting Inward Order en brouillon
+  doctype: Subcontracting Inward Order
+  filters:
+    docstatus: 0
+  color: orange
+- type: number_card
+  label: Subcontracting Inward Order soumis
+  doctype: Subcontracting Inward Order
+  filters:
+    docstatus: 1
+  color: green
+- type: header
+  text: Opérations
+- type: shortcut
+  doctype: Subcontracting Order
+  new: true
+- type: shortcut
+  doctype: Subcontracting Receipt
+  new: true
+- type: shortcut
+  doctype: Subcontracting Inward Order
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Subcontracting BOM
+  new: true

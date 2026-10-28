@@ -1,0 +1,45 @@
+schema_version: 1
+name: crm
+label: CRM
+icon: users
+order: 12
+blocks:
+- type: header
+  text: Vue d'ensemble
+- type: number_card
+  label: Contract en brouillon
+  doctype: Contract
+  filters:
+    docstatus: 0
+  color: orange
+- type: number_card
+  label: Contract soumis
+  doctype: Contract
+  filters:
+    docstatus: 1
+  color: green
+- type: header
+  text: Prospection
+- type: shortcut
+  doctype: Lead
+  new: true
+- type: shortcut
+  doctype: Opportunity
+  new: true
+- type: shortcut
+  doctype: Prospect
+  new: true
+- type: shortcut
+  doctype: Contract
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Contact
+  new: true
+- type: shortcut
+  doctype: Campaign
+  new: true
+- type: shortcut
+  doctype: Appointment
+  new: true

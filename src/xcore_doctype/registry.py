@@ -18,6 +18,7 @@ from .errors import InvalidDefinition, NotFound, ValidationFailed
 from .expr import ExprError
 from .extensions import Extension, merge, parse_extension, target_problem
 from .mapping import mappable_types, same_number_kind
+from .printing import parse_template, template_fields_problems
 from .schema import LINK_FILTER_REF, DocTypeDef, parse_definition
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
 
@@ -108,6 +109,9 @@ class DocTypeRegistry:
         # Modules FRÈRES (`load_dir(…, peers=True)`) : des plugins qui se citent en cycle (accounts ↔ stock ↔ selling…) ne peuvent pas se
         # charger l'un après l'autre. Un parent dont la table enfant vient d'un frère pas encore chargé ATTEND ici (invisible, aucune écriture),
         # et s'enregistre à l'arrivée de cet enfant ; une définition dont un contrôle échoue à l'arrivée d'un frère est BRISÉE (écritures refusées).
+        # Gabarits d'impression LIVRÉS par un plugin (process/impression.md §2) : (DocType, nom) -> (gabarit, source, propriétaire).
+        # L'habillage d'une organisation, lui, vit en base et PRIME sur ceux-ci : il n'a rien à faire dans le registre.
+        self._print_templates: dict[tuple[str, str], tuple[Any, str, str]] = {}
         self._waiting: dict[str, tuple[DocTypeDef, str, str | None]] = {}  # DocType -> (définition d'origine, source, propriétaire)
         self._broken: dict[str, list[str]] = {}
         self._peered: set[str] = set()  # chargés avec `peers=True` : eux seuls peuvent être incomplets (une cible absente ailleurs est une erreur de chargement)
@@ -348,6 +352,8 @@ class DocTypeRegistry:
                 if peered:
                     self._peered.add(name)
         self._broken = {n: why for n, why in self._broken.items() if n in self._items}
+        for key in [k for k, (_, _, who) in self._print_templates.items() if who == owner]:
+            del self._print_templates[key]
         self._drop_extensions(owner)
         for name in [n for n, who in self._workspace_owners.items() if who == owner]:
             self._workspaces.pop(name, None)
@@ -416,6 +422,56 @@ class DocTypeRegistry:
         for contribution in contributed:
             self._contributions.setdefault(contribution.contributes_to, []).append((owner, contribution))
         return [ws.name for ws in parsed] + [f"+{c.contributes_to}" for c in contributed]
+
+    def load_print_templates(self, directory: Path, *, owner: str) -> list[str]:
+        """Charge les gabarits d'impression d'un plugin (`<plugin>/print/*.yaml`). Tout ou rien, comme `load_dir`.
+
+        À appeler APRÈS `load_dir` : un gabarit vise un DocType chargé, et ses blocs visent ses champs. Les fautes
+        sortent ICI (process/impression.md §8), jamais à la première impression.
+
+        Un gabarit est identifié par (DocType, `name`) : deux plugins ne peuvent pas livrer le même « standard »
+        pour le même type. L'habillage d'une organisation n'entre pas ici — il vit en base et prime au service.
+        """
+        if not _OWNER_RE.match(owner):
+            raise InvalidDefinition(f"plugin {owner!r}: son nom ne peut pas apporter de gabarit d'impression")
+        directory = Path(directory)
+        if not directory.is_dir():
+            raise InvalidDefinition(f"dossier de gabarits d'impression introuvable : {directory}")
+        parsed: list[tuple[Any, str]] = []
+        for path in sorted(p for p in directory.iterdir() if p.suffix in _SUFFIXES):
+            try:
+                text = path.read_text(encoding="utf-8")
+                raw = json.loads(text) if path.suffix == ".json" else yaml.safe_load(text)
+            except (OSError, ValueError, yaml.YAMLError) as e:
+                raise InvalidDefinition(f"{path}: illisible ({e})") from e
+            template = parse_template(raw, source=str(path))
+            compiled = self._items.get(template.doctype)
+            if compiled is None:
+                raise InvalidDefinition(f"{path}: DocType {template.doctype!r} inconnu (chargez-le avant, ou nommez-le dans `requires`)")
+            d = compiled.definition
+            if d.istable or d.single or d.source is not None:
+                what = "enfant" if d.istable else ("unique" if d.single else "virtuel")
+                raise InvalidDefinition(f"{path}: {template.doctype!r} est un DocType {what} : il ne s'imprime pas")
+            key = (template.doctype, template.name)
+            if key in self._print_templates:
+                _, other, who = self._print_templates[key]
+                raise InvalidDefinition(f"{path}: le gabarit {template.name!r} de {template.doctype!r} est déjà livré par {who} ({other})")
+            if any(k == key for t, _ in parsed for k in [(t.doctype, t.name)]):
+                raise InvalidDefinition(f"{path}: deux gabarits {template.name!r} pour {template.doctype!r} dans ce dossier")
+            if problems := template_fields_problems(template, d, lambda f, c=compiled: c.children.get(str(c.definition.field_map[f].options))):
+                raise InvalidDefinition(f"{path}: gabarit invalide :\n" + "\n".join(f"  - {p}" for p in problems))
+            parsed.append((template, str(path)))
+        for template, source in parsed:
+            self._print_templates[(template.doctype, template.name)] = (template, source, owner)
+        return [f"{t.doctype}:{t.name}" for t, _ in parsed]
+
+    def print_templates(self, doctype: str) -> list[Any]:
+        """Les gabarits LIVRÉS pour ce type, par nom. Le service y ajoute l'habillage de l'organisation et, à défaut, le gabarit fabriqué."""
+        return [t for (dt, _), (t, _, _) in sorted(self._print_templates.items()) if dt == doctype]
+
+    def print_template(self, doctype: str, name: str) -> Any | None:
+        found = self._print_templates.get((doctype, name))
+        return found[0] if found else None
 
     def _module_exists(self, module: str) -> bool:
         """Un module « existe » s'il a un espace déclaré ou au moins un DocType qui lui fabrique son espace."""
@@ -903,6 +959,14 @@ class DocTypeChannel:
         names = self._registry.load_workspaces(Path(directory), owner=owner)
         if self._log is not None:
             self._log.info("workspaces registered by plugin", plugin=owner, workspaces=names)
+        return names
+
+    def load_print_templates(self, owner: str, directory: str | Path) -> list[str]:
+        """Les gabarits d'impression que ce plugin livre (process/impression.md §2) : à appeler APRÈS `load_dir`,
+        `…load_print_templates(self.ctx.name, dossier / "print")`. Un gabarit vise un DocType chargé."""
+        names = self._registry.load_print_templates(Path(directory), owner=owner)
+        if self._log is not None:
+            self._log.info("print templates registered by plugin", plugin=owner, templates=names)
         return names
 
     def load_extensions(self, owner: str, directory: str | Path) -> list[str]:

@@ -186,7 +186,9 @@ Rien ne commence ici avant une étude écrite qui réponde, pour chaque élémen
 - **Tâches planifiées et webhooks** : étude faite, voir §3.1 — **et largement répondue par `xflow`, voir §3.3**.
 - **Temps réel** : canal (SSE ou WebSocket), autorisation par tenant, et ce qu'on pousse (jamais le contenu d'un document, comme pour
   les événements du bus).
-- **Formats d'impression et PDF** : moteur de rendu, polices, et la surface d'attaque d'un gabarit écrit par un utilisateur.
+- **Formats d'impression et PDF** : étude faite ET en cours de réalisation, voir `process/impression.md` (moteur PlutoPrint en
+  dépendance optionnelle, vocabulaire de blocs fermé, rendu HTML pur, et la surface d'attaque fermée par deux verrous : aucune URL
+  externe au chargement, et un récupérateur de ressources qui refuse tout à l'exécution). Fait : les étapes 1 à 3 de son §11.
 
 ### 3.1 Étude — l'ordonnanceur (22 octobre 2026)
 
@@ -702,6 +704,53 @@ organisation), dessiné avec Vue Flow (`@vue-flow/core`, MIT, la bibliothèque d
 Ajouter un état ou une transition (point 1 ci-dessus : il faudrait qu'xauth sache déclarer un grant après le chargement), et
 l'historique des retouches d'automate (qui a fermé quelle transition : `xdt_layout_override` ne garde que l'état courant et son
 auteur).
+
+### 3.7 Décision — le calcul : `compute:`, et les quantités en décimal exact (27 octobre 2026)
+
+La question est arrivée en butant sur un fait : **une facture ne peut pas avoir de total.** Mesuré sur le jeu d'ERP —
+`amount`, `net_amount`, `total`, `grand_total`, `total_taxes_and_charges`, `outstanding_amount` sont tous `read_only`, donc
+l'utilisateur ne peut pas les saisir, et **aucun mécanisme de calcul déclaratif n'existe** dans le schéma (`expr.py` le dit
+dans sa grammaire : « pas d'arithmétique »). `fetch_from` ne sait que COPIER la valeur d'un document lié.
+
+Ce n'est donc pas une imprécision à corriger plus tard : c'est structurel, et cela conditionne la façon d'écrire les 136
+pièces soumettables. D'où trois décisions, prises avant d'écrire le moindre hook.
+
+**Décision 1 — les quantités passent en `Decimal`.** Le cas canonique est `amount` (Currency, 2 décimales) `= qty × rate`,
+or `qty` est aujourd'hui un `Number`, un flottant (274 champs de quantité dans ce cas ; le jeu compte 915 Currency pour
+663 Number). Multiplier un flottant par un décimal exact pour produire de l'argent exigerait une règle d'arrondi — et
+arrondir de l'argent est une question métier, pas technique. Le moteur refusant déjà un flottant pour un montant, on ne
+fait pas entrer le flottant par la porte du calcul : les quantités deviennent exactes, avec une échelle déclarée. La
+migration du YAML est mécanique (même forme que les T1-T13 d'`erp-doctypes.md`). Conséquence heureuse : le « reste à
+faire » du mapper (`mapper.md` §5) devient exact pour les quantités aussi, et `same_number_kind` y reste satisfait
+puisque les deux côtés bougent ensemble.
+
+**Décision 2 — un `compute:` à vocabulaire FERMÉ, et non une arithmétique dans `expr.py`.** `expr.py` vaut par deux
+choses : il est minuscule, et il est JUMELÉ au navigateur (même arbre, même sémantique, vecteurs partagés). Y ajouter
+l'arithmétique, ce serait la grammaire, l'évaluateur Python, son jumeau TypeScript, les vecteurs, et des règles de
+promotion numérique — en risquant d'embrouiller la sémantique volontairement stricte des conditions (`1 == true` est
+faux). Or le besoin n'est pas un langage, c'est **trois formes** :
+
+    compute: qty * rate              # produit de champs voisins (sur la ligne)
+    compute: sum(items.amount)       # somme d'une colonne de lignes (sur le parent)
+    compute: grand_total - paid_amount   # somme ou différence de champs voisins
+
+Fermé, donc testable exhaustivement, et le Desk le reflète à peu de frais — il prévisualise déjà `fetch_from` en direct.
+Un champ `compute:` est écrit par le SERVEUR à chaque écriture, comme `fetch_from`, et reste `read_only` pour le client.
+À préciser à l'implémentation : l'échelle du résultat (celle du champ qui reçoit), le refus au chargement d'un `compute:`
+qui mélange des genres numériques (la règle existe déjà : `mapping.same_number_kind`), et ce qu'une somme fait d'une
+table vide (zéro, pas null).
+
+**Décision 3 — les états à deux dimensions sont une affaire de moteur.** `aggregate` ne regroupe que sur UN champ
+(`query.py` : un `select(key, *cols).group_by(key)`), or une balance générale est une matrice compte × période et une
+balance de stock une matrice article × entrepôt. Trois modules en ont besoin — `accounts`, `stock`, `manufacturing` — et
+leur faire écrire trois extensions JavaScript serait l'erreur qu'on vient d'éviter avec le mapper : trois moteurs de
+rapport dans du code de confiance chargé chez chaque utilisateur. On ajoute donc un second axe de regroupement et un type
+de vue « rapport mesuré » déclaré en YAML, avec une borne sur le PRODUIT des cardinalités (`MAX_GROUPS` vaut 400 pour un
+seul axe). Resteront en JavaScript trois écrans, et non trois plugins : le lettrage des paiements, l'explosion de
+nomenclature, la téléphonie.
+
+**Ordre imposé par ces décisions.** La migration des quantités (1) précède `compute:` (2), qui précède les hooks de
+comptabilisation — sinon les 136 pièces s'écrivent deux fois. Le rapport mesuré (3) est indépendant.
 
 ## 4. Ce qu'on vise
 

@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, AvailableMappings, AvailableTransitions, MappedDraft, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, AvailableMappings, AvailableTransitions, MappedDraft, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, PrintTemplates, PrintedDocument, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 import type { DevDefinition } from './doctypebuilder'
 
@@ -333,6 +333,35 @@ export class ApiClient {
     return this.call('GET', `/map/${encodeURIComponent(doctype)}/${encodeURIComponent(source)}/${encodeURIComponent(name)}`)
   }
 
+  // ── Impression (process/impression.md) ──────────────────
+  /** Les gabarits proposés pour ce type, et si le moteur PDF est là. Le Desk ne choisit rien : le serveur a déjà filtré par les droits. */
+  printTemplates(doctype: string): Promise<PrintTemplates> {
+    return this.call('GET', `/print-templates/${encodeURIComponent(doctype)}`)
+  }
+
+  /** Le document en HTML. Imprimer, c'est LIRE : aucun droit de plus que l'ouverture de la fiche. */
+  print(doctype: string, name: string, opts: { template?: string; letterhead?: string } = {}): Promise<PrintedDocument> {
+    const params = new URLSearchParams()
+    if (opts.template) params.set('template', opts.template)
+    if (opts.letterhead) params.set('letterhead', opts.letterhead)
+    return this.call('GET', `/print/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`, { params })
+  }
+
+  /**
+   * Le PDF du document, en octets.
+   *
+   * Pourquoi le PDF du SERVEUR et non l'impression du navigateur (qui sait aussi faire un PDF) : une facture est
+   * une pièce qui sort de l'entreprise, et deux utilisateurs sur deux navigateurs produiraient deux fichiers
+   * différents. Celui du serveur est la référence, le même que celui qu'un traitement joindrait à un e-mail.
+   */
+  async printPdf(doctype: string, name: string, opts: { template?: string; letterhead?: string } = {}): Promise<{ bytes: Uint8Array; filename: string }> {
+    const params = new URLSearchParams()
+    if (opts.template) params.set('template', opts.template)
+    if (opts.letterhead) params.set('letterhead', opts.letterhead)
+    const res = await this.bytes('GET', `/print/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}/pdf`, { params })
+    return { bytes: res.bytes, filename: filenameFromDisposition(res.disposition) ?? `${doctype} ${name}.pdf` }
+  }
+
   /** Joue une transition du workflow. Remplace `submit`/`cancel` sur un type qui en a un (le serveur les y refuse). */
   transition(doctype: string, name: string, action: string, version: number): Promise<DocRecord> {
     return this.call('POST', `/doc/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}/transition`, { body: { action, version } })
@@ -464,6 +493,45 @@ export class ApiClient {
     }
     throw err
   }
+
+  /** Comme `call`, mais la réponse est un FICHIER (le PDF d'un document). Un échec reste une erreur JSON ordinaire. */
+  protected async bytes(
+    method: HttpMethod,
+    path: string,
+    opts: { params?: URLSearchParams; retried?: boolean } = {},
+  ): Promise<{ bytes: Uint8Array; contentType: string; disposition: string }> {
+    const { baseUrl, token, tenant } = this.context()
+    const query = opts.params && [...opts.params.keys()].length ? `?${opts.params.toString()}` : ''
+    const headers: Record<string, string> = { Accept: '*/*' }
+    if (token) headers.Authorization = `Bearer ${token}`
+    if (tenant) headers['X-Tenant-ID'] = tenant
+    const res = await this.transport.request({ method, url: `${baseUrl}${path}${query}`, headers, binary: true })
+    if (res.status >= 200 && res.status < 300 && res.bytes) {
+      return { bytes: res.bytes, contentType: res.contentType ?? '', disposition: res.disposition ?? '' }
+    }
+    const err = normalizeError(res.status, res.json)
+    if (res.status === 401 && (await this.onUnauthorized()) === true && !opts.retried) {
+      return this.bytes(method, path, { ...opts, retried: true })
+    }
+    throw err
+  }
+}
+
+/**
+ * Le nom de fichier que le serveur propose (`Content-Disposition`). On lit `filename*` (RFC 5987, encodé en
+ * pourcents) avant `filename`, qui est la version ASCII dégradée : un nom accentué doit arriver intact.
+ */
+export function filenameFromDisposition(disposition: string): string | null {
+  const utf8 = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition)
+  if (utf8) {
+    try {
+      return decodeURIComponent(utf8[1]!.trim()) || null
+    } catch {
+      /* un encodage abîmé : on retombe sur le nom ASCII */
+    }
+  }
+  const ascii = /filename\s*=\s*"([^"]*)"/i.exec(disposition) ?? /filename\s*=\s*([^;]+)/i.exec(disposition)
+  return ascii ? ascii[1]!.trim() || null : null
 }
 
 /**

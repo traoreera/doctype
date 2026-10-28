@@ -11,6 +11,7 @@ from xcore_doctype.context import RequestContext
 from xcore_doctype.document import DocumentService
 from xcore_doctype.errors import ContextError, NotFound, ValidationFailed, VersionConflict
 from xcore_doctype.registry import DocTypeRegistry
+from xcore_doctype.schema import parse_definition
 
 
 class FakeLog:
@@ -18,6 +19,14 @@ class FakeLog:
         self.records: list[tuple[str, dict]] = []
 
     def info(self, msg, **kw):
+        self.records.append((msg, kw))
+
+    # Le logger d'xcore est `error(msg, **fields)` / `warning(...)` : un double qui ne les a pas transforme un refus
+    # du moteur en AttributeError, ce qui masque la vraie raison (ici : un DocType incomplet).
+    def error(self, msg, **kw):
+        self.records.append((msg, kw))
+
+    def warning(self, msg, **kw):
         self.records.append((msg, kw))
 
 
@@ -29,6 +38,10 @@ def log():
 @pytest.fixture
 def svc(db, tables, customer, log):
     reg = DocTypeRegistry()
+    # `Customer.country` cite `Country` : sans lui le type est INCOMPLET et toute écriture est refusée (503,
+    # `load_dir(…, peers=True)`). Ces tests parlent de cloisonnement et de contexte système, pas de types incomplets.
+    reg.register(parse_definition({"schema_version": 1, "name": "Country", "module": "geo",
+                                   "fields": [{"fieldname": "country_name", "fieldtype": "Text"}]}))
     reg.register(customer.definition)
     return DocumentService(reg, db, tables, log)
 

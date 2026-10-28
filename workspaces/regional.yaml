@@ -1,0 +1,11 @@
+schema_version: 1
+contributes_to: accounts
+blocks:
+- type: header
+  text: Conformité
+- type: shortcut
+  doctype: Import Supplier Invoice
+  new: true
+- type: shortcut
+  doctype: Lower Deduction Certificate
+  new: true

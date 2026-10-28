@@ -1,0 +1,11 @@
+schema_version: 1
+contributes_to: setup
+blocks:
+- type: header
+  text: Outils
+- type: shortcut
+  doctype: Rename Tool
+  new: true
+- type: shortcut
+  doctype: Video
+  new: true

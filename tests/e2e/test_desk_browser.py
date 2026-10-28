@@ -187,6 +187,14 @@ def test_the_workflow_builder_draws_the_circuit_and_tightens_it(host):
 
 
 @pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+def test_printing_previews_in_a_sandboxed_frame_and_downloads_a_real_pdf(host):
+    """Imprimer dans un vrai navigateur : l'aperçu en bac à sable (jsdom n'applique pas l'isolation d'origine, et
+    c'est elle qui avait cassé le bouton « Imprimer »), aucun script dans le cadre, et le PDF du serveur."""
+    run = _scenario(host, "e2e/print.e2e.mjs")
+    assert run.returncode == 0, f"scénario d'impression en échec :\n{run.stdout}\n{run.stderr}"
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
 def test_the_form_builder_rearranges_and_adds_fields_in_the_browser(host):
     """« Personnaliser le formulaire » sous la vraie CSP : un vrai glisser-déposer, un champ ajouté, la fiche qui suit, le retour à l'application."""
     run = _scenario(host, "e2e/formbuilder.e2e.mjs")

@@ -57,8 +57,12 @@ jobs:
       - name: Métadonnées du projet (pyproject.toml valide, verrou à jour)
         run: poetry check --lock
 
-      - name: Dépendances Python
-        run: poetry install
+      # `--extras pdf` apporte plutoprint et pypdf, OPTIONNELS pour un opérateur mais exigés ici : sinon le test
+      # fumigène du moteur PDF (`tests/unit/test_pdf_engine.py`) s'ignorerait partout, et un test qui ne tourne
+      # jamais ne vérifie rien. C'est aussi ce qui détectera un changement de comportement du moteur à une
+      # version près (le `@page` suivi, l'URL `data:` qui échappe au récupérateur de ressources).
+      - name: Dépendances Python (avec l'extra d'impression PDF)
+        run: poetry install --extras pdf
 
       - uses: pnpm/action-setup@v4 # la version vient du champ packageManager de ui/package.json
         with:

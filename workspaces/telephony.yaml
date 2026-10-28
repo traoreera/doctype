@@ -1,0 +1,11 @@
+schema_version: 1
+contributes_to: crm
+blocks:
+- type: header
+  text: Téléphonie
+- type: shortcut
+  doctype: Call Log
+  new: true
+- type: shortcut
+  doctype: Telephony Call Type
+  new: true

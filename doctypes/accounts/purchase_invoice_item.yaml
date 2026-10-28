@@ -216,6 +216,7 @@ fields:
   fieldtype: Link
   options: Purchase Order
   read_only: true
+  target_status: submitted
 - fieldname: include_exploded_items
   label: Include Exploded Items
   fieldtype: Boolean
@@ -239,6 +240,7 @@ fields:
   fieldtype: Link
   options: Purchase Receipt
   read_only: true
+  target_status: submitted
 - fieldname: page_break
   label: Page Break
   fieldtype: Boolean

@@ -249,6 +249,7 @@ fields:
   fieldtype: Link
   options: Sales Order
   read_only: true
+  target_status: submitted
 - fieldname: so_detail
   label: Sales Order Item
   fieldtype: Text
@@ -259,6 +260,7 @@ fields:
   fieldtype: Link
   options: Delivery Note
   read_only: true
+  target_status: submitted
 - fieldname: dn_detail
   label: Delivery Note Item
   fieldtype: Text

@@ -293,6 +293,19 @@ class CompiledDocType:
             transition_conditions,
         )
 
+    @property
+    def children_by_field(self) -> dict[str, DocTypeDef]:
+        """Les mêmes enfants, mais par CHAMP Table — ce que demandent l'impression et tout ce qui rend des lignes.
+
+        `children` est indexé par nom de DocType parce que c'est ce que la compilation manipule ; un rendu, lui,
+        part du champ. La traduction (`options` du champ) se faisait à la main sur chaque site d'appel.
+        """
+        return {
+            f.fieldname: child
+            for f in self.definition.fields
+            if f.fieldtype == "Table" and (child := self.children.get(str(f.options))) is not None
+        }
+
     def validate_data(self, payload: Any, *, old: Mapping[str, Any] | None = None, rules: FormRules | None = None) -> dict[str, Any]:
         """Valide un payload d'écriture et retourne le JSON à stocker (les `None` sont omis).
 

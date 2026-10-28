@@ -84,3 +84,9 @@ views:
     start: from_date
     end: to_date
     title: employee_name
+permissions:
+  write: []
+  create: []
+  delete: []
+  submit: []
+  cancel: []

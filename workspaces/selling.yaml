@@ -1,0 +1,45 @@
+schema_version: 1
+name: selling
+label: Ventes
+icon: shopping-cart
+order: 10
+blocks:
+- type: header
+  text: Vue d'ensemble
+- type: number_card
+  label: Installation Note en brouillon
+  doctype: Installation Note
+  filters:
+    docstatus: 0
+  color: orange
+- type: number_card
+  label: Installation Note soumis
+  doctype: Installation Note
+  filters:
+    docstatus: 1
+  color: green
+- type: header
+  text: Opérations
+- type: shortcut
+  doctype: Quotation
+  new: true
+- type: shortcut
+  doctype: Sales Order
+  new: true
+- type: shortcut
+  doctype: Installation Note
+  new: true
+- type: shortcut
+  doctype: Proforma Invoice
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Customer
+  new: true
+- type: shortcut
+  doctype: Product Bundle
+  new: true
+- type: shortcut
+  doctype: Industry Type
+  new: true

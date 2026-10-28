@@ -14,12 +14,29 @@ export interface HttpRequest {
   headers: Record<string, string>
   body?: unknown
   signal?: AbortSignal
+  /**
+   * Attendre des OCTETS et non du JSON (le PDF d'un document, `api.printPdf`).
+   *
+   * Pourquoi dans le contrat de transport plutôt qu'un `fetch` direct : parce que ce contrat est la seule chose
+   * qui touche le réseau, et qu'un portage Tauri doit pouvoir servir ce cas aussi. L'autre voie aurait été une
+   * URL signée publique, comme pour les fichiers — mais une URL publique qui RESTITUE un document rendu est une
+   * surface bien plus grande qu'un champ de plus ici (process/impression.md §6 : rien n'est public).
+   *
+   * Un échec reste du JSON : le serveur répond une erreur ordinaire, et `bytes` n'est pas rempli.
+   */
+  binary?: true
 }
 
 export interface HttpResponse {
   status: number
   /** Le corps décodé en JSON, ou `null` s'il est vide ou n'est pas du JSON. */
   json: unknown
+  /** Le corps en octets, seulement pour une requête `binary` qui a réussi. */
+  bytes?: Uint8Array
+  /** Le type de contenu annoncé par le serveur, pour une requête `binary`. */
+  contentType?: string
+  /** Le `Content-Disposition` annoncé par le serveur : il porte le nom de fichier à proposer. */
+  disposition?: string
 }
 
 export interface Transport {
@@ -47,6 +64,18 @@ export class FetchTransport implements Transport {
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') throw e
       throw new NetworkError('Le serveur est injoignable', e)
+    }
+    // Une réponse binaire ATTENDUE et réussie se lit en octets ; un échec revient toujours en JSON (le serveur
+    // répond une erreur ordinaire), donc on ne lit les octets que sur un succès.
+    if (req.binary && res.ok) {
+      const buffer = await res.arrayBuffer()
+      return {
+        status: res.status,
+        json: null,
+        bytes: new Uint8Array(buffer),
+        contentType: res.headers.get('Content-Type') ?? '',
+        disposition: res.headers.get('Content-Disposition') ?? '',
+      }
     }
     const text = await res.text()
     let json: unknown = null

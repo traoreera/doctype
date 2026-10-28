@@ -1,0 +1,25 @@
+schema_version: 1
+name: support
+label: Support
+icon: ticket
+order: 90
+blocks:
+- type: header
+  text: Opérations
+- type: shortcut
+  doctype: Issue
+  new: true
+- type: shortcut
+  doctype: Warranty Claim
+  new: true
+- type: header
+  text: Référentiel
+- type: shortcut
+  doctype: Issue Type
+  new: true
+- type: shortcut
+  doctype: Issue Priority
+  new: true
+- type: shortcut
+  doctype: Service Level Agreement
+  new: true
