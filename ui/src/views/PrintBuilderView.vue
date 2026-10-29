@@ -164,7 +164,25 @@ function add(kind: BlockKind): void {
   draft.value = addBlock(draft.value, made, at)
   chosen.value = made.key
 }
+/** Le rang survolé pendant un glisser : la pile y montre une ligne de dépôt. `null` quand on ne glisse pas. */
+const over = ref<number | null>(null)
+
+function dragStart(e: DragEvent, key: string): void {
+  // Sans `effectAllowed`/`dropEffect`, le navigateur affiche le curseur « interdit » et le dépôt n'aboutit pas.
+  if (!e.dataTransfer) return
+  e.dataTransfer.effectAllowed = 'move'
+  e.dataTransfer.setData(DRAG_BLOCK, key)
+}
+
+function dragOver(e: DragEvent, at: number): void {
+  e.preventDefault()
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+  over.value = at
+}
+
 function drop(e: DragEvent, at: number): void {
+  e.preventDefault()
+  over.value = null
   const key = e.dataTransfer?.getData(DRAG_BLOCK)
   if (key) draft.value = moveBlock(draft.value, key, at)
 }
