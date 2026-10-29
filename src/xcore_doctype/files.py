@@ -36,6 +36,10 @@ MAX_IDS = 100
 FILE_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 # Le « champ » des fichiers JOINTS à un document (pas à un de ses champs) dans `xdt_file` : réservé, un nom de champ ne commence jamais par `_`.
 ATTACHMENT_FIELD = "_attachment"
+# Le « champ » des IMAGES d'un gabarit d'impression (le logo, le tampon, la signature d'un document libre,
+# process/impression.md §12) : elles appartiennent au TYPE, pas à un document. Réservé comme le précédent.
+PRINT_FIELD = "_print"
+PRINT_IMAGE_MAX_MB = 5
 
 # Les formats d'image qu'on accepte, reconnus à leurs premiers octets. SVG est exclu exprès : c'est du XML qui peut porter du script.
 _IMAGE_SIGNATURES: tuple[tuple[bytes, str, str], ...] = (

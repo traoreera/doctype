@@ -295,3 +295,32 @@ class TestThePdfBackground:
     def test_an_empty_background_changes_nothing(self):
         content = engine.to_pdf(invoice_html())
         assert engine.overlay(content, b"", every_page=True) == content
+
+
+class TestAFreeDocumentPlacesItsImagesExactly:
+    """Le document libre (§12) : une image « devant le texte » sort là où l'éditeur l'a posée, au millimètre.
+
+    Mesuré sur la matrice `cm` qui précède le `Do` de l'image dans le flux de la page : PlutoPrint écrit dans un
+    repère retourné (origine en haut à gauche, en points). C'est cette mesure qui a trouvé le décalage de 4,2 mm
+    — la marge du premier paragraphe qui traversait le conteneur — corrigé par le `padding-top` de la feuille.
+    """
+
+    def placed(self, content: str, page: dict) -> tuple[float, float, float]:
+        import re
+
+        pypdf = pytest.importorskip("pypdf")
+        template = parse_template({"schema_version": 1, "doctype": "Facture", "content": content, "page": page})
+        html = render_html(template, INVOICE, {"client": "Durand"}, name="FA-1", images={"a" * 32: RED_PNG})
+        stream = pypdf.PdfReader(io.BytesIO(engine.to_pdf(html))).pages[0].get_contents().get_data().decode("latin1")
+        found = re.search(r"([-\d.]+) 0 0 -([-\d.]+) ([-\d.]+) ([-\d.]+) cm\s*/\w+ gs /\w+ Do", stream)
+        assert found, "aucune image placée dans la page"
+        width, height, x, bottom = (float(g) for g in found.groups())
+        pt = 25.4 / 72
+        return round(x * pt, 1), round((bottom - height) * pt, 1), round(width * pt, 1)
+
+    def test_in_front_of_the_text_lands_where_it_was_put(self):
+        page = {"size": "A4", "top": 20, "bottom": 20, "left": 15, "right": 15}
+        image = f'<img data-file="{"a" * 32}" data-wrap="front" style="width:40mm;left:120mm;top:30mm">'
+        # Derrière un titre ET un paragraphe : leurs marges ne doivent rien changer à la position.
+        x, y, w = self.placed(f"<h2>Titre</h2><p>Client {image}</p>", page)
+        assert (x, y, w) == (135.0, 50.0, 40.0)  # 15 + 120, 20 + 30

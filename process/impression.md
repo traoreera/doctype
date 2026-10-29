@@ -18,7 +18,7 @@ Et l'étape 5 : le Desk (`PrintDialog.vue`, entrée « Imprimer… » du menu «
 Chromium (`ui/e2e/print.e2e.mjs`).
 
 Et les étapes 6 et 7 : le DocType `Letter Head` livré avec le plugin `system`, et l'éditeur de gabarits
-(`#/print/<Type>`).
+(`#/print/<Type>`), devenu le 29 oct. un éditeur FAÇON TRAITEMENT DE TEXTE avec images placées librement (§12).
 
 **Pas encore fait :** le TÉLÉVERSEMENT du PDF d'en-tête depuis l'écran. Le serveur le superpose déjà
 (`pdf.overlay`, testé) et le modèle de l'éditeur porte ses réglages, mais une question reste OUVERTE et je
@@ -399,7 +399,8 @@ l'utilisateur peut lire (un `list` à `limit=1`), et dit clairement quand il n'y
 alors sans aperçu, plutôt que pas du tout.
 
 **Ce que l'éditeur ne fait pas** : placer des blocs librement en deux dimensions (le gabarit est une PILE, pas
-une toile — c'est ce qui permet de garantir le rendu sans CSS grid), ni écrire du CSS, ni du HTML.
+une toile — c'est ce qui permet de garantir le rendu sans CSS grid), ni écrire du CSS, ni du HTML. *(Dépassé par
+§12 : le document libre place ses IMAGES librement, mesuré au millimètre dans le moteur ; le texte reste un flux.)*
 
 Page `#/print/<Type>` , entrée par le menu « ⋯ » de la fiche et de la liste, à côté de « Personnaliser le
 formulaire ». Preuve en Chromium (`ui/e2e/`) comme pour le Form Builder et le constructeur de workflow : un
@@ -434,6 +435,9 @@ rendu. Mesuré sur la page au repos : **1 aperçu demandé, 0 mutation du DOM**.
 le clic était refusé pour une raison de géométrie, pas de réactivité.
 
 ## 10 ter. Refonte du 29 oct. : un éditeur de FACTURE, pas une liste de blocs
+
+> **Remplacé le même jour par §12** (l'éditeur façon traitement de texte). Ce qui suit reste vrai pour les
+> défauts trouvés ; la feuille à blocs décrite ici n'existe plus.
 
 Le retour d'usage était sans appel : « je n'arrive même pas à bien placer les tableaux, ni à faire un glisser-
 déposer ». Mesuré dans Chromium sur une vraie facture (`Invoice` du jeu d'essai, deux lignes), avant d'écrire :
@@ -509,3 +513,115 @@ et que personne ne peut voir.
 
 Les étapes 1 à 3 ne dépendent d'aucune décision ouverte. L'étape 4 est le seul engagement de paquet, et il est
 réversible : rien d'autre ne dépend de PlutoPrint.
+
+## 12. Le document LIBRE, façon traitement de texte (29 oct.)
+
+**Le retour d'usage, après §10 ter :** « ce système ne peut pas gérer des formats libres, placer une image — je
+veux un éditeur à la façon de Word, qui fait le PDF ». Il avait raison sur le fond : une facture d'entreprise a
+SON en-tête, son logo à un endroit précis, une adresse en deux colonnes, des mentions en petit — une pile de sept
+blocs ne l'écrit pas. Deux décisions de l'utilisateur, le 29 oct. : l'éditeur façon Word **REMPLACE** l'éditeur à
+blocs, et une image se place **comme dans Word** (dans le texte, habillée, ou posée librement sur la page).
+
+**Mesuré avant d'écrire** : PlutoPrint suit `float`, `position:absolute` dans un conteneur `position:relative`,
+`text-align`, couleurs, gras/italique/souligné (rendu PNG d'une page d'essai). Le choix du moteur ne bouge donc
+pas ; c'est le FORMAT du gabarit qui s'élargit.
+
+### Le format
+
+Un gabarit a des `blocks` (la pile, inchangée : les gabarits LIVRÉS par les plugins restent ainsi) **ou** un
+`content` : du HTML d'un sous-ensemble FERMÉ (`print_document.py`), exactement l'un des deux.
+
+| Ce qu'on écrit | En HTML | À l'impression |
+|---|---|---|
+| texte, titres 1-3, gras, italique, souligné, barré, listes, citation, ligne | `p h1-h3 strong em u s ul ol li blockquote hr br` | tel quel, réécrit |
+| couleur, surlignage, taille, interligne, alignement | `style` : `color`, `background-color`, `font-size` (6-96 pt/px), `line-height`, `text-align` | propriétés vérifiées une à une |
+| tableau de mise en page (logo à gauche, adresse à droite) | `table[data-borders=all\|none]`, `td colspan/rowspan/colwidth`, `col style=width` | `table.lay` |
+| une VALEUR du document dans le texte | `<span data-value="doc.client">Client</span>` | la valeur, comme une cellule (titre d'un lien, décimal à l'échelle), ÉCHAPPÉE |
+| le tableau des lignes, les totaux, une grille de champs | `<div data-block='{…bloc du vocabulaire…}'>` | LE rendu existant (`_render_block`), sous-totaux exacts compris |
+| une image : dans le texte, habillée, devant le texte | `<img data-file="<32 hex>" data-wrap="inline\|left\|right\|front" style="width;left;top">` (mm) | `data:` résolu par le service |
+| saut de page | `<div data-page-break>` | `.pb` |
+
+**Refusé, jamais nettoyé** (la règle de `fieldtypes.rich_text`) : toute balise, tout attribut, toute propriété de
+style hors liste est une FAUTE dite à l'enregistrement, toutes les fautes d'un coup. Et le rendu ne recopie JAMAIS
+l'entrée : il réécrit l'arbre analysé, attribut par attribut, depuis des valeurs vérifiées — un `style` est une
+liste de couples reconstruits, pas une chaîne qu'on laisse passer. Pas de `src`, pas de `href`, pas de `class` :
+aucune URL n'a d'attribut où se loger, ni de propriété (`url(` n'est la valeur d'aucune propriété permise).
+
+Le Desk NETTOIE ce qu'un collage apporte (« font-family: Calibri », une taille en `em`) avant d'envoyer
+(`lib/printdoc.normalizeHtml`), parce que TipTap recopie les styles collés : c'est le seul endroit où un document
+écrit à l'écran pourrait être refusé sans qu'on sache pourquoi. Le serveur reste l'autorité, et les deux côtés
+jouent les MÊMES cas (`tests/vectors/print_style_cases.json`, 25 cas).
+
+### Les images
+
+Une image de gabarit est un fichier `xdt_file` au champ RÉSERVÉ `_print` (comme `_attachment`), déposé par
+`POST /print-image/{doctype}` sous le verrou de l'enregistrement du gabarit (périmètre d'écriture total), PNG,
+JPEG, GIF ou WebP reconnus à leurs octets, 5 Mo au plus. **À l'impression, seule une image `_print` de CE type
+s'incorpore** (`FileService.print_image`) : l'identifiant vient d'un gabarit, donc d'un client, et sans ce
+contrôle un auteur de gabarit pourrait faire sortir sur papier n'importe quel fichier du tenant dont il connaît
+l'identifiant (une pièce jointe de la paie). Mutation-vérifié : retirer le contrôle du champ, ou celui du type,
+fait échouer son test. Qui LIT le type voit les images dans l'éditeur (`_may_read`).
+
+Ce qui ne marche pas, et c'est voulu : une image absente, effacée, ou qui n'est pas une image de gabarit de ce
+type est simplement OMISE — une facture ne devient pas inimprimable parce qu'un logo a disparu. Les images
+`_print` ne sont jamais libérées (aucun document ne les « cite » au sens de `release`) : un gabarit qui retire son
+logo laisse le fichier. Le téléversement est HTTP seulement (pas d'action IPC jumelle : le corps est binaire).
+
+**« Devant le texte », au millimètre.** Le document est enveloppé dans `div.doc{position:relative}`, papier à
+en-tête compris, et une image `front` s'y place en `left`/`top` (mm) depuis le coin haut-gauche de la zone
+imprimable de la PREMIÈRE page — la même origine que la feuille de l'éditeur. Mesuré dans le vrai moteur
+(`test_pdf_engine.TestAFreeDocumentPlacesItsImagesExactly`, sur la matrice `cm` du flux PDF) : posée à
+`left:120mm;top:30mm` avec des marges de 15/20 mm, l'image sort à **135,0 × 50,0 mm**. Le premier essai donnait
+**54,2 mm** : la marge haute du premier paragraphe « traversait » le conteneur (fusion des marges) et décalait
+TOUTES les images. `display:flow-root` l'aurait empêché — PlutoPrint l'ignore, mesuré aussi — d'où un
+`padding-top:0.01mm`, qui suffit (le test échoue sans lui : 53,0 mm).
+
+### L'éditeur (Desk)
+
+`PrintBuilderView` + `components/printdoc/` : TipTap (déjà employé pour les champs `TextEditor`), plus trois
+extensions OFFICIELLES sous MIT — `@tiptap/extension-table`, `-text-style` (couleur, surlignage, taille,
+interligne ; la police est retirée), `-text-align` — et quatre nœuds à nous : le champ inséré (`ValueToken`),
+l'image (`PrintImage`), le bloc incorporé (`EmbeddedBlock`) et le saut de page. Chaque nœud ne produit dans
+`getHTML()` que ce que le serveur accepte ; ce qui s'AFFICHE (la valeur « Durand », l'image elle-même, l'aperçu du
+tableau des lignes) vient de leurs vues Vue.
+
+- **La feuille** a les dimensions du format en millimètres CSS, marges comprises, réduite à l'écran par un
+  `transform: scale` ; un trait pointillé marque chaque hauteur de page. Elle reste BLANCHE en mode sombre.
+- **Insérer** (à gauche) : image, tableau des lignes (un par champ Table), totaux, grille de champs, tableau de
+  mise en page, saut de page ; puis les VALEURS du document, qu'on CLIQUE (au curseur) ou qu'on GLISSE dans le
+  texte (le bouton porte le HTML du champ inséré en `text/html`, que l'éditeur sait recevoir).
+- **Propriétés** (à droite) : pour une image, l'habillage, la largeur et la position ; pour un bloc incorporé, le
+  panneau existant (`BlockPanel` : colonnes, largeurs, regroupement, sous-totaux), branché sur le nœud.
+- **Un gabarit à blocs s'ouvre CONVERTI** (`lib/printdoc.blocksToContent`) : titre et texte deviennent du texte,
+  leurs jetons `{{ … }}` des champs insérés, le reste des blocs incorporés tels quels. Enregistrer écrit un
+  document libre ; le gabarit livré, lui, ne change pas, et « Revenir à l'original » le rend.
+
+**Trois défauts que seul le navigateur a montrés**, comme pour chaque éditeur avant celui-ci :
+
+1. **Le contexte des vues n'était pas réactif.** TipTap RECOPIE l'objet de stockage d'une extension au premier
+   niveau (`{ ...addStorage() }`) : un `reactive` posé là perdait sa réactivité et les vues ne recevaient jamais le
+   document d'exemple. Le contexte vit un niveau plus bas (`storage.printDoc.ctx`), où la copie garde la référence.
+2. **Insérer REMPLAÇAIT la sélection.** Cliquer « Totaux » avec le tableau des lignes sélectionné le faisait
+   disparaître — le comportement de base d'un éditeur, qui surprend ici. Un nœud sélectionné n'est jamais
+   remplacé (on insère après), et tant que l'utilisateur n'a pas posé son curseur, on insère à la FIN.
+3. **Une image passée « devant le texte » sautait** au coin de la page, souvent hors de la vue ; elle garde
+   maintenant la place qu'elle occupait à l'écran, convertie en millimètres. Et on ne peut plus la poser hors du
+   papier (bornée aux bords de la feuille, marges comprises).
+
+Preuve en Chromium : `ui/e2e/printbuilder.e2e.mjs` — ouvrir par le menu, le gabarit converti avec les valeurs
+réelles, écrire un paragraphe centré avec une valeur en gras, téléverser un logo, le passer devant le texte SANS
+qu'il saute, vérifier qu'il n'est recouvert par rien, le DÉPLACER à la souris, enregistrer, puis lire le HTML
+imprimé (texte, mise en forme, image et sa position) et le PDF, l'aperçu, le retour à l'original, le sombre, le
+téléphone.
+
+### Ce que le document libre ne fait pas (encore)
+
+- Une zone de texte « devant le texte » (seules les IMAGES se posent librement ; le texte est un flux).
+- Un en-tête/pied RÉPÉTÉ à chaque page écrit dans l'éditeur (c'est toujours le travail du fond PDF, §5).
+- Les polices : une seule famille (`sans-serif`), parce que le moteur ne charge aucune police distante (§6) et
+  qu'une police incorporée est une autre étude (taille, licence).
+- La fidélité exacte des coupures de ligne : la feuille de l'éditeur et le PDF n'emploient pas la même police
+  `sans-serif` (celle de Chromium contre celle de PlutoPrint) ; les mesures et les marges sont les mêmes, les fins
+  de ligne peuvent différer d'un mot. L'« Aperçu imprimé » fait foi.
+- Les nombres et les dates du SERVEUR restent en `2026-10-29` / `37.5` (l'éditeur montre `29/10/2026` /
+  `37,5`) : c'est un défaut de `printing._cell`, noté au §10 ter, à trancher à part.
