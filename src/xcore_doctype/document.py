@@ -70,7 +70,7 @@ from .permissions import ACTIONS, Action, Facts, Scope, require, scope_for, stor
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .mapping import already_done, map_document, nothing_left
-from .schema import FILE_TYPES, LINK_FILTER_REF, MAX_MAPPING_SOURCES, TODAY, DocTypeDef, FieldDef, NamingField
+from .schema import DECIMAL_TYPES, FILE_TYPES, LINK_FILTER_REF, MAX_MAPPING_SOURCES, TODAY, DocTypeDef, FieldDef, NamingField
 from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer, kept
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
@@ -115,6 +115,8 @@ from .versions import diff, snapshot
 MAX_PAGE = 200
 DEFAULT_PAGE = 20
 MAX_SEARCH = 50
+# Ce qu'un hook lit d'un coup dans sa transaction (`tx.find`) : assez pour les écritures d'une pièce, pas pour parcourir un grand livre.
+MAX_FIND = 500
 MAX_HISTORY = 200
 MAX_NAME = 140  # largeur de la colonne `name`
 MAX_UNIQUE_VALUE = 500  # largeur de la colonne `value` de xdt_unique
@@ -2869,6 +2871,45 @@ class _Transaction:
             return self._svc._present(found) if found else None
         doc = await self._q.get(doctype, name, scope=Scope.everything("read"), lock=lock)
         return self._svc._present(doc) if doc else None
+
+    def _searchable(self, doctype: str) -> CompiledDocType:
+        compiled = self._svc._doctype(doctype)
+        if self._svc._source(compiled) is not None:
+            # Un type virtuel vit chez son plugin, pas dans cette transaction : ce qu'on y lirait ne serait pas « dans » la transaction.
+            raise ValidationFailed(f"{compiled.definition.name} est un DocType virtuel : il ne se cherche pas dans une transaction", code="not_in_transaction")
+        return compiled
+
+    async def find(
+        self, doctype: str, filters: Mapping[str, Any] | None = None, *, order_by: str = "name", descending: bool = False,
+        limit: int = MAX_FIND, lock: bool = False,
+    ) -> list[dict[str, Any]]:
+        compiled = self._searchable(doctype)
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_FIND:
+            raise ValidationFailed(f"limit doit être entre 1 et {MAX_FIND}")
+        if order_by not in SYSTEM_SORTABLE and order_by not in compiled.definition.field_map:
+            raise ValidationFailed(f"tri impossible sur {order_by!r}")
+        if compiled.definition.field_map.get(order_by) is not None and compiled.definition.field_map[order_by].fieldtype == "Table":
+            raise ValidationFailed(f"tri impossible sur {order_by!r} : un champ Table n'a pas d'ordre")
+        # Les MÊMES filtres typés que la liste et les agrégats : un seul interprète, pas un second qui divergerait.
+        coerced = aggregation.validate_filters(compiled, filters)
+        docs, _ = await self._q.list(
+            compiled.definition, filters=coerced, order_by=order_by, descending=descending, limit=limit, offset=0,
+            scope=Scope.everything("read"), lock=lock,
+        )
+        return [self._svc._present(d) for d in docs]
+
+    async def sum(self, doctype: str, field: str, filters: Mapping[str, Any] | None = None) -> Decimal:
+        compiled = self._searchable(doctype)
+        target = compiled.definition.field_map.get(field) if isinstance(field, str) else None
+        if target is None or target.fieldtype not in DECIMAL_TYPES:
+            raise ValidationFailed(f"{compiled.definition.name}.{field} n'est pas un champ Decimal ou Currency : il ne se somme pas", code="not_summable")
+        coerced = aggregation.validate_filters(compiled, filters)
+        values = await self._q.field_values(compiled.definition, field, filters=coerced, scope=Scope.everything("read"))
+        # En `Decimal`, valeur par valeur : le SUM du SQL passe par un double sous SQLite. Chaque valeur stockée se lit exactement
+        # (chaîne canonique) ; le total sort à l'échelle que le champ déclare AUJOURD'HUI (`quantize`, pas `canonical`, qui lèverait
+        # pour une valeur écrite quand le champ avait plus de décimales).
+        total = sum((Decimal(v) for v in values if v is not None), Decimal(0))
+        return total.quantize(Decimal(1).scaleb(-int(target.decimals or 0)))
 
     async def create(self, doctype: str, data: Mapping[str, Any], *, name: str | None = None) -> dict[str, Any]:
         compiled = self._writable(doctype)

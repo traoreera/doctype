@@ -25,6 +25,7 @@ import inspect
 import json
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 from typing import Any, Awaitable, Callable, Literal, Mapping, Protocol
 
 from .context import RequestContext
@@ -119,6 +120,21 @@ class HookTransaction(Protocol):
 
     async def get(self, doctype: str, name: str, *, lock: bool = False) -> dict[str, Any] | None:
         """Le document (même tenant), ou `None`. `lock=True` le verrouille jusqu'à la fin de la transaction."""
+
+    async def find(
+        self, doctype: str, filters: Mapping[str, Any] | None = None, *, order_by: str = "name", descending: bool = False,
+        limit: int = 500, lock: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Les documents de ce type (même tenant) qui répondent aux filtres — les MÊMES filtres typés que la liste (`{"voucher_no": x}`,
+        `{"posting_date": [">=", "2026-01-01"]}`, `docstatus`, `_tag`) —, lus DANS la transaction : un hook voit ce qu'il vient d'écrire.
+        Au plus 500 (`MAX_FIND`), dans l'ordre de `order_by` puis du nom. `lock=True` les verrouille jusqu'à la fin de la transaction
+        (PostgreSQL ; SQLite n'a pas de verrou de ligne et compte sur la première écriture). C'est ainsi qu'une annulation retrouve SES
+        écritures. Un type virtuel ne se cherche pas ici (`not_in_transaction`)."""
+
+    async def sum(self, doctype: str, field: str, filters: Mapping[str, Any] | None = None) -> Decimal:
+        """La somme EXACTE d'un champ Decimal ou Currency sur les documents qui répondent aux filtres, à l'échelle du champ (0 si aucun) :
+        le solde d'un compte, le reste dû d'une facture, la valeur d'un stock. Faite en `decimal.Decimal`, jamais par le SUM du SQL
+        (un double sous SQLite). Un autre genre de champ est refusé (`not_summable`)."""
 
     async def create(self, doctype: str, data: Mapping[str, Any], *, name: str | None = None) -> dict[str, Any]:
         """Crée un document en brouillon. `name` : un nom choisi par le hook (un nom déjà pris échoue en 409 `already_exists`)."""
