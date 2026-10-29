@@ -146,8 +146,14 @@ Dans l'ordre de valeur :
 3. ~~**`target_status` sur les liens entre pièces.**~~ **Fait** : les 10 champs `document` des mappings portent
    `target_status: submitted`, donc une facture ne peut plus citer une commande annulée — jugé à l'écriture ET à
    la soumission du document citant (D23). Invariant dans `tests/unit/test_erp_doctypes.py`.
-4. **Les workflows.** Zéro `workflow:` : aucun circuit d'approbation. Le constructeur existe
-   (`process/programme.md` §3.6).
+4. ~~**Les workflows.**~~ **Fait pour les quatre pièces à approbation** : commande fournisseur, demande de
+   matériel, note de frais, congé. Un seul circuit, le même partout : Brouillon → À approuver → Approuvée
+   (soumise) ou Refusée (annulée), Reprendre rend la pièce à son auteur, et Annuler part de l'état approuvé — parce
+   que sur un type à circuit `/cancel` est REFUSÉ : sans cette transition, une commande approuvée ne s'annulerait
+   plus jamais (invariant `test_an_approved_document_can_always_be_cancelled`, sur tout le jeu, mutation vérifiée).
+   L'auteur n'approuve ni ne refuse sa propre pièce (`not_owner`). Chaque action est un grant
+   `<module>:<type>:workflow_<action>` que le plugin du module déclarera. Une organisation resserre un circuit à
+   l'écran (`#/workflow/<Type>`) ; d'autres pièces en recevront un quand un circuit réel sera connu.
 5. ~~**17 espaces de travail manquants**~~ **Fait** : 9 espaces métier écrits (libellé français, icône, `order`
    métier, raccourcis CHOISIS sous des en-têtes — ce sont les en-têtes qui font les sous-groupes dépliables de la
    barre latérale) et 7 modules de PLOMBERIE rattachés par `contributes_to` (D27) là où leurs types servent :
