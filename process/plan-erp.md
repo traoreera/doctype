@@ -101,7 +101,12 @@ production il faut `backend: redis` ou un seul processus. Ce sera écrit dans la
 type d'un autre module ; une tâche lancée deux fois dans la même transaction n'écrit pas deux fois (nom prévisible
 ou `ensure`).
 
-## 2. Lot P — les plugins de module
+## 2. Lot P — les plugins de module (HORS de ce dépôt)
+
+**Décision du 29 oct. :** les modules de `doctypes/` deviennent des plugins À PART, qui ne vivent pas dans ce dépôt
+et sont traités séparément. Ce dépôt garde le moteur, le Desk et le jeu de définitions qu'ils reprendront ; il
+n'écrit ni plugin de module ni hook métier. Ce qui suit est donc le plan de CES plugins, gardé ici parce qu'il dit
+ce que le moteur doit leur offrir.
 
 Après le lot M. Chaque module devient un plugin de confiance : `load_dir(nom, dossier, peers=True)`, un seul
 `rbac.declare` de ses grants, son espace, ses hooks enregistrés par NOM. Rien de cela ne touche au moteur.
@@ -136,9 +141,11 @@ Ne bloque pas le démarrage ; à mesurer sur un jeu de données réaliste avant 
 
 ## 4. Les décisions qu'il faut prendre avant P1
 
-1. **Où vivent les plugins de module ?** Ce sont des PRODUITS, pas des jeux d'essai (la règle du 19 oct. interdit
-   d'en faire dans `app/` ou `tests/support/plugins`). Proposition : un dossier `erp/<module>/` à la racine,
-   `doctypes/<module>/` déplacé dedans.
+Fait dans `doctypes/` le 29 oct., en préparation des plugins : T16 (`depends_on`, `fetch_from` sur les pièces et
+référentiels clés) et les circuits d'approbation des quatre pièces qui en ont un (`process/erp-doctypes.md` §3-§4).
+
+
+1. ~~**Où vivent les plugins de module ?**~~ **Tranché le 29 oct. : hors de ce dépôt**, traités à part (§2).
 2. **La méthode de valorisation du stock** : moyenne pondérée (simple, une valeur par `Bin`) ou FIFO (une file par
    article et dépôt). ERPNext offre les deux ; la décision 1 de `palier40.md` avait écarté toute valorisation.
 3. **Le périmètre de la première version** : `setup` + `accounts` + `stock` + `selling` + `buying` (P1 à P3)
