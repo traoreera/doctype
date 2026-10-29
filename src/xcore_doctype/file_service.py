@@ -82,6 +82,44 @@ class FileService:
             raise
         return {"id": att["id"], "file_id": file_id, "owner": att["owner"], "creation": att["creation"], "filename": name, "content_type": mime, "size": len(content)}
 
+    async def save_print_image(
+        self, ctx: RequestContext, doctype: str, *, content: bytes, filename: str | None, content_type: str | None
+    ) -> dict[str, Any]:
+        """Dépose une IMAGE de gabarit d'impression pour ce type (champ réservé `_print`). Les droits sont jugés par
+        l'appelant (`print_service`, le même verrou que l'enregistrement du gabarit), pas ici. Une image seulement :
+        PNG, JPEG, GIF, WebP reconnus à leurs octets — jamais un SVG, qui porte du script."""
+        mime, name = F.check_upload(kind="Image", content=content, filename=filename or "", declared_type=content_type, limit_mb=F.PRINT_IMAGE_MAX_MB)
+        namespace = _namespace(ctx.tenant_id, doctype)
+        blob = await self._store.save(content, name, namespace)
+        file_id = _new_id()
+        try:
+            async with self._docs._query(ctx) as q:
+                await q.add_file(
+                    file_id, doctype=doctype, fieldname=F.PRINT_FIELD, filename=name, content_type=mime, size=len(content),
+                    namespace=namespace, blob_id=str(blob.file_id), stored_name=str(blob.stored_name),
+                )
+        except Exception:
+            await self._store.delete(str(blob.file_id), namespace, str(blob.stored_name))  # pas de blob sans ligne
+            raise
+        return {"id": file_id, "filename": name, "content_type": mime, "size": len(content)}
+
+    async def print_image(self, tenant: str, doctype: str, file_id: str) -> tuple[bytes, str] | None:
+        """Les octets d'une image de gabarit, pour l'incorporer à l'impression — ou `None`.
+
+        SEULEMENT une image déposée pour un gabarit de CE type (`_print`, même DocType) : un gabarit ne peut pas
+        citer l'identifiant d'un autre fichier du tenant (une pièce jointe de la paie, un document d'un autre type)
+        pour le faire sortir sur papier. L'identifiant vient d'un gabarit, donc d'un client : c'est ici qu'il se juge.
+        """
+        if not F.FILE_ID_RE.match(file_id):
+            return None
+        sys = RequestContext.system(tenant, "print template image")
+        async with self._docs._query(sys) as q:
+            row = (await q.get_files({file_id})).get(file_id)
+        if row is None or row["fieldname"] != F.PRINT_FIELD or row["doctype"] != doctype:
+            return None
+        blob = await self._store.read(row["blob_id"], row["namespace"], row["stored_name"])
+        return None if blob is None else (blob, row["content_type"])
+
     # ── Lire : liens signés ───────────────────────────────────
     async def links(self, ctx: RequestContext, ids: Sequence[str]) -> dict[str, dict[str, Any]]:
         """Pour chaque fichier que l'appelant a le droit de lire : un lien signé de courte durée et ses métadonnées. Un fichier absent, d'un autre
@@ -151,6 +189,13 @@ class FileService:
             except NotFound:
                 return False
             return (scope.granted or scope.share) and await self._docs.read_document(ctx, q, att["doctype"], att["docname"], scope) is not None
+        if row["fieldname"] == F.PRINT_FIELD:
+            # Une image de gabarit se lit comme le gabarit : qui peut LIRE le type ouvre l'éditeur et voit ses images.
+            try:
+                scope = scope_for(self._docs._doctype(doctype).definition, ctx, "read")
+            except NotFound:
+                return False
+            return scope.granted
         if doctype not in scopes:
             try:
                 scopes[doctype] = scope_for(self._docs._doctype(doctype).definition, ctx, "read")

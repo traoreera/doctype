@@ -374,6 +374,13 @@ export class ApiClient {
     })
   }
 
+  /** Dépose une image pour un gabarit de ce type (logo, tampon, signature). Réservé à qui peut enregistrer le gabarit. */
+  printImage(doctype: string, file: File): Promise<FileMeta> {
+    const body = new FormData()
+    body.append('file', file, file.name)
+    return this.call('POST', `/print-image/${encodeURIComponent(doctype)}`, { body })
+  }
+
   /** Un document d'exemple pour l'aperçu, ou `null` : le gabarit s'édite alors sans aperçu. */
   printExample(doctype: string): Promise<{ doctype: string; name: string | null }> {
     return this.call('GET', `/print-example/${encodeURIComponent(doctype)}`)

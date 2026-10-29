@@ -45,6 +45,7 @@ EXPECTED_ROUTES = sorted(
         ("GET", "/map/{doctype}/{source}/{name}"),
         ("GET", "/print-templates/{doctype}"),
         ("GET", "/print-example/{doctype}"),
+        ("POST", "/print-image/{doctype}"),
         ("GET", "/override/print/{doctype}"),
         ("POST", "/override/print/{doctype}"),
         ("DELETE", "/override/print/{doctype}"),
