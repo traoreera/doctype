@@ -19,6 +19,24 @@ SYSTEM = {
     )
 }
 ADMIN = ["system:system_settings:read", "system:system_settings:write"]
+
+# Un plugin qui apporte ses DocTypes PUIS ses gabarits d'impression (process/impression.md §2) : l'ordre compte.
+MAIN_WITH_PRINT = '''
+from pathlib import Path
+from xcore.sdk import TrustedBase, error
+
+BASE = Path(__file__).resolve().parent.parent
+
+
+class Plugin(TrustedBase):
+    async def on_load(self):
+        registry = self.get_service("doctype_registry")
+        registry.load_dir(self.ctx.name, BASE / "doctypes")
+        registry.load_print_templates(self.ctx.name, BASE / "print")
+
+    async def handle(self, action, payload):
+        return error("no actions", "unknown_action")
+'''
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 64
 
 
@@ -78,8 +96,78 @@ def test_the_shipped_plugin_is_valid_and_ships_with_the_package():
     from xcore_doctype.cli import check
 
     lines, findings = check([system_plugin_dir() / "doctypes"], "system")
-    # System Settings, Notification Rule et sa table de destinataires, User Permission
-    assert "4 DocType(s) valides" in lines[0] and not [f for f in findings if f.level == "error"]
+    # System Settings, Notification Rule et sa table de destinataires, User Permission, Letter Head
+    assert "5 DocType(s) valides" in lines[0] and not [f for f in findings if f.level == "error"]
     dev_link = ROOT / "app" / "system"  # lien de confort de l'hôte de développement : présent seulement sur le poste du développeur
     if dev_link.exists() or dev_link.is_symlink():
         assert dev_link.resolve() == system_plugin_dir().resolve()
+
+
+LETTERHEAD = ["system:letter_head:read", "system:letter_head:write"]
+
+
+def with_letterhead() -> dict:
+    """Le plugin `system` tel qu'il est LIVRÉ, avec le papier à en-tête et l'espace « Administration »."""
+    files = {
+        f"doctypes/{n}.yaml": (system_plugin_dir() / "doctypes" / f"{n}.yaml").read_text(encoding="utf-8")
+        for n in ("system_settings", "letter_head")
+    }
+    files["workspaces/system.yaml"] = (system_plugin_dir() / "workspaces" / "system.yaml").read_text(encoding="utf-8")
+    return {"system": ((system_plugin_dir() / "src" / "main.py").read_text(encoding="utf-8"), files)}
+
+
+async def test_a_letter_head_is_printed_on_a_document_by_whoever_can_only_read_it(tmp_path):
+    """Le papier à en-tête livré (process/impression.md §5, étape 6) : son image et son pied s'impriment.
+
+    Le point qui compte : il est lu en contexte SYSTÈME, donc un lecteur SANS aucun grant sur `Letter Head`
+    l'obtient quand même. Autrement un commercial qui lit les factures imprimerait sans en-tête — l'en-tête est
+    de la présentation d'entreprise, pas un document métier (le précédent de `preferences.py`).
+    """
+    import yaml as _yaml
+
+    invoice = {
+        "schema_version": 1, "name": "Bill", "module": "shop",
+        "fields": [{"fieldname": "customer", "fieldtype": "Text", "required": True}],
+    }
+    template = {
+        "schema_version": 1, "doctype": "Bill", "name": "standard", "label": "Facture",
+        "letterhead": {"name": "default"},
+        "blocks": [{"type": "fields", "fields": ["customer"]}],
+    }
+    shop = (
+        MAIN_WITH_PRINT,
+        {"doctypes/bill.yaml": _yaml.safe_dump(invoice), "print/standard.yaml": _yaml.safe_dump(template)},
+    )
+    async with boot_host(tmp_path, inline_plugins={**with_letterhead(), "shop": shop}) as h:
+        admin = h.token(sub="ada", permissions=[*LETTERHEAD, "shop:bill:read", "shop:bill:write"])
+        made = await h.http("POST", "/doc/Letter Head", token=admin, json={
+            "data": {"is_default": True, "disabled": False, "footer_text": "SARL Durand — RCS Paris 123 456 789"},
+            "name": "Papier 2026",
+        })
+        assert made.status_code == 201, made.text
+        bill = await h.http("POST", "/doc/Bill", token=admin, json={"data": {"customer": "Durand"}})
+        name = bill.json()["name"]
+
+        # Un lecteur SANS grant sur `Letter Head` : il obtient quand même le pied de page.
+        reader = h.token(sub="rita", permissions=["shop:bill:read"])
+        printed = await h.http("GET", f"/print/Bill/{name}", token=reader)
+        assert printed.status_code == 200, printed.text
+        assert "RCS Paris 123 456 789" in printed.json()["html"]
+
+        # Désactivé : on imprime SANS en-tête, et ce n'est pas une erreur.
+        current = await h.http("GET", "/doc/Letter Head/Papier 2026", token=admin)
+        off = await h.http("PUT", "/doc/Letter Head/Papier 2026", token=admin, json={
+            "version": current.json()["version"],
+            "data": {"is_default": True, "disabled": True, "footer_text": "SARL Durand — RCS Paris 123 456 789"},
+        })
+        assert off.status_code == 200, off.text
+        again = await h.http("GET", f"/print/Bill/{name}", token=reader)
+        assert again.status_code == 200 and "RCS Paris" not in again.json()["html"]
+
+
+async def test_the_administration_workspace_offers_the_letter_head(tmp_path):
+    async with boot_host(tmp_path, inline_plugins=with_letterhead()) as h:
+        admin = h.token(sub="ada", permissions=[*LETTERHEAD, *ADMIN])
+        spaces = (await h.http("GET", "/workspaces", token=admin)).json()
+        system = next(w for w in spaces if w["name"] == "system")
+        assert "Letter Head" in [b.get("doctype") for b in system["blocks"]]

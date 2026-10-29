@@ -9,5 +9,7 @@ order: 90
 blocks:
   - { type: header, text: Notifications }
   - { type: shortcut, doctype: Notification Rule, new: true }
+  - { type: header, text: Impression }
+  - { type: shortcut, doctype: Letter Head, new: true }
   - { type: header, text: Droits }
   - { type: shortcut, doctype: User Permission, new: true }

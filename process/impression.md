@@ -17,9 +17,17 @@ toujours pour qu'il tourne au moins là.
 Et l'étape 5 : le Desk (`PrintDialog.vue`, entrée « Imprimer… » du menu « ⋯ » de la fiche), avec sa preuve en
 Chromium (`ui/e2e/print.e2e.mjs`).
 
-**Pas encore fait :** le DocType `Letter Head` dans le plugin `system` (le mécanisme est là, pas encore le YAML
-livré) et le TÉLÉVERSEMENT du PDF d'en-tête à l'écran (le serveur le superpose, le modèle porte ses réglages).
-L'ordre de §11 tient.
+Et les étapes 6 et 7 : le DocType `Letter Head` livré avec le plugin `system`, et l'éditeur de gabarits
+(`#/print/<Type>`).
+
+**Pas encore fait :** le TÉLÉVERSEMENT du PDF d'en-tête depuis l'écran. Le serveur le superpose déjà
+(`pdf.overlay`, testé) et le modèle de l'éditeur porte ses réglages, mais une question reste OUVERTE et je
+préfère l'écrire que de l'inventer : **à quoi le fichier téléversé est-il rattaché ?** `api.upload` exige un
+couple (DocType, champ) existant, or le fond est cité depuis un GABARIT, pas depuis un champ de document. Deux
+voies : (a) donner à `Letter Head` un champ `Attach` « fond », ce qui unifierait les deux formes d'en-tête mais
+contredirait §5, qui met `pdf`/`pages`/`offset` dans le gabarit à dessein ; (b) téléverser vers ce champ juste
+pour obtenir un identifiant, que le gabarit cite ensuite — mécaniquement juste, conceptuellement tordu. La
+réponse change le schéma de `Letter Head` : elle se prend avant d'écrire, pas pendant.
 
 Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
 obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos
@@ -438,7 +446,12 @@ le clic était refusé pour une raison de géométrie, pas de réactivité.
 5. ~~Desk : bouton « Imprimer », aperçu, choix du gabarit.~~ **fait** — `PrintDialog.vue`, entrée « Imprimer… »
    dans le menu « ⋯ » de la FICHE seulement (imprimer plusieurs documents d'un coup est une autre affaire, qui
    demanderait un rendu multi-documents : hors périmètre, §9). Preuve en Chromium : `ui/e2e/print.e2e.mjs`.
-6. `Letter Head` dans le plugin `system`.
+6. ~~`Letter Head` dans le plugin `system`.~~ **fait** — le DocType livré
+   (`system_plugin_dir/doctypes/letter_head.yaml`) et son raccourci dans l'espace « Administration ». Deux
+   choix que l'écriture a tranchés : le nom est SAISI (`naming: prompt`) et sert d'intitulé — un champ
+   « intitulé » à côté serait un second nom, alors qu'un gabarit n'en désigne qu'un ; et **pas de
+   `allow_rename`**, parce qu'un gabarit cite son papier par une simple CHAÎNE de son habillage, que `rename`
+   ne peut pas suivre (il réécrit les Link, pas les chaînes) — renommer casserait silencieusement les gabarits.
 7. ~~L'éditeur (§10) : le modèle pur d'abord et ses tests, puis la page, puis la route d'aperçu.~~ **fait** —
    modèle pur (`ui/src/lib/printedit.ts`), serveur (ouvrir, enregistrer, retirer, l'aperçu d'un BROUILLON par
    `POST /print-preview/{dt}/{name}`, le document d'exemple, et quatre actions IPC), et la page

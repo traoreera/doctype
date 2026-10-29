@@ -1,0 +1,44 @@
+# Le papier à en-tête de l'organisation (process/impression.md §5) : ce qui s'imprime EN HAUT d'un document, et
+# la mention légale qui s'imprime en bas.
+#
+# C'est de la donnée PAR ORGANISATION, donc un DocType et pas un fichier : le registre est global au processus,
+# un YAML déposé par un tenant servirait à tous.
+#
+# Trois choses à savoir, et elles viennent du service (`print_service.py`), pas d'ici :
+#
+#  1. l'impression le lit en contexte SYSTÈME, sur une liste FERMÉE de champs (`LETTERHEAD_FIELDS` : `image`,
+#     `footer_text`, `is_default`, `disabled`). C'est le précédent de `preferences.py` — le logo de
+#     l'organisation s'affiche pour tout le monde alors que `System Settings` est réservé aux administrateurs.
+#     Sans cela, un commercial qui lit les factures mais n'a aucun grant ici imprimerait sans en-tête.
+#     **Un champ ajouté plus bas ne sortira donc PAS par l'impression** tant qu'on ne l'ajoute pas à cette liste.
+#  2. son absence n'est JAMAIS une erreur : supprimé, désactivé, ou ce plugin pas installé — on imprime sans.
+#     Une facture ne devient pas inimprimable parce qu'une ligne d'en-tête a disparu ; les mentions
+#     obligatoires sont dans les BLOCS du gabarit.
+#  3. un gabarit le désigne par son NOM (`letterhead: {name: "Papier 2026"}`), et le nom réservé `default`
+#     prend celui qui porte `is_default`. Le fond PDF préimprimé, lui, se déclare dans le GABARIT
+#     (`letterhead: {pdf: …}`) et non ici : c'est une propriété de l'impression, pas de l'en-tête.
+schema_version: 1
+name: Letter Head
+label: Papier à en-tête
+module: system
+icon: image
+# Le nom est SAISI, et il est à la fois l'identifiant et l'intitulé : « Papier 2026 », « Filiale Nord ». Pas de
+# champ « intitulé » à côté — ce serait un second nom, et le gabarit en désigne un seul.
+naming: prompt
+# PAS de `allow_rename`, et c'est voulu : un gabarit cite son papier par son NOM, dans une simple chaîne de son
+# habillage (`letterhead: {name: …}`), qui n'est pas un Link. `rename` réécrit les documents qui citent par un
+# Link ; il ne peut pas suivre celle-ci. Renommer casserait donc silencieusement les gabarits qui s'y réfèrent.
+fields:
+  - { fieldname: is_default, label: Par défaut, fieldtype: Boolean, default: false, in_list_view: true, description: "Celui qu'un gabarit obtient quand il demande « default »" }
+  - { fieldname: disabled, label: Désactivé, fieldtype: Boolean, default: false, in_list_view: true, description: "Gardé, mais plus imprimé : les documents sortent alors sans en-tête" }
+  # L'image est lue par NOUS et incorporée en `data:` dans le HTML : le moteur de rendu n'a pas d'accès réseau
+  # (§6). PNG, JPEG, GIF ou WebP — un SVG est refusé, au téléversement comme à l'impression (il porte du script).
+  - { fieldname: image, label: Image, fieldtype: Image, description: "En haut de la PREMIÈRE page. Un en-tête répété à chaque page est le travail du fond PDF, déclaré dans le gabarit" }
+  - { fieldname: footer_text, label: Pied de page, fieldtype: LongText, description: "Texte brut imprimé en fin de document (SARL au capital de…, RCS, TVA intracommunautaire)" }
+layout:
+  - section: Papier à en-tête
+    columns: [[is_default, disabled], [image]]
+  - section: Mentions
+    columns: [[footer_text]]
+# Aucun bloc `permissions` : par convention system:letter_head:read | write | delete, donc un niveau
+# administrateur comme les autres types de ce plugin.
