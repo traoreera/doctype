@@ -17,6 +17,7 @@ fields:
   label: Gender
   fieldtype: Link
   options: Gender
+  depends_on: "customer_type == 'Individual'"
 - fieldname: customer_type
   label: Customer Type
   fieldtype: Select
@@ -78,6 +79,8 @@ fields:
   fieldtype: Link
   options: Company
   description: Select the related company that this Customer represents for inter-company transactions.
+  depends_on: "is_internal_customer"
+  mandatory_depends_on: "is_internal_customer"
 - fieldname: companies
   label: Allowed to transact with
   fieldtype: Table
@@ -167,6 +170,7 @@ fields:
   label: Release Date
   fieldtype: Date
   description: Leave blank if the Customer is blocked indefinitely
+  depends_on: "on_hold"
 - fieldname: loyalty_program
   label: Loyalty Program
   fieldtype: Link

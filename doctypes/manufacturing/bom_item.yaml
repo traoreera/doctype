@@ -12,6 +12,7 @@ fields:
 - fieldname: item_name
   label: Item name
   fieldtype: Text
+  fetch_from: item_code.item_name
 - fieldname: operation
   label: Item operation
   fieldtype: Link

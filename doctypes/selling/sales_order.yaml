@@ -22,6 +22,7 @@ fields:
   label: Customer Name
   fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: order_type
   label: Order Type
   fieldtype: Select

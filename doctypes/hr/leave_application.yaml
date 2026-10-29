@@ -22,6 +22,7 @@ fields:
   label: Employee Name
   fieldtype: Text
   read_only: true
+  fetch_from: employee.employee_name
 - fieldname: employee_email
   label: Employee Email
   fieldtype: Text
@@ -57,6 +58,8 @@ fields:
 - fieldname: half_day_date
   label: Half Day Date
   fieldtype: Date
+  depends_on: "half_day"
+  mandatory_depends_on: "half_day"
 - fieldname: total_leave_days
   label: Total Leave Days
   fieldtype: Number

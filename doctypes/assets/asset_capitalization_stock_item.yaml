@@ -50,6 +50,7 @@ fields:
   label: Item Name
   fieldtype: Text
   read_only: true
+  fetch_from: item_code.item_name
 - fieldname: actual_qty
   label: Actual Qty in Warehouse
   fieldtype: Decimal

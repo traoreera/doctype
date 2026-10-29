@@ -17,6 +17,7 @@ fields:
   label: Employee name
   fieldtype: Text
   read_only: true
+  fetch_from: employee.employee_name
 - fieldname: leave_policy
   label: Leave Policy
   fieldtype: Link

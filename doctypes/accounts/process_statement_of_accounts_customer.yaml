@@ -22,3 +22,4 @@ fields:
   label: Customer Name
   fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name

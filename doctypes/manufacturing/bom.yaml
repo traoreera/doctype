@@ -18,6 +18,7 @@ fields:
   label: Item name
   fieldtype: Text
   read_only: true
+  fetch_from: item.item_name
 - fieldname: image
   label: Image
   fieldtype: Image

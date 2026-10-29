@@ -30,8 +30,8 @@ fields:
 - fieldname: customer_name
   label: Customer Name
   fieldtype: Text
-  required: true
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: company
   label: Company
   fieldtype: Link

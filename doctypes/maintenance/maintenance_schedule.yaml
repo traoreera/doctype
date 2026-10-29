@@ -44,6 +44,7 @@ fields:
   fieldtype: Text
   in_list_view: true
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: contact_person
   label: Contact Person
   fieldtype: Link

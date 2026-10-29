@@ -26,6 +26,7 @@ fields:
   label: Job Worker Name
   fieldtype: Text
   read_only: true
+  fetch_from: supplier.supplier_name
 - fieldname: posting_date
   label: Date
   fieldtype: Date

@@ -23,6 +23,7 @@ fields:
   label: Item Name
   fieldtype: Text
   read_only: true
+  fetch_from: item.item_name
 - fieldname: item_description
   label: Item Description
   fieldtype: LongText

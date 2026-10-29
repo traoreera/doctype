@@ -25,6 +25,7 @@ fields:
   label: Supplier Name
   fieldtype: Text
   read_only: true
+  fetch_from: supplier.supplier_name
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -46,6 +47,7 @@ fields:
 - fieldname: order_confirmation_date
   label: Order Confirmation Date
   fieldtype: Date
+  depends_on: "order_confirmation_no"
 - fieldname: customer
   label: Customer
   fieldtype: Link
@@ -55,6 +57,7 @@ fields:
   label: Customer Name
   fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: customer_contact_person
   label: Customer Contact
   fieldtype: Link
@@ -139,6 +142,8 @@ fields:
   label: Supplier Warehouse
   fieldtype: Link
   options: Warehouse
+  depends_on: "is_subcontracted"
+  mandatory_depends_on: "is_subcontracted"
 - fieldname: scan_barcode
   label: Scan Barcode
   fieldtype: Text

@@ -12,8 +12,8 @@ fields:
 - fieldname: item_name
   label: Item Name
   fieldtype: Text
-  required: true
   in_list_view: true
+  fetch_from: item_code.item_name
 - fieldname: qty
   label: Quantity
   fieldtype: Decimal

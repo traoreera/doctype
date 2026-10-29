@@ -20,7 +20,7 @@ fields:
 - fieldname: item_name
   label: Item Name
   fieldtype: Text
-  required: true
+  fetch_from: item_code.item_name
 - fieldname: description
   label: Description
   fieldtype: TextEditor

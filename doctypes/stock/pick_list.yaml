@@ -75,6 +75,7 @@ fields:
   label: Customer Name
   fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: status
   label: Status
   fieldtype: Select

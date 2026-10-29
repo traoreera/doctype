@@ -17,6 +17,7 @@ fields:
   fieldtype: Text
   in_list_view: true
   read_only: true
+  fetch_from: employee.employee_name
 - fieldname: resignation_letter_date
   label: Resignation Letter Date
   fieldtype: Date
