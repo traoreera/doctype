@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
+from pydantic import BaseModel, ConfigDict
 
 from ..context import ContextSettings, RequestContext, http_context
 from ..errors import DoctypeError
@@ -19,6 +20,22 @@ from ..print_service import PrintService
 
 # Le nom d'un gabarit et celui d'un papier à en-tête : bornés ici pour que rien de démesuré n'atteigne le service.
 _NAME = {"max_length": 140}
+
+
+class PrintOverrideBody(BaseModel):
+    """Le gabarit que l'éditeur enregistre. `doctype` n'y est PAS : c'est celui de la cible, sinon on ferait
+    imprimer un autre type que celui qu'on édite (`overrides.validate_print_override`)."""
+
+    model_config = ConfigDict(extra="forbid")
+    template: dict
+
+
+class PrintPreviewBody(BaseModel):
+    """Un gabarit en BROUILLON, plus le papier à en-tête à employer pour l'aperçu (`none` pour aucun)."""
+
+    model_config = ConfigDict(extra="forbid")
+    template: dict
+    letterhead: str | None = None
 
 
 def build_print_router(printer: PrintService, settings: ContextSettings) -> APIRouter:
@@ -70,6 +87,47 @@ def build_print_router(printer: PrintService, settings: ContextSettings) -> APIR
                 "Cache-Control": "private, no-store",
             },
         )
+
+    # ── L'éditeur de gabarits (§10) ───────────────────────────
+    @router.get("/override/print/{doctype}")
+    async def print_override(doctype: str, template: str | None = Query(None, **_NAME), ctx: RequestContext = Depends(ctx_dep)):
+        """Ce que l'éditeur ouvre : le gabarit à éditer, d'où il vient, et si l'appelant peut l'enregistrer."""
+        try:
+            return await printer.override(ctx, doctype, template)
+        except DoctypeError as e:
+            _raise(e)
+
+    @router.post("/override/print/{doctype}")
+    async def save_print_override(doctype: str, body: PrintOverrideBody, ctx: RequestContext = Depends(ctx_dep)):
+        """Enregistre le gabarit de l'organisation. Exige un périmètre d'écriture TOTAL sur le type (§10)."""
+        try:
+            return await printer.save_override(ctx, doctype, body.template)
+        except DoctypeError as e:
+            _raise(e)
+
+    @router.delete("/override/print/{doctype}")
+    async def delete_print_override(doctype: str, template: str | None = Query(None, **_NAME), ctx: RequestContext = Depends(ctx_dep)):
+        """Retire le gabarit de l'organisation : celui du plugin, ou le fabriqué, reprend la main."""
+        try:
+            return await printer.delete_override(ctx, doctype, template)
+        except DoctypeError as e:
+            _raise(e)
+
+    @router.post("/print-preview/{doctype}/{name}")
+    async def print_preview(doctype: str, name: str, body: PrintPreviewBody, ctx: RequestContext = Depends(ctx_dep)):
+        """L'aperçu d'un gabarit en BROUILLON (non enregistré). N'écrit rien, et exige de LIRE le document d'exemple."""
+        try:
+            return await printer.preview(ctx, doctype, name, body.template, body.letterhead)
+        except DoctypeError as e:
+            _raise(e)
+
+    @router.get("/print-example/{doctype}")
+    async def print_example(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
+        """Un document d'exemple pour l'aperçu de l'éditeur, ou `null` : un gabarit s'édite alors sans aperçu."""
+        try:
+            return await printer.example(ctx, doctype)
+        except DoctypeError as e:
+            _raise(e)
 
     return router
 

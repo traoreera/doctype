@@ -18,7 +18,8 @@ Et l'étape 5 : le Desk (`PrintDialog.vue`, entrée « Imprimer… » du menu «
 Chromium (`ui/e2e/print.e2e.mjs`).
 
 **Pas encore fait :** le DocType `Letter Head` dans le plugin `system` (le mécanisme est là, pas encore le YAML
-livré), et l'éditeur (§10). L'ordre de §11 tient.
+livré) et le TÉLÉVERSEMENT du PDF d'en-tête à l'écran (le serveur le superpose, le modèle porte ses réglages).
+L'ordre de §11 tient.
 
 Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
 obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos
@@ -374,10 +375,16 @@ refus du réseau et la résolution des images par le service de fichiers. Un gab
 être un chemin d'écriture ni une porte : elle n'écrit rien, et exige le droit de LIRE le document d'exemple.
 
 **Qui peut éditer : un périmètre d'écriture TOTAL** (`rights.write === 'all'`), comme les règles de formulaire
-(§3.5) et non comme une simple disposition. La raison n'est pas technique : un gabarit de facture engage
-l'entreprise — mentions obligatoires, numéro, conditions. Il lie tous ceux qui impriment, et une erreur a des
-conséquences légales. Un lecteur voit l'éditeur en lecture seule. (À valider : c'est le point de la spéc le plus
-discutable, parce qu'il réserve l'édition aux administrateurs.)
+(§3.5) et non comme une simple disposition. **Tranché le 28 oct., et pour une raison plus solide que celle
+écrite d'abord.** J'avais justifié par « un gabarit de facture engage l'entreprise » : c'est vrai et cela ne
+prouve rien, puisqu'une disposition de formulaire engage aussi et ne demande qu'un droit ordinaire. Le vrai
+argument : **un gabarit rend des documents que son éditeur n'a pas forcément le droit de LIRE.** Quelqu'un dont
+le périmètre est `if_owner` déciderait de la présentation des factures des autres. C'est la forme exacte du
+verrou des règles de notification, dont l'auteur doit pouvoir lire TOUS les documents du type — le précédent le
+plus proche, bien plus que la disposition d'un formulaire. Le coût est faible : la CONVENTION donne un périmètre
+total (`sales:facture:write` seul vaut « tout »), donc le verrou ne gêne pas le cas ordinaire ; il ne mord que
+sur un type dont l'écriture est explicitement bornée par `if_owner`. Un lecteur voit l'éditeur en lecture seule
+(`editable: false`), il n'est pas refusé.
 
 **Le document d'exemple** : l'éditeur a besoin d'un document réel pour l'aperçu. Il prend le dernier que
 l'utilisateur peut lire (un `list` à `limit=1`), et dit clairement quand il n'y en a aucun — un gabarit s'édite
@@ -389,6 +396,34 @@ une toile — c'est ce qui permet de garantir le rendu sans CSS grid), ni écrir
 Page `#/print/<Type>` , entrée par le menu « ⋯ » de la fiche et de la liste, à côté de « Personnaliser le
 formulaire ». Preuve en Chromium (`ui/e2e/`) comme pour le Form Builder et le constructeur de workflow : un
 bloc déplacé, une colonne ajoutée, un aperçu qui suit, un retour à l'origine.
+
+## 10 bis. L'éditeur en place, et le défaut que seul le navigateur a montré
+
+`#/print/<Type>`, ouvert par « Personnaliser l'impression… » dans le menu « ⋯ » de la fiche ET de la liste.
+Quatre volets : la palette (les sept blocs, le format, les marges) | la pile | les propriétés | l'aperçu.
+
+**Ce que l'éditeur résout, et qui obligeait à écrire du YAML** : choisir les champs imprimés et leur ordre,
+choisir le tableau, ses colonnes, leur titre, alignement, largeur, le regroupement et les sous-totaux.
+
+Trois règles que le modèle pur tient pour que le serveur n'ait jamais à refuser :
+
+- un bloc qu'on vient d'ajouter n'empêche pas d'enregistrer le reste (un tableau sans colonne n'est pas
+  envoyé) — autrement l'éditeur obligerait à finir un bloc avant de pouvoir sauver le travail d'à côté ;
+- retirer une colonne emporte son sous-total, et ne plus regrouper les emporte tous ;
+- `columns` a DEUX sens dans le format du serveur — un nombre pour un bloc `fields`, une liste pour un
+  `table`. Le modèle le dit (`tableColumns`, `fieldColumns`) au lieu de forcer la conversion, qui aurait marché
+  jusqu'au jour où quelqu'un lit `.length` sur un nombre.
+
+**Et le défaut trouvé dans Chromium, invisible partout ailleurs** : la palette DÉBORDAIT par-dessus la pile.
+Un clic sur un bloc atteignait un bouton de palette — vitest ne le voit pas (jsdom ne calcule pas la mise en
+page) et le typage encore moins. Cause : un enfant de grille CSS a `min-width: auto`, donc un contenu plus
+large que sa piste sort de la colonne au lieu de la contraindre. Corrigé par `minmax(0, …)` sur les colonnes,
+`max-content` pour la palette et `min-width: 0` sur les enfants — et le scénario CONTRÔLE désormais qu'aucun
+élément cliquable n'est recouvert (`document.elementFromPoint` sur chacun), plutôt que de faire confiance.
+
+Le diagnostic a aussi écarté une fausse piste, et c'est l'intérêt de mesurer : j'avais supposé une boucle de
+rendu. Mesuré sur la page au repos : **1 aperçu demandé, 0 mutation du DOM**. La page était parfaitement stable ;
+le clic était refusé pour une raison de géométrie, pas de réactivité.
 
 ## 11. Ordre de réalisation
 
@@ -404,7 +439,12 @@ bloc déplacé, une colonne ajoutée, un aperçu qui suit, un retour à l'origin
    dans le menu « ⋯ » de la FICHE seulement (imprimer plusieurs documents d'un coup est une autre affaire, qui
    demanderait un rendu multi-documents : hors périmètre, §9). Preuve en Chromium : `ui/e2e/print.e2e.mjs`.
 6. `Letter Head` dans le plugin `system`.
-7. L'éditeur (§10) : le modèle pur d'abord et ses tests, puis la page, puis la route d'aperçu.
+7. ~~L'éditeur (§10) : le modèle pur d'abord et ses tests, puis la page, puis la route d'aperçu.~~ **fait** —
+   modèle pur (`ui/src/lib/printedit.ts`), serveur (ouvrir, enregistrer, retirer, l'aperçu d'un BROUILLON par
+   `POST /print-preview/{dt}/{name}`, le document d'exemple, et quatre actions IPC), et la page
+   `#/print/<Type>` avec sa preuve en Chromium (`ui/e2e/printbuilder.e2e.mjs`, 8 étapes). Reste le
+   TÉLÉVERSEMENT du PDF d'en-tête à l'écran : le serveur le superpose déjà et le modèle porte ses réglages
+   (`letterhead.pdf`, `pages`, zones réservées), il manque le champ de fichier et ses deux curseurs.
 
 **L'ordre 1-3 avant 7 n'est pas négociable** : un éditeur édite un format qui doit exister, et il n'est
 utilisable qu'avec l'aperçu. Le construire d'abord donnerait un éditeur produisant un gabarit que rien ne valide

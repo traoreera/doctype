@@ -515,3 +515,86 @@ class TestALinkPrintsItsTitle:
                                             "naming": {"field": "code"},
                                             "fields": [{"fieldname": "code", "fieldtype": "Text", "required": True, "unique": True}]}))
         assert env2.reg.get("Devise").definition.title_field is None
+
+
+class TestTheEditorsServerSide:
+    """Ce que l'éditeur de gabarits (§10) demande au serveur : ouvrir, enregistrer, aperçu d'un brouillon."""
+
+    async def test_a_reader_opens_it_READ_ONLY_instead_of_being_refused(self, env):
+        """Comme l'éditeur d'automate : tout lecteur du type l'ouvre, seul qui écrit tout y change quelque chose."""
+        reader = make_ctx("acme", "rita", permissions=["sales:facture:read"])
+        out = await env.printer.override(reader, "Facture")
+        assert out["editable"] is False and out["template"]["blocks"]
+        assert out["source"] == SOURCE_GENERATED  # rien de livré : le fabriqué sert de point de départ
+
+    async def test_whoever_writes_the_whole_type_may_edit(self, env):
+        out = await env.printer.override(ALICE, "Facture")
+        assert out["editable"] is True
+
+    async def test_a_partial_writer_may_NOT_save(self, env):
+        """Un gabarit rend des documents que son éditeur n'a pas forcément le droit de LIRE : c'est la raison du verrou.
+
+        Il faut un type dont l'écriture est bornée par `if_owner` — la convention, elle, donne un périmètre
+        total, et c'est bien ainsi : le verrou ne gêne pas le cas ordinaire.
+        """
+        from xcore_doctype.errors import ValidationFailed
+
+        env.reg.register(parse_definition({
+            "schema_version": 1, "name": "Note Privee", "module": "sales",
+            "permissions": {"read": ["sales:note_privee:read"],
+                            "write": [{"grant": "sales:note_privee:write", "if_owner": True}]},
+            "fields": [{"fieldname": "texte", "fieldtype": "Text", "required": True}],
+        }))
+        mine = make_ctx("acme", "alice", permissions=["sales:note_privee:read", "sales:note_privee:write"])
+        assert (await env.printer.override(mine, "Note Privee"))["editable"] is False
+        with pytest.raises(ValidationFailed) as e:
+            await env.printer.save_override(mine, "Note Privee", {"name": "standard", "blocks": [{"type": "fields", "fields": ["texte"]}]})
+        assert e.value.code == "print_template_reserved"
+
+    async def test_saving_then_printing_uses_it(self, env):
+        body = {k: v for k, v in TEMPLATE.items() if k != "doctype"}
+        body = {**body, "label": "La facture de la maison", "blocks": [{"type": "title", "text": "MAISON {{ name }}"}]}
+        await env.printer.save_override(ALICE, "Facture", body)
+        name = await invoice(env)
+        assert "MAISON" in (await env.printer.render(ALICE, "Facture", name))["html"]
+        reopened = await env.printer.override(ALICE, "Facture")
+        assert reopened["source"] == SOURCE_ORG and reopened["template"]["label"] == "La facture de la maison"
+
+    async def test_removing_it_gives_the_plugins_template_back(self, env):
+        ship(env, label="Celui du plugin")
+        await env.printer.save_override(ALICE, "Facture", {k: v for k, v in TEMPLATE.items() if k != "doctype"})
+        assert (await env.printer.override(ALICE, "Facture"))["source"] == SOURCE_ORG
+        await env.printer.delete_override(ALICE, "Facture", "standard")
+        assert (await env.printer.override(ALICE, "Facture"))["source"] == SOURCE_PLUGIN
+
+    async def test_a_draft_is_previewed_without_being_saved(self, env):
+        """Ce qui distingue cet éditeur : on regarde la facture, pas une mise en page abstraite."""
+        name = await invoice(env)
+        draft = {"name": "standard", "blocks": [{"type": "title", "text": "BROUILLON {{ name }}"}]}
+        out = await env.printer.preview(ALICE, "Facture", name, draft)
+        assert "BROUILLON" in out["html"] and name in out["html"]
+        # Rien n'a été enregistré : le gabarit servi reste le fabriqué.
+        assert (await env.printer.override(ALICE, "Facture"))["source"] == SOURCE_GENERATED
+
+    async def test_a_draft_passes_the_SAME_checks_as_a_save(self, env):
+        """Un gabarit non enregistré n'est pas une porte : ni champ interdit, ni URL externe (§6, §8)."""
+        from xcore_doctype.errors import ValidationFailed
+
+        name = await invoice(env)
+        with pytest.raises(ValidationFailed):
+            await env.printer.preview(ALICE, "Facture", name, {"name": "x", "blocks": [{"type": "fields", "fields": ["secret"]}]})
+        with pytest.raises(ValidationFailed):
+            await env.printer.preview(ALICE, "Facture", name, {"name": "x", "blocks": [{"type": "fields", "fields": ["absent"]}]})
+
+    async def test_previewing_needs_only_the_right_to_READ_the_document(self, env):
+        """Voir ce qu'on obtiendrait est une lecture ; enregistrer, lui, exige le périmètre total."""
+        name = await invoice(env)
+        reader = make_ctx("acme", "rita", permissions=["sales:facture:read"])
+        out = await env.printer.preview(reader, "Facture", name, {"name": "x", "blocks": [{"type": "title", "text": "vu"}]})
+        assert "vu" in out["html"]
+
+    async def test_an_example_document_is_offered_or_honestly_absent(self, env):
+        """Sans document, un gabarit s'édite sans aperçu — plutôt que pas du tout."""
+        assert (await env.printer.example(ALICE, "Facture"))["name"] is None
+        name = await invoice(env)
+        assert (await env.printer.example(ALICE, "Facture"))["name"] == name

@@ -767,6 +767,42 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.print.pdf", op)
 
+    @action("doc.print.override.get")
+    async def doc_print_override_get(self, payload: dict) -> dict:
+        """Ce que l'éditeur de gabarits ouvre (§10) : le gabarit, d'où il vient, et s'il est modifiable ici."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.printer.override(ctx, _need(payload, "doctype"), payload.get("template"))
+
+        return await self._run("doc.print.override.get", op)
+
+    @action("doc.print.override.save")
+    async def doc_print_override_save(self, payload: dict) -> dict:
+        """Enregistre le gabarit de l'organisation. Périmètre d'écriture TOTAL exigé sur le type."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.printer.save_override(ctx, _need(payload, "doctype"), _need(payload, "template"))
+
+        return await self._run("doc.print.override.save", op)
+
+    @action("doc.print.override.delete")
+    async def doc_print_override_delete(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return await self.printer.delete_override(ctx, _need(payload, "doctype"), payload.get("template"))
+
+        return await self._run("doc.print.override.delete", op)
+
+    @action("doc.print.preview")
+    async def doc_print_preview(self, payload: dict) -> dict:
+        """L'aperçu d'un gabarit NON enregistré : les mêmes contrôles qu'un enregistrement, et aucune écriture."""
+
+        async def op(ctx: RequestContext) -> dict:
+            return await self.printer.preview(
+                ctx, _need(payload, "doctype"), _need(payload, "name"), _need(payload, "template"), payload.get("letterhead")
+            )
+
+        return await self._run("doc.print.preview", op)
+
     @action("doc.save")
     async def doc_save(self, payload: dict) -> dict:
         """Sans `name` : création (`new_name` : le nom choisi d'un DocType `naming: prompt`). Avec `name` : mise à jour, `version` obligatoire (D15)."""

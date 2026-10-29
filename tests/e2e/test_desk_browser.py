@@ -195,6 +195,14 @@ def test_printing_previews_in_a_sandboxed_frame_and_downloads_a_real_pdf(host):
 
 
 @pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+def test_the_print_builder_chooses_fields_and_the_preview_follows(host):
+    """« Personnaliser l'impression » : choisir les champs, l'aperçu qui suit, l'enregistrement que l'impression
+    emploie ensuite, et le retour à l'original. Ce qu'un test de composant ne peut pas montrer."""
+    run = _scenario(host, "e2e/printbuilder.e2e.mjs")
+    assert run.returncode == 0, f"scénario de l'éditeur d'impression en échec :\n{run.stdout}\n{run.stderr}"
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
 def test_the_form_builder_rearranges_and_adds_fields_in_the_browser(host):
     """« Personnaliser le formulaire » sous la vraie CSP : un vrai glisser-déposer, un champ ajouté, la fiche qui suit, le retour à l'application."""
     run = _scenario(host, "e2e/formbuilder.e2e.mjs")

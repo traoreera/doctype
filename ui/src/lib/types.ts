@@ -126,6 +126,15 @@ export interface PrintTemplates {
   templates: PrintTemplateChoice[]
 }
 
+/** Ce que l'éditeur de gabarits ouvre (§10). `editable` : l'appelant peut ENREGISTRER (périmètre d'écriture total). */
+export interface PrintOverride {
+  doctype: string
+  template: Record<string, unknown>
+  source: 'organisation' | 'plugin' | 'fabriqué'
+  editable: boolean
+  templates: PrintTemplateChoice[]
+}
+
 /** Le document rendu en HTML. `background` : un fond PDF complète ce rendu, mais seulement dans le PDF. */
 export interface PrintedDocument {
   doctype: string

@@ -620,6 +620,10 @@ const createItems = computed<MoreItem[]>(() =>
 const moreItems = computed<MoreItem[]>(() => {
   const out: MoreItem[] = []
   if (canPrint.value) out.push({ label: t.print.menu, icon: 'pi pi-print', testid: 'print', command: () => (printing.value = true) })
+  // L'éditeur de gabarits : tout lecteur l'ouvre (en lecture seule s'il n'écrit pas tout), comme celui d'automate.
+  if (canPrint.value) {
+    out.push({ label: t.printBuilder.menu, icon: 'pi pi-file-edit', testid: 'print-customize', command: () => void router.push({ name: 'print-builder', params: { doctype: props.doctype } }) })
+  }
   if (canRename.value) out.push({ label: t.form.rename, icon: 'pi pi-pencil', testid: 'rename', command: openRename })
   if (canDuplicate.value) out.push({ label: t.form.duplicate, icon: 'pi pi-clone', testid: 'duplicate', command: duplicate })
   // « Personnaliser » : le Form Builder, une page (onglets, sections, champs à glisser), à la manière de Frappe.

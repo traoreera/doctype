@@ -30,7 +30,8 @@ from .context import RequestContext
 from .document import DocumentService
 from .errors import DoctypeError, InvalidDefinition, NotFound, ValidationFailed
 from .file_service import FileService
-from .overrides import KIND_PRINT
+from .overrides import KIND_PRINT, validate_print_override
+from .permissions import scope_for
 from .printing import PrintTemplate
 
 LETTERHEAD_DOCTYPE = "Letter Head"
@@ -215,6 +216,111 @@ class PrintService:
         if background is not None:
             content = pdf_engine.overlay(content, background.content, every_page=background.every_page)
         return content, _filename(doctype, name, found)
+
+    # ── L'éditeur de gabarits (§10) ───────────────────────────
+    async def override(self, ctx: RequestContext, doctype: str, template: Any = None) -> dict[str, Any]:
+        """Ce que l'éditeur ouvre : le gabarit à éditer, d'où il vient, et si l'appelant peut l'enregistrer.
+
+        Tout lecteur du type l'ouvre — en lecture seule s'il ne peut pas écrire, comme l'éditeur d'automate. On
+        rend le gabarit de l'ORGANISATION s'il existe, sinon celui du plugin ou le fabriqué, qui servent de
+        point de départ : partir d'une page blanche obligerait à tout réécrire pour changer une colonne.
+        """
+        self._docs._enter(ctx, "doc.print.override.get", doctype)
+        compiled = self._printable(doctype)
+        self._docs._scope(ctx, compiled, "read")
+        chosen = await self._all(ctx, compiled)
+        wanted = template if isinstance(template, str) and template else self._default_name(chosen)
+        if wanted not in chosen:
+            raise NotFound("print_template_not_found", f"Gabarit {wanted!r} introuvable pour {doctype}")
+        found, source = chosen[wanted]
+        # Le périmètre d'écriture SANS lever : un lecteur ouvre l'éditeur en lecture seule, il n'est pas refusé
+        # (c'est `scope_for` et non `_scope`, comme `/meta` pour ses droits effectifs).
+        write = scope_for(compiled.definition, ctx, "write")
+        async with self._docs._query(ctx) as q:
+            total = write.level == "all" and not await q.restricted(write)
+        return {
+            "doctype": compiled.definition.name,
+            "template": found.model_dump(mode="json", exclude_none=True),
+            "source": source,
+            "editable": total,
+            "templates": [{"name": n, "label": t.label or n, "source": s} for n, (t, s) in chosen.items()],
+        }
+
+    async def save_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
+        """Enregistre le gabarit d'une ORGANISATION. Exige un périmètre d'écriture TOTAL sur le type."""
+        self._docs._enter(ctx, "doc.print.override.save", doctype)
+        compiled = self._printable(doctype)
+        write = self._docs._scope(ctx, compiled, "write")
+        cleaned = validate_print_override(compiled, config)
+        async with self._docs._query(ctx) as q:
+            self._check_author(write, compiled, restricted=await q.restricted(write))
+            made = await q.put_override(KIND_PRINT, target_of(compiled.definition.name, cleaned["name"]), owner=ctx.owner_id, config=cleaned)
+        return {"doctype": compiled.definition.name, "template": made["config"]}
+
+    async def delete_override(self, ctx: RequestContext, doctype: str, template: Any = None) -> dict[str, Any]:
+        """Retire le gabarit de l'organisation : celui du plugin (ou le fabriqué) reprend la main."""
+        self._docs._enter(ctx, "doc.print.override.delete", doctype)
+        compiled = self._printable(doctype)
+        write = self._docs._scope(ctx, compiled, "write")
+        wanted = template if isinstance(template, str) and template else "standard"
+        async with self._docs._query(ctx) as q:
+            self._check_author(write, compiled, restricted=await q.restricted(write))
+            await q.delete_override(KIND_PRINT, target_of(compiled.definition.name, wanted))
+        return {"doctype": compiled.definition.name, "template": wanted}
+
+    @staticmethod
+    def _check_author(write: Any, compiled: Any, *, restricted: bool = False) -> None:
+        """Éditer un gabarit exige un périmètre d'écriture TOTAL sur le type (§10).
+
+        La raison n'est pas « une facture engage l'entreprise » — c'est vrai et cela ne prouve rien, puisqu'une
+        disposition de formulaire engage aussi et ne demande qu'un droit ordinaire. La raison est qu'**un
+        gabarit rend des documents que son éditeur n'a pas forcément le droit de LIRE** : quelqu'un dont le
+        périmètre est `if_owner` déciderait de la présentation des factures des autres. C'est la forme exacte du
+        verrou des règles de notification, dont l'auteur doit pouvoir lire TOUS les documents du type.
+        """
+        if write.level == "all" and not restricted:
+            return
+        name = compiled.definition.name
+        raise ValidationFailed(
+            f"Le gabarit de {name} sert à imprimer TOUS ses documents : seul qui peut les modifier tous le change",
+            code="print_template_reserved",
+            details=[{"field": "blocks", "msg": "Réservé à qui peut modifier tous les documents du type", "type": "print_template_reserved"}],
+        )
+
+    async def preview(self, ctx: RequestContext, doctype: str, name: str, config: Any, letterhead: Any = None) -> dict[str, Any]:
+        """L'aperçu d'un gabarit en BROUILLON, non enregistré (§10). N'écrit rien.
+
+        C'est ce qui distingue cet éditeur des autres : on ne règle pas une mise en page abstraite, on regarde
+        la facture. Le brouillon passe par la MÊME validation qu'un enregistrement (`validate_print_override`),
+        donc un gabarit non enregistré n'est pas une porte : ni URL externe, ni champ qui ne s'imprime pas.
+
+        Il faut pouvoir LIRE le document d'exemple, et rien de plus — un aperçu est une lecture. Enregistrer,
+        lui, exige le périmètre total ; voir ce qu'on obtiendrait ne le demande pas.
+        """
+        self._docs._enter(ctx, "doc.print.preview", doctype, name)
+        compiled = self._printable(doctype)
+        cleaned = validate_print_override(compiled, config)
+        found = printing.parse_template(cleaned, source="gabarit en brouillon")
+        record = await self._docs.get(ctx, doctype, name)  # LE contrôle de droit : lire le document
+        titles = await self._titles(ctx, found, compiled, record["data"])
+        head, foot, background = await self._letterhead(ctx, found, letterhead)
+        extra = "" if background is None else printing.reserved_margins_css(found.page, top=background.top, bottom=background.bottom)
+        html = printing.render_html(
+            found, compiled.definition, record["data"], name=record["name"], children=compiled.children_by_field,
+            letterhead_html=head, footer_html=foot, css_extra=extra, titles=titles,
+        )
+        return {"doctype": doctype, "name": record["name"], "html": html, "background": background is not None}
+
+    async def example(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
+        """Un document d'exemple pour l'aperçu : le dernier que l'appelant peut LIRE, ou rien.
+
+        « Rien » est une réponse : un gabarit s'édite alors sans aperçu, plutôt que pas du tout (§10).
+        """
+        self._docs._enter(ctx, "doc.print.example", doctype)
+        compiled = self._printable(doctype)
+        self._docs._scope(ctx, compiled, "read")
+        page = await self._docs.list(ctx, doctype, limit=1)
+        return {"doctype": compiled.definition.name, "name": page["items"][0]["name"] if page["items"] else None}
 
     # ── Le papier à en-tête ───────────────────────────────────
     async def _letterhead(self, ctx: RequestContext, template: PrintTemplate, asked: Any) -> tuple[str, str, Background | None]:

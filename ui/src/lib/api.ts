@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, AvailableMappings, AvailableTransitions, MappedDraft, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, PrintTemplates, PrintedDocument, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
+import type { AssignmentItem, AssignmentStatus, AvailableMappings, AvailableTransitions, MappedDraft, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, PrintOverride, PrintTemplates, PrintedDocument, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 import type { DevDefinition } from './doctypebuilder'
 
@@ -345,6 +345,38 @@ export class ApiClient {
     if (opts.template) params.set('template', opts.template)
     if (opts.letterhead) params.set('letterhead', opts.letterhead)
     return this.call('GET', `/print/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`, { params })
+  }
+
+  // ── L'éditeur de gabarits (process/impression.md §10) ───
+  /** Ce que l'éditeur ouvre : le gabarit, d'où il vient, et si l'appelant peut l'enregistrer. */
+  printOverride(doctype: string, template?: string): Promise<PrintOverride> {
+    const params = new URLSearchParams()
+    if (template) params.set('template', template)
+    return this.call('GET', `/override/print/${encodeURIComponent(doctype)}`, { params })
+  }
+
+  /** Enregistre le gabarit de l'organisation. Exige un périmètre d'écriture TOTAL sur le type. */
+  savePrintOverride(doctype: string, template: Record<string, unknown>): Promise<{ doctype: string; template: Record<string, unknown> }> {
+    return this.call('POST', `/override/print/${encodeURIComponent(doctype)}`, { body: { template } })
+  }
+
+  /** Retire le gabarit de l'organisation : celui du plugin, ou le fabriqué, reprend la main. */
+  removePrintOverride(doctype: string, template?: string): Promise<{ doctype: string; template: string }> {
+    const params = new URLSearchParams()
+    if (template) params.set('template', template)
+    return this.call('DELETE', `/override/print/${encodeURIComponent(doctype)}`, { params })
+  }
+
+  /** L'aperçu d'un gabarit en BROUILLON, non enregistré. N'écrit rien, et ne demande que de lire le document. */
+  printPreview(doctype: string, name: string, template: Record<string, unknown>, letterhead?: string): Promise<PrintedDocument> {
+    return this.call('POST', `/print-preview/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`, {
+      body: letterhead ? { template, letterhead } : { template },
+    })
+  }
+
+  /** Un document d'exemple pour l'aperçu, ou `null` : le gabarit s'édite alors sans aperçu. */
+  printExample(doctype: string): Promise<{ doctype: string; name: string | null }> {
+    return this.call('GET', `/print-example/${encodeURIComponent(doctype)}`)
   }
 
   /**
