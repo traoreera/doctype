@@ -832,6 +832,10 @@ class DocTypeDef(BaseModel):
     # Document « soumettable » : brouillon (0) -> soumis (1) -> annulé (2). Un document soumis est figé : plus de modification
     # ni de suppression, on l'annule (et on l'amende : une copie en brouillon). Voir document.py (submit, cancel, amend).
     submittable: StrictBool = False
+    # Annuler un document que cite encore un document SOUMIS est refusé (409 `document_cited`) : une facture payée ne s'annule pas tant que
+    # son paiement tient. Sauf les types nommés ici — ses PROPRES écritures (grand livre, stock), que ses hooks `on_cancel` extournent et
+    # qui, soumises elles aussi, la citent : sans cette liste, toute pièce comptabilisée serait inannulable. Vérifié au chargement.
+    cancel_ignores: Annotated[list[Annotated[str, StringConstraints(min_length=1, max_length=140)]], PydanticField(max_length=50)] = PydanticField(default_factory=list)
     # Document UNIQUE (« Paramètres ») : un seul enregistrement par organisation, nommé comme son type. Il n'a ni liste, ni création, ni suppression :
     # le Desk l'ouvre directement, vide de valeurs tant qu'on ne l'a pas enregistré (ses défauts). Exemple : les réglages d'un module.
     single: StrictBool = False
@@ -1054,6 +1058,7 @@ class DocTypeDef(BaseModel):
             return self
         stray = [a for a in SUBMIT_ACTIONS if getattr(self.permissions, a) is not None]
         stray += [e for e in TRANSITION_HOOKS if self.hooks.for_event(e)]
+        stray += ["cancel_ignores"] if self.cancel_ignores else []
         if stray:
             raise ValueError(f"{', '.join(stray)} n'a de sens que pour un DocType `submittable: true`")
         return self

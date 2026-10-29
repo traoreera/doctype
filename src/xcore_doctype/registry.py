@@ -622,6 +622,7 @@ class DocTypeRegistry:
             self._check_link_filters(name, problems)
             self._check_dynamic(name, problems, allow_missing=allow_missing)
             self._check_mappings(name, problems, allow_missing=allow_missing)
+            self._check_cancel_ignores(name, problems, allow_missing=allow_missing)
             for f in self._items[name].definition.fields:
                 if f.fieldtype != "Link":
                     continue
@@ -636,6 +637,22 @@ class DocTypeRegistry:
                     problems.append(
                         f"{name}.{f.fieldname}: `target_status` vise {f.options!r}, qui n'est jamais soumettable : aucun document ne satisfera jamais cette contrainte"
                     )
+
+    def _check_cancel_ignores(self, name: str, problems: list[str], *, allow_missing: bool = False) -> None:
+        """`cancel_ignores` ne nomme que ce qui pourrait VRAIMENT bloquer l'annulation : un type connu, soumettable (un brouillon ou un
+        type sans état ne bloque jamais), qui cite celui-ci par un Link ou un DynamicLink. Un nom de trop dirait « ignoré » d'une chose
+        qui n'existe pas — et une faute de frappe laisserait la vraie écriture bloquer sans que personne comprenne pourquoi."""
+        citing = {r.doctype for r in self.referrers(name)}
+        for other in self._items[name].definition.cancel_ignores:
+            target = self._items.get(other)
+            if target is None:
+                if not allow_missing:
+                    problems.append(f"{name}.cancel_ignores: DocType inconnu {other!r}")
+                continue
+            if not target.definition.submittable:
+                problems.append(f"{name}.cancel_ignores: {other!r} n'est pas soumettable, il ne bloque jamais une annulation")
+            elif other not in citing:
+                problems.append(f"{name}.cancel_ignores: {other!r} ne cite pas {name} (ni Link ni DynamicLink)")
 
     # Les deux prédicats de type vivent dans `mapping.py`, avec la logique qu'ils gouvernent (import local : `mapping`
     # importe `schema`, et le registre n'a besoin d'eux qu'ici).

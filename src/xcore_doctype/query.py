@@ -458,13 +458,14 @@ class Query:
         await self._session.execute(stmt.with_for_update())
 
     async def references_to(
-        self, target: str, name: str, referrers: Sequence[tuple[Any, ...]]
+        self, target: str, name: str, referrers: Sequence[tuple[Any, ...]], *, docstatus: int | None = None
     ) -> list[tuple[Any, ...]]:
         """Les références parmi `referrers` dont au moins un document pointe vers `target`/`name`.
 
         Une référence est `(doctype, champ, table)` ou, pour un champ DynamicLink, `(doctype, champ, table, champ_type)` : le champ_type dit
         DANS quel DocType chercher, il doit valoir `target`. `table` est le champ Table dont les LIGNES portent le Link (`None` : le Link est dans le
-        document lui-même). La réponse reprend les références telles qu'elles ont été données.
+        document lui-même). La réponse reprend les références telles qu'elles ont été données. `docstatus` : seuls les documents citants
+        dans cet état comptent (une annulation n'est bloquée que par une pièce SOUMISE).
         VOLONTAIREMENT sans périmètre de permission : une référence que l'utilisateur ne peut pas lire empêche quand
         même la suppression, sinon il laisserait un lien orphelin. Le tenant, lui, reste imposé par `_scope`.
         """
@@ -475,6 +476,8 @@ class Query:
             conds = [self._t.c.doctype == doctype, cond]
             if doctype == target:
                 conds.append(self._t.c.name != name)  # un document qui se cite lui-même ne se bloque pas
+            if docstatus is not None:
+                conds.append(self._t.c.docstatus == docstatus)
             stmt = select(literal(1)).where(self._scope(*conds)).limit(1)
             if (await self._session.execute(stmt)).first() is not None:
                 used.append(ref)

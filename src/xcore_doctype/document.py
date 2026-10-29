@@ -53,6 +53,7 @@ from .db.tables import SystemTables
 from .errors import (
     AlreadyExists,
     DoctypeError,
+    DocumentCited,
     DocumentInUse,
     DocumentLocked,
     DocumentValidationError,
@@ -1580,6 +1581,8 @@ class DocumentService:
                 raise ValidationFailed("Ce document ne respecte plus la définition : corrigez-le avant cette transition", details=e.details) from None
 
         async with self._query(ctx) as q:
+            if after == CANCELLED and before == SUBMITTED and self._registry.referrers(doctype):
+                await q.lock_for_delete(doctype, name)  # avant l'état, pour la raison dite dans `_transition`
             doc = await q.workflow_transition(
                 doctype, name,
                 source_state=current.workflow_state, target_state=transition.to,
@@ -1587,6 +1590,8 @@ class DocumentService:
             )
             # L'historique parle le vocabulaire fermé des versions : une transition qui soumet ou annule s'y inscrit comme
             # telle (ces entrées-là ne se purgent jamais), les autres sont des modifications de l'état.
+            if after == CANCELLED and before == SUBMITTED:
+                await self._check_not_cited(q, compiled, name, doc.data)  # la même règle qu'à `/cancel` : un circuit ne la contourne pas
             recorded = "submit" if after == SUBMITTED and before != SUBMITTED else "cancel" if after == CANCELLED and before != CANCELLED else "update"
             await self._record(q, ctx, compiled, doc, recorded, {"workflow_state": state}, {"workflow_state": transition.to})
             written = _TxWrites()
@@ -1632,6 +1637,12 @@ class DocumentService:
             except ValidationFailed as e:
                 raise ValidationFailed("Ce brouillon ne respecte plus la définition : corrigez-le avant de le soumettre", details=e.details) from None
         async with self._query(ctx) as q:
+            if action == "cancel" and self._registry.referrers(doctype):
+                # Le verrou de la ligne AVANT l'état : sous PostgreSQL un verrou porte sur une VERSION de ligne ; posé après l'UPDATE,
+                # il viserait la version neuve et ne rencontrerait pas le `FOR KEY SHARE` qu'un paiement soumis à l'instant tient sur
+                # l'ancienne — mesuré, les deux passaient. Sous SQLite ce SELECT ne verrouille rien : l'UPDATE qui suit reste la première
+                # écriture, celle qui prend la base avant que les hooks ne lisent.
+                await q.lock_for_delete(doctype, name)
             # L'état D'ABORD : cet UPDATE conditionnel est ce qui rend la transition unique (idempotence), et sur SQLite
             # c'est l'écriture qui prend le verrou de la base avant que les hooks ne lisent quoi que ce soit.
             doc = await q.transition(doctype, name, source=source, target=target, expected_version=version, scope=scope)
@@ -1642,6 +1653,8 @@ class DocumentService:
                     await self._check_links(ctx, q, compiled, doc.data, None, constrained_only=True)
                 except ValidationFailed as e:
                     raise ValidationFailed("Ce brouillon cite un document dans un état que son lien refuse : corrigez-le avant de le soumettre", details=e.details) from None
+            if action == "cancel":
+                await self._check_not_cited(q, compiled, name, doc.data)
             await self._record(q, ctx, compiled, doc, action, {"docstatus": source}, {"docstatus": target})
             written = _TxWrites()
             if action == "cancel":
@@ -2322,13 +2335,54 @@ class DocumentService:
         ligne, une fenêtre très étroite subsiste entre ce contrôle et la suppression.
         La réponse nomme les types et champs, jamais les documents : l'appelant n'a peut-être pas le droit de les lire.
         """
-        referrers = self._registry.referrers(doctype)
-        if not referrers:
-            return
-        await q.lock_for_delete(doctype, name)
-        used = [(d, f, t) for d, f, t, *_ in await q.references_to(doctype, name, [r.key() for r in referrers])]
+        used = await self._citations(q, doctype, name)
         if not used:
             return
+        target = self._registry.get(doctype).definition
+        raise DocumentInUse(
+            f"Suppression impossible : {target.label or doctype} {self._shown(target, name, data)} est utilisé par {', '.join(self._citation_labels(used))}",
+            details=[{"doctype": d, "field": f, **({"table": t} if t else {})} for d, f, t in used],
+        )
+
+    async def _check_not_cited(self, q: Query, compiled: CompiledDocType, name: str, data: Mapping[str, Any]) -> None:
+        """Refuse d'ANNULER un document qu'un document SOUMIS du tenant cite encore : une facture payée ne s'annule pas tant que son
+        paiement tient (on annule d'abord le paiement). Les brouillons et les annulés ne comptent pas ; les types de `cancel_ignores`
+        non plus — les propres écritures du document (grand livre, stock), qui le citent et que ses hooks `on_cancel` extournent.
+
+        Appelé APRÈS l'écriture de l'état et AVANT les hooks. La pièce a été verrouillée comme pour une suppression (`FOR UPDATE`) AVANT
+        cette écriture (voir `_transition`) : sous PostgreSQL l'UPDATE de l'état ne gêne pas le `FOR KEY SHARE` qu'une soumission concurrente
+        pose sur ce qu'elle cite, ce verrou-ci si — l'une des deux attend l'autre et voit son résultat (la citante refusée par son
+        `target_status`, ou celle-ci par la citante). `test_cancel_cited.py` le prouve par une course.
+        Les références se cherchent sans le périmètre de l'appelant (comme pour la suppression) ; la réponse nomme les types, jamais
+        les documents.
+        """
+        d = compiled.definition
+        used = await self._citations(q, d.name, name, docstatus=SUBMITTED, ignore=frozenset(d.cancel_ignores))
+        if not used:
+            return
+        raise DocumentCited(
+            f"Annulation impossible : {d.label or d.name} {self._shown(d, name, data)} est cité par des documents soumis "
+            f"({', '.join(self._citation_labels(used))}) — annulez-les d'abord",
+            details=[{"doctype": dt, "field": f, **({"table": t} if t else {})} for dt, f, t in used],
+        )
+
+    async def _citations(
+        self, q: Query, doctype: str, name: str, *, docstatus: int | None = None, ignore: frozenset[str] = frozenset(),
+    ) -> list[tuple[str, str, str | None]]:
+        """Les références `(DocType, champ, table)` qui pointent encore vers ce document, après l'avoir verrouillé (`FOR UPDATE`)."""
+        referrers = [r for r in self._registry.referrers(doctype) if r.doctype not in ignore]
+        if not referrers:
+            return []
+        await q.lock_for_delete(doctype, name)
+        return [(dt, f, t) for dt, f, t, *_ in await q.references_to(doctype, name, [r.key() for r in referrers], docstatus=docstatus)]
+
+    @staticmethod
+    def _shown(target: DocTypeDef, name: str, data: Mapping[str, Any]) -> str:
+        # L'utilisateur reconnaît « Vis à bois », pas « 2a120aa438f9 » : le titre quand le DocType en a un, sinon le nom.
+        title = data.get(target.title_field) if target.title_field else None
+        return f"« {title} »" if isinstance(title, str) and title else repr(name)
+
+    def _citation_labels(self, used: Sequence[tuple[str, str, str | None]]) -> list[str]:
         labels = []
         for ref_doctype, fieldname, table in used:
             d = self._registry.get(ref_doctype).definition
@@ -2337,14 +2391,7 @@ class DocumentService:
             else:  # un Link dans les lignes : « Facture (Lignes › Article) »
                 child = self._registry.get(ref_doctype).children[str(d.field_map[table].options)]
                 labels.append(f"{d.label or d.name} ({d.field_map[table].label or table} › {child.field_map[fieldname].label or fieldname})")
-        target = self._registry.get(doctype).definition
-        # L'utilisateur reconnaît « Vis à bois », pas « 2a120aa438f9 » : le titre quand le DocType en a un, sinon le nom.
-        title = data.get(target.title_field) if target.title_field else None
-        shown = f"« {title} »" if isinstance(title, str) and title else repr(name)
-        raise DocumentInUse(
-            f"Suppression impossible : {target.label or doctype} {shown} est utilisé par {', '.join(labels)}",
-            details=[{"doctype": d, "field": f, **({"table": t} if t else {})} for d, f, t in used],
-        )
+        return labels
 
     def _require_hooks(self, compiled: CompiledDocType) -> None:
         """Échec fermé (D16) : tout hook référencé doit être disponible, sinon on ne sauvegarde pas.

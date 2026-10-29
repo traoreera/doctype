@@ -485,6 +485,10 @@ async def scenario_references_to(env: Env):
     async with env.q(B) as q:
         assert await q.references_to("Country", "DE", direct) == direct
         assert await q.references_to("Country", "FR", direct) == []  # la référence de A reste invisible
+        # Le filtre d'état (une annulation ne compte que les citants SOUMIS) : le brouillon de B ne compte pas, A jamais.
+        assert await q.references_to("Country", "DE", direct, docstatus=1) == []
+        assert await q.references_to("Country", "DE", direct, docstatus=0) == direct
+        assert await q.references_to("Country", "FR", direct, docstatus=0) == []
         assert await q.references_to("Item", "Z", rows) == rows  # une ligne qui n'est pas la première
         assert await q.references_to("Item", "X", rows) == []
         # Un document qui se cite lui-même n'est pas une référence.
