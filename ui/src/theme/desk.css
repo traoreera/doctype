@@ -24,6 +24,13 @@
   --pill-bad-bg: var(--p-red-100);
   --pill-bad-fg: var(--p-red-800);
   --desk-grid-dot: var(--p-surface-300); /* les points du canevas d'un graphe (éditeur de circuit) */
+  /* La feuille de l'éditeur d'impression : du PAPIER, donc les mêmes couleurs dans les deux thèmes (jamais
+     redéfinies sous `.app-dark`) — une facture ne s'imprime pas en sombre. */
+  --desk-paper: #fff;
+  --desk-paper-ink: #1f2328;
+  --desk-paper-muted: #5f6672;
+  --desk-paper-rule: #d0d4da;
+  --desk-paper-head: #f3f4f6;
 
   /* Graphiques : la palette catégorielle documentée (dataviz/palette.md), ordre FIXE, validée daltonisme et contraste sur ces surfaces
      (validate_palette.js). Trois teintes claires (aqua, jaune, magenta) restent sous 3:1 sur blanc : le dessin s'accompagne donc toujours

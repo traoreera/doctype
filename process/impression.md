@@ -433,6 +433,50 @@ Le diagnostic a aussi écarté une fausse piste, et c'est l'intérêt de mesurer
 rendu. Mesuré sur la page au repos : **1 aperçu demandé, 0 mutation du DOM**. La page était parfaitement stable ;
 le clic était refusé pour une raison de géométrie, pas de réactivité.
 
+## 10 ter. Refonte du 29 oct. : un éditeur de FACTURE, pas une liste de blocs
+
+Le retour d'usage était sans appel : « je n'arrive même pas à bien placer les tableaux, ni à faire un glisser-
+déposer ». Mesuré dans Chromium sur une vraie facture (`Invoice` du jeu d'essai, deux lignes), avant d'écrire :
+
+- **la palette prenait toute la largeur** : `minmax(11rem, max-content)` laissait la piste s'étendre à la
+  largeur de ses `Select` (format, marges), et la pile, les propriétés et l'aperçu se partageaient le reste —
+  l'aperçu faisait 140 px de large ;
+- **les réglages des colonnes débordaient sur l'aperçu** (titre + alignement + largeur sur une ligne, dans
+  une colonne trop étroite) ;
+- **la pile n'était qu'une liste de libellés** (« Tableau Lignes », « Champs (4) ») : on composait une
+  facture sans la voir, et l'aperçu, rendu par le serveur, ne se manipulait pas ;
+- **rien ne se glissait** depuis la palette, ni un champ, ni une colonne ; le glisser de la pile n'avait
+  aucune marque de dépôt ;
+- et deux défauts du modèle, trouvés en écrivant les tests : un bloc `fields` **perdait son nombre de
+  colonnes** à l'ouverture (`fromTemplate` ne gardait que les LISTES), et `toTemplate` **ne l'envoyait jamais**
+  — le réglage « Colonnes » n'avait donc aucun effet à l'impression.
+
+**Ce qui change.** Le centre de la page est une FEUILLE (`PrintCanvas.vue`) aux proportions du format et à
+l'échelle des marges, qui dessine chaque bloc avec les valeurs du document d'exemple (les liens par leur
+titre, les montants formatés). On y glisse un bloc de la palette à sa place, on déplace les blocs, un champ
+dans son bloc ou VERS un autre bloc de champs (refusé vers des totaux s'il n'est pas un nombre), les colonnes
+d'un tableau par leur en-tête, et on tire le bord droit d'une colonne pour sa largeur. Les propriétés restent
+à droite, une colonne dépliée à la fois. L'aperçu du serveur passe derrière une bascule « Mise en page / Aperçu
+imprimé » : la feuille est un rendu d'ÉDITION, l'aperçu fait foi quand ils diffèrent.
+
+**Ce qui ne change pas** : c'est toujours une PILE (§10), et le serveur, le format du gabarit et ses refus sont
+intacts. Tout geste passe par le modèle pur : `slotIndex` (un emplacement se lit après le retrait de l'élément
+déplacé), `moveBlockToSlot`, `moveFieldTo`, `insertField`, `moveColumnToSlot`, `setColumnWidth` (jamais plus de
+100 % au total, puisque le serveur refuserait), `fillText` (la substitution, pour la feuille seulement).
+
+**Le défaut que seul le navigateur a montré, encore.** La poignée de largeur ne réagissait pas.
+`elementFromPoint` au centre de la poignée rendait l'en-tête VOISIN : posée à cheval sur le bord, la colonne
+suivante la recouvrait, et `overflow: hidden` en coupait la moitié. Le clic attrapait donc l'en-tête voisin,
+`draggable`, et Chromium lançait un glisser NATIF qui avale tous les `pointermove` (trace : `pointerdown`,
+`dragstart`, `pointercancel`). La poignée est maintenant DANS son en-tête, et l'en-tête cesse d'être
+`draggable` le temps du geste. Le scénario (`ui/e2e/printbuilder.e2e.mjs`) vérifie les deux : que la poignée
+est le premier élément sous le pointeur, et que la largeur a réellement diminué.
+
+**Reste vu à cette occasion, non traité ici** : l'impression du SERVEUR écrit les dates en ISO
+(`2026-10-29`) et les nombres avec un point (`37.5`), là où la feuille montre `29/10/2026` et `37,5`. Pour une
+facture française c'est un défaut de `printing.py` (il devrait suivre le format de date de l'organisation,
+`System Settings`, et la virgule) — une décision à prendre, pas à glisser dans une refonte du Desk.
+
 ## 11. Ordre de réalisation
 
 1. ~~`printing.py` : les blocs, le rendu HTML pur, ses refus. Testable seul, sans base ni paquet.~~ **fait.**

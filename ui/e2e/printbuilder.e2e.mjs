@@ -34,7 +34,8 @@ try {
     await page.getByTestId('list-print').click()
     await page.waitForURL(/#\/print\/Customer$/)
     await page.getByTestId('pb-title').waitFor()
-    await page.getByTestId('pb-frame').waitFor()
+    await page.getByTestId('pc-paper').waitFor()
+    await page.getByTestId('pb-frame').waitFor({ state: 'attached' }) // l'aperçu du serveur, derrière la bascule
     await r.shot(page, 'printbuilder-01-ouvert')
   }, page)
 
@@ -65,7 +66,7 @@ try {
     // La palette débordait par-dessus la pile : un clic sur un bloc atteignait un bouton de palette. Un
     // enfant de grille a `min-width: auto`, donc son contenu sort de la piste au lieu de la contraindre.
     const covered = await page.evaluate(() =>
-      [...document.querySelectorAll('[data-testid^="pb-pick-"], [data-testid^="pb-new-"]')]
+      [...document.querySelectorAll('[data-testid^="pb-block-"], [data-testid^="pb-new-"], [data-testid="pb-save"], [data-testid="pb-mode"]')]
         .map((el) => {
           const r = el.getBoundingClientRect()
           const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
@@ -77,7 +78,7 @@ try {
   }, page)
 
   await r.step('CHOISIR les champs : on en retire un, l’aperçu le perd', async () => {
-    await page.getByTestId('pb-pick-1').click()
+    await page.getByTestId('pb-block-1').click() // un clic sur le bloc de la FEUILLE le choisit
     await page.getByTestId('pb-panel-title').waitFor()
     const dropped = await page.locator('[data-testid^="pb-drop-"]').first().getAttribute('data-testid')
     const field = dropped.replace('pb-drop-', '')
@@ -129,6 +130,71 @@ try {
     await page.reload()
     await page.getByTestId('pb-readonly').waitFor()
     assert(await page.getByTestId('pb-save').isDisabled(), 'le bouton Enregistrer doit être grisé pour un lecteur')
+  }, page)
+
+  await r.step('une FACTURE se compose à la souris : bloc glissé de la palette, bloc, champ et colonne déplacés, largeur tirée', async () => {
+    const item = await api(cfg, 'POST', '/doc/Item', { data: { item_name: 'Vis inox', uom: 'pcs' } })
+    const client = await api(cfg, 'POST', '/doc/Customer', { data: { customer_name: 'Durand', type: 'Particulier' } })
+    const invoice = await api(cfg, 'POST', '/doc/Invoice', {
+      data: { customer: client.json.name, posting_date: '2026-10-29', items: [{ item: item.json.name, qty: 3, rate: 12.5 }] },
+    })
+    assert(invoice.status === 201, `facture : ${invoice.status} ${JSON.stringify(invoice.json)}`)
+    await page.goto(`${cfg.desk}#/print/Invoice`)
+    await page.getByTestId('pc-paper').waitFor()
+    await page.getByTestId('pc-col-item').waitFor()
+    const kinds = () => page.locator('[data-testid^="pb-block-"]').evaluateAll((els) => els.map((e) => e.dataset.kind))
+    // Le client par son NOM, pas son identifiant : le titre se lit juste après les valeurs, on l'attend.
+    await page.getByTestId('pc-field-customer').getByText('Durand', { exact: true }).waitFor()
+    const start = await kinds()
+    const table = start.indexOf('table')
+
+    // 1. Un bloc de la palette lâché sur le HAUT du tableau se pose juste avant lui.
+    await page.getByTestId('pb-new-text').dragTo(page.getByTestId(`pb-block-${table}`), { targetPosition: { x: 40, y: 4 } })
+    let now = await kinds()
+    assert(now[table] === 'text' && now[table + 1] === 'table', `bloc glissé mal placé : ${now}`)
+    await page.getByTestId('pb-text').fill('MENTION GLISSÉE')
+
+    // 2. Le bloc des totaux remonte tout en haut.
+    const totals = now.indexOf('totals')
+    await page.getByTestId(`pb-block-${totals}`).dragTo(page.getByTestId('pb-block-0'), { targetPosition: { x: 40, y: 3 } })
+    now = await kinds()
+    assert(now[0] === 'totals', `les totaux devaient passer en tête : ${now}`)
+
+    // 3. Un champ passe devant un autre.
+    await page.getByTestId('pc-field-payment').dragTo(page.getByTestId('pc-field-customer'), { targetPosition: { x: 3, y: 5 } })
+    const fields = await page.locator('[data-testid^="pc-field-"]').evaluateAll((e) => e.map((x) => x.dataset.testid))
+    assert(fields.indexOf('pc-field-payment') < fields.indexOf('pc-field-customer'), `champ non déplacé : ${fields}`)
+
+    // 4. Une colonne passe en tête du tableau.
+    await page.getByTestId('pc-col-amount').dragTo(page.getByTestId('pc-col-item'), { targetPosition: { x: 3, y: 5 } })
+    const cols = await page.locator('th[data-testid^="pc-col-"]').evaluateAll((e) => e.map((x) => x.dataset.testid))
+    assert(cols[0] === 'pc-col-amount', `colonne non déplacée : ${cols}`)
+
+    // 5. La largeur se TIRE : la poignée est atteignable (pas recouverte par la colonne voisine) et suit la souris.
+    const handle = await page.getByTestId('pc-resize-item').boundingBox()
+    const hit = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.getAttribute('data-testid'), [handle.x + handle.width / 2, handle.y + handle.height / 2])
+    assert(hit === 'pc-resize-item', `poignée recouverte par ${hit}`)
+    const before = await page.getByTestId('pc-col-item').evaluate((th) => th.style.width)
+    await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(handle.x - 80, handle.y + 5, { steps: 6 })
+    await page.mouse.up()
+    const after = await page.getByTestId('pc-col-item').evaluate((th) => th.style.width)
+    assert(after && after !== before && parseInt(after) < parseInt(before), `largeur inchangée : ${before} -> ${after}`)
+    await r.shot(page, 'printbuilder-05-facture')
+
+    // 6. Ce qu'on a composé est ce qui s'IMPRIME.
+    await page.waitForTimeout(600)
+    await page.getByTestId('pb-save').click()
+    await page.getByText('Gabarit enregistré').waitFor()
+    const printed = await api(cfg, 'GET', `/print/Invoice/${encodeURIComponent(invoice.json.name)}`)
+    const html = printed.json.html
+    assert(html.indexOf('MENTION GLISSÉE') > 0 && html.indexOf('MENTION GLISSÉE') < html.indexOf('Article'), 'le bloc glissé doit précéder le tableau à l’impression')
+    assert(html.indexOf('Montant') < html.indexOf('Article'), 'la colonne déplacée doit précéder « Article » à l’impression')
+    await page.getByText('Aperçu imprimé').click()
+    await page.getByTestId('pb-frame').waitFor()
+    await page.getByTestId('pb-reset').click()
+    await page.getByText('Gabarit retiré').waitFor()
   }, page)
 
   await r.step('téléphone : tout s’empile, rien ne déborde', async () => {

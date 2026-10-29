@@ -24,6 +24,12 @@ export const MAX_FIELDS = 60
 export const MAX_TEXT = 2000
 /** Le type MIME d'un bloc qu'on glisse dans la pile. */
 export const DRAG_BLOCK = 'text/x-xdt-print-block'
+/** Un genre de bloc qu'on glisse depuis la palette (un bloc NEUF). */
+export const DRAG_KIND = 'text/x-xdt-print-kind'
+/** Un champ d'un bloc `fields`/`totals` qu'on glisse : `<clé du bloc>|<champ>`. */
+export const DRAG_FIELD = 'text/x-xdt-print-field'
+/** Une colonne de tableau qu'on glisse : `<clé du bloc>|<clé de la colonne>`. */
+export const DRAG_COLUMN = 'text/x-xdt-print-column'
 
 /** Ce qu'un bloc ne peut pas imprimer : le serveur le refuse (`printing.UNPRINTABLE`). */
 export const UNPRINTABLE = ['Password', 'JSON', 'TextEditor', 'Image', 'Attach'] as const
@@ -117,7 +123,12 @@ export function fromTemplate(raw: unknown): Draft {
     blocks: blocks.map((b) => ({
       ...(b as unknown as Block),
       key: key('b'),
-      columns: Array.isArray(b.columns) ? (b.columns as Record<string, unknown>[]).map((c) => ({ ...(c as unknown as Column), key: key('c') })) : undefined,
+      // Un bloc `fields` porte un NOMBRE de colonnes : le garder tel quel (le perdre ramenait tout gabarit à 2).
+      columns: Array.isArray(b.columns)
+        ? (b.columns as Record<string, unknown>[]).map((c) => ({ ...(c as unknown as Column), key: key('c') }))
+        : typeof b.columns === 'number'
+          ? b.columns
+          : undefined,
     })),
   }
 }
@@ -130,7 +141,9 @@ export function toTemplate(draft: Draft): Record<string, unknown> {
     if (Array.isArray(b.columns)) out.columns = b.columns.map(({ key: _ck, ...c }) => prune(c as unknown as Record<string, unknown>))
     if (b.type !== 'table') {
       delete out.field
-      delete out.columns
+      // `columns` d'un bloc `fields` est son NOMBRE de colonnes (1-4), qu'il faut envoyer : le retirer ici
+      // rendait le réglage « Colonnes » sans effet à l'impression.
+      if (b.type !== 'fields' || typeof b.columns !== 'number') delete out.columns
       delete out.style
       delete out.density
       delete out.repeat_header
@@ -198,6 +211,18 @@ export function moveBlock(draft: Draft, blockKey: string, to: number): Draft {
   return { ...draft, blocks }
 }
 
+/**
+ * Le rang où poser un élément déplacé depuis `from` vers l'EMPLACEMENT `slot` (0 = avant le premier, n = après le
+ * dernier) : une fois l'élément retiré, les emplacements qui le suivent reculent d'un cran.
+ */
+export const slotIndex = (from: number, slot: number): number => (from >= 0 && slot > from ? slot - 1 : slot)
+
+/** Déplacer un bloc vers un emplacement de la page (ce que donne un glisser-déposer). */
+export function moveBlockToSlot(draft: Draft, blockKey: string, slot: number): Draft {
+  const from = draft.blocks.findIndex((b) => b.key === blockKey)
+  return from < 0 ? draft : moveBlock(draft, blockKey, slotIndex(from, slot))
+}
+
 /** Monter ou descendre d'un cran : l'équivalent clavier du glisser-déposer (une page doit s'utiliser sans souris). */
 export function nudgeBlock(draft: Draft, blockKey: string, how: 'up' | 'down'): Draft {
   const at = draft.blocks.findIndex((b) => b.key === blockKey)
@@ -229,6 +254,43 @@ export function moveFieldInBlock(draft: Draft, blockKey: string, field: string, 
   return updateBlock(draft, blockKey, { fields: current })
 }
 
+/**
+ * Glisser un champ à un emplacement d'un bloc `fields`/`totals`, le même ou un autre : la facture se compose en
+ * déplaçant « Échéance » du bloc d'en-tête vers celui du bas, pas en le retirant puis en le rajoutant.
+ *
+ * Refusé (pile inchangée) quand la cible n'est pas un bloc de champs, qu'elle l'imprime déjà, ou qu'un bloc
+ * `totals` recevrait autre chose qu'un nombre (`numeric` : les champs que le serveur y accepte).
+ */
+export function moveFieldTo(draft: Draft, fromKey: string, field: string, toKey: string, slot: number, numeric?: ReadonlySet<string>): Draft {
+  const source = draft.blocks.find((b) => b.key === fromKey)
+  const target = draft.blocks.find((b) => b.key === toKey)
+  if (!source || !target || !source.fields?.includes(field)) return draft
+  if (target.type !== 'fields' && target.type !== 'totals') return draft
+  if (target.type === 'totals' && numeric && !numeric.has(field)) return draft
+  if (fromKey === toKey) {
+    const current = [...source.fields]
+    const from = current.indexOf(field)
+    current.splice(from, 1)
+    current.splice(Math.max(0, Math.min(slotIndex(from, slot), current.length)), 0, field)
+    return updateBlock(draft, fromKey, { fields: current })
+  }
+  const into = target.fields ?? []
+  if (into.includes(field) || into.length >= MAX_FIELDS) return draft
+  const next = [...into]
+  next.splice(Math.max(0, Math.min(slot, next.length)), 0, field)
+  return updateBlock(updateBlock(draft, fromKey, { fields: source.fields.filter((f) => f !== field) }), toKey, { fields: next })
+}
+
+/** Poser un champ (venu de la liste des champs disponibles) à un emplacement d'un bloc. */
+export function insertField(draft: Draft, blockKey: string, field: string, slot: number): Draft {
+  const block = draft.blocks.find((b) => b.key === blockKey)
+  const current = block?.fields ?? []
+  if (!block || current.includes(field) || current.length >= MAX_FIELDS) return draft
+  const next = [...current]
+  next.splice(Math.max(0, Math.min(slot, next.length)), 0, field)
+  return updateBlock(draft, blockKey, { fields: next })
+}
+
 // ── Les colonnes d'un tableau ──────────────────────────────
 export function addColumn(draft: Draft, blockKey: string, field: string): Draft {
   const block = draft.blocks.find((b) => b.key === blockKey)
@@ -256,6 +318,45 @@ export function moveColumn(draft: Draft, blockKey: string, columnKey: string, ho
   if (at < 0 || to < 0 || to >= columns.length) return draft
   columns.splice(to, 0, columns.splice(at, 1)[0]!)
   return updateBlock(draft, blockKey, { columns })
+}
+
+/** Glisser une colonne à un emplacement de son tableau. */
+export function moveColumnToSlot(draft: Draft, blockKey: string, columnKey: string, slot: number): Draft {
+  const block = draft.blocks.find((b) => b.key === blockKey)
+  const columns = block ? [...tableColumns(block)] : []
+  const from = columns.findIndex((c) => c.key === columnKey)
+  if (from < 0) return draft
+  const [moved] = columns.splice(from, 1)
+  columns.splice(Math.max(0, Math.min(slotIndex(from, slot), columns.length)), 0, moved!)
+  return updateBlock(draft, blockKey, { columns })
+}
+
+/**
+ * La largeur d'une colonne qu'on tire à la souris, en % : arrondie, au moins 1, et jamais au point que la somme
+ * des largeurs dépasse 100 (le serveur refuserait le gabarit). Les colonnes sans largeur ne comptent pas : elles
+ * se partagent ce qui reste.
+ */
+export function setColumnWidth(draft: Draft, blockKey: string, columnKey: string, width: number): Draft {
+  const block = draft.blocks.find((b) => b.key === blockKey)
+  if (!block || !Number.isFinite(width)) return draft
+  const others = tableColumns(block)
+    .filter((c) => c.key !== columnKey)
+    .reduce((sum, c) => sum + (c.width ?? 0), 0)
+  const room = Math.max(1, 100 - others)
+  return updateColumn(draft, blockKey, columnKey, { width: Math.max(1, Math.min(Math.round(width), room)) })
+}
+
+/**
+ * Le texte d'un bloc titre/texte tel qu'il s'imprimera sur le document d'exemple : la substitution du serveur
+ * (`{{ name }}`, `{{ doctype }}`, `{{ doc.<champ> }}`), pour que la page de l'éditeur ressemble à la facture.
+ * Ce n'est qu'un rendu d'édition : l'aperçu imprimé, lui, vient du serveur et fait foi.
+ */
+export function fillText(text: string, ctx: { name?: string | null; doctype: string; value: (field: string) => string }): string {
+  return text.replace(/\{\{\s*(doc\.([a-z0-9_]+)|name|doctype)\s*\}\}/g, (whole, what: string, field?: string) => {
+    if (what === 'name') return ctx.name ?? whole
+    if (what === 'doctype') return ctx.doctype
+    return field ? ctx.value(field) : whole
+  })
 }
 
 export function updateColumn(draft: Draft, blockKey: string, columnKey: string, patch: Partial<Column>): Draft {

@@ -14,7 +14,14 @@ import {
   blockLabel,
   columnFields,
   draftProblems,
+  fillText,
   fromTemplate,
+  insertField,
+  moveBlockToSlot,
+  moveColumnToSlot,
+  moveFieldTo,
+  setColumnWidth,
+  slotIndex,
   groupableColumns,
   isUseful,
   moveBlock,
@@ -304,6 +311,93 @@ describe('le papier à en-tête', () => {
   })
 })
 
+describe('glisser sur la feuille', () => {
+  const d = () => fromTemplate({
+    name: 'standard',
+    blocks: [
+      { type: 'title', text: 'Facture {{ name }}' },
+      { type: 'fields', columns: 3, fields: ['client', 'date'] },
+      { type: 'table', field: 'items', columns: [{ field: 'article', width: 50 }, { field: 'qty', width: 20 }, { field: 'amount' }] },
+      { type: 'totals', fields: ['total'] },
+    ],
+  })
+
+  it('un bloc `fields` garde son NOMBRE de colonnes (il retombait à 2 à chaque ouverture)', () => {
+    const draft = d()
+    expect(draft.blocks[1]!.columns).toBe(3)
+    expect((toTemplate(draft).blocks as Record<string, unknown>[])[1]!.columns).toBe(3)
+  })
+
+  it('un emplacement se lit APRÈS le retrait de l’élément déplacé', () => {
+    expect(slotIndex(0, 3)).toBe(2) // le premier vers la fin d'une liste de 3
+    expect(slotIndex(2, 0)).toBe(0)
+    expect(slotIndex(1, 1)).toBe(1) // juste avant lui-même : il ne bouge pas
+    expect(slotIndex(1, 2)).toBe(1) // juste après lui-même : non plus
+  })
+
+  it('un bloc lâché sous le dernier va à la fin, lâché en tête va en tête', () => {
+    const draft = d()
+    const title = draft.blocks[0]!.key
+    expect(moveBlockToSlot(draft, title, 4).blocks.map((b) => b.type)).toEqual(['fields', 'table', 'totals', 'title'])
+    const totals = draft.blocks[3]!.key
+    expect(moveBlockToSlot(draft, totals, 0).blocks.map((b) => b.type)).toEqual(['totals', 'title', 'fields', 'table'])
+    expect(moveBlockToSlot(draft, 'inconnu', 0)).toBe(draft)
+  })
+
+  it('un champ passe d’un bloc à l’autre, à l’emplacement choisi', () => {
+    const draft = addBlock(d(), { key: 'bas', type: 'fields', fields: ['total'] })
+    const head = draft.blocks[1]!.key
+    const moved = moveFieldTo(draft, head, 'date', 'bas', 0)
+    expect(moved.blocks[1]!.fields).toEqual(['client'])
+    expect(moved.blocks.find((b) => b.key === 'bas')!.fields).toEqual(['date', 'total'])
+    // Dans le même bloc : un simple réordonnancement.
+    expect(moveFieldTo(draft, head, 'client', head, 2).blocks[1]!.fields).toEqual(['date', 'client'])
+  })
+
+  it('un champ n’entre pas dans un bloc qui l’imprime déjà, ni dans des totaux s’il n’est pas un nombre', () => {
+    const draft = addBlock(d(), { key: 'bis', type: 'fields', fields: ['date'] })
+    const head = draft.blocks[1]!.key
+    expect(moveFieldTo(draft, head, 'date', 'bis', 0)).toBe(draft)
+    const totals = draft.blocks[3]!.key
+    expect(moveFieldTo(draft, head, 'client', totals, 0, new Set(['total']))).toBe(draft)
+    // Ni vers un tableau ou un titre.
+    expect(moveFieldTo(draft, head, 'client', draft.blocks[0]!.key, 0)).toBe(draft)
+  })
+
+  it('un champ ajouté depuis le panneau se pose une seule fois', () => {
+    const draft = d()
+    const head = draft.blocks[1]!.key
+    expect(insertField(draft, head, 'total', 1).blocks[1]!.fields).toEqual(['client', 'total', 'date'])
+    expect(insertField(draft, head, 'client', 0)).toBe(draft)
+  })
+
+  it('une colonne glissée change de rang dans SON tableau', () => {
+    const draft = d()
+    const table = draft.blocks[2]!
+    const cols = tableColumns(table)
+    const moved = moveColumnToSlot(draft, table.key, cols[2]!.key, 0)
+    expect(tableColumns(moved.blocks[2]!).map((c) => c.field)).toEqual(['amount', 'article', 'qty'])
+  })
+
+  it('tirer une colonne ne fait jamais dépasser 100 % au total', () => {
+    const draft = d()
+    const table = draft.blocks[2]!
+    const [article, qty, amount] = tableColumns(table)
+    const widths = (x: Draft) => tableColumns(x.blocks[2]!).map((c) => c.width ?? null)
+    expect(widths(setColumnWidth(draft, table.key, article!.key, 61.4))).toEqual([61, 20, null])
+    expect(widths(setColumnWidth(draft, table.key, article!.key, 95))).toEqual([80, 20, null]) // 100 - 20
+    expect(widths(setColumnWidth(draft, table.key, qty!.key, -4))).toEqual([50, 1, null])
+    expect(widths(setColumnWidth(draft, table.key, amount!.key, 60))).toEqual([50, 20, 30])
+    expect(draftProblems(setColumnWidth(draft, table.key, article!.key, 999), INVOICE)).toEqual([])
+  })
+
+  it('le texte d’un titre se remplit comme à l’impression', () => {
+    const value = (f: string) => ({ client: 'Durand' })[f] ?? ''
+    expect(fillText('Facture {{ name }} · {{ doc.client }} ({{ doctype }})', { name: 'FA-1', doctype: 'Facture', value })).toBe('Facture FA-1 · Durand (Facture)')
+    expect(fillText('{{ name }}', { name: null, doctype: 'Facture', value })).toBe('{{ name }}')
+  })
+})
+
 describe('la page « Personnaliser l’impression »', () => {
   afterEach(() => {
     unmountAll() // AVANT de vider le corps de la page (une fenêtre PrimeVue s'y téléporte)
@@ -381,6 +475,41 @@ describe('la page « Personnaliser l’impression »', () => {
     // Le bloc texte est vide, donc inutile : il n'est pas envoyé, et l'aperçu ne bouge pas de longueur.
     await new Promise((r) => setTimeout(r, 600))
     expect(calls).toEqual(['preview:4'])
+  })
+
+  it('la feuille dessine les VALEURS du document d’exemple, liens par leur titre', async () => {
+    const extra = {
+      get: vi.fn(async () => ({ doctype: 'Facture', name: 'FA-1', version: 1, data: { client: 'CL-1', date: '2026-10-29', items: [{ article: 'VIS', qty: '3.000', amount: '37.50' }], total: '37.50' } })),
+      search: vi.fn(),
+      list: vi.fn(async () => ({ data: [{ name: 'CL-1', data: { nom: 'Durand' } }], total: 1 })),
+    }
+    const api = {
+      meta: async () => INVOICE,
+      printOverride: vi.fn(async () => override),
+      printExample: vi.fn(async () => ({ doctype: 'Facture', name: 'FA-1' })),
+      printPreview: vi.fn(async () => ({ doctype: 'Facture', name: 'FA-1', html: '<p>x</p>', background: false })),
+      ...extra,
+    }
+    const { w } = mountWith(PrintBuilderView, { doctype: 'Facture' }, api)
+    await new Promise((r) => setTimeout(r, 0))
+    await w.vm.$nextTick()
+    expect(extra.get).toHaveBeenCalledWith('Facture', 'FA-1')
+    const paper = find('pc-paper')!.textContent ?? ''
+    expect(paper).toContain('FA-1') // le titre `{{ name }}` rempli
+    expect(paper).toContain('37,50') // un montant formaté comme une pièce, pas « 37.50 »
+    expect(find('pc-col-article')).not.toBeNull() // les en-têtes du tableau, glissables
+  })
+
+  it('« Aperçu imprimé » montre le rendu du serveur à la place de la feuille', async () => {
+    const { w } = await open()
+    const paper = find('pc-desk') as HTMLElement
+    expect(paper.style.display).not.toBe('none')
+    const preview = [...document.querySelectorAll('[data-testid="pb-mode"] button, [data-testid="pb-mode"] [role="button"], [data-testid="pb-mode"] [data-pc-section="pctogglebutton"]')]
+      .find((b) => b.textContent?.includes('Aperçu imprimé')) as HTMLElement | undefined
+    expect(preview).toBeTruthy()
+    preview!.click()
+    await w.vm.$nextTick()
+    expect(paper.style.display).toBe('none')
   })
 
   it('« Revenir à l’original » n’est offert que s’il y a un gabarit d’organisation à retirer', async () => {

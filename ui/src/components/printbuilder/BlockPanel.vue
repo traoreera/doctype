@@ -27,15 +27,18 @@ import type { DocTypeMeta } from '@/lib/types'
  * Le panneau ne décide rien : il appelle le modèle pur (`lib/printedit`) et n'offre que ce que le serveur
  * accepterait (un secret, un fichier et une table ne sont pas proposés ; un sous-total exige un regroupement).
  */
-const props = defineProps<{ block: Block | null; meta: DocTypeMeta; editable: boolean }>()
+const props = defineProps<{ block: Block | null; meta: DocTypeMeta; editable: boolean; chosenColumn?: string | null }>()
 const emit = defineEmits<{
   update: [patch: Partial<Block>]
+  selectColumn: [key: string | null]
   toggleField: [field: string]
+  insertField: [field: string]
   moveField: [field: string, how: 'up' | 'down']
   addColumn: [field: string]
   removeColumn: [key: string]
   moveColumn: [key: string, how: 'left' | 'right']
   updateColumn: [key: string, patch: Partial<Column>]
+  setColumnWidth: [key: string, width: number]
   setGroupBy: [field: string | null]
   toggleSubtotal: [field: string]
 }>()
@@ -119,7 +122,7 @@ const groupOptions = computed(() => [
               size="small"
               :disabled="!editable"
               :data-testid="`pb-add-${f.fieldname}`"
-              @click="emit('toggleField', f.fieldname)"
+              @click="emit('insertField', f.fieldname)"
             />
           </div>
         </fieldset>
@@ -143,17 +146,37 @@ const groupOptions = computed(() => [
         <fieldset class="pb-field">
           <legend>{{ t.printBuilder.tableColumns }}</legend>
           <ol class="pb-chosen" data-testid="pb-columns">
-            <li v-for="(c, i) in tableColumns(block)" :key="c.key" :data-testid="`pb-col-${c.field}`">
-              <span>{{ c.label || columnLabelOf(c.field) }}</span>
+            <li
+              v-for="(c, i) in tableColumns(block)"
+              :key="c.key"
+              :class="{ chosen: chosenColumn === c.key }"
+              :data-testid="`pb-col-${c.field}`"
+            >
+              <button type="button" class="pb-col-pick" :aria-expanded="chosenColumn === c.key" @click="emit('selectColumn', chosenColumn === c.key ? null : c.key)">
+                {{ c.label || columnLabelOf(c.field) }}
+                <small v-if="c.width" class="desk-muted">· {{ c.width }} %</small>
+              </button>
               <span class="pb-row-actions">
-                <Button icon="pi pi-arrow-left" text size="small" :disabled="!editable || i === 0" :aria-label="t.printBuilder.moveUp" @click="emit('moveColumn', c.key, 'left')" />
-                <Button icon="pi pi-arrow-right" text size="small" :disabled="!editable || i === tableColumns(block).length - 1" :aria-label="t.printBuilder.moveDown" @click="emit('moveColumn', c.key, 'right')" />
+                <Button icon="pi pi-arrow-left" text size="small" :disabled="!editable || i === 0" :aria-label="t.printBuilder.moveLeft" @click="emit('moveColumn', c.key, 'left')" />
+                <Button icon="pi pi-arrow-right" text size="small" :disabled="!editable || i === tableColumns(block).length - 1" :aria-label="t.printBuilder.moveRight" @click="emit('moveColumn', c.key, 'right')" />
                 <Button icon="pi pi-times" text severity="danger" size="small" :disabled="!editable" :aria-label="t.delete" :data-testid="`pb-col-drop-${c.field}`" @click="emit('removeColumn', c.key)" />
               </span>
-              <div class="pb-col-props">
-                <InputText :model-value="c.label ?? ''" :placeholder="t.printBuilder.columnLabel" :disabled="!editable" size="small" @update:model-value="emit('updateColumn', c.key, { label: $event || null })" />
-                <Select :model-value="c.align ?? 'left'" :options="alignOptions" option-label="label" option-value="value" :disabled="!editable" size="small" @update:model-value="emit('updateColumn', c.key, { align: $event })" />
-                <InputNumber :model-value="c.width ?? null" :min="1" :max="100" :placeholder="t.printBuilder.columnWidth" :disabled="!editable" size="small" @update:model-value="emit('updateColumn', c.key, { width: $event ?? null })" />
+              <!-- Les réglages de LA colonne choisie (sur la feuille ou ici) : une à la fois, sinon le panneau déborde. -->
+              <div v-if="chosenColumn === c.key" class="pb-col-props" :data-testid="`pb-col-props-${c.field}`">
+                <label class="pb-field">
+                  <span>{{ t.printBuilder.columnLabel }}</span>
+                  <InputText :model-value="c.label ?? ''" :placeholder="columnLabelOf(c.field)" :disabled="!editable" size="small" fluid @update:model-value="emit('updateColumn', c.key, { label: $event || null })" />
+                </label>
+                <div class="pb-col-pair">
+                  <label class="pb-field">
+                    <span>{{ t.printBuilder.columnAlign }}</span>
+                    <Select :model-value="c.align ?? 'left'" :options="alignOptions" option-label="label" option-value="value" :disabled="!editable" size="small" fluid @update:model-value="emit('updateColumn', c.key, { align: $event })" />
+                  </label>
+                  <label class="pb-field">
+                    <span>{{ t.printBuilder.columnWidth }}</span>
+                    <InputNumber :model-value="c.width ?? null" :min="1" :max="100" :placeholder="t.printBuilder.auto" :disabled="!editable" size="small" fluid :data-testid="`pb-col-width-${c.field}`" @update:model-value="$event === null ? emit('updateColumn', c.key, { width: null }) : emit('setColumnWidth', c.key, $event)" />
+                  </label>
+                </div>
               </div>
             </li>
           </ol>
@@ -281,11 +304,35 @@ const groupOptions = computed(() => [
   display: flex;
 }
 
+.pb-chosen li.chosen {
+  border-color: var(--p-primary-color);
+}
+
+.pb-col-pick {
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  min-height: 24px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pb-col-props {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 0.25rem;
+  gap: 0.4rem;
+  padding-top: 0.25rem;
+}
+
+.pb-col-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.4rem;
 }
 
 .pb-add {
