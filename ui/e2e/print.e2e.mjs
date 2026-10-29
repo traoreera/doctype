@@ -140,6 +140,40 @@ try {
     await r.shot(page, 'print-03-pdf')
   }, page)
 
+  await r.step('les gabarits LIVRÉS par le plugin sont offerts, et chacun imprime le sien', async () => {
+    // Le plugin `sales` livre deux gabarits pour `Invoice` (`tests/support/plugins/sales/print/`) : c'est le
+    // chemin de §2 — un plugin connaît la forme de sa facture et ne laisse pas le moteur la deviner.
+    const client = await api(cfg, 'POST', '/doc/Customer', { data: { customer_name: 'Durand', type: 'Entreprise', company_id: 'FR-1' } })
+    const item = await api(cfg, 'POST', '/doc/Item', { data: { item_name: 'Chaise en hêtre', uom: 'pcs' } })
+    const made = await api(cfg, 'POST', '/doc/Invoice', {
+      data: {
+        customer: client.json.name, posting_date: '2026-10-28', due_date: '2026-11-27', payment: 'Impayée',
+        items: [{ item: item.json.name, qty: 2, rate: 250 }, { item: item.json.name, qty: 3, rate: 19.9 }],
+      },
+    })
+    assert(made.status === 201, `facture : ${made.status} ${JSON.stringify(made.json)}`)
+    const invoice = made.json.name
+
+    const listed = await api(cfg, 'GET', '/print-templates/Invoice')
+    const names = listed.json.templates.map((x) => `${x.name}:${x.source}`).sort()
+    assert(JSON.stringify(names) === JSON.stringify(['duplicata:plugin', 'standard:plugin']), `gabarits offerts : ${JSON.stringify(names)}`)
+    assert(listed.json.default === 'standard', `défaut attendu « standard » : ${listed.json.default}`)
+
+    const standard = await api(cfg, 'GET', `/print/Invoice/${encodeURIComponent(invoice)}`)
+    const duplicata = await api(cfg, 'GET', `/print/Invoice/${encodeURIComponent(invoice)}?template=duplicata`)
+    assert(standard.json.html.includes(`Facture ${invoice}`), 'le gabarit standard n’imprime pas le titre attendu')
+    assert(duplicata.json.html.includes('DUPLICATA'), 'le duplicata n’imprime pas son propre titre')
+    // Le TITRE du client et de l'article, jamais leur identifiant : sans cela le papier est illisible.
+    assert(standard.json.html.includes('Durand'), `le nom du client manque : ${standard.json.html.slice(0, 400)}`)
+    assert(standard.json.html.includes('Chaise en hêtre'), 'le libellé de l’article manque')
+    assert(!standard.json.html.includes(client.json.name), `l'identifiant du client est imprimé : ${client.json.name}`)
+    // Le MONTANT de chaque ligne, calculé par le serveur (`compute: qty * rate`), et sans bruit binaire :
+    // 3 × 19,9 vaut 59.699999999999996 en machine et n'a pas sa place sur une facture.
+    assert(standard.json.html.includes('>500<'), `le montant 500 manque : ${standard.json.html.slice(0, 600)}`)
+    assert(standard.json.html.includes('>59.7<'), 'le montant 59,7 manque, ou porte le bruit du flottant')
+    assert(!standard.json.html.includes('59.699'), 'du bruit de flottant est imprimé')
+  }, page)
+
   await r.step('téléphone : le dialogue tient dans l’écran', async () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.getByTestId('print-frame').waitFor()

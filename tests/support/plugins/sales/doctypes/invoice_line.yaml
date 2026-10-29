@@ -8,4 +8,8 @@ fields:
   - { fieldname: item, label: Article, fieldtype: Link, options: Item, required: true }
   - { fieldname: qty, label: Quantité, fieldtype: Number, required: true, default: 1 }
   - { fieldname: rate, label: Prix unitaire, fieldtype: Number, required: true }
+  # Calculé par le SERVEUR à chaque écriture (`compute:`, programme §3.7) : ni saisi, ni envoyé par le client.
+  # Les deux opérandes sont des `Number`, donc le résultat l'est aussi — un flottant et un décimal exact ne se
+  # mélangent pas (c'est refusé au chargement).
+  - { fieldname: amount, label: Montant, fieldtype: Number, compute: "qty * rate", read_only: true }
   - { fieldname: note, label: Note, fieldtype: Text }

@@ -266,6 +266,21 @@ def _label(field: Any, fallback: str) -> str:
     return escape(getattr(field, "label", None) or fallback)
 
 
+def _number(value: float) -> str:
+    """Un FLOTTANT sur du papier, sans ses artefacts binaires. `3.0 × 19.9` vaut `59.699999999999996` en
+    machine, et ce nombre-là n'a rien à faire sur une facture.
+
+    Ce n'est pas la réponse au problème de l'argent — la réponse est `Decimal`, exact et à l'échelle déclarée,
+    et le moteur refuse déjà un flottant pour un montant. Mais un `Number` existe (une quantité, un poids), et
+    quand il s'imprime il ne doit pas montrer le bruit de sa représentation. Jamais d'exposant non plus : une
+    pièce comptable n'affiche pas `1,23e+06`.
+    """
+    if value != value or value in (float("inf"), float("-inf")):  # le moteur ne stocke ni NaN ni Infinity
+        return ""
+    text = f"{value:.6f}".rstrip("0").rstrip(".")
+    return text or "0"
+
+
 def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None = None) -> str:
     """La valeur d'un champ, en texte ÉCHAPPÉ. Un Decimal garde sa chaîne canonique : il ne passe pas par un float.
 
@@ -279,6 +294,8 @@ def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None =
         return ""
     if isinstance(value, bool):
         return "Oui" if value else "Non"
+    if isinstance(value, float):
+        return escape(_number(value))
     if titles and field is not None and isinstance(value, str) and field.fieldtype in ("Link", "DynamicLink"):
         found = titles.get((str(field.options), value))
         if found:
@@ -301,7 +318,7 @@ def _sum(rows: Sequence[Mapping[str, Any]], name: str, field: Any) -> str:
         return escape(canonical(total, int(field.decimals or 0)))
     if field is not None and field.fieldtype == "Int":
         return escape(str(int(total)))
-    return escape(f"{float(total):g}")
+    return escape(_number(float(total)))  # le même rendu qu'une cellule : un seul formatage de flottant
 
 
 def render_html(

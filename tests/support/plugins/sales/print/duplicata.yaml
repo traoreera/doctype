@@ -1,0 +1,31 @@
+# Un SECOND gabarit pour le même type : le Desk les propose tous les deux dans « Imprimer » (§7), et l'éditeur
+# les édite séparément — un gabarit est identifié par (DocType, `name`).
+#
+# Il montre ce qu'un duplicata emploie et que le « standard » n'a pas : un autre format de page, un tableau
+# dense sans bordures, et un SAUT DE PAGE suivi des conditions.
+#
+# Pas de `group_by` ici, à dessein : aucun champ de `InvoiceLine` ne fait un groupe utile (grouper par article
+# quand chaque article ne paraît qu'une fois ne fait que dédoubler chaque ligne — essayé, et c'est illisible).
+# Le regroupement avec sous-totaux a son propre jeu d'essai dans `tests/unit/test_printing.py`, sur un type qui
+# porte un entrepôt.
+schema_version: 1
+doctype: Invoice
+name: duplicata
+label: Duplicata
+page: { size: A4, orientation: portrait, top: 25, bottom: 20, left: 15, right: 15 }
+blocks:
+  - { type: title, text: "DUPLICATA — Facture {{ name }}" }
+  - { type: fields, columns: 2, fields: [customer, posting_date, due_date, payment] }
+  - type: table
+    field: items
+    style: ruled
+    density: compact
+    columns:
+      - { field: item, label: Article, width: 40 }
+      - { field: qty, label: Quantité, align: right, width: 15 }
+      - { field: rate, label: "Prix unitaire", align: right, width: 20 }
+      - { field: amount, label: Montant, align: right, width: 25 }
+  - { type: totals, fields: [total] }
+  - { type: page_break }
+  - { type: title, text: "Conditions générales" }
+  - { type: text, text: "Ce duplicata ne vaut pas second appel de fonds. Il reprend la facture {{ name }} dans son intégralité." }

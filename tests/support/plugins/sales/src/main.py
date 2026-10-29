@@ -3,7 +3,9 @@
 1. il apporte ses DocTypes (`../doctypes/*.yaml`), dont le `module` est son propre nom : xcore-doctype refuse les autres ;
 2. il enregistre les hooks de confiance que ces DocTypes citent par leur nom ;
 3. il déclare à auth les grants que ses DocTypes exigent, tirés du YAML (source unique : rien n'est retapé ici) ;
-4. il livre une extension JavaScript du Desk (`../desk/index.js`) : un panneau et une action sur la fiche Client, une page, une commande.
+4. il livre une extension JavaScript du Desk (`../desk/index.js`) : un panneau et une action sur la fiche Client, une page, une commande ;
+5. il livre les GABARITS D'IMPRESSION de ses documents (`../print/*.yaml`, process/impression.md §2) : une facture
+   a une forme que le plugin connaît, et il ne laisse pas le moteur la deviner.
 """
 
 from pathlib import Path
@@ -22,6 +24,9 @@ class Plugin(TrustedBase):
         registry.load_workspaces(self.ctx.name, DOCTYPES.parent / "workspaces")  # APRÈS les DocTypes : les raccourcis les visent
         # 4. son extension du Desk (D28) : servie seulement si l'opérateur l'autorise (`doctype.desk.extensions`).
         registry.load_desk(self.ctx.name, DOCTYPES.parent / "desk")
+        # 5. ses gabarits d'impression, APRÈS les DocTypes : leurs blocs visent les champs du type, et une faute
+        # (un champ absent, une colonne qui n'existe pas) sort ICI et non à la première facture imprimée.
+        registry.load_print_templates(self.ctx.name, DOCTYPES.parent / "print")
         # Un SEUL `rbac.declare` pour tout le plugin, APRÈS le chargement des DocTypes : auth désactive les grants
         # qu'il ne retrouve plus dans la liste reçue.
         grants = self.get_service("doctype_grants").for_plugin(self.ctx.name)
@@ -32,7 +37,12 @@ class Plugin(TrustedBase):
         self.get_service("doctype_registry").unregister_owner(self.ctx.name)
 
     async def invoice_totals(self, event) -> None:
-        """`before_save` de `Invoice` : le total est la somme des lignes. Ce que le client envoie pour `total` est écrasé."""
+        """`before_save` de `Invoice` : le total est la somme des lignes. Ce que le client envoie pour `total` est écrasé.
+
+        Le MONTANT d'une ligne, lui, se déclare désormais (`compute: qty * rate` sur `InvoiceLine`) : ce hook
+        reste parce qu'il est l'exemple d'un hook de confiance enregistré par son nom — mais il montre aussi la
+        limite que `compute:` lève, puisque ce calcul-là n'avait pas besoin de code.
+        """
         rows = event.data.get("items") or []
         event.data["total"] = round(sum(row["qty"] * row["rate"] for row in rows), 2)
 

@@ -1,0 +1,34 @@
+# Le gabarit d'impression qu'un plugin LIVRE avec ses DocTypes (process/impression.md §2).
+#
+# Chargé par `doctype_registry.load_print_templates(self.ctx.name, <plugin>/print)`, APRÈS `load_dir` : ses blocs
+# visent les champs du type, et une faute sort au CHARGEMENT, jamais à la première facture.
+#
+# Il n'est pas modifiable à l'écran — il est versionné avec le plugin. Une organisation qui veut le sien
+# l'habille (« Personnaliser l'impression », §10), et son habillage PRIME sur celui-ci.
+#
+# Réserve de ce JEU D'ESSAI, pas du gabarit : les montants d'`Invoice` sont des `Number` (flottants), parce que
+# ce plugin précède la décision 1 de `programme.md` §3.7. Une vraie facture déclare ses montants en `Decimal`
+# avec leur échelle, et imprime donc « 250,00 » là où on lit ici « 250 ». Le rendu, lui, ne montre jamais le
+# bruit binaire d'un flottant (`printing._number`).
+schema_version: 1
+doctype: Invoice
+name: standard
+label: Facture
+page: { size: A4, orientation: portrait, top: 20, bottom: 20, left: 15, right: 15 }
+blocks:
+  - { type: title, text: "Facture {{ name }}" }
+  - { type: fields, columns: 2, fields: [customer, posting_date, due_date, payment] }
+  - type: table
+    field: items
+    label: Détail
+    style: bordered
+    density: normal
+    repeat_header: true          # l'en-tête se répète si les lignes débordent sur une seconde page
+    columns:
+      - { field: item, label: Article, width: 42 }
+      - { field: qty, label: Quantité, align: right, width: 14 }
+      - { field: rate, label: "Prix unitaire", align: right, width: 20 }
+      - { field: amount, label: Montant, align: right, width: 20 }
+  - { type: totals, fields: [total] }
+  - { type: spacer, size: 6 }
+  - { type: text, text: "Payable à réception. Toute somme non réglée à l'échéance porte intérêt au taux légal." }
