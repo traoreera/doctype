@@ -386,6 +386,20 @@ def apply(path: Path, relative: str, write: bool) -> list[str]:
     return notes
 
 
+def verify() -> list[str]:
+    """Relit chaque fichier et compare clé par clé à la table : une insertion tombée DANS un texte sur plusieurs
+    lignes se parse sans erreur, mais la clé n'existe pas — c'est arrivé au premier passage."""
+    wrong = []
+    for relative in sorted(set(FETCHES) | set(CONDITIONS)):
+        fields = {f["fieldname"]: f for f in (yaml.safe_load((ROOT / relative).read_text(encoding="utf-8")) or {}).get("fields") or []}
+        for field, source in FETCHES.get(relative, {}).items():
+            if fields.get(field, {}).get("fetch_from") != source:
+                wrong.append(f"{relative}: {field}.fetch_from")
+        for field, conds in CONDITIONS.get(relative, {}).items():
+            wrong += [f"{relative}: {field}.{k}" for k, v in conds.items() if fields.get(field, {}).get(k) != v]
+    return wrong
+
+
 def main() -> int:
     write = "--write" in sys.argv
     total = 0
@@ -401,6 +415,11 @@ def main() -> int:
             for n in notes:
                 print(f"      {n}")
     print(f"\n{total} champ(s) {'modifié(s)' if write else 'à modifier'}")
+    if write and (wrong := verify()):
+        print("RELECTURE EN ÉCHEC (clé absente ou différente une fois le YAML relu) :")
+        for w in wrong:
+            print(f"      {w}")
+        return 1
     if not write and total:
         print("Rien n'a été écrit : relancez avec --write")
     return 0
