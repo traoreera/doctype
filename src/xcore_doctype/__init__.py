@@ -26,7 +26,7 @@ from pathlib import Path
 
 from .errors import DocumentValidationError, HookRegistrationError
 from .hooks import HookEvent, HookRegistry
-
+from .mount import Config, mount_desk
 try:
     __version__ = metadata.version("xcore-doctype")
 except metadata.PackageNotFoundError:  # exécuté depuis des sources non installées
@@ -47,4 +47,7 @@ def system_plugin_dir() -> Path:
     return Path(str(resources.files("xcore_doctype") / "system_plugin_dir"))
 
 
-__all__ = ["DocumentValidationError", "HookEvent", "HookRegistrationError", "HookRegistry", "plugin_dir", "system_plugin_dir", "__version__"]
+__all__ = [
+    "Config",
+    "mount_desk",
+    "DocumentValidationError", "HookEvent", "HookRegistrationError", "HookRegistry", "plugin_dir", "system_plugin_dir", "__version__"]
