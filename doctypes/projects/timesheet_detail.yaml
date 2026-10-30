@@ -70,6 +70,7 @@ fields:
   label: Project Name
   fieldtype: Text
   read_only: true
+  fetch_from: project.project_name
 - fieldname: description
   label: Description
   fieldtype: LongText

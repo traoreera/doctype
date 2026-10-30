@@ -23,6 +23,7 @@ fields:
   fieldtype: Text
   read_only: true
   hidden: true
+  fetch_from: customer.customer_name
 - fieldname: address_display
   label: Address
   fieldtype: TextEditor

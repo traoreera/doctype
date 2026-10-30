@@ -24,6 +24,7 @@ fields:
   fieldtype: Text
   in_list_view: true
   read_only: true
+  fetch_from: item_code.item_name
 - fieldname: cost
   label: Cost
   fieldtype: Currency

@@ -12,6 +12,7 @@ fields:
 - fieldname: item_name
   label: Item Name
   fieldtype: Text
+  fetch_from: item_code.item_name
 - fieldname: qty
   label: Quantity
   fieldtype: Decimal

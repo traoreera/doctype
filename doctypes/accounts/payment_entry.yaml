@@ -44,21 +44,28 @@ fields:
 - fieldname: party_type
   label: Party Type
   fieldtype: Text
+  depends_on: "payment_type != 'Internal Transfer'"
+  mandatory_depends_on: "payment_type != 'Internal Transfer'"
 - fieldname: party
   label: Party
   fieldtype: DynamicLink
   options: party_type
+  depends_on: "payment_type != 'Internal Transfer'"
+  mandatory_depends_on: "payment_type != 'Internal Transfer'"
 - fieldname: party_name
   label: Party Name
   fieldtype: Text
+  depends_on: "payment_type != 'Internal Transfer'"
 - fieldname: contact_person
   label: Contact
   fieldtype: Link
   options: Contact
+  depends_on: "party"
 - fieldname: contact_email
   label: Email
   fieldtype: Text
   read_only: true
+  depends_on: "party"
 - fieldname: paid_from
   label: Account Paid From
   fieldtype: Link
@@ -206,6 +213,7 @@ fields:
   label: Party Bank Account
   fieldtype: Link
   options: Bank Account
+  depends_on: "party"
 - fieldname: payment_order_status
   label: Payment Order Status
   fieldtype: Select

@@ -21,8 +21,9 @@ fields:
   required: true
 - fieldname: customer_name
   label: Customer Name
-  fieldtype: LongText
+  fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: tax_id
   label: Tax Id
   fieldtype: Text
@@ -39,6 +40,8 @@ fields:
   label: POS Profile
   fieldtype: Link
   options: POS Profile
+  depends_on: "is_pos"
+  mandatory_depends_on: "is_pos"
 - fieldname: is_return
   label: Is Return (Credit Note)
   fieldtype: Boolean
@@ -73,6 +76,8 @@ fields:
   label: Return Against
   fieldtype: Link
   options: Sales Invoice
+  depends_on: "is_return"
+  mandatory_depends_on: "is_return"
 - fieldname: update_billed_amount_in_sales_order
   label: Update Billed Amount in Sales Order
   fieldtype: Boolean
@@ -83,6 +88,7 @@ fields:
 - fieldname: po_date
   label: Customer's Purchase Order Date
   fieldtype: Date
+  depends_on: "po_no"
 - fieldname: customer_address
   label: Customer Address
   fieldtype: Link
@@ -180,6 +186,7 @@ fields:
   label: Source Warehouse
   fieldtype: Link
   options: Warehouse
+  depends_on: "update_stock"
 - fieldname: update_stock
   label: Update Stock
   fieldtype: Boolean
@@ -277,6 +284,7 @@ fields:
 - fieldname: loyalty_points
   label: Loyalty Points
   fieldtype: Int
+  depends_on: "redeem_loyalty_points"
 - fieldname: loyalty_amount
   label: Loyalty Amount
   fieldtype: Currency
@@ -290,14 +298,17 @@ fields:
   label: Loyalty Program
   fieldtype: Link
   options: Loyalty Program
+  depends_on: "redeem_loyalty_points"
 - fieldname: loyalty_redemption_account
   label: Redemption Account
   fieldtype: Link
   options: Account
+  depends_on: "redeem_loyalty_points"
 - fieldname: loyalty_redemption_cost_center
   label: Redemption Cost Center
   fieldtype: Link
   options: Cost Center
+  depends_on: "redeem_loyalty_points"
 - fieldname: apply_discount_on
   label: Apply Additional Discount On
   fieldtype: Select
@@ -391,6 +402,7 @@ fields:
   fieldtype: Link
   options: Account
   hidden: true
+  depends_on: "is_pos"
 - fieldname: payments
   label: Sales Invoice Payment
   fieldtype: Table
@@ -418,6 +430,7 @@ fields:
   label: Account for Change Amount
   fieldtype: Link
   options: Account
+  depends_on: "is_pos"
 - fieldname: write_off_amount
   label: Write Off Amount
   fieldtype: Currency
@@ -468,6 +481,7 @@ fields:
   fieldtype: Link
   options: Purchase Invoice
   read_only: true
+  depends_on: "is_internal_customer"
 - fieldname: customer_group
   label: Customer Group
   fieldtype: Link
@@ -566,16 +580,20 @@ fields:
   fieldtype: Link
   options: Account
   description: Unrealized Profit / Loss account for intra-company transfers
+  depends_on: "is_internal_customer"
 - fieldname: represents_company
   label: Represents Company
   fieldtype: Link
   options: Company
   read_only: true
   description: Company which internal customer represents
+  depends_on: "is_internal_customer"
+  mandatory_depends_on: "is_internal_customer"
 - fieldname: set_target_warehouse
   label: Set Target Warehouse
   fieldtype: Link
   options: Warehouse
+  depends_on: "is_internal_customer"
 - fieldname: is_debit_note
   label: Is Rate Adjustment Entry (Debit Note)
   fieldtype: Boolean

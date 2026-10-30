@@ -50,6 +50,8 @@ fields:
   fieldtype: Link
   options: Company
   description: Select the related company that this Supplier represents for inter-company transactions.
+  depends_on: "is_internal_supplier"
+  mandatory_depends_on: "is_internal_supplier"
 - fieldname: image
   label: Image
   fieldtype: Image
@@ -128,10 +130,13 @@ fields:
   - Invoices
   - Payments
   default: All
+  depends_on: "on_hold"
+  mandatory_depends_on: "on_hold"
 - fieldname: release_date
   label: Release Date
   fieldtype: Date
   description: Leave blank if the Supplier is blocked indefinitely
+  depends_on: "on_hold"
 - fieldname: accounts
   label: Per-Company Accounts
   fieldtype: Table

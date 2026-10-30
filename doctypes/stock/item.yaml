@@ -80,6 +80,8 @@ fields:
   label: Asset Category
   fieldtype: Link
   options: Asset Category
+  depends_on: "is_fixed_asset"
+  mandatory_depends_on: "is_fixed_asset"
 - fieldname: image
   label: Image
   fieldtype: Image
@@ -98,6 +100,7 @@ fields:
 - fieldname: shelf_life_in_days
   label: Shelf Life In Days
   fieldtype: Int
+  depends_on: "is_stock_item"
 - fieldname: end_of_life
   label: End of Life
   fieldtype: Date
@@ -123,6 +126,7 @@ fields:
   - Standard Cost
   description: Serialized items are valued at Moving Average once stock transactions exist and Serial No Wise Valuation
     is disabled.
+  depends_on: "is_stock_item"
 - fieldname: warranty_period
   label: Warranty Period (in days)
   fieldtype: Text
@@ -147,39 +151,47 @@ fields:
   fieldtype: Boolean
   description: Track this item in batches. Cannot be changed after a stock transaction exists.
   default: false
+  depends_on: "is_stock_item"
 - fieldname: create_new_batch
   label: Automatically Create New Batch
   fieldtype: Boolean
   description: Batch number will be auto-created in format AAAA.00001 if not specified in transactions. Leave blank
     to always enter batch numbers manually.
   default: false
+  depends_on: "has_batch_no"
 - fieldname: batch_number_series
   label: Batch Number Series
   fieldtype: Text
   description: 'Example: ABCD.#####. If series is set and Batch No is not mentioned in transactions, then automatic
     batch number will be created based on this series. If you always want to explicitly mention Batch No for this
     item, leave this blank. Note: this setting will take priority over the Naming Series Prefix in Stock Settings.'
+  depends_on: "has_batch_no"
 - fieldname: has_expiry_date
   label: Has Expiry Date
   fieldtype: Boolean
   description: Batch number will be created based on expiry date. Expiry dates can be set in the Batch master.
   default: false
+  depends_on: "has_batch_no"
 - fieldname: retain_sample
   label: Retain Sample
   fieldtype: Boolean
   description: Enable to reserve a small sample from each batch for any analysis arising ahead
   default: false
+  depends_on: "has_batch_no"
 - fieldname: sample_quantity
   label: Max Sample Quantity
   fieldtype: Int
   description: Maximum sample quantity that can be retained
+  depends_on: "retain_sample"
 - fieldname: has_serial_no
   label: Has Serial No
   fieldtype: Boolean
   description: Track each unit with a unique serial number for warranty and return tracking. Cannot be changed after
     a stock transaction exists.
   default: false
+  depends_on: "is_stock_item"
 - fieldname: serial_no_series
+  depends_on: "has_serial_no"
   label: Serial Number Series
   fieldtype: Text
   description: 'Example: ABCD.#####
@@ -192,6 +204,7 @@ fields:
   description: Value every outward movement at each Serial No's own incoming rate. If unchecked, the item is valued
     at Moving Average once stock transactions exist. Cannot be enabled once Serial Nos exist for this item.
   default: true
+  depends_on: "has_serial_no"
 - fieldname: has_variants
   label: Has Variants
   fieldtype: Boolean
@@ -204,6 +217,7 @@ fields:
   - Item Attribute
   - Manufacturer
   default: Item Attribute
+  depends_on: "has_variants"
 - fieldname: attributes
   label: Variant Attributes
   fieldtype: Table
@@ -222,12 +236,14 @@ fields:
   label: Default Purchase Unit of Measure
   fieldtype: Link
   options: UOM
+  depends_on: "is_purchase_item"
 - fieldname: min_order_qty
   label: Minimum Order Qty
   fieldtype: Decimal
   decimals: 3
   description: Minimum quantity should be as per Stock UOM
   default: "0.000"
+  depends_on: "is_purchase_item"
 - fieldname: safety_stock
   label: Safety Stock
   fieldtype: Number
@@ -237,6 +253,7 @@ fields:
   label: Lead Time in days
   fieldtype: Int
   description: Average time taken by the supplier to deliver
+  depends_on: "is_purchase_item"
 - fieldname: last_purchase_rate
   label: Last Purchase Rate
   fieldtype: Number
@@ -269,6 +286,7 @@ fields:
   label: Default Sales Unit of Measure
   fieldtype: Link
   options: UOM
+  depends_on: "is_sales_item"
 - fieldname: is_sales_item
   label: Allow Sales
   fieldtype: Boolean
@@ -280,6 +298,7 @@ fields:
   fieldtype: Number
   description: 'Maximum discount % allowed when selling this item. Eg: if set to 20%, a discount greater than 20%
     cannot be applied in sales transactions.'
+  depends_on: "is_sales_item"
 - fieldname: enable_deferred_revenue
   label: Enable Deferred Revenue
   fieldtype: Boolean
@@ -289,6 +308,7 @@ fields:
 - fieldname: no_of_months
   label: No of Months (Revenue)
   fieldtype: Int
+  depends_on: "enable_deferred_revenue"
 - fieldname: enable_deferred_expense
   label: Enable Deferred Expense
   fieldtype: Boolean
@@ -298,6 +318,7 @@ fields:
 - fieldname: no_of_months_exp
   label: No of Months (Expense)
   fieldtype: Int
+  depends_on: "enable_deferred_expense"
 - fieldname: customer_items
   label: Customer Items
   fieldtype: Table
@@ -356,6 +377,7 @@ fields:
   label: Auto create assets on purchase
   fieldtype: Boolean
   default: false
+  depends_on: "is_fixed_asset"
 - fieldname: default_item_manufacturer
   label: Default Item Manufacturer
   fieldtype: Link
@@ -375,11 +397,13 @@ fields:
   fieldtype: Boolean
   description: Creates a single grouped asset instead of individual assets when purchased in bulk.
   default: false
+  depends_on: "is_fixed_asset"
 - fieldname: allow_negative_stock
   label: Allow Negative Stock
   fieldtype: Boolean
   description: Allow stock to go below zero for this item, even if negative stock is disabled in Stock Settings.
   default: false
+  depends_on: "is_stock_item"
 - fieldname: purchase_tax_withholding_category
   label: Purchase Tax Withholding Category
   fieldtype: Link

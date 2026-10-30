@@ -4,7 +4,7 @@ label: "Material Request Item"
 istable: true
 fields:
   - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
-  - { fieldname: item_name, label: "Item Name", fieldtype: Text }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, fetch_from: item_code.item_name }
   - { fieldname: description, label: "Description", fieldtype: TextEditor }
   - { fieldname: qty, label: "Quantity", fieldtype: Decimal, decimals: 3, required: true, in_list_view: true }
   - { fieldname: uom, label: "UOM", fieldtype: Link, options: "UOM", required: true, in_list_view: true }

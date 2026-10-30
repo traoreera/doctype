@@ -5,7 +5,7 @@ istable: true
 fields:
   - { fieldname: barcode, label: "Barcode", fieldtype: Text }
   - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", required: true, in_list_view: true }
-  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true, fetch_from: item_code.item_name }
   - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", required: true, in_list_view: true }
   - { fieldname: qty, label: "Quantity", fieldtype: Decimal, decimals: 3, in_list_view: true }
   - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", in_list_view: true, read_only: true }

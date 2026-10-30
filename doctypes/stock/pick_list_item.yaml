@@ -6,7 +6,7 @@ fields:
   - { fieldname: qty, label: "Qty", fieldtype: Decimal, decimals: 3, required: true, in_list_view: true, default: "1.000" }
   - { fieldname: picked_qty, label: "Picked Qty (in Stock UOM)", fieldtype: Decimal, decimals: 3, in_list_view: true }
   - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", in_list_view: true, read_only: true }
-  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true, fetch_from: item_code.item_name }
   - { fieldname: description, label: "Description", fieldtype: LongText, read_only: true }
   - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
   - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }

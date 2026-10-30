@@ -24,6 +24,7 @@ fields:
   label: Employee Name
   fieldtype: Text
   read_only: true
+  fetch_from: employee.employee_name
 - fieldname: company
   label: Company
   fieldtype: Link

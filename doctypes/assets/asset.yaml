@@ -259,6 +259,7 @@ fields:
   fieldtype: Text
   read_only: true
   hidden: true
+  fetch_from: item_code.item_name
 title_field: item_code
 layout:
 - tab: Général

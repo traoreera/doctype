@@ -175,9 +175,12 @@ fields:
   label: Deferred Expense Account
   fieldtype: Link
   options: Account
+  depends_on: "enable_deferred_expense"
+  mandatory_depends_on: "enable_deferred_expense"
 - fieldname: service_stop_date
   label: Service Stop Date
   fieldtype: Date
+  depends_on: "enable_deferred_expense"
 - fieldname: enable_deferred_expense
   label: Enable Deferred Expense
   fieldtype: Boolean
@@ -185,9 +188,13 @@ fields:
 - fieldname: service_start_date
   label: Service Start Date
   fieldtype: Date
+  depends_on: "enable_deferred_expense"
+  mandatory_depends_on: "enable_deferred_expense"
 - fieldname: service_end_date
   label: Service End Date
   fieldtype: Date
+  depends_on: "enable_deferred_expense"
+  mandatory_depends_on: "enable_deferred_expense"
 - fieldname: allow_zero_valuation_rate
   label: Allow Zero Valuation Rate
   fieldtype: Boolean
@@ -235,6 +242,7 @@ fields:
   label: Asset Location
   fieldtype: Link
   options: Location
+  depends_on: "is_fixed_asset"
 - fieldname: po_detail
   label: Purchase Order Item
   fieldtype: Text
@@ -284,6 +292,7 @@ fields:
   fieldtype: Link
   options: Asset Category
   read_only: true
+  depends_on: "is_fixed_asset"
 - fieldname: from_warehouse
   label: From Warehouse
   fieldtype: Link

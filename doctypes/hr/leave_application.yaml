@@ -22,6 +22,7 @@ fields:
   label: Employee Name
   fieldtype: Text
   read_only: true
+  fetch_from: employee.employee_name
 - fieldname: employee_email
   label: Employee Email
   fieldtype: Text
@@ -57,6 +58,8 @@ fields:
 - fieldname: half_day_date
   label: Half Day Date
   fieldtype: Date
+  depends_on: "half_day"
+  mandatory_depends_on: "half_day"
 - fieldname: total_leave_days
   label: Total Leave Days
   fieldtype: Number
@@ -156,3 +159,37 @@ views:
     end: to_date
     title: employee_name
     color: status
+# Circuit d'approbation (Demande de congé) : Le responsable approuve ou refuse le congé.
+# Celui qui a créé la pièce ne l'approuve jamais lui-même (`not_owner`). Une pièce approuvée s'annule par « Annuler »
+# (le circuit remplace `/submit` et `/cancel`, qui sont refusés sur un type à circuit). Chaque action est un grant
+# `<module>:<type>:workflow_<action>`, déclaré à auth comme les autres.
+workflow:
+  states:
+  - name: Brouillon
+  - name: À approuver
+  - name: Approuvée
+    docstatus: submitted
+  - name: Refusée
+    docstatus: cancelled
+  - name: Annulée
+    docstatus: cancelled
+  transitions:
+  - action: Soumettre
+    from: Brouillon
+    to: À approuver
+    description: Envoyer à l'approbation
+  - action: Approuver
+    from: À approuver
+    to: Approuvée
+    not_owner: true
+  - action: Refuser
+    from: À approuver
+    to: Refusée
+    not_owner: true
+  - action: Reprendre
+    from: À approuver
+    to: Brouillon
+    description: Rendre la pièce à son auteur pour correction
+  - action: Annuler
+    from: Approuvée
+    to: Annulée

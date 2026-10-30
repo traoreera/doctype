@@ -62,6 +62,7 @@ fields:
   label: Work Order
   fieldtype: Link
   options: Work Order
+  depends_on: "purpose in ['Material Transfer for Manufacture', 'Manufacture', 'Material Consumption for Manufacture']"
 - fieldname: is_fg_conversion
   label: Is Finished Good Conversion
   fieldtype: Boolean
@@ -114,16 +115,20 @@ fields:
   label: BOM No
   fieldtype: Link
   options: BOM
+  depends_on: "from_bom"
+  mandatory_depends_on: "from_bom"
 - fieldname: fg_completed_qty
   label: 'Finished Good Quantity '
   fieldtype: Decimal
   decimals: 3
   description: As per Stock UOM
+  depends_on: "from_bom"
 - fieldname: use_multi_level_bom
   label: Use Multi-Level BOM
   fieldtype: Boolean
   description: Including items for sub assemblies
   default: true
+  depends_on: "from_bom"
 - fieldname: from_warehouse
   label: Default Source Warehouse
   fieldtype: Link
@@ -191,6 +196,7 @@ fields:
   label: Supplier Name
   fieldtype: Text
   read_only: true
+  fetch_from: supplier.supplier_name
 - fieldname: supplier_address
   label: Supplier Address
   fieldtype: Link

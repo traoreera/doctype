@@ -26,6 +26,7 @@ fields:
   label: Supplier Name
   fieldtype: Text
   read_only: true
+  fetch_from: supplier.supplier_name
 - fieldname: supplier_delivery_note
   label: Supplier Delivery Note
   fieldtype: Text

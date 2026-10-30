@@ -30,6 +30,7 @@ fields:
   label: Name
   fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: address_display
   label: Address
   fieldtype: TextEditor
