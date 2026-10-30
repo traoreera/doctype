@@ -60,6 +60,13 @@ class DocumentInUse(DoctypeError):
         super().__init__("document_in_use", message, status=409, details=details)
 
 
+class DocumentCited(DoctypeError):
+    """Annulation refusée : un document SOUMIS cite encore celui-ci (une facture payée, un paiement qui tient)."""
+
+    def __init__(self, message: str, details: Any = None) -> None:
+        super().__init__("document_cited", message, status=409, details=details)
+
+
 class DocumentLocked(DoctypeError):
     """Modification ou suppression d'un document qui n'est plus un brouillon : soumis ou annulé, il est figé."""
 
