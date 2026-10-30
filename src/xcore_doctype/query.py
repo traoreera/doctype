@@ -164,8 +164,12 @@ class Query:
         limit: int,
         offset: int,
         scope: Scope,
+        lock: bool = False,
     ) -> tuple[list[StoredDoc], int]:
-        """`filters` : égalités déjà validées par type (voir `CompiledDocType.coerce_filter`)."""
+        """`filters` : égalités déjà validées par type (voir `CompiledDocType.coerce_filter`).
+
+        `lock` : `FOR UPDATE` sur les lignes de la page (PostgreSQL) — un hook qui lit puis écrit d'après ce qu'il a lu (`tx.find`).
+        """
         conds = self._filter_conds(defn, filters)
         sort = self._sort_expr(defn, order_by)
         sort = sort.desc().nulls_last() if descending else sort.asc().nulls_last()
@@ -178,10 +182,22 @@ class Query:
             .limit(limit)
             .offset(offset)
         )
+        if lock:
+            page = page.with_for_update()
         total = select(func.count()).select_from(self._t).where(self._scope(*conds, scope=scope))
         rows = (await self._session.execute(page)).mappings().all()
         count = (await self._session.execute(total)).scalar_one()
         return [self._doc(r) for r in rows], count
+
+    async def field_values(self, defn: DocTypeDef, fieldname: str, *, filters: Mapping[str, Any], scope: Scope) -> list[Any]:
+        """Les valeurs BRUTES d'un champ (le JSON stocké, une chaîne décimale pour un Decimal) des documents qui répondent aux filtres.
+
+        Pour une somme EXACTE faite par l'appelant en `decimal.Decimal` (`tx.sum`) : le SUM du SQL passe par un double sous SQLite,
+        où 0,1 + 0,2 ne fait pas 0,3 — inacceptable pour de l'argent. Le champ a été validé contre la définition avant d'arriver ici.
+        """
+        conds = self._filter_conds(defn, filters)
+        stmt = select(self._t.c.data[fieldname].as_string()).where(self._scope(*conds, scope=scope))
+        return [r[0] for r in (await self._session.execute(stmt)).all()]
 
     async def aggregate(
         self,

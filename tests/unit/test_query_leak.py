@@ -187,6 +187,9 @@ async def scenario_list(env: Env):
         docs, total = await q.list(defn, filters={}, **page)
         assert [d.name for d in docs] == ["only-b", "shared"] and total == 2
         assert all(d.data["customer_name"].startswith(f"{B}:") for d in docs)
+        # Verrouiller (`tx.find(lock=True)`) ne change pas ce qu'on voit.
+        docs, total = await q.list(defn, filters={}, **page, lock=True)
+        assert [d.name for d in docs] == ["only-b", "shared"] and total == 2
         # Un filtre qui ne correspond qu'à des documents de A ne ramène rien (ni dans total).
         docs, total = await q.list(defn, filters={"customer_name": f"{A}:needle"}, **page)
         assert docs == [] and total == 0
@@ -207,6 +210,16 @@ async def scenario_list(env: Env):
         none = Scope("read", (), doctype="Customer", user="friend", restrict=(("Customer", None),), share=True)  # aucun rôle : les partages seuls
         docs, _ = await q.list(defn, filters={}, **{**page, "scope": none})
         assert [d.name for d in docs] == ["shared"]
+
+
+async def scenario_field_values(env: Env):
+    """Les valeurs d'un champ (la somme exacte de `tx.sum`) ne viennent que du tenant de l'appelant."""
+    defn = env.customer.definition
+    async with env.q(B) as q:
+        assert sorted(await q.field_values(defn, "customer_name", filters={}, scope=ALL)) == [f"{B}:only-b", f"{B}:shared"]
+        assert await q.field_values(defn, "customer_name", filters={"customer_name": f"{A}:needle"}, scope=ALL) == []
+        # Un champ que seul A renseigne (« country ») : aucune valeur de A, seulement les vides de B.
+        assert await q.field_values(defn, "country", filters={}, scope=ALL) == [None, None]
 
 
 async def scenario_aggregate(env: Env):
@@ -875,6 +888,7 @@ SCENARIOS = {
     "list": scenario_list,
     "search": scenario_search,
     "aggregate": scenario_aggregate,
+    "field_values": scenario_field_values,
     "add_file": scenario_files,
     "get_files": scenario_files,
     "file_cited": scenario_files,
