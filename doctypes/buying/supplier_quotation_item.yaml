@@ -17,6 +17,7 @@ fields:
 - fieldname: item_name
   label: Item Name
   fieldtype: Text
+  fetch_from: item_code.item_name
 - fieldname: lead_time_days
   label: Supplier Lead Time (days)
   fieldtype: Int

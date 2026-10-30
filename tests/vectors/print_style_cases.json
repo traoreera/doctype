@@ -1,0 +1,30 @@
+{
+  "about": "Styles d'un document d'impression libre (process/impression.md §12) : ce que le serveur accepte (print_document.STYLES), et ce que le Desk garde quand il nettoie un collage (ui/src/lib/printdoc.ts). `kept` est la forme réécrite ; `ok` faux veut dire que le serveur refuse ce style tel quel.",
+  "cases": [
+    {"tag": "p", "style": "text-align: center", "ok": true, "kept": "text-align:center"},
+    {"tag": "p", "style": "TEXT-ALIGN: Right ; color: #ABCDEF", "ok": true, "kept": "text-align:right;color:#abcdef"},
+    {"tag": "span", "style": "color: rgb(26, 86, 219); font-size: 14pt", "ok": true, "kept": "color:rgb(26, 86, 219);font-size:14pt"},
+    {"tag": "span", "style": "color: red", "ok": true, "kept": "color:red"},
+    {"tag": "span", "style": "background-color: #ff0", "ok": true, "kept": "background-color:#ff0"},
+    {"tag": "span", "style": "line-height: 1.5", "ok": true, "kept": "line-height:1.5"},
+    {"tag": "span", "style": "font-size: 12px", "ok": true, "kept": "font-size:12px"},
+    {"tag": "span", "style": "font-size: 1.2em", "ok": false, "kept": ""},
+    {"tag": "span", "style": "font-size: 400pt", "ok": false, "kept": ""},
+    {"tag": "span", "style": "font-size: 3pt", "ok": false, "kept": ""},
+    {"tag": "span", "style": "font-family: Arial", "ok": false, "kept": ""},
+    {"tag": "span", "style": "color: expression(alert(1))", "ok": false, "kept": ""},
+    {"tag": "p", "style": "background-image: url(https://evil.example/x)", "ok": false, "kept": ""},
+    {"tag": "p", "style": "position: fixed; text-align: left", "ok": false, "kept": "text-align:left"},
+    {"tag": "p", "style": "width: 10mm", "ok": false, "kept": ""},
+    {"tag": "li", "style": "color: red", "ok": false, "kept": ""},
+    {"tag": "table", "style": "min-width: 75px", "ok": true, "kept": "min-width:75px"},
+    {"tag": "table", "style": "width: 120%", "ok": false, "kept": ""},
+    {"tag": "col", "style": "width: 120px", "ok": true, "kept": "width:120px"},
+    {"tag": "td", "style": "background-color: #eeeeee; vertical-align: middle", "ok": true, "kept": "background-color:#eeeeee;vertical-align:middle"},
+    {"tag": "img", "style": "width: 40mm; left: 120mm; top: -5mm", "ok": true, "kept": "width:40mm;left:120mm;top:-5mm"},
+    {"tag": "img", "style": "left: 900mm", "ok": false, "kept": ""},
+    {"tag": "img", "style": "width: 3000px", "ok": false, "kept": ""},
+    {"tag": "span", "style": "color", "ok": false, "kept": ""},
+    {"tag": "span", "style": ";;", "ok": true, "kept": ""}
+  ]
+}

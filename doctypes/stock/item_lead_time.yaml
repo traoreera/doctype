@@ -12,6 +12,7 @@ fields:
   label: Item Name
   fieldtype: Text
   read_only: true
+  fetch_from: item_code.item_name
 - fieldname: buffer_time
   label: Buffer Time
   fieldtype: Int

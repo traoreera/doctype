@@ -6,7 +6,7 @@ fields:
   - { fieldname: packed_parent_item, label: "Parent Item", fieldtype: Link, options: "Item", in_list_view: true, read_only: true }
   - { fieldname: item_code, label: "Item Code", fieldtype: Link, options: "Item", in_list_view: true, read_only: true }
   - { fieldname: product_bundle, label: "Product Bundle", fieldtype: Link, options: "Product Bundle", read_only: true, description: "Product Bundle version this row was packed from" }
-  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true }
+  - { fieldname: item_name, label: "Item Name", fieldtype: Text, read_only: true, fetch_from: item_code.item_name }
   - { fieldname: description, label: "Description", fieldtype: TextEditor, in_list_view: true }
   - { fieldname: warehouse, label: "From Warehouse", fieldtype: Link, options: "Warehouse" }
   - { fieldname: target_warehouse, label: "To Warehouse (Optional)", fieldtype: Link, options: "Warehouse" }

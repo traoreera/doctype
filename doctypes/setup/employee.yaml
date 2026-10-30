@@ -140,9 +140,11 @@ fields:
 - fieldname: bank_name
   label: Bank Name
   fieldtype: Text
+  depends_on: "salary_mode == 'Bank'"
 - fieldname: bank_ac_no
   label: Bank A/C No.
   fieldtype: Text
+  depends_on: "salary_mode == 'Bank'"
 - fieldname: cell_number
   label: Mobile
   fieldtype: Text
@@ -245,30 +247,39 @@ fields:
 - fieldname: resignation_letter_date
   label: Resignation Letter Date
   fieldtype: Date
+  depends_on: "status == 'Left'"
 - fieldname: relieving_date
   label: Relieving Date
   fieldtype: Date
+  depends_on: "status == 'Left'"
+  mandatory_depends_on: "status == 'Left'"
 - fieldname: reason_for_leaving
   label: Reason for Leaving
   fieldtype: LongText
+  depends_on: "status == 'Left'"
 - fieldname: leave_encashed
   label: Leave Encashed?
   fieldtype: Select
   options:
   - 'Yes'
   - 'No'
+  depends_on: "status == 'Left'"
 - fieldname: encashment_date
   label: Encashment Date
   fieldtype: Date
+  depends_on: "status == 'Left'"
 - fieldname: held_on
   label: Exit Interview Held On
   fieldtype: Date
+  depends_on: "status == 'Left'"
 - fieldname: new_workplace
   label: New Workplace
   fieldtype: Text
+  depends_on: "status == 'Left'"
 - fieldname: feedback
   label: Feedback
   fieldtype: LongText
+  depends_on: "status == 'Left'"
 - fieldname: lft
   label: lft
   fieldtype: Int
@@ -297,6 +308,7 @@ fields:
 - fieldname: iban
   label: IBAN
   fieldtype: Text
+  depends_on: "salary_mode == 'Bank'"
 title_field: status
 layout:
 - tab: Overview

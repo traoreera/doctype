@@ -24,8 +24,9 @@ from decimal import Decimal, InvalidOperation
 from html import escape
 from typing import Annotated, Any, Literal, Mapping, Sequence
 
-from pydantic import BaseModel, ConfigDict, Field as PydanticField, StringConstraints, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field as PydanticField, PrivateAttr, StringConstraints, TypeAdapter, ValidationError, model_validator
 
+from . import print_document
 from .decimals import canonical, to_decimal
 from .errors import InvalidDefinition
 from .notification_rules import SPECIALS, render as render_text, template_problems
@@ -145,6 +146,11 @@ class PageBreakBlock(_Model):
 
 
 PrintBlock = TitleBlock | FieldsBlock | TableBlock | TotalsBlock | TextBlock | SpacerBlock | PageBreakBlock
+# Ce qu'un document libre peut INCORPORER : ce qui exige un calcul ou une répétition (le tableau des lignes et ses
+# sous-totaux, les totaux, une grille de champs). Le texte, lui, s'écrit directement dans le document.
+EMBEDDED_BLOCK: TypeAdapter[Any] = TypeAdapter(
+    Annotated[FieldsBlock | TableBlock | TotalsBlock, PydanticField(discriminator="type")]
+)
 
 
 class LetterheadRef(_Model):
@@ -172,8 +178,34 @@ class PrintTemplate(_Model):
     label: str | None = None
     page: PageSetup = PydanticField(default_factory=PageSetup)
     letterhead: LetterheadRef | None = None
+    # Une PILE de blocs (le format d'origine, celui des gabarits livrés)…
     blocks: Annotated[list[Annotated[PrintBlock, PydanticField(discriminator="type")]],
-                      PydanticField(min_length=1, max_length=MAX_PRINT_BLOCKS)]
+                      PydanticField(min_length=1, max_length=MAX_PRINT_BLOCKS)] | None = None
+    # …ou un DOCUMENT LIBRE écrit comme dans un traitement de texte (`print_document`, §12). L'un OU l'autre.
+    content: Annotated[str, StringConstraints(min_length=1, max_length=print_document.MAX_CONTENT)] | None = None
+    _document: print_document.Parsed | None = PrivateAttr(default=None)
+
+    @model_validator(mode="after")
+    def _one_form(self) -> "PrintTemplate":
+        if (self.blocks is None) == (self.content is None):
+            raise ValueError("un gabarit a des `blocks` OU un `content` (document libre), exactement l'un des deux")
+        if self.content is not None:
+            parsed = print_document.parse(self.content, EMBEDDED_BLOCK)
+            if parsed.problems:
+                raise ValueError("document : " + " ; ".join(parsed.problems[:8]))
+            self._document = parsed
+        return self
+
+    @property
+    def document(self) -> print_document.Parsed | None:
+        """Le document libre analysé (une fois, à la validation), ou `None` pour une pile de blocs."""
+        return self._document
+
+    def all_blocks(self) -> list[PrintBlock]:
+        """Les blocs que ce gabarit imprime : sa pile, ou ceux que son document incorpore."""
+        if self.blocks is not None:
+            return list(self.blocks)
+        return print_document.embedded_blocks(self._document.root) if self._document else []
 
 
 def parse_template(raw: object, *, source: str = "<gabarit>") -> PrintTemplate:
@@ -211,8 +243,12 @@ def template_fields_problems(template: PrintTemplate, definition: DocTypeDef, ch
         elif allow is not None and f.fieldtype not in allow:
             problems.append(f"{where}: {name!r} est un {f.fieldtype}, attendu : {', '.join(allow)}")
 
-    for i, block in enumerate(template.blocks):
-        at = f"blocks.{i} ({block.type})"
+    if template.document is not None:
+        for name in print_document.values_cited(template.document.root):
+            check_field("content", name)
+    where = "blocks" if template.blocks is not None else "content (bloc incorporé)"
+    for i, block in enumerate(template.all_blocks()):
+        at = f"{where}.{i} ({block.type})"
         if isinstance(block, (TitleBlock, TextBlock)):
             problems += [f"{at}: {p}" for p in template_problems(block.text, fields)]
             for m in _TOKEN.finditer(block.text):
@@ -332,8 +368,12 @@ def render_html(
     footer_html: str = "",
     css_extra: str = "",
     titles: Titles = None,
+    images: Mapping[str, str] | None = None,
 ) -> str:
     """Le document, en HTML prêt pour le moteur PDF. Pur : rien n'est lu ni écrit.
+
+    `images` : pour un document libre, l'URL `data:` de chaque image citée, résolue par l'appelant (une image
+    absente de la table ne s'imprime pas).
 
     `children` : par champ Table, la définition du DocType de ses lignes (pour les libellés et les échelles).
     `letterhead_html` / `footer_html` : le papier à en-tête déjà rendu par l'appelant (lui seul sait lire un
@@ -343,13 +383,32 @@ def render_html(
     fields = definition.field_map
     values = {"doctype": definition.label or definition.name, "name": name}
     body: list[str] = []
-    for block in template.blocks:
-        body.append(_render_block(block, definition, data, fields, children or {}, values, titles))
+    if template.document is not None:
+        # Le document libre est ENVELOPPÉ, papier à en-tête compris : une image « devant le texte » se place depuis
+        # le coin de la zone imprimable de la première page, comme dans l'éditeur.
+        def value(token: str) -> str:
+            if token in ("name", "doctype"):
+                return escape(values[token])
+            field_name = token[4:]
+            return _cell(data.get(field_name), fields.get(field_name), titles)
+
+        inner = print_document.render(
+            template.document.root,
+            value=value,
+            block=lambda b: _render_block(b, definition, data, fields, children or {}, values, titles),
+            image=lambda fid: (images or {}).get(fid),
+        )
+        body.append(f'<div class="doc">{letterhead_html}{inner}{footer_html}</div>')
+        letterhead_html = footer_html = ""
+    else:
+        for block in template.blocks or []:
+            body.append(_render_block(block, definition, data, fields, children or {}, values, titles))
     return (
         "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>"
         + escape(f"{definition.label or definition.name} {name}")
         + "</title><style>"
         + _stylesheet(template.page)
+        + (print_document.STYLESHEET if template.document is not None else "")
         + escape(css_extra, quote=False)
         + "</style></head><body>"
         + letterhead_html
@@ -381,7 +440,10 @@ def linked_values(
             wanted.setdefault(target, set()).add(value)
 
     fields = definition.field_map
-    for block in template.blocks:
+    if template.document is not None:
+        for name in print_document.values_cited(template.document.root):
+            note(fields.get(name), data)
+    for block in template.all_blocks():
         if isinstance(block, (FieldsBlock, TotalsBlock)):
             for name in block.fields:
                 note(fields.get(name), data)
@@ -397,6 +459,11 @@ def linked_values(
                 for name in columns:
                     note(child.field_map.get(name), row)
     return wanted
+
+
+def content_files(template: PrintTemplate) -> list[str]:
+    """Les fichiers (images) qu'un document libre cite : le service les résout en URL `data:`."""
+    return list(template.document.files) if template.document is not None else []
 
 
 def letterhead_markup(image: str | None) -> str:

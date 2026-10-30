@@ -29,8 +29,8 @@ fields:
 - fieldname: supplier_name
   label: Job Worker Name
   fieldtype: Text
-  required: true
   read_only: true
+  fetch_from: supplier.supplier_name
 - fieldname: supplier_warehouse
   label: Job Worker Warehouse
   fieldtype: Link

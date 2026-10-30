@@ -170,6 +170,7 @@ class PrintService:
             footer_html=foot,
             css_extra=extra,
             titles=titles,
+            images=await self._images(ctx, compiled, found),
         )
         return html, found, background
 
@@ -308,8 +309,37 @@ class PrintService:
         html = printing.render_html(
             found, compiled.definition, record["data"], name=record["name"], children=compiled.children_by_field,
             letterhead_html=head, footer_html=foot, css_extra=extra, titles=titles,
+            images=await self._images(ctx, compiled, found),
         )
         return {"doctype": doctype, "name": record["name"], "html": html, "background": background is not None}
+
+    async def upload_image(
+        self, ctx: RequestContext, doctype: str, *, content: bytes, filename: str | None, content_type: str | None
+    ) -> dict[str, Any]:
+        """Dépose une image pour un gabarit de ce type (le logo, un tampon, une signature : §12).
+
+        Le MÊME verrou que l'enregistrement du gabarit (périmètre d'écriture total) : une image ne sert qu'à un
+        gabarit, et qui ne peut pas l'enregistrer n'a rien à y déposer.
+        """
+        self._docs._enter(ctx, "doc.print.image", doctype)
+        compiled = self._printable(doctype)
+        write = self._docs._scope(ctx, compiled, "write")
+        async with self._docs._query(ctx) as q:
+            self._check_author(write, compiled, restricted=await q.restricted(write))
+        return await self._files.save_print_image(ctx, compiled.definition.name, content=content, filename=filename, content_type=content_type)
+
+    async def _images(self, ctx: RequestContext, compiled: Any, template: PrintTemplate) -> dict[str, str]:
+        """Les images d'un document libre en URL `data:`, lues par NOUS (§6 : le moteur n'a pas de réseau).
+
+        Une image absente, effacée, ou qui n'est pas une image de gabarit de CE type est simplement omise : une
+        facture ne devient pas inimprimable parce qu'un logo a disparu.
+        """
+        out: dict[str, str] = {}
+        for file_id in printing.content_files(template):
+            found = await self._files.print_image(ctx.tenant_id, compiled.definition.name, file_id)
+            if found is not None and found[1] in EMBEDDABLE:
+                out[file_id] = f"data:{found[1]};base64,{base64.b64encode(found[0]).decode('ascii')}"
+        return out
 
     async def example(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
         """Un document d'exemple pour l'aperçu : le dernier que l'appelant peut LIRE, ou rien.

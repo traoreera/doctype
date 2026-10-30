@@ -26,6 +26,7 @@ fields:
   label: Supplier Name
   fieldtype: Text
   read_only: true
+  fetch_from: supplier.supplier_name
 - fieldname: tax_id
   label: Tax Id
   fieldtype: Text
@@ -75,9 +76,11 @@ fields:
   label: Release Date
   fieldtype: Date
   description: Once set, this invoice will be on hold till the set date
+  depends_on: "on_hold"
 - fieldname: hold_comment
   label: Reason For Putting On Hold
   fieldtype: LongText
+  depends_on: "on_hold"
 - fieldname: bill_no
   label: Supplier Invoice No
   fieldtype: Text
@@ -85,11 +88,14 @@ fields:
 - fieldname: bill_date
   label: Supplier Invoice Date
   fieldtype: Date
+  depends_on: "bill_no"
 - fieldname: return_against
   label: Return Against Purchase Invoice
   fieldtype: Link
   options: Purchase Invoice
   read_only: true
+  depends_on: "is_return"
+  mandatory_depends_on: "is_return"
 - fieldname: update_billed_amount_in_purchase_order
   label: Update Billed Amount in Purchase Order
   fieldtype: Boolean
@@ -157,10 +163,12 @@ fields:
   label: Set Accepted Warehouse
   fieldtype: Link
   options: Warehouse
+  depends_on: "update_stock"
 - fieldname: rejected_warehouse
   label: Rejected Warehouse
   fieldtype: Link
   options: Warehouse
+  depends_on: "update_stock"
 - fieldname: is_subcontracted
   label: Is Subcontracted
   fieldtype: Boolean
@@ -347,10 +355,13 @@ fields:
   label: Mode of Payment
   fieldtype: Link
   options: Mode of Payment
+  depends_on: "is_paid"
 - fieldname: cash_bank_account
   label: Cash/Bank Account
   fieldtype: Link
   options: Account
+  depends_on: "is_paid"
+  mandatory_depends_on: "is_paid"
 - fieldname: clearance_date
   label: Clearance Date
   fieldtype: Date
@@ -466,6 +477,7 @@ fields:
   fieldtype: Link
   options: Sales Invoice
   read_only: true
+  depends_on: "is_internal_supplier"
 - fieldname: remarks
   label: Remarks
   fieldtype: LongText
@@ -499,12 +511,15 @@ fields:
   fieldtype: Link
   options: Account
   description: Unrealized Profit/Loss account for intra-company transfers
+  depends_on: "is_internal_supplier"
 - fieldname: represents_company
   label: Represents Company
   fieldtype: Link
   options: Company
   read_only: true
   description: Company which internal supplier represents
+  depends_on: "is_internal_supplier"
+  mandatory_depends_on: "is_internal_supplier"
 - fieldname: set_from_warehouse
   label: Set From Warehouse
   fieldtype: Link
@@ -513,6 +528,7 @@ fields:
   label: Supplier Warehouse
   fieldtype: Link
   options: Warehouse
+  depends_on: "is_subcontracted"
 - fieldname: per_received
   label: Per Received
   fieldtype: Percent

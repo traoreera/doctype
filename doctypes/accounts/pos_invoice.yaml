@@ -21,6 +21,7 @@ fields:
   label: Customer Name
   fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: tax_id
   label: Tax Id
   fieldtype: Text

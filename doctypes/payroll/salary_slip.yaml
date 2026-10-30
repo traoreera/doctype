@@ -22,9 +22,9 @@ fields:
 - fieldname: employee_name
   label: Employee Name
   fieldtype: Text
-  required: true
   in_list_view: true
   read_only: true
+  fetch_from: employee.employee_name
 - fieldname: department
   label: Department
   fieldtype: Link

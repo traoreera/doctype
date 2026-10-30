@@ -276,3 +276,107 @@ def test_no_computed_field_is_demanded_from_the_client(registry: DocTypeRegistry
         if f.compute is not None and (f.required or f.default is not None or f.fetch_from is not None)
     ]
     assert wrong == []
+
+
+# ── T16 : les formulaires s'allègent et se remplissent seuls (`scripts/add_conditions.py`) ──
+
+
+def _errors_on(registry: DocTypeRegistry, doctype: str, data: dict, field: str) -> list[dict]:
+    """Les refus que les conditions du type portent sur `field` (les autres obligations du formulaire ne comptent pas ici)."""
+    return [e for e in registry.get(doctype).rule_errors(data, None) if e["field"] == field]
+
+
+def test_a_credit_note_must_cite_the_invoice_it_returns(registry: DocTypeRegistry) -> None:
+    """Un avoir sans facture d'origine n'est pas un avoir : obligatoire QUAND c'est un retour, invisible sinon."""
+    assert _errors_on(registry, "Sales Invoice", {"is_return": True}, "return_against")
+    assert _errors_on(registry, "Sales Invoice", {"is_return": False}, "return_against") == []
+    assert _errors_on(registry, "Purchase Invoice", {"is_return": True}, "return_against")
+
+
+def test_an_internal_transfer_has_no_party(registry: DocTypeRegistry) -> None:
+    assert _errors_on(registry, "Payment Entry", {"payment_type": "Receive"}, "party")
+    assert _errors_on(registry, "Payment Entry", {"payment_type": "Internal Transfer"}, "party") == []
+
+
+def test_an_employee_who_left_has_a_relieving_date(registry: DocTypeRegistry) -> None:
+    assert _errors_on(registry, "Employee", {"status": "Left"}, "relieving_date")
+    assert _errors_on(registry, "Employee", {"status": "Active"}, "relieving_date") == []
+
+
+def test_a_deferred_revenue_line_has_its_service_period(registry: DocTypeRegistry) -> None:
+    """Une condition DANS UNE LIGNE : l'erreur s'adresse à la cellule (`items.0.service_start_date`)."""
+    errors = registry.get("Sales Invoice").rule_errors({"items": [{"enable_deferred_revenue": True}, {}]}, None)
+    fields = {e["field"] for e in errors}
+    assert "items.0.service_start_date" in fields and "items.0.deferred_revenue_account" in fields
+    deferred = ("service_start_date", "service_end_date", "deferred_revenue_account")
+    assert not any(f"items.1.{d}" in fields for d in deferred)  # la ligne sans revenu différé ne demande rien de tel
+
+
+def test_identity_copies_fill_the_main_documents(registry: DocTypeRegistry) -> None:
+    """Le nom du tiers, de l'employé et de l'article se recopient depuis leur référentiel (T16)."""
+    expected = {
+        ("Sales Invoice", "customer_name"): "customer.customer_name",
+        ("Purchase Invoice", "supplier_name"): "supplier.supplier_name",
+        ("Purchase Order", "supplier_name"): "supplier.supplier_name",
+        ("Leave Application", "employee_name"): "employee.employee_name",
+        ("Expense Claim", "employee_name"): "employee.employee_name",
+        ("Sales Order Item", "item_name"): "item_code.item_name",
+        ("Purchase Order Item", "item_name"): "item_code.item_name",
+    }
+    for (doctype, field), source in expected.items():
+        assert registry.get(doctype).definition.field_map[field].fetch_from == source, f"{doctype}.{field}"
+
+
+def test_a_copy_never_erases_what_a_user_typed(registry: DocTypeRegistry) -> None:
+    """Avec un lien VIDE, le serveur vide la copie (`DocumentService._fetched`). Une copie n'est donc permise que sur
+    un champ que personne ne saisit (lecture seule) ou derrière un lien obligatoire — sinon le libellé libre d'une
+    ligne sans article serait effacé à l'enregistrement. Toutes les copies du jeu, sans exception."""
+    wrong = []
+    for name in registry.names():
+        fields = registry.get(name).definition.field_map
+        for f in fields.values():
+            if f.fetch_from is None:
+                continue
+            link = fields[f.fetch_from.split(".", 1)[0]]
+            if not (f.read_only or link.required):
+                wrong.append(f"{name}.{f.fieldname}")
+    assert wrong == []
+
+
+# ── Les circuits d'approbation ──
+
+APPROVED = {"Purchase Order", "Material Request", "Expense Claim", "Leave Application"}
+
+
+def test_the_pieces_that_need_an_approval_have_a_circuit(registry: DocTypeRegistry) -> None:
+    """Commande fournisseur, demande de matériel, note de frais, congé : approuvés par un autre que leur auteur."""
+    for name in sorted(APPROVED):
+        wf = registry.get(name).definition.workflow
+        assert wf is not None, name
+        by_action = {t.action: t for t in wf.transitions}
+        assert by_action["Approuver"].not_owner and by_action["Refuser"].not_owner, f"{name} : l'auteur n'approuve pas sa pièce"
+
+
+def test_an_approved_document_can_always_be_cancelled(registry: DocTypeRegistry) -> None:
+    """Sur un type à circuit, `/cancel` est REFUSÉ (le circuit le remplace). Un état soumis sans transition vers un état
+    annulé laisserait donc une commande approuvée impossible à annuler, à jamais. Tous les circuits du jeu."""
+    wrong = []
+    for name in registry.names():
+        wf = registry.get(name).definition.workflow
+        if wf is None:
+            continue
+        kind = {s.name: s.docstatus for s in wf.states}
+        for state, docstatus in kind.items():
+            if docstatus == "submitted" and not any(t.from_ == state and kind[t.to] == "cancelled" for t in wf.transitions):
+                wrong.append(f"{name}: {state}")
+    assert wrong == []
+
+
+def test_every_approval_action_is_a_declared_grant(registry: DocTypeRegistry) -> None:
+    """Chaque action du circuit est un grant que le plugin du module déclarera à auth : sans lui, personne ne peut approuver."""
+    declared = set(GrantCatalog(registry).all())
+    for name in sorted(APPROVED):
+        d = registry.get(name).definition
+        slug = re.sub(r"[^a-z0-9]+", "_", d.name.lower()).strip("_")
+        for action in ("soumettre", "approuver", "refuser", "reprendre", "annuler"):
+            assert f"{d.module}:{slug}:workflow_{action}" in declared, f"{name} : {action}"

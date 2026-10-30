@@ -9,13 +9,13 @@ d'autre, aucune écriture, et le PDF seul dépend du paquet optionnel — l'aper
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict
 
 from ..context import ContextSettings, RequestContext, http_context
 from ..errors import DoctypeError
-from ..files import content_disposition
+from ..files import PRINT_IMAGE_MAX_MB, content_disposition
 from ..print_service import PrintService
 
 # Le nom d'un gabarit et celui d'un papier à en-tête : bornés ici pour que rien de démesuré n'atteigne le service.
@@ -118,6 +118,15 @@ def build_print_router(printer: PrintService, settings: ContextSettings) -> APIR
         """L'aperçu d'un gabarit en BROUILLON (non enregistré). N'écrit rien, et exige de LIRE le document d'exemple."""
         try:
             return await printer.preview(ctx, doctype, name, body.template, body.letterhead)
+        except DoctypeError as e:
+            _raise(e)
+
+    @router.post("/print-image/{doctype}", status_code=201)
+    async def print_image(doctype: str, file: UploadFile = File(...), ctx: RequestContext = Depends(ctx_dep)):
+        """Dépose une image pour un gabarit de ce type (§12). Le verrou de l'enregistrement : périmètre d'écriture total."""
+        content = await file.read(PRINT_IMAGE_MAX_MB * 1024 * 1024 + 1)  # un octet de trop suffit à refuser
+        try:
+            return await printer.upload_image(ctx, doctype, content=content, filename=file.filename, content_type=file.content_type)
         except DoctypeError as e:
             _raise(e)
 

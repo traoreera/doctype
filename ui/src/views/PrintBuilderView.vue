@@ -1,75 +1,66 @@
 <script setup lang="ts">
+import { NodeSelection } from '@tiptap/pm/state'
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import SelectButton from 'primevue/selectbutton'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import BlockPanel from '@/components/printbuilder/BlockPanel.vue'
-import PrintCanvas from '@/components/printbuilder/PrintCanvas.vue'
+import PrintDocEditor, { type Selected } from '@/components/printdoc/PrintDocEditor.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
+import { PX_PER_MM, blocksToContent, newEmbedded, round1, tokenHtml } from '@/lib/printdoc'
+import { docContext } from '@/components/printdoc/extensions'
 import {
-  DRAG_KIND,
-  KIND_LABELS,
-  addBlock,
   addColumn,
-  draftProblems,
   fromTemplate,
   insertField,
-  moveBlockToSlot,
   moveColumn,
-  moveColumnToSlot,
   moveFieldInBlock,
-  moveFieldTo,
-  newBlock,
-  nudgeBlock,
-  removeBlock,
+  printableFields,
+  rawBlock,
   removeColumn,
   setColumnWidth,
   setGroupBy,
-  toTemplate,
   toggleField,
   toggleSubtotal,
-  totalFields,
   updateBlock,
   updateColumn,
   type Block,
-  type BlockKind,
   type Draft,
 } from '@/lib/printedit'
 import { useServices } from '@/lib/services'
 import type { DocTypeMeta } from '@/lib/types'
+import { useFiles } from '@/stores/files'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
 
 /**
- * « Personnaliser l'impression » (`process/impression.md` §10 ter) : un éditeur de FACTURE. Au centre, la
- * feuille (`PrintCanvas`) dessine les blocs avec les valeurs d'un document réel ; on y glisse les blocs de la
- * palette, on y déplace blocs, champs et colonnes, on tire la largeur d'une colonne. À droite, les propriétés du
- * bloc choisi. La bascule « Aperçu imprimé » montre ce que le SERVEUR imprime vraiment.
+ * « Personnaliser l'impression » (`process/impression.md` §12) : un éditeur de document FAÇON WORD. On écrit et
+ * met en forme la pièce sur une feuille à l'échelle ; on y insère les VALEURS du document (cliquées ou glissées
+ * depuis le panneau « Insérer »), le tableau des lignes, les totaux, des images qu'on place librement, des
+ * tableaux de mise en page. Le panneau de droite règle ce qu'on a cliqué (une image, un tableau des lignes).
+ * La bascule « Aperçu imprimé » montre ce que le SERVEUR imprime, et c'est lui qui fait foi.
  *
- * L'aperçu imprimé vient du SERVEUR (`POST /print-preview`), qui applique au brouillon les mêmes contrôles qu'à
- * un enregistrement — un gabarit non enregistré n'est donc pas une porte. La feuille, elle, n'est qu'un rendu
- * d'édition : quand les deux diffèrent, l'aperçu imprimé fait foi.
- *
- * Une pile, pas une toile : les blocs se suivent. Ce n'est pas une limite de l'éditeur mais du rendu (le moteur
- * d'impression ne connaît pas CSS grid), et c'est elle qui permet de garantir ce qui sortira.
+ * Un gabarit à BLOCS (celui d'un plugin, ou le fabriqué) s'ouvre CONVERTI en document : on part de ce qui
+ * s'imprime aujourd'hui, et l'enregistrement le remplace par un document libre (le format livré ne change pas).
  *
  * Droits : tout lecteur du type ouvre la page ; seul qui peut modifier TOUS ses documents enregistre, parce
- * qu'un gabarit rend des documents que son éditeur n'a pas forcément le droit de lire. La page le DIT et grise
- * le reste, au lieu de laisser découvrir un refus.
+ * qu'un gabarit rend des documents que son éditeur n'a pas forcément le droit de lire.
  */
 const props = defineProps<{ doctype: string }>()
 const { api } = useServices()
 const notify = useNotify()
 const metaStore = useMeta()
-
 const links = useLinks()
+const files = useFiles()
 
 const meta = ref<DocTypeMeta | null>(null)
+/** Le nom, le libellé, la page et le papier à en-tête du gabarit (ses blocs éventuels ne servent qu'à l'ouverture). */
 const draft = ref<Draft>(fromTemplate(null))
+const content = ref('')
 const source = ref<string>('')
 const editable = ref(false)
 const initial = ref('')
@@ -77,62 +68,69 @@ const loading = ref(true)
 const failure = ref('')
 const problem = ref<string | null>(null)
 const saving = ref(false)
-const chosen = ref<string | null>(null)
 const example = ref<string | null>(null)
-/** Les valeurs du document d'exemple, que la feuille dessine. */
 const exampleData = ref<Record<string, unknown> | null>(null)
-/** La colonne de tableau choisie sur la feuille (ses réglages s'ouvrent dans le panneau). */
-const chosenColumn = ref<string | null>(null)
-/** « Mise en page » (la feuille qu'on édite) ou « Aperçu imprimé » (le rendu du serveur). */
 const mode = ref<'layout' | 'preview'>('layout')
 const modes = [
   { value: 'layout', label: t.printBuilder.layoutMode },
   { value: 'preview', label: t.printBuilder.previewMode },
 ]
-const preview = ref<string>('')
+const preview = ref('')
 const previewing = ref(false)
 const previewFailure = ref('')
-/** Un jeton par aperçu demandé : une réponse en retard ne doit pas écraser un rendu plus récent. */
+const uploading = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const docEditor = shallowRef<InstanceType<typeof PrintDocEditor> | null>(null)
+const selected = ref<Selected | null>(null)
+/** Le bloc incorporé choisi, dans la forme d'édition de `printedit` (clés de colonnes stables le temps du choix). */
+const blockDraft = ref<Draft | null>(null)
+const chosenColumn = ref<string | null>(null)
 let ticket = 0
 
 const label = computed(() => meta.value?.label || props.doctype)
-const block = computed(() => draft.value.blocks.find((b) => b.key === chosen.value) ?? null)
-const problems = computed(() => (meta.value ? draftProblems(draft.value, meta.value) : []))
-const payload = computed(() => toTemplate(draft.value))
-const dirty = computed(() => !!initial.value && JSON.stringify(payload.value) !== initial.value)
-const kinds: BlockKind[] = ['title', 'fields', 'table', 'totals', 'text', 'spacer', 'page_break']
-const kindIcons: Record<BlockKind, string> = {
-  title: 'pi pi-bookmark', // PrimeIcons 7 n'a pas de « titre » : une classe inconnue laisserait un trou
-  fields: 'pi pi-th-large',
-  table: 'pi pi-table',
-  totals: 'pi pi-calculator',
-  text: 'pi pi-align-left',
-  spacer: 'pi pi-arrows-v',
-  page_break: 'pi pi-minus',
-}
-const numeric = computed(() => new Set(meta.value ? totalFields(meta.value).map((f) => f.fieldname) : []))
 const sizes = ['A3', 'A4', 'A5', 'B4', 'B5', 'Letter', 'Legal', 'Ledger']
+const payload = computed(() => {
+  const out: Record<string, unknown> = { name: draft.value.name, page: { ...draft.value.page }, content: content.value }
+  if (draft.value.label) out.label = draft.value.label
+  const lh = draft.value.letterhead
+  if (lh && (lh.name || lh.pdf)) out.letterhead = Object.fromEntries(Object.entries(lh).filter(([, v]) => v !== null && v !== undefined))
+  return out
+})
+const dirty = computed(() => !!initial.value && JSON.stringify(payload.value) !== initial.value)
+const empty = computed(() => !content.value.replace(/<p><\/p>/g, '').trim())
+const values = computed(() => {
+  const m = meta.value
+  if (!m) return []
+  return [
+    { token: 'name', label: t.printDoc.docNumber },
+    { token: 'doctype', label: t.printDoc.docType },
+    ...printableFields(m).filter((f) => !f.hidden).map((f) => ({ token: `doc.${f.fieldname}`, label: f.label || f.fieldname })),
+  ]
+})
+const tables = computed(() => meta.value?.fields.filter((f) => f.fieldtype === 'Table') ?? [])
 
 onMounted(load)
 watch(() => props.doctype, load)
-// L'aperçu suit le brouillon, sans le demander à chaque frappe : un court répit, puis une seule requête.
 let timer: ReturnType<typeof setTimeout> | undefined
 watch(payload, () => {
   clearTimeout(timer)
-  timer = setTimeout(() => void refreshPreview(), 400)
+  timer = setTimeout(() => void refreshPreview(), 500)
 })
 
 async function load(): Promise<void> {
   loading.value = true
   failure.value = ''
+  selected.value = null
   try {
     meta.value = await metaStore.refresh(props.doctype)
     const current = await api.printOverride(props.doctype)
     draft.value = fromTemplate(current.template)
+    const raw = current.template as { content?: string; blocks?: Record<string, unknown>[] }
+    content.value = typeof raw.content === 'string' ? raw.content : blocksToContent(raw.blocks ?? [], meta.value)
+    void files.resolve([...content.value.matchAll(/data-file="([0-9a-f]{32})"/g)].map((m) => m[1]!))
     source.value = current.source
     editable.value = current.editable
-    chosen.value = draft.value.blocks[0]?.key ?? null
-    initial.value = JSON.stringify(toTemplate(draft.value))
+    initial.value = JSON.stringify(payload.value)
     example.value = (await api.printExample(props.doctype)).name
     await loadExample()
     await refreshPreview()
@@ -143,10 +141,7 @@ async function load(): Promise<void> {
   }
 }
 
-/**
- * Le document d'exemple, et les TITRES de ses liens : une facture imprime « Durand », pas « CUST-0001 ». Un
- * échec ici ne bloque rien — la feuille montre alors des tirets, l'aperçu imprimé reste juste.
- */
+/** Le document d'exemple et les TITRES de ses liens : la feuille montre « Durand », pas « CUST-0001 ». */
 async function loadExample(): Promise<void> {
   exampleData.value = null
   if (!example.value || !meta.value) return
@@ -175,7 +170,7 @@ async function loadExample(): Promise<void> {
 }
 
 async function refreshPreview(): Promise<void> {
-  if (!example.value) return
+  if (!example.value || empty.value) return
   const mine = ++ticket
   previewing.value = true
   previewFailure.value = ''
@@ -218,40 +213,129 @@ async function reset(): Promise<void> {
   }
 }
 
-// ── La feuille : ajouter, déplacer, retirer ──
-function add(kind: BlockKind, slot?: number): void {
-  const made = newBlock(kind, meta.value ?? undefined)
-  const after = chosen.value ? draft.value.blocks.findIndex((b) => b.key === chosen.value) + 1 : null
-  draft.value = addBlock(draft.value, made, slot ?? after)
-  select(made.key)
+const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, page: { ...draft.value.page, ...p } })
+
+// ── Insérer ──
+const editor = () => docEditor.value?.editor ?? null
+/** Le curseur a-t-il été posé par l'utilisateur ? Sinon, un élément inséré va à la FIN du document, pas avant le titre. */
+let placed = false
+watch(docEditor, (c) => c?.editor?.on('focus', () => (placed = true)))
+/**
+ * Insère au curseur. Un bloc ou une image SÉLECTIONNÉS ne sont jamais remplacés (le comportement de base d'un
+ * éditeur, qui surprend ici : cliquer « Totaux » faisait disparaître le tableau des lignes qu'on venait de régler) —
+ * on insère juste après.
+ */
+function insert(html: string | Record<string, unknown>): void {
+  const e = editor()
+  if (!e || !editable.value) return
+  const sel = e.state.selection
+  if (sel instanceof NodeSelection) e.chain().focus().insertContentAt(sel.to, html).run()
+  else if (!placed) e.chain().focus().insertContentAt(e.state.doc.content.size, html).run()
+  else e.chain().focus().insertContent(html).run()
 }
-function select(key: string): void {
-  if (chosen.value !== key) chosenColumn.value = null
-  chosen.value = key
+const insertValue = (token: string) => meta.value && insert(tokenHtml(token, meta.value) + ' ')
+/** Un champ se GLISSE aussi dans le texte : l'éditeur reçoit le HTML du champ inséré là où on le lâche. */
+function valueDrag(e: DragEvent, token: string): void {
+  if (!e.dataTransfer || !meta.value || !editable.value) return
+  e.dataTransfer.effectAllowed = 'copy'
+  e.dataTransfer.setData('text/html', tokenHtml(token, meta.value))
+  e.dataTransfer.setData('text/plain', values.value.find((v) => v.token === token)?.label ?? token)
 }
-function selectColumn(key: string, column: string): void {
-  chosen.value = key
-  chosenColumn.value = column
+function insertBlock(type: 'table' | 'totals' | 'fields', tableField?: string): void {
+  if (!meta.value) return
+  insert({ type: 'embeddedBlock', attrs: { block: newEmbedded(type, meta.value, tableField) } })
 }
-function remove(key: string): void {
-  draft.value = removeBlock(draft.value, key)
-  if (chosen.value === key) {
-    chosen.value = null
-    chosenColumn.value = null
+const insertTable = () => editor()?.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: false }).updateAttributes('table', { borders: 'none' }).run()
+const insertBreak = () => insert({ type: 'pageBreak' })
+
+async function uploadImage(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  uploading.value = true
+  try {
+    const made = await api.printImage(props.doctype, file)
+    await files.resolve([made.id], { force: true })
+    insert({ type: 'printImage', attrs: { file: made.id, wrap: 'inline', width: 40, left: 0, top: 0 } })
+  } catch (e) {
+    notify.error(describeError(e))
+  } finally {
+    uploading.value = false
   }
 }
-function moveField(from: string, field: string, to: string, slot: number): void {
-  draft.value = moveFieldTo(draft.value, from, field, to, slot, numeric.value)
-  chosen.value = to
+
+// ── Ce qu'on a cliqué : une image, un bloc incorporé ──
+function onSelect(node: Selected | null): void {
+  const was = selected.value
+  selected.value = node
+  if (node?.type !== 'embeddedBlock') {
+    blockDraft.value = null
+    chosenColumn.value = null
+    return
+  }
+  // Le même bloc qu'avant (une transaction l'a seulement mis à jour) : on garde la forme d'édition et ses clés.
+  const same = was?.type === 'embeddedBlock' && was.pos === node.pos && blockDraft.value
+  if (same && JSON.stringify(rawBlock(blockDraft.value!.blocks[0]!)) === JSON.stringify(node.attrs.block)) return
+  blockDraft.value = fromTemplate({ blocks: [node.attrs.block] })
+  if (!same) chosenColumn.value = null
 }
-/** La palette se GLISSE sur la feuille (et se clique : le bloc va après celui qui est choisi). */
-function paletteStart(e: DragEvent, kind: BlockKind): void {
-  if (!e.dataTransfer || !editable.value) return
-  e.dataTransfer.effectAllowed = 'copy'
-  e.dataTransfer.setData(DRAG_KIND, kind)
+function setNodeAttrs(attrs: Record<string, unknown>): void {
+  const e = editor()
+  const node = selected.value
+  if (!e || !node) return
+  e.chain()
+    .command(({ tr }) => {
+      const current = tr.doc.nodeAt(node.pos)
+      if (!current) return false
+      tr.setNodeMarkup(node.pos, undefined, { ...current.attrs, ...attrs })
+      tr.setSelection(NodeSelection.create(tr.doc, node.pos))
+      return true
+    })
+    .run()
 }
-const patch = (p: Partial<Block>) => chosen.value && (draft.value = updateBlock(draft.value, chosen.value, p))
-const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, page: { ...draft.value.page, ...p } })
+const imageAttrs = computed(() => (selected.value?.type === 'printImage' ? (selected.value.attrs as { wrap: string; width: number; left: number; top: number }) : null))
+const wraps = computed(() => [
+  { value: 'inline', label: t.printDoc.wraps.inline },
+  { value: 'left', label: t.printDoc.wraps.left },
+  { value: 'right', label: t.printDoc.wraps.right },
+  { value: 'front', label: t.printDoc.wraps.front },
+])
+/**
+ * Changer l'habillage d'une image. Passée « devant le texte », elle reste OÙ ELLE ÉTAIT à l'écran : sa position
+ * se calcule depuis sa place dans le texte (sinon elle sautait au coin de la page, souvent hors de la vue).
+ */
+function setWrap(wrap: string): void {
+  const e = editor()
+  const node = selected.value
+  if (!e || !node) return
+  if (wrap === 'front' && node.attrs.wrap !== 'front') {
+    const dom = e.view.nodeDOM(node.pos) as HTMLElement | null
+    if (dom) {
+      const at = dom.getBoundingClientRect()
+      const root = e.view.dom.getBoundingClientRect()
+      const perMm = PX_PER_MM * (docContext(e).scale || 1)
+      setNodeAttrs({ wrap, left: round1((at.left - root.left) / perMm), top: round1((at.top - root.top) / perMm) })
+      return
+    }
+  }
+  setNodeAttrs({ wrap })
+}
+function removeSelected(): void {
+  const e = editor()
+  if (e && selected.value) e.chain().focus().deleteSelection().run()
+}
+
+/** Une opération de `printedit` sur le bloc incorporé choisi, réécrite dans le document. */
+function onBlock(fn: (d: Draft, key: string) => Draft): void {
+  const d = blockDraft.value
+  const b = d?.blocks[0]
+  if (!d || !b) return
+  const next = fn(d, b.key)
+  blockDraft.value = next
+  setNodeAttrs({ block: rawBlock(next.blocks[0]!) })
+}
+const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? null)
 </script>
 
 <template>
@@ -282,7 +366,7 @@ const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, 
           icon="pi pi-check"
           size="small"
           :loading="saving"
-          :disabled="!editable || !dirty || !!problems.length"
+          :disabled="!editable || !dirty || empty"
           data-testid="pb-save"
           @click="save"
         />
@@ -292,22 +376,12 @@ const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, 
     <Message v-if="failure" severity="error" data-testid="pb-error">{{ failure }}</Message>
     <Message v-else-if="!editable && !loading" severity="info" size="small" data-testid="pb-readonly">{{ t.printBuilder.readOnly }}</Message>
     <Message v-if="problem" severity="error" data-testid="pb-refused">{{ problem }}</Message>
-    <Message v-for="p in problems" :key="p" severity="warn" size="small" data-testid="pb-problem">{{ p }}</Message>
 
-    <!-- La page : format, orientation, marges, et la bascule entre la feuille et l'aperçu du serveur -->
+    <!-- La page : format, orientation, marges, et la bascule entre l'éditeur et l'aperçu du serveur -->
     <div v-if="meta" class="pb-toolbar">
       <label class="pb-inline">
         <span>{{ t.printBuilder.pageSize }}</span>
-        <Select
-          :model-value="draft.page.size"
-          :options="sizes.map((s) => ({ value: s, label: s }))"
-          option-label="label"
-          option-value="value"
-          :disabled="!editable"
-          size="small"
-          data-testid="pb-page-size"
-          @update:model-value="setPage({ size: $event })"
-        />
+        <Select :model-value="draft.page.size" :options="sizes.map((s) => ({ value: s, label: s }))" option-label="label" option-value="value" :disabled="!editable" size="small" data-testid="pb-page-size" @update:model-value="setPage({ size: $event })" />
       </label>
       <label class="pb-inline">
         <span>{{ t.printBuilder.orientation }}</span>
@@ -326,102 +400,122 @@ const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, 
         <legend>{{ t.printBuilder.margins }}</legend>
         <label v-for="side in (['top', 'right', 'bottom', 'left'] as const)" :key="side" class="pb-margin">
           <span>{{ t.printBuilder.sides[side] }}</span>
-          <InputNumber
-            :model-value="draft.page[side]"
-            :min="0"
-            :max="100"
-            :disabled="!editable"
-            size="small"
-            input-class="pb-margin-input"
-            :data-testid="`pb-margin-${side}`"
-            @update:model-value="setPage({ [side]: $event ?? 0 })"
-          />
+          <InputNumber :model-value="draft.page[side]" :min="0" :max="100" :disabled="!editable" size="small" input-class="pb-margin-input" :data-testid="`pb-margin-${side}`" @update:model-value="setPage({ [side]: $event ?? 0 })" />
         </label>
       </fieldset>
       <SelectButton v-model="mode" :options="modes" option-label="label" option-value="value" :allow-empty="false" size="small" class="pb-mode" data-testid="pb-mode" />
     </div>
 
     <div v-if="meta" class="pb-grid">
-      <!-- La palette : on glisse un bloc sur la feuille, ou on le clique -->
-      <aside class="pb-palette" :aria-label="t.printBuilder.palette">
-        <h2 class="pb-panel-title">{{ t.printBuilder.palette }}</h2>
-        <p class="desk-muted pb-hint">{{ t.printBuilder.paletteHint }}</p>
+      <!-- Insérer : cliquer place au curseur ; une valeur se glisse aussi dans le texte -->
+      <aside class="pb-insert" :aria-label="t.printDoc.insert">
+        <h2 class="pb-panel-title">{{ t.printDoc.insert }}</h2>
+        <h3 class="pb-group">{{ t.printDoc.elements }}</h3>
+        <button type="button" class="pb-item" :disabled="!editable || uploading" data-testid="pd-insert-image" @click="fileInput?.click()">
+          <i class="pi pi-image" aria-hidden="true" />{{ uploading ? t.printDoc.uploading : t.printDoc.image }}
+        </button>
+        <input ref="fileInput" type="file" accept="image/png,image/jpeg,image/gif,image/webp" class="pb-file" data-testid="pd-image-file" @change="uploadImage" />
+        <button v-for="tb in tables" :key="tb.fieldname" type="button" class="pb-item" :disabled="!editable" :data-testid="`pd-insert-lines-${tb.fieldname}`" @click="insertBlock('table', tb.fieldname)">
+          <i class="pi pi-table" aria-hidden="true" />{{ t.printDoc.lines(tb.label || tb.fieldname) }}
+        </button>
+        <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-totals" @click="insertBlock('totals')"><i class="pi pi-calculator" aria-hidden="true" />{{ t.printDoc.totals }}</button>
+        <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-fields" @click="insertBlock('fields')"><i class="pi pi-th-large" aria-hidden="true" />{{ t.printDoc.fieldsGrid }}</button>
+        <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-table" @click="insertTable"><i class="pi pi-objects-column" aria-hidden="true" />{{ t.printDoc.layoutTable }}</button>
+        <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-break" @click="insertBreak"><i class="pi pi-minus" aria-hidden="true" />{{ t.printDoc.pageBreak }}</button>
+        <h3 class="pb-group">{{ t.printDoc.values }}</h3>
+        <p class="desk-muted pb-hint">{{ t.printDoc.valuesHint }}</p>
         <button
-          v-for="k in kinds"
-          :key="k"
+          v-for="v in values"
+          :key="v.token"
           type="button"
-          class="pb-palette-item"
+          class="pb-item pb-value"
           :draggable="editable"
           :disabled="!editable"
-          :data-testid="`pb-new-${k}`"
-          @dragstart="paletteStart($event, k)"
-          @click="add(k)"
+          :data-testid="`pd-value-${v.token}`"
+          @dragstart="valueDrag($event, v.token)"
+          @click="insertValue(v.token)"
         >
-          <i :class="kindIcons[k]" aria-hidden="true" />
-          <span>{{ KIND_LABELS[k] }}</span>
+          <i class="pi pi-tag" aria-hidden="true" />{{ v.label }}
         </button>
       </aside>
 
-      <!-- La feuille, ou l'aperçu imprimé par le serveur -->
       <div class="pb-center">
-        <PrintCanvas
+        <PrintDocEditor
           v-show="mode === 'layout'"
-          :draft="draft"
+          ref="docEditor"
+          v-model="content"
+          :page="draft.page"
           :meta="meta"
           :example="exampleData"
           :name="example"
-          :chosen="chosen"
-          :chosen-column="chosenColumn"
           :editable="editable"
           :link-title="links.title"
-          @select="select"
-          @select-column="selectColumn"
-          @insert="(kind, slot) => add(kind, slot)"
-          @move-block="(key, slot) => (draft = moveBlockToSlot(draft, key, slot))"
-          @move-field="moveField"
-          @move-column="(key, column, slot) => (draft = moveColumnToSlot(draft, key, column, slot))"
-          @resize-column="(key, column, width) => (draft = setColumnWidth(draft, key, column, width))"
-          @nudge="(key, how) => (draft = nudgeBlock(draft, key, how))"
-          @remove="remove"
+          :image-url="files.url"
+          @select="onSelect"
         />
         <div v-show="mode === 'preview'" class="pb-preview">
           <p v-if="!example" class="desk-muted" data-testid="pb-no-example">{{ t.printBuilder.noPreview }}</p>
           <Message v-else-if="previewFailure" severity="warn" size="small" data-testid="pb-preview-error">{{ previewFailure }}</Message>
           <span v-if="previewing" class="desk-muted" data-testid="pb-previewing">{{ t.printBuilder.previewing }}</span>
-          <!-- Même bac à sable que le dialogue d'impression : aucun script, et `allow-same-origin` seulement pour
-               que la page parente puisse atteindre le cadre (mesuré dans un vrai navigateur). -->
-          <iframe
-            v-if="example && preview"
-            class="pb-frame"
-            sandbox="allow-same-origin allow-modals"
-            :title="t.printBuilder.preview"
-            :srcdoc="preview"
-            data-testid="pb-frame"
-          />
+          <!-- Aucun script dans ce cadre ; `allow-same-origin` seulement pour que la page atteigne le cadre (mesuré). -->
+          <iframe v-if="example && preview" class="pb-frame" sandbox="allow-same-origin allow-modals" :title="t.printBuilder.preview" :srcdoc="preview" data-testid="pb-frame" />
         </div>
         <p v-if="mode === 'layout' && !example" class="desk-muted pb-hint" data-testid="pb-no-example">{{ t.printBuilder.noExample }}</p>
       </div>
 
-      <!-- Les propriétés du bloc choisi -->
-      <BlockPanel
-        class="pb-props"
-        :block="block"
-        :meta="meta"
-        :editable="editable"
-        :chosen-column="chosenColumn"
-        @update="patch"
-        @select-column="(c) => (chosenColumn = c)"
-        @toggle-field="chosen && (draft = toggleField(draft, chosen, $event))"
-        @insert-field="(f) => chosen && (draft = insertField(draft, chosen, f, block?.fields?.length ?? 0))"
-        @move-field="(f, how) => chosen && (draft = moveFieldInBlock(draft, chosen, f, how))"
-        @add-column="chosen && (draft = addColumn(draft, chosen, $event))"
-        @remove-column="chosen && (draft = removeColumn(draft, chosen, $event))"
-        @move-column="(k, how) => chosen && (draft = moveColumn(draft, chosen, k, how))"
-        @update-column="(k, p) => chosen && (draft = updateColumn(draft, chosen, k, p))"
-        @set-column-width="(k, w) => chosen && (draft = setColumnWidth(draft, chosen, k, w))"
-        @set-group-by="chosen && (draft = setGroupBy(draft, chosen, $event))"
-        @toggle-subtotal="chosen && (draft = toggleSubtotal(draft, chosen, $event))"
-      />
+      <!-- Les propriétés de ce qu'on a cliqué -->
+      <aside class="pb-props" :aria-label="t.printBuilder.properties">
+        <template v-if="imageAttrs">
+          <h2 class="pb-panel-title" data-testid="pd-props-title">{{ t.printDoc.image }}</h2>
+          <label class="pb-field">
+            <span>{{ t.printDoc.wrap }}</span>
+            <Select :model-value="imageAttrs.wrap" :options="wraps" option-label="label" option-value="value" :disabled="!editable" size="small" fluid data-testid="pd-wrap" @update:model-value="setWrap($event)" />
+          </label>
+          <p v-if="imageAttrs.wrap === 'front'" class="desk-muted pb-hint">{{ t.printDoc.frontHint }}</p>
+          <label class="pb-field">
+            <span>{{ t.printDoc.width }}</span>
+            <InputNumber :model-value="imageAttrs.width" :min="5" :max="500" :max-fraction-digits="1" :disabled="!editable" size="small" fluid data-testid="pd-width" @update:model-value="setNodeAttrs({ width: $event ?? 40 })" />
+          </label>
+          <div v-if="imageAttrs.wrap === 'front'" class="pb-pair">
+            <label class="pb-field">
+              <span>{{ t.printDoc.left }}</span>
+              <InputNumber :model-value="imageAttrs.left" :min="-50" :max="500" :max-fraction-digits="1" :disabled="!editable" size="small" fluid data-testid="pd-left" @update:model-value="setNodeAttrs({ left: $event ?? 0 })" />
+            </label>
+            <label class="pb-field">
+              <span>{{ t.printDoc.top }}</span>
+              <InputNumber :model-value="imageAttrs.top" :min="-50" :max="500" :max-fraction-digits="1" :disabled="!editable" size="small" fluid data-testid="pd-top" @update:model-value="setNodeAttrs({ top: $event ?? 0 })" />
+            </label>
+          </div>
+          <Button :label="t.printDoc.removeImage" icon="pi pi-trash" text severity="danger" size="small" :disabled="!editable" data-testid="pd-remove" @click="removeSelected" />
+        </template>
+
+        <template v-else-if="embedded">
+          <BlockPanel
+            :block="embedded"
+            :meta="meta"
+            :editable="editable"
+            :chosen-column="chosenColumn"
+            @update="(p) => onBlock((d, k) => updateBlock(d, k, p))"
+            @select-column="(c) => (chosenColumn = c)"
+            @toggle-field="(f) => onBlock((d, k) => toggleField(d, k, f))"
+            @insert-field="(f) => onBlock((d, k) => insertField(d, k, f, embedded?.fields?.length ?? 0))"
+            @move-field="(f, how) => onBlock((d, k) => moveFieldInBlock(d, k, f, how))"
+            @add-column="(f) => onBlock((d, k) => addColumn(d, k, f))"
+            @remove-column="(c) => onBlock((d, k) => removeColumn(d, k, c))"
+            @move-column="(c, how) => onBlock((d, k) => moveColumn(d, k, c, how))"
+            @update-column="(c, p) => onBlock((d, k) => updateColumn(d, k, c, p))"
+            @set-column-width="(c, w) => onBlock((d, k) => setColumnWidth(d, k, c, w))"
+            @set-group-by="(f) => onBlock((d, k) => setGroupBy(d, k, f))"
+            @toggle-subtotal="(f) => onBlock((d, k) => toggleSubtotal(d, k, f))"
+          />
+          <Button :label="t.printDoc.removeBlock" icon="pi pi-trash" text severity="danger" size="small" :disabled="!editable" data-testid="pd-remove" @click="removeSelected" />
+        </template>
+
+        <template v-else>
+          <h2 class="pb-panel-title">{{ t.printBuilder.properties }}</h2>
+          <p class="desk-muted pb-hint">{{ t.printDoc.nothingChosen }}</p>
+        </template>
+      </aside>
     </div>
   </section>
 </template>
@@ -515,11 +609,9 @@ const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, 
   margin-left: auto;
 }
 
-/* Trois colonnes de largeur FIXE autour de la feuille : la palette et le panneau ne mangent plus la page
-   (`max-content` laissait la palette s'étendre sur toute la largeur et écrasait la feuille et l'aperçu). */
 .pb-grid {
   display: grid;
-  grid-template-columns: 10rem minmax(0, 1fr) 20rem;
+  grid-template-columns: 12rem minmax(0, 1fr) 18rem;
   gap: 1rem;
   align-items: start;
 }
@@ -528,20 +620,27 @@ const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, 
   min-width: 0;
 }
 
-/* Sous 1100 px : la palette passe en bande au-dessus, le panneau sous la feuille. */
 @media (max-width: 1100px) {
   .pb-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .pb-palette {
+  .pb-insert {
+    position: static !important;
+    max-height: none !important;
     display: flex !important;
     flex-wrap: wrap;
   }
 
-  .pb-palette .pb-panel-title,
-  .pb-palette .pb-hint {
+  .pb-insert .pb-panel-title,
+  .pb-insert .pb-group,
+  .pb-insert .pb-hint {
     width: 100%;
+  }
+
+  .pb-props {
+    position: static !important;
+    max-height: none !important;
   }
 }
 
@@ -550,78 +649,97 @@ const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, 
   margin: 0 0 0.25rem;
 }
 
+.pb-group {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--p-text-muted-color);
+  margin: 0.5rem 0 0.1rem;
+}
+
 .pb-hint {
   font-size: 0.75rem;
   margin: 0 0 0.25rem;
 }
 
-.pb-palette {
+.pb-insert,
+.pb-props {
   display: grid;
   gap: 0.35rem;
   align-content: start;
   position: sticky;
   top: 0.5rem;
-}
-
-.pb-palette-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 2.25rem;
-  padding: 0.35rem 0.6rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-sm, 4px);
-  background: var(--p-content-background);
-  color: var(--p-text-color);
-  font: inherit;
-  font-size: 0.85rem;
-  cursor: grab;
-  text-align: left;
-}
-
-.pb-palette-item:hover:not(:disabled) {
-  border-color: var(--p-primary-color);
-}
-
-.pb-palette-item:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.pb-palette-item i {
-  color: var(--p-primary-color);
-}
-
-.pb-center {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.pb-preview {
-  display: grid;
-  gap: 0.5rem;
+  max-height: calc(100vh - 6rem);
+  overflow: auto;
 }
 
 .pb-props {
-  position: sticky;
-  top: 0.5rem;
-  max-height: calc(100vh - 6rem);
-  overflow: auto;
+  gap: 0.6rem;
   padding: 0.75rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-border-radius-md, 6px);
   background: var(--p-content-background);
 }
 
-@media (max-width: 1100px) {
-  .pb-palette,
-  .pb-props {
-    position: static;
-    max-height: none;
-  }
+.pb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.1rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-border-radius-sm, 4px);
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
 }
 
-/* L'aperçu est une page de papier : fond blanc quel que soit le thème, comme elle sortira. */
+.pb-item:hover:not(:disabled) {
+  border-color: var(--p-primary-color);
+}
+
+.pb-item:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.pb-item i {
+  color: var(--p-primary-color);
+}
+
+.pb-value {
+  cursor: grab;
+}
+
+.pb-file {
+  display: none;
+}
+
+.pb-field {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.pb-field > span {
+  color: var(--p-text-muted-color);
+}
+
+.pb-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.pb-center,
+.pb-preview {
+  display: grid;
+  gap: 0.5rem;
+}
+
 .pb-frame {
   width: 100%;
   height: calc(100vh - 14rem);

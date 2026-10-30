@@ -1,20 +1,12 @@
 /**
- * L'éditeur de gabarits d'impression (`process/impression.md` §10) : le gabarit comme une PILE de blocs qu'on
- * manipule, et sa traduction exacte en ce que le serveur reçoit.
+ * Les BLOCS du vocabulaire d'impression (`process/impression.md` §4) et leur édition pure : ce que le document
+ * libre (§12) incorpore — le tableau des lignes, les totaux, une grille de champs — se règle avec ces fonctions,
+ * dans le panneau de droite de l'éditeur (`BlockPanel`). Le texte, lui, s'écrit dans l'éditeur (`lib/printdoc`).
  *
- * Tout est pur ici, testé à part (`tests/printedit.spec.ts`) : la page affiche la pile, appelle ces fonctions —
- * qui rendent toujours une NOUVELLE pile — et demande l'aperçu au serveur. C'est le découpage de
- * `lib/formbuilder.ts`, qui a marché.
- *
- * **Une pile, pas une toile.** Les blocs se suivent ; on ne les place pas librement en deux dimensions. Ce
- * n'est pas une limite de l'éditeur mais du rendu : le moteur d'impression ne connaît pas CSS grid, et c'est
- * précisément ce qui permet de garantir ce qui sortira (§1). Un éditeur qui laisserait poser un bloc n'importe
- * où promettrait ce que le PDF ne tiendrait pas.
- *
- * Les règles du serveur (`printing.py`, §8) sont tenues ICI, avant l'enregistrement, pour qu'on ne les
- * découvre pas par un refus : 100 blocs au plus, 12 colonnes par tableau, des largeurs de 1 à 100 dont la
- * somme ne dépasse pas 100, un `subtotal` qui exige un `group_by` et ne nomme que des colonnes présentes, et
- * aucun champ qui ne s'imprime pas (secret, fichier, structure).
+ * Tout est pur, testé à part (`tests/printedit.spec.ts`) : chaque fonction rend une NOUVELLE forme. Les règles
+ * du serveur (`printing.py`, §8) sont tenues ici avant l'enregistrement : 12 colonnes par tableau, des largeurs
+ * de 1 à 100 dont la somme ne dépasse pas 100, un `subtotal` qui exige un `group_by` et ne nomme que des colonnes
+ * présentes, aucun champ qui ne s'imprime pas (secret, fichier, structure).
  */
 import type { DocTypeMeta, FieldMeta } from './types'
 
@@ -22,14 +14,6 @@ export const MAX_BLOCKS = 100
 export const MAX_COLUMNS = 12
 export const MAX_FIELDS = 60
 export const MAX_TEXT = 2000
-/** Le type MIME d'un bloc qu'on glisse dans la pile. */
-export const DRAG_BLOCK = 'text/x-xdt-print-block'
-/** Un genre de bloc qu'on glisse depuis la palette (un bloc NEUF). */
-export const DRAG_KIND = 'text/x-xdt-print-kind'
-/** Un champ d'un bloc `fields`/`totals` qu'on glisse : `<clé du bloc>|<champ>`. */
-export const DRAG_FIELD = 'text/x-xdt-print-field'
-/** Une colonne de tableau qu'on glisse : `<clé du bloc>|<clé de la colonne>`. */
-export const DRAG_COLUMN = 'text/x-xdt-print-column'
 
 /** Ce qu'un bloc ne peut pas imprimer : le serveur le refuse (`printing.UNPRINTABLE`). */
 export const UNPRINTABLE = ['Password', 'JSON', 'TextEditor', 'Image', 'Attach'] as const
@@ -133,103 +117,30 @@ export function fromTemplate(raw: unknown): Draft {
   }
 }
 
-/** Ce qu'on envoie au serveur : les clés d'édition retirées, les blocs vides écartés. */
-export function toTemplate(draft: Draft): Record<string, unknown> {
-  const blocks = draft.blocks.filter(isUseful).map((b) => {
-    const { key: _k, ...rest } = b
-    const out: Record<string, unknown> = { ...rest }
-    if (Array.isArray(b.columns)) out.columns = b.columns.map(({ key: _ck, ...c }) => prune(c as unknown as Record<string, unknown>))
-    if (b.type !== 'table') {
-      delete out.field
-      // `columns` d'un bloc `fields` est son NOMBRE de colonnes (1-4), qu'il faut envoyer : le retirer ici
-      // rendait le réglage « Colonnes » sans effet à l'impression.
-      if (b.type !== 'fields' || typeof b.columns !== 'number') delete out.columns
-      delete out.style
-      delete out.density
-      delete out.repeat_header
-      delete out.group_by
-      delete out.subtotal
-    }
-    if (b.type !== 'fields' && b.type !== 'totals') delete out.fields
-    if (b.type !== 'spacer') delete out.size
-    if (b.type !== 'title' && b.type !== 'text') delete out.text
-    return prune(out)
-  })
-  const out: Record<string, unknown> = { name: draft.name, page: { ...draft.page }, blocks }
-  if (draft.label) out.label = draft.label
-  if (draft.letterhead && (draft.letterhead.name || draft.letterhead.pdf)) out.letterhead = prune({ ...draft.letterhead })
-  return out
+/** Un bloc dans la forme du serveur : clés d'édition retirées, propriétés d'un autre genre de bloc écartées. */
+export function rawBlock(b: Block): Record<string, unknown> {
+  const { key: _k, ...rest } = b
+  const out: Record<string, unknown> = { ...rest }
+  if (Array.isArray(b.columns)) out.columns = b.columns.map(({ key: _ck, ...c }) => prune(c as unknown as Record<string, unknown>))
+  if (b.type !== 'table') {
+    delete out.field
+    // `columns` d'un bloc `fields` est son NOMBRE de colonnes (1-4), qu'il faut envoyer : le retirer ici
+    // rendait le réglage « Colonnes » sans effet à l'impression.
+    if (b.type !== 'fields' || typeof b.columns !== 'number') delete out.columns
+    delete out.style
+    delete out.density
+    delete out.repeat_header
+    delete out.group_by
+    delete out.subtotal
+  }
+  if (b.type !== 'fields' && b.type !== 'totals') delete out.fields
+  if (b.type !== 'spacer') delete out.size
+  if (b.type !== 'title' && b.type !== 'text') delete out.text
+  return prune(out)
 }
 
 const prune = (o: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(o).filter(([, v]) => v !== null && v !== undefined && !(Array.isArray(v) && !v.length)))
-
-/**
- * Un bloc qui n'imprimerait RIEN n'est pas envoyé : un tableau sans colonne, une liste de champs vide, un
- * titre sans texte. Le serveur les refuserait (`min_length`), et un éditeur ne doit pas obliger à finir un
- * bloc qu'on vient d'ajouter avant de pouvoir enregistrer le reste.
- */
-export function isUseful(b: Block): boolean {
-  if (b.type === 'fields' || b.type === 'totals') return !!b.fields?.length
-  if (b.type === 'table') return !!b.field && tableColumns(b).length > 0
-  if (b.type === 'title' || b.type === 'text') return !!b.text?.trim()
-  return true // spacer, page_break : toujours utiles
-}
-
-/** Un bloc neuf du genre demandé, avec les valeurs par défaut du serveur. */
-export function newBlock(type: BlockKind, meta?: DocTypeMeta): Block {
-  const base: Block = { key: key('b'), type }
-  if (type === 'title') return { ...base, text: '{{ doctype }} {{ name }}' }
-  if (type === 'text') return { ...base, text: '' }
-  if (type === 'fields') return { ...base, fields: [] }
-  if (type === 'totals') return { ...base, fields: [] }
-  if (type === 'spacer') return { ...base, size: 5 }
-  if (type === 'table') {
-    const table = meta?.fields.find((f) => f.fieldtype === 'Table')
-    return { ...base, field: table?.fieldname, columns: [] as Column[], style: 'bordered', density: 'normal', repeat_header: true }
-  }
-  return base
-}
-
-// ── Déplacer, ajouter, retirer ──────────────────────────────
-export function addBlock(draft: Draft, block: Block, at: number | null = null): Draft {
-  const blocks = [...draft.blocks]
-  blocks.splice(at === null ? blocks.length : Math.max(0, Math.min(at, blocks.length)), 0, block)
-  return { ...draft, blocks }
-}
-
-export function removeBlock(draft: Draft, blockKey: string): Draft {
-  return { ...draft, blocks: draft.blocks.filter((b) => b.key !== blockKey) }
-}
-
-export function moveBlock(draft: Draft, blockKey: string, to: number): Draft {
-  const from = draft.blocks.findIndex((b) => b.key === blockKey)
-  if (from < 0) return draft
-  const blocks = [...draft.blocks]
-  const [moved] = blocks.splice(from, 1)
-  blocks.splice(Math.max(0, Math.min(to, blocks.length)), 0, moved!)
-  return { ...draft, blocks }
-}
-
-/**
- * Le rang où poser un élément déplacé depuis `from` vers l'EMPLACEMENT `slot` (0 = avant le premier, n = après le
- * dernier) : une fois l'élément retiré, les emplacements qui le suivent reculent d'un cran.
- */
-export const slotIndex = (from: number, slot: number): number => (from >= 0 && slot > from ? slot - 1 : slot)
-
-/** Déplacer un bloc vers un emplacement de la page (ce que donne un glisser-déposer). */
-export function moveBlockToSlot(draft: Draft, blockKey: string, slot: number): Draft {
-  const from = draft.blocks.findIndex((b) => b.key === blockKey)
-  return from < 0 ? draft : moveBlock(draft, blockKey, slotIndex(from, slot))
-}
-
-/** Monter ou descendre d'un cran : l'équivalent clavier du glisser-déposer (une page doit s'utiliser sans souris). */
-export function nudgeBlock(draft: Draft, blockKey: string, how: 'up' | 'down'): Draft {
-  const at = draft.blocks.findIndex((b) => b.key === blockKey)
-  if (at < 0) return draft
-  const to = how === 'up' ? at - 1 : at + 1
-  return to < 0 || to >= draft.blocks.length ? draft : moveBlock(draft, blockKey, to)
-}
 
 export function updateBlock(draft: Draft, blockKey: string, patch: Partial<Block>): Draft {
   return { ...draft, blocks: draft.blocks.map((b) => (b.key === blockKey ? { ...b, ...patch } : b)) }
@@ -252,33 +163,6 @@ export function moveFieldInBlock(draft: Draft, blockKey: string, field: string, 
   if (at < 0 || to < 0 || to >= current.length) return draft
   current.splice(to, 0, current.splice(at, 1)[0]!)
   return updateBlock(draft, blockKey, { fields: current })
-}
-
-/**
- * Glisser un champ à un emplacement d'un bloc `fields`/`totals`, le même ou un autre : la facture se compose en
- * déplaçant « Échéance » du bloc d'en-tête vers celui du bas, pas en le retirant puis en le rajoutant.
- *
- * Refusé (pile inchangée) quand la cible n'est pas un bloc de champs, qu'elle l'imprime déjà, ou qu'un bloc
- * `totals` recevrait autre chose qu'un nombre (`numeric` : les champs que le serveur y accepte).
- */
-export function moveFieldTo(draft: Draft, fromKey: string, field: string, toKey: string, slot: number, numeric?: ReadonlySet<string>): Draft {
-  const source = draft.blocks.find((b) => b.key === fromKey)
-  const target = draft.blocks.find((b) => b.key === toKey)
-  if (!source || !target || !source.fields?.includes(field)) return draft
-  if (target.type !== 'fields' && target.type !== 'totals') return draft
-  if (target.type === 'totals' && numeric && !numeric.has(field)) return draft
-  if (fromKey === toKey) {
-    const current = [...source.fields]
-    const from = current.indexOf(field)
-    current.splice(from, 1)
-    current.splice(Math.max(0, Math.min(slotIndex(from, slot), current.length)), 0, field)
-    return updateBlock(draft, fromKey, { fields: current })
-  }
-  const into = target.fields ?? []
-  if (into.includes(field) || into.length >= MAX_FIELDS) return draft
-  const next = [...into]
-  next.splice(Math.max(0, Math.min(slot, next.length)), 0, field)
-  return updateBlock(updateBlock(draft, fromKey, { fields: source.fields.filter((f) => f !== field) }), toKey, { fields: next })
 }
 
 /** Poser un champ (venu de la liste des champs disponibles) à un emplacement d'un bloc. */
@@ -320,17 +204,6 @@ export function moveColumn(draft: Draft, blockKey: string, columnKey: string, ho
   return updateBlock(draft, blockKey, { columns })
 }
 
-/** Glisser une colonne à un emplacement de son tableau. */
-export function moveColumnToSlot(draft: Draft, blockKey: string, columnKey: string, slot: number): Draft {
-  const block = draft.blocks.find((b) => b.key === blockKey)
-  const columns = block ? [...tableColumns(block)] : []
-  const from = columns.findIndex((c) => c.key === columnKey)
-  if (from < 0) return draft
-  const [moved] = columns.splice(from, 1)
-  columns.splice(Math.max(0, Math.min(slotIndex(from, slot), columns.length)), 0, moved!)
-  return updateBlock(draft, blockKey, { columns })
-}
-
 /**
  * La largeur d'une colonne qu'on tire à la souris, en % : arrondie, au moins 1, et jamais au point que la somme
  * des largeurs dépasse 100 (le serveur refuserait le gabarit). Les colonnes sans largeur ne comptent pas : elles
@@ -344,19 +217,6 @@ export function setColumnWidth(draft: Draft, blockKey: string, columnKey: string
     .reduce((sum, c) => sum + (c.width ?? 0), 0)
   const room = Math.max(1, 100 - others)
   return updateColumn(draft, blockKey, columnKey, { width: Math.max(1, Math.min(Math.round(width), room)) })
-}
-
-/**
- * Le texte d'un bloc titre/texte tel qu'il s'imprimera sur le document d'exemple : la substitution du serveur
- * (`{{ name }}`, `{{ doctype }}`, `{{ doc.<champ> }}`), pour que la page de l'éditeur ressemble à la facture.
- * Ce n'est qu'un rendu d'édition : l'aperçu imprimé, lui, vient du serveur et fait foi.
- */
-export function fillText(text: string, ctx: { name?: string | null; doctype: string; value: (field: string) => string }): string {
-  return text.replace(/\{\{\s*(doc\.([a-z0-9_]+)|name|doctype)\s*\}\}/g, (whole, what: string, field?: string) => {
-    if (what === 'name') return ctx.name ?? whole
-    if (what === 'doctype') return ctx.doctype
-    return field ? ctx.value(field) : whole
-  })
 }
 
 export function updateColumn(draft: Draft, blockKey: string, columnKey: string, patch: Partial<Column>): Draft {
@@ -385,8 +245,6 @@ export const printableFields = (meta: DocTypeMeta): FieldMeta[] =>
 /** Les champs qu'un bloc `totals` peut imprimer : des nombres, alignés à droite par le rendu. */
 export const totalFields = (meta: DocTypeMeta): FieldMeta[] => meta.fields.filter((f) => NUMERIC.includes(f.fieldtype as never))
 
-export const tableFields = (meta: DocTypeMeta): FieldMeta[] => meta.fields.filter((f) => f.fieldtype === 'Table')
-
 /** Les colonnes possibles pour un tableau : les champs de ses LIGNES, hors structures et secrets. */
 export function columnFields(meta: DocTypeMeta, tableField: string | undefined): FieldMeta[] {
   const table = meta.fields.find((f) => f.fieldname === tableField)
@@ -396,41 +254,6 @@ export function columnFields(meta: DocTypeMeta, tableField: string | undefined):
 
 export const groupableColumns = (meta: DocTypeMeta, tableField: string | undefined): FieldMeta[] =>
   columnFields(meta, tableField).filter((f) => GROUPABLE.includes(f.fieldtype as never))
-
-/**
- * Ce que le serveur refuserait, dit AVANT d'enregistrer. Les mêmes règles que `printing.py` §8 — un éditeur qui
- * laisse enregistrer puis montre un 422 fait deviner à l'utilisateur ce qu'un contrôle sait déjà.
- */
-export function draftProblems(draft: Draft, meta: DocTypeMeta): string[] {
-  const problems: string[] = []
-  const useful = draft.blocks.filter(isUseful)
-  if (!useful.length) problems.push('Un gabarit imprime au moins un bloc.')
-  if (useful.length > MAX_BLOCKS) problems.push(`${MAX_BLOCKS} blocs au plus.`)
-  const printable = new Set(printableFields(meta).map((f) => f.fieldname))
-  for (const b of draft.blocks) {
-    const where = blockLabel(b, meta)
-    if (b.type === 'fields' || b.type === 'totals') {
-      for (const f of b.fields ?? []) if (!printable.has(f)) problems.push(`${where} : « ${f} » ne s'imprime pas.`)
-      if ((b.fields?.length ?? 0) > MAX_FIELDS) problems.push(`${where} : ${MAX_FIELDS} champs au plus.`)
-    }
-    if (b.type === 'table') {
-      const columns = tableColumns(b)
-      if (!b.field) problems.push(`${where} : choisissez le tableau à imprimer.`)
-      if (columns.length > MAX_COLUMNS) problems.push(`${where} : ${MAX_COLUMNS} colonnes au plus.`)
-      const widths = columns.map((c) => c.width ?? 0).reduce((a, b2) => a + b2, 0)
-      if (widths > 100) problems.push(`${where} : la somme des largeurs dépasse 100 % (${widths} %).`)
-      const named = new Set(columns.map((c) => c.field))
-      for (const f of b.subtotal ?? []) {
-        if (!named.has(f)) problems.push(`${where} : le sous-total « ${f} » ne correspond à aucune colonne.`)
-      }
-      if ((b.subtotal?.length ?? 0) && !b.group_by) problems.push(`${where} : un sous-total se calcule par groupe, choisissez un regroupement.`)
-    }
-    if ((b.type === 'title' || b.type === 'text') && (b.text?.length ?? 0) > MAX_TEXT) {
-      problems.push(`${where} : ${MAX_TEXT} caractères au plus.`)
-    }
-  }
-  return problems
-}
 
 export const KIND_LABELS: Record<BlockKind, string> = {
   title: 'Titre',
@@ -442,14 +265,3 @@ export const KIND_LABELS: Record<BlockKind, string> = {
   page_break: 'Saut de page',
 }
 
-/** Comment nommer un bloc dans la pile et dans un message : son genre, et ce qu'il imprime. */
-export function blockLabel(b: Block, meta?: DocTypeMeta): string {
-  const kind = KIND_LABELS[b.type]
-  if (b.type === 'table') {
-    const table = meta?.fields.find((f) => f.fieldname === b.field)
-    return `${kind} ${table?.label || b.field || '—'}`
-  }
-  if (b.type === 'fields' || b.type === 'totals') return `${kind} (${b.fields?.length ?? 0})`
-  if (b.type === 'title' || b.type === 'text') return `${kind} ${(b.text ?? '').slice(0, 24)}`.trimEnd()
-  return kind
-}

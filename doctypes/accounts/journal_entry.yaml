@@ -63,9 +63,13 @@ fields:
 - fieldname: cheque_no
   label: Reference Number
   fieldtype: Text
+  depends_on: "voucher_type in ['Bank Entry', 'Credit Card Entry']"
+  mandatory_depends_on: "voucher_type == 'Bank Entry'"
 - fieldname: cheque_date
   label: Reference Date
   fieldtype: Date
+  depends_on: "voucher_type in ['Bank Entry', 'Credit Card Entry']"
+  mandatory_depends_on: "voucher_type == 'Bank Entry'"
 - fieldname: user_remark
   label: User Remark
   fieldtype: LongText
@@ -119,6 +123,7 @@ fields:
   fieldtype: Link
   options: Journal Entry
   read_only: true
+  depends_on: "voucher_type == 'Inter Company Journal Entry'"
 - fieldname: bill_no
   label: Bill No
   fieldtype: Text
@@ -135,10 +140,12 @@ fields:
   - Accounts Receivable
   - Accounts Payable
   default: Accounts Receivable
+  depends_on: "voucher_type == 'Write Off Entry'"
 - fieldname: write_off_amount
   label: Write Off Amount
   fieldtype: Currency
   decimals: 2
+  depends_on: "voucher_type == 'Write Off Entry'"
 - fieldname: pay_to_recd_from
   label: Pay To / Recd From
   fieldtype: Text
@@ -206,14 +213,17 @@ fields:
   label: Periodic Entry Difference Account
   fieldtype: Link
   options: Account
+  depends_on: "voucher_type == 'Periodic Accounting Entry'"
 - fieldname: for_all_stock_asset_accounts
   label: For All Stock Asset Accounts
   fieldtype: Boolean
   default: true
+  depends_on: "voucher_type == 'Periodic Accounting Entry'"
 - fieldname: stock_asset_account
   label: Stock Asset Account
   fieldtype: Link
   options: Account
+  depends_on: "voucher_type == 'Periodic Accounting Entry'"
 - fieldname: party_not_required
   label: Party Not Required
   fieldtype: Boolean

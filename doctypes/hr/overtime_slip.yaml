@@ -22,6 +22,7 @@ fields:
 - fieldname: employee_name
   label: Employee Name
   fieldtype: Text
+  fetch_from: employee.employee_name
 - fieldname: department
   label: Department
   fieldtype: Link

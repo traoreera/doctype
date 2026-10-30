@@ -173,9 +173,12 @@ fields:
   label: Deferred Revenue Account
   fieldtype: Link
   options: Account
+  depends_on: "enable_deferred_revenue"
+  mandatory_depends_on: "enable_deferred_revenue"
 - fieldname: service_stop_date
   label: Service Stop Date
   fieldtype: Date
+  depends_on: "enable_deferred_revenue"
 - fieldname: enable_deferred_revenue
   label: Enable Deferred Revenue
   fieldtype: Boolean
@@ -183,9 +186,13 @@ fields:
 - fieldname: service_start_date
   label: Service Start Date
   fieldtype: Date
+  depends_on: "enable_deferred_revenue"
+  mandatory_depends_on: "enable_deferred_revenue"
 - fieldname: service_end_date
   label: Service End Date
   fieldtype: Date
+  depends_on: "enable_deferred_revenue"
+  mandatory_depends_on: "enable_deferred_revenue"
 - fieldname: weight_per_unit
   label: Weight Per Unit
   fieldtype: Number
@@ -285,6 +292,7 @@ fields:
   label: Asset
   fieldtype: Link
   options: Asset
+  depends_on: "is_fixed_asset"
 - fieldname: page_break
   label: Page Break
   fieldtype: Boolean

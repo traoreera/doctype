@@ -25,6 +25,7 @@ fields:
   label: Supplier Name
   fieldtype: Text
   read_only: true
+  fetch_from: supplier.supplier_name
 - fieldname: company
   label: Company
   fieldtype: Link
@@ -46,6 +47,7 @@ fields:
 - fieldname: order_confirmation_date
   label: Order Confirmation Date
   fieldtype: Date
+  depends_on: "order_confirmation_no"
 - fieldname: customer
   label: Customer
   fieldtype: Link
@@ -55,6 +57,7 @@ fields:
   label: Customer Name
   fieldtype: Text
   read_only: true
+  fetch_from: customer.customer_name
 - fieldname: customer_contact_person
   label: Customer Contact
   fieldtype: Link
@@ -139,6 +142,8 @@ fields:
   label: Supplier Warehouse
   fieldtype: Link
   options: Warehouse
+  depends_on: "is_subcontracted"
+  mandatory_depends_on: "is_subcontracted"
 - fieldname: scan_barcode
   label: Scan Barcode
   fieldtype: Text
@@ -675,3 +680,37 @@ created_from:
       quantity:
         source: qty
         target: qty
+# Circuit d'approbation (Commande fournisseur) : Le responsable des achats approuve la commande avant qu'elle parte chez le fournisseur.
+# Celui qui a créé la pièce ne l'approuve jamais lui-même (`not_owner`). Une pièce approuvée s'annule par « Annuler »
+# (le circuit remplace `/submit` et `/cancel`, qui sont refusés sur un type à circuit). Chaque action est un grant
+# `<module>:<type>:workflow_<action>`, déclaré à auth comme les autres.
+workflow:
+  states:
+  - name: Brouillon
+  - name: À approuver
+  - name: Approuvée
+    docstatus: submitted
+  - name: Refusée
+    docstatus: cancelled
+  - name: Annulée
+    docstatus: cancelled
+  transitions:
+  - action: Soumettre
+    from: Brouillon
+    to: À approuver
+    description: Envoyer à l'approbation
+  - action: Approuver
+    from: À approuver
+    to: Approuvée
+    not_owner: true
+  - action: Refuser
+    from: À approuver
+    to: Refusée
+    not_owner: true
+  - action: Reprendre
+    from: À approuver
+    to: Brouillon
+    description: Rendre la pièce à son auteur pour correction
+  - action: Annuler
+    from: Approuvée
+    to: Annulée
