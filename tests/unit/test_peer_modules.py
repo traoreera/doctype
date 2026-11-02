@@ -146,7 +146,13 @@ async def test_a_type_citing_an_absent_peer_reads_but_does_not_write_until_it_ar
 async def test_a_parent_waits_for_its_peers_table_invisible_but_with_its_grants_declared(plugins, env, tmp_path):
     sell, acct = plugins
     reg, channel, log, svc = env
-    write(sell.parent / "sell_ws", ws={"schema_version": 1, "name": "sell", "label": "Ventes", "blocks": [{"type": "shortcut", "doctype": "Order"}]})
+    write(sell.parent / "sell_ws", ws={"schema_version": 1, "name": "sell", "label": "Ventes", "blocks": [
+        {"type": "shortcut", "doctype": "Order"},
+        # Des blocs qui CALCULENT sur un type en attente : acceptés aussi (avant, le chargement de l'espace échouait — selon l'ordre
+        # des modules, puisqu'un type n'attend que si son frère n'est pas encore là).
+        {"type": "number_card", "label": "Commandes", "doctype": "Order"},
+        {"type": "chart", "label": "Par mois", "doctype": "Order", "kind": "bar", "group_by": "creation", "bucket": "month", "periods": 6},
+    ]})
     channel.load_dir("sell", sell, peers=True)  # Order attend la table « Payment Schedule » d'acct
     assert reg.waiting() == {"Order": ["Payment Schedule"]}
     assert not reg.has("Order")

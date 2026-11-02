@@ -494,6 +494,11 @@ class DocTypeRegistry:
             elif item.definition.istable:
                 problems.append(f"bloc qui vise {target!r} : c'est un DocType enfant (ses lignes n'ont pas de liste)")
         for i, block in enumerate(ws.blocks):
+            # Un bloc qui calcule se juge contre son DocType. Celui qui ATTEND la table d'un module frère n'est pas encore compilé : ses
+            # champs ne se jugent pas, et le bloc reste invisible jusqu'à son arrivée (`registry.has`), comme un raccourci — sinon un
+            # espace qui compte les brouillons d'un tel type ferait échouer son plugin selon l'ORDRE de chargement des modules.
+            if block.type in ("number_card", "chart", "quick_list") and getattr(block, "doctype", None) in self._waiting:
+                continue
             if block.type in ("number_card", "chart"):  # (les autres sont contrôlés plus haut, par `doctypes()`)
                 problems += [f"blocs.{i} ({block.label}): {p}" for p in check_measured(block, self._items.get, None)]
             elif block.type == "quick_list" and block.doctype in self._items:
