@@ -55,6 +55,7 @@ EXPECTED_ROUTES = sorted(
         ("POST", "/upload/{doctype}/{fieldname}"),
         ("POST", "/file-links"),
         ("GET", "/preferences"),
+        ("PUT", "/preferences/language"),
         ("GET", "/collab/{doctype}/{name}"),
         ("POST", "/comments/{doctype}/{name}"),
         ("PUT", "/comments/{comment_id}"),
