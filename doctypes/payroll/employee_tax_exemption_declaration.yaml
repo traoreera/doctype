@@ -38,11 +38,13 @@ fields:
   fieldtype: Table
   options: Employee Tax Exemption Declaration Category
 - fieldname: total_declared_amount
+  currency_from: currency
   label: Total Declared Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_exemption_amount
+  currency_from: currency
   label: Total Exemption Amount
   fieldtype: Currency
   decimals: 2

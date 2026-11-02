@@ -19,10 +19,12 @@ fields:
   default: Any
   required: true
 - fieldname: min_amount
+  currency_from: company.default_currency
   label: Min Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: max_amount
+  currency_from: company.default_currency
   label: Max Amount
   fieldtype: Currency
   decimals: 2

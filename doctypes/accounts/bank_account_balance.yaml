@@ -16,6 +16,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: balance
+  currency_from: company.default_currency
   label: Balance
   fieldtype: Currency
   decimals: 2

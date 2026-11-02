@@ -10,6 +10,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: allocated_amount
+  currency_from: currency
   label: Allocated Amount
   fieldtype: Currency
   decimals: 2
@@ -21,6 +22,7 @@ fields:
   options: Account
   read_only: true
 - fieldname: difference_amount
+  currency_from: currency
   label: Difference Amount
   fieldtype: Currency
   decimals: 2
@@ -48,12 +50,14 @@ fields:
   required: true
   read_only: true
 - fieldname: unreconciled_amount
+  currency_from: currency
   label: Unreconciled Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
   hidden: true
 - fieldname: amount
+  currency_from: currency
   label: Amount
   fieldtype: Currency
   decimals: 2

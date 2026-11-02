@@ -84,16 +84,19 @@ fields:
   fieldtype: Number
   read_only: true
 - fieldname: total_costing_amount
+  currency_from: currency
   label: Total Costing Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_billable_amount
+  currency_from: currency
   label: Total Billable Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_billed_amount
+  currency_from: currency
   label: Total Billed Amount
   fieldtype: Currency
   decimals: 2
@@ -119,16 +122,19 @@ fields:
   fieldtype: Link
   options: Currency
 - fieldname: base_total_costing_amount
+  currency_from: company.default_currency
   label: Base Total Costing Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total_billable_amount
+  currency_from: company.default_currency
   label: Base Total Billable Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total_billed_amount
+  currency_from: company.default_currency
   label: Base Total Billed Amount
   fieldtype: Currency
   decimals: 2

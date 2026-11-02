@@ -26,6 +26,7 @@ fields:
   read_only: true
   fetch_from: item_code.item_name
 - fieldname: cost
+  currency_from: parent_currency
   label: Cost
   fieldtype: Currency
   decimals: 2
@@ -70,6 +71,7 @@ fields:
   label: Description
   fieldtype: TextEditor
 - fieldname: base_cost
+  currency_from: parent_company.default_currency
   label: Base Cost (Company Currency)
   fieldtype: Currency
   decimals: 2

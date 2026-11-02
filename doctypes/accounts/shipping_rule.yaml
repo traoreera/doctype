@@ -43,6 +43,7 @@ fields:
   default: Fixed
   in_list_view: true
 - fieldname: shipping_amount
+  currency_from: company.default_currency
   label: Shipping Amount
   fieldtype: Currency
   decimals: 2

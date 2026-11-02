@@ -44,11 +44,13 @@ fields:
   options: UOM
   read_only: true
 - fieldname: rate
+  currency_from: parent_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

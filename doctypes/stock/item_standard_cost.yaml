@@ -27,6 +27,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: standard_rate
+  currency_from: company.default_currency
   label: Standard Valuation Rate
   fieldtype: Currency
   decimals: 2

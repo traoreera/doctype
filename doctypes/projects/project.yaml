@@ -100,16 +100,19 @@ fields:
   fieldtype: Date
   read_only: true
 - fieldname: estimated_costing
+  currency_from: company.default_currency
   label: Estimated Cost
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: total_costing_amount
+  currency_from: company.default_currency
   label: Total Costing Amount (via Timesheet)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_purchase_cost
+  currency_from: company.default_currency
   label: Total Purchase Cost (via Purchase Invoice)
   fieldtype: Currency
   decimals: 2
@@ -120,21 +123,25 @@ fields:
   options: Company
   required: true
 - fieldname: total_sales_amount
+  currency_from: company.default_currency
   label: Total Sales amount (via Sales Order)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_billable_amount
+  currency_from: company.default_currency
   label: Total Billable amount (via Timesheet)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_billed_amount
+  currency_from: company.default_currency
   label: Total Billed amount (via Sales Invoice)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_consumed_material_cost
+  currency_from: company.default_currency
   label: Total Consumed Material Cost
   fieldtype: Currency
   decimals: 2
@@ -144,6 +151,7 @@ fields:
   fieldtype: Link
   options: Cost Center
 - fieldname: gross_margin
+  currency_from: company.default_currency
   label: Gross Margin
   fieldtype: Currency
   decimals: 2

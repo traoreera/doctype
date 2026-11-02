@@ -29,6 +29,7 @@ fields:
   fieldtype: Percent
   required: true
 - fieldname: certificate_limit
+  currency_from: company.default_currency
   label: Certificate Limit
   fieldtype: Currency
   decimals: 2

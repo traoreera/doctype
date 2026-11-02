@@ -36,21 +36,25 @@ fields:
   label: Exchange Rate
   fieldtype: Number
 - fieldname: debit_in_account_currency
+  currency_from: account_currency
   label: Debit
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: debit
+  currency_from: parent_company.default_currency
   label: Debit in Company Currency
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: credit_in_account_currency
+  currency_from: account_currency
   label: Credit
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: credit
+  currency_from: parent_company.default_currency
   label: Credit in Company Currency
   fieldtype: Currency
   decimals: 2

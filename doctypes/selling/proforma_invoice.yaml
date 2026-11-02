@@ -71,6 +71,7 @@ fields:
   decimals: 3
   read_only: true
 - fieldname: grand_total
+  currency_from: currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2

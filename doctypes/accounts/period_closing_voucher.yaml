@@ -29,6 +29,7 @@ fields:
   required: true
   description: The account head under Liability or Equity, in which Profit/Loss will be booked
 - fieldname: stock_value_difference
+  currency_from: company.default_currency
   label: Accepted Stock Value Difference
   fieldtype: Currency
   decimals: 2

@@ -32,6 +32,7 @@ fields:
   fieldtype: Table
   options: Landed Cost Taxes and Charges
 - fieldname: total_taxes_and_charges
+  currency_from: company.default_currency
   label: Total Landed Cost (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -55,6 +56,7 @@ fields:
   fieldtype: Table
   options: Landed Cost Vendor Invoice
 - fieldname: total_vendor_invoices_cost
+  currency_from: company.default_currency
   label: Total Vendor Invoices Cost (Company Currency)
   fieldtype: Currency
   decimals: 2

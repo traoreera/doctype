@@ -39,16 +39,19 @@ fields:
   fieldtype: Table
   options: Payment Reconciliation Payment
 - fieldname: total_invoice_amount
+  currency_from: currency
   label: Total Invoice Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_payment_amount
+  currency_from: currency
   label: Total Payment Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: difference_amount
+  currency_from: currency
   label: Difference Amount
   fieldtype: Currency
   decimals: 2
@@ -70,6 +73,7 @@ fields:
   fieldtype: Date
   in_list_view: true
 - fieldname: minimum_invoice_amount
+  currency_from: currency
   label: Minimum Invoice Amount
   fieldtype: Currency
   decimals: 2
@@ -85,10 +89,12 @@ fields:
   label: To Payment Date
   fieldtype: Date
 - fieldname: minimum_payment_amount
+  currency_from: currency
   label: Minimum Payment Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: maximum_payment_amount
+  currency_from: currency
   label: Maximum Payment Amount
   fieldtype: Currency
   decimals: 2
@@ -98,6 +104,7 @@ fields:
   description: System will fetch all the entries if limit value is zero.
   default: 50
 - fieldname: maximum_invoice_amount
+  currency_from: currency
   label: Maximum Invoice Amount
   fieldtype: Currency
   decimals: 2

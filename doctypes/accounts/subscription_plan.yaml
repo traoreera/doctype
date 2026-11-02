@@ -29,6 +29,7 @@ fields:
   - Monthly Rate
   required: true
 - fieldname: cost
+  currency_from: currency
   label: Cost
   fieldtype: Currency
   decimals: 2

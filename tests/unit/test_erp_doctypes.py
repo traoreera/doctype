@@ -380,3 +380,40 @@ def test_every_approval_action_is_a_declared_grant(registry: DocTypeRegistry) ->
         slug = re.sub(r"[^a-z0-9]+", "_", d.name.lower()).strip("_")
         for action in ("soumettre", "approuver", "refuser", "reprendre", "annuler"):
             assert f"{d.module}:{slug}:workflow_{action}" in declared, f"{name} : {action}"
+
+
+# T16b (M3 de process/plan-erp.md) : les types dont des montants restent SANS devise, et pourquoi. Un référentiel sans société ni
+# devise (un article, un poste de travail, un barème…), ou une ligne dont un parent n'en a pas (l'équipe commerciale sert aussi la
+# fiche client, les taxes servent aussi leur MODÈLE : leurs montants `base_*` ont une devise, les autres non).
+AMOUNTS_WITHOUT_CURRENCY = {
+    "Accounts Settings", "Activity Cost", "Activity Type", "Asset Finance Book", "BOM Operation", "Bank Guarantee", "Depreciation Schedule",
+    "Employee Benefit Ledger", "Employee Tax Exemption Category", "Employee Tax Exemption Sub Category", "Item", "Landed Cost Taxes and Charges",
+    "Loan Repayment", "Overtime Type", "Process Payment Reconciliation Log Allocations", "Purchase Taxes and Charges", "Quick Stock Balance",
+    "Salary Component", "Sales Taxes and Charges", "Sales Team", "Shipment", "Shipment Delivery Note", "Vehicle Log", "Vehicle Service",
+    "Workstation", "Workstation Cost", "Workstation Type",
+}
+
+
+def test_every_amount_says_its_currency(registry: DocTypeRegistry) -> None:
+    """Une facture en dollars n'affiche pas « € » : chaque montant a `options` (fixe) ou `currency_from` (lue), hors la liste
+    nommée ci-dessus — un nouveau montant sans devise fait échouer ce test, un type qui en reçoit une doit quitter la liste.
+    Que chaque source désigne un vrai champ, sur CHAQUE parent d'une ligne, c'est le chargement qui le juge
+    (`registry._check_currencies`, dans `test_the_whole_set_loads_and_every_link_resolves`)."""
+    without = {
+        name for name in registry.names()
+        for f in registry.get(name).definition.fields
+        if f.fieldtype == "Currency" and not f.options and not f.currency_from
+    }
+    assert without == AMOUNTS_WITHOUT_CURRENCY
+
+
+def test_an_invoice_shows_its_own_currency_and_the_company_s(registry: DocTypeRegistry) -> None:
+    """Le cas d'école : la facture et ses lignes dans la devise de la PIÈCE, leurs `base_*` dans celle de la société, ce que
+    doit le client dans la devise de SON compte."""
+    invoice = registry.get("Sales Invoice").definition.field_map
+    line = registry.get("Sales Invoice Item").definition.field_map
+    assert (invoice["grand_total"].currency_from, invoice["base_grand_total"].currency_from) == ("currency", "company.default_currency")
+    assert invoice["outstanding_amount"].currency_from == "party_account_currency"
+    assert (line["rate"].currency_from, line["base_rate"].currency_from) == ("parent_currency", "parent_company.default_currency")
+    gl = registry.get("GL Entry").definition.field_map
+    assert (gl["debit"].currency_from, gl["debit_in_account_currency"].currency_from) == ("company.default_currency", "account_currency")

@@ -18,6 +18,7 @@ fields:
   label: Rate of Interest
   fieldtype: Percent
 - fieldname: maximum_loan_amount
+  currency_from: company.default_currency
   label: Maximum Loan Amount
   fieldtype: Currency
   decimals: 2

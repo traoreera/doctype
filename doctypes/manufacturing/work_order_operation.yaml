@@ -58,6 +58,7 @@ fields:
   fieldtype: Number
   read_only: true
 - fieldname: planned_operating_cost
+  currency_from: parent_company.default_currency
   label: Planned Operating Cost
   fieldtype: Currency
   decimals: 2
@@ -78,6 +79,7 @@ fields:
   read_only: true
   description: Updated via 'Time Log' (In Minutes)
 - fieldname: actual_operating_cost
+  currency_from: parent_company.default_currency
   label: Actual Operating Cost
   fieldtype: Currency
   decimals: 2

@@ -19,11 +19,13 @@ fields:
   read_only: true
   fetch_from: employee.employee_name
 - fieldname: max_benefits
+  currency_from: currency
   label: Max Benefits (Yearly)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: remaining_benefit
+  currency_from: currency
   label: Remaining Benefits (Yearly)
   fieldtype: Currency
   decimals: 2
@@ -49,6 +51,7 @@ fields:
   fieldtype: Table
   options: Employee Benefit Application Detail
 - fieldname: total_amount
+  currency_from: currency
   label: Total Amount
   fieldtype: Currency
   decimals: 2

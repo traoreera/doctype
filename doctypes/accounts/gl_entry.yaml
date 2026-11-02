@@ -33,10 +33,12 @@ fields:
   options: Cost Center
   in_list_view: true
 - fieldname: debit
+  currency_from: company.default_currency
   label: Debit Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: credit
+  currency_from: company.default_currency
   label: Credit Amount
   fieldtype: Currency
   decimals: 2
@@ -45,10 +47,12 @@ fields:
   fieldtype: Link
   options: Currency
 - fieldname: debit_in_account_currency
+  currency_from: account_currency
   label: Debit Amount in Account Currency
   fieldtype: Currency
   decimals: 2
 - fieldname: credit_in_account_currency
+  currency_from: account_currency
   label: Credit Amount in Account Currency
   fieldtype: Currency
   decimals: 2
@@ -124,10 +128,12 @@ fields:
   label: Transaction Exchange Rate
   fieldtype: Number
 - fieldname: debit_in_transaction_currency
+  currency_from: transaction_currency
   label: Debit Amount in Transaction Currency
   fieldtype: Currency
   decimals: 2
 - fieldname: credit_in_transaction_currency
+  currency_from: transaction_currency
   label: Credit Amount in Transaction Currency
   fieldtype: Currency
   decimals: 2
@@ -135,10 +141,12 @@ fields:
   label: Voucher Subtype
   fieldtype: LongText
 - fieldname: debit_in_reporting_currency
+  currency_from: company.reporting_currency
   label: Debit Amount in Reporting Currency
   fieldtype: Currency
   decimals: 2
 - fieldname: credit_in_reporting_currency
+  currency_from: company.reporting_currency
   label: Credit Amount in Reporting Currency
   fieldtype: Currency
   decimals: 2

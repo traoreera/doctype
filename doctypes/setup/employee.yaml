@@ -302,6 +302,7 @@ fields:
   fieldtype: Link
   options: Currency
 - fieldname: ctc
+  currency_from: salary_currency
   label: Cost to Company (CTC)
   fieldtype: Currency
   decimals: 2

@@ -63,10 +63,12 @@ fields:
   stars: 5
   in_list_view: true
 - fieldname: lower_range
+  currency_from: currency
   label: Lower Range
   fieldtype: Currency
   decimals: 2
 - fieldname: upper_range
+  currency_from: currency
   label: Upper Range
   fieldtype: Currency
   decimals: 2

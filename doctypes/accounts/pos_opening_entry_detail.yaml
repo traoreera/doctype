@@ -10,6 +10,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: opening_amount
+  currency_from: parent_company.default_currency
   label: Opening Amount
   fieldtype: Currency
   decimals: 2

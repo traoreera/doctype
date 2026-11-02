@@ -20,11 +20,13 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: amount
+  currency_from: currency
   label: Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: outstanding_amount
+  currency_from: currency
   label: Outstanding Amount
   fieldtype: Currency
   decimals: 2

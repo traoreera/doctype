@@ -24,11 +24,13 @@ fields:
   in_list_view: true
   default: "0.000"
 - fieldname: min_amount
+  currency_from: parent_currency
   label: Min Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: max_amount
+  currency_from: parent_currency
   label: Max Amount
   fieldtype: Currency
   decimals: 2
@@ -52,6 +54,7 @@ fields:
   fieldtype: Link
   options: UOM
 - fieldname: free_item_rate
+  currency_from: parent_currency
   label: Rate
   fieldtype: Currency
   decimals: 2

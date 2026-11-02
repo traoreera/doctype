@@ -9,6 +9,7 @@ fields:
   options: Opportunity
   in_list_view: true
 - fieldname: amount
+  currency_from: currency
   label: Amount
   fieldtype: Currency
   decimals: 2

@@ -68,18 +68,21 @@ fields:
   fieldtype: Date
   required: true
 - fieldname: total_payable_amount
+  currency_from: company.default_currency
   label: Total Payable Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: total_receivable_amount
+  currency_from: company.default_currency
   label: Total Receivable Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: total_asset_recovery_cost
+  currency_from: company.default_currency
   label: Total Asset Recovery Cost
   fieldtype: Currency
   decimals: 2

@@ -9,15 +9,15 @@ fields:
   - { fieldname: warehouse, label: "Warehouse", fieldtype: Link, options: "Warehouse", required: true, in_list_view: true }
   - { fieldname: qty, label: "Quantity", fieldtype: Decimal, decimals: 3, in_list_view: true }
   - { fieldname: stock_uom, label: "Stock UOM", fieldtype: Link, options: "UOM", in_list_view: true, read_only: true }
-  - { fieldname: valuation_rate, label: "Valuation Rate", fieldtype: Currency, decimals: 2, in_list_view: true }
-  - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: valuation_rate, label: "Valuation Rate", fieldtype: Currency, decimals: 2, in_list_view: true, currency_from: parent_company.default_currency }
+  - { fieldname: amount, label: "Amount", fieldtype: Currency, decimals: 2, read_only: true, currency_from: parent_company.default_currency }
   - { fieldname: serial_no, label: "Serial No", fieldtype: LongText }
   - { fieldname: current_qty, label: "Current Qty", fieldtype: Decimal, decimals: 3, read_only: true }
   - { fieldname: current_serial_no, label: "Current Serial No", fieldtype: LongText, read_only: true }
-  - { fieldname: current_valuation_rate, label: "Current Valuation Rate", fieldtype: Currency, decimals: 2, read_only: true }
-  - { fieldname: current_amount, label: "Current Amount", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: current_valuation_rate, label: "Current Valuation Rate", fieldtype: Currency, decimals: 2, read_only: true, currency_from: parent_company.default_currency }
+  - { fieldname: current_amount, label: "Current Amount", fieldtype: Currency, decimals: 2, read_only: true, currency_from: parent_company.default_currency }
   - { fieldname: quantity_difference, label: "Quantity Difference", fieldtype: Text, read_only: true }
-  - { fieldname: amount_difference, label: "Amount Difference", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: amount_difference, label: "Amount Difference", fieldtype: Currency, decimals: 2, read_only: true, currency_from: parent_company.default_currency }
   - { fieldname: batch_no, label: "Batch No", fieldtype: Link, options: "Batch" }
   - { fieldname: allow_zero_valuation_rate, label: "Allow Zero Valuation Rate", fieldtype: Boolean, default: false }
   - { fieldname: has_item_scanned, label: "Has Item Scanned", fieldtype: Text, read_only: true }

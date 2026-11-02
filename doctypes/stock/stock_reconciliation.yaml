@@ -54,6 +54,7 @@ fields:
   fieldtype: Link
   options: Cost Center
 - fieldname: difference_amount
+  currency_from: company.default_currency
   label: Difference Amount
   fieldtype: Currency
   decimals: 2

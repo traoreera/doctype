@@ -45,11 +45,13 @@ fields:
   fieldtype: Table
   options: Employee Tax Exemption Proof Submission Detail
 - fieldname: total_actual_amount
+  currency_from: currency
   label: Total Actual Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: exemption_amount
+  currency_from: currency
   label: Total Exemption Amount
   fieldtype: Currency
   decimals: 2

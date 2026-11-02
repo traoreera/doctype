@@ -27,6 +27,7 @@ fields:
   fieldtype: Percent
   in_list_view: true
 - fieldname: taxable_amount
+  currency_from: currency
   label: Base Taxable Amount
   fieldtype: Currency
   decimals: 2
@@ -86,6 +87,7 @@ fields:
   - Lower Deduction Certificate
   read_only: true
 - fieldname: withholding_amount
+  currency_from: currency
   label: Base Tax Withheld
   fieldtype: Currency
   decimals: 2

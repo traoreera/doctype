@@ -35,6 +35,7 @@ fields:
   fieldtype: Date
   required: true
 - fieldname: current_asset_value
+  currency_from: company.default_currency
   label: Current Asset Value
   fieldtype: Currency
   decimals: 2
@@ -42,12 +43,14 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: new_asset_value
+  currency_from: company.default_currency
   label: New Asset Value
   fieldtype: Currency
   decimals: 2
   required: true
   in_list_view: true
 - fieldname: difference_amount
+  currency_from: company.default_currency
   label: Difference Amount
   fieldtype: Currency
   decimals: 2

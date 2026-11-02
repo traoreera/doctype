@@ -10,18 +10,21 @@ fields:
   required: true
   in_list_view: true
 - fieldname: expected_amount
+  currency_from: parent_company.default_currency
   label: Expected Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: difference
+  currency_from: parent_company.default_currency
   label: Difference
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: opening_amount
+  currency_from: parent_company.default_currency
   label: Opening Amount
   fieldtype: Currency
   decimals: 2
@@ -29,6 +32,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: closing_amount
+  currency_from: parent_company.default_currency
   label: Closing Amount
   fieldtype: Currency
   decimals: 2

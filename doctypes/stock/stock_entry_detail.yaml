@@ -37,26 +37,31 @@ fields:
   required: true
   in_list_view: true
 - fieldname: basic_rate
+  currency_from: parent_company.default_currency
   label: Basic Rate (as per Stock UOM)
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: basic_amount
+  currency_from: parent_company.default_currency
   label: Basic Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: additional_cost
+  currency_from: parent_company.default_currency
   label: Additional Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: valuation_rate
+  currency_from: parent_company.default_currency
   label: Valuation Rate
   fieldtype: Currency
   decimals: 2
@@ -223,11 +228,13 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: landed_cost_voucher_amount
+  currency_from: parent_company.default_currency
   label: Landed Cost Voucher Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: customer_provided_item_cost
+  currency_from: parent_company.default_currency
   label: Customer Provided Item Cost
   fieldtype: Currency
   decimals: 2

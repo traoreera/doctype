@@ -100,11 +100,13 @@ fields:
   fieldtype: Date
   read_only: true
 - fieldname: total_costing_amount
+  currency_from: company.default_currency
   label: Total Costing Amount (via Timesheet)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_billing_amount
+  currency_from: company.default_currency
   label: Total Billable Amount (via Timesheet)
   fieldtype: Currency
   decimals: 2

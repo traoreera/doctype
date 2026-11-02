@@ -43,6 +43,7 @@ fields:
   read_only: true
   hidden: true
 - fieldname: rate
+  currency_from: parent_company.default_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
@@ -50,6 +51,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -83,17 +85,20 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: service_cost_per_qty
+  currency_from: parent_company.default_currency
   label: Service Cost Per Qty
   fieldtype: Currency
   decimals: 2
   required: true
   read_only: true
 - fieldname: additional_cost_per_qty
+  currency_from: parent_company.default_currency
   label: Additional Cost Per Qty
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: rm_cost_per_qty
+  currency_from: parent_company.default_currency
   label: Raw Material Cost Per Qty
   fieldtype: Currency
   decimals: 2

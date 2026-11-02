@@ -31,11 +31,13 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: rate
+  currency_from: parent_company.default_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -43,6 +45,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: applicable_charges
+  currency_from: parent_company.default_currency
   label: Applicable Charges
   fieldtype: Currency
   decimals: 2

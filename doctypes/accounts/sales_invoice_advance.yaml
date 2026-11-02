@@ -24,17 +24,20 @@ fields:
   read_only: true
   hidden: true
 - fieldname: advance_amount
+  currency_from: parent_currency
   label: Advance amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: allocated_amount
+  currency_from: parent_currency
   label: Allocated amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: exchange_gain_loss
+  currency_from: parent_currency
   label: Exchange Gain/Loss
   fieldtype: Currency
   decimals: 2

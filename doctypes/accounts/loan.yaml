@@ -28,6 +28,7 @@ fields:
   options: Loan Product
   required: true
 - fieldname: loan_amount
+  currency_from: company.default_currency
   label: Loan Amount
   fieldtype: Currency
   decimals: 2

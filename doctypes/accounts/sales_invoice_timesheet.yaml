@@ -15,6 +15,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: billing_amount
+  currency_from: parent_currency
   label: Billing Amount
   fieldtype: Currency
   decimals: 2

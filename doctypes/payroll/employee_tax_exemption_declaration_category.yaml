@@ -17,6 +17,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: max_amount
+  currency_from: parent_currency
   label: Maximum Exempted Amount
   fieldtype: Currency
   decimals: 2
@@ -24,6 +25,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Declared Amount
   fieldtype: Currency
   decimals: 2

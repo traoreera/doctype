@@ -12,6 +12,7 @@ fields:
   fieldtype: Text
   in_list_view: true
 - fieldname: salary
+  currency_from: parent_salary_currency
   label: Salary
   fieldtype: Currency
   decimals: 2

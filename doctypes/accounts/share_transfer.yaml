@@ -54,6 +54,7 @@ fields:
   required: true
   description: (including)
 - fieldname: rate
+  currency_from: company.default_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
@@ -68,6 +69,7 @@ fields:
   required: true
   description: (including)
 - fieldname: amount
+  currency_from: company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

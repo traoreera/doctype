@@ -9,6 +9,7 @@ fields:
   fieldtype: Link
   options: Salary Structure
 - fieldname: default_base_pay
+  currency_from: currency
   label: Default Base Pay
   fieldtype: Currency
   decimals: 2

@@ -4,12 +4,14 @@ label: Taxable Salary Slab
 istable: true
 fields:
 - fieldname: from_amount
+  currency_from: parent_currency
   label: From Amount
   fieldtype: Currency
   decimals: 2
   required: true
   in_list_view: true
 - fieldname: to_amount
+  currency_from: parent_currency
   label: To Amount
   fieldtype: Currency
   decimals: 2

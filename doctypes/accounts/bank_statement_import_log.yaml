@@ -16,6 +16,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: closing_balance
+  currency_from: currency
   label: Closing Balance
   fieldtype: Currency
   decimals: 2
@@ -85,11 +86,13 @@ fields:
   options: Currency
   read_only: true
 - fieldname: total_debits
+  currency_from: currency
   label: Total Debits
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_credits
+  currency_from: currency
   label: Total Credits
   fieldtype: Currency
   decimals: 2

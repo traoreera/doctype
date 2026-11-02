@@ -27,6 +27,7 @@ fields:
   read_only: true
   fetch_from: item_code.item_name
 - fieldname: asset_value
+  currency_from: parent_company.default_currency
   label: Asset Value
   fieldtype: Currency
   decimals: 2
@@ -50,6 +51,7 @@ fields:
   fieldtype: Link
   options: Finance Book
 - fieldname: current_asset_value
+  currency_from: parent_company.default_currency
   label: Current Asset Value
   fieldtype: Currency
   decimals: 2

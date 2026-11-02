@@ -56,11 +56,13 @@ fields:
   fieldtype: Table
   options: Bank Transaction Payments
 - fieldname: allocated_amount
+  currency_from: currency
   label: Allocated Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: unallocated_amount
+  currency_from: currency
   label: Unallocated Amount
   fieldtype: Currency
   decimals: 2
@@ -73,11 +75,13 @@ fields:
   fieldtype: DynamicLink
   options: party_type
 - fieldname: deposit
+  currency_from: currency
   label: Deposit
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: withdrawal
+  currency_from: currency
   label: Withdrawal
   fieldtype: Currency
   decimals: 2
@@ -95,10 +99,12 @@ fields:
   label: Party Account No. (Bank Statement)
   fieldtype: Text
 - fieldname: included_fee
+  currency_from: currency
   label: Included Fee
   fieldtype: Currency
   decimals: 2
 - fieldname: excluded_fee
+  currency_from: currency
   label: Excluded Fee
   fieldtype: Currency
   decimals: 2

@@ -36,6 +36,7 @@ fields:
   - 501-1000
   - 1000+
 - fieldname: annual_revenue
+  currency_from: company.default_currency
   label: Annual Revenue
   fieldtype: Currency
   decimals: 2

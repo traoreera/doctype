@@ -65,6 +65,7 @@ fields:
   label: Additional Discount Percentage
   fieldtype: Percent
 - fieldname: additional_discount_amount
+  currency_from: company.default_currency
   label: Additional Discount Amount
   fieldtype: Currency
   decimals: 2

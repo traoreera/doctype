@@ -161,6 +161,7 @@ fields:
   fieldtype: Text
   in_list_view: true
 - fieldname: annual_revenue
+  currency_from: company.default_currency
   label: Annual Revenue
   fieldtype: Currency
   decimals: 2

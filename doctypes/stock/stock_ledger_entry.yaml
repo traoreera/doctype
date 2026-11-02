@@ -57,12 +57,14 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: incoming_rate
+  currency_from: company.default_currency
   label: Incoming Rate
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: outgoing_rate
+  currency_from: company.default_currency
   label: Outgoing Rate
   fieldtype: Currency
   decimals: 2
@@ -78,16 +80,19 @@ fields:
   decimals: 3
   read_only: true
 - fieldname: valuation_rate
+  currency_from: company.default_currency
   label: Average Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: stock_value
+  currency_from: company.default_currency
   label: Balance Stock Value
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: stock_value_difference
+  currency_from: company.default_currency
   label: Change in Stock Value
   fieldtype: Currency
   decimals: 2

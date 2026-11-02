@@ -93,6 +93,7 @@ fields:
   fieldtype: Number
   default: 1.0
 - fieldname: raw_material_cost
+  currency_from: currency
   label: Total Cost
   fieldtype: Currency
   decimals: 2

@@ -41,10 +41,12 @@ fields:
   options: Currency
   read_only: true
 - fieldname: current_ctc
+  currency_from: salary_currency
   label: Current CTC
   fieldtype: Currency
   decimals: 2
 - fieldname: revised_ctc
+  currency_from: salary_currency
   label: Revised CTC
   fieldtype: Currency
   decimals: 2

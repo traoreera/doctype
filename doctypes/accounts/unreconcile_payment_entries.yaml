@@ -9,6 +9,7 @@ fields:
   options: reference_doctype
   in_list_view: true
 - fieldname: allocated_amount
+  currency_from: parent_company.default_currency
   label: Allocated Amount
   fieldtype: Currency
   decimals: 2

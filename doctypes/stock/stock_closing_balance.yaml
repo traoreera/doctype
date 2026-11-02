@@ -36,11 +36,13 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: valuation_rate
+  currency_from: company.default_currency
   label: Valuation Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: stock_value
+  currency_from: company.default_currency
   label: Balance Stock Value
   fieldtype: Currency
   decimals: 2
@@ -56,6 +58,7 @@ fields:
   options: UOM
   read_only: true
 - fieldname: stock_value_difference
+  currency_from: company.default_currency
   label: Change in Stock Value
   fieldtype: Currency
   decimals: 2

@@ -9,7 +9,7 @@ fields:
   - { fieldname: customer_address, label: "Customer Address", fieldtype: TextEditor, read_only: true }
   - { fieldname: visited, label: "Visited", fieldtype: Boolean, default: false }
   - { fieldname: delivery_note, label: "Delivery Note", fieldtype: Link, options: "Delivery Note", in_list_view: true, read_only: true }
-  - { fieldname: grand_total, label: "Grand Total", fieldtype: Currency, decimals: 2, read_only: true }
+  - { fieldname: grand_total, label: "Grand Total", fieldtype: Currency, decimals: 2, read_only: true, currency_from: parent_company.default_currency }
   - { fieldname: contact, label: "Contact Name", fieldtype: Link, options: "Contact" }
   - { fieldname: email_sent_to, label: "Email sent to", fieldtype: Text, read_only: true }
   - { fieldname: customer_contact, label: "Customer Contact", fieldtype: TextEditor, read_only: true }

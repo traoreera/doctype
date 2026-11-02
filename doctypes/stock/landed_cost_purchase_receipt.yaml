@@ -25,6 +25,7 @@ fields:
   fieldtype: Date
   read_only: true
 - fieldname: grand_total
+  currency_from: parent_company.default_currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2

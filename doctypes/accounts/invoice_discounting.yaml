@@ -44,11 +44,13 @@ fields:
   fieldtype: Table
   options: Discounted Invoice
 - fieldname: total_amount
+  currency_from: company.default_currency
   label: Total Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: bank_charges
+  currency_from: company.default_currency
   label: Bank Charges
   fieldtype: Currency
   decimals: 2

@@ -21,12 +21,14 @@ fields:
   required: true
   in_list_view: true
 - fieldname: rate
+  currency_from: parent_supplier_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   required: true
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_supplier_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -34,11 +36,13 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: base_rate
+  currency_from: parent_company.default_currency
   label: Rate (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_amount
+  currency_from: parent_company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

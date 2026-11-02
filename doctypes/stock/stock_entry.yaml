@@ -165,16 +165,19 @@ fields:
   fieldtype: Table
   options: Stock Entry Detail
 - fieldname: total_incoming_value
+  currency_from: company.default_currency
   label: Total Incoming Value (Receipt)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_outgoing_value
+  currency_from: company.default_currency
   label: Total Outgoing Value (Consumption)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: value_difference
+  currency_from: company.default_currency
   label: Total Value Difference (Incoming - Outgoing)
   fieldtype: Currency
   decimals: 2
@@ -184,6 +187,7 @@ fields:
   fieldtype: Table
   options: Landed Cost Taxes and Charges
 - fieldname: total_additional_costs
+  currency_from: company.default_currency
   label: Total Additional Costs
   fieldtype: Currency
   decimals: 2
@@ -231,6 +235,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: total_amount
+  currency_from: company.default_currency
   label: Total Amount
   fieldtype: Currency
   decimals: 2

@@ -19,11 +19,13 @@ fields:
   label: To Date
   fieldtype: Date
 - fieldname: account_opening_balance
+  currency_from: account_currency
   label: Account Opening Balance
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: bank_statement_closing_balance
+  currency_from: account_currency
   label: Closing Balance
   fieldtype: Currency
   decimals: 2

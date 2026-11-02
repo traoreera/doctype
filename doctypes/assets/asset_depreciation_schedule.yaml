@@ -62,6 +62,7 @@ fields:
   fieldtype: Int
   read_only: true
 - fieldname: expected_value_after_useful_life
+  currency_from: company.default_currency
   label: Expected Value After Useful Life
   fieldtype: Currency
   decimals: 2
@@ -72,6 +73,7 @@ fields:
   read_only: true
   hidden: true
 - fieldname: opening_accumulated_depreciation
+  currency_from: company.default_currency
   label: Opening Accumulated Depreciation
   fieldtype: Currency
   decimals: 2
@@ -96,11 +98,13 @@ fields:
   options: Company
   read_only: true
 - fieldname: value_after_depreciation
+  currency_from: company.default_currency
   label: Value After Depreciation
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: net_purchase_amount
+  currency_from: company.default_currency
   label: Net Purchase Amount
   fieldtype: Currency
   decimals: 2

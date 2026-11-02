@@ -134,10 +134,12 @@ fields:
   fieldtype: Decimal
   decimals: 3
 - fieldname: min_amt
+  currency_from: currency
   label: Min Amt
   fieldtype: Currency
   decimals: 2
 - fieldname: max_amt
+  currency_from: currency
   label: Max Amt
   fieldtype: Currency
   decimals: 2
@@ -184,10 +186,12 @@ fields:
   - Net Total
   default: Grand Total
 - fieldname: rate
+  currency_from: currency
   label: Rate
   fieldtype: Currency
   decimals: 2
 - fieldname: discount_amount
+  currency_from: currency
   label: Discount Amount
   fieldtype: Currency
   decimals: 2
@@ -216,6 +220,7 @@ fields:
   fieldtype: Link
   options: UOM
 - fieldname: free_item_rate
+  currency_from: currency
   label: Free Item Rate
   fieldtype: Currency
   decimals: 2

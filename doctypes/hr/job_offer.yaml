@@ -89,18 +89,22 @@ fields:
   - Base and Variable
   - CTC
 - fieldname: base
+  currency_from: currency
   label: Base
   fieldtype: Currency
   decimals: 2
 - fieldname: variable
+  currency_from: currency
   label: Variable
   fieldtype: Currency
   decimals: 2
 - fieldname: ctc
+  currency_from: currency
   label: Total Cost to Company (CTC)
   fieldtype: Currency
   decimals: 2
 - fieldname: gross
+  currency_from: currency
   label: Gross Pay
   fieldtype: Currency
   decimals: 2

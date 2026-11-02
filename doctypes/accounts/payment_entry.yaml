@@ -101,6 +101,7 @@ fields:
   options: Bank Account
   read_only: true
 - fieldname: paid_amount
+  currency_from: paid_from_account_currency
   label: Paid Amount
   fieldtype: Currency
   decimals: 2
@@ -110,12 +111,14 @@ fields:
   fieldtype: Number
   required: true
 - fieldname: base_paid_amount
+  currency_from: company.default_currency
   label: Paid Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   required: true
   read_only: true
 - fieldname: received_amount
+  currency_from: paid_to_account_currency
   label: Received Amount
   fieldtype: Currency
   decimals: 2
@@ -125,6 +128,7 @@ fields:
   fieldtype: Number
   required: true
 - fieldname: base_received_amount
+  currency_from: company.default_currency
   label: Received Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -135,20 +139,24 @@ fields:
   fieldtype: Table
   options: Payment Entry Reference
 - fieldname: total_allocated_amount
+  currency_from: company.default_currency
   label: Total Allocated Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total_allocated_amount
+  currency_from: company.default_currency
   label: Total Allocated Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: unallocated_amount
+  currency_from: company.default_currency
   label: Unallocated Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: difference_amount
+  currency_from: company.default_currency
   label: Difference Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -252,34 +260,40 @@ fields:
   fieldtype: Table
   options: Advance Taxes and Charges
 - fieldname: base_total_taxes_and_charges
+  currency_from: company.default_currency
   label: Total Taxes and Charges (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_taxes_and_charges
+  currency_from: company.default_currency
   label: Total Taxes and Charges
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: paid_amount_after_tax
+  currency_from: paid_from_account_currency
   label: Paid Amount After Tax
   fieldtype: Currency
   decimals: 2
   read_only: true
   hidden: true
 - fieldname: base_paid_amount_after_tax
+  currency_from: company.default_currency
   label: Paid Amount After Tax (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
   hidden: true
 - fieldname: received_amount_after_tax
+  currency_from: paid_to_account_currency
   label: Received Amount After Tax
   fieldtype: Currency
   decimals: 2
   read_only: true
   hidden: true
 - fieldname: base_received_amount_after_tax
+  currency_from: company.default_currency
   label: Received Amount After Tax (Company Currency)
   fieldtype: Currency
   decimals: 2

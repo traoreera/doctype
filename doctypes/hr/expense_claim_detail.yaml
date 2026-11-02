@@ -24,12 +24,14 @@ fields:
   fieldtype: TextEditor
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
   required: true
   in_list_view: true
 - fieldname: sanctioned_amount
+  currency_from: parent_currency
   label: Sanctioned Amount
   fieldtype: Currency
   decimals: 2
@@ -43,10 +45,12 @@ fields:
   fieldtype: Link
   options: Project
 - fieldname: base_amount
+  currency_from: parent_company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
 - fieldname: base_sanctioned_amount
+  currency_from: parent_company.default_currency
   label: Sanctioned Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

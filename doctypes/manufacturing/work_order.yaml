@@ -145,20 +145,24 @@ fields:
   fieldtype: Table
   options: Work Order Operation
 - fieldname: planned_operating_cost
+  currency_from: company.default_currency
   label: Planned Operating Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: actual_operating_cost
+  currency_from: company.default_currency
   label: Actual Operating Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: additional_operating_cost
+  currency_from: company.default_currency
   label: Additional Operating Cost
   fieldtype: Currency
   decimals: 2
 - fieldname: total_operating_cost
+  currency_from: company.default_currency
   label: Total Operating Cost
   fieldtype: Currency
   decimals: 2
@@ -225,6 +229,7 @@ fields:
   fieldtype: Number
   default: 0.0
 - fieldname: corrective_operation_cost
+  currency_from: company.default_currency
   label: Corrective Operation Cost
   fieldtype: Currency
   decimals: 2

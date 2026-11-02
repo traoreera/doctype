@@ -23,18 +23,21 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: total_amount
+  currency_from: parent_company.default_currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: outstanding_amount
+  currency_from: parent_company.default_currency
   label: Outstanding
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: allocated_amount
+  currency_from: parent_company.default_currency
   label: Allocated
   fieldtype: Currency
   decimals: 2
@@ -48,6 +51,7 @@ fields:
   fieldtype: Link
   options: Payment Term
 - fieldname: exchange_gain_loss
+  currency_from: parent_company.default_currency
   label: Exchange Gain/Loss
   fieldtype: Currency
   decimals: 2

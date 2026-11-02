@@ -202,22 +202,26 @@ fields:
   read_only: true
   compute: sum(items.qty)
 - fieldname: base_total
+  currency_from: company.default_currency
   label: Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_net_total
+  currency_from: company.default_currency
   label: Net Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total
+  currency_from: currency
   label: Total
   fieldtype: Currency
   decimals: 2
   read_only: true
   compute: sum(items.amount)
 - fieldname: net_total
+  currency_from: currency
   label: Net Total
   fieldtype: Currency
   decimals: 2
@@ -248,31 +252,37 @@ fields:
   fieldtype: TextEditor
   read_only: true
 - fieldname: base_taxes_and_charges_added
+  currency_from: company.default_currency
   label: Taxes and Charges Added (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_taxes_and_charges_deducted
+  currency_from: company.default_currency
   label: Taxes and Charges Deducted (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total_taxes_and_charges
+  currency_from: company.default_currency
   label: Total Taxes and Charges (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: taxes_and_charges_added
+  currency_from: currency
   label: Taxes and Charges Added
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: taxes_and_charges_deducted
+  currency_from: currency
   label: Taxes and Charges Deducted
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_taxes_and_charges
+  currency_from: currency
   label: Total Taxes and Charges
   fieldtype: Currency
   decimals: 2
@@ -285,6 +295,7 @@ fields:
   - Net Total
   default: Grand Total
 - fieldname: base_discount_amount
+  currency_from: company.default_currency
   label: Additional Discount Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -293,20 +304,24 @@ fields:
   label: Additional Discount Percentage
   fieldtype: Number
 - fieldname: discount_amount
+  currency_from: currency
   label: Additional Discount Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: base_grand_total
+  currency_from: company.default_currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_rounding_adjustment
+  currency_from: company.default_currency
   label: Rounding Adjustment
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_rounded_total
+  currency_from: company.default_currency
   label: Rounded Total
   fieldtype: Currency
   decimals: 2
@@ -316,6 +331,7 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: grand_total
+  currency_from: currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2
@@ -323,11 +339,13 @@ fields:
   read_only: true
   compute: total + total_taxes_and_charges
 - fieldname: rounding_adjustment
+  currency_from: currency
   label: Rounding Adjustment
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: rounded_total
+  currency_from: currency
   label: Rounded Total
   fieldtype: Currency
   decimals: 2
@@ -337,11 +355,13 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: total_advance
+  currency_from: currency
   label: Total Advance
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: outstanding_amount
+  currency_from: party_account_currency
   label: Outstanding Amount
   fieldtype: Currency
   decimals: 2
@@ -367,19 +387,23 @@ fields:
   fieldtype: Date
   read_only: true
 - fieldname: paid_amount
+  currency_from: currency
   label: Paid Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: base_paid_amount
+  currency_from: company.default_currency
   label: Paid Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: write_off_amount
+  currency_from: currency
   label: Write Off Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: base_write_off_amount
+  currency_from: company.default_currency
   label: Write Off Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -587,6 +611,7 @@ fields:
   label: Last Scanned Warehouse
   fieldtype: Text
 - fieldname: claimed_landed_cost_amount
+  currency_from: currency
   label: Claimed Landed Cost Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
