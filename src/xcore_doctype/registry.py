@@ -20,7 +20,7 @@ from .extensions import Extension, merge, parse_extension, target_problem
 from .mapping import mappable_types, same_number_kind
 from .compute import compute_order, compute_problems, parse_compute
 from .printing import parse_template, template_fields_problems
-from .schema import LINK_FILTER_REF, DocTypeDef, parse_definition
+from .schema import LINK_FILTER_REF, PARENT_PREFIX, DocTypeDef, parse_definition
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
 
 _SUFFIXES = {".yaml", ".yml", ".json"}
@@ -617,6 +617,7 @@ class DocTypeRegistry:
     def _link_problems(self, only: list[str] | None, problems: list[str], *, allow_missing: bool) -> None:
         for name in (self.names() if only is None else sorted(only)):
             self._check_units(name, problems)
+            self._check_currencies(name, problems)
             self._check_compute(name, problems)
             self._check_fetch(name, problems)
             self._check_link_filters(name, problems)
@@ -831,6 +832,52 @@ class DocTypeRegistry:
                     problems.append(f"{where} : le DocType {holder.options!r} n'a pas de champ {rest!r}")
                 elif unit is not None and unit.fieldtype not in ("Text", "Select"):
                     problems.append(f"{where} : {holder.options}.{rest} doit être un texte (Text ou Select), pas un {unit.fieldtype}")
+
+    # Ce qui porte un code de devise : un texte, ou un Link vers des devises (nommées par leur code, `naming: {field: …}`).
+    CURRENCY_HOLDERS = ("Text", "Select", "Link")
+
+    def _currency_problem(self, defn: DocTypeDef, source: str) -> str | None:
+        """Le défaut de `source` (`currency` ou `company.default_currency`) lu dans `defn`, ou None. Cible absente : tolérée (pairs)."""
+        first, _, rest = source.partition(".")
+        holder = defn.field_map.get(first)
+        if holder is None or holder.fieldtype == "Table":
+            return f"champ inconnu {first!r}"
+        if not rest:
+            if holder.fieldtype not in self.CURRENCY_HOLDERS:
+                return f"{first!r} doit porter un code de devise (Text, Select ou Link), pas un {holder.fieldtype}"
+            return None
+        if holder.fieldtype != "Link":
+            return f"{first!r} n'est pas un champ Link"
+        target = self._items.get(str(holder.options))
+        code = target.definition.field_map.get(rest) if target is not None else None
+        if target is not None and code is None:
+            return f"le DocType {holder.options!r} n'a pas de champ {rest!r}"
+        if code is not None and code.fieldtype not in self.CURRENCY_HOLDERS:
+            return f"{holder.options}.{rest} doit porter un code de devise (Text, Select ou Link), pas un {code.fieldtype}"
+        return None
+
+    def _check_currencies(self, name: str, problems: list[str]) -> None:
+        """`currency_from` doit désigner un champ qui porte un code de devise. Une ligne qui lit `parent_…` est jugée sur CHAQUE
+        parent qui l'emploie (un enfant peut servir plusieurs parents) : c'est donc ici, au parent, qu'elle l'est."""
+        d = self._items[name].definition
+        for f in d.fields:
+            if f.currency_from is None:
+                continue
+            if d.istable and f.currency_from.startswith(PARENT_PREFIX):
+                continue  # jugé au(x) parent(s), ci-dessous
+            if (problem := self._currency_problem(d, f.currency_from)) is not None:
+                problems.append(f"{name}.{f.fieldname}: currency_from {f.currency_from!r} : {problem}")
+        for table in d.fields:
+            if table.fieldtype != "Table":
+                continue
+            child = self._items.get(str(table.options))
+            if child is None:
+                continue
+            for f in child.definition.fields:
+                if f.currency_from is not None and f.currency_from.startswith(PARENT_PREFIX):
+                    problem = self._currency_problem(d, f.currency_from[len(PARENT_PREFIX):])
+                    if problem is not None:
+                        problems.append(f"{name}.{table.fieldname}.{f.fieldname}: currency_from {f.currency_from!r} : sur le parent {name!r}, {problem}")
 
     def _check_compute(self, name: str, problems: list[str]) -> None:
         """`compute:` doit nommer des champs qui existent, du même genre numérique, sans perdre de précision (compute.py).

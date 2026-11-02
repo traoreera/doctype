@@ -20,6 +20,7 @@ Trois règles gouvernent tout :
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from html import escape
 from typing import Annotated, Any, Literal, Mapping, Sequence
@@ -30,7 +31,7 @@ from . import print_document
 from .decimals import canonical, to_decimal
 from .errors import InvalidDefinition
 from .notification_rules import SPECIALS, render as render_text, template_problems
-from .schema import DECIMAL_TYPES, FILE_TYPES, DocTypeDef
+from .schema import DECIMAL_TYPES, FILE_TYPES, PARENT_PREFIX, DocTypeDef
 
 # Un gabarit reste lisible d'un coup d'œil : au-delà, ce n'est plus une facture.
 MAX_PRINT_BLOCKS = 100
@@ -60,6 +61,80 @@ _DATA_URI = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$
 # Les titres des documents que les LIENS du gabarit désignent : `(DocType cible, nom) -> titre`. Résolus par
 # l'appelant (lui seul a les droits et la base) ; un lien absent de la table garde son identifiant.
 Titles = Mapping[tuple[str, str], str] | None
+# Les documents lus pour un `currency_from` à un saut (`company.default_currency`) : `(DocType, nom) -> données`.
+Linked = Mapping[tuple[str, str], Mapping[str, Any]]
+
+
+def _currency_source(field: Any, row: Mapping[str, Any] | None) -> tuple[str, bool] | None:
+    """`(source, lue sur le parent)` pour un champ Currency à devise lue, ou None. Le préfixe `parent_` ne vaut que dans une ligne."""
+    source = getattr(field, "currency_from", None)
+    if not source or getattr(field, "fieldtype", None) != "Currency":
+        return None
+    if row is not None and source.startswith(PARENT_PREFIX):
+        return source[len(PARENT_PREFIX):], True
+    return source, False
+
+
+@dataclass(frozen=True)
+class Money:
+    """La devise de chaque montant imprimé (M3) : `options` (fixe) ou `currency_from` résolu sur le document, la ligne ou
+    un document lié (`linked`, lu par l'appelant avec SES droits ; illisible = pas de devise, jamais une erreur)."""
+
+    definition: DocTypeDef
+    data: Mapping[str, Any]
+    children: Mapping[str, Any]
+    linked: Linked
+
+    def code(self, field: Any, row: Mapping[str, Any] | None = None, table: str | None = None) -> str | None:
+        if getattr(field, "fieldtype", None) != "Currency":
+            return None
+        if isinstance(field.options, str) and field.options:
+            return field.options
+        found = _currency_source(field, row)
+        if found is None:
+            return None
+        source, on_parent = found
+        if row is None or on_parent:
+            container, defn = self.data, self.definition
+        else:
+            container, defn = row, self.children.get(table or "")
+        first, _, rest = source.partition(".")
+        value = container.get(first)
+        if not isinstance(value, str) or not value:
+            return None
+        if not rest:
+            return value
+        holder = defn.field_map.get(first) if defn is not None else None
+        if holder is None or holder.fieldtype != "Link":
+            return None
+        code = self.linked.get((str(holder.options), value), {}).get(rest)
+        return code if isinstance(code, str) and code else None
+
+
+def currency_links(definition: DocTypeDef, data: Mapping[str, Any], children: Mapping[str, Any] | None = None) -> dict[str, set[str]]:
+    """`{DocType: {noms}}` à lire pour les devises à un saut (`company.default_currency`). Pur : rien n'est lu."""
+    wanted: dict[str, set[str]] = {}
+
+    def note(source: str, container: Mapping[str, Any], defn: Any) -> None:
+        first, _, rest = source.partition(".")
+        holder = defn.field_map.get(first) if defn is not None else None
+        value = container.get(first)
+        if rest and holder is not None and holder.fieldtype == "Link" and isinstance(value, str) and value:
+            wanted.setdefault(str(holder.options), set()).add(value)
+
+    for f in definition.fields:
+        if (found := _currency_source(f, None)) is not None:
+            note(found[0], data, definition)
+    for table, child in (children or {}).items():
+        rows = data.get(table)
+        for row in rows if isinstance(rows, list) else []:
+            if not isinstance(row, Mapping):
+                continue
+            for f in child.fields:
+                if (found := _currency_source(f, row)) is not None:
+                    source, on_parent = found
+                    note(source, data if on_parent else row, definition if on_parent else child)
+    return wanted
 
 
 class _Model(BaseModel):
@@ -317,7 +392,7 @@ def _number(value: float) -> str:
     return text or "0"
 
 
-def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None = None) -> str:
+def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None = None, code: str | None = None) -> str:
     """La valeur d'un champ, en texte ÉCHAPPÉ. Un Decimal garde sa chaîne canonique : il ne passe pas par un float.
 
     Un LIEN montre le TITRE de ce qu'il désigne, jamais son identifiant : sur une facture, « Société Durand »
@@ -328,6 +403,8 @@ def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None =
     """
     if value is None or isinstance(value, (list, dict)):
         return ""
+    if code and isinstance(value, str) and value:
+        return f"{escape(value)} {escape(code)}"  # un montant et sa devise : « 1200.00 EUR »
     if isinstance(value, bool):
         return "Oui" if value else "Non"
     if isinstance(value, float):
@@ -369,6 +446,7 @@ def render_html(
     css_extra: str = "",
     titles: Titles = None,
     images: Mapping[str, str] | None = None,
+    linked: Linked | None = None,
 ) -> str:
     """Le document, en HTML prêt pour le moteur PDF. Pur : rien n'est lu ni écrit.
 
@@ -382,6 +460,7 @@ def render_html(
     """
     fields = definition.field_map
     values = {"doctype": definition.label or definition.name, "name": name}
+    money = Money(definition, data, children or {}, linked or {})
     body: list[str] = []
     if template.document is not None:
         # Le document libre est ENVELOPPÉ, papier à en-tête compris : une image « devant le texte » se place depuis
@@ -390,19 +469,19 @@ def render_html(
             if token in ("name", "doctype"):
                 return escape(values[token])
             field_name = token[4:]
-            return _cell(data.get(field_name), fields.get(field_name), titles)
+            return _cell(data.get(field_name), fields.get(field_name), titles, money.code(fields.get(field_name)))
 
         inner = print_document.render(
             template.document.root,
             value=value,
-            block=lambda b: _render_block(b, definition, data, fields, children or {}, values, titles),
+            block=lambda b: _render_block(b, definition, data, fields, children or {}, values, titles, money),
             image=lambda fid: (images or {}).get(fid),
         )
         body.append(f'<div class="doc">{letterhead_html}{inner}{footer_html}</div>')
         letterhead_html = footer_html = ""
     else:
         for block in template.blocks or []:
-            body.append(_render_block(block, definition, data, fields, children or {}, values, titles))
+            body.append(_render_block(block, definition, data, fields, children or {}, values, titles, money))
     return (
         "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>"
         + escape(f"{definition.label or definition.name} {name}")
@@ -506,7 +585,8 @@ def reserved_margins_css(page: PageSetup, *, top: int = 0, bottom: int = 0) -> s
 
 def _render_block(block: PrintBlock, definition: DocTypeDef, data: Mapping[str, Any],
                   fields: Mapping[str, Any], children: Mapping[str, Any], values: Mapping[str, str],
-                  titles: Titles = None) -> str:
+                  titles: Titles = None, money: Money | None = None) -> str:
+    money = money or Money(definition, data, children, {})
     if isinstance(block, TitleBlock):
         return f"<h1>{escape(render_text(block.text, values, data))}</h1>"
     if isinstance(block, TextBlock):
@@ -516,17 +596,17 @@ def _render_block(block: PrintBlock, definition: DocTypeDef, data: Mapping[str, 
     if isinstance(block, PageBreakBlock):
         return '<div class="pb"></div>'
     if isinstance(block, FieldsBlock):
-        return _render_fields(block, data, fields, titles)
+        return _render_fields(block, data, fields, titles, money)
     if isinstance(block, TotalsBlock):
-        return _render_totals(block, data, fields, titles)
+        return _render_totals(block, data, fields, titles, money)
     if isinstance(block, TableBlock):
-        return _render_table(block, data, children.get(block.field), titles)
+        return _render_table(block, data, children.get(block.field), titles, money)
     return ""
 
 
-def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles) -> str:
+def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles, money: Money) -> str:
     cells = [
-        f"<td><span class=k>{_label(fields.get(n), n)}</span><br>{_cell(data.get(n), fields.get(n), titles)}</td>"
+        f"<td><span class=k>{_label(fields.get(n), n)}</span><br>{_cell(data.get(n), fields.get(n), titles, money.code(fields.get(n)))}</td>"
         for n in block.fields
     ]
     rows = [cells[i : i + block.columns] for i in range(0, len(cells), block.columns)]
@@ -535,16 +615,16 @@ def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[
     return head + '<table class="fields">' + "".join(f"<tr>{''.join(pad(r))}</tr>" for r in rows) + "</table>"
 
 
-def _render_totals(block: TotalsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles) -> str:
+def _render_totals(block: TotalsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles, money: Money) -> str:
     last = len(block.fields) - 1
     rows = []
     for i, n in enumerate(block.fields):
         strong = ' class="grand"' if i == last else ""
-        rows.append(f"<tr{strong}><td>{_label(fields.get(n), n)}</td><td class=r>{_cell(data.get(n), fields.get(n), titles)}</td></tr>")
+        rows.append(f"<tr{strong}><td>{_label(fields.get(n), n)}</td><td class=r>{_cell(data.get(n), fields.get(n), titles, money.code(fields.get(n)))}</td></tr>")
     return '<table class="totaux">' + "".join(rows) + "</table>"
 
 
-def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles: Titles) -> str:
+def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles: Titles, money: Money) -> str:
     rows = data.get(block.field)
     rows = [r for r in rows if isinstance(r, Mapping)] if isinstance(rows, list) else []
     child_fields = child.field_map if child is not None else {}
@@ -569,13 +649,15 @@ def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles
             out.append(f'<tr class="grp"><td colspan={len(block.columns)}>{_cell(key, child_fields.get(block.group_by), titles)}</td></tr>')
         for row in members:
             out.append("<tr>" + "".join(
-                f"<td class={c.align or 'left'}>{_cell(row.get(c.field), child_fields.get(c.field), titles)}</td>"
+                f"<td class={c.align or 'left'}>{_cell(row.get(c.field), child_fields.get(c.field), titles, money.code(child_fields.get(c.field), row, block.field))}</td>"
                 for c in block.columns) + "</tr>")
         if block.subtotal:
             cells = []
             for c in block.columns:
                 if c.field in block.subtotal:
-                    cells.append(f"<td class={c.align or 'right'}>{_sum(members, c.field, child_fields.get(c.field))}</td>")
+                    code = money.code(child_fields.get(c.field), members[0], block.field) if members else None
+                    total = _sum(members, c.field, child_fields.get(c.field)) + (f" {escape(code)}" if code else "")
+                    cells.append(f"<td class={c.align or 'right'}>{total}</td>")
                 else:
                     cells.append(f"<td class={c.align or 'left'}></td>")
             out.append('<tr class="sub">' + "".join(cells) + "</tr>")

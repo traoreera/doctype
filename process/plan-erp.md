@@ -71,6 +71,8 @@ bloquent pas ; un type inconnu dans `cancel_ignores` est une erreur de chargemen
 
 ### M3. La devise d'un montant vient d'un champ — taille S
 
+**Fait (moteur, Desk, impression)** : `tests/unit/test_currency_from.py`. Écart au plan : 426 des 911 montants sont dans des LIGNES, d'où la forme `parent_currency` / `parent_company.default_currency` (le préfixe des conditions de ligne), jugée sur chaque parent de l'enfant. L'impression ajoute le CODE ISO (« 12.50 USD »), le Desk le symbole.
+
 `currency_from: currency` (un champ du même conteneur) ou `currency_from: company.default_currency` (un saut par
 un Link), sur le modèle exact de `unit_from` : AFFICHAGE seulement, vérifié au chargement
 (`registry._check_units` en est le patron), lu par le Desk (`formatCell`, `CellValue`) et par l'impression

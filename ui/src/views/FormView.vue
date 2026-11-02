@@ -882,6 +882,7 @@ onBeforeUnmount(() => {
                   :read-only="!writable || states[n]!.readOnly"
                   :errors="errors"
                   :parent-values="values"
+                  :parent-fields="meta.fields"
                   :form-id="formId"
                   @update:model-value="edit(n, $event)"
                   @cell="(i, col, v) => editCell(n, i, col, v)"

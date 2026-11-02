@@ -7,7 +7,7 @@ import { cellStates, childOf, newValues, rowContext, toPayload, validate, fieldS
 import { todayIn } from '@/lib/format'
 import { SERVICES } from '@/lib/services'
 import { unitLinks, unitOf, unitSource } from '@/lib/units'
-import type { DocRecord } from '@/lib/types'
+import type { DocRecord, FieldMeta } from '@/lib/types'
 import { MOVE } from './fixtures'
 
 const lines = MOVE.fields.find((f) => f.fieldname === 'items')!
@@ -119,6 +119,48 @@ describe('unités', () => {
   it('les articles à lire se rassemblent par DocType cible', () => {
     const wanted = unitLinks(child.fields, [{ item: 'vis' }, { item: 'ecrou' }, { item: 'vis' }, {}])
     expect([...wanted.entries()].map(([k, v]) => [k, [...v].sort()])).toEqual([['Item', ['ecrou', 'vis']]])
+  })
+})
+
+describe('devises (currency_from, M3)', () => {
+  const base = { required: false, hidden: false, in_list_view: false }
+  const amount = (from: string): FieldMeta => ({ ...base, fieldname: 'rate', fieldtype: 'Currency', decimals: 2, currency_from: from })
+  const parentFields: FieldMeta[] = [
+    { ...base, fieldname: 'currency', fieldtype: 'Link', options: 'Currency' },
+    { ...base, fieldname: 'company', fieldtype: 'Link', options: 'Company' },
+  ]
+  const read = (target: string, name: string, fieldname: string) => (target === 'Company' && name === 'c1' && fieldname === 'default_currency' ? 'XOF' : undefined)
+
+  it('la devise de la pièce s’affiche par son symbole', () => {
+    const f = amount('currency')
+    expect(unitOf(f, [f, ...parentFields], { currency: 'USD' }, read)).toBe('$US')
+    expect(unitOf(f, [f, ...parentFields], { currency: 'EUR' }, read)).toBe('€')
+  })
+
+  it('un code que le navigateur ne connaît pas s’affiche tel quel', () => {
+    const f = amount('currency')
+    expect(unitOf(f, [f], { currency: 'ZZZ' }, read)).toBe('ZZZ')
+  })
+
+  it('une ligne lit la devise de son parent, directement ou à travers un lien', () => {
+    const side = { fields: parentFields, values: { currency: 'EUR', company: 'c1' } }
+    expect(unitOf(amount('parent_currency'), [], {}, read, side)).toBe('€')
+    expect(unitOf(amount('parent_company.default_currency'), [], {}, read, side)).toBe('F\u202fCFA')
+  })
+
+  it('les sociétés à lire viennent du parent, une seule fois pour toutes les lignes', () => {
+    const side = { fields: parentFields, values: { company: 'c1' } }
+    const wanted = unitLinks([amount('parent_company.default_currency')], [{}, {}], side)
+    expect([...wanted.entries()].map(([k, v]) => [k, [...v]])).toEqual([['Company', ['c1']]])
+  })
+
+  it('sans le parent, une source parent_… ne désigne rien', () => {
+    expect(unitOf(amount('parent_currency'), [], { parent_currency: 'EUR' }, read)).toBe('€') // lu comme un champ de la ligne
+    expect(unitOf(amount('parent_company.default_currency'), [], {}, read)).toBeNull()
+  })
+
+  it('currency_from ne vaut que pour un montant', () => {
+    expect(unitSource({ ...base, fieldname: 'x', fieldtype: 'Decimal', decimals: 2, currency_from: 'currency' }, parentFields)).toBeNull()
   })
 })
 
