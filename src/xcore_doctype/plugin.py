@@ -58,6 +58,7 @@ SOURCES_SERVICE = "doctype_sources"  # service exporté : `self.get_service("doc
 REGISTRY_SERVICE = "doctype_registry"  # service exporté : `self.get_service("doctype_registry").load_dir(nom, dossier)`
 # Les actions d'OPÉRATEUR vivent hors de `doc.*` (que le manifeste ouvre à tous les appelants) : le manifeste livré ne les ouvre pas.
 OPS_HISTORY_PURGE = "ops.history.purge"
+OPS_TRASH_PURGE = "ops.trash.purge"
 
 
 def _need(payload: dict, key: str) -> Any:
@@ -444,6 +445,31 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         l'écriture du document ; celle-ci atteint les documents qu'on n'écrit plus et les documents supprimés. Renvoie le nombre d'entrées
         supprimées.
         """
+        parsed = self._purge_request(payload)
+        if isinstance(parsed, dict):
+            return parsed
+        tenant, before, doctype = parsed
+        deleted = await self.documents.purge_history(tenant, before, doctype=doctype)
+        return ok(deleted=deleted)
+
+    @action(OPS_TRASH_PURGE)
+    async def ops_trash_purge(self, payload: dict) -> dict:
+        """Vide la corbeille du tenant de ce qui y est depuis avant une date, fichiers des champs compris :
+        `{"tenant": …, "before": "2026-01-01T00:00:00+00:00", "doctype"?: …}`. Mêmes deux verrous que `ops.history.purge` (ressource
+        fermée par le manifeste livré, grant transverse exigé). La corbeille n'a pas d'autre rétention : sans cette action, planifiée par
+        l'opérateur, un document supprimé y reste. Renvoie le nombre de documents purgés."""
+        parsed = self._purge_request(payload)
+        if isinstance(parsed, dict):
+            return parsed
+        tenant, before, doctype = parsed
+        try:
+            purged = await self.documents.purge_trash(tenant, before, doctype=doctype)
+        except DoctypeError as e:
+            return error(e.message, e.code)
+        return ok(purged=purged)
+
+    def _purge_request(self, payload: dict) -> tuple[str, datetime, str | None] | dict:
+        """`(tenant, before, doctype)` d'une purge d'opérateur, ou la réponse d'erreur à rendre telle quelle."""
         if not ipc_operator(self._settings):
             return error("Réservé à l'opérateur de la plateforme", "forbidden")
         body = payload or {}
@@ -462,8 +488,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         doctype = body.get("doctype")
         if doctype is not None and (not isinstance(doctype, str) or not doctype):
             return error("`doctype` doit être un nom de DocTypes", "invalid_payload")
-        deleted = await self.documents.purge_history(tenant, before, doctype=doctype)
-        return ok(deleted=deleted)
+        return tenant, before, doctype
 
     @action("doc.tree")
     async def doc_tree(self, payload: dict) -> dict:
@@ -913,6 +938,24 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return {"doc": await self.documents.amend(ctx, _need(payload, "doctype"), _need(payload, "name"))}
 
         return await self._run("doc.amend", op)
+
+    @action("doc.trash.list")
+    async def doc_trash_list(self, payload: dict) -> dict:
+        return await self._run("doc.trash.list", lambda ctx: self.documents.trash(
+            ctx, _need(payload, "doctype"), limit=payload.get("limit", 20), offset=payload.get("offset", 0)
+        ))
+
+    @action("doc.trash.restore")
+    async def doc_trash_restore(self, payload: dict) -> dict:
+        return await self._run("doc.trash.restore", lambda ctx: self.documents.restore(ctx, _need(payload, "doctype"), _need(payload, "id")))
+
+    @action("doc.trash.purge")
+    async def doc_trash_purge(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            await self.documents.purge_trashed(ctx, _need(payload, "doctype"), _need(payload, "id"))
+            return {}
+
+        return await self._run("doc.trash.purge", op)
 
     @action("doc.delete")
     async def doc_delete(self, payload: dict) -> dict:

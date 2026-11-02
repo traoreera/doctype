@@ -138,6 +138,7 @@ class Query:
         self._uniques = tables.uniques
         self._tags = tables.tags
         self._shares = tables.shares
+        self._trash = tables.trash
 
     # ── Lecture ───────────────────────────────────────────────
     async def get(self, doctype: str, name: str, *, scope: Scope, lock: bool = False) -> StoredDoc | None:
@@ -262,8 +263,14 @@ class Query:
         return [self._doc(r) for r in (await self._session.execute(stmt)).mappings().all()]
 
     # ── Écriture ──────────────────────────────────────────────
-    async def insert(self, doctype: str, name: str, data: dict[str, Any], *, amended_from: str | None = None, workflow_state: str | None = None) -> StoredDoc:
+    async def insert(
+        self, doctype: str, name: str, data: dict[str, Any], *, amended_from: str | None = None, workflow_state: str | None = None,
+        owner: str | None = None,
+    ) -> StoredDoc:
+        """`owner` : un propriétaire IMPOSÉ — seulement la restauration d'un document de la corbeille, qui le rend à qui il était."""
         values = self._new_row(doctype, name, data, amended_from, workflow_state)
+        if owner is not None:
+            values["owner"] = owner
         try:
             await self._session.execute(insert(self._t).values(**values))
         except IntegrityError as e:
@@ -417,6 +424,63 @@ class Query:
             self._scope(self._t.c.doctype == doctype, self._t.c.name == name, self._t.c.docstatus == DRAFT, scope=scope)
         )
         return (await self._session.execute(stmt)).rowcount > 0
+
+    # ── Corbeille ─────────────────────────────────────────────
+    async def put_trash(self, doc: StoredDoc, *, deleted_by: str, files: Collection[str]) -> str:
+        """Le document supprimé, tel qu'il était, dans la corbeille (même transaction que la suppression). Rend son identifiant."""
+        trash_id = secrets.token_hex(16)
+        await self._session.execute(insert(self._trash).values(
+            tenant_id=self._tenant, id=trash_id, doctype=doc.doctype, name=doc.name, data=doc.data, owner=doc.owner,
+            workflow_state=doc.workflow_state, creation=doc.creation, deleted_by=deleted_by, deleted_at=datetime.now(UTC),
+            files=sorted(files),
+        ))
+        return trash_id
+
+    async def trash_page(self, doctype: str, *, scope: Scope, offset: int = 0, limit: int = 20) -> tuple[list[dict[str, Any]], int]:
+        """Les documents de ce type à la corbeille que `scope` permet de lire (jugé sur le document tel qu'il était), plus récents d'abord."""
+        where = self._trscope(self._trash.c.doctype == doctype, scope=scope)
+        total = (await self._session.execute(select(func.count()).select_from(self._trash).where(where))).scalar_one()
+        rows = (await self._session.execute(
+            select(self._trash).where(where).order_by(self._trash.c.deleted_at.desc(), self._trash.c.id).offset(offset).limit(limit)
+        )).mappings().all()
+        return [self._trashed(r) for r in rows], int(total)
+
+    async def trash_get(self, doctype: str, trash_id: str, *, scope: Scope, lock: bool = False) -> dict[str, Any] | None:
+        stmt = select(self._trash).where(self._trscope(self._trash.c.doctype == doctype, self._trash.c.id == trash_id, scope=scope))
+        if lock:
+            stmt = stmt.with_for_update()
+        row = (await self._session.execute(stmt)).mappings().first()
+        return self._trashed(row) if row is not None else None
+
+    async def trash_newer(self, doctype: str, name: str, deleted_at: datetime) -> bool:
+        """Un document du MÊME nom est-il arrivé dans la corbeille après celui-ci ? (sans périmètre : c'est une règle d'ordre, pas une lecture)"""
+        stmt = select(self._trash.c.id).where(
+            self._trscope(self._trash.c.doctype == doctype, self._trash.c.name == name, self._trash.c.deleted_at > deleted_at)
+        ).limit(1)
+        return (await self._session.execute(stmt)).first() is not None
+
+    async def trash_remove(self, doctype: str, trash_id: str) -> bool:
+        stmt = delete(self._trash).where(self._trscope(self._trash.c.doctype == doctype, self._trash.c.id == trash_id))
+        return (await self._session.execute(stmt)).rowcount > 0
+
+    async def purge_trash_before(self, before: datetime, *, doctype: str | None = None) -> list[dict[str, Any]]:
+        """Action opérateur (`ops.trash.purge`) : vide la corbeille du tenant de ce qui y est depuis avant `before`. Rend ce qui est
+        parti (type et fichiers), pour que l'appelant libère les fichiers APRÈS le commit."""
+        conds = [self._trash.c.deleted_at < before] + ([self._trash.c.doctype == doctype] if doctype else [])
+        rows = (await self._session.execute(
+            select(self._trash.c.id, self._trash.c.doctype, self._trash.c.files).where(self._trscope(*conds))
+        )).mappings().all()
+        if rows:
+            await self._session.execute(delete(self._trash).where(self._trscope(self._trash.c.id.in_([r["id"] for r in rows]))))
+        return [{"doctype": r["doctype"], "files": list(r["files"] or [])} for r in rows]
+
+    @staticmethod
+    def _trashed(row: Mapping[str, Any]) -> dict[str, Any]:
+        return {
+            "id": row["id"], "doctype": row["doctype"], "name": row["name"], "data": dict(row["data"]), "owner": row["owner"],
+            "workflow_state": row["workflow_state"], "creation": row["creation"], "deleted_by": row["deleted_by"],
+            "deleted_at": row["deleted_at"], "files": list(row["files"] or []),
+        }
 
     async def existing_names(self, doctype: str, names: Collection[str], *, scope: Scope, lock: bool = False) -> set[str]:
         """Parmi `names`, ceux qui existent ET que `scope` permet de lire (contrôle des champs Link à l'écriture).
@@ -652,11 +716,23 @@ class Query:
         return [self._version(r) for r in rows], total
 
     async def _deletions(self, doctype: str, docname: str) -> list[int]:
-        """Les ids des deux dernières entrées de suppression du nom, la plus récente d'abord : ce qui borne ses générations."""
+        """Les ids des deux dernières entrées de suppression du nom, la plus récente d'abord : ce qui borne ses générations.
+
+        Une suppression que la corbeille a DÉFAITE (l'entrée suivante du nom est un `restore`) ne borne rien : le document restauré
+        retrouve son historique d'avant. La restauration n'est permise que pour la plus récente suppression d'un nom
+        (`trash_superseded`), ce qui rend « l'entrée suivante » exacte."""
         v = self._versions
+        after = self._versions.alias("after_delete")
+        following = (
+            select(after.c.action)
+            .where(after.c.tenant_id == v.c.tenant_id, after.c.doctype == v.c.doctype, after.c.docname == v.c.docname, after.c.id > v.c.id)
+            .order_by(after.c.id)
+            .limit(1)
+            .scalar_subquery()
+        )
         stmt = (
             select(v.c.id)
-            .where(self._vscope(v.c.doctype == doctype, v.c.docname == docname, v.c.action == "delete"))
+            .where(self._vscope(v.c.doctype == doctype, v.c.docname == docname, v.c.action == "delete", func.coalesce(following, "") != "restore"))
             .order_by(v.c.id.desc())
             .limit(2)
         )
@@ -1281,6 +1357,13 @@ class Query:
             parts.append(self._permission_clause(scope))
         return and_(*parts)
 
+    def _trscope(self, *conds: Any, scope: Scope | None = None) -> Any:
+        """Le point de passage de la corbeille : le tenant est imposé, et le périmètre de lecture si fourni (sur le document tel qu'il était)."""
+        parts = [self._trash.c.tenant_id == self._tenant, *conds]
+        if scope is not None:
+            parts.append(self._permission_clause(scope, self._trash))
+        return and_(*parts)
+
     def _vscope(self, *conds: Any) -> Any:
         """Le point de passage de l'historique : le tenant est imposé, comme `_scope` le fait pour les documents."""
         return and_(self._versions.c.tenant_id == self._tenant, *conds)
@@ -1329,9 +1412,13 @@ class Query:
             "changes": dict(row["changes"]),
         }
 
-    def _permission_clause(self, scope: Scope) -> Any:
+    def _permission_clause(self, scope: Scope, table: Any = None) -> Any:
         """Le périmètre en SQL : (rôles ET restrictions de l'utilisateur) OU documents partagés avec lui. L'équivalent Python est
-        `Scope.allows` ; `test_permissions_matrix.py` compare les deux à un oracle."""
+        `Scope.allows` ; `test_permissions_matrix.py` compare les deux à un oracle.
+
+        `table` : une autre table qui porte les mêmes colonnes `owner`, `name` et `data` (la corbeille). Les partages n'y jouent
+        pas : ils disparaissent avec le document."""
+        t = self._t if table is None else table
         if scope.unrestricted:
             role: Any = true()
         elif scope.clauses:
@@ -1339,17 +1426,17 @@ class Query:
             for clause in scope.clauses:
                 parts = []
                 if clause.owner is not None:
-                    parts.append(self._t.c.owner == clause.owner)
+                    parts.append(t.c.owner == clause.owner)
                 if clause.match is not None:
                     # Les champs de `match` sont validés (schema.MATCHABLE_TYPES) : tous textuels.
-                    parts.append(self._t.c.data[clause.match[0]].as_string() == clause.match[1])
+                    parts.append(t.c.data[clause.match[0]].as_string() == clause.match[1])
                 ors.append(and_(*parts))
             role = or_(*ors)
         else:
             role = false()
         if scope.restrict and scope.granted:
-            role = and_(role, *self._restriction_conds(scope))
-        if scope.share and scope.user is not None:
+            role = and_(role, *self._restriction_conds(scope, t))
+        if scope.share and scope.user is not None and table is None:
             return or_(role, self._shared_cond(scope))
         return role
 
@@ -1366,12 +1453,13 @@ class Query:
             or_(applies.is_(None), applies == "", applies == scope.doctype),
         )
 
-    def _restriction_conds(self, scope: Scope) -> list[Any]:
+    def _restriction_conds(self, scope: Scope, table: Any = None) -> list[Any]:
         """Pour chaque champ qu'une restriction peut viser : aucune restriction sur sa cible, ou une valeur vide, ou une valeur permise."""
+        t = self._t if table is None else table
         conds = []
         for target, fieldname in scope.restrict:
             rows = self._user_permission_rows(scope, target)
-            value = self._t.c.name if fieldname is None else self._t.c.data[fieldname].as_string()
+            value = t.c.name if fieldname is None else t.c.data[fieldname].as_string()
             conds.append(or_(~exists(rows), value.is_(None), value == "", value.in_(rows)))
         return conds
 

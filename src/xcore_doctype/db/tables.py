@@ -38,6 +38,7 @@ ATTACHMENT_TABLE = "xdt_attachment"
 UNIQUE_TABLE = "xdt_unique"
 TAG_TABLE = "xdt_tag"
 SHARE_TABLE = "xdt_share"
+TRASH_TABLE = "xdt_trash"
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +56,7 @@ class SystemTables:
     uniques: Table
     tags: Table
     shares: Table
+    trash: Table
 
 
 def build_system_tables() -> SystemTables:
@@ -257,4 +259,28 @@ def build_system_tables() -> SystemTables:
         PrimaryKeyConstraint("tenant_id", "doctype", "docname", "member", name="pk_xdt_share"),
         Index("ix_xdt_share_member", "tenant_id", "member"),
     )
-    return SystemTables(md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags, shares)
+    # La corbeille (process/programme.md groupe 2, élément 7) : un document SUPPRIMÉ, tel qu'il était, écrit dans la transaction de
+    # la suppression. Une table à part plutôt qu'une colonne « supprimé » sur xdt_document : aucune lecture, aucun lien, aucune
+    # valeur unique du moteur n'a à le savoir. `owner`, `name` et `data` portent les mêmes noms que dans xdt_document : le même
+    # périmètre SQL (`Query._permission_clause`) s'y applique. `files` : les fichiers de ses champs Image/Attach, gardés jusqu'à
+    # la purge (une restauration les retrouve).
+    trash = Table(
+        TRASH_TABLE,
+        md,
+        Column("tenant_id", String(63), nullable=False),
+        Column("id", String(32), nullable=False),
+        Column("doctype", String(140), nullable=False),
+        Column("name", String(140), nullable=False),
+        Column("data", JsonType, nullable=False),
+        Column("owner", String(255), nullable=False),
+        Column("workflow_state", String(60), nullable=True),
+        Column("creation", DateTime(timezone=True), nullable=False),  # celle du document, pas celle de sa mise à la corbeille
+        Column("deleted_by", String(255), nullable=False),
+        Column("deleted_at", DateTime(timezone=True), nullable=False),
+        Column("files", JsonType, nullable=False),
+        PrimaryKeyConstraint("tenant_id", "id", name="pk_xdt_trash"),
+        Index("ix_xdt_trash_list", "tenant_id", "doctype", "deleted_at"),
+    )
+    return SystemTables(
+        md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags, shares, trash
+    )

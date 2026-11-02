@@ -21,12 +21,12 @@ from tests.conftest import make_ctx
 from xcore_doctype.aggregation import Group, Metric
 from xcore_doctype.db.tables import (
     ASSIGNMENT_TABLE, ATTACHMENT_TABLE, COMMENT_TABLE, DOCUMENT_TABLE, FILE_TABLE, NAMING_TABLE, OVERRIDE_TABLE, SAVED_VIEW_TABLE, SHARE_TABLE, TAG_TABLE, UNIQUE_TABLE,
-    VERSION_TABLE,
+    TRASH_TABLE, VERSION_TABLE,
 )
 from xcore_doctype.errors import AlreadyExists, DocumentLocked, InvalidDocStatus, NotFound, VersionConflict
 from xcore_doctype.builder import Filter
 from xcore_doctype.permissions import USER_PERMISSION, Facts, Scope
-from xcore_doctype.query import FileCiters, Query, UniqueViolation
+from xcore_doctype.query import FileCiters, Query, StoredDoc, UniqueViolation
 
 A, B = "acme", "globex"
 ALL = Scope.everything("read")
@@ -42,7 +42,7 @@ class Env:
         event.listen(db.engine.sync_engine, "before_cursor_execute", self._capture)
 
     def _capture(self, conn, cursor, statement, parameters, context, executemany):
-        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE, UNIQUE_TABLE, FILE_TABLE, TAG_TABLE, SHARE_TABLE)):
+        if self.recording and any(t in statement for t in (DOCUMENT_TABLE, NAMING_TABLE, VERSION_TABLE, SAVED_VIEW_TABLE, OVERRIDE_TABLE, COMMENT_TABLE, ASSIGNMENT_TABLE, ATTACHMENT_TABLE, UNIQUE_TABLE, FILE_TABLE, TAG_TABLE, SHARE_TABLE, TRASH_TABLE)):
             self.captured.append((statement, parameters))
 
     def close(self):
@@ -94,12 +94,16 @@ class Env:
             tags = await s.execute(
                 text(f"SELECT doctype, docname, folded, tag, owner FROM {TAG_TABLE} WHERE tenant_id = :t ORDER BY doctype, docname, folded"), {"t": tenant}
             )
+            trash = await s.execute(
+                text(f"SELECT id, doctype, name, owner, deleted_by FROM {TRASH_TABLE} WHERE tenant_id = :t ORDER BY id"), {"t": tenant}
+            )
             return (
                 [tuple(x) for x in docs.all()]
                 + collab
                 + [tuple(x) for x in uniques.all()]
                 + [tuple(x) for x in tags.all()]
                 + [tuple(x) for x in shares.all()]
+                + [tuple(x) for x in trash.all()]
                 + [tuple(x) for x in counters.all()]
                 + [tuple(x) for x in history.all()]
                 + [tuple(x) for x in views.all()]
@@ -149,6 +153,11 @@ class Env:
             await q.sync_unique("Customer", "only-a", {"code": "A2"})
             # Une permission utilisateur chez A pour un identifiant qui existe aussi chez B : elle ne doit jamais restreindre B.
             await q.insert(USER_PERMISSION, "up-a", {"user": "friend", "allow": "Customer", "for_value": "only-a"})
+            # La corbeille de A : un document « gone-a », et un « shared » (même nom qu'un document vivant de B). B ne doit ni les voir,
+            # ni les restaurer, ni les purger.
+            for n in ("gone-a", "shared"):
+                stored = StoredDoc("Customer", n, {"customer_name": f"acme:{n}"}, "user-acme", datetime.now(UTC), datetime.now(UTC), 1)
+                self.ids[A][f"trash-{n}"] = await q.put_trash(stored, deleted_by="user-acme", files=["c" * 32])
             for _ in range(3):  # A en est à 3 : si B partageait ce compteur, son premier numéro serait 4
                 await q.next_number("Customer", "C-{#}")
 
@@ -451,6 +460,38 @@ async def scenario_purge_versions_before(env: Env):
         assert await q.purge_versions_before(soon) == 1  # l'entrée de B, plus vieille que la date
         assert await q.purge_versions_before(soon, doctype="Customer") == 0  # plus rien à purger
         assert await q.purge_versions_before(datetime.now(UTC) - timedelta(days=1)) == 0  # rien n'est plus vieux que ça
+
+
+async def scenario_put_trash(env: Env):
+    async with env.q(B) as q:
+        stored = StoredDoc("Customer", "shared", {"customer_name": "globex"}, "user-globex", datetime.now(UTC), datetime.now(UTC), 1)
+        await q.put_trash(stored, deleted_by="user-globex", files=[])  # même nom qu'à la corbeille de A : chez B seulement
+
+
+async def scenario_trash_page(env: Env):
+    async with env.q(B) as q:
+        assert await q.trash_page("Customer", scope=Scope.everything("read")) == ([], 0)  # deux documents à la corbeille de A
+
+
+async def scenario_trash_get(env: Env):
+    async with env.q(B) as q:
+        for key in ("trash-gone-a", "trash-shared"):
+            assert await q.trash_get("Customer", env.ids[A][key], scope=Scope.everything("read"), lock=True) is None
+
+
+async def scenario_trash_newer(env: Env):
+    async with env.q(B) as q:
+        assert await q.trash_newer("Customer", "shared", datetime(2000, 1, 1, tzinfo=UTC)) is False
+
+
+async def scenario_trash_remove(env: Env):
+    async with env.q(B) as q:
+        assert await q.trash_remove("Customer", env.ids[A]["trash-gone-a"]) is False
+
+
+async def scenario_purge_trash_before(env: Env):
+    async with env.q(B) as q:
+        assert await q.purge_trash_before(datetime.now(UTC) + timedelta(days=1)) == []
 
 
 async def scenario_lock_for_delete(env: Env):
@@ -832,6 +873,12 @@ async def scenario_people(env: Env):
 
 
 SCENARIOS = {
+    "put_trash": scenario_put_trash,
+    "trash_page": scenario_trash_page,
+    "trash_get": scenario_trash_get,
+    "trash_newer": scenario_trash_newer,
+    "trash_remove": scenario_trash_remove,
+    "purge_trash_before": scenario_purge_trash_before,
     "add_comment": scenario_comments,
     "comments": scenario_comments,
     "get_comment": scenario_comments,

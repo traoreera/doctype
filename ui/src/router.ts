@@ -38,6 +38,7 @@ export function createDeskRouter(pinia: Pinia): Router {
       { path: '/api/:doctype?', name: 'api-docs', component: () => import('@/views/ApiDocsView.vue'), props: true },
       { path: '/dev/doctype/:doctype?', name: 'dev-doctype', component: () => import('@/views/DoctypeBuilderView.vue'), props: true },
       { path: '/customize/:doctype', name: 'customize', component: () => import('@/views/FormBuilderView.vue'), props: true },
+      { path: '/trash/:doctype', name: 'trash', component: () => import('@/views/TrashView.vue'), props: true },
       { path: '/workflow/:doctype', name: 'workflow', component: () => import('@/views/WorkflowBuilderView.vue'), props: true },
       { path: '/print/:doctype', name: 'print-builder', component: () => import('@/views/PrintBuilderView.vue'), props: true },
       { path: '/settings/:doctype?', name: 'settings', component: () => import('@/views/SettingsView.vue'), props: true },
