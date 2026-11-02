@@ -3,15 +3,15 @@
  * Les montants Decimal restent des CHAÎNES exactes jusqu'à l'affichage (`lib/decimal.ts`) ; seul le dessin d'un graphique les lit
  * comme des nombres, et un dessin n'a pas besoin d'être exact.
  */
-import { t } from '@/i18n'
+import { intlLocale, t } from '@/i18n'
 import { formatDecimal, sumDecimals } from './decimal'
 import { statusLabel } from './docstatus'
 import { formatNumber } from './format'
 import type { AggregateGroup, AggregateMetric, AggregateQuery, AggregateResult, AggregateRow, ChartBlock, NumberCardBlock } from './types'
 
-const average = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 })
-const month = new Intl.DateTimeFormat('fr-FR', { month: 'short', year: '2-digit', timeZone: 'UTC' })
-const day = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+const average = new Intl.NumberFormat(intlLocale, { maximumFractionDigits: 2 })
+const month = new Intl.DateTimeFormat(intlLocale, { month: 'short', year: '2-digit', timeZone: 'UTC' })
+const day = new Intl.DateTimeFormat(intlLocale, { day: 'numeric', month: 'short', timeZone: 'UTC' })
 
 /** La requête d'agrégat qui répond à un bloc (carte ou graphique). */
 export function queryOf(block: NumberCardBlock | ChartBlock): AggregateQuery {

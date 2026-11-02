@@ -2,6 +2,7 @@
  * Géométrie des graphiques : des fonctions pures (sans DOM), donc testables seules. Le Desk dessine en SVG, sans bibliothèque : les
  * couleurs viennent des variables CSS `--chart-N` du thème (clair et sombre), jamais d'une valeur écrite ici.
  */
+import { intlLocale } from '@/i18n'
 
 export interface Scale {
   min: number
@@ -37,7 +38,7 @@ export function niceScale(lo: number, hi: number, target = 4, integer = false): 
 /** La position (en pixels, de haut en bas) d'une valeur sur l'axe vertical. */
 export const scaleY = (v: number, s: Scale, top: number, bottom: number): number => bottom - ((v - s.min) / (s.max - s.min)) * (bottom - top)
 
-const compact = new Intl.NumberFormat('fr-FR', { notation: 'compact', maximumFractionDigits: 1 })
+const compact = new Intl.NumberFormat(intlLocale, { notation: 'compact', maximumFractionDigits: 1 })
 
 /** Une graduation courte : 1 500 -> « 1,5 k ». */
 export const formatTick = (n: number): string => compact.format(n)

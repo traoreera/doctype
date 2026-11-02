@@ -14,8 +14,8 @@ import { allowedDocstatus } from '@/lib/docstatus'
 import { canonicalDecimal, normalizeDecimal } from '@/lib/decimal'
 import { formatDuration, parseDuration } from '@/lib/duration'
 import { normalizeTime } from '@/lib/fieldrules'
-import { currencySymbol, datePattern, dateFromIso, isoFromDate } from '@/lib/format'
-import { t } from '@/i18n'
+import { currencySymbol, dateFromIso, datePattern, isoFromDate, optionLabel } from '@/lib/format'
+import { intlLocale, t } from '@/i18n'
 import type { FieldMeta } from '@/lib/types'
 
 const props = defineProps<{
@@ -34,7 +34,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: unknown] }>()
 const set = (v: unknown) => emit('update:modelValue', v)
 // Le champ Nombre de PrimeVue n'émet `update:modelValue` qu'au blur, à Tab ou à Entrée ; pendant la frappe il n'émet que `input`.
 // Sans lui, une condition `depends_on` sur un nombre ne réagirait pas à la frappe et Ctrl+S enverrait l'ancienne valeur.
-const options = computed(() => (Array.isArray(props.field.options) ? props.field.options : []))
+// Une option de Select se CHOISIT par sa valeur et se LIT par son libellé (traduit par le serveur, `option_labels`).
+const options = computed(() => (Array.isArray(props.field.options) ? props.field.options.map((v) => ({ label: optionLabel(props.field, v), value: v })) : []))
 const target = computed(() => (typeof props.field.options === 'string' ? props.field.options : ''))
 const asText = computed(() => (typeof props.modelValue === 'string' ? props.modelValue : ''))
 const asNumber = computed(() => (typeof props.modelValue === 'number' ? props.modelValue : null))
@@ -115,7 +116,7 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
     :invalid="invalid"
     :use-grouping="false"
     :max-fraction-digits="10"
-    locale="fr-FR"
+    :locale="intlLocale"
     fluid
     @input="set($event.value ?? null)"
     @update:model-value="set($event ?? null)"
@@ -128,7 +129,7 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
     :invalid="invalid"
     :use-grouping="false"
     :max-fraction-digits="0"
-    locale="fr-FR"
+    :locale="intlLocale"
     fluid
     @input="set($event.value ?? null)"
     @update:model-value="set($event ?? null)"
@@ -144,7 +145,7 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
     :min="0"
     :max="100"
     suffix=" %"
-    locale="fr-FR"
+    :locale="intlLocale"
     fluid
     @input="set($event.value ?? null)"
     @update:model-value="set($event ?? null)"
@@ -264,6 +265,8 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
     :input-id="inputId"
     :model-value="typeof modelValue === 'string' ? modelValue : null"
     :options="options"
+    option-label="label"
+    option-value="value"
     :invalid="invalid"
     :show-clear="!field.required"
     fluid

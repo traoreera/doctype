@@ -1,4 +1,5 @@
 import type { AssignmentItem, AssignmentStatus, AvailableMappings, AvailableTransitions, MappedDraft, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, PrintOverride, PrintTemplates, PrintedDocument, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
+import { language } from '@/i18n'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 import type { DevDefinition } from './doctypebuilder'
 
@@ -77,6 +78,11 @@ export class ApiClient {
 
   // ── Préférences de l'organisation ───────────────────────
   /** Nom, logo, couleur et format de date de l'organisation : lisibles par tout utilisateur identifié (les réglages, eux, par un administrateur). */
+  /** Choisir SA langue (`null` : suivre celle de l'organisation). Le Desk recharge ensuite la page. */
+  setMyLanguage(language: string | null): Promise<{ my_language: string | null }> {
+    return this.call('PUT', '/preferences/language', { body: { language } })
+  }
+
   preferences(): Promise<OrgPreferences> {
     return this.call('GET', '/preferences')
   }
@@ -517,6 +523,7 @@ export class ApiClient {
     const headers: Record<string, string> = { Accept: 'application/json' }
     if (token) headers.Authorization = `Bearer ${token}`
     if (tenant) headers['X-Tenant-ID'] = tenant
+    headers['Accept-Language'] = language // les libellés des types (`/meta`, espaces) dans la langue de la page
     if (opts.body !== undefined && !(typeof FormData !== 'undefined' && opts.body instanceof FormData)) headers['Content-Type'] = 'application/json'
     const res: HttpResponse = await this.transport.request({
       method,
@@ -544,6 +551,7 @@ export class ApiClient {
     const headers: Record<string, string> = { Accept: '*/*' }
     if (token) headers.Authorization = `Bearer ${token}`
     if (tenant) headers['X-Tenant-ID'] = tenant
+    headers['Accept-Language'] = language // les libellés des types (`/meta`, espaces) dans la langue de la page
     const res = await this.transport.request({ method, url: `${baseUrl}${path}${query}`, headers, binary: true })
     if (res.status >= 200 && res.status < 300 && res.bytes) {
       return { bytes: res.bytes, contentType: res.contentType ?? '', disposition: res.disposition ?? '' }

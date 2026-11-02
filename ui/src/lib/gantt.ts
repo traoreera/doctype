@@ -1,6 +1,7 @@
 /**
  * L'échelle de temps d'un Gantt : pures fonctions (jours -> pixels), testées sans interface. Les dates sont des `AAAA-MM-JJ`.
  */
+import { intlLocale } from '@/i18n'
 import { addDays, daysBetween, firstOfMonth, parseIso, shiftMonth, weekStart } from './calendar'
 
 export type Zoom = 'day' | 'week' | 'month'
@@ -38,8 +39,8 @@ export interface Tick {
   major: boolean
 }
 
-const monthName = new Intl.DateTimeFormat('fr-FR', { month: 'short', year: 'numeric', timeZone: 'UTC' })
-const dayNum = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', timeZone: 'UTC' })
+const monthName = new Intl.DateTimeFormat(intlLocale, { month: 'short', year: 'numeric', timeZone: 'UTC' })
+const dayNum = new Intl.DateTimeFormat(intlLocale, { day: 'numeric', timeZone: 'UTC' })
 
 /** Les graduations : chaque jour (zoom jour), chaque lundi (semaine), chaque début de mois (mois). */
 export function ticks(from: string, days: number, zoom: Zoom): Tick[] {

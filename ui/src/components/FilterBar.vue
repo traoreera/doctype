@@ -5,10 +5,10 @@ import InputNumber from 'primevue/inputnumber'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import { computed } from 'vue'
-import { t } from '@/i18n'
+import { intlLocale, t } from '@/i18n'
 import { defaultOp, opsFor, type FilterRow } from '@/lib/filters'
 import { dateFromUtc, utcFromDate } from '@/lib/datetime'
-import { datePattern, dateFromIso, isoFromDate } from '@/lib/format'
+import { dateFromIso, datePattern, isoFromDate, optionLabel } from '@/lib/format'
 import { isDecimalType, type FieldMeta } from '@/lib/types'
 
 const props = defineProps<{ fields: FieldMeta[]; rows: FilterRow[] }>()
@@ -74,7 +74,9 @@ function clear(): void {
         <Select
           v-else-if="fieldOf(row.field)!.fieldtype === 'Select'"
           :model-value="row.value"
-          :options="(fieldOf(row.field)!.options as string[]) ?? []"
+          :options="((fieldOf(row.field)!.options as string[]) ?? []).map((v) => ({ label: optionLabel(fieldOf(row.field)!, v), value: v }))"
+          option-label="label"
+          option-value="value"
           size="small"
           :aria-label="t.list.value"
           @update:model-value="patch(row, { value: $event })"
@@ -84,7 +86,7 @@ function clear(): void {
           :model-value="typeof row.value === 'number' ? row.value : null"
           :use-grouping="false"
           :max-fraction-digits="10"
-          locale="fr-FR"
+          :locale="intlLocale"
           size="small"
           :aria-label="t.list.value"
           @input="patch(row, { value: $event.value ?? null })"

@@ -149,6 +149,9 @@ export interface OrgPreferences {
   organization_name?: string
   brand_color?: string
   date_format?: string
+  /** La langue de l'organisation (`fr`, `en`) ; `my_language` : celle que l'utilisateur a choisie, qui passe avant. */
+  language?: string
+  my_language?: string
   logo?: FileLink
 }
 
@@ -356,6 +359,8 @@ export interface FieldMeta {
   format?: 'email' | 'phone' | 'url'
   /** L'unité affichée à côté d'une quantité : `uom` (un champ du même document ou de la même ligne) ou `item.uom` (champ de la cible d'un Link). */
   unit_from?: string
+  /** Select : le libellé de chaque valeur dans la langue de la page (`/meta`, translations.py). La VALEUR reste celle de `options`. */
+  option_labels?: Record<string, string>
   /** Currency : la devise vient d'un champ (`currency`, `company.default_currency`, et dans une ligne `parent_currency`) : affichage seulement (M3). */
   currency_from?: string
   /** Link : les documents qu'on peut choisir (D29). Une valeur, ou `$champ` pour celle d'un autre champ du document (ou de la ligne). Le serveur l'exige aussi à l'écriture. */
@@ -461,6 +466,9 @@ export interface ChildMeta {
 }
 
 export interface DocTypeMeta {
+  /** Workflow : le libellé de chaque état et de chaque action dans la langue de la page. Les VALEURS restent celles du YAML. */
+  state_labels?: Record<string, string>
+  action_labels?: Record<string, string>
   name: string
   label?: string
   module?: string

@@ -2,7 +2,8 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { computed, defineAsyncComponent, reactive, watch, type Component } from 'vue'
 import { onBeforeRouteUpdate, useRouter } from 'vue-router'
-import { t } from '@/i18n'
+import { useNotify } from '@/composables/useNotify'
+import { LANGUAGES, t } from '@/i18n'
 import { piIcon } from '@/lib/icons'
 import { moduleLabel } from '@/lib/modules'
 import type { ThemeMode } from '@/lib/theme'
@@ -22,7 +23,7 @@ import FormView from '@/views/FormView.vue'
 const props = defineProps<{ doctype?: string }>()
 
 const meta = useMeta()
-const { auth } = useServices()
+const { auth, api } = useServices()
 
 // Les pages d'administration d'xauth (comptes, membres, rôles, courrier, audit, API) : des rubriques « système », adresse `/settings/~<clé>`. Elles n'existent que
 // connecté à xauth ; chacune dit elle-même si l'utilisateur n'a pas le droit de s'en servir.
@@ -63,7 +64,24 @@ const workspaces = useWorkspaces()
 const confirm = useConfirm()
 const prefs = usePreferences()
 const router = useRouter()
+const notify = useNotify()
 void meta.loadSummaries().catch(() => {})
+
+/** Ma langue : `null` suit celle de l'organisation. Enregistrée sur le serveur (tous mes navigateurs), puis la page la prend en rechargeant. */
+const languageChoices = computed(() => [
+  { value: null, label: t.settings.languageOrg },
+  ...LANGUAGES.map((code) => ({ value: code, label: t.settings.languages[code] ?? code })),
+])
+const myLanguage = computed(() => prefs.items.my_language ?? null)
+async function chooseLanguage(code: string | null): Promise<void> {
+  try {
+    await api.setMyLanguage(code)
+    notify.success(t.settings.languageSaved)
+    await prefs.load(true) // les préférences relues décident de la langue (`adoptLanguage`) : rechargement si elle change
+  } catch (e) {
+    notify.error(e)
+  }
+}
 void workspaces.load().catch(() => {})
 
 /** Les réglages globaux, que « Général » montre : `System Settings` (plugin `system`) d'abord, puis ceux que d'autres plugins y ajoutent. */
@@ -207,6 +225,14 @@ onBeforeRouteUpdate((to, from) => {
             <div class="view-switcher" role="radiogroup" :aria-label="t.settings.theme">
               <button v-for="m in modes" :key="m.value" type="button" role="radio" :aria-checked="theme.mode === m.value" :class="['view-btn', { active: theme.mode === m.value }]" :data-testid="`theme-${m.value}`" @click="theme.setMode(m.value)">
                 <i :class="['pi', m.icon]" aria-hidden="true" /><span>{{ m.label }}</span>
+              </button>
+            </div>
+            <div class="view-switcher settings-language" role="radiogroup" :aria-label="t.settings.language">
+              <button
+                v-for="l in languageChoices" :key="String(l.value)" type="button" role="radio" :aria-checked="myLanguage === l.value"
+                :class="['view-btn', { active: myLanguage === l.value }]" :data-testid="`language-${l.value ?? 'org'}`" @click="chooseLanguage(l.value)"
+              >
+                <i class="pi pi-language" aria-hidden="true" /><span>{{ l.label }}</span>
               </button>
             </div>
           </section>

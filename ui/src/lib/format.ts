@@ -1,3 +1,4 @@
+import { intlLocale, t } from '@/i18n'
 import { ref } from 'vue'
 import { formatDatetime } from './datetime'
 import { formatDecimal } from './decimal'
@@ -58,7 +59,7 @@ export function todayIn(timeZone?: string, now: Date = new Date()): string {
   }
 }
 
-const numberFormat = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 10 })
+const numberFormat = new Intl.NumberFormat(intlLocale, { maximumFractionDigits: 10 })
 export const formatNumber = (n: number): string => numberFormat.format(n)
 
 const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' })
@@ -84,7 +85,7 @@ export function relativeTime(iso: string, now = Date.now()): string {
 export function formatTimestamp(iso: string): string {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return iso
-  return d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+  return d.toLocaleString(intlLocale, { dateStyle: 'short', timeStyle: 'short' })
 }
 
 /** « 1,5 Mo », « 320 Ko » : la taille d'un fichier. */
@@ -97,7 +98,7 @@ export function formatBytes(n: number): string {
 /** Le symbole d'une devise (« EUR » -> « € »), ou le code lui-même si le navigateur ne le connaît pas. */
 export function currencySymbol(code: string): string {
   try {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: code }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? code
+    return new Intl.NumberFormat(intlLocale, { style: 'currency', currency: code }).formatToParts(0).find((p) => p.type === 'currency')?.value ?? code
   } catch {
     return code
   }
@@ -126,7 +127,7 @@ export function formatCell(field: FieldMeta, value: unknown, links?: Record<stri
     case 'Rating':
       return typeof value === 'number' ? starsText(value, field.stars ?? 5) : String(value)
     case 'Int':
-      return typeof value === 'number' ? new Intl.NumberFormat('fr-FR', { useGrouping: false }).format(value) : String(value)
+      return typeof value === 'number' ? new Intl.NumberFormat(intlLocale, { useGrouping: false }).format(value) : String(value)
     case 'Percent':
       return typeof value === 'number' ? `${formatNumber(value)} %` : String(value)
     case 'Duration':
@@ -151,10 +152,24 @@ export function formatCell(field: FieldMeta, value: unknown, links?: Record<stri
     case 'Date':
       return typeof value === 'string' ? formatDate(value) : String(value)
     case 'Boolean':
-      return value ? 'Oui' : 'Non'
+      return value ? t.yes : t.no
+    case 'Select':
+      return optionLabel(field, value)
     case 'Link':
       return typeof value === 'string' ? (links?.[value] ?? value) : String(value)
     default:
       return String(value)
   }
 }
+
+/** Le libellé d'une valeur de Select dans la langue de la page ; la valeur elle-même quand le catalogue ne la traduit pas. */
+export function optionLabel(field: Pick<FieldMeta, 'option_labels'>, value: unknown): string {
+  const v = value === null || value === undefined ? '' : String(value)
+  return field.option_labels?.[v] ?? v
+}
+
+/** Le libellé d'un état de workflow (`state_labels` de `/meta`) ; l'état lui-même sinon. */
+export const stateLabel = (meta: Pick<DocTypeMeta, 'state_labels'> | null | undefined, state: string): string => meta?.state_labels?.[state] ?? state
+
+/** Le libellé d'une action de workflow (`action_labels` de `/meta`) ; l'action elle-même sinon. */
+export const actionLabel = (meta: Pick<DocTypeMeta, 'action_labels'> | null | undefined, action: string): string => meta?.action_labels?.[action] ?? action

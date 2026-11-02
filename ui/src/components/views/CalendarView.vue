@@ -2,7 +2,7 @@
 import Button from 'primevue/button'
 import { computed, ref, watch } from 'vue'
 import { describeError, useNotify } from '@/composables/useNotify'
-import { t } from '@/i18n'
+import { intlLocale, t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { addDays, eventsByDay, firstOfMonth, monthGrid, moved, shiftMonth, span, weekDays, type CalEvent } from '@/lib/calendar'
 import { layerFilters, passesLater } from '@/lib/filters'
@@ -87,7 +87,7 @@ const heading = computed(() => {
   const first = days.value[0]!
   const last = days.value.at(-1)!
   if (mode.value === 'week') return `${formatDate(first)} → ${formatDate(last)}`
-  return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${firstOfMonth(cursor.value)}T00:00:00Z`))
+  return new Intl.DateTimeFormat(intlLocale, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${firstOfMonth(cursor.value)}T00:00:00Z`))
 })
 const inMonth = (d: string): boolean => d.slice(0, 7) === cursor.value.slice(0, 7)
 
