@@ -99,7 +99,39 @@ porter les trois formes, la liste qu'il ouvre les applique), groupe « Étiquett
 | 4 | ~~**Permissions utilisateur + Partage d'un document**~~ **FAIT le 26 oct. (voir §2.1)** | tranché le 26 oct. : comme Frappe pour les restrictions, « qui écrit partage » pour le partage | 2 des 20 → faites |
 | 5 | ~~**Import CSV**~~ **FAIT le 26 oct. (voir §2.2)** | tranché : une transaction PAR LIGNE (comme l'action en lot), 1000 lignes au plus par import | 1 des 20 → faite |
 | 6 | **Clés d'API** | **Dépend d'xauth**, qui est hors du dépôt : la clé est-elle un jeton xauth à longue vie (c'est xauth qui la crée et la révoque) ou une clé propre au moteur ? Je ne touche pas à `app/auth` sans accord. | 1 des 20 |
-| 7 | **Corbeille** (déplacée ici, voir §0) | Suppression douce : colonne d'état, exclusion dans `Query._scope()` (le seul goulet), restauration, purge, et les réponses aux questions du §0 (liens, unicité, historique). | 1 des 20 |
+| 7 | ~~**Corbeille**~~ **FAIT le 2 nov. (voir §2.3)** | tranché : PAS de colonne d'état sur xdt_document — une table à part, et les questions du §0 disparaissent | 1 des 20 → faite |
+
+### 2.3 La corbeille (fait le 2 novembre 2026)
+
+**Le choix.** Le §0 craignait une suppression douce : une colonne « supprimé » sur `xdt_document` aurait obligé CHAQUE lecture à
+l'exclure, et posé trois questions (un document à la corbeille retient-il ses liens ? sa valeur unique est-elle libre ? que devient
+son historique ?). On a fait autrement : **supprimer reste supprimer**, et le document part, tel qu'il était, dans une table à part
+(`xdt_trash`), dans la MÊME transaction. Aucune lecture, aucun lien, aucune valeur unique du moteur n'a donc à savoir qu'une corbeille
+existe : la suppression libère son nom et ses valeurs uniques comme avant, et refuse comme avant un document encore cité.
+
+**Restaurer est une CRÉATION ordinaire** (`DocumentService.restore` → `_create`) : la définition d'aujourd'hui, les liens, les valeurs
+uniques, les hooks du type. Si le monde a changé, c'est refusé proprement et le document reste à la corbeille : nom repris (409
+`already_exists`), document cité disparu depuis (422 `link_not_found`), valeur unique reprise (422), une suppression plus récente du
+même nom (409 `trash_superseded`). Le document revient sous son NOM, à son PROPRIÉTAIRE, dans son état de workflow, ses secrets
+recopiés chiffrés tels quels (jamais relus ni re-scellés), ses liens non rejugés sur l'état de leur cible (comme un amendement).
+L'historique s'écrit `restore`, et une suppression immédiatement suivie d'un `restore` ne ferme plus de génération : le document
+retrouve son historique d'avant (`Query._deletions`).
+
+**Droits** : voir la corbeille = avoir pu LIRE le document (le périmètre, `if_owner` et permissions utilisateur compris, jugé EN SQL
+sur le document tel qu'il était, par le même `_permission_clause` paramétré par table ; les partages, partis avec le document, n'y
+jouent plus) ; restaurer = pouvoir le CRÉER (périmètre de création jugé sur son propriétaire d'origine) ; purger = pouvoir le
+SUPPRIMER. Aucun grant nouveau.
+
+**Fichiers** : ceux des champs Image/Attach restent jusqu'à la purge (une restauration les retrouve) ; les commentaires, assignations,
+pièces jointes, étiquettes et partages partent avec le document, comme avant — ils ne sont pas restaurés.
+
+**Rétention** : aucune automatique. « Supprimer définitivement » par document (Desk), et l'action d'opérateur `ops.trash.purge`
+(`{tenant, before, doctype?}`, mêmes deux verrous que `ops.history.purge`) à planifier par l'opérateur.
+
+**Hors corbeille** : les documents uniques (`single`) ne se suppriment pas, les DocTypes virtuels sont supprimés par leur source.
+
+Preuves : `tests/unit/test_trash.py` (SQLite et PostgreSQL, chaque règle vérifiée par mutation), `tests/integration/test_trash.py`
+(HTTP, IPC, purge d'opérateur sur un vrai hôte), six scénarios de fuite dans `test_query_leak.py`, `ui/tests/trash.spec.ts`.
 
 ### 2.1 Permissions utilisateur et partage (fait le 26 octobre 2026)
 

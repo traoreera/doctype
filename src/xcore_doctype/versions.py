@@ -13,8 +13,9 @@ from __future__ import annotations
 
 from typing import Any, Literal, Mapping
 
-Action = Literal["create", "update", "delete", "submit", "cancel", "rename"]
-ACTIONS: tuple[Action, ...] = ("create", "update", "delete", "submit", "cancel", "rename")
+# `restore` : le document revient de la corbeille ; la suppression qu'il suit immédiatement ne ferme plus de génération (Query._deletions).
+Action = Literal["create", "update", "delete", "submit", "cancel", "rename", "restore"]
+ACTIONS: tuple[Action, ...] = ("create", "update", "delete", "submit", "cancel", "rename", "restore")
 # Ce que la rétention par document (`max_versions`) ne purge jamais : qui a soumis, qui a annulé. C'est la trace qui rend un document figé
 # opposable (schema `_submittable_rules`) ; au plus une entrée de chaque par document (un document soumis ne revient pas au brouillon).
 KEPT_ACTIONS: tuple[Action, ...] = ("submit", "cancel")

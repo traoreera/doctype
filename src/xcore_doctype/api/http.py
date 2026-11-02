@@ -193,6 +193,20 @@ def build_router(documents: DocumentService, settings: ContextSettings, *, devel
     ):
         return await _guard(documents.history(ctx, doctype, name, limit=limit, offset=offset))
 
+    # La corbeille (process/programme.md groupe 2, élément 7) : ce qu'on pouvait lire, restaurer (créer), purger (supprimer).
+    @router.get("/trash/{doctype}")
+    async def trash_list(doctype: str, limit: int = DEFAULT_PAGE, offset: int = 0, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(documents.trash(ctx, doctype, limit=limit, offset=offset))
+
+    @router.post("/trash/{doctype}/{trash_id}/restore")
+    async def trash_restore(doctype: str, trash_id: str, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(documents.restore(ctx, doctype, trash_id))
+
+    @router.delete("/trash/{doctype}/{trash_id}", status_code=204)
+    async def trash_purge(doctype: str, trash_id: str, ctx: RequestContext = Depends(ctx_dep)):
+        await _guard(documents.purge_trashed(ctx, doctype, trash_id))
+        return Response(status_code=204)
+
     @router.get("/connections/{doctype}/{name}")
     async def connections(doctype: str, name: str, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.connections(ctx, doctype, name))

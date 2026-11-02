@@ -123,6 +123,7 @@ MAX_HISTORY = 200
 MAX_NAME = 140  # largeur de la colonne `name`
 MAX_UNIQUE_VALUE = 500  # largeur de la colonne `value` de xdt_unique
 MAX_BULK = 100  # documents par action en lot
+MAX_TRASH_PAGE = 100  # documents par page de corbeille
 BULK_ACTIONS = ("update", "delete", "submit", "cancel")
 # Un nom se lit dans une URL (`/app/Client/<nom>`) et dans un chemin d'API : ni séparateur, ni caractère de contrôle, ni ce qui change le sens d'une URL.
 _FORBIDDEN_IN_NAME = re.compile(r"[\x00-\x1f\x7f/\\?#%]")
@@ -1062,6 +1063,7 @@ class DocumentService:
     async def _create(
         self, ctx: RequestContext, compiled: CompiledDocType, scope: Scope, data: Any,
         *, name: str | None = None, amended_from: str | None = None, requested: Any = None, copied: Mapping[str, Any] | None = None,
+        restoring: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Création d'un brouillon. `name` : un nom imposé (un amendement), qui remplace la numérotation du DocType. `requested` : le nom que le client demande (`naming: prompt`).
         `copied` : les valeurs recopiées d'un document annulé (un amendement), dont les liens ne se jugent pas sur l'état de leur cible (`_check_links`)."""
@@ -1073,6 +1075,11 @@ class DocumentService:
         facts = await self._facts(ctx, scope, None)
         finalize = self._finalizer(compiled, scope, ctx.owner_id, facts)
         chosen = name is not None and amended_from is None  # un nom que le CLIENT choisit (`naming: prompt`) ; un nom tiré d'un champ l'est aussi
+        if restoring is not None:
+            # Une restauration recopie ce qui était enregistré : ses liens ne se rejugent pas sur l'état de leur cible (comme un
+            # amendement), et ce que l'organisation exige depuis ne la bloque pas (la prochaine modification l'exigera).
+            copied = restoring["data"]
+            rules = replace(rules, mandatory=frozenset())
         if amended_from is not None:
             # Un amendement est la copie qu'on va CORRIGER : ce que l'organisation exige depuis s'y saisira (la mise à jour et la soumission
             # l'exigent). L'exiger ici rendrait l'amendement impossible, la copie se faisant sans saisie. Ses défauts, eux, s'appliquent.
@@ -1097,6 +1104,8 @@ class DocumentService:
             if chosen and scope.restrict and not within_restrictions(scope.restrict, facts.restrictions, clean, name):
                 raise PermissionDenied()
             clean = self._seal(compiled, clean, None)
+            if restoring is not None:
+                clean.update(restoring["secrets"])  # les secrets reviennent CHIFFRÉS tels qu'ils étaient : jamais re-scellés ni lus
             await self._check_links(ctx, q, compiled, clean, None, copied=copied)
             await self._check_mapping_rows(ctx, q, compiled, clean, None)
             # D29 : à la création comme à la modification ; un amendement recopie ses liens, qui ne se rejugent pas (comme leur état).
@@ -1110,13 +1119,23 @@ class DocumentService:
             try:
                 # Un document naît dans le PREMIER état de son workflow : sans état initial, aucune transition ne partirait.
                 wf = compiled.definition.workflow
-                doc = await q.insert(doctype, name, clean, amended_from=amended_from, workflow_state=wf.initial if wf else None)
+                state = wf.initial if wf else None
+                if restoring is not None and wf and restoring["workflow_state"] in {st.name for st in wf.states}:
+                    state = restoring["workflow_state"]  # un brouillon « À approuver » le redevient ; un état disparu du YAML : le premier
+                doc = await q.insert(
+                    doctype, name, clean, amended_from=amended_from, workflow_state=state,
+                    owner=restoring["owner"] if restoring is not None else None,
+                )
             except AlreadyExists:
+                if restoring is not None:
+                    raise AlreadyExists(f"{doctype} {name!r} : ce nom est repris par un autre document, renommez-le avant de restaurer") from None
                 if amended_from is None:
                     raise
                 raise DoctypeError("already_amended", f"{doctype} {amended_from!r} a déjà été amendé", status=409) from None
+            if restoring is not None and not await q.trash_remove(doctype, restoring["id"]):
+                raise VersionConflict(f"{doctype} {name!r} a déjà été restauré ou purgé")
             await self._sync_unique(q, compiled, doc)
-            await self._record(q, ctx, compiled, doc, "create", None, doc.data)
+            await self._record(q, ctx, compiled, doc, "restore" if restoring is not None else "create", None, doc.data)
         await self._after_save(ctx, compiled, doc, None)
         return self._present(doc)
 
@@ -1211,18 +1230,124 @@ class DocumentService:
                 # Le document existait et était supprimable à la lecture : il a changé entre-temps.
                 raise VersionConflict(f"{doctype} {name!r} a été modifié pendant la suppression")
             await self._record(q, ctx, compiled, current, "delete", current.data, None)
+            # À la corbeille, tel qu'il était, dans la MÊME transaction : une suppression défaite ne laisse rien dans la corbeille. Les
+            # fichiers de ses champs restent en place (une restauration les retrouve) ; ils partent à la purge.
+            await q.put_trash(current, deleted_by=ctx.user_id or f"system:{ctx.reason}", files=self._field_files(compiled, current.data))
             await q.drop_unique(doctype, name)  # ses valeurs uniques redeviennent libres
             # Les assignés ouverts, lus AVANT de disparaître avec le document : une règle « Suppression » qui les prévient les trouve.
             assignees = tuple(a["assignee"] for a in await q.assignments(doctype, name) if a.get("status") == "open") if self.notifications else None
             attached = await q.remove_collaboration(doctype, name)  # commentaires, assignations et pièces jointes disparaissent avec lui
         await self._after_delete(ctx, compiled, current, assignees=assignees)
         await self._settle(ctx, written)
-        await self._release_files(ctx, compiled, current.data, None)
         if attached and self.files is not None:
             try:
                 await self.files.release(ctx, {fid: (doctype, ATTACHMENT_FIELD) for fid in attached})
             except Exception as e:  # noqa: BLE001 - un fichier orphelin vaut mieux qu'une suppression qui échoue après coup
                 self._log.error("attachment release failed", doctype=doctype, error=repr(e))
+
+    # ── Corbeille (process/programme.md groupe 2, élément 7) ──
+    @staticmethod
+    def _field_files(compiled: CompiledDocType, data: Mapping[str, Any]) -> list[str]:
+        return [str(data[f.fieldname]) for f in compiled.definition.fields if f.fieldtype in FILE_TYPES and data.get(f.fieldname)]
+
+    def _trash_type(self, doctype: str) -> CompiledDocType:
+        """Un type dont les documents passent par la corbeille : stocké ici (pas unique, pas virtuel ; un enfant n'existe pas seul)."""
+        compiled = self._doctype(doctype)
+        d = compiled.definition
+        if d.single or d.source is not None:
+            raise ValidationFailed(f"{doctype} n'a pas de corbeille (document unique ou virtuel)", code="no_trash")
+        return compiled
+
+    def _trash_item(self, compiled: CompiledDocType, row: Mapping[str, Any]) -> dict[str, Any]:
+        d = compiled.definition
+        title = row["data"].get(d.title_field) if d.title_field else None
+        return {
+            "id": row["id"], "name": row["name"], "title": title if isinstance(title, str) and title else None,
+            "owner": row["owner"], "deleted_by": row["deleted_by"], "deleted_at": row["deleted_at"].isoformat(),
+            "creation": row["creation"].isoformat(), "workflow_state": row["workflow_state"],
+            "data": self._masked(d.secret_fields, row["data"]),  # un secret ne sort pas plus de la corbeille que du document
+        }
+
+    async def trash(self, ctx: RequestContext, doctype: str, *, offset: Any = 0, limit: Any = 20) -> dict[str, Any]:
+        """Les documents de ce type à la corbeille que l'appelant pouvait LIRE (son périmètre, jugé sur le document tel qu'il était)."""
+        self._enter(ctx, "doc.trash.list", doctype)
+        compiled = self._trash_type(doctype)
+        if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
+            raise ValidationFailed("offset : un entier positif", code="invalid_page")
+        if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_TRASH_PAGE:
+            raise ValidationFailed(f"limit : de 1 à {MAX_TRASH_PAGE}", code="invalid_page")
+        read = replace(self._scope(ctx, compiled, "read"), share=False)  # les partages sont partis avec le document
+        async with self._query(ctx) as q:
+            rows, total = await q.trash_page(doctype, scope=read, offset=offset, limit=limit)
+        return {"items": [self._trash_item(compiled, r) for r in rows], "total": total, "offset": offset, "limit": limit}
+
+    async def _trashed(self, ctx: RequestContext, q: Query, compiled: CompiledDocType, trash_id: Any, *, lock: bool = False) -> dict[str, Any]:
+        if not isinstance(trash_id, str) or not trash_id:
+            raise NotFound("trash_not_found", "Document introuvable dans la corbeille")
+        read = replace(self._scope(ctx, compiled, "read"), share=False)
+        row = await q.trash_get(compiled.definition.name, trash_id, scope=read, lock=lock)
+        if row is None:  # absent, ou hors de ce que l'appelant pouvait lire : la même réponse
+            raise NotFound("trash_not_found", "Document introuvable dans la corbeille")
+        return row
+
+    async def restore(self, ctx: RequestContext, doctype: str, trash_id: Any) -> dict[str, Any]:
+        """Remet un document de la corbeille à sa place, sous son NOM, à son PROPRIÉTAIRE, dans son état de workflow.
+
+        C'est une CRÉATION ordinaire (`_create`) : la définition d'aujourd'hui, les liens (une cible supprimée depuis le refuse), les
+        valeurs uniques (reprises depuis : refusé), les hooks du type. Il faut pouvoir créer ce document-là (périmètre de création,
+        jugé sur son propriétaire) et avoir pu le lire. Seule la plus récente suppression d'un nom se restaure (`trash_superseded`).
+        """
+        self._enter(ctx, "doc.trash.restore", doctype, trash_id if isinstance(trash_id, str) else None)
+        compiled = self._trash_type(doctype)
+        create = self._scope(ctx, compiled, "create")
+        self._require_hooks(compiled)
+        async with self._query(ctx) as q:
+            row = await self._trashed(ctx, q, compiled, trash_id)
+            if await q.trash_newer(doctype, row["name"], row["deleted_at"]):
+                raise DoctypeError(
+                    "trash_superseded",
+                    f"{doctype} {row['name']!r} : un document plus récent de ce nom a été supprimé après celui-ci ; restaurez ou purgez d'abord celui-là",
+                    status=409,
+                )
+        facts = await self._facts(ctx, create, row["name"])
+        self._check_written(create, row["owner"], row["data"], facts, row["name"])
+        secrets_ = {f: v for f, v in row["data"].items() if f in compiled.definition.secret_fields or _sealed(v)}
+        data = {k: v for k, v in row["data"].items() if k not in secrets_}
+        return await self._create(ctx, compiled, create, data, name=row["name"], restoring={**row, "secrets": secrets_})
+
+    async def purge_trashed(self, ctx: RequestContext, doctype: str, trash_id: Any) -> None:
+        """Supprime DÉFINITIVEMENT un document de la corbeille (et les fichiers de ses champs) : le droit de le supprimer, comme avant."""
+        self._enter(ctx, "doc.trash.purge", doctype, trash_id if isinstance(trash_id, str) else None)
+        compiled = self._trash_type(doctype)
+        delete_scope = replace(self._scope(ctx, compiled, "delete"), share=False)
+        async with self._query(ctx) as q:
+            row = await self._trashed(ctx, q, compiled, trash_id, lock=True)
+            facts = await q.permission_facts(delete_scope, row["name"]) if delete_scope.restrict else None
+            self._check_written(delete_scope, row["owner"], row["data"], facts, row["name"])
+            if not await q.trash_remove(doctype, row["id"]):
+                raise NotFound("trash_not_found", "Document introuvable dans la corbeille")
+        await self._release_trash_files(ctx, compiled.definition.name, row["files"])
+
+    async def purge_trash(self, tenant: str, before: datetime, doctype: str | None = None) -> int:
+        """Vide la corbeille du tenant de ce qui y est depuis avant `before` (action opérateur `ops.trash.purge`). Rend le nombre purgé."""
+        ctx = RequestContext.system(tenant, "trash purge")
+        if doctype is not None:
+            self._trash_type(doctype)
+        async with self._query(ctx) as q:
+            gone = await q.purge_trash_before(before, doctype=doctype)
+        for item in gone:
+            await self._release_trash_files(ctx, item["doctype"], item["files"])
+        return len(gone)
+
+    async def _release_trash_files(self, ctx: RequestContext, doctype: str, files: Sequence[str]) -> None:
+        """Les fichiers des champs d'un document purgé. `FileService.release` relit le champ de chaque fichier et ne supprime que ce que
+        plus aucun document ne cite. Au mieux : un fichier orphelin vaut mieux qu'une purge qui échoue après coup."""
+        if not files or self.files is None:
+            return
+        try:
+            await self.files.release(ctx, {fid: (doctype, "") for fid in files})
+        except Exception as e:  # noqa: BLE001
+            self._log.error("trash file release failed", doctype=doctype, error=repr(e))
 
     async def bulk(self, ctx: RequestContext, doctype: str, action: Any, names: Any, *, data: Any = None) -> dict[str, Any]:
         """Une même action sur plusieurs documents (la liste, « Actions ») : `update` (poser les valeurs de `data` sur chacun), `delete`, `submit`, `cancel`.

@@ -145,7 +145,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 |---|---|
 | Multi-tenant, isolation, RLS optionnelle | ✔ |
 | Plugins métier qui apportent leurs DocTypes | ✔ |
-| Corbeille (documents supprimés, restaurables) | M |
+| Corbeille (documents supprimés, restaurables) | ✔ (2 nov. : table `xdt_trash` écrite dans la transaction de la suppression, restauration par la création ordinaire, purge par document ou par âge ; `process/programme.md` §2.3) |
 | Journal d'accès et d'audit | ◐ (historique par document ; journal d'audit d'xauth, hors dépôt ; pas de journal des lectures) |
 | Gestionnaire de fichiers | ✔ (C4 : écran « Fichiers », ce que l'appelant peut lire, filtre, tri, téléchargement signé, « Détacher » par l'écriture ordinaire ; pas de dossiers, un fichier vit par un document) |
 | E-mail entrant (IMAP) et file d'envoi | ✖ |

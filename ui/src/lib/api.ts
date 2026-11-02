@@ -1,4 +1,4 @@
-import type { AssignmentItem, AssignmentStatus, AvailableMappings, AvailableTransitions, MappedDraft, BulkResult, ImportResult, Connection, Filters, SharedDoc, SharesResult, TagCount, Collab, CommentItem, AttachmentItem, DetachTarget, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, AggregateQuery, AggregateResult, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FormOverride, GlobalSearchItem, HistoryResult, LayoutScope, ListQuery, OrgPreferences, Person, PrintOverride, PrintTemplates, PrintedDocument, ListResult, SavedView, SavedViewInput, SearchItem, TreeResult, Workspace, WorkflowDef, WorkflowOverride, WorkspaceOverride } from './types'
+import type { AggregateQuery, AggregateResult, AssignmentItem, AssignmentStatus, AttachmentItem, AvailableMappings, AvailableTransitions, BulkResult, Collab, CommentItem, Connection, DetachTarget, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, Filters, FormOverride, GlobalSearchItem, HistoryResult, ImportResult, LayoutScope, ListQuery, ListResult, MappedDraft, OrgPreferences, Person, PrintedDocument, PrintOverride, PrintTemplates, SavedView, SavedViewInput, SearchItem, SharedDoc, SharesResult, TagCount, TrashResult, TreeResult, WorkflowDef, WorkflowOverride, Workspace, WorkspaceOverride } from './types'
 import { language } from '@/i18n'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 import type { DevDefinition } from './doctypebuilder'
@@ -218,6 +218,24 @@ export class ApiClient {
     if (page.limit !== undefined) params.set('limit', String(page.limit))
     if (page.offset !== undefined) params.set('offset', String(page.offset))
     return this.call('GET', `/history/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`, { params })
+  }
+
+  /** La corbeille du type : ce que l'appelant pouvait lire, plus récent d'abord. */
+  trash(doctype: string, page: { limit?: number; offset?: number } = {}): Promise<TrashResult> {
+    const params = new URLSearchParams()
+    if (page.limit !== undefined) params.set('limit', String(page.limit))
+    if (page.offset !== undefined) params.set('offset', String(page.offset))
+    return this.call('GET', `/trash/${encodeURIComponent(doctype)}`, { params })
+  }
+
+  /** Remet le document à sa place (sous son nom, à son propriétaire) : une création ordinaire, refusée si le monde a changé. */
+  restoreTrashed(doctype: string, id: string): Promise<DocRecord> {
+    return this.call('POST', `/trash/${encodeURIComponent(doctype)}/${encodeURIComponent(id)}/restore`)
+  }
+
+  /** Supprime définitivement (fichiers des champs compris). */
+  purgeTrashed(doctype: string, id: string): Promise<void> {
+    return this.call('DELETE', `/trash/${encodeURIComponent(doctype)}/${encodeURIComponent(id)}`)
   }
 
   get(doctype: string, name: string): Promise<DocRecord> {
