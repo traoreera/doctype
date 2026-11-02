@@ -4,6 +4,7 @@ label: Asset Repair Consumed Item
 istable: true
 fields:
 - fieldname: valuation_rate
+  currency_from: parent_company.default_currency
   label: Valuation Rate
   fieldtype: Currency
   decimals: 2
@@ -13,6 +14,7 @@ fields:
   fieldtype: Text
   in_list_view: true
 - fieldname: total_value
+  currency_from: parent_company.default_currency
   label: Total Value
   fieldtype: Currency
   decimals: 2

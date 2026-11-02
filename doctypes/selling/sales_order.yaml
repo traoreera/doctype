@@ -176,22 +176,26 @@ fields:
   read_only: true
   compute: sum(items.qty)
 - fieldname: base_total
+  currency_from: company.default_currency
   label: Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_net_total
+  currency_from: company.default_currency
   label: Net Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total
+  currency_from: currency
   label: Total
   fieldtype: Currency
   decimals: 2
   read_only: true
   compute: sum(items.amount)
 - fieldname: net_total
+  currency_from: currency
   label: Net Total
   fieldtype: Currency
   decimals: 2
@@ -222,11 +226,13 @@ fields:
   fieldtype: TextEditor
   read_only: true
 - fieldname: base_total_taxes_and_charges
+  currency_from: company.default_currency
   label: Total Taxes and Charges (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_taxes_and_charges
+  currency_from: currency
   label: Total Taxes and Charges
   fieldtype: Currency
   decimals: 2
@@ -237,6 +243,7 @@ fields:
   read_only: true
   hidden: true
 - fieldname: loyalty_amount
+  currency_from: currency
   label: Loyalty Amount
   fieldtype: Currency
   decimals: 2
@@ -254,6 +261,7 @@ fields:
   - Net Total
   default: Grand Total
 - fieldname: base_discount_amount
+  currency_from: company.default_currency
   label: Additional Discount Amount
   fieldtype: Currency
   decimals: 2
@@ -262,6 +270,7 @@ fields:
   label: Additional Discount Percentage
   fieldtype: Number
 - fieldname: discount_amount
+  currency_from: currency
   label: Additional Discount Amount
   fieldtype: Currency
   decimals: 2
@@ -270,16 +279,19 @@ fields:
     a larger share of the discount. To spread the discount proportionally across item prices, use Additional Discount
     Percentage instead.
 - fieldname: base_grand_total
+  currency_from: company.default_currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_rounding_adjustment
+  currency_from: company.default_currency
   label: Rounding Adjustment
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_rounded_total
+  currency_from: company.default_currency
   label: Rounded Total
   fieldtype: Currency
   decimals: 2
@@ -290,6 +302,7 @@ fields:
   read_only: true
   description: In Words will be visible once you save the Sales Order.
 - fieldname: grand_total
+  currency_from: currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2
@@ -297,11 +310,13 @@ fields:
   read_only: true
   compute: total + total_taxes_and_charges
 - fieldname: rounding_adjustment
+  currency_from: currency
   label: Rounding Adjustment
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: rounded_total
+  currency_from: currency
   label: Rounded Total
   fieldtype: Currency
   decimals: 2
@@ -311,6 +326,7 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: advance_paid
+  currency_from: party_account_currency
   label: Advance Paid
   fieldtype: Currency
   decimals: 2
@@ -422,6 +438,7 @@ fields:
   label: Commission Rate
   fieldtype: Number
 - fieldname: total_commission
+  currency_from: currency
   label: Total Commission
   fieldtype: Currency
   decimals: 2
@@ -465,6 +482,7 @@ fields:
   fieldtype: TextEditor
   read_only: true
 - fieldname: amount_eligible_for_commission
+  currency_from: currency
   label: Amount Eligible for Commission
   fieldtype: Currency
   decimals: 2

@@ -64,6 +64,7 @@ fields:
   options: Currency
   read_only: true
 - fieldname: price_list_rate
+  currency_from: currency
   label: Rate
   fieldtype: Currency
   decimals: 2

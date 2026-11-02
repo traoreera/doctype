@@ -14,7 +14,7 @@ marches 1a/1b/1c, déjà tenu : 1a et 1b sont faites).
 | `hooks:` dans les définitions | **0** — les 136 pièces soumises n'écrivent ni grand livre ni stock |
 | `workflow:` | 0 |
 | fichiers avec `depends_on` ou `fetch_from` | 4 |
-| champs `Currency` sans devise | **911/911** (le moteur n'accepte qu'un code ISO fixe dans `options`) |
+| champs `Currency` sans devise | **911/911** (le moteur n'accepte qu'un code ISO fixe dans `options`) — après M3/T16b : **51/911**, sur 27 types sans source de devise |
 | ce qu'un hook peut faire dans sa transaction | `get` par NOM, `create`, `ensure`, `update` — aucune recherche, aucune somme |
 | ce qu'un plugin peut ÉCRIRE hors d'un hook | **rien** (`doctype_documents` lit seulement ; une action IPC exige le principal de la requête xcore) |
 | annuler une pièce encore citée par une pièce soumise | **permis** (une facture payée s'annule) |
@@ -70,6 +70,8 @@ paiement pendant qu'on annule sa facture — est déjà tenu par `target_status:
 bloquent pas ; un type inconnu dans `cancel_ignores` est une erreur de chargement ; course sur PostgreSQL.
 
 ### M3. La devise d'un montant vient d'un champ — taille S
+
+**Fait (moteur, Desk, impression)** : `tests/unit/test_currency_from.py`. Écart au plan : 426 des 911 montants sont dans des LIGNES, d'où la forme `parent_currency` / `parent_company.default_currency` (le préfixe des conditions de ligne), jugée sur chaque parent de l'enfant. L'impression ajoute le CODE ISO (« 12.50 USD »), le Desk le symbole. **T16b fait** : 860 montants sur 911 (`scripts/add_currencies.py`, `process/erp-doctypes.md`), l'invariant de `test_erp_doctypes.py` nomme les 27 types qui gardent des montants sans devise au lieu d'exiger zéro.
 
 `currency_from: currency` (un champ du même conteneur) ou `currency_from: company.default_currency` (un saut par
 un Link), sur le modèle exact de `unit_from` : AFFICHAGE seulement, vérifié au chargement

@@ -15,6 +15,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: estimated_cost_per_position
+  currency_from: parent_company.default_currency
   label: Estimated Cost Per Position
   fieldtype: Currency
   decimals: 2
@@ -32,6 +33,7 @@ fields:
   fieldtype: Int
   in_list_view: true
 - fieldname: total_estimated_cost
+  currency_from: parent_company.default_currency
   label: Total Estimated Cost
   fieldtype: Currency
   decimals: 2

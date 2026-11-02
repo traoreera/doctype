@@ -4,6 +4,7 @@ label: Employee Benefit Application Detail
 istable: true
 fields:
 - fieldname: max_benefit_amount
+  currency_from: parent_currency
   label: Max Benefit Amount
   fieldtype: Currency
   decimals: 2
@@ -11,6 +12,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

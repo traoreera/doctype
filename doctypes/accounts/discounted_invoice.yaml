@@ -21,6 +21,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: outstanding_amount
+  currency_from: parent_company.default_currency
   label: Outstanding Amount
   fieldtype: Currency
   decimals: 2

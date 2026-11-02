@@ -46,6 +46,7 @@ fields:
   options: reference_doctype
   read_only: true
 - fieldname: grand_total
+  currency_from: currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -170,6 +171,7 @@ fields:
   read_only: true
   hidden: true
 - fieldname: outstanding_amount
+  currency_from: party_account_currency
   label: Outstanding Amount
   fieldtype: Currency
   decimals: 2

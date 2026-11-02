@@ -64,6 +64,7 @@ fields:
   fieldtype: Link
   options: Currency
 - fieldname: opportunity_amount
+  currency_from: currency
   label: Opportunity Amount
   fieldtype: Currency
   decimals: 2
@@ -131,16 +132,19 @@ fields:
   fieldtype: Link
   options: Language
 - fieldname: base_opportunity_amount
+  currency_from: company.default_currency
   label: Opportunity Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total
+  currency_from: company.default_currency
   label: Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total
+  currency_from: currency
   label: Total
   fieldtype: Currency
   decimals: 2
@@ -164,6 +168,7 @@ fields:
   - 501-1000
   - 1000+
 - fieldname: annual_revenue
+  currency_from: currency
   label: Annual Revenue
   fieldtype: Currency
   decimals: 2

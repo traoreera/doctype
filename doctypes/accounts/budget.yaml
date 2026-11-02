@@ -127,6 +127,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: budget_amount
+  currency_from: company.default_currency
   label: Budget Amount
   fieldtype: Currency
   decimals: 2
@@ -168,6 +169,7 @@ fields:
   default: Monthly
   required: true
 - fieldname: budget_distribution_total
+  currency_from: company.default_currency
   label: Budget Distribution Total
   fieldtype: Currency
   decimals: 2

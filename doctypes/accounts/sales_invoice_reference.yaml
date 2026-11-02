@@ -30,6 +30,7 @@ fields:
   options: Sales Invoice
   read_only: true
 - fieldname: grand_total
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

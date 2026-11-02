@@ -10,6 +10,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -25,6 +26,7 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: base_amount
+  currency_from: parent_company.default_currency
   label: Base Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

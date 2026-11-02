@@ -24,11 +24,13 @@ fields:
   fieldtype: Table
   options: Exchange Rate Revaluation Account
 - fieldname: gain_loss_unbooked
+  currency_from: company.default_currency
   label: Gain/Loss from Revaluation
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: gain_loss_booked
+  currency_from: company.default_currency
   label: Gain/Loss already booked
   fieldtype: Currency
   decimals: 2
@@ -36,6 +38,7 @@ fields:
   description: Gain/Loss accumulated in foreign currency account. Accounts with '0' balance in either Base or Account
     currency
 - fieldname: total_gain_loss
+  currency_from: company.default_currency
   label: Total Gain/Loss
   fieldtype: Currency
   decimals: 2

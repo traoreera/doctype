@@ -44,6 +44,7 @@ fields:
   options: against_voucher_type
   in_list_view: true
 - fieldname: amount
+  currency_from: company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -53,6 +54,7 @@ fields:
   fieldtype: Link
   options: Currency
 - fieldname: amount_in_account_currency
+  currency_from: account_currency
   label: Amount in Account Currency
   fieldtype: Currency
   decimals: 2

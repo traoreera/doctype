@@ -155,6 +155,7 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: write_off_limit
+  currency_from: currency
   label: Write Off Limit
   fieldtype: Currency
   decimals: 2

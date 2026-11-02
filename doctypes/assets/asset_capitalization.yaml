@@ -60,11 +60,13 @@ fields:
   fieldtype: Table
   options: Asset Capitalization Asset Item
 - fieldname: stock_items_total
+  currency_from: company.default_currency
   label: Consumed Stock Total Value
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: asset_items_total
+  currency_from: company.default_currency
   label: Consumed Asset Total Value
   fieldtype: Currency
   decimals: 2
@@ -78,16 +80,19 @@ fields:
   fieldtype: Table
   options: Asset Capitalization Service Item
 - fieldname: service_items_total
+  currency_from: company.default_currency
   label: Service Expense Total Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_value
+  currency_from: company.default_currency
   label: Total Value
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: target_incoming_rate
+  currency_from: company.default_currency
   label: Target Incoming Rate
   fieldtype: Currency
   decimals: 2

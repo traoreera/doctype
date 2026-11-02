@@ -22,6 +22,7 @@ fields:
   options: Currency
   read_only: true
 - fieldname: balance_in_account_currency
+  currency_from: account_currency
   label: Balance In Account Currency
   fieldtype: Currency
   decimals: 2
@@ -31,6 +32,7 @@ fields:
   fieldtype: Number
   read_only: true
 - fieldname: balance_in_base_currency
+  currency_from: parent_company.default_currency
   label: Balance In Base Currency
   fieldtype: Currency
   decimals: 2
@@ -42,12 +44,14 @@ fields:
   required: true
   in_list_view: true
 - fieldname: new_balance_in_base_currency
+  currency_from: parent_company.default_currency
   label: New Balance In Base Currency
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: gain_loss
+  currency_from: parent_company.default_currency
   label: Gain/Loss
   fieldtype: Currency
   decimals: 2
@@ -59,6 +63,7 @@ fields:
   description: This Account has '0' balance in either Base Currency or Account Currency
   default: false
 - fieldname: new_balance_in_account_currency
+  currency_from: account_currency
   label: New Balance In Account Currency
   fieldtype: Currency
   decimals: 2

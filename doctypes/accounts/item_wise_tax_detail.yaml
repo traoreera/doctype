@@ -18,11 +18,13 @@ fields:
   fieldtype: Number
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Tax Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: taxable_amount
+  currency_from: parent_currency
   label: Taxable Amount
   fieldtype: Currency
   decimals: 2

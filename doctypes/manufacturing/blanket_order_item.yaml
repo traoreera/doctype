@@ -25,22 +25,26 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: price_list_rate
+  currency_from: parent_currency
   label: Price List Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_price_list_rate
+  currency_from: parent_company.default_currency
   label: Price List Rate (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: rate
+  currency_from: parent_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   required: true
   in_list_view: true
 - fieldname: base_rate
+  currency_from: parent_company.default_currency
   label: Rate (Company Currency)
   fieldtype: Currency
   decimals: 2

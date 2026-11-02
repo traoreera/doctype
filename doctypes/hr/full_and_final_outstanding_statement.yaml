@@ -30,6 +30,7 @@ fields:
   options: Account
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

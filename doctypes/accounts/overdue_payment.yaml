@@ -26,21 +26,25 @@ fields:
   fieldtype: Percent
   read_only: true
 - fieldname: payment_amount
+  currency_from: parent_currency
   label: Payment Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: outstanding
+  currency_from: parent_currency
   label: Outstanding
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: paid_amount
+  currency_from: parent_currency
   label: Paid Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: discounted_amount
+  currency_from: parent_currency
   label: Discounted Amount
   fieldtype: Currency
   decimals: 2
@@ -67,6 +71,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: interest
+  currency_from: parent_currency
   label: Interest
   fieldtype: Currency
   decimals: 2

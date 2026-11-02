@@ -54,14 +54,17 @@ fields:
   options: Salary Component
   description: Salary Component for timesheet based payroll.
 - fieldname: hour_rate
+  currency_from: currency
   label: Hour Rate
   fieldtype: Currency
   decimals: 2
 - fieldname: leave_encashment_amount_per_day
+  currency_from: currency
   label: Leave Encashment Amount Per Day
   fieldtype: Currency
   decimals: 2
 - fieldname: max_benefits
+  currency_from: currency
   label: Max Benefits (Amount)
   fieldtype: Currency
   decimals: 2
@@ -78,18 +81,21 @@ fields:
   fieldtype: Table
   options: Salary Detail
 - fieldname: total_earning
+  currency_from: currency
   label: Total Earning
   fieldtype: Currency
   decimals: 2
   read_only: true
   hidden: true
 - fieldname: total_deduction
+  currency_from: currency
   label: Total Deduction
   fieldtype: Currency
   decimals: 2
   read_only: true
   hidden: true
 - fieldname: net_pay
+  currency_from: currency
   label: Net Pay
   fieldtype: Currency
   decimals: 2

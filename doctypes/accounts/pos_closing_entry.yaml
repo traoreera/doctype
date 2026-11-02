@@ -48,11 +48,13 @@ fields:
   fieldtype: Table
   options: POS Closing Entry Detail
 - fieldname: grand_total
+  currency_from: company.default_currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: net_total
+  currency_from: company.default_currency
   label: Net Total
   fieldtype: Currency
   decimals: 2
@@ -103,6 +105,7 @@ fields:
   options: Sales Invoice Reference
   read_only: true
 - fieldname: total_taxes_and_charges
+  currency_from: company.default_currency
   label: Total Taxes and Charges
   fieldtype: Currency
   decimals: 2

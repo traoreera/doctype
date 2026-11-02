@@ -9,16 +9,19 @@ fields:
   options: Expense Claim Type
   in_list_view: true
 - fieldname: sponsored_amount
+  currency_from: parent_company.default_currency
   label: Sponsored Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: funded_amount
+  currency_from: parent_company.default_currency
   label: Funded Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: total_amount
+  currency_from: parent_company.default_currency
   label: Total Amount
   fieldtype: Currency
   decimals: 2

@@ -31,11 +31,13 @@ fields:
   options: UOM
   in_list_view: true
 - fieldname: rate
+  currency_from: parent_company.default_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

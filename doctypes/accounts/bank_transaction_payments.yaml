@@ -14,6 +14,7 @@ fields:
   options: payment_document
   in_list_view: true
 - fieldname: allocated_amount
+  currency_from: parent_currency
   label: Allocated Amount
   fieldtype: Currency
   decimals: 2

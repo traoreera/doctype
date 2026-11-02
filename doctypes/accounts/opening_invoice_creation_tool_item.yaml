@@ -37,6 +37,7 @@ fields:
   in_list_view: true
   description: Currency of the outstanding amount. Defaults to the Company currency.
 - fieldname: outstanding_amount
+  currency_from: currency
   label: Outstanding Amount
   fieldtype: Currency
   decimals: 2

@@ -137,6 +137,7 @@ fields:
   options: Job Card Operation
   read_only: true
 - fieldname: hour_rate
+  currency_from: company.default_currency
   label: Hour Rate
   fieldtype: Currency
   decimals: 2

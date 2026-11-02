@@ -46,10 +46,12 @@ fields:
   read_only: true
   hidden: true
 - fieldname: monthly_sales_target
+  currency_from: default_currency
   label: Monthly Sales Target
   fieldtype: Currency
   decimals: 2
 - fieldname: total_monthly_sales
+  currency_from: default_currency
   label: Total Monthly Sales
   fieldtype: Currency
   decimals: 2
@@ -167,6 +169,7 @@ fields:
   fieldtype: Link
   options: Cost Center
 - fieldname: credit_limit
+  currency_from: default_currency
   label: Credit Limit
   fieldtype: Currency
   decimals: 2

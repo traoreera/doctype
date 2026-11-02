@@ -41,12 +41,14 @@ fields:
   - Cancelled
   default: Draft
 - fieldname: total_claimed_amount
+  currency_from: currency
   label: Total Claimed Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: total_sanctioned_amount
+  currency_from: currency
   label: Total Sanctioned Amount
   fieldtype: Currency
   decimals: 2
@@ -78,6 +80,7 @@ fields:
   fieldtype: Link
   options: Task
 - fieldname: total_amount_reimbursed
+  currency_from: currency
   label: Total Amount Reimbursed
   fieldtype: Currency
   decimals: 2
@@ -125,6 +128,7 @@ fields:
   fieldtype: Table
   options: Expense Claim Advance
 - fieldname: total_advance_amount
+  currency_from: currency
   label: Total Advance Amount
   fieldtype: Currency
   decimals: 2
@@ -134,12 +138,14 @@ fields:
   fieldtype: Table
   options: Expense Taxes and Charges
 - fieldname: grand_total
+  currency_from: currency
   label: Grand Total
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: total_taxes_and_charges
+  currency_from: currency
   label: Total Taxes and Charges
   fieldtype: Currency
   decimals: 2
@@ -158,26 +164,31 @@ fields:
   fieldtype: Number
   required: true
 - fieldname: base_total_sanctioned_amount
+  currency_from: company.default_currency
   label: Total Sanctioned Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_grand_total
+  currency_from: company.default_currency
   label: Grand Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total_advance_amount
+  currency_from: company.default_currency
   label: Total Advance Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total_taxes_and_charges
+  currency_from: company.default_currency
   label: Total Taxes and Charges (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total_claimed_amount
+  currency_from: company.default_currency
   label: Total Claimed Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -191,6 +202,7 @@ fields:
   fieldtype: Link
   options: Account
 - fieldname: total_exchange_gain_loss
+  currency_from: currency
   label: Total Exchange Gain/Loss
   fieldtype: Currency
   decimals: 2

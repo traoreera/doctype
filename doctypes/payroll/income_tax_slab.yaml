@@ -26,6 +26,7 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: standard_tax_exemption_amount
+  currency_from: currency
   label: Standard Tax Exemption Amount
   fieldtype: Currency
   decimals: 2
@@ -43,6 +44,7 @@ fields:
   options: Currency
   required: true
 - fieldname: tax_relief_limit
+  currency_from: currency
   label: Taxable Income Relief Threshold Limit
   fieldtype: Currency
   decimals: 2

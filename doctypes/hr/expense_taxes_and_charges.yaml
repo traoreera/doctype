@@ -22,11 +22,13 @@ fields:
   fieldtype: Number
   in_list_view: true
 - fieldname: tax_amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: total
+  currency_from: parent_currency
   label: Total
   fieldtype: Currency
   decimals: 2
@@ -37,11 +39,13 @@ fields:
   fieldtype: Link
   options: Project
 - fieldname: base_total
+  currency_from: parent_company.default_currency
   label: Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_tax_amount
+  currency_from: parent_company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

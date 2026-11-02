@@ -103,6 +103,7 @@ fields:
   decimals: 3
   read_only: true
 - fieldname: total
+  currency_from: company.default_currency
   label: Total
   fieldtype: Currency
   decimals: 2
@@ -215,6 +216,7 @@ fields:
   fieldtype: Table
   options: Landed Cost Taxes and Charges
 - fieldname: total_additional_costs
+  currency_from: company.default_currency
   label: Total Additional Costs
   fieldtype: Currency
   decimals: 2

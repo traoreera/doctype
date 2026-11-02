@@ -28,6 +28,7 @@ fields:
   label: Exchange Rate
   fieldtype: Number
 - fieldname: base_amount
+  currency_from: parent_company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

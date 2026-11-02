@@ -100,21 +100,25 @@ fields:
   options: UOM
   read_only: true
 - fieldname: rate
+  currency_from: parent_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_rate
+  currency_from: parent_company.default_currency
   label: Base Rate
   fieldtype: Currency
   decimals: 2
   hidden: true
 - fieldname: base_amount
+  currency_from: parent_company.default_currency
   label: Base Amount
   fieldtype: Currency
   decimals: 2

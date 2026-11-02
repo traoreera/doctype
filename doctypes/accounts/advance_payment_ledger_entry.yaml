@@ -26,6 +26,7 @@ fields:
   options: against_voucher_type
   read_only: true
 - fieldname: amount
+  currency_from: currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -49,6 +50,7 @@ fields:
   fieldtype: Boolean
   read_only: true
 - fieldname: base_amount
+  currency_from: company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

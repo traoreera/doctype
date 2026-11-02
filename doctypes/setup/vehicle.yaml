@@ -32,6 +32,7 @@ fields:
   label: Chassis No
   fieldtype: Text
 - fieldname: vehicle_value
+  currency_from: company.default_currency
   label: Vehicle Value
   fieldtype: Currency
   decimals: 2

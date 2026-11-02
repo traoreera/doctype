@@ -40,6 +40,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: advance_amount
+  currency_from: currency
   label: Advance Amount
   fieldtype: Currency
   decimals: 2
@@ -47,6 +48,7 @@ fields:
   in_list_view: true
   description: Amount of expense
 - fieldname: claimed_amount
+  currency_from: currency
   label: Claimed Amount
   fieldtype: Currency
   decimals: 2
@@ -80,6 +82,7 @@ fields:
   fieldtype: Link
   options: Mode of Payment
 - fieldname: return_amount
+  currency_from: currency
   label: Returned Amount
   fieldtype: Currency
   decimals: 2
@@ -90,6 +93,7 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: pending_amount
+  currency_from: currency
   label: Pending Amount
   fieldtype: Currency
   decimals: 2
@@ -101,12 +105,14 @@ fields:
   options: Currency
   required: true
 - fieldname: base_paid_amount
+  currency_from: company.default_currency
   label: Paid Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
   description: Amount that has been paid against this advance
 - fieldname: paid_amount
+  currency_from: currency
   label: Paid Amount
   fieldtype: Currency
   decimals: 2

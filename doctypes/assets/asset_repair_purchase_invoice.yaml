@@ -15,6 +15,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: repair_cost
+  currency_from: parent_company.default_currency
   label: Repair Cost
   fieldtype: Currency
   decimals: 2

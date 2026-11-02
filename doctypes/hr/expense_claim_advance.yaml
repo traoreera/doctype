@@ -15,12 +15,14 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: advance_paid
+  currency_from: parent_currency
   label: Advance Paid
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: unclaimed_amount
+  currency_from: parent_currency
   label: Unclaimed Amount
   fieldtype: Currency
   decimals: 2
@@ -28,6 +30,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: allocated_amount
+  currency_from: parent_currency
   label: Allocated Amount
   fieldtype: Currency
   decimals: 2
@@ -38,21 +41,25 @@ fields:
   options: Account
   hidden: true
 - fieldname: return_amount
+  currency_from: parent_currency
   label: Returned Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_advance_paid
+  currency_from: parent_company.default_currency
   label: Advance Paid (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_unclaimed_amount
+  currency_from: parent_company.default_currency
   label: Unclaimed Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_allocated_amount
+  currency_from: parent_company.default_currency
   label: Allocated Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -63,6 +70,7 @@ fields:
   read_only: true
   description: Exchange rate of Payment Entry against Employee Advance
 - fieldname: exchange_gain_loss
+  currency_from: parent_currency
   label: Exchange Gain/Loss
   fieldtype: Currency
   decimals: 2

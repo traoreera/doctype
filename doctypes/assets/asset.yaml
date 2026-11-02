@@ -97,6 +97,7 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: opening_accumulated_depreciation
+  currency_from: company.default_currency
   label: Opening Accumulated Depreciation
   fieldtype: Currency
   decimals: 2
@@ -113,6 +114,7 @@ fields:
   - Written Down Value
   - Manual
 - fieldname: value_after_depreciation
+  currency_from: company.default_currency
   label: Value After Depreciation
   fieldtype: Currency
   decimals: 2
@@ -211,22 +213,26 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: total_asset_cost
+  currency_from: company.default_currency
   label: Total Asset Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: additional_asset_cost
+  currency_from: company.default_currency
   label: Additional Asset Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: value_adjustment_amount
+  currency_from: company.default_currency
   label: Value Adjustment Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
   description: Net change from Asset Value Adjustments
 - fieldname: purchase_amount
+  currency_from: company.default_currency
   label: Purchase Amount
   fieldtype: Currency
   decimals: 2
@@ -244,6 +250,7 @@ fields:
   fieldtype: Text
   hidden: true
 - fieldname: net_purchase_amount
+  currency_from: company.default_currency
   label: Net Purchase Amount
   fieldtype: Currency
   decimals: 2

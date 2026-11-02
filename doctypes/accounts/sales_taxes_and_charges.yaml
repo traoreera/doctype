@@ -57,16 +57,19 @@ fields:
   decimals: 2
   read_only: true
 - fieldname: base_tax_amount
+  currency_from: parent_company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_total
+  currency_from: parent_company.default_currency
   label: Total (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_tax_amount_after_discount_amount
+  currency_from: parent_company.default_currency
   label: Tax Amount After Discount Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -97,6 +100,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: base_net_amount
+  currency_from: parent_company.default_currency
   label: Net Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

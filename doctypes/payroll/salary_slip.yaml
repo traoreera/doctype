@@ -115,6 +115,7 @@ fields:
   label: Total Working Hours
   fieldtype: Number
 - fieldname: hour_rate
+  currency_from: currency
   label: Hour Rate
   fieldtype: Currency
   decimals: 2
@@ -137,16 +138,19 @@ fields:
   fieldtype: Table
   options: Salary Detail
 - fieldname: gross_pay
+  currency_from: currency
   label: Gross Pay
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: net_pay
+  currency_from: currency
   label: Net Pay
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: rounded_total
+  currency_from: currency
   label: Rounded Total
   fieldtype: Currency
   decimals: 2
@@ -166,6 +170,7 @@ fields:
   required: true
   read_only: true
 - fieldname: total_deduction
+  currency_from: currency
   label: Total Deduction
   fieldtype: Currency
   decimals: 2
@@ -175,10 +180,12 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: base_hour_rate
+  currency_from: company.default_currency
   label: Hour Rate (Company Currency)
   fieldtype: Currency
   decimals: 2
 - fieldname: base_gross_pay
+  currency_from: company.default_currency
   label: Gross Pay (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -190,16 +197,19 @@ fields:
   hidden: true
   default: 1.0
 - fieldname: base_total_deduction
+  currency_from: company.default_currency
   label: Total Deduction (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_net_pay
+  currency_from: company.default_currency
   label: Net Pay (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_rounded_total
+  currency_from: company.default_currency
   label: Rounded Total (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -209,6 +219,7 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: year_to_date
+  currency_from: currency
   label: Year To Date
   fieldtype: Currency
   decimals: 2
@@ -216,6 +227,7 @@ fields:
   description: Total salary booked for this employee from the beginning of the year (payroll period or fiscal year)
     up to the current salary slip's end date.
 - fieldname: month_to_date
+  currency_from: currency
   label: Month To Date
   fieldtype: Currency
   decimals: 2
@@ -223,11 +235,13 @@ fields:
   description: Total salary booked for this employee from the beginning of the month up to the current salary slip's
     end date.
 - fieldname: base_year_to_date
+  currency_from: company.default_currency
   label: Year To Date(Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_month_to_date
+  currency_from: company.default_currency
   label: Month To Date(Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -238,71 +252,85 @@ fields:
   options: Salary Slip Leave
   read_only: true
 - fieldname: gross_year_to_date
+  currency_from: currency
   label: Gross Year To Date
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_gross_year_to_date
+  currency_from: company.default_currency
   label: Gross Year To Date(Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: ctc
+  currency_from: currency
   label: CTC
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: income_from_other_sources
+  currency_from: currency
   label: Income from Other Sources
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_earnings
+  currency_from: currency
   label: Total Earnings
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: non_taxable_earnings
+  currency_from: currency
   label: Non Taxable Earnings
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: deductions_before_tax_calculation
+  currency_from: currency
   label: Deductions before tax calculation
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: tax_exemption_declaration
+  currency_from: currency
   label: Tax Exemption Declaration
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: standard_tax_exemption_amount
+  currency_from: currency
   label: Standard Tax Exemption Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: annual_taxable_amount
+  currency_from: currency
   label: Annual Taxable Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: income_tax_deducted_till_date
+  currency_from: currency
   label: Income Tax Deducted Till Date
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: future_income_tax_deductions
+  currency_from: currency
   label: Future Income Tax
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: current_month_income_tax
+  currency_from: currency
   label: Current Month Income Tax
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_income_tax
+  currency_from: currency
   label: Total Income Tax
   fieldtype: Currency
   decimals: 2

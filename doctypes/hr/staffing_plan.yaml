@@ -30,6 +30,7 @@ fields:
   fieldtype: Table
   options: Staffing Plan Detail
 - fieldname: total_estimated_budget
+  currency_from: company.default_currency
   label: Total Estimated Budget
   fieldtype: Currency
   decimals: 2

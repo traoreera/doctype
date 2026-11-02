@@ -14,11 +14,13 @@ fields:
   required: true
   in_list_view: true
 - fieldname: min_taxable_income
+  currency_from: parent_currency
   label: Min Taxable Income
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: max_taxable_income
+  currency_from: parent_currency
   label: Max Taxable Income
   fieldtype: Currency
   decimals: 2

@@ -40,6 +40,7 @@ fields:
   in_list_view: true
   read_only: true
 - fieldname: repair_cost
+  currency_from: company.default_currency
   label: Repair Cost
   fieldtype: Currency
   decimals: 2
@@ -71,6 +72,7 @@ fields:
   fieldtype: Link
   options: Project
 - fieldname: total_repair_cost
+  currency_from: company.default_currency
   label: Total Repair Cost
   fieldtype: Currency
   decimals: 2
@@ -92,6 +94,7 @@ fields:
   fieldtype: Table
   options: Asset Repair Purchase Invoice
 - fieldname: consumed_items_cost
+  currency_from: company.default_currency
   label: Consumed Items Cost
   fieldtype: Currency
   decimals: 2

@@ -52,6 +52,7 @@ fields:
   fieldtype: Number
   required: true
 - fieldname: price_list_rate
+  currency_from: parent_currency
   label: Price List Rate
   fieldtype: Currency
   decimals: 2
@@ -59,25 +60,30 @@ fields:
   label: Discount on Price List Rate (%)
   fieldtype: Percent
 - fieldname: discount_amount
+  currency_from: parent_currency
   label: Discount Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: last_purchase_rate
+  currency_from: parent_currency
   label: Last Purchase Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_price_list_rate
+  currency_from: parent_company.default_currency
   label: Price List Rate (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: rate
+  currency_from: parent_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -85,12 +91,14 @@ fields:
   read_only: true
   compute: qty * rate
 - fieldname: base_rate
+  currency_from: parent_company.default_currency
   label: Rate (Company Currency)
   fieldtype: Currency
   decimals: 2
   required: true
   read_only: true
 - fieldname: base_amount
+  currency_from: parent_company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -106,22 +114,26 @@ fields:
   fieldtype: Boolean
   read_only: true
 - fieldname: net_rate
+  currency_from: parent_currency
   label: Net Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: net_amount
+  currency_from: parent_currency
   label: Net Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
   compute: amount - discount_amount
 - fieldname: base_net_rate
+  currency_from: parent_company.default_currency
   label: Net Rate (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_net_amount
+  currency_from: parent_company.default_currency
   label: Net Amount (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -189,6 +201,7 @@ fields:
   fieldtype: Link
   options: Blanket Order
 - fieldname: blanket_order_rate
+  currency_from: parent_currency
   label: Blanket Order Rate
   fieldtype: Currency
   decimals: 2
@@ -226,6 +239,7 @@ fields:
   decimals: 3
   read_only: true
 - fieldname: billed_amt
+  currency_from: parent_currency
   label: Billed Amount
   fieldtype: Currency
   decimals: 2
@@ -274,6 +288,7 @@ fields:
   fieldtype: Boolean
   read_only: true
 - fieldname: stock_uom_rate
+  currency_from: parent_currency
   label: Rate of Stock UOM
   fieldtype: Currency
   decimals: 2
@@ -297,11 +312,13 @@ fields:
   label: Margin Rate or Amount
   fieldtype: Number
 - fieldname: rate_with_margin
+  currency_from: parent_currency
   label: Rate With Margin
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_rate_with_margin
+  currency_from: parent_company.default_currency
   label: Rate With Margin (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -354,10 +371,12 @@ fields:
   options: Job Card
   read_only: true
 - fieldname: distributed_discount_amount
+  currency_from: parent_currency
   label: Distributed Discount Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: mapped_additional_discount_amount
+  currency_from: parent_currency
   label: Additional Discount per Stock Unit
   fieldtype: Currency
   decimals: 2

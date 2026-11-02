@@ -171,6 +171,12 @@ class FieldDef(BaseModel):
     # Une quantité s'affiche avec son unité : `unit_from: uom` (un champ texte du même document ou de la même ligne) ou
     # `unit_from: item.uom` (le champ `uom` du document que le champ Link `item` désigne). Affichage seulement : rien n'est stocké.
     unit_from: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}(\.[a-z][a-z0-9_]{0,62})?$")] | None = None
+    # La devise d'un montant (Currency) vient d'un champ, comme l'unité d'une quantité (M3 de process/plan-erp.md) : `currency`
+    # (un champ du même document ou de la même ligne, qui porte le CODE : Text, Select, ou Link vers des devises nommées par
+    # leur code), `company.default_currency` (un saut par un Link), et dans une LIGNE `parent_currency` /
+    # `parent_company.default_currency` (le document parent, comme les conditions de ligne). Affichage seulement ; `options`
+    # (une devise fixe) et `currency_from` ensemble sont refusés.
+    currency_from: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]{0,62}(\.[a-z][a-z0-9_]{0,62})?$")] | None = None
     depends_on: str | None = None  # faux : le champ est masqué, et n'est plus obligatoire
     mandatory_depends_on: str | None = None  # vrai : le champ est obligatoire
     read_only_depends_on: str | None = None  # vrai (sur l'état AVANT modification) : le champ ne peut plus changer
@@ -310,6 +316,11 @@ class FieldDef(BaseModel):
 
         if self.unit_from is not None and ftype not in ("Number", "Decimal", "Currency", "Int"):
             raise ValueError(f"{name}: `unit_from` n'a de sens que pour un Number ou un Decimal")
+        if self.currency_from is not None:
+            if ftype != "Currency":
+                raise ValueError(f"{name}: `currency_from` n'a de sens que pour une Currency")
+            if options is not None:
+                raise ValueError(f"{name}: `options` (une devise fixe) et `currency_from` (la devise lue dans un champ) s'excluent")
         if self.default is not None and not _default_matches(self):
             raise ValueError(f"{name}: `default` {self.default!r} incompatible avec {ftype}")
         return self

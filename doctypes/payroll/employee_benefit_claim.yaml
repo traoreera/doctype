@@ -30,11 +30,13 @@ fields:
   required: true
   in_list_view: true
 - fieldname: max_amount_eligible
+  currency_from: currency
   label: Max Amount Eligible For Claim
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: claimed_amount
+  currency_from: currency
   label: Claimed Amount
   fieldtype: Currency
   decimals: 2
@@ -60,6 +62,7 @@ fields:
   required: true
   default: today
 - fieldname: yearly_benefit
+  currency_from: currency
   label: Yearly Amount
   fieldtype: Currency
   decimals: 2

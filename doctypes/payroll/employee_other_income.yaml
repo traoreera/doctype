@@ -29,6 +29,7 @@ fields:
   label: Source
   fieldtype: Text
 - fieldname: amount
+  currency_from: company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

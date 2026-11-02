@@ -171,6 +171,7 @@ class PrintService:
             css_extra=extra,
             titles=titles,
             images=await self._images(ctx, compiled, found),
+            linked=await self._currencies(ctx, compiled, record["data"]),
         )
         return html, found, background
 
@@ -207,6 +208,19 @@ class PrintService:
                 title = item["data"].get(field)
                 if isinstance(title, str) and title:
                     out[(doctype, item["name"])] = title
+        return out
+
+    async def _currencies(self, ctx: RequestContext, compiled: Any, data: Mapping[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
+        """Les documents d'où vient la devise d'un montant (`company.default_currency`, M3). Lus avec le périmètre de
+        l'APPELANT, comme les titres : une société qu'il ne lit pas laisse le montant sans devise, jamais une erreur."""
+        out: dict[tuple[str, str], dict[str, Any]] = {}
+        for doctype, names in printing.currency_links(compiled.definition, data, compiled.children_by_field).items():
+            try:
+                page = await self._docs.list(ctx, doctype, filters={"name": ["in", sorted(names)[:MAX_TITLES]]}, limit=MAX_TITLES)
+            except DoctypeError:
+                continue
+            for item in page["items"]:
+                out[(doctype, item["name"])] = item["data"]
         return out
 
     # ── Le PDF ────────────────────────────────────────────────
@@ -310,6 +324,7 @@ class PrintService:
             found, compiled.definition, record["data"], name=record["name"], children=compiled.children_by_field,
             letterhead_html=head, footer_html=foot, css_extra=extra, titles=titles,
             images=await self._images(ctx, compiled, found),
+            linked=await self._currencies(ctx, compiled, record["data"]),
         )
         return {"doctype": doctype, "name": record["name"], "html": html, "background": background is not None}
 

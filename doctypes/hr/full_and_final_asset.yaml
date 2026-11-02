@@ -40,6 +40,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: cost
+  currency_from: parent_company.default_currency
   label: Cost
   fieldtype: Currency
   decimals: 2
@@ -50,6 +51,7 @@ fields:
   options: Account
   in_list_view: true
 - fieldname: actual_cost
+  currency_from: parent_company.default_currency
   label: Actual Cost
   fieldtype: Currency
   decimals: 2

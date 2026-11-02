@@ -4,6 +4,7 @@ label: POS Closing Entry Taxes
 istable: true
 fields:
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

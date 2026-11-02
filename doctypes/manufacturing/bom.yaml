@@ -118,32 +118,38 @@ fields:
   fieldtype: Table
   options: BOM Item
 - fieldname: operating_cost
+  currency_from: currency
   label: Operating Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: raw_material_cost
+  currency_from: currency
   label: Raw Material Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_operating_cost
+  currency_from: company.default_currency
   label: Operating Cost (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_raw_material_cost
+  currency_from: company.default_currency
   label: Raw Material Cost (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: total_cost
+  currency_from: currency
   label: Total Cost
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: base_total_cost
+  currency_from: company.default_currency
   label: Total Cost (Company Currency)
   fieldtype: Currency
   decimals: 2
@@ -215,6 +221,7 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: operating_cost_per_bom_quantity
+  currency_from: currency
   label: Operating cost per BOM quantity
   fieldtype: Currency
   decimals: 2
@@ -253,16 +260,19 @@ fields:
   fieldtype: Table
   options: BOM Secondary Item
 - fieldname: secondary_items_cost
+  currency_from: currency
   label: Secondary Items Cost
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: base_secondary_items_cost
+  currency_from: company.default_currency
   label: Secondary Items Cost (Company Currency)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: cost_allocation
+  currency_from: currency
   label: Cost allocation for Finished Good
   fieldtype: Currency
   decimals: 2

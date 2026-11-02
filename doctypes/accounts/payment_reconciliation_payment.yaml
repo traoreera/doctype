@@ -29,6 +29,7 @@ fields:
   read_only: true
   hidden: true
 - fieldname: amount
+  currency_from: currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -40,6 +41,7 @@ fields:
   options: Currency
   hidden: true
 - fieldname: difference_amount
+  currency_from: currency
   label: Difference Amount
   fieldtype: Currency
   decimals: 2

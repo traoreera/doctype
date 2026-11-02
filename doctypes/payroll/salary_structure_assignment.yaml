@@ -44,20 +44,24 @@ fields:
   options: Company
   required: true
 - fieldname: base
+  currency_from: currency
   label: Base
   fieldtype: Currency
   decimals: 2
 - fieldname: annual_gross_earning
+  currency_from: currency
   label: Annual Gross Earning
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: ctc
+  currency_from: currency
   label: Total Cost To Company (CTC)
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: variable
+  currency_from: currency
   label: Variable
   fieldtype: Currency
   decimals: 2
@@ -85,10 +89,12 @@ fields:
   options: Employee Grade
   read_only: true
 - fieldname: tax_deducted_till_date
+  currency_from: currency
   label: Tax Deducted Till Date
   fieldtype: Currency
   decimals: 2
 - fieldname: taxable_earnings_till_date
+  currency_from: currency
   label: Taxable Earnings Till Date
   fieldtype: Currency
   decimals: 2
@@ -97,10 +103,12 @@ fields:
   fieldtype: Table
   options: Employee Benefit Detail
 - fieldname: max_benefits
+  currency_from: currency
   label: Maximum Benefit Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: leave_encashment_amount_per_day
+  currency_from: currency
   label: Leave Encashment Amount Per Day
   fieldtype: Currency
   decimals: 2

@@ -9,11 +9,13 @@ fields:
   required: true
   in_list_view: true
 - fieldname: per_cycle
+  currency_from: currency
   label: Per Cycle
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: yearly
+  currency_from: currency
   label: Yearly
   fieldtype: Currency
   decimals: 2

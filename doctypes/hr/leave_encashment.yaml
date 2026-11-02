@@ -45,6 +45,7 @@ fields:
   fieldtype: Number
   read_only: true
 - fieldname: encashment_amount
+  currency_from: currency
   label: Encashment Amount
   fieldtype: Currency
   decimals: 2
@@ -88,6 +89,7 @@ fields:
   description: Process leave encashment via a separate Payment Entry instead of Salary Slip
   default: false
 - fieldname: paid_amount
+  currency_from: currency
   label: Paid Amount
   fieldtype: Currency
   decimals: 2

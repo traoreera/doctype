@@ -22,6 +22,8 @@ const props = defineProps<{
   formId: string
   /** Les valeurs du document qui porte la table : les conditions d'une cellule les lisent (`parent_purpose`). */
   parentValues: Values
+  /** Les champs de ce document : une ligne qui lit sa devise sur le parent (`parent_company.default_currency`) suit SES liens. */
+  parentFields?: readonly FieldMeta[]
 }>()
 const emit = defineEmits<{
   /** Ligne ajoutée ou supprimée : les numéros des lignes changent, les erreurs de cellules n'ont plus de sens. */
@@ -57,14 +59,16 @@ const columnRequired = (c: FieldMeta) =>
   c.required || (!!c.mandatory_depends_on && (rows.value.length ? states.value.some((s) => s[c.fieldname]!.required) : cellStates(props.child, {}, props.parentValues)[c.fieldname]!.required))
 
 // Les unités (« kg ») viennent de l'article de chaque ligne : on lit ces articles d'un coup, pas un par un.
+// La devise d'un montant peut venir du parent (`parent_company.default_currency`) : on lit aussi ce lien-là.
+const parentSide = computed(() => (props.parentFields ? { fields: props.parentFields, values: props.parentValues } : undefined))
 watch(
-  rows,
-  (list) => {
-    for (const [target, names] of unitLinks(props.child.fields, list)) void links.resolve(target, names, { data: true })
+  [rows, parentSide],
+  ([list, side]) => {
+    for (const [target, names] of unitLinks(props.child.fields, list, side)) void links.resolve(target, names, { data: true })
   },
   { immediate: true },
 )
-const unit = (c: FieldMeta, row: Row) => unitOf(c, props.child.fields, row, links.field)
+const unit = (c: FieldMeta, row: Row) => unitOf(c, props.child.fields, row, links.field, parentSide.value)
 
 // Saisie au clavier : Tab dans la dernière cellule de la dernière ligne ajoute une ligne et s'y place (pas besoin de la souris).
 const root = ref<HTMLElement | null>(null)

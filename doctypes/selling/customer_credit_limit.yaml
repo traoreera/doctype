@@ -4,11 +4,13 @@ label: Customer Credit Limit
 istable: true
 fields:
 - fieldname: credit_limit
+  currency_from: company.default_currency
   label: Credit Limit
   fieldtype: Currency
   decimals: 2
   in_list_view: true
 - fieldname: overdue_billing_threshold
+  currency_from: company.default_currency
   label: Overdue Limit
   fieldtype: Currency
   decimals: 2

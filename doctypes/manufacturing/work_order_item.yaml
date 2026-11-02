@@ -72,11 +72,13 @@ fields:
   decimals: 3
   read_only: true
 - fieldname: rate
+  currency_from: parent_company.default_currency
   label: Rate
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount
   fieldtype: Currency
   decimals: 2

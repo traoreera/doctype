@@ -53,6 +53,7 @@ fields:
   label: Formula
   fieldtype: Code
 - fieldname: amount
+  currency_from: parent_currency
   label: Amount
   fieldtype: Currency
   decimals: 2
@@ -62,21 +63,25 @@ fields:
   fieldtype: Boolean
   default: false
 - fieldname: default_amount
+  currency_from: parent_currency
   label: Default Amount
   fieldtype: Currency
   decimals: 2
 - fieldname: additional_amount
+  currency_from: parent_currency
   label: Additional Amount
   fieldtype: Currency
   decimals: 2
   read_only: true
   hidden: true
 - fieldname: tax_on_flexible_benefit
+  currency_from: parent_currency
   label: Tax on flexible benefit
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: tax_on_additional_salary
+  currency_from: parent_currency
   label: Tax on additional salary
   fieldtype: Currency
   decimals: 2
@@ -91,6 +96,7 @@ fields:
   fieldtype: Boolean
   read_only: true
 - fieldname: year_to_date
+  currency_from: parent_currency
   label: Year To Date
   fieldtype: Currency
   decimals: 2

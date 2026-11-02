@@ -61,10 +61,12 @@ fields:
   fieldtype: Link
   options: Currency
 - fieldname: lower_range
+  currency_from: currency
   label: Lower Range
   fieldtype: Currency
   decimals: 2
 - fieldname: upper_range
+  currency_from: currency
   label: Upper Range
   fieldtype: Currency
   decimals: 2

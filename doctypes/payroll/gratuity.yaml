@@ -28,6 +28,7 @@ fields:
   fieldtype: Number
   default: 0.0
 - fieldname: amount
+  currency_from: company.default_currency
   label: Total Amount
   fieldtype: Currency
   decimals: 2
@@ -73,6 +74,7 @@ fields:
   fieldtype: Text
   read_only: true
 - fieldname: paid_amount
+  currency_from: company.default_currency
   label: Paid Amount
   fieldtype: Currency
   decimals: 2

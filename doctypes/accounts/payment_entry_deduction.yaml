@@ -16,6 +16,7 @@ fields:
   required: true
   in_list_view: true
 - fieldname: amount
+  currency_from: parent_company.default_currency
   label: Amount (Company Currency)
   fieldtype: Currency
   decimals: 2

@@ -79,6 +79,7 @@ fields:
   fieldtype: Boolean
   read_only: true
 - fieldname: rate
+  currency_from: parent_currency
   label: Rate
   fieldtype: Currency
   decimals: 2

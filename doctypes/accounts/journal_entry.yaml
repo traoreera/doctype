@@ -75,17 +75,20 @@ fields:
   fieldtype: LongText
   hidden: true
 - fieldname: total_debit
+  currency_from: company.default_currency
   label: Total Debit
   fieldtype: Currency
   decimals: 2
   in_list_view: true
   read_only: true
 - fieldname: total_credit
+  currency_from: company.default_currency
   label: Total Credit
   fieldtype: Currency
   decimals: 2
   read_only: true
 - fieldname: difference
+  currency_from: company.default_currency
   label: Difference (Dr - Cr)
   fieldtype: Currency
   decimals: 2
@@ -101,6 +104,7 @@ fields:
   read_only: true
   hidden: true
 - fieldname: total_amount
+  currency_from: total_amount_currency
   label: Total Amount
   fieldtype: Currency
   decimals: 2
@@ -142,6 +146,7 @@ fields:
   default: Accounts Receivable
   depends_on: "voucher_type == 'Write Off Entry'"
 - fieldname: write_off_amount
+  currency_from: company.default_currency
   label: Write Off Amount
   fieldtype: Currency
   decimals: 2
