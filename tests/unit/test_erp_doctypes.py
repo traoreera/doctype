@@ -15,6 +15,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 from xcore_doctype.grants import GrantCatalog
 from xcore_doctype.registry import DocTypeRegistry
@@ -417,3 +418,59 @@ def test_an_invoice_shows_its_own_currency_and_the_company_s(registry: DocTypeRe
     assert (line["rate"].currency_from, line["base_rate"].currency_from) == ("parent_currency", "parent_company.default_currency")
     gl = registry.get("GL Entry").definition.field_map
     assert (gl["debit"].currency_from, gl["debit_in_account_currency"].currency_from) == ("company.default_currency", "account_currency")
+
+
+# i18n : le catalogue français des cinq modules de la première version (process/plan-erp.md §4, décision du 2 nov.). Les libellés de
+# doctypes/ sont en anglais ; `translations/fr.yaml` les traduit (clé = texte source), `fr-unchanged.txt` liste ce qui reste tel quel
+# (numéros, modèles de numérotation, sigles, textes déjà en français). Assemblé par scripts/build_fr_catalog.py.
+FIRST_VERSION = ("setup", "accounts", "stock", "selling", "buying")
+CATALOG_DIR = ERP_DIR.parent / "translations"
+
+
+def _texts_of(defn: dict) -> set[str]:
+    texts = {defn.get("label") or defn["name"]}
+    for f in defn.get("fields", []):
+        texts |= {f.get("label"), f.get("description")}
+        if f.get("fieldtype") == "Select" and isinstance(f.get("options"), list):
+            texts |= {str(o) for o in f["options"]}
+    for section in defn.get("layout") or []:
+        texts |= {section.get("section"), section.get("tab")}
+    flow = defn.get("workflow") or {}
+    texts |= {st.get("name") for st in flow.get("states", [])} | {t.get("action") for t in flow.get("transitions", [])}
+    return {t for t in texts if isinstance(t, str) and t.strip()}
+
+
+def test_every_label_of_the_first_version_has_its_french():
+    """Un libellé ajouté à l'un des cinq modules sans traduction se voit ici : il faut le traduire dans un lot et réassembler
+    `translations/fr.yaml`, ou le consigner dans `fr-unchanged.txt` s'il ne se traduit pas."""
+    from xcore_doctype.translations import Translations
+
+    catalog = Translations()
+    assert catalog.load_dir("erp", CATALOG_DIR) == ["fr"]  # un catalogue fautif serait une erreur de chargement
+    messages = yaml.safe_load((CATALOG_DIR / "fr.yaml").read_text(encoding="utf-8"))["messages"]
+    unchanged = set((CATALOG_DIR / "fr-unchanged.txt").read_text(encoding="utf-8").splitlines())
+    missing = sorted(
+        f"{path.relative_to(ERP_DIR)}: {text!r}"
+        for module in FIRST_VERSION
+        for path in sorted((ERP_DIR / module).rglob("*.yaml"))
+        for text in _texts_of(yaml.safe_load(path.read_text(encoding="utf-8")))
+        if text not in messages and text not in unchanged
+    )
+    assert missing == [], "\n".join(missing[:50])
+
+
+def test_the_french_catalog_turns_an_invoice_s_meta_french(registry: DocTypeRegistry):
+    from dataclasses import replace
+
+    from tests.conftest import make_ctx
+    from xcore_doctype.translations import Translations
+
+    catalog = Translations()
+    catalog.load_dir("erp", CATALOG_DIR)
+    meta = registry.get("Sales Invoice").definition.model_dump(mode="json", exclude_none=True)
+    meta = catalog.localize_meta(meta, replace(make_ctx("acme", "a"), language="fr").language)
+    fields = {f["fieldname"]: f for f in meta["fields"]}
+    assert meta["label"] == "Facture de vente"
+    assert (fields["posting_date"]["label"], fields["grand_total"]["label"], fields["customer"]["label"]) == (
+        "Date de comptabilisation", "Total général", "Client",
+    )
