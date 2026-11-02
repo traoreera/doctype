@@ -26,7 +26,7 @@ import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
 import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchSource, fieldStates, formTabs, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, resolveLinkFilters, startValues, tabOfField, toPayload, validate, type Row, type Values } from '@/lib/form'
-import { formatTimestamp, relativeTime } from '@/lib/format'
+import { actionLabel, formatTimestamp, relativeTime, stateLabel } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
 import { SUBMITTED, type AvailableMapping, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldMeta, type LayoutSection } from '@/lib/types'
@@ -501,10 +501,10 @@ function confirmTransition(kind: 'submit' | 'cancel'): void {
 
 function confirmFlow(action: AvailableTransition): void {
   confirm.require({
-    header: action.action,
-    message: t.form.confirmTransition(action.action, action.to, action.docstatus !== 0),
+    header: actionLabel(meta.value, action.action),
+    message: t.form.confirmTransition(actionLabel(meta.value, action.action), stateLabel(meta.value, action.to), action.docstatus !== 0),
     icon: 'pi pi-exclamation-triangle',
-    acceptLabel: action.action,
+    acceptLabel: actionLabel(meta.value, action.action),
     rejectLabel: t.cancel,
     acceptProps: { severity: action.docstatus === 2 ? 'danger' : 'primary' },
     rejectProps: { severity: 'secondary', text: true },
@@ -752,7 +752,7 @@ onBeforeUnmount(() => {
         <!-- Avec un workflow, l'état métier dit plus que « Brouillon / Soumis » : c'est lui qu'on montre, avec la teinte de
              l'état de document qu'il porte (gris en cours, vert soumis, rouge annulé). -->
         <span v-else-if="flowState && record" :class="['status-pill', statusTone(record.docstatus)]" data-testid="status" :data-docstatus="record.docstatus" :data-state="flowState">
-          {{ flowState }}
+          {{ stateLabel(meta, flowState) }}
         </span>
         <span v-else-if="submittable && record" :class="['status-pill', statusTone(record.docstatus)]" data-testid="status" :data-docstatus="record.docstatus">
           {{ statusLabel(record.docstatus) }}
@@ -774,7 +774,7 @@ onBeforeUnmount(() => {
         <Button
           v-for="a in flow?.transitions ?? []"
           :key="a.action"
-          :label="a.action"
+          :label="actionLabel(meta, a.action)"
           :icon="a.docstatus === 2 ? 'pi pi-ban' : a.docstatus === 1 ? 'pi pi-check' : 'pi pi-send'"
           :severity="a.docstatus === 2 ? 'danger' : undefined"
           :outlined="a.docstatus === 2"

@@ -10,7 +10,7 @@ import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone } from '@/lib/docstatus'
 import { layerFilters, matchesFilter, passesLater } from '@/lib/filters'
 import { savedFieldLocked } from '@/lib/form'
-import { formatCell } from '@/lib/format'
+import { formatCell, optionLabel } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import type { DocRecord, DocTypeMeta, FieldMeta, Filters } from '@/lib/types'
 import { useFiles } from '@/stores/files'
@@ -146,7 +146,7 @@ const menu = ref<InstanceType<typeof Menu> | null>(null)
 const menuItems = ref<{ label: string; command: () => void }[]>([])
 
 function openMenu(ev: Event, record: DocRecord, from: string): void {
-  menuItems.value = columnNames.value.filter((c) => c !== from).map((c) => ({ label: c, command: () => void move(record, from, c) }))
+  menuItems.value = columnNames.value.filter((c) => c !== from).map((c) => ({ label: field.value ? optionLabel(field.value, c) : c, command: () => void move(record, from, c) }))
   menu.value?.toggle(ev)
 }
 
@@ -178,7 +178,7 @@ const errors = computed(() => Object.values(board).find((c) => c.error)?.error ?
       >
         <header class="kanban-head">
           <span class="kanban-dot" :class="`c-${columnNames.indexOf(column) % 8}`" aria-hidden="true" />
-          <h3 class="kanban-title">{{ column }}</h3>
+          <h3 class="kanban-title">{{ field ? optionLabel(field, column) : column }}</h3>
           <span class="count" :data-testid="`kanban-count-${column}`">{{ board[column]?.total ?? 0 }}</span>
           <span class="desk-spacer" />
           <RouterLink

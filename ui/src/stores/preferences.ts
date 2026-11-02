@@ -4,7 +4,7 @@ import { brandCss } from '@/lib/brand'
 import { setDateFormat } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import type { OrgPreferences } from '@/lib/types'
-import { t } from '@/i18n'
+import { adoptLanguage, t } from '@/i18n'
 
 const STYLE_ID = 'desk-brand'
 
@@ -32,6 +32,12 @@ export const usePreferences = defineStore('preferences', () => {
   function apply(prefs: OrgPreferences): void {
     items.value = prefs
     setDateFormat(prefs.date_format)
+    // La langue dite par le serveur (la sienne, sinon celle de l'organisation) : si ce n'est pas celle de la page, on la garde et on recharge.
+    try {
+      adoptLanguage(prefs)
+    } catch {
+      /* un environnement sans rechargement (tests) : la page reste dans sa langue */
+    }
     if (typeof document === 'undefined') return
     document.title = documentTitle.value
     let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null

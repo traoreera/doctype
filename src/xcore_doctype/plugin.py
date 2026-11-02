@@ -174,6 +174,10 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         for d in dirs:
             registry.load_dir(Path(d).expanduser())
         registry.validate_links()  # toutes les définitions sont là : une cible de Link inconnue échoue au chargement
+        # Les catalogues de traduction des DocTypes de l'opérateur (translations.py) : un dossier `fr.yaml`, `en.yaml`… par entrée.
+        translation_dirs = block.get("translations_dirs", [])
+        if not isinstance(translation_dirs, list) or not all(isinstance(d, str) for d in translation_dirs):
+            raise ConfigurationError("doctype.translations_dirs doit être une liste de chemins")
 
         tables = build_system_tables()
         await create_system_tables(db, tables)
@@ -232,8 +236,11 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         self.ctx.services[GRANTS_SERVICE] = catalog
         # ...et y apportent leurs propres DocTypes (module == leur nom, voir registry.DocTypeChannel).
         self.ctx.services[REGISTRY_SERVICE] = DocTypeChannel(
-            registry, self.logger, unique_check=self.documents.ensure_unique_clean, desk=desk_extensions
+            registry, self.logger, unique_check=self.documents.ensure_unique_clean, desk=desk_extensions,
+            translations=self.documents.translations,
         )
+        for i, d in enumerate(translation_dirs):
+            self.documents.translations.load_dir(f"operator.{i}", Path(d).expanduser())
         # ...et lisent les documents d'un tenant en contexte système, pour vérifier ou rapporter (lecture seule).
         self.ctx.services[DOCUMENTS_SERVICE] = SystemReaders(self.documents)
         # ...et y écrivent : un bouton avec les droits de l'utilisateur, une tâche en système sur les types de son module (M4).

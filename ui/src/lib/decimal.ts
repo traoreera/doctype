@@ -5,6 +5,7 @@
  * aucun `parseFloat` entre la frappe de l'utilisateur et l'envoi, sinon `0.1 + 0.2` reviendrait par la porte de derrière.
  * `canonicalDecimal` reprend EXACTEMENT les règles de `decimals.canonical` (mêmes vecteurs : tests/vectors/decimal_cases.json).
  */
+import { intlLocale } from '@/i18n'
 const PATTERN = /^-?(0|[1-9][0-9]*)(\.[0-9]+)?$/
 export const MAX_DIGITS = 18
 
@@ -32,7 +33,7 @@ export function formatDecimal(stored: string, decimals: number): string {
   if (canon === null) return stored
   const digits = canon.replace(/[-.]/g, '').length
   if (digits > 15) return canon.replace('.', ',')
-  return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(Number(canon))
+  return new Intl.NumberFormat(intlLocale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(Number(canon))
 }
 
 /**

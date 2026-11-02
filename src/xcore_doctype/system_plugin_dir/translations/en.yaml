@@ -1,0 +1,77 @@
+# Le plugin `system` est écrit en français ; voici ses libellés en anglais (clés = le texte source, voir translations.py).
+messages:
+  fr: French
+  en: English
+  AAAA-MM-JJ: YYYY-MM-DD
+  JJ/MM/AAAA: DD/MM/YYYY
+  MM/JJ/AAAA: MM/DD/YYYY
+  Active: Active
+  Administration: Administration
+  "Affiché en haut du Desk (PNG, JPEG, GIF ou WebP)": "Shown at the top of the Desk (PNG, JPEG, GIF or WebP)"
+  "Affiché en haut du Desk à la place de « Desk »": "Shown at the top of the Desk instead of “Desk”"
+  Annulation: Cancellation
+  Canal: Channel
+  "Celui qu'un gabarit obtient quand il demande « default »": "The one a template gets when it asks for “default”"
+  Champ désignant un destinataire: Field naming a recipient
+  Champ surveillé: Watched field
+  Changement de valeur: Value change
+  Cloche: Bell
+  Cloche et e-mail: Bell and e-mail
+  Condition: Condition
+  Couleur de l'organisation: Organisation colour
+  Création: Creation
+  Destinataire: Recipient
+  Destinataires: Recipients
+  Droits: Rights
+  Déclencheur: Trigger
+  Désactivé: Disabled
+  E-mail: E-mail
+  E-mail du membre: Member e-mail
+  "En haut de la PREMIÈRE page. Un en-tête répété à chaque page est le travail du fond PDF, déclaré dans le gabarit": "At the top of the FIRST page. A header repeated on every page is the PDF background's job, declared in the template"
+  "Ex. : Warehouse. Le nom du type, tel que l'affiche l'adresse de sa liste": "E.g. Warehouse. The type's name, as its list's address shows it"
+  "Ex. : {{ doctype }} {{ name }} soumis par {{ actor }} ; un champ du document s'écrit {{ doc.champ }}": "E.g. {{ doctype }} {{ name }} submitted by {{ actor }}; a field of the document is written {{ doc.field }}"
+  "Facultatif : la restriction ne vaut que pour ce type (le type lui-même, ou un type qui le cite)": "Optional: the restriction applies only to this type (the type itself, or a type that cites it)"
+  "Facultative, dans la langue des conditions des formulaires (ex. : status == 'Ouvert' and priority == 'Haute')": "Optional, in the language of form conditions (e.g. status == 'Open' and priority == 'High')"
+  Format de date: Date format
+  "Gardé, mais plus imprimé : les documents sortent alors sans en-tête": "Kept, but no longer printed: documents then print without a letterhead"
+  Identifiant: Identifier
+  Image: Image
+  Impression: Printing
+  "L'e-mail du membre (ou son identifiant)": "The member's e-mail (or identifier)"
+  "La langue du Desk pour toute l'organisation (fr : français, en : anglais) ; chacun peut choisir la sienne dans « Mon profil »": "The Desk language for the whole organisation (fr: French, en: English); everyone can choose their own in “My profile”"
+  La règle se déclenche quand ce champ change de valeur: The rule fires when this field's value changes
+  Langue: Language
+  "Le nom d'un document de ce type": "The name of a document of this type"
+  "Le nom du DocType, tel que l'affiche l'adresse d'une liste (ex. : Sales Invoice)": "The DocType's name, as a list's address shows it (e.g. Sales Invoice)"
+  "Les règles de l'organisation.": "The organisation's rules."
+  Logo: Logo
+  Membre: Member
+  Membres prévenus: Notified members
+  Mentions: Legal notice
+  Message: Message
+  Modification: Change
+  Nom de l'organisation: Organisation name
+  Nom de la règle: Rule name
+  Notifications: Notifications
+  Objet: Subject
+  Organisation: Organisation
+  Papier à en-tête: Letterhead
+  Par défaut: Default
+  Paramètres généraux: General settings
+  Permission utilisateur: User permission
+  Pied de page: Footer
+  Prévenir l'auteur du document: Notify the document's author
+  Prévenir les personnes assignées: Notify the assignees
+  Restriction: Restriction
+  Règle de notification: Notification rule
+  Régional: Regional
+  Seulement pour le type: Only for the type
+  Soumission: Submission
+  Suppression: Deletion
+  "Teinte des boutons et des éléments actifs ; vide = la teinte par défaut": "Tint of buttons and active elements; empty = the default tint"
+  "Texte brut imprimé en fin de document (SARL au capital de…, RCS, TVA intracommunautaire)": "Plain text printed at the end of the document (company capital, registration, VAT number)"
+  "Texte brut. Variables : {{ doctype }}, {{ name }}, {{ event }}, {{ actor }}, {{ link }}, {{ doc.champ }}": "Plain text. Variables: {{ doctype }}, {{ name }}, {{ event }}, {{ actor }}, {{ link }}, {{ doc.field }}"
+  Type de document: Document type
+  "Un champ du document qui contient l'e-mail ou l'identifiant d'un membre (ex. : approver)": "A field of the document holding a member's e-mail or identifier (e.g. approver)"
+  Valeur permise: Allowed value
+  Événement: Event

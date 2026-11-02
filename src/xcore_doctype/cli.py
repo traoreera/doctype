@@ -35,7 +35,7 @@ from .registry import DocTypeRegistry
 Level = Literal["ok", "warn", "error"]
 PLUGIN_NAME = "xcore-doctype"
 SYSTEM_PLUGIN_NAME = "system"
-SYSTEM_YAML_DIRS = ("doctypes", "workspaces")  # ce que le plugin `system` livre en YAML (réécrit à chaque install)
+SYSTEM_YAML_DIRS = ("doctypes", "workspaces", "translations")  # ce que le plugin `system` livre en YAML (réécrit à chaque install)
 SHIPPED_LIST = ".shipped"  # dans app/system : ce que la dernière install a posé (les seuls fichiers qu'une install suivante peut retirer)
 _MARK = {"ok": "✔", "warn": "⚠", "error": "✖"}
 

@@ -1,0 +1,275 @@
+1
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+2
+20
+3
+4
+5
+6
+7
+8
+9
+A+
+A-
+A4
+AB+
+AB-
+ACC-BTN-.YYYY.-
+ACC-JV-.YYYY.-
+ACC-PAY-.YYYY.-
+ACC-PINV-.YYYY.-
+ACC-PINV-RET-.YYYY.-
+ACC-PRQ-.YYYY.-
+ACC-PSINV-.YYYY.-
+ACC-SH-.YYYY.-
+ACC-SINV-.YYYY.-
+ACC-SINV-RET-.YYYY.-
+Achats
+Actif
+Action
+Alias
+Annuler
+Annulée
+Approuver
+Approuvée
+Article
+Articles
+Articles, entrepôts, lots et mouvements de stock.
+B+
+B-
+Brouillon
+Budget
+BUDGET-.########
+Bulletins de paie
+Bulletins par état
+Bulletins récents
+CBAL-.#####
+Centime, cent, pesewa…
+Code
+Code ISO 3166-1
+Code ISO 4217
+CODE-39
+Codes
+Commission
+Comptabilité
+Comptabilité et montants
+Comptes, écritures, factures et paiements.
+Condition
+Configuration
+Conformité
+Congés et paramètres
+Contact
+Contribution (%)
+CRM
+CUST-.YYYY.-
+Date
+Date de fabrication
+Date d’expiration
+Dates
+Dates et planification
+Demandes de congé ouvertes
+Demandes de congé par mois
+Demandes de congé récentes
+Demandes de congé soumises
+Derniers mouvements
+Description
+Description et notes
+Deux lettres majuscules : CI, FR, SN. C'est le nom du document.
+Devise
+Devise par défaut
+Diesel
+Distance
+Documents
+Dossiers du personnel, absences, présence et organisation des équipes.
+DUNN-.MM.-.YY.-
+Désactivé
+Détails
+EAN
+EAN-13
+EAN-8
+Employés
+Entrepôts
+exchangerate.host
+Fabrication
+Factures client en brouillon
+Factures client par mois
+Factures client récentes
+Factures client soumises
+Factures fournisseur
+Factures par état
+Fax
+Fiches de travail
+Fraction
+frankfurter.dev
+frankfurter.dev - v2
+GS1
+GTIN
+GTIN-14
+Général
+HR-DRI-.YYYY.-
+HR-EMP-
+IBAN
+Identifiant du lot utilisé sur les mouvements de stock.
+Identification du lot
+Image
+Immobilisations
+Incoterm
+Index
+Indicatif téléphonique
+Informations complémentaires 12
+Informations complémentaires 17
+Informations complémentaires 2
+Informations complémentaires 3
+Informations complémentaires 4
+Informations complémentaires 5
+Informations complémentaires 7
+Informations complémentaires 8
+Informations complémentaires 9
+Informations principales
+Instructions
+Introduction
+ISBN
+ISBN-10
+ISBN-13
+ISC-.YYYY.-
+ISSN
+JAN
+Latitude
+Lft
+lft
+Logo
+Longitude
+Lot
+Lot parent
+Lots de paie en brouillon
+Lots de paie par mois
+Lots de paie soumis
+Maintenance
+MAT-DN-.YYYY.-
+MAT-DN-RET-.YYYY.-
+MAT-DT-.YYYY.-
+MAT-INS-.YYYY.-
+MAT-LCV-.YYYY.-
+MAT-MR-.YYYY.-
+MAT-PAC-.YYYY.-
+MAT-PR-RET-.YYYY.-
+MAT-PRE-.YYYY.-
+MAT-QA-.YYYY.-
+MAT-RECO-.YYYY.-
+MAT-STE-.YYYY.-
+Message
+Messagerie
+Mouvements en brouillon
+Mouvements par mois
+Mouvements par nature
+Mouvements soumis
+Nom
+Nomenclatures, ordres de fabrication et suivi des opérations.
+Note
+Notes
+N° de lot
+O+
+O-
+old_parent
+Options
+Options complémentaires 12
+Options complémentaires 14
+Options complémentaires 2
+Options complémentaires 9
+Opérations
+Orange
+Ordres de fabrication en brouillon
+Ordres de fabrication récents
+Ordres de fabrication soumis
+Ordres par état
+Organisation
+Orientation
+Outils
+Paie
+Paiements
+Pays
+Personnel et organisation
+Planification et production
+Plans de production
+Plans de production par mois
+PMO-
+Portrait
+POS-CLO-
+PRLE-.####
+PRO-.YYYY.-
+Projets
+Prospect
+Prospection
+Préparation des paies, bulletins et éléments de rémunération.
+Présences par état
+PU-SSP-.YYYY.-
+PUR-ORD-.YYYY.-
+PUR-RFQ-.YYYY.-
+PUR-SQTN-.YYYY.-
+PZN
+Qualification
+Qualité
+Quantité en stock
+Quantité par article
+Quantité par entrepôt
+quotation_item
+Refuser
+Refusée
+Reprendre
+Ressources humaines
+Rgt
+rgt
+Route
+Référence de la ligne d'origine (Material Request Item).
+Référence de la ligne d'origine (Payment Schedule).
+Référence de la ligne d'origine (Pick List Item).
+Référence de la ligne d'origine (Subcontracting Inward Order Item).
+Référence de la ligne d'origine (Supplier Quotation Item).
+Références
+Référentiel
+Référentiel et banque
+SABB-.########
+SAL-ORD-.YYYY.-
+SAL-QTN-.YYYY.-
+Score
+Soumettre
+Source
+Sous-traitance
+Standard
+STO-ITEM-.YYYY.-
+STO-PICK-.YYYY.-
+Stock
+Subdivision
+Suivi
+SUP-.YYYY.-
+Symbole
+SYSCOHADA révisé
+Taxes
+Total
+Traitement de la paie
+Traitements en lot
+Transaction
+Transit
+Trois lettres majuscules : EUR, XOF, USD. C'est le nom du document.
+Type
+Téléphonie
+Unités par fraction
+UPC
+UPC-A
+Variable
+Variables
+Ventes
+Vue d'ensemble
+Vue d’ensemble
+À approuver
+Écritures récentes
+État et options

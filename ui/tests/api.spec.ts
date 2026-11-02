@@ -31,7 +31,8 @@ describe('requêtes', () => {
   it('omet les en-têtes quand il n’y a ni jeton ni tenant', async () => {
     const { api, requests } = setup([{ status: 200, json: [] }], { token: null, tenant: null })
     await api.doctypes()
-    expect(Object.keys(requests[0]!.headers)).toEqual(['Accept'])
+    // La langue part toujours : les libellés des types reviennent dans celle de la page (le français dans les tests).
+    expect(requests[0]!.headers).toEqual({ Accept: 'application/json', 'Accept-Language': 'fr' })
   })
 
   it('encode les noms de DocType et de document (espaces, barres, accents)', async () => {

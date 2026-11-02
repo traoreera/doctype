@@ -1,0 +1,153 @@
+# Plan comptable SYSCOHADA révisé (Acte uniforme OHADA relatif au droit comptable et à l'information financière, 2017).
+#
+# Des DONNÉES, pas un DocType : le plugin `accounts` (hors de ce dépôt, process/plan-erp.md) crée les comptes (`Account`) d'une
+# société à partir de ce fichier quand `Company.create_chart_of_accounts_based_on` vaut « SYSCOHADA révisé ». Hors de doctypes/
+# exprès : tout fichier de cet arbre-là est lu comme un DocType.
+#
+# Forme d'un compte : `number` (chiffres seulement ; le premier est la CLASSE), `name`, `group` (un compte de regroupement, qui n'est
+# jamais mouvementé), `parent` (le NUMÉRO du compte parent : les comptes sont nommés au hasard, le numéro est la seule clé stable),
+# `root_type` / `report_type` (les champs du même nom d'`Account`), `account_type` facultatif (le rôle d'un compte clé pour le
+# moteur : client, fournisseur, banque, caisse, taxe, stock…). Une classe dont les comptes sont de natures différentes (1 et 4) n'a pas
+# de `root_type` : il est porté par ses comptes.
+#
+# PÉRIMÈTRE ET LIMITES — À FAIRE VALIDER PAR UN EXPERT-COMPTABLE AVANT LA PRODUCTION :
+# - les 9 classes, les comptes principaux à 2 chiffres et les comptes divisionnaires à 3 chiffres d'usage courant seulement ; une
+#   entreprise ouvre ses sous-comptes (4 chiffres et plus) sous ceux-ci, selon son activité ;
+# - transcrit de mémoire du plan publié, PAS d'une source vérifiée ligne à ligne : un numéro ou un intitulé faux dans un plan
+#   comptable se paie cher (états financiers, déclarations fiscales). `tests/unit/test_syscohada.py` garantit la COHÉRENCE du fichier
+#   (numéros, filiation, classes, nature bilan / résultat), pas son exactitude réglementaire.
+chart: SYSCOHADA révisé
+version: 2017
+accounts:
+  # ── Classe 1 : ressources durables ─────────────────────────────────
+  - {number: "1", name: Comptes de ressources durables, group: true}
+  - {number: "10", name: Capital, group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "101", name: Capital social, parent: "10", root_type: Equity, report_type: Balance Sheet, account_type: Equity}
+  - {number: "109", name: Apporteurs, capital souscrit non appelé, parent: "10", root_type: Equity, report_type: Balance Sheet}
+  - {number: "11", name: Réserves, group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "111", name: Réserve légale, parent: "11", root_type: Equity, report_type: Balance Sheet}
+  - {number: "118", name: Autres réserves, parent: "11", root_type: Equity, report_type: Balance Sheet}
+  - {number: "12", name: Report à nouveau, group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "121", name: Report à nouveau créditeur, parent: "12", root_type: Equity, report_type: Balance Sheet}
+  - {number: "129", name: Report à nouveau débiteur, parent: "12", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13", name: Résultat net de l'exercice, group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "131", name: "Résultat net : bénéfice", parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "139", name: "Résultat net : perte", parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "14", name: Subventions d'investissement, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "15", name: Provisions réglementées et fonds assimilés, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "16", name: Emprunts et dettes assimilées, group: true, parent: "1", root_type: Liability, report_type: Balance Sheet}
+  - {number: "162", name: Emprunts et dettes auprès des établissements de crédit, parent: "16", root_type: Liability, report_type: Balance Sheet}
+  - {number: "17", name: Dettes de location-acquisition, parent: "1", root_type: Liability, report_type: Balance Sheet}
+  - {number: "18", name: Dettes liées à des participations et comptes de liaison, parent: "1", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19", name: Provisions pour risques et charges, parent: "1", root_type: Liability, report_type: Balance Sheet}
+
+  # ── Classe 2 : actif immobilisé ────────────────────────────────────
+  - {number: "2", name: Comptes d'actif immobilisé, group: true, root_type: Asset, report_type: Balance Sheet}
+  - {number: "21", name: Immobilisations incorporelles, parent: "2", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "22", name: Terrains, parent: "2", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23", name: Bâtiments, installations techniques et agencements, parent: "2", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24", name: Matériel, mobilier et actifs biologiques, parent: "2", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "25", name: Avances et acomptes versés sur immobilisations, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26", name: Titres de participation, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27", name: Autres immobilisations financières, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "28", name: Amortissements, parent: "2", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "29", name: Dépréciations des immobilisations, parent: "2", root_type: Asset, report_type: Balance Sheet}
+
+  # ── Classe 3 : stocks ──────────────────────────────────────────────
+  - {number: "3", name: Comptes de stocks, group: true, root_type: Asset, report_type: Balance Sheet}
+  - {number: "31", name: Marchandises, parent: "3", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "32", name: Matières premières et fournitures liées, parent: "3", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "33", name: Autres approvisionnements, parent: "3", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "34", name: Produits en cours, parent: "3", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "35", name: Services en cours, parent: "3", root_type: Asset, report_type: Balance Sheet}
+  - {number: "36", name: Produits finis, parent: "3", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "37", name: Produits intermédiaires et résiduels, parent: "3", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "38", name: Stocks en cours de route, en consignation ou en dépôt, parent: "3", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "39", name: Dépréciations des stocks et encours de production, parent: "3", root_type: Asset, report_type: Balance Sheet}
+
+  # ── Classe 4 : tiers ───────────────────────────────────────────────
+  - {number: "4", name: Comptes de tiers, group: true}
+  - {number: "40", name: Fournisseurs et comptes rattachés, group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "401", name: Fournisseurs, dettes en compte, parent: "40", root_type: Liability, report_type: Balance Sheet, account_type: Payable}
+  - {number: "408", name: Fournisseurs, factures non parvenues, parent: "40", root_type: Liability, report_type: Balance Sheet, account_type: Stock Received But Not Billed}
+  - {number: "41", name: Clients et comptes rattachés, group: true, parent: "4", root_type: Asset, report_type: Balance Sheet}
+  - {number: "411", name: Clients, parent: "41", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "419", name: Clients créditeurs, parent: "41", root_type: Asset, report_type: Balance Sheet}
+  - {number: "42", name: Personnel, group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "421", name: Personnel, avances et acomptes, parent: "42", root_type: Liability, report_type: Balance Sheet}
+  - {number: "422", name: Personnel, rémunérations dues, parent: "42", root_type: Liability, report_type: Balance Sheet}
+  - {number: "43", name: Organismes sociaux, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44", name: État et collectivités publiques, group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "441", name: État, impôt sur les bénéfices, parent: "44", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "443", name: État, TVA facturée, parent: "44", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "445", name: État, TVA récupérable, parent: "44", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "447", name: État, impôts retenus à la source, parent: "44", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "45", name: Organismes internationaux, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46", name: Apporteurs, associés et groupe, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "47", name: Débiteurs et créditeurs divers, parent: "4", root_type: Asset, report_type: Balance Sheet}
+  - {number: "48", name: Créances et dettes hors activités ordinaires, parent: "4", root_type: Asset, report_type: Balance Sheet}
+  - {number: "49", name: Dépréciations et provisions pour risques à court terme (tiers), parent: "4", root_type: Asset, report_type: Balance Sheet}
+
+  # ── Classe 5 : trésorerie ──────────────────────────────────────────
+  - {number: "5", name: Comptes de trésorerie, group: true, root_type: Asset, report_type: Balance Sheet}
+  - {number: "50", name: Titres de placement, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "51", name: Valeurs à encaisser, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "52", name: Banques, group: true, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "521", name: Banques locales, parent: "52", root_type: Asset, report_type: Balance Sheet, account_type: Bank}
+  - {number: "53", name: Établissements financiers et assimilés, parent: "5", root_type: Asset, report_type: Balance Sheet, account_type: Bank}
+  - {number: "54", name: Instruments de trésorerie, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "56", name: Banques, crédits de trésorerie et d'escompte, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "57", name: Caisse, group: true, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "571", name: Caisse siège social, parent: "57", root_type: Asset, report_type: Balance Sheet, account_type: Cash}
+  - {number: "58", name: Régies d'avances, accréditifs et virements internes, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "59", name: Dépréciations et provisions pour risques à court terme (trésorerie), parent: "5", root_type: Asset, report_type: Balance Sheet}
+
+  # ── Classe 6 : charges des activités ordinaires ────────────────────
+  - {number: "6", name: Comptes de charges des activités ordinaires, group: true, root_type: Expense, report_type: Profit and Loss}
+  - {number: "60", name: Achats et variations de stocks, group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "601", name: Achats de marchandises, parent: "60", root_type: Expense, report_type: Profit and Loss, account_type: Cost of Goods Sold}
+  - {number: "602", name: Achats de matières premières et fournitures liées, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "603", name: Variations des stocks de biens achetés, parent: "60", root_type: Expense, report_type: Profit and Loss, account_type: Stock Adjustment}
+  - {number: "604", name: Achats stockés de matières et fournitures consommables, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "605", name: Autres achats, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "61", name: Transports, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62", name: Services extérieurs A, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63", name: Services extérieurs B, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64", name: Impôts et taxes, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65", name: Autres charges, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66", name: Charges de personnel, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "67", name: Frais financiers et charges assimilées, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "68", name: Dotations aux amortissements, parent: "6", root_type: Expense, report_type: Profit and Loss, account_type: Depreciation}
+  - {number: "69", name: Dotations aux provisions et aux dépréciations, parent: "6", root_type: Expense, report_type: Profit and Loss}
+
+  # ── Classe 7 : produits des activités ordinaires ───────────────────
+  - {number: "7", name: Comptes de produits des activités ordinaires, group: true, root_type: Income, report_type: Profit and Loss}
+  - {number: "70", name: Ventes, group: true, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "701", name: Ventes de marchandises, parent: "70", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "702", name: Ventes de produits finis, parent: "70", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "706", name: Services vendus, parent: "70", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "71", name: Subventions d'exploitation, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "72", name: Production immobilisée, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "73", name: Variations des stocks de biens et de services produits, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "75", name: Autres produits, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "77", name: Revenus financiers et produits assimilés, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "78", name: Transferts de charges, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "79", name: Reprises de provisions, de dépréciations et autres, parent: "7", root_type: Income, report_type: Profit and Loss}
+
+  # ── Classe 8 : autres charges et autres produits (hors activités ordinaires) ──
+  - {number: "8", name: Comptes des autres charges et des autres produits, group: true}
+  - {number: "81", name: Valeurs comptables des cessions d'immobilisations, parent: "8", root_type: Expense, report_type: Profit and Loss}
+  - {number: "82", name: Produits des cessions d'immobilisations, parent: "8", root_type: Income, report_type: Profit and Loss}
+  - {number: "83", name: Charges hors activités ordinaires, parent: "8", root_type: Expense, report_type: Profit and Loss}
+  - {number: "84", name: Produits hors activités ordinaires, parent: "8", root_type: Income, report_type: Profit and Loss}
+  - {number: "85", name: Dotations hors activités ordinaires, parent: "8", root_type: Expense, report_type: Profit and Loss}
+  - {number: "86", name: Reprises hors activités ordinaires, parent: "8", root_type: Income, report_type: Profit and Loss}
+  - {number: "87", name: Participation des travailleurs, parent: "8", root_type: Expense, report_type: Profit and Loss}
+  - {number: "88", name: Subventions d'équilibre, parent: "8", root_type: Income, report_type: Profit and Loss}
+  - {number: "89", name: Impôts sur le résultat, parent: "8", root_type: Expense, report_type: Profit and Loss}
+
+  # ── Classe 9 : engagements hors bilan et comptabilité analytique de gestion ──
+  # Ni bilan ni résultat : pas de `root_type` ni de `report_type`. L'analytique de gestion (92-99) est propre à chaque entreprise.
+  - {number: "9", name: Comptes des engagements hors bilan et de la comptabilité analytique de gestion, group: true}
+  - {number: "90", name: Engagements obtenus et engagements accordés, parent: "9"}
+  - {number: "91", name: Contreparties des engagements, parent: "9"}

@@ -111,6 +111,7 @@ from .workspaces import (
     ShortcutBlock,
     SpacerBlock,
 )
+from .translations import Translations
 from .versions import diff, snapshot
 
 MAX_PAGE = 200
@@ -197,6 +198,7 @@ class DocumentService:
         self._timezone, self._clock = timezone, clock
         self.files: Any = None  # le `FileService`, posé par le plugin après coup (il a besoin de ce service)
         self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
+        self.translations = Translations()  # les catalogues des plugins (translations.py) : libellés dans la langue de la requête
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
 
     # ── Méta ──────────────────────────────────────────────────
@@ -215,7 +217,7 @@ class DocumentService:
                             # page qui le fait : il n'a rien à faire dans une liste de « Créer ». Le Desk a besoin de le savoir.
                             **({"per_user": True} if d.naming == "owner" else {}),
                             "create": scope_for(d, ctx, "create").granted and not d.single})
-        return out
+        return self.translations.localize_summaries(out, ctx.language)
 
     # ── Espaces de travail ────────────────────────────────────
     def _readable(self, ctx: RequestContext, doctype: str) -> DocTypeDef | None:
@@ -310,7 +312,8 @@ class DocumentService:
         first = types[0]
         blocks: list[dict[str, Any]] = [{"type": "header", "text": "Aperçu"}]
         blocks += [{"type": "number_card", "label": d.label or d.name, "doctype": d.name, "function": "count", "color": tones[i % len(tones)], "cols": 3} for i, d in enumerate(types[:4])]
-        blocks.append({"type": "quick_list", "label": f"Derniers : {first.label or first.name}", "doctype": first.name, "limit": 5, "cols": 12})
+        # Le libellé du TYPE, pas une phrase (« Derniers : … ») : un catalogue de traduction traduit un texte source, jamais un assemblage.
+        blocks.append({"type": "quick_list", "label": first.label or first.name, "doctype": first.name, "limit": 5, "cols": 12})
         blocks.append({"type": "header", "text": "Accès"})
         blocks += [{"type": "shortcut", "doctype": d.name, "new": True} for d in types]
         made = parse_workspace({"schema_version": 1, "name": module, "label": module_label(module), "blocks": blocks})
@@ -370,7 +373,7 @@ class DocumentService:
             blocks, _, content = self._serve_blocks(ctx, ws.blocks)
             if content:
                 out.append(self._workspace_out(ctx, ws, blocks, layer))
-        return out
+        return self.translations.localize_workspaces(out, ctx.language)
 
     def get_meta(
         self, ctx: RequestContext, doctype: str, *, override: Mapping[str, Any] | None = None, dashboard: Mapping[str, Any] | None = None,
@@ -434,6 +437,8 @@ class DocumentService:
                         cfield.pop(kind, None)
                         if kind in mine:
                             cfield[kind] = mine[kind]
+        # La langue AVANT l'habillage : un libellé que l'organisation a choisi (dans SA langue) gagne sur la traduction du YAML.
+        self.translations.localize_meta(meta, ctx.language)
         if override:
             # Les retouches d'écriture (obligatoire, lecture seule, défaut) sont montrées telles que le serveur les appliquera : `form_rules`, tolérante.
             apply_form_override(meta, override, form_rules(compiled, override))

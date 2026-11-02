@@ -17,6 +17,7 @@ from xcore.kernel.tenancy import _current_tenant_id
 # Import privé : à exposer publiquement côté xcore (process/doctype.md §14, point 3).
 from xcore.kernel.tenancy.services import _validate_tenant
 
+from .translations import parse_language
 from .errors import ConfigurationError, ContextError
 
 Source = Literal["http", "ipc", "system"]
@@ -65,6 +66,8 @@ class RequestContext:
     source: Source
     request_id: str | None = None
     reason: str | None = None  # renseigné uniquement pour source == "system"
+    # La langue des libellés renvoyés (`Accept-Language`, deux lettres), ou None : les textes tels que les définitions les écrivent.
+    language: str | None = None
 
     # ── Accesseurs ────────────────────────────────────────────
     @property
@@ -129,7 +132,7 @@ class RequestContext:
                 )
             requested = "default"
         tenant = _bind_tenant(requested, principal, settings)
-        return cls(tenant, principal, "http", request.headers.get("x-request-id"))
+        return cls(tenant, principal, "http", request.headers.get("x-request-id"), language=parse_language(request.headers.get("accept-language")))
 
 
 def _checked_tenant(tenant_id: str) -> str:

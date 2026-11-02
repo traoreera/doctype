@@ -84,6 +84,8 @@ export default defineConfig({
     alias: { '@xcore-doctype/desk': fileURLToPath(new URL(`./${SHARED['@xcore-doctype/desk']}`, import.meta.url)) },
     environment: 'happy-dom',
     include: ['tests/**/*.spec.ts'],
+    // Le français, langue de référence (sans cela happy-dom annonce l'anglais) : voir tests/setup-language.ts.
+    setupFiles: ['tests/setup-language.ts'],
     // Le premier test d'un fichier qui monte PrimeVue paie la transformation du module : plus de 5 s quand la machine est chargée
     // (suite Python en parallèle, build…). Ce n'est pas une erreur de logique, et un test réellement bloqué échoue toujours.
     testTimeout: 20_000,

@@ -13,8 +13,9 @@ fields:
   - { fieldname: logo, label: Logo, fieldtype: Image, max_mb: 2, description: "Affiché en haut du Desk (PNG, JPEG, GIF ou WebP)" }
   - { fieldname: brand_color, label: Couleur de l'organisation, fieldtype: Color, description: Teinte des boutons et des éléments actifs ; vide = la teinte par défaut }
   - { fieldname: date_format, label: Format de date, fieldtype: Select, options: [JJ/MM/AAAA, AAAA-MM-JJ, MM/JJ/AAAA], default: JJ/MM/AAAA }
+  - { fieldname: language, label: Langue, fieldtype: Select, options: [fr, en], default: fr, description: "La langue du Desk pour toute l'organisation (fr : français, en : anglais) ; chacun peut choisir la sienne dans « Mon profil »" }
 layout:
   - section: Organisation
     columns: [[organization_name, brand_color], [logo]]
   - section: Régional
-    columns: [[date_format]]
+    columns: [[date_format, language]]

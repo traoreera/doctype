@@ -37,7 +37,7 @@ import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone } from '@/lib/docstatus'
 import { buildFilters, parseFiltersParam, rowsFromFilters, type FilterRow } from '@/lib/filters'
-import { formatCell, hasReadableName, isNumeric, relativeTime } from '@/lib/format'
+import { formatCell, hasReadableName, isNumeric, relativeTime, stateLabel } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import { sidebarFields } from '@/lib/sidebar'
 import { TAG_FILTER, sameTag, supportsTags, tagFilterLabel, type TagFilter } from '@/lib/tags'
@@ -109,7 +109,7 @@ function startStatus(m: DocTypeMeta, value: number | string | null): number | st
 const flowStates = computed(() => meta.value?.workflow?.states.map((st) => st.name) ?? [])
 const statusChoices = computed(() =>
   flowStates.value.length
-    ? [{ label: t.list.allStatuses, value: null }, ...flowStates.value.map((name) => ({ label: name, value: name }))]
+    ? [{ label: t.list.allStatuses, value: null }, ...flowStates.value.map((name) => ({ label: stateLabel(meta.value, name), value: name }))]
     : [{ label: t.list.allStatuses, value: null }, ...[0, 1, 2].map((v) => ({ label: statusLabel(v), value: v }))],
 )
 
@@ -763,7 +763,7 @@ function title(r: DocRecord): string {
           >
             <template #body="{ data }">
               <span :class="['status-pill', statusTone(data.docstatus)]" :data-testid="`status-${data.name}`" :data-state="data.workflow_state">
-                {{ flowStates.length ? data.workflow_state : statusLabel(data.docstatus) }}
+                {{ flowStates.length ? stateLabel(meta, data.workflow_state) : statusLabel(data.docstatus) }}
               </span>
             </template>
           </Column>

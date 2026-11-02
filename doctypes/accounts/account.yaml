@@ -13,6 +13,8 @@ fields:
   label: Account Number
   fieldtype: Text
   in_list_view: true
+  required: true
+  description: SYSCOHADA - every account is numbered, and its first digit is its class (1 to 9)
 - fieldname: is_group
   label: Is Group
   fieldtype: Boolean
