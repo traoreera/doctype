@@ -1,0 +1,4 @@
+# Les libellés du plugin `system` sont écrits en français : ce catalogue ne nomme que les codes de langue (les options de « Langue »).
+messages:
+  fr: Français
+  en: Anglais

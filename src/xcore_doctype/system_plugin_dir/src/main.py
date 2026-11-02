@@ -17,6 +17,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         registry.load_dir(self.ctx.name, DOCTYPES)
         if (DOCTYPES.parent / "workspaces").is_dir():
             registry.load_workspaces(self.ctx.name, DOCTYPES.parent / "workspaces")  # APRÈS les DocTypes : les blocs les visent
+        registry.load_translations(self.ctx.name, DOCTYPES.parent / "translations")  # ses libellés en anglais (ils sont écrits en français)
         grants = self.get_service("doctype_grants").for_plugin(self.ctx.name)
         await self.ctx.events.emit("rbac.declare", {"plugin": self.ctx.name, "grants": grants}, source=self.ctx.name)
 

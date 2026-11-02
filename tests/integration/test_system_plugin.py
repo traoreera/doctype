@@ -15,6 +15,7 @@ SYSTEM = {
         (system_plugin_dir() / "src" / "main.py").read_text(encoding="utf-8"),
         {
             "doctypes/system_settings.yaml": (system_plugin_dir() / "doctypes" / "system_settings.yaml").read_text(encoding="utf-8"),
+            "translations/en.yaml": (system_plugin_dir() / "translations" / "en.yaml").read_text(encoding="utf-8"),
         },
     )
 }
@@ -45,7 +46,7 @@ async def test_a_new_organisation_gets_the_defaults_and_anybody_identified_reads
         nobody = h.token(sub="bob", permissions=[])  # aucun grant : un simple utilisateur
         r = await h.http("GET", "/preferences", token=nobody)
         assert r.status_code == 200, r.text
-        assert r.json() == {"date_format": "JJ/MM/AAAA"}  # le seul défaut ; rien d'autre n'est inventé
+        assert r.json() == {"date_format": "JJ/MM/AAAA", "language": "fr"}  # les seuls défauts ; rien d'autre n'est inventé
         # Mais les réglages eux-mêmes restent réservés : lire le document demande le grant.
         assert (await h.http("GET", "/doc/System Settings/System Settings", token=nobody)).status_code in (403, 404)
         assert (await h.http("GET", "/doc/System Settings/System Settings", token=h.token(permissions=ADMIN))).status_code == 200
@@ -60,9 +61,9 @@ async def test_what_an_administrator_saves_is_what_everybody_sees_in_their_own_o
         r = await h.http("PUT", "/doc/System Settings/System Settings", token=admin, json={"version": 0, "data": {"organization_name": "ACME", "brand_color": "#2a78d6", "date_format": "AAAA-MM-JJ"}})
         assert r.status_code == 200, r.text
         user = h.token(sub="bob", permissions=[])
-        assert (await h.http("GET", "/preferences", token=user)).json() == {"organization_name": "ACME", "brand_color": "#2a78d6", "date_format": "AAAA-MM-JJ"}
+        assert (await h.http("GET", "/preferences", token=user)).json() == {"organization_name": "ACME", "brand_color": "#2a78d6", "date_format": "AAAA-MM-JJ", "language": "fr"}
         other = h.token(sub="gus", tenant="globex", permissions=[])
-        assert (await h.http("GET", "/preferences", token=other, tenant="globex")).json() == {"date_format": "JJ/MM/AAAA"}  # pas celui d'acme
+        assert (await h.http("GET", "/preferences", token=other, tenant="globex")).json() == {"date_format": "JJ/MM/AAAA", "language": "fr"}  # pas celui d'acme
 
 
 async def test_the_logo_is_served_to_everybody_through_a_signed_link(tmp_path):
@@ -83,7 +84,7 @@ async def test_preferences_need_an_identity_and_only_ever_expose_the_closed_list
         assert (await h.http("GET", "/preferences", token=None)).status_code in (401, 403, 422)
         admin = h.token(permissions=ADMIN)
         await h.http("PUT", "/doc/System Settings/System Settings", token=admin, json={"version": 0, "data": {"organization_name": "ACME"}})
-        assert set((await h.http("GET", "/preferences", token=admin)).json()) <= {"organization_name", "brand_color", "date_format", "logo"}
+        assert set((await h.http("GET", "/preferences", token=admin)).json()) <= {"organization_name", "brand_color", "date_format", "language", "logo", "my_language"}
 
 
 async def test_without_the_system_plugin_preferences_are_simply_empty(tmp_path):
@@ -171,3 +172,27 @@ async def test_the_administration_workspace_offers_the_letter_head(tmp_path):
         spaces = (await h.http("GET", "/workspaces", token=admin)).json()
         system = next(w for w in spaces if w["name"] == "system")
         assert "Letter Head" in [b.get("doctype") for b in system["blocks"]]
+
+
+async def test_labels_follow_accept_language_and_each_user_keeps_a_language(tmp_path):
+    """i18n : le plugin `system` est écrit en français et livre son catalogue anglais ; `/meta` suit `Accept-Language` (les VALEURS
+    ne bougent pas, leurs libellés s'ajoutent) ; chacun choisit sa langue (`PUT /preferences/language`), seulement une langue du Desk."""
+    async with boot_host(tmp_path, inline_plugins=SYSTEM) as h:
+        admin = h.token(permissions=ADMIN)
+        url = h.base + "/meta/System Settings"
+        english = (await h.client.get(url, headers={**h.headers(admin, "acme"), "Accept-Language": "en-GB,en;q=0.9"})).json()
+        french = (await h.client.get(url, headers={**h.headers(admin, "acme"), "Accept-Language": "fr-FR"})).json()
+        assert (english["label"], french["label"]) == ("General settings", "Paramètres généraux")
+        fields = {f["fieldname"]: f for f in english["fields"]}
+        assert fields["language"]["label"] == "Language" and fields["language"]["options"] == ["fr", "en"]
+        assert fields["language"]["option_labels"] == {"fr": "French", "en": "English"}
+        assert [s["section"] for s in english["layout"]] == ["Organisation", "Regional"]
+
+        bob = h.token(sub="bob", permissions=[])
+        r = await h.http("PUT", "/preferences/language", token=bob, json={"language": "en"})
+        assert r.status_code == 200 and r.json() == {"my_language": "en"}
+        assert (await h.http("GET", "/preferences", token=bob)).json()["my_language"] == "en"
+        assert "my_language" not in (await h.http("GET", "/preferences", token=admin)).json()  # celle de bob, pas celle des autres
+        assert (await h.http("PUT", "/preferences/language", token=bob, json={"language": "de"})).status_code == 422
+        await h.http("PUT", "/preferences/language", token=bob, json={"language": None})
+        assert "my_language" not in (await h.http("GET", "/preferences", token=bob)).json()

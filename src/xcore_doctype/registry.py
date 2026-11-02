@@ -21,6 +21,7 @@ from .mapping import mappable_types, same_number_kind
 from .compute import compute_order, compute_problems, parse_compute
 from .printing import parse_template, template_fields_problems
 from .schema import LINK_FILTER_REF, PARENT_PREFIX, DocTypeDef, parse_definition
+from .translations import Translations
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
 
 _SUFFIXES = {".yaml", ".yml", ".json"}
@@ -968,10 +969,11 @@ class DocTypeChannel:
 
     def __init__(
         self, registry: DocTypeRegistry, logger: Any = None, *, unique_check: Callable[[CompiledDocType], Awaitable[None]] | None = None,
-        desk: DeskExtensions | None = None,
+        desk: DeskExtensions | None = None, translations: Translations | None = None,
     ) -> None:
         self._registry, self._log, self._unique_check = registry, logger, unique_check
         self._desk = desk if desk is not None else DeskExtensions()
+        self._translations = translations if translations is not None else Translations()
         self._checks: set[asyncio.Task[None]] = set()  # les contrôles `unique` rétroactifs en cours (gardés : une tâche orpheline serait ramassée)
 
     def load_dir(self, owner: str, directory: str | Path, *, peers: bool = False) -> list[str]:
@@ -1048,6 +1050,14 @@ class DocTypeChannel:
             self._log.info("workspaces registered by plugin", plugin=owner, workspaces=names)
         return names
 
+    def load_translations(self, owner: str, directory: str | Path) -> list[str]:
+        """Les catalogues de traduction de ce plugin (`<dossier>/fr.yaml`, `en.yaml`… : translations.py), retirés avec lui. Tout ou rien ;
+        un dossier absent n'est pas une faute (un plugin peut n'avoir rien à traduire). Rend les langues chargées."""
+        languages = self._translations.load_dir(owner, Path(directory))
+        if self._log is not None:
+            self._log.info("translations registered by plugin", plugin=owner, languages=languages)
+        return languages
+
     def load_print_templates(self, owner: str, directory: str | Path) -> list[str]:
         """Les gabarits d'impression que ce plugin livre (process/impression.md §2) : à appeler APRÈS `load_dir`,
         `…load_print_templates(self.ctx.name, dossier / "print")`. Un gabarit vise un DocType chargé."""
@@ -1071,4 +1081,5 @@ class DocTypeChannel:
 
     def unregister_owner(self, owner: str) -> list[str]:
         self._desk.unregister(owner)
+        self._translations.unload(owner)
         return self._registry.unregister_owner(owner)

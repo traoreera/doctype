@@ -108,6 +108,14 @@ def build_preferences_router(prefs: "Preferences", settings: ContextSettings) ->
         except DoctypeError as e:
             _raise(e)
 
+    @router.put("/preferences/language")
+    async def my_language(body: dict, ctx: RequestContext = Depends(ctx_dep)):
+        """Sa langue (`{"language": "en"}`), ou `{"language": null}` pour suivre celle de l'organisation."""
+        try:
+            return await prefs.set_my_language(ctx, (body or {}).get("language"))
+        except DoctypeError as e:
+            _raise(e)
+
     return router
 
 
