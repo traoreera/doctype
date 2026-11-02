@@ -49,6 +49,14 @@ class TestPackaging:
         assert manifest["name"] == "xcore-doctype" and manifest["entry_point"] == "src/main.py"
         assert manifest["execution_mode"] == "trusted"
 
+    def test_the_shipped_manifest_loads_no_desk_extension(self):
+        """D28 : une extension du Desk est du code de CONFIANCE exécuté dans la page de chaque utilisateur. Le manifeste livré n'en
+        charge AUCUNE ; c'est l'opérateur qui en nomme dans SA copie. `["*"]` y avait été laissé par un essai : le test de livraison
+        (`config.json` sans extension) échouait, mais seulement là, après la construction d'un wheel. Ce test le dit tout de suite."""
+        desk = yaml.safe_load((plugin_dir() / "plugin.yaml").read_text())["doctype"]["desk"]
+        assert desk.get("extensions") in (None, [])
+        assert not desk.get("developer_mode")  # l'autre outil fermé par défaut
+
     def test_the_manifest_version_follows_the_package_version(self):
         """Une version qui diverge ferait croire à `install` que le manifeste installé est périmé."""
         assert yaml.safe_load((plugin_dir() / "plugin.yaml").read_text())["version"] == metadata.version("xcore-doctype")
