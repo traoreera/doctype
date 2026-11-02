@@ -149,9 +149,10 @@ Fait dans `doctypes/` le 29 oct., en préparation des plugins : T16 (`depends_on
 référentiels clés) et les circuits d'approbation des quatre pièces qui en ont un (`process/erp-doctypes.md` §3-§4).
 
 
-1. ~~**Où vivent les plugins de module ?**~~ **Tranché le 29 oct. : hors de ce dépôt**, traités à part (§2).
-2. **La méthode de valorisation du stock** : moyenne pondérée (simple, une valeur par `Bin`) ou FIFO (une file par
-   article et dépôt). ERPNext offre les deux ; la décision 1 de `palier40.md` avait écarté toute valorisation.
+1. ~~**Où vivent les plugins de module ?**~~ **Tranché le 29 oct. : hors de ce dépôt**, traités à part (§2) — depuis le 2 nov.
+   dans `traoreera/erp`.
+2. ~~**La méthode de valorisation du stock**~~ **Tranché le 2 nov. : coût moyen pondéré** (une valeur par `Bin`, recalculée à
+   chaque entrée ; admis par le SYSCOHADA). FIFO reste possible plus tard. Fait dans le dépôt `traoreera/erp`.
 3. ~~**Le périmètre de la première version**~~ **Tranché le 2 nov. : `setup`, `accounts`, `stock`, `selling`, `buying`, et la
    comptabilité au système OHADA (SYSCOHADA révisé)**, en français et en anglais (i18n : `translations.py`, `translations/fr.yaml`
    pour ces cinq modules, garde-fou dans `test_erp_doctypes.py`). OHADA (T18 de `erp-doctypes.md`) : numéro de compte obligatoire,
