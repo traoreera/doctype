@@ -525,7 +525,7 @@ export interface ListResult {
 export interface VersionEntry {
   id: number
   version: number
-  action: 'create' | 'update' | 'delete' | 'submit' | 'cancel' | 'rename'
+  action: 'create' | 'update' | 'delete' | 'submit' | 'cancel' | 'rename' | 'restore'
   user: string
   owner: string
   creation: string
@@ -777,6 +777,26 @@ export interface SharesResult {
 }
 
 /** Un document partagé avec moi (« Partagés avec moi »). */
+/** Un document à la corbeille, tel qu'il était (secrets masqués) : `id` le désigne dans la corbeille, `name` est son nom d'avant. */
+export interface TrashItem {
+  id: string
+  name: string
+  title: string | null
+  owner: string
+  deleted_by: string
+  deleted_at: string
+  creation: string
+  workflow_state: string | null
+  data: DocData
+}
+
+export interface TrashResult {
+  items: TrashItem[]
+  total: number
+  limit: number
+  offset: number
+}
+
 export interface SharedDoc {
   doctype: string
   label: string

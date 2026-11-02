@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 import struct
 import zlib
 
@@ -303,13 +305,19 @@ class TestReading:
 
 
 class TestRelease:
-    async def test_deleting_a_document_deletes_its_files(self, env):
+    async def test_a_deleted_document_s_files_are_unreadable_then_purged_with_it(self, env):
+        """Le document part à la corbeille (process/programme.md §2.3) : ses fichiers RESTENT (une restauration les retrouve) mais
+        personne ne peut plus les lire, aucun document vivant ne les citant ; la purge les supprime."""
+        colleague = replace(HR, principal={**HR.principal, "sub": "colleague"})  # les mêmes droits, sans être celui qui a déposé
         photo = (await up(env))["id"]
         doc = await env.docs.create(HR, "Employee", {"full_name": "H", "photo": photo})
-        assert len(env.store.blobs) == 1
+        assert len(env.store.blobs) == 1 and set(await env.files.links(colleague, [photo])) == {photo}
         await env.docs.delete(HR, "Employee", doc["name"])
+        assert len(env.store.blobs) == 1
+        assert await env.files.links(colleague, [photo]) == {}  # celui qui l'a déposé le relit toujours (règle des téléversements)
+        [item] = (await env.docs.trash(HR, "Employee"))["items"]
+        await env.docs.purge_trashed(HR, "Employee", item["id"])
         assert env.store.blobs == {}
-        assert await env.files.links(HR, [photo]) == {}
 
     async def test_replacing_a_file_deletes_the_old_one(self, env):
         old = (await up(env))["id"]

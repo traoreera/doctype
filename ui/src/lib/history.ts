@@ -70,5 +70,5 @@ export function linkValues(meta: DocTypeMeta, entries: readonly VersionEntry[]):
   return out
 }
 
-const VERBS = { create: 'created', update: 'updated', delete: 'deleted', submit: 'submitted', cancel: 'cancelled', rename: 'renamed' } as const
+const VERBS = { create: 'created', update: 'updated', delete: 'deleted', submit: 'submitted', cancel: 'cancelled', rename: 'renamed', restore: 'restored' } as const
 export const verbOf = (action: VersionEntry['action']): string => t.history[VERBS[action]]
