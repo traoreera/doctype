@@ -154,8 +154,10 @@ référentiels clés) et les circuits d'approbation des quatre pièces qui en on
    article et dépôt). ERPNext offre les deux ; la décision 1 de `palier40.md` avait écarté toute valorisation.
 3. ~~**Le périmètre de la première version**~~ **Tranché le 2 nov. : `setup`, `accounts`, `stock`, `selling`, `buying`, et la
    comptabilité au système OHADA (SYSCOHADA révisé)**, en français et en anglais (i18n : `translations.py`, `translations/fr.yaml`
-   pour ces cinq modules, garde-fou dans `test_erp_doctypes.py`). L'adaptation OHADA de `doctypes/accounts` et le plan comptable
-   SYSCOHADA (à faire valider par un comptable avant la production) viennent ensuite.
+   pour ces cinq modules, garde-fou dans `test_erp_doctypes.py`). OHADA (T18 de `erp-doctypes.md`) : numéro de compte obligatoire,
+   « SYSCOHADA révisé » par défaut à la création d'une société, et le plan comptable en données (`charts/syscohada.yaml`, 117
+   comptes) — **à faire valider par un expert-comptable avant la production**. Reste au plugin `accounts` (hors dépôt) : créer les
+   comptes d'une société depuis ce fichier, et les états financiers au format SYSCOHADA (bilan, compte de résultat, TAFIRE).
 4. **La porte système de M4 limitée au module du plugin** : c'est la proposition (une tâche ne contourne pas les
    règles d'un autre module) ; à confirmer.
 

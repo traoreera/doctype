@@ -84,8 +84,10 @@ fields:
   label: Create Chart Of Accounts Based On
   fieldtype: Select
   options:
+  - SYSCOHADA révisé
   - Standard Template
   - Existing Company
+  default: SYSCOHADA révisé
 - fieldname: existing_company
   label: 'Existing Company '
   fieldtype: Link

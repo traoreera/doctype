@@ -3656,3 +3656,4 @@ messages:
   'Yes': Oui
   Zero Balance: Solde nul
   Zero-Quantity Line Items: Lignes de quantité nulle
+  SYSCOHADA - every account is numbered, and its first digit is its class (1 to 9): 'SYSCOHADA : chaque compte porte un numéro, dont le premier chiffre est sa classe (1 à 9)'

@@ -252,6 +252,7 @@ Subdivision
 Suivi
 SUP-.YYYY.-
 Symbole
+SYSCOHADA révisé
 Taxes
 Total
 Traitement de la paie
