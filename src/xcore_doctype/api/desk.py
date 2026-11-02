@@ -109,15 +109,19 @@ class DeskSettings:
         return cls(**out)
 
 
-def _csp(login_url: str | None, script_hashes: tuple[str, ...] = ()) -> str:
+def _csp(login_url: str | None, script_hashes: tuple[str, ...] = (), api_base: str | None = None) -> str:
     """Politique stricte. Les styles en ligne restent permis : PrimeVue injecte ses feuilles de style à l'exécution.
 
     `script_hashes` : l'empreinte de l'import map d'`index.html` (D28), le seul script en ligne permis ; jamais `'unsafe-inline'`.
+    `api_base` : une API servie sur une AUTRE origine (`mount_desk`) doit être nommée dans `connect-src`, comme la connexion.
     """
     connect = ["'self'"]
-    if login_url and login_url.startswith(("http://", "https://")):
-        parts = urlsplit(login_url)
-        connect.append(f"{parts.scheme}://{parts.netloc}")
+    for url in (login_url, api_base):
+        if url and url.startswith(("http://", "https://")):
+            parts = urlsplit(url)
+            origin = f"{parts.scheme}://{parts.netloc}"
+            if origin not in connect:
+                connect.append(origin)
     return "; ".join(
         [
             "default-src 'self'",
@@ -160,7 +164,28 @@ def _safe_file(root: Path, relative: str) -> Path | None:
     return target if target.is_relative_to(root) and target.is_file() else None
 
 
-def build_desk_router(settings: DeskSettings, extensions: DeskExtensions | None = None) -> APIRouter:
+# Ce que contient le build (`vite.config.ts`) : `index.html`, `assets/` (noms hachés) et `shared/` (l'import map de D28).
+BUILD_DIRS = ("assets", "shared")
+
+
+def build_desk_router(
+    settings: DeskSettings,
+    extensions: DeskExtensions | None = None,
+    *,
+    at: str = "/desk",
+    api_base: str | None = None,
+    catch_all: bool = True,
+) -> APIRouter:
+    """Les routes du Desk sous `at` (`/desk` dans le plugin ; `/` ou un autre chemin pour `mount_desk`).
+
+    `api_base` : l'adresse de l'API annoncée par `config.json`. None (le plugin) : déduite de l'URL de la requête, `at` retiré.
+    `catch_all=False` : seulement `index.html`, `assets/` et `shared/` au lieu de `<at>/{chemin}` — monté à la racine d'une
+    application, une route attrape-tout masquerait toutes les routes que l'application déclare APRÈS (FastAPI essaie dans l'ordre).
+    `extensions` None : pas de route `ext/` (le plugin passe toujours les siennes).
+    """
+    base = at.rstrip("/")
+    if base and (not base.startswith("/") or "{" in base):
+        raise ConfigurationError(f"chemin du Desk invalide : {at!r}")
     dist = settings.dist_dir.resolve()
     extensions = extensions if extensions is not None else DeskExtensions()
     router = APIRouter(include_in_schema=False)
@@ -175,7 +200,7 @@ def build_desk_router(settings: DeskSettings, extensions: DeskExtensions | None 
             seen["hashes"], seen["stamp"] = inline_script_hashes(index.read_text(encoding="utf-8")), stamp
         return {
             **common,
-            "Content-Security-Policy": _csp(settings.login_url, seen["hashes"]),
+            "Content-Security-Policy": _csp(settings.login_url, seen["hashes"], api_base),
             "X-Frame-Options": "DENY",
             "Cache-Control": "no-cache",
         }
@@ -190,44 +215,50 @@ def build_desk_router(settings: DeskSettings, extensions: DeskExtensions | None 
     def missing() -> Response:
         return JSONResponse({"detail": {"code": "not_found", "msg": "Fichier introuvable"}}, status_code=404, headers=common)
 
-    @router.get("/desk")
-    async def desk_without_slash() -> Response:
-        # Relatif : la redirection reste correcte quel que soit le préfixe sous lequel xcore monte le plugin.
-        return RedirectResponse("desk/", status_code=307)
+    if base:
+        leaf = base.rsplit("/", 1)[-1]
 
-    @router.get("/desk/config.json")
+        @router.get(base)
+        async def desk_without_slash() -> Response:
+            # Relatif : la redirection reste correcte quel que soit le préfixe sous lequel xcore monte le plugin. Sans elle,
+            # `config.json`, cherché RELATIVEMENT à la page, serait demandé un niveau trop haut.
+            return RedirectResponse(f"{leaf}/", status_code=307)
+
+    @router.get(f"{base}/config.json")
     async def desk_config(request: Request) -> Response:
         path = request.url.path
-        api_base = path[: -len("/desk/config.json")] if path.endswith("/desk/config.json") else ""
+        suffix = f"{base}/config.json"
+        served = api_base if api_base is not None else (path[: -len(suffix)] if path.endswith(suffix) else "")
         return JSONResponse(
             {
-                "api_base": api_base,
-                "login_url": _login_url(settings.login_url, api_base),
+                "api_base": served,
+                "login_url": _login_url(settings.login_url, served),
                 "extensions": [{"name": e.name, "url": e.url} for e in extensions.served()],
                 "developer": settings.developer_mode,  # le Desk n'offre le constructeur de DocTypes que si l'opérateur l'a ouvert
             },
             headers={**common, "Cache-Control": "no-store"},
         )
 
-    @router.get("/desk/")
+    @router.get(f"{base}/")
     async def desk_index() -> Response:
         index = dist / "index.html"
         if not index.is_file():
             return not_built()
         return FileResponse(index, media_type=_MEDIA[".html"], headers=html_headers(index))
 
-    @router.get("/desk/ext/{plugin}/{asset_path:path}")
-    async def desk_extension_file(plugin: str, asset_path: str) -> Response:
-        # D28 : seulement l'extension d'un plugin que l'opérateur autorise ; inconnue et refusée répondent pareil.
-        ext = extensions.get(plugin)
-        target = _safe_file(ext.directory, asset_path) if ext is not None else None
-        media = _MEDIA.get(target.suffix.lower()) if target is not None else None
-        if target is None or media is None or media.startswith("text/html"):
-            return missing()  # ni type inconnu (servi comme quoi ?), ni page HTML (elle échapperait à la CSP du Desk)
-        return FileResponse(target, media_type=media, headers={**common, "Cache-Control": "no-cache"})
+    if extensions is not None:
 
-    @router.get("/desk/{asset_path:path}")
-    async def desk_file(asset_path: str) -> Response:
+        @router.get(base + "/ext/{plugin}/{asset_path:path}")
+        async def desk_extension_file(plugin: str, asset_path: str) -> Response:
+            # D28 : seulement l'extension d'un plugin que l'opérateur autorise ; inconnue et refusée répondent pareil.
+            ext = extensions.get(plugin)
+            target = _safe_file(ext.directory, asset_path) if ext is not None else None
+            media = _MEDIA.get(target.suffix.lower()) if target is not None else None
+            if target is None or media is None or media.startswith("text/html"):
+                return missing()  # ni type inconnu (servi comme quoi ?), ni page HTML (elle échapperait à la CSP du Desk)
+            return FileResponse(target, media_type=media, headers={**common, "Cache-Control": "no-cache"})
+
+    def serve(asset_path: str) -> Response:
         target = _safe_file(dist, asset_path)
         if target is None:
             return missing() if dist.is_dir() else not_built()
@@ -239,5 +270,27 @@ def build_desk_router(settings: DeskSettings, extensions: DeskExtensions | None 
         headers = {**common, "Cache-Control": "public, max-age=31536000, immutable" if hashed else "no-cache"}
         media = _MEDIA.get(target.suffix.lower(), "application/octet-stream")
         return FileResponse(target, media_type=media, headers=headers)
+
+    if catch_all:
+
+        @router.get(base + "/{asset_path:path}")
+        async def desk_file(asset_path: str) -> Response:
+            return serve(asset_path)
+
+    else:
+
+        @router.get(f"{base}/index.html")
+        async def desk_index_file() -> Response:
+            return serve("index.html")
+
+        def build_file(folder: str):
+            # Une fermeture, pas un paramètre par défaut : FastAPI ferait de `folder` un paramètre de requête choisi par le client.
+            async def desk_build_file(asset_path: str) -> Response:
+                return serve(f"{folder}/{asset_path}")
+
+            return desk_build_file
+
+        for folder in BUILD_DIRS:
+            router.add_api_route(base + f"/{folder}/{{asset_path:path}}", build_file(folder), methods=["GET"])
 
     return router
