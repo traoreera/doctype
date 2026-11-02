@@ -84,6 +84,8 @@ jamais par une règle sur les noms. Invariant ajouté à `test_erp_doctypes.py` 
 
 ### M4. Une porte d'écriture pour les plugins — taille M
 
+**Fait** : `src/xcore_doctype/writer.py`, service `doctype_writer` ; preuves `tests/unit/test_writer.py` (SQLite et PostgreSQL) et un vrai bouton dans le plugin d'essai `stock` (`POST …/stock/quick-receipt`). Ajouts au plan : `ensure(…, unique=|name=)` pour rejouer une tâche sans double écriture (la base tranche, jamais « lire puis créer »), `transition` et `amend` parmi les méthodes, et la limite au module ne porte que sur l'ÉCRITURE (une tâche lit la société, l'actif…).
+
 Un service exporté `doctype_writer`, deux portes et pas une de plus :
 
 - `as_request(request)` : depuis une route HTTP du plugin, le contexte de l'UTILISATEUR (même vérification que

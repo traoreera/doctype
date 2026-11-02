@@ -271,3 +271,29 @@ async def test_simultaneous_http_issues_never_overdraw_on_postgresql(tmp_path):
         for name in build_system_tables().metadata.tables:
             await conn.execute(f"DROP TABLE IF EXISTS public.{name}")
         await conn.close()
+
+
+async def test_a_server_button_writes_with_the_user_s_rights(tmp_path):
+    """M4 : la route d'un plugin écrit par `doctype_writer.as_request(request)` — l'utilisateur de la REQUÊTE, ses droits, son tenant.
+    Même vérification que l'API : sans jeton 401, sans le grant 403, un tenant que le jeton ne couvre pas refusé, et le document
+    créé appartient à l'utilisateur (historique compris)."""
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins=PLUGINS) as h:
+        t = h.token(permissions=KEEPER, sub="keeper")
+        item, paris, _ = await world(h, t)
+        url = f"{h.prefix}/stock/quick-receipt"
+        body = {"item": item, "qty": "4.000", "warehouse": paris}
+
+        r = await h.client.post(url, json=body, headers=h.headers(t, "acme"))
+        assert r.status_code == 201, r.text
+        doc = r.json()
+        assert doc["owner"] == "keeper" and doc["docstatus"] == 0 and doc["data"]["items"][0]["qty"] == "4.000"
+        history = (await h.http("GET", f"/history/Stock Entry/{doc['name']}", token=t)).json()
+        assert history["items"][0]["user"] == "keeper"
+
+        reader = h.token(permissions=["stock:stock_entry:read", "stock:item:read", "stock:warehouse:read"])
+        refused = await h.client.post(url, json=body, headers=h.headers(reader, "acme"))
+        assert refused.status_code == 403 and refused.json()["detail"]["code"] == "permission_denied"
+
+        assert (await h.client.post(url, json=body, headers=h.headers(None, "acme"))).status_code == 401
+        elsewhere = await h.client.post(url, json=body, headers=h.headers(t, "globex"))
+        assert elsewhere.status_code == 403 and elsewhere.json()["detail"]["code"] == "tenant_mismatch"

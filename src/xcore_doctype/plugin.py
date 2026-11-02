@@ -29,6 +29,7 @@ from .db.access import create_system_tables, ensure_async_database
 from .db.rls import ensure_rls
 from .db.tables import SystemTables, build_system_tables
 from .document import DocumentService, SystemReaders
+from .writer import DocumentWriters
 from .file_library import FileLibrary
 from .file_service import FileService
 from .print_service import PrintService
@@ -51,6 +52,7 @@ from .sources import DocumentSources
 
 HOOKS_SERVICE = "doctype_hooks"  # service exporté : `self.get_service("doctype_hooks").register(...)`
 GRANTS_SERVICE = "doctype_grants"  # service exporté : `self.get_service("doctype_grants").for_plugin(nom)`
+WRITER_SERVICE = "doctype_writer"  # service exporté : écriture des plugins, `.as_request(request)` (bouton) ou `.system(plugin, tenant, raison)` (tâche)
 DOCUMENTS_SERVICE = "doctype_documents"  # service exporté : lecture système, `.system(tenant, raison)` (contrôles, rapports)
 SOURCES_SERVICE = "doctype_sources"  # service exporté : `self.get_service("doctype_sources").register(nom_plugin, "ma_source", source)` (DocTypes virtuels)
 REGISTRY_SERVICE = "doctype_registry"  # service exporté : `self.get_service("doctype_registry").load_dir(nom, dossier)`
@@ -233,6 +235,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         )
         # ...et lisent les documents d'un tenant en contexte système, pour vérifier ou rapporter (lecture seule).
         self.ctx.services[DOCUMENTS_SERVICE] = SystemReaders(self.documents)
+        # ...et y écrivent : un bouton avec les droits de l'utilisateur, une tâche en système sur les types de son module (M4).
+        self.ctx.services[WRITER_SERVICE] = DocumentWriters(self.documents, self._settings)
         # Un champ `unique` posé sur un type qui a déjà des documents refuse le chargement si des valeurs sont déjà en double (D25).
         for name in registry.names():
             compiled = registry.get(name)
@@ -314,6 +318,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             self.ctx.services.pop(GRANTS_SERVICE, None)
             self.ctx.services.pop(REGISTRY_SERVICE, None)
             self.ctx.services.pop(DOCUMENTS_SERVICE, None)
+            self.ctx.services.pop(WRITER_SERVICE, None)
         self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = self.printer = None
 
     def get_router(self) -> APIRouter | None:

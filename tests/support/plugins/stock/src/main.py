@@ -6,6 +6,7 @@ propre nom) et (3) déclare à auth les grants que le YAML exige. La logique du 
 
 from pathlib import Path
 
+from fastapi import APIRouter, HTTPException, Request
 from xcore.sdk import AutoDispatchMixin, TrustedBase, action, error, ok
 
 from .ledger import HOOKS, verify_balances
@@ -24,6 +25,30 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         registry.load_workspaces(self.ctx.name, DOCTYPES.parent / "workspaces")  # APRÈS les DocTypes : les raccourcis les visent
         grants = self.get_service("doctype_grants").for_plugin(self.ctx.name)
         await self.ctx.events.emit("rbac.declare", {"plugin": self.ctx.name, "grants": grants}, source=self.ctx.name)
+        self._router = self._buttons()
+
+    def get_router(self) -> APIRouter | None:
+        return getattr(self, "_router", None)
+
+    def _buttons(self) -> APIRouter:
+        """Un BOUTON serveur (M4) : « Réception rapide » crée un mouvement brouillon avec les droits de l'UTILISATEUR de la requête
+        (`doctype_writer.as_request`) — un grant manquant donne le même 403 que l'API, un entrepôt qu'il ne lit pas le même refus."""
+        router = APIRouter()
+        writers = self.get_service("doctype_writer")
+
+        @router.post("/quick-receipt", status_code=201)
+        async def quick_receipt(request: Request, body: dict) -> dict:
+            writer = await writers.as_request(request)
+            line = {"item": body.get("item"), "qty": body.get("qty"), "target_warehouse": body.get("warehouse")}
+            try:
+                return await writer.create("Stock Entry", {"purpose": "Réception", "items": [line]})
+            except Exception as e:  # noqa: BLE001 — une erreur du moteur garde son code et son statut
+                status = getattr(e, "status", None)
+                if status is None:
+                    raise
+                raise HTTPException(status, e.as_detail()) from e
+
+        return router
 
     async def on_unload(self) -> None:
         self.get_service("doctype_hooks").unregister_owner(self.ctx.name)
