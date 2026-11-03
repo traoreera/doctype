@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLiveDoctype } from '@/composables/useLive'
 import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import { computed, reactive, ref, watch } from 'vue'
@@ -87,6 +88,10 @@ async function loadColumn(value: string, append = false): Promise<void> {
 
 const loadAll = (): Promise<unknown> => Promise.all(columnNames.value.map((v) => loadColumn(v)))
 watch(() => [props.doctype, JSON.stringify(props.filters), columnNames.value.join('|')], () => void loadAll(), { immediate: true })
+// Temps réel : les colonnes se relisent, sauf pendant un glisser (la carte tenue ne doit pas disparaître sous le curseur).
+useLiveDoctype(() => props.doctype, () => {
+  if (!dragging.value) void loadAll()
+})
 
 // ── Glisser-déposer ─────────────────────────────────────────
 const dragging = ref<{ record: DocRecord; from: string } | null>(null)

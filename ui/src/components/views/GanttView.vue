@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLiveDoctype } from '@/composables/useLive'
 import { computed, ref, watch } from 'vue'
 import { describeError } from '@/composables/useNotify'
 import { t } from '@/i18n'
@@ -82,6 +83,8 @@ async function load(): Promise<void> {
     if (mine === ticket) loading.value = false
   }
 }
+// Temps réel : un document de ce type a changé, la vue se relit (avec les droits de l'utilisateur).
+useLiveDoctype(() => props.doctype, () => void load())
 watch(() => [props.doctype, JSON.stringify(props.filters), config.value?.start, config.value?.end], () => void load(), { immediate: true })
 </script>
 

@@ -2,6 +2,7 @@
 import { reactive, watch } from 'vue'
 import { formatNumber } from '@/lib/format'
 import { useServices } from '@/lib/services'
+import { useLiveDoctypes } from '@/composables/useLive'
 import { t } from '@/i18n'
 import { piIcon } from '@/lib/icons'
 import type { WorkspaceShortcut } from '@/lib/types'
@@ -32,6 +33,17 @@ watch(
     await Promise.all([worker(), worker(), worker(), worker()])
   },
   { immediate: true },
+)
+// Temps réel : un document d'un de ces types a changé, son compteur seul est relu (dans le périmètre de l'utilisateur).
+useLiveDoctypes(
+  () => props.shortcuts.filter((s) => !s.single).map((s) => s.doctype),
+  async (d) => {
+    try {
+      counts[d] = (await api.list(d, { limit: 1 })).total
+    } catch {
+      /* le chiffre précédent reste */
+    }
+  },
 )
 const countOf = (d: string): string | null => (typeof counts[d] === 'number' ? formatNumber(counts[d] as number) : null)
 </script>

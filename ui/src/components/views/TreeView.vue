@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLiveDoctype } from '@/composables/useLive'
 import Button from 'primevue/button'
 import { computed, onMounted, ref, watch } from 'vue'
 import { describeError } from '@/composables/useNotify'
@@ -46,6 +47,8 @@ async function load(): Promise<void> {
     loading.value = false
   }
 }
+// Temps réel : un document de ce type a changé, la vue se relit (avec les droits de l'utilisateur).
+useLiveDoctype(() => props.doctype, () => void load())
 
 const toggle = (name: string): void => {
   const next = new Set(collapsed.value)

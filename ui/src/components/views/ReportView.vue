@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useLiveDoctype } from '@/composables/useLive'
 import Button from 'primevue/button'
 import Column from 'primevue/column'
 import DataTable, { type DataTablePageEvent, type DataTableSortEvent } from 'primevue/datatable'
@@ -134,6 +135,8 @@ async function load(): Promise<void> {
     if (mine === ticket) loading.value = false
   }
 }
+// Temps réel : un document de ce type a changé, la vue se relit (avec les droits de l'utilisateur).
+useLiveDoctype(() => props.doctype, () => void load())
 
 initColumns()
 watch(() => [props.doctype, JSON.stringify(props.filters), groupBy.value, bucket.value, sums.value.map((c) => c.key).join('|')], () => {

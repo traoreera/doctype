@@ -26,9 +26,53 @@ export interface ModuleTaken {
   source: string
 }
 
+/** Un module du catalogue vu par MON organisation (`GET /me/modules`). */
+export interface MarketModule {
+  code: string
+  label: string
+  description: string | null
+  free: boolean
+  price: number
+  currency: string | null
+  period: 'month' | 'year' | 'once' | null
+  active: boolean
+  /** Payant sans tarif chez le prestataire : affiché, pas achetable. */
+  sellable: boolean
+  taken: boolean
+  source: 'free' | 'paid' | 'granted' | null
+  expires_at: string | null
+  /** Utilisable MAINTENANT (pris et courant, ou tout est ouvert pendant l'essai). */
+  usable: boolean
+}
+
+export interface MyModules {
+  state: string
+  valid: boolean
+  trial: boolean
+  all_modules: boolean
+  /** Prendre, rendre, payer : l'administrateur de l'organisation seulement. Le serveur le rejuge de toute façon. */
+  can_manage: boolean
+  modules: MarketModule[]
+}
+
 export class XlicenseClient extends ApiClient {
   constructor(transport: Transport, context: () => ClientContext, onUnauthorized?: () => boolean | Promise<boolean> | void) {
     super(transport, context, onUnauthorized)
+  }
+
+  /** Le catalogue de l'instance et ce que MON organisation en a pris. */
+  modules(): Promise<MyModules> {
+    return this.call('GET', '/me/modules')
+  }
+
+  /** Prendre un module GRATUIT (un payant répond 402 `payment_required` : passer par `checkout`). */
+  take(code: string): Promise<ModuleTaken> {
+    return this.call('POST', `/me/modules/${encodeURIComponent(code)}`)
+  }
+
+  /** Rendre un module gratuit ou accordé (un module payé se résilie au portail : 409 `subscription_active`). */
+  drop(code: string): Promise<{ code: string; taken: false }> {
+    return this.call('DELETE', `/me/modules/${encodeURIComponent(code)}`)
   }
 
   /** Ouvre le paiement d'un module payant. Rien n'est activé avant l'encaissement. */
@@ -58,4 +102,16 @@ export class XlicenseClient extends ApiClient {
 export function licenseBase(apiBase: string): string | null {
   const base = apiBase.replace(/\/+$/, '')
   return /\/xcore-doctype$/.test(base) ? base.replace(/\/xcore-doctype$/, '/xlicense') : null
+}
+
+/** Ce que l'écran propose pour un module, selon son état et mon pouvoir. Pur : c'est la règle de l'écran, testée seule. */
+export type ModuleAction = 'take' | 'subscribe' | 'drop' | 'portal' | null
+
+export function moduleAction(m: MarketModule, canManage: boolean): ModuleAction {
+  if (!canManage) return null
+  if (m.taken && m.source === 'paid') return 'portal' // résilier se fait là où l'argent est pris
+  if (m.taken) return m.expires_at ? null : 'drop' // pris jusqu'à une échéance (résilié) : il court jusqu'au bout, rien à faire
+  if (!m.active) return null // retiré du catalogue : plus proposé, même à reprendre
+  if (m.free) return 'take'
+  return m.sellable ? 'subscribe' : null
 }

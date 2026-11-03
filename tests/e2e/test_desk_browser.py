@@ -71,6 +71,7 @@ def host(tmp_path, request):
     Paramètre indirect `{"extensions": [...]}` : les plugins dont l'opérateur laisse servir l'extension du Desk (D28)."""
     extensions = getattr(request, "param", {}).get("extensions")
     developer = getattr(request, "param", {}).get("developer", False)
+    platform = getattr(request, "param", {}).get("platform", False)
     config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["services"]["databases"]["default"]["url"] = f"sqlite+aiosqlite:///{tmp_path / 'e2e.db'}"
     config["tenancy"] = {"enabled": True, "isolate_db": False}
@@ -104,9 +105,21 @@ def host(tmp_path, request):
     (tmp_path / "app" / "biblio").symlink_to(ROOT / "examples" / "biblio")  # le plugin d'exemple de la documentation
     (tmp_path / "app" / "flux").symlink_to(FIXTURES / "flux")  # un type à circuit d'approbation (l'éditeur du circuit)
 
+    env = {**os.environ, "XCORE_DEV_AUTH_SECRET": SECRET}
+    if platform:
+        # La plateforme livrée avec le moteur : xlicense (abonnements) et xpulse (temps réel), avec la paire RSA des licences.
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        for name in xcore_doctype.PLATFORM_PLUGINS:
+            (tmp_path / "app" / name).symlink_to(xcore_doctype.platform_plugins_dir() / name)
+        key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        (tmp_path / "lic-private.pem").write_bytes(key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption()))
+        (tmp_path / "lic-public.pem").write_bytes(key.public_key().public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo))
+        env["XLICENSE_PRIVATE_KEY_PATH"], env["XLICENSE_PUBLIC_KEY_PATH"] = str(tmp_path / "lic-private.pem"), str(tmp_path / "lic-public.pem")
+
     port = _free_port()
     log = (tmp_path / "host.log").open("w")
-    env = {**os.environ, "XCORE_DEV_AUTH_SECRET": SECRET}
     proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "main:app", "--host", "127.0.0.1", "--port", str(port)],
         cwd=tmp_path, env=env, stdout=log, stderr=subprocess.STDOUT,
@@ -135,14 +148,14 @@ def host(tmp_path, request):
         log.close()
 
 
-def _scenario(host: str, script: str, **extra_env: str) -> subprocess.CompletedProcess:
+def _scenario(host: str, script: str, *, permissions: list[str] | None = None, **extra_env: str) -> subprocess.CompletedProcess:
     missing = _chromium_missing()
     if missing:
         pytest.skip(missing)
     tenant = f"e2e-{uuid.uuid4().hex[:8]}"  # un tenant neuf : le scénario part d'une liste vide quoi qu'il arrive
     token = mint_token(
         SECRET,
-        {"sub": "alice", "tenant_id": tenant, "permissions": GRANTS, "user": {"email": "alice@example.com", "tenant_id": tenant}},
+        {"sub": "alice", "tenant_id": tenant, "permissions": GRANTS + (permissions or []), "user": {"email": "alice@example.com", "tenant_id": tenant}},
         ttl=3600,
     )
     env = {
@@ -222,3 +235,14 @@ def test_the_developer_builder_makes_a_yaml_that_a_plugin_loads(host, tmp_path):
     assert run.returncode == 0, f"scénario du constructeur en échec :\n{run.stdout}\n{run.stderr}"
     _, findings = check([plugin], owner="support", needs=[FIXTURES / "geo" / "doctypes", FIXTURES / "stock" / "doctypes", FIXTURES / "sales" / "doctypes"])
     assert not [f for f in findings if f.level == "error"], findings
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"platform": True}], indirect=True)
+def test_the_platform_live_documents_and_my_modules_in_the_browser(host):
+    """La plateforme dans Chromium, face au vrai xpulse (flux SSE) et au vrai xlicense : une liste et une fiche suivent ce qu'on enregistre
+    ailleurs (sans recharger la page, la saisie en cours gardée), et « Mes modules » prend un module gratuit puis s'arrête proprement à la
+    caisse d'un module payant (sans clés Stripe ici : le refus doit se lire, jamais une page cassée). `admin:*` : dev-auth n'a pas
+    `xauth.tenant_access`, l'administrateur de la plateforme passe (et peut mettre des modules en rayon)."""
+    run = _scenario(host, "e2e/platform.e2e.mjs", permissions=["admin:*"])
+    assert run.returncode == 0, f"scénario de la plateforme en échec :\n{run.stdout}\n{run.stderr}"
