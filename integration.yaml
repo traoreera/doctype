@@ -101,6 +101,11 @@ services:
       config:
         backend: local
         max_size_mb: 10
+        # La liste par défaut d'xstorage refuse .html, .md, .json… Le moteur juge déjà lui-même (une image est reconnue à ses
+        # octets, une pièce jointe est TOUJOURS téléchargée, jamais affichée) : en développement on accepte donc aussi ces
+        # formats-là. Ce que l'opérateur refuse ici, le moteur le renvoie en 415 (`file_type_not_allowed`), jamais en 500.
+        allowed_extensions: [.pdf, .doc, .docx, .odt, .rtf, .txt, .md, .html, .htm, .json, .xml, .xls, .xlsx, .csv, .ods,
+                             .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .tiff, .zip, .tar, .gz, .rar, .7z, .ppt, .pptx, .odp]
         local:
           path: data/storage
 
