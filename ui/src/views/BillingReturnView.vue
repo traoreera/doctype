@@ -79,7 +79,7 @@ async function openPortal(): Promise<void> {
     </Message>
 
     <div class="billing-actions">
-      <Button as="router-link" to="/app/Tenant Module" :label="t.billing.myModules" icon="pi pi-th-large" outlined />
+      <Button as="router-link" to="/modules" :label="t.billing.myModules" icon="pi pi-th-large" outlined />
       <Button
         v-if="license"
         :label="t.billing.portal"

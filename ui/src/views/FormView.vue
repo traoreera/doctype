@@ -459,7 +459,7 @@ function askToPay(why: string): void {
   if (!license || !code) return void notify.error(new Error(why))
   confirm.require({
     header: t.billing.payHeader,
-    message: why,
+    message: why && why !== 'payment_required' ? why : t.billing.payNeeded, // xlicense rend un code sans phrase
     acceptLabel: t.billing.pay,
     rejectLabel: t.cancel,
     accept: async () => {

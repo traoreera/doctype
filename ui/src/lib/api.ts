@@ -54,6 +54,7 @@ export interface ApiErrorDetail {
  *  - xcore-doctype : `{"detail": {"code", "msg", "details"}}`
  *  - authentification d'xcore/xauth : `{"detail": "Token manquant"}`
  *  - TenantMiddleware d'xcore : `{"error": "invalid_tenant", "detail": "..."}`
+ *  - contrôle de licence d'xlicense : `{"error": "license_required", "message": "..."}`
  *  - validation FastAPI : `{"detail": [{"loc", "msg", "type"}, ...]}`
  */
 export function normalizeError(status: number, body: unknown): ApiError {
@@ -62,10 +63,14 @@ export function normalizeError(status: number, body: unknown): ApiError {
   if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
     const d = detail as Record<string, unknown>
     const details = Array.isArray(d.details) ? (d.details as ApiErrorDetail[]) : d.details && typeof d.details === 'object' ? [d.details as ApiErrorDetail] : []
-    return new ApiError(status, String(d.code ?? `http_${status}`), String(d.msg ?? d.code ?? `Erreur ${status}`), details)
+    return new ApiError(status, String(d.code ?? `http_${status}`), String(d.msg ?? d.message ?? d.code ?? `Erreur ${status}`), details)
   }
   if (typeof detail === 'string') {
     return new ApiError(status, typeof b.error === 'string' ? b.error : `http_${status}`, detail)
+  }
+  // Le contrôle de licence d'xlicense (middleware) : `{"error": "license_required" | "module_not_in_plan", "message": "…"}`, sans `detail`.
+  if (detail === undefined && typeof b.error === 'string' && typeof b.message === 'string') {
+    return new ApiError(status, b.error, b.message)
   }
   if (Array.isArray(detail)) {
     const details = detail.map((e: Record<string, unknown>) => ({

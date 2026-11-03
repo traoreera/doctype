@@ -63,3 +63,36 @@ async def test_a_write_signals_its_type_on_the_organisation_channel_xpulse_serve
         await asyncio.sleep(0.1)
         assert not theirs.done()
         theirs.cancel()
+
+
+async def test_the_desk_s_modules_page_reads_its_catalogue_and_takes_a_free_module(tmp_path, monkeypatch):
+    """Ce que l'écran « Mes modules » appelle (`ui/src/lib/xlicense.ts`), sur un vrai hôte : `GET /me/modules` rend le catalogue et
+    `can_manage` ; `POST /me/modules/{code}` prend un module gratuit (il apparaît pris) et REFUSE un payant (402 `payment_required`,
+    c'est la caisse qui l'active) ; `DELETE` le rend."""
+    keys(tmp_path, monkeypatch)
+    async with boot_host(tmp_path, link_plugins=PLATFORM) as h:
+        t = h.token(permissions=["admin:*"])  # dev-auth n'a pas `xauth.tenant_access` : l'administrateur de la plateforme passe sans
+        hd, base = h.headers(t, "acme"), f"{h.prefix}/xlicense"
+        # Ici, seuls des plugins de plateforme sont chargés (jamais vendables) : on met en rayon comme l'administrateur le ferait.
+        for body in ({"code": "crm", "label": "CRM", "free": True},
+                     {"code": "caisse", "label": "Caisse", "free": False, "price": 20, "currency": "XOF", "period": "month", "stripe_price_id": "price_x"}):
+            r = await h.client.put(f"{base}/modules/{body['code']}", headers=hd, json=body)
+            assert r.status_code == 200, r.text
+        r = await h.client.get(f"{base}/me/modules", headers=hd)
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["can_manage"] is True
+        modules = {m["code"]: m for m in body["modules"]}
+        assert {"code", "label", "free", "price", "currency", "period", "taken", "source", "usable", "sellable", "expires_at"} <= set(modules["crm"])
+        assert modules["caisse"]["sellable"] and not modules["caisse"]["free"]
+
+        r = await h.client.post(f"{base}/me/modules/caisse", headers=hd)
+        assert r.status_code == 402 and r.json()["detail"]["code"] == "payment_required", r.text  # payant : seulement par la caisse
+        r = await h.client.post(f"{base}/me/modules/crm", headers=hd)
+        assert r.status_code == 200, r.text
+        again = {m["code"]: m for m in (await h.client.get(f"{base}/me/modules", headers=hd)).json()["modules"]}
+        assert again["crm"]["taken"] is True and again["crm"]["source"] == "free"
+        assert again["caisse"]["taken"] is False
+        r = await h.client.delete(f"{base}/me/modules/crm", headers=hd)
+        assert r.status_code == 200, r.text
+        assert not {m["code"]: m for m in (await h.client.get(f"{base}/me/modules", headers=hd)).json()["modules"]}["crm"]["taken"]

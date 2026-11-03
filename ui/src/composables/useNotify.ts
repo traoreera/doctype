@@ -6,6 +6,8 @@ import { NetworkError } from '@/lib/transport'
 /** Message lisible pour n'importe quelle erreur qui remonte d'un appel d'API. */
 export function describeError(e: unknown): string {
   if (e instanceof ApiError) {
+    // Un module hors abonnement ou une licence à renouveler : la raison du serveur dit quoi faire (s'abonner), un « interdit » ne le dirait pas.
+    if (e.isModuleNotLicensed || e.code === 'license_required') return e.message || t.errors.generic
     if (e.status === 403) return t.errors.forbidden
     return e.message || t.errors.generic
   }
