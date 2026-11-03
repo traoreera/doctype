@@ -4,6 +4,7 @@ import { describeError } from '@/composables/useNotify'
 import { statusLabel, statusTone } from '@/lib/docstatus'
 import { relativeTime } from '@/lib/format'
 import { useServices } from '@/lib/services'
+import { useLiveDoctype } from '@/composables/useLive'
 import { t } from '@/i18n'
 import type { DocRecord, QuickListBlock } from '@/lib/types'
 
@@ -13,19 +14,17 @@ const rows = ref<DocRecord[] | null>(null)
 const error = ref<string | null>(null)
 let ticket = 0
 
-watch(
-  () => JSON.stringify(props.block),
-  async () => {
-    const mine = ++ticket
-    try {
-      const res = await api.list(props.block.doctype, { filters: props.block.filters, limit: props.block.limit, order_by: 'modified', order: 'desc' })
-      if (mine === ticket) rows.value = res.items
-    } catch (e) {
-      if (mine === ticket) error.value = describeError(e)
-    }
-  },
-  { immediate: true },
-)
+async function fetchRows(): Promise<void> {
+  const mine = ++ticket
+  try {
+    const res = await api.list(props.block.doctype, { filters: props.block.filters, limit: props.block.limit, order_by: 'modified', order: 'desc' })
+    if (mine === ticket) (rows.value = res.items), (error.value = null)
+  } catch (e) {
+    if (mine === ticket) error.value = describeError(e)
+  }
+}
+watch(() => JSON.stringify(props.block), fetchRows, { immediate: true })
+useLiveDoctype(() => props.block.doctype, () => void fetchRows()) // les derniers documents suivent ceux qu'on enregistre ailleurs
 
 const title = (r: DocRecord): string => {
   const v = props.block.title_field ? r.data[props.block.title_field] : undefined

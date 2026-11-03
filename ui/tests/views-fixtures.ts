@@ -79,13 +79,14 @@ export function unmountAll(): void {
   for (const w of mounted.splice(0)) w.unmount()
 }
 
-export function mountWith(component: unknown, props: Record<string, unknown>, api: Record<string, unknown> = {}, r: Router = router()) {
+/** `services` : d'autres services à fournir (le temps réel simulé, par exemple). */
+export function mountWith(component: unknown, props: Record<string, unknown>, api: Record<string, unknown> = {}, r: Router = router(), services: Record<string, unknown> = {}) {
   const w = mount(component as never, {
     props: props as never,
     attachTo: document.body,
     global: {
       plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), r],
-      provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api: { meta: async () => TASK, ...api } } },
+      provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api: { meta: async () => TASK, ...api }, ...services } },
     },
   }) as unknown as VueWrapper
   mounted.push(w)
