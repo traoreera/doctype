@@ -27,6 +27,9 @@ config:
     # le moteur sous ce seul préfixe, donc `_module_for_path` rendrait « xcore-doctype » pour chacun.
     # Ces modules-là se gardent par les grants (`source_plugin` + `entitled_plugins` d'xauth).
     - "/app/xcore-doctype"
+    # Le temps réel du Desk (xpulse, plateforme lui aussi) : sans cette exclusion, une organisation sans licence active recevait 402
+    # sur le flux et perdait la cloche et les documents en direct alors que le Desk reste servi (mesuré, ui/e2e/platform.e2e.mjs).
+    - "/app/xpulse"
     - "/docs"
     - "/redoc"
     - "/openapi"
