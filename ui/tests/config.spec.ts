@@ -24,7 +24,7 @@ describe('configuration', () => {
     const t = transport({ status: 200, json: { api_base: '/app/xcore-doctype/', login_url: '/app/auth/login' } })
     const cfg = await loadConfig(t, at('/app/xcore-doctype/desk/'))
     expect(t.urls).toEqual(['http://host:8000/app/xcore-doctype/desk/config.json'])
-    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login', extensions: [], developer: false })
+    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login', extensions: [], developer: false, realtime: false })
   })
 
   it('le mode développeur n’est ouvert que si le serveur dit exactement `true`', async () => {
@@ -34,6 +34,24 @@ describe('configuration', () => {
       const cfg = await loadConfig(transport({ status: 200, json: { api_base: '/p', developer } }), at('/p/desk/'))
       expect(cfg.developer).toBe(false)
     }
+  })
+
+  it('le temps réel n’existe que si le serveur l’annonce exactement `true` (sinon aucun flux n’est demandé)', async () => {
+    expect((await loadConfig(transport({ status: 200, json: { api_base: '/p', realtime: true } }), at('/p/desk/'))).realtime).toBe(true)
+    for (const realtime of ['true', 1, null, undefined]) {
+      expect((await loadConfig(transport({ status: 200, json: { api_base: '/p', realtime } }), at('/p/desk/'))).realtime).toBe(false)
+    }
+  })
+
+  it('le Desk ne crée son client temps réel que sur annonce', async () => {
+    const { createDesk } = await import('@/desk')
+    const { SERVICES } = await import('@/lib/services')
+    const services = (realtime: boolean) => {
+      const desk = createDesk({ request: async () => ({ status: 200, json: null }) }, { baseUrl: '/app/xcore-doctype', loginUrl: null, realtime })
+      return desk.app._context.provides[SERVICES as symbol] as { realtime: unknown }
+    }
+    expect(services(false).realtime).toBeNull()
+    expect(services(true).realtime).not.toBeNull()
   })
 
   it('sans login_url : jeton collé', async () => {

@@ -90,10 +90,11 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
         },
       )
     : null
-  // xpulse : le flux temps réel, sous le même préfixe d'hôte que l'API (`…/xcore-doctype` -> `…/xpulse`). Absent : un 404, et le Desk relit
-  // comme avant (le client s'arrête de lui-même).
-  const pulseRoot = /\/xcore-doctype\/?$/.test(config.baseUrl) ? pluginBase(config.baseUrl.replace(/\/+$/, ''), 'xpulse') : null
-  const realtime = new RealtimeClient({
+  // xpulse : le flux temps réel, sous le même préfixe d'hôte que l'API (`…/xcore-doctype` -> `…/xpulse`). Non annoncé : aucun client, le
+  // Desk relit comme avant (jamais de requête vers un flux absent).
+  // Seulement quand le serveur l'annonce (`config.json` `realtime` : le moteur publie ET xpulse est chargé).
+  const pulseRoot = config.realtime && /\/xcore-doctype\/?$/.test(config.baseUrl) ? pluginBase(config.baseUrl.replace(/\/+$/, ''), 'xpulse') : null
+  const realtime = pulseRoot === null ? null : new RealtimeClient({
     transport,
     context: () => {
       const s = useSession(pinia)

@@ -96,3 +96,15 @@ async def test_the_desk_s_modules_page_reads_its_catalogue_and_takes_a_free_modu
         r = await h.client.delete(f"{base}/me/modules/crm", headers=hd)
         assert r.status_code == 200, r.text
         assert not {m["code"]: m for m in (await h.client.get(f"{base}/me/modules", headers=hd)).json()["modules"]}["crm"]["taken"]
+
+
+async def test_config_json_announces_real_time_only_when_xpulse_serves_it(tmp_path, monkeypatch):
+    """Le Desk ne demande le flux que si `config.json` l'annonce : sans xpulse, un hôte répondait 404 au flux à chaque page (une erreur
+    de console permanente, mesurée dans le scénario Chromium de la caisse d'erp). L'annonce exige le moteur qui publie ET xpulse chargé."""
+    keys(tmp_path, monkeypatch)
+    async with boot_host(tmp_path / "avec", link_plugins=PLATFORM) as h:
+        r = await h.client.get(f"{h.base}/desk/config.json")
+        assert r.status_code == 200 and r.json()["realtime"] is True, r.text
+    async with boot_host(tmp_path / "sans") as h:  # ext.pubsub est là (hermetic_services), xpulse non
+        r = await h.client.get(f"{h.base}/desk/config.json")
+        assert r.status_code == 200 and r.json()["realtime"] is False, r.text

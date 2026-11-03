@@ -61,7 +61,7 @@ def test_the_page_carries_the_strict_policy(dist):
 
 def test_config_says_what_the_operator_configured(dist):
     body = client(dist, api_base="/api/doc/", login_url="/auth/login", developer=True).get("/config.json").json()
-    assert body == {"api_base": "/api/doc", "login_url": "/auth/login", "extensions": [], "developer": True}
+    assert body == {"api_base": "/api/doc", "login_url": "/auth/login", "extensions": [], "developer": True, "realtime": False}  # mount_desk : jamais de flux xpulse
 
 
 def test_mounted_at_the_root_it_hides_no_later_route(dist):

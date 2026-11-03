@@ -68,6 +68,9 @@ def _need(payload: dict, key: str) -> Any:
     return payload[key]
 
 
+
+XPULSE = "xpulse"  # le plugin de la plateforme qui sert le flux temps réel (`platform/xpulse`)
+
 class Plugin(AutoDispatchMixin, TrustedBase):
     registry: DocTypeRegistry | None = None
     hook_registry: HookRegistry | None = None
@@ -227,7 +230,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root.include_router(build_public_files_router(file_service))  # servir : la signature de l'URL fait foi (pas de jeton dans une balise <img>)
         desk_extensions = DeskExtensions(desk.extensions, self.logger)  # D28 : ce que les plugins livrent au Desk, filtré par l'opérateur
         if desk.enabled:
-            root.include_router(build_desk_router(desk, desk_extensions))
+            root.include_router(build_desk_router(desk, desk_extensions, realtime=self._realtime_served))
         self._router = root
         # Les plugins qui dépendent de nous (`requires: [xcore-doctype]`) y enregistrent leurs hooks de confiance...
         self.ctx.services[HOOKS_SERVICE] = hook_registry
@@ -300,6 +303,16 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return NoRealtime()
         self.logger.info("realtime signals published on ext.pubsub")
         return Realtime(pubsub, self.logger)
+
+    def _realtime_served(self) -> bool:
+        """Le Desk peut ouvrir le flux : le moteur publie sur `ext.pubsub` ET le plugin `xpulse`, qui le sert en SSE, est chargé."""
+        if not isinstance(getattr(self.documents, "realtime", None), Realtime):
+            return False
+        registry = getattr(self.ctx, "registry", None)
+        try:
+            return bool(registry is not None and registry.has(XPULSE))
+        except Exception:  # noqa: BLE001 - un registre illisible : pas de temps réel annoncé, le Desk relit comme avant
+            return False
 
     def _blob_store(self, raw: Any) -> BlobStore:
         """Le magasin de fichiers : l'extension `ext.storage` de l'hôte si elle existe (local, s3, r2, supabase), sinon un dossier local."""
