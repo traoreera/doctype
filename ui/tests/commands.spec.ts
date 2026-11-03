@@ -25,6 +25,10 @@ describe('normalisation', () => {
 
 describe('commandes proposées', () => {
   it('« Nouveau type de document » n’est proposé qu’en mode développeur', () => {
+    expect(ids(buildCommands(src()))).not.toContain('modules') // sans facturation installée
+    const billing = buildCommands(src({ billing: true }))
+    expect(rank(billing, 'modules')[0]?.id).toBe('modules')
+    expect(rank(billing, 'abonnement')[0]?.to).toEqual({ name: 'settings', params: { doctype: '~modules' } })
     expect(ids(buildCommands(src()))).not.toContain('dev-doctype')
     expect(ids(buildCommands(src({ developer: true })))).toContain('dev-doctype')
     expect(rank(buildCommands(src({ developer: true })), 'doctype')[0]?.id).toBe('dev-doctype')

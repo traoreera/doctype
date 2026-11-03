@@ -1351,6 +1351,7 @@ export const en: Messages = {
     failed: 'The payment could not be verified.',
     noSession: 'This page expects a return from the payment provider.',
     myModules: 'My modules',
+    group: 'Subscription',
     portal: 'Manage billing',
     unavailable: 'Billing is not installed on this instance.',
     modulesIntro: 'Your organisation’s applications: the ones you have taken and the ones you can add.',

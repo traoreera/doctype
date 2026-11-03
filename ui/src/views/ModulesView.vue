@@ -20,6 +20,8 @@ import { formatTimestamp } from '@/lib/format'
 import { useServices } from '@/lib/services'
 import { moduleAction, type MarketModule, type ModuleAction, type MyModules } from '@/lib/xlicense'
 
+/** `embedded` : rubrique « Abonnement › Mes modules » des Paramètres, qui porte déjà le titre. */
+defineProps<{ embedded?: boolean }>()
 const { license } = useServices()
 const notify = useNotify()
 const confirm = useConfirm()
@@ -120,8 +122,8 @@ const LABELS: Record<Exclude<ModuleAction, null>, { label: () => string; icon: s
 </script>
 
 <template>
-  <div class="desk-page" data-testid="modules">
-    <div class="desk-page-head"><i class="pi pi-th-large ws-icon" /><h1>{{ t.billing.myModules }}</h1></div>
+  <div :class="{ 'desk-page': !embedded }" data-testid="modules">
+    <div v-if="!embedded" class="desk-page-head"><i class="pi pi-th-large ws-icon" /><h1>{{ t.billing.myModules }}</h1></div>
     <p class="desk-muted ws-description">{{ t.billing.modulesIntro }}</p>
 
     <Message v-if="failure" severity="error" :closable="false" data-testid="modules-failed">{{ failure }}</Message>

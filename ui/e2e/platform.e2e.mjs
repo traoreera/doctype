@@ -88,11 +88,24 @@ try {
     }
   }, page)
 
-  await r.step('« Mes modules » depuis le menu du compte : le catalogue et les prix', async () => {
+  await r.step('« Mes modules » par la barre de commande, puis par Paramètres › Abonnement', async () => {
     await page.goto(`${cfg.desk}#/`)
     await page.getByRole('heading', { level: 1 }).first().waitFor()
-    await page.goto(`${cfg.desk}#/modules`)
+    // La barre de commande (Ctrl+G) : taper « abonnement » trouve la rubrique.
+    await page.keyboard.press('Control+g')
+    await page.getByTestId('palette').locator('input').fill('abonnement')
+    await page.getByTestId('cmd-modules').click()
+    await page.waitForURL(/#\/settings\/~modules$/)
     await page.getByTestId('modules').waitFor()
+    // Le même endroit depuis la colonne des Paramètres : le groupe « Abonnement ».
+    await page.goto(`${cfg.desk}#/settings`)
+    await page.getByTestId('settings-group-billing').filter({ hasText: 'Abonnement' }).waitFor()
+    await page.getByTestId('billing-modules').click()
+    await page.waitForURL(/#\/settings\/~modules$/)
+    await page.getByTestId('modules').waitFor()
+    // L'ancienne adresse suit (favoris, liens déjà donnés).
+    await page.goto(`${cfg.desk}#/modules`)
+    await page.waitForURL(/#\/settings\/~modules$/)
     await page.locator('[data-module="crm"]').waitFor()
     const price = await page.locator('[data-module="caisse"] [data-testid="module-price"]').innerText()
     assert(/15\s?000/.test(price) && /mois/.test(price), `prix de la caisse : ${price}`)

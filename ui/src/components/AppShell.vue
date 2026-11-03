@@ -251,8 +251,6 @@ const items = computed(() => [
   ...(services.auth ? [{ label: t.admin.sections.account, icon: 'pi pi-user', command: () => void router.push({ name: 'settings', params: { doctype: '~account' } }) }] : []),
   // Les fichiers de ce que je lis : pour tout utilisateur identifié (le serveur ne liste que ce que chacun peut lire).
   { label: t.fileLibrary.title, icon: 'pi pi-paperclip', command: () => void router.push({ name: 'files' }) },
-  // Les modules de l'organisation, quand la facturation (xlicense) est installée.
-  ...(services.license ? [{ label: t.billing.myModules, icon: 'pi pi-th-large', command: () => void router.push({ name: 'modules' }) }] : []),
   { separator: true },
   { label: t.nav.theme, disabled: true, class: 'desk-menu-title' },
   ...(['light', 'dark', 'system'] as ThemeMode[]).map((m) => ({

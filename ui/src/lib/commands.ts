@@ -38,11 +38,13 @@ export interface CommandSources {
   recents: readonly Recent[]
   /** Le mode développeur est ouvert : « Nouveau type de document » se propose. */
   developer?: boolean
+  /** La facturation (xlicense) est installée : « Mes modules » se propose (Paramètres › Abonnement). */
+  billing?: boolean
   /** Les commandes que les extensions ajoutent (D28). */
   extensions?: readonly { extension: string; label: string; icon?: string; keywords?: string; run: () => unknown }[]
 }
 
-export function buildCommands({ workspaces, summaries, recents, extensions = [], developer = false }: CommandSources): Command[] {
+export function buildCommands({ workspaces, summaries, recents, extensions = [], developer = false, billing = false }: CommandSources): Command[] {
   const out: Command[] = []
   const labelOf = (doctype: string) => summaries.find((d) => d.name === doctype)?.label ?? doctype
   for (const r of recents) {
@@ -63,6 +65,9 @@ export function buildCommands({ workspaces, summaries, recents, extensions = [],
   }
   if (summaries.length) out.push(make({ id: 'files', label: t.fileLibrary.title, icon: 'paperclip', group: 'go', to: { name: 'files' } }, t.fileLibrary.keywords))
   if (summaries.length) out.push(make({ id: 'api-docs', label: t.apiDocs.title, icon: 'code', group: 'go', to: { name: 'api-docs' } }, 'api rest swagger curl documentation developpeur'))
+  if (billing) {
+    out.push(make({ id: 'modules', label: t.billing.myModules, hint: t.billing.group, icon: 'th-large', group: 'go', to: { name: 'settings', params: { doctype: '~modules' } } }, 'modules abonnement facturation paiement catalogue acheter prendre'))
+  }
   extensions.forEach((c, i) => {
     out.push(make({ id: `ext:${c.extension}:${i}`, label: c.label, hint: t.extensions.palette, icon: c.icon ?? 'bolt', group: 'extension', extension: { name: c.extension, run: c.run } }, `${c.keywords ?? ''} ${c.extension}`))
   })
