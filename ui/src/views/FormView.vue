@@ -45,7 +45,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ dirty: [value: boolean]; saved: [record: DocRecord] }>()
 
-const { api } = useServices()
+const { api, license } = useServices()
 const metaStore = useMeta()
 const router = useRouter()
 const route = useRoute()
@@ -430,6 +430,9 @@ async function save(): Promise<void> {
   } catch (e) {
     if (!here()) return void notify.error(e)
     if (e instanceof ApiError && e.isConflict) return askReload()
+    // Prendre un module payant comme s'il était gratuit : ce n'est pas une saisie à corriger, c'est un
+    // paiement à faire. On propose la caisse plutôt qu'un message d'erreur que l'utilisateur ne peut pas résoudre.
+    if (e instanceof ApiError && e.isPaymentRequired) return askToPay(e.message)
     if (e instanceof ApiError && (e.status === 422 || e.status === 413 || e.code.startsWith('hook_'))) {
       const mapped = mapServerErrors(e, m)
       errors.value = mapped.fields
@@ -439,6 +442,31 @@ async function save(): Promise<void> {
   } finally {
     if (here()) saving.value = false
   }
+}
+
+/**
+ * « Ce module est payant » : on emmène à la caisse du prestataire.
+ *
+ * Le code du module est celui que la fiche porte — jamais une valeur devinée — et c'est le SERVEUR qui construit
+ * l'adresse de retour et les métadonnées de la session : le navigateur n'a ici qu'à suivre l'URL rendue.
+ */
+function askToPay(why: string): void {
+  const code = String(values.value.module ?? '').trim()
+  if (!license || !code) return void notify.error(new Error(why))
+  confirm.require({
+    header: t.billing.payHeader,
+    message: why,
+    acceptLabel: t.billing.pay,
+    rejectLabel: t.cancel,
+    accept: async () => {
+      try {
+        const { url } = await license.checkout(code)
+        window.location.assign(url)
+      } catch (e) {
+        notify.error(e)
+      }
+    },
+  })
 }
 
 function askReload(stale = false): void {

@@ -32,6 +32,9 @@ export function createDeskRouter(pinia: Pinia): Router {
       // Tous les réglages des modules au même endroit : `/settings` (général), `/settings/<Type unique>` (un réglage, édité sur place).
       { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue') },
       { path: '/tasks', name: 'tasks', component: () => import('@/views/TasksView.vue') },
+      // Retour du prestataire de paiement : une page nommée, parce que l'encaissement doit être CONFIRMÉ au
+      // serveur (voir BillingReturnView). L'adresse est construite par xlicense, jamais par le navigateur.
+      { path: '/billing', name: 'billing', component: () => import('@/views/BillingReturnView.vue') },
       { path: '/shared', name: 'shared', component: () => import('@/views/SharedView.vue') },
       // Les fichiers des documents que je peux lire (champs Image/Attach, pièces jointes) : lister, télécharger, détacher.
       { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },

@@ -1337,6 +1337,20 @@ export const en: Messages = {
       'size:asc': 'Smallest first',
     } as Record<string, string>,
   },
+  /** Billing: open a checkout, come back from the provider. Reading your modules goes through the DocTypes. */
+  billing: {
+    payHeader: 'Paid module',
+    pay: 'Pay',
+    returnTitle: 'Payment result',
+    confirming: 'Checking the payment…',
+    confirmed: (label: string) => `“${label}” is now active for your organisation.`,
+    cancelled: 'Payment abandoned: nothing was charged and the module is not active.',
+    failed: 'The payment could not be verified.',
+    noSession: 'This page expects a return from the payment provider.',
+    myModules: 'My modules',
+    portal: 'Manage billing',
+    unavailable: 'Billing is not installed on this instance.',
+  },
   errors: {
     forbidden: 'You are not allowed to perform this action',
     unreachable: 'The server cannot be reached',

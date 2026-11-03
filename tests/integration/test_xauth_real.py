@@ -43,6 +43,7 @@ MANIFEST = yaml.safe_dump({
 })
 PLUGINS = {"shop": (MAIN, {"doctypes/order.yaml": yaml.safe_dump(ORDER), "plugin.yaml": MANIFEST})}
 RITA = ("rita@example.com", "Rita-Passw0rd!7")
+BOB = "bob@example.com"  # jamais inscrit : il ne sert qu'à adresser une invitation
 
 
 def claims(token: str) -> dict:
@@ -113,6 +114,81 @@ async def test_a_member_has_no_access_until_the_administrator_grants_it(tmp_path
         assert (await h.http("POST", "/doc/Order", token=fresh["access_token"], tenant=tenant, json={"data": {"title": "x"}})).status_code == 403  # lire n'est pas écrire
 
 
+async def test_creating_an_organisation_gives_tenant_admin_never_the_platform_admin_role(tmp_path):
+    """Qui s'inscrit puis crée son organisation administre CELLE-CI, et rien de la plateforme.
+
+    `POST /setup/create` passait `admin_role_name` comme rôle du créateur : tout compte qui créait une organisation
+    recevait le rôle `admin`, que la seed garnit de TOUTES les permissions — `admin:*` comprise.
+    """
+    async with boot_host(tmp_path, xauth=True, inline_plugins=PLUGINS, operator_doctypes=False) as h:
+        adm = await admin(h)  # la plateforme a son administrateur, posé par la seed : il ne vient pas d'ici
+        reg = await h.client.post("/app/auth/register", json={"email": RITA[0], "password": RITA[1]})
+        assert reg.status_code == 201, reg.text
+        first = await login(h, *RITA)
+        made = await h.client.post("/app/auth/setup/create", json={"refresh_token": first["refresh_token"], "name": "Chez Rita", "slug": "chez-rita"})
+        assert made.status_code == 200, made.text
+        hers = {"Authorization": f"Bearer {made.json()['access_token']}"}
+
+        # Son organisation : elle l'administre (le rôle `tenant_admin` et ses grants délégables).
+        held = await h.client.get("/app/auth/rbac/me/permissions", headers=hers)
+        assert held.status_code == 200, held.text
+        assert "admin:*" not in held.json(), held.json()
+        assert {"invites:write", "tenants:read", "rbac:read"} <= set(held.json()), held.json()
+        # `/rbac/me/roles` rend des IDENTIFIANTS de rôle : on les résout par le catalogue de la plateforme.
+        catalogue = await h.client.get("/app/auth/rbac/roles", headers={"Authorization": f"Bearer {adm['access_token']}"})
+        assert catalogue.status_code == 200, catalogue.text
+        by_name = {r["name"]: r["id"] for r in catalogue.json()}
+        mine = await h.client.get("/app/auth/rbac/me/roles", headers=hers)
+        assert mine.status_code == 200, mine.text
+        assert by_name["tenant_admin"] in mine.json() and by_name["admin"] not in mine.json(), mine.json()
+
+        # Et rien de la plateforme : ni la liste des comptes, ni le compte de l'administrateur, ni le courrier.
+        assert (await h.client.get("/app/auth/admin/users", headers=hers)).status_code == 403
+        assert (await h.client.get(f"/app/auth/admin/users/{adm['user_id']}", headers=hers)).status_code == 404  # hors de son organisation
+        assert (await h.client.get("/app/auth/mail/status", headers=hers)).status_code == 403
+        assert (await h.client.delete(f"/app/auth/admin/users/{adm['user_id']}", headers=hers)).status_code == 403
+
+
+async def test_administering_an_organisation_goes_through_the_tenant_admin_role_not_ownership(tmp_path):
+    """Inviter, gérer les membres, accorder rôles et permissions : le rôle `tenant_admin`, pas le drapeau `is_owner`.
+
+    Avant, tout cela était réservé au PROPRIÉTAIRE, posé à la création et jamais transférable : les grants du rôle
+    `tenant_admin` n'ouvraient aucune porte et l'administration d'une organisation ne se déléguait pas.
+    """
+    async with boot_host(tmp_path, xauth=True, inline_plugins=PLUGINS, operator_doctypes=False) as h:
+        adm = await admin(h)
+        tenant = adm["tenant_id"]
+        auth = {"Authorization": f"Bearer {adm['access_token']}"}
+        rita = await add_member(h, adm, *RITA, "invites:write", "invites:read")
+        hers = {"Authorization": f"Bearer {rita['access_token']}"}
+
+        # Le grant seul ne suffit pas : administrer une organisation est un rôle DANS cette organisation.
+        refused = await h.client.post("/app/auth/invites/", json={"tenant_id": tenant, "email": BOB}, headers=hers)
+        assert refused.status_code == 403, refused.text
+
+        # L'administrateur délègue en donnant le rôle. Rien d'autre ne change : la portée se juge en base, pas dans le jeton.
+        roles = await h.client.get("/app/auth/rbac/roles", headers=auth)
+        assert roles.status_code == 200, roles.text
+        role_id = next(r["id"] for r in roles.json() if r["name"] == "tenant_admin")
+        given = await h.client.post(f"/app/auth/rbac/tenants/{tenant}/members/{rita['user_id']}/roles", json={"role_id": role_id}, headers=auth)
+        assert given.status_code in (200, 201), given.text
+
+        # Elle invite, sans être propriétaire.
+        sent = await h.client.post("/app/auth/invites/", json={"tenant_id": tenant, "email": BOB}, headers=hers)
+        assert sent.status_code == 201, sent.text
+        # Et elle voit les membres et les invitations de SON organisation.
+        assert (await h.client.get(f"/app/auth/rbac/tenants/{tenant}/members", headers=hers)).status_code == 200
+        assert (await h.client.get(f"/app/auth/invites/{tenant}", headers=hers)).status_code == 200
+
+        # Ce que la délégation ne donne pas : une permission non délégable, et rien hors de son organisation.
+        esc = await h.client.post(f"/app/auth/rbac/tenants/{tenant}/members/{rita['user_id']}/permissions", json={"permission_name": "admin:*"}, headers=hers)
+        assert esc.status_code == 400, esc.text
+        elsewhere = await h.client.post("/app/auth/invites/", json={"tenant_id": "une-autre-organisation", "email": BOB}, headers=hers)
+        assert elsewhere.status_code == 403, elsewhere.text
+        # L'organisation elle-même reste au propriétaire : renommer n'est pas de l'administration d'utilisateurs.
+        assert (await h.client.patch(f"/app/auth/tenants/{tenant}", json={"name": "Chez Rita"}, headers=hers)).status_code == 403
+
+
 async def test_the_directory_is_xauth_members_by_email_and_assignment_is_checked_against_it(tmp_path):
     async with boot_host(tmp_path, xauth=True, inline_plugins=PLUGINS, operator_doctypes=False) as h:
         adm = await admin(h)
@@ -157,6 +233,16 @@ async def test_an_assignment_and_a_mention_ring_the_bell_of_the_member_concerned
         assert c.status_code == 201
         [mention] = (await bell(adm)).json()
         assert mention["type"] == "MENTION" and mention["title"].startswith(f"{RITA[0]} vous a mentionné dans Commande")
+
+        # La route REST n'écrit pas dans la cloche de n'importe qui : viser un AUTRE compte est une opération
+        # d'administration de l'organisation. (Provisoire : les notifications doivent sortir d'xauth.)
+        hers = {"Authorization": f"Bearer {rita['access_token']}"}
+        usurped = await h.client.post("/app/auth/notifications", json={"title": "Compte suspendu", "user_id": adm["user_id"]}, headers=hers)
+        assert usurped.status_code == 403, usurped.text
+        assert [n["title"] for n in (await bell(adm)).json()] == [mention["title"]]  # rien de nouveau chez l'administrateur
+        assert (await h.client.post("/app/auth/notifications", json={"title": "Pense-bête"}, headers=hers)).status_code == 201  # pour soi, oui
+        pushed = await h.client.post("/app/auth/notifications", json={"title": "Maintenance", "user_id": rita["user_id"]}, headers={"Authorization": f"Bearer {token}"})
+        assert pushed.status_code == 201, pushed.text  # l'administrateur, lui, prévient ses membres
 
         # `xauth.notify` : un identifiant qui n'est pas membre de l'organisation est ignoré en silence, un lien douteux ou un titre vide est refusé.
         ask = lambda **kw: h.action("xauth.notify", {"tenant_id": tenant, "title": "T", **kw}, token=token, tenant=tenant, plugin="auth")  # noqa: E731

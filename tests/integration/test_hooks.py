@@ -136,10 +136,22 @@ async def test_missing_sandboxed_plugin_is_503(tmp_path):
 
 async def test_slow_sandboxed_hook_times_out_within_our_budget(tmp_path):
     async with boot_host(tmp_path, hook_plugins=True, extra_doctypes=(probe("slow"),), doctype_config={"hook_timeout_seconds": 1}) as h:
+        # Le budget (`asyncio.wait_for`) n'entoure QUE l'appel du plugin : la durée mesurée, c'est tout le reste de la
+        # requête PLUS le budget. On mesure donc d'abord ce « reste » sur une sauvegarde ordinaire du même chemin (même
+        # plugin sandboxé), la première servant à démarrer son sous-processus. Sans ce repère, le seuil était un temps
+        # mural absolu : sur un coureur chargé, 1,5 s de démarrage + 1 s de budget dépassaient les 2,5 s attendues.
+        assert (await post(h, INVOICE)).status_code == 201
+        start = time.monotonic()
+        assert (await post(h, INVOICE)).status_code == 201
+        baseline = time.monotonic() - start
+
         start = time.monotonic()
         r = await post(h, {"blob": "x"}, doctype="Probe Slow")
+        elapsed = time.monotonic() - start
         assert r.status_code == 504 and r.json()["detail"]["code"] == "hook_timeout"
-        assert time.monotonic() - start < 2.5  # 1 s de budget, pas les 3 s du timeout du plugin ni les 30 s de son sommeil
+        # Notre budget d'1 s, pas les 3 s du sommeil du hook (ni les 10 s du timeout propre au plugin) : 1 s de marge
+        # au-dessus du budget, et il reste 1 s avant le sommeil, qui est ce que cette mesure doit exclure.
+        assert elapsed < baseline + 2.0, f"attendu ~{baseline:.2f}s de requête + 1 s de budget, mesuré {elapsed:.2f}s"
         assert (await stored(h, "Probe Slow"))["total"] == 0
 
 

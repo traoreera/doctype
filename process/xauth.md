@@ -51,6 +51,51 @@ Chaque plugin métier (`sales`, `stock`, `hr`, `system`) émet UN `rbac.declare`
 l'organisation (`POST /app/auth/rbac/tenants/{id}/members/{user}/permissions`). Un jeton porte les grants du membre dans CETTE organisation. L'événement n'est écouté
 que si xauth est déjà chargé : les plugins du dépôt déclarent `requires: [..., auth]`.
 
+## Qui administre une organisation : le rôle `tenant_admin`
+
+**Administrer une organisation passe par le RÔLE `tenant_admin`, plus par le drapeau `is_owner`** (décision du 2 nov. 2026).
+Avant, invitations, membres, rôles et permissions étaient réservés au PROPRIÉTAIRE — un drapeau posé à la création,
+jamais transférable : les six grants de `TENANT_ADMIN_PERMISSIONS` n'ouvraient aucune porte et une organisation n'avait
+qu'un administrateur, définitif. Une seule porte désormais, `routes/_scope.require_tenant_admin` : **admin plateforme
+(`admin:*`), propriétaire, ou membre portant le rôle `tenant_admin` dans CETTE organisation** (rôle primaire ou
+secondaire, `MemberRoleService.get_roles_for_user`). Le propriétaire reste administrateur de droit — la seed prévoit
+explicitement qu'il puisse ne pas avoir de rôle.
+
+| Opération | Qui |
+|---|---|
+| inviter, révoquer une invitation, lister les invitations | administrateur de l'organisation (`POST /invites/`, `DELETE /invites/{id}`) |
+| retirer un membre (jamais le propriétaire), rôle principal et rôles secondaires, permissions d'un membre, rôles propres à l'organisation | administrateur de l'organisation (les 14 routes `/rbac/tenants/{id}/…`) |
+| renommer l'organisation, ses réglages | **propriétaire** (`owner_only`) |
+| supprimer l'organisation | plateforme (`tenants:delete`) |
+
+Ce que la délégation ne donne PAS : les permissions non délégables. `grant_permission_to_member` et
+`create_tenant_role` refusent tout ce qui n'est pas `tenant_grantable`, donc un administrateur d'organisation ne peut
+se fabriquer ni `admin:*` ni `user:delete`. Et **le rôle `tenant_admin` est le seul rôle GLOBAL qu'une organisation
+puisse attribuer** (`RoleService._get_assignable_role` — c'est le geste de la délégation) ; le modifier, le garnir ou le
+supprimer reste impossible (`_get_owned_role`), sinon une organisation changerait un rôle global, donc toutes les
+autres. Le Desk propose les rôles globaux dans Paramètres > Utilisateurs : les autres (`admin`, `user`) sont refusés
+par le serveur (400), l'écran ne les distingue pas encore.
+
+**Qui crée son organisation reçoit `tenant_admin`, jamais `admin`.** `POST /setup/create` passait `admin_role_name`
+(« admin ») comme rôle du créateur, et `seed_admin_role` garnit ce rôle de TOUTES les permissions du catalogue,
+`admin:*` comprise : tout compte qui s'inscrivait puis créait une organisation devenait administrateur de la
+PLATEFORME. Corrigé (`routes/auth.py` laisse le défaut `tenant_admin` du service ; `POST /tenants/`, l'autre chemin de
+création, cherchait déjà `tenant_admin` nommément). Preuve :
+`test_creating_an_organisation_gives_tenant_admin_never_the_platform_admin_role` — le créateur a `tenant_admin` et ses
+grants délégables, n'a pas `admin:*`, et se voit refuser la liste des comptes, le compte de l'administrateur (404 : hors
+de son organisation), les réglages de courrier et la suppression d'un compte.
+
+Preuve : `test_xauth_real.py::test_administering_an_organisation_goes_through_the_tenant_admin_role_not_ownership`
+(un membre porteur du grant mais pas du rôle est refusé ; le rôle donné, il invite sans être propriétaire ; il ne peut
+ni s'accorder `admin:*`, ni toucher une autre organisation, ni renommer la sienne).
+
+**Portées rectifiées en même temps** (elles ne vérifiaient qu'une permission, jamais l'organisation) :
+`GET /admin/users/{id}` (`user:read` est accordé à TOUT inscrit et est délégable : il faut désormais partager une
+organisation avec la cible, l'admin plateforme passant partout, et un UUID inconnu répond 404 — un identifiant ne
+révèle pas qu'un compte existe) et `GET /rbac/users/{id}/tenants/{id}/permissions` (`rbac:read` est délégable et porté
+par `tenant_admin` : le propriétaire de A lisait les droits de n'importe qui dans B). **`DELETE /tenants/{tenant_id}`
+n'a toujours aucune portée** : inoffensif tant que `tenants:delete` reste non délégable, à corriger avant de le déléguer.
+
 ## Ce qui a changé par rapport à orchestra-backend
 
 - **Courrier : l'extension `ext.email`** (`extensions/xmailler`, copiée de donna) est branchée dans `integration.yaml` (`services.extensions.email`) et xauth la
@@ -67,7 +112,7 @@ que si xauth est déjà chargé : les plugins du dépôt déclarent `requires: [
   ligne xcore répond `ipc_denied` et le moteur retombe sur les identités observées (sans e-mail).
 - `ext.google` (Gmail, Calendar, Drive pour le compte de l'utilisateur) est facultatif : absent, `xauth.google.*` n'est pas disponible, la connexion OAuth marche.
 - Dépendances ajoutées au groupe `host` (le wheel xcore-doctype n'en dépend pas) ; `app/auth/pyproject.toml`, `makefile` et `example.env` ne sont pas repris.
-- **Notifications du moteur : `xauth.notify`** (IPC, même `allowed_callers`) : `{tenant_id, user_ids ≤ 50, title, message?, link?, type?}` crée une notification de la cloche pour chaque identifiant qui est MEMBRE de `tenant_id` (les autres sont ignorés en silence), avec un lien `#/…` ou `https://` seulement. Le moteur l'appelle à l'assignation d'un document et à une mention `@adresse` dans un commentaire (`process/phase-h2.md`) ; un échec ne fait jamais échouer l'opération qui l'a provoquée. La route `POST /notifications` (REST) accepte toujours n'importe quel `user_id` : à fermer, non traité.
+- **Notifications du moteur : `xauth.notify`** (IPC, même `allowed_callers`) : `{tenant_id, user_ids ≤ 50, title, message?, link?, type?}` crée une notification de la cloche pour chaque identifiant qui est MEMBRE de `tenant_id` (les autres sont ignorés en silence), avec un lien `#/…` ou `https://` seulement. Le moteur l'appelle à l'assignation d'un document et à une mention `@adresse` dans un commentaire (`process/phase-h2.md`) ; un échec ne fait jamais échouer l'opération qui l'a provoquée. La route `POST /notifications` (REST) n'écrit plus chez n'importe qui : pour soi toujours, pour un AUTRE compte il faut être administrateur de l'organisation courante et la cible doit en être membre (sinon 404). **Provisoire** : les notifications doivent sortir d'xauth pour devenir un plugin à elles (décision du 2 nov. 2026) ; d'ici là cette route est rectifiée, pas conçue.
 
 ## Desk : la connexion
 
@@ -75,6 +120,10 @@ Le Desk n'a qu'une seule adresse de connexion : `login_url`. Le manifeste livré
 de la requête (`api_base` moins `/xcore-doctype`, `src/xcore_doctype/api/desk.py`), donc il suit `app.plugin_prefix` quel qu'il soit. Un chemin (`/app/auth/login`) ou une URL absolue
 force une autre adresse ; `null` demande un jeton collé (développement, et le groupe Paramètres > Système disparaît). `xcore-doctype doctor` **avertit** si `login_url` est défini mais
 qu'aucun plugin d'authentification (`auth`) n'est installé sous `plugins.directory` : la connexion répondrait 404.
+
+Les quatre chemins qui émettent un jeton — `/login`, `/refresh`, `/select-tenant`, `/auth/verify-mfa` — y mettent `email`
+et `tenant_id` ; **l'onboarding aussi depuis le 2 nov. 2026** (`/setup/create` et `/setup/join` l'omettaient, et le Desk,
+qui lit l'identité dans ce claim, affichait l'UUID jusqu'au premier renouvellement).
 
 `ui/src/stores/session.ts` couvre tout le flux d'xauth, dans cet ordre : `POST /login` **avec `tenant_id`** quand `ADMIN_…` gère plusieurs organisations (la réponse liste alors les
 organisations, le Desk redemande) ; sinon MFA (`mfa_required` → `POST /verify-mfa` avec le code, le dialogue reste à l'écran) ; sinon compte sans organisation → page **`/onboarding`**

@@ -1335,6 +1335,20 @@ export const fr = {
       'size:asc': 'Les plus petits',
     } as Record<string, string>,
   },
+  /** Facturation : ouvrir une caisse, revenir du prestataire. Lire ses modules passe par les DocTypes. */
+  billing: {
+    payHeader: 'Module payant',
+    pay: 'Payer',
+    returnTitle: 'Retour du paiement',
+    confirming: 'Vérification du paiement…',
+    confirmed: (label: string) => `« ${label} » est activé pour votre organisation.`,
+    cancelled: 'Paiement abandonné : rien n’a été débité et le module n’est pas activé.',
+    failed: 'Le paiement n’a pas pu être vérifié.',
+    noSession: 'Cette page attend un retour du prestataire de paiement.',
+    myModules: 'Mes modules',
+    portal: 'Gérer ma facturation',
+    unavailable: 'La facturation n’est pas installée sur cette instance.',
+  },
   errors: {
     forbidden: 'Vous n’avez pas le droit d’effectuer cette action',
     unreachable: 'Le serveur est injoignable',

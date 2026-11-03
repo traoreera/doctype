@@ -22,7 +22,10 @@ dependencies = [
     "redis[asyncio] (>=8.1.0,<9.0.0)",
     # Les champs Password sont scellés par Fernet (sealing.py). Le paquet n'arrivait ici que par le groupe `host` (python-jose) :
     # un plugin installé HORS de ce dépôt (le dépôt erp) n'importait plus le moteur.
-    "cryptography (>=44.0.0,<51.0.0)"
+    "cryptography (>=44.0.0,<51.0.0)",
+    "pyjwt[crypto] (>=2.15.1,<3.0.0)",
+    "stripe>=16.1.0",
+    "aiomqtt (>=2.5.1,<3.0.0)",
 ]
 
 [project.scripts]

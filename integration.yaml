@@ -70,6 +70,26 @@ services:
         timeout: 10
         max_retries: 3
         queue_size: 100
+    pubsub:
+      module: extensions.pubsub.service:PubSubClient
+      config:
+        provider: redis
+        redis:
+          url: redis://localhost:6379
+    xpay:
+      module: extensions.xpay.service:PayProvider
+      config:
+        secret_key: ${STRIPE_SECRET_KEY}
+        publishable_key: ${STRIPE_PUBLISHABLE_KEY}
+        webhook_secret: ${STRIPE_WEBHOOK_SECRET}
+        domain: ${DOMAIN_NAIME_PAYMENT}
+    
+    websocket:
+      module: extensions.xwebsocket.main:WsManager
+      config:
+        channel:
+        - user
+
 
   scheduler:
     enabled: true

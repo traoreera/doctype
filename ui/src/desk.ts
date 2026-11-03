@@ -21,6 +21,7 @@ import { usePreferences } from '@/stores/preferences'
 import { useTasks } from '@/stores/tasks'
 import { useUsers } from '@/stores/users'
 import { authBase, XauthClient } from '@/lib/xauth'
+import { licenseBase, XlicenseClient } from '@/lib/xlicense'
 import { useWorkspaces } from '@/stores/workspaces'
 import { primeVueOptions } from '@/theme/frappe'
 import { frLocale } from '@/theme/locale'
@@ -70,7 +71,25 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
         },
       )
     : null
-  const services: Services = { transport, config, api, auth }
+  // xlicense : l'abonnement. Racine déduite de celle de l'API (les deux plugins partagent le préfixe de l'hôte).
+  // `null` quand xlicense n'est pas installé : les écrans de facturation ne s'affichent simplement pas.
+  const licenseRoot = licenseBase(config.baseUrl)
+  const license = licenseRoot
+    ? new XlicenseClient(
+        transport,
+        () => {
+          const s = useSession(pinia)
+          return { baseUrl: licenseRoot, token: s.token, tenant: s.tenant }
+        },
+        async () => {
+          const s = useSession(pinia)
+          if ((await s.refresh()) === 'ok') return true
+          s.expire()
+          return false
+        },
+      )
+    : null
+  const services: Services = { transport, config, api, auth, license }
 
   const router = createDeskRouter(pinia)
   const app = createApp(App)

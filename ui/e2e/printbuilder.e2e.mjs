@@ -79,16 +79,35 @@ try {
   }, page)
 
   await r.step('ÉCRIRE et METTRE EN FORME : un paragraphe centré, une valeur insérée en gras', async () => {
-    await page.getByTestId('pd-content').locator('p').last().click()
+    const content = page.getByTestId('pd-content')
+    await content.locator('p').last().click()
     await page.keyboard.press('End')
     await page.keyboard.press('Enter')
     await page.keyboard.type('Merci de votre confiance, ')
     await page.getByTestId('pd-value-doc.customer').click()
-    await page.keyboard.press('Shift+Home')
+    await content.locator('[data-token="doc.customer"]').waitFor()
+
+    // Le bouton des valeurs est dans la palette, qui n'a pas le `@mousedown.prevent` de la barre d'outils : l'éditeur
+    // perd le focus au clic et le reprend par `chain().focus()`. Sur une machine lente, `Shift+Home` arrivait AVANT ce
+    // retour, la sélection restait vide, et « gras » ne posait qu'une marque pour la frappe suivante — le centrage,
+    // lui, s'appliquait quand même (c'est un attribut du paragraphe), d'où le seul `<strong>` manquant en CI.
+    // On attend donc le focus, puis une sélection RÉELLE, avant de mettre en forme.
+    await page.waitForFunction(() => !!document.activeElement?.closest('[data-testid="pd-content"]'))
+    const picked = () => page.evaluate(() => {
+      const s = window.getSelection()
+      return !!s && !s.isCollapsed && s.toString().includes('Merci de votre confiance')
+    })
+    for (let i = 0; i < 20 && !(await picked()); i++) {
+      await page.keyboard.press('End')
+      await page.keyboard.press('Shift+Home')
+      if (!(await picked())) await page.waitForTimeout(100)
+    }
+    assert(await picked(), 'la sélection du paragraphe ne s’est pas posée : rien à mettre en gras')
+
     await page.getByTestId('pd-bold').click()
     await page.getByTestId('pd-center').click()
     await page.keyboard.press('End')
-    const html = await page.getByTestId('pd-content').innerHTML()
+    const html = await content.innerHTML()
     assert(/text-align: center/.test(html) && /<strong>Merci de votre confiance/.test(html), `mise en forme absente : ${html.slice(-400)}`)
   }, page)
 

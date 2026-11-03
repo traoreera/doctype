@@ -23,6 +23,23 @@ export class ApiError extends Error {
   get isStale(): boolean {
     return this.status === 409 && (this.code === 'invalid_docstatus' || this.code === 'document_locked')
   }
+
+  /**
+   * Il manque un paiement, pas un droit. Deux provenances, et c'est pour cela que le statut seul ne suffit pas :
+   *  - 402 du gate de licence (xlicense) ou de sa route d'achat : la licence ou le module n'est pas réglé ;
+   *  - 422 `payment_required` quand on essaie de prendre un module payant comme s'il était gratuit — la source
+   *    de xlicense refuse et nomme la raison.
+   * Un 403 reste un refus de droit : on ne le confond jamais avec un défaut de paiement (« réservé » n'est pas
+   * « à payer »), et c'est exactement ce que cette distinction protège.
+   */
+  get isPaymentRequired(): boolean {
+    return this.status === 402 || this.code === 'payment_required'
+  }
+
+  /** Le module existe mais n'est pas dans l'abonnement de l'organisation (gate par module de xlicense). */
+  get isModuleNotLicensed(): boolean {
+    return this.code === 'module_not_in_plan'
+  }
 }
 
 export interface ApiErrorDetail {
