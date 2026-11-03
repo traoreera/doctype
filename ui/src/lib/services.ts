@@ -1,6 +1,7 @@
 import { inject, type InjectionKey } from 'vue'
 import type { ApiClient } from './api'
 import type { DeskConfig } from './config'
+import type { RealtimeClient } from './realtime'
 import type { TabSync } from './tabsync'
 import type { Transport } from './transport'
 import type { XauthClient } from './xauth'
@@ -16,6 +17,8 @@ export interface Services {
   /** xlicense (ouvrir une caisse, confirmer un paiement, le portail du prestataire), quand le plugin est installé ;
    * `null` sinon. Lire le catalogue, ses modules et sa licence passe par les DocTypes, donc par `api`. */
   license?: XlicenseClient | null
+  /** Le temps réel par xpulse (`lib/realtime.ts`) : cloche et documents en direct ; `null`/absent = le Desk relit comme avant. */
+  realtime?: RealtimeClient | null
   /** Ce que les onglets d'une même session se passent (jeton de renouvellement, déconnexion) ; défaut : le navigateur (`lib/tabsync`). */
   tabs?: TabSync
 }

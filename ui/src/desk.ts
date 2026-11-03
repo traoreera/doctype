@@ -22,6 +22,7 @@ import { useTasks } from '@/stores/tasks'
 import { useUsers } from '@/stores/users'
 import { authBase, XauthClient } from '@/lib/xauth'
 import { licenseBase, XlicenseClient } from '@/lib/xlicense'
+import { RealtimeClient } from '@/lib/realtime'
 import { useWorkspaces } from '@/stores/workspaces'
 import { primeVueOptions } from '@/theme/frappe'
 import { frLocale } from '@/theme/locale'
@@ -89,7 +90,18 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
         },
       )
     : null
-  const services: Services = { transport, config, api, auth, license }
+  // xpulse : le flux temps réel, sous le même préfixe d'hôte que l'API (`…/xcore-doctype` -> `…/xpulse`). Absent : un 404, et le Desk relit
+  // comme avant (le client s'arrête de lui-même).
+  const pulseRoot = /\/xcore-doctype\/?$/.test(config.baseUrl) ? pluginBase(config.baseUrl.replace(/\/+$/, ''), 'xpulse') : null
+  const realtime = new RealtimeClient({
+    transport,
+    context: () => {
+      const s = useSession(pinia)
+      return { baseUrl: pulseRoot, token: s.authenticated ? s.token : null, tenant: s.tenant }
+    },
+    onUnauthorized: async () => (await useSession(pinia).refresh()) === 'ok',
+  })
+  const services: Services = { transport, config, api, auth, license, realtime }
 
   const router = createDeskRouter(pinia)
   const app = createApp(App)

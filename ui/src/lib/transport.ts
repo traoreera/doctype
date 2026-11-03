@@ -41,6 +41,14 @@ export interface HttpResponse {
 
 export interface Transport {
   request(req: HttpRequest): Promise<HttpResponse>
+  /**
+   * Une réponse qui DURE (le flux SSE d'xpulse, `lib/realtime.ts`) : `onText` reçoit chaque morceau décodé tel qu'il arrive, et la promesse
+   * se résout sur le statut quand le serveur ferme (ou rejette sur `AbortError` quand `signal` l'interrompt).
+   *
+   * Pourquoi pas `EventSource` : il ne sait pas envoyer d'en-tête, il faudrait mettre le jeton dans l'URL (journalisée partout, et xauth
+   * le signale comme non sûr). Facultative : un transport qui ne la fournit pas laisse simplement le Desk sans temps réel.
+   */
+  stream?(req: HttpRequest, onText: (text: string) => void): Promise<{ status: number }>
 }
 
 /** Le serveur n'a pas répondu (réseau coupé, DNS, CORS…) : distinct d'une réponse d'erreur. */
@@ -87,5 +95,27 @@ export class FetchTransport implements Transport {
       }
     }
     return { status: res.status, json }
+  }
+
+  async stream(req: HttpRequest, onText: (text: string) => void): Promise<{ status: number }> {
+    let res: Response
+    try {
+      res = await this.fetchImpl(req.url, { method: req.method, headers: req.headers, signal: req.signal ?? null })
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') throw e
+      throw new NetworkError('Le serveur est injoignable', e)
+    }
+    if (!res.ok || !res.body) return { status: res.status }
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      const text = decoder.decode(value, { stream: true })
+      if (text) onText(text)
+    }
+    const tail = decoder.decode()
+    if (tail) onText(tail)
+    return { status: res.status }
   }
 }
