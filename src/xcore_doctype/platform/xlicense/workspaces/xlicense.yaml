@@ -1,0 +1,18 @@
+# L'espace « Abonnement » : la marketplace et la licence de l'organisation.
+#
+# Le serveur filtre déjà ces raccourcis par les droits de l'appelant (un raccourci illisible disparaît, et « + »
+# n'apparaît que pour qui peut créer) : l'administrateur d'une organisation y voit ses modules et sa licence, un
+# membre simple n'y voit que ce qu'il peut lire, et l'administrateur de la plateforme y gagne le catalogue et ses prix.
+schema_version: 1
+name: xlicense
+label: Abonnement
+icon: credit-card
+description: Les modules de votre organisation, votre licence et sa facturation.
+order: 90
+blocks:
+  - { type: header, text: Mon abonnement }
+  - { type: shortcut, doctype: Tenant Module, label: Mes modules, new: true }
+  - { type: shortcut, doctype: License, label: Ma licence }
+  - { type: header, text: Catalogue }
+  - { type: paragraph, text: "Les modules installés dans cette instance. Un module gratuit s'active tout de suite ; un module payant passe par le paiement." }
+  - { type: shortcut, doctype: Module, label: Modules et tarifs }

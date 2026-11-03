@@ -27,7 +27,7 @@ from typing import Literal, Sequence
 
 import yaml
 
-from . import __version__, plugin_dir, system_plugin_dir
+from . import PLATFORM_PLUGINS, __version__, platform_plugins_dir, plugin_dir, system_plugin_dir
 from .desk_extensions import DeskExtensions
 from .errors import InvalidDefinition
 from .registry import DocTypeRegistry
@@ -220,10 +220,39 @@ def install(plugins_dir: Path, *, config: Path | None = None, force: bool = Fals
     record.write_text("\n".join(shipped) + "\n", encoding="utf-8")
     out.append(Finding("ok", f"{sys_dest} écrit (plugin `system` : Paramètres > Général, règles de notification de l'organisation)"))
 
+    for name in PLATFORM_PLUGINS:
+        out.extend(_lay_platform_plugin(platform_plugins_dir() / name, plugins_dir / name, force=force))
+
     if config_path is not None:
         out.extend(diagnose(config_path, plugins_dir))
     else:
         out.append(Finding("warn", "aucun integration.yaml trouvé (--config) : je n'ai pas pu vérifier l'instance"))
+    return out
+
+
+def _lay_platform_plugin(src: Path, dest: Path, *, force: bool) -> list[Finding]:
+    """Un plugin de la plateforme (xlicense, xpulse) : son CODE appartient au paquet et suit sa version (réécrit à chaque install, et un
+    fichier que l'install précédente avait posé et que le paquet ne livre plus est retiré, d'après `.shipped`) ; son `plugin.yaml` est la
+    copie de l'opérateur (blocage 402, routes exclues, canaux…) : gardé, sauf `--force` ou s'il n'existe pas encore."""
+    out: list[Finding] = []
+    files = sorted(p.relative_to(src).as_posix() for p in src.rglob("*") if p.is_file() and "__pycache__" not in p.parts)
+    shipped = [f for f in files if f != "plugin.yaml"]
+    for rel in shipped:
+        (dest / rel).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src / rel, dest / rel)
+    record = dest / SHIPPED_LIST
+    before = set(record.read_text(encoding="utf-8").split()) if record.is_file() else set()
+    for rel in sorted(before - set(shipped)):
+        if (dest / rel).is_file():
+            (dest / rel).unlink()
+            out.append(Finding("ok", f"{dest / rel} retiré : le paquet ne le livre plus"))
+    record.write_text("\n".join(shipped) + "\n", encoding="utf-8")
+    manifest = dest / "plugin.yaml"
+    if not manifest.exists() or force:
+        shutil.copyfile(src / "plugin.yaml", manifest)
+        out.append(Finding("ok", f"{dest} écrit (plugin de plateforme `{src.name}` ; son manifeste {'réécrit' if force else 'créé'})"))
+    else:
+        out.append(Finding("ok", f"{dest} : code mis à jour, manifeste conservé (--force pour repartir de celui du paquet)"))
     return out
 
 

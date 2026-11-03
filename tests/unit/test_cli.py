@@ -457,3 +457,31 @@ class TestReviewOfTheTools:
             {"type": "number_card", "label": "Tagués", "doctype": "Item", "filters": {"crm_tag": "a"}}]})
         stock = TestCheck.write(TestCheck(), tmp_path / "stock", item=TestCheck.dt(TestCheck(), "Item", module="stock"))
         assert main(["check", str(home / "doctypes"), "--owner", "crm", "--with", str(stock)]) == 0, capsys.readouterr().err
+
+
+# ── Les plugins de la plateforme (xlicense, xpulse) ──────────────────────────────────────────────
+
+
+def test_install_lays_the_platform_plugins_and_keeps_their_manifests(tmp_path):
+    """Leur code suit le paquet (réécrit, et ce que le paquet ne livre plus est retiré) ; leur manifeste est la copie de l'opérateur."""
+    from xcore_doctype import PLATFORM_PLUGINS
+    from xcore_doctype.cli import install
+
+    app = tmp_path / "app"
+    install(app)
+    for name in PLATFORM_PLUGINS:
+        assert (app / name / "plugin.yaml").is_file() and (app / name / "src" / "main.py").is_file()
+        assert not list((app / name).rglob("__pycache__"))
+    manifest = app / "xlicense" / "plugin.yaml"
+    manifest.write_text(manifest.read_text() + "\n# réglé par l'opérateur\n")
+    stale = app / "xlicense" / "src" / "ancien.py"
+    stale.write_text("x = 1\n")
+    record = app / "xlicense" / ".shipped"
+    record.write_text(record.read_text() + "src/ancien.py\n")  # comme si une install précédente l'avait posé
+    (app / "xlicense" / "src" / "main.py").write_text("cassé")
+    install(app)
+    assert "# réglé par l'opérateur" in manifest.read_text()  # gardé
+    assert "class Plugin" in (app / "xlicense" / "src" / "main.py").read_text()  # le code, lui, est rétabli
+    assert not stale.exists()  # le paquet ne le livre plus
+    install(app, force=True)
+    assert "# réglé par l'opérateur" not in manifest.read_text()

@@ -48,7 +48,17 @@ def system_plugin_dir() -> Path:
     return Path(str(resources.files("xcore_doctype") / "system_plugin_dir"))
 
 
+PLATFORM_PLUGINS = ("xlicense", "xpulse")  # livrés par le paquet, posés par `xcore-doctype install` à côté du moteur
+
+
+def platform_plugins_dir() -> Path:
+    """Les plugins de la PLATEFORME embarqués (`xlicense` : licences, modules et abonnements ; `xpulse` : notifications en temps réel,
+    SSE), que `xcore-doctype install` dépose à côté du moteur. Leurs extensions de service sont, elles, importées depuis le paquet
+    (`xcore_doctype.ext.*`, à nommer dans `services.extensions` d'integration.yaml) : rien à copier pour elles."""
+    return Path(str(resources.files("xcore_doctype") / "platform"))
+
+
 __all__ = [
     "Config", "DocumentValidationError", "HookEvent", "HookRegistrationError", "HookRegistry",
-    "mount_desk", "plugin_dir", "system_plugin_dir", "__version__",
+    "mount_desk", "platform_plugins_dir", "plugin_dir", "system_plugin_dir", "__version__",
 ]

@@ -1,0 +1,39 @@
+# Le CATALOGUE des modules vendables : les plugins installés dans cette instance, avec leur prix. DocType VIRTUEL
+# (`source: xlicense`) : les lignes vivent dans `license_modules`, rien n'est copié dans la table du moteur.
+#
+# Lire : tout membre identifié — un écran de marketplace doit pouvoir montrer ce qui est à vendre, et le grant
+# `xlicense:module:read` est délégable pour que l'administrateur d'une organisation l'ait.
+# Écrire : la PLATEFORME seule. `tenant_grantable: false` fait que le grant n'arrive qu'au rôle de la plateforme,
+# et la source le revérifie (le moteur autorise, xlicense décide).
+#
+# Le catalogue se synchronise tout seul sur les plugins installés (`services/seed.sync_license_modules`) : on vient
+# ici pour poser un prix, pas pour inventorier.
+schema_version: 1
+name: Module
+label: Module
+module: xlicense
+icon: shopping-cart
+source: xlicense
+title_field: label
+fields:
+  - { fieldname: code, label: Code, fieldtype: Text, required: true, read_only: true, in_list_view: true, description: "Le nom du plugin dans l'instance : la clé partagée avec le contrôle d'accès aux modules" }
+  - { fieldname: label, label: Nom, fieldtype: Text, required: true, in_list_view: true }
+  - { fieldname: description, label: Description, fieldtype: LongText }
+  - { fieldname: free, label: Gratuit, fieldtype: Boolean, default: true, in_list_view: true, description: "Un module gratuit s'active sans paiement" }
+  - { fieldname: price, label: Prix, fieldtype: Currency, decimals: 2, currency_from: currency, in_list_view: true, depends_on: "free == false", description: "Par période, forfaitaire (indépendant du nombre d'utilisateurs)" }
+  - { fieldname: currency, label: Devise, fieldtype: Select, options: [EUR, USD, XOF], default: EUR, depends_on: "free == false" }
+  - { fieldname: period, label: Périodicité, fieldtype: Select, options: [month, year, once], default: month, depends_on: "free == false" }
+  - { fieldname: stripe_price_id, label: Tarif chez le prestataire, fieldtype: Text, depends_on: "free == false", mandatory_depends_on: "free == false", description: "Sans lui, le module serait proposé à l'achat puis impossible à encaisser" }
+  - { fieldname: active, label: Au catalogue, fieldtype: Boolean, default: true, in_list_view: true, description: "Décoché : plus proposé à personne, sans rien retirer aux organisations qui l'ont déjà" }
+layout:
+  - section: Module
+    columns: [[code, label, description], [active]]
+  - section: Tarif
+    columns: [[free, price, currency], [period, stripe_price_id]]
+permissions:
+  read: [{ grant: xlicense:module:read, description: "Voir le catalogue des modules et leurs prix" }]
+  write: [{ grant: xlicense:module:write, tenant_grantable: false, description: "Fixer le prix d'un module (plateforme)" }]
+  create: [{ grant: xlicense:module:write, tenant_grantable: false }]
+  delete: []
+views:
+  default: list

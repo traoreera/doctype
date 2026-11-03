@@ -1,0 +1,170 @@
+name: xlicense
+version: 1.0.0
+author: xcore
+description: >
+  Gestionnaire de licences enterprise pour Xcore — cycle de vie, state machine,
+  et middleware de protection globale par tenant.
+
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype, auth]
+# ACL IPC plugin-à-plugin (IPCAuthMiddleware, enforce_ipc=true) : seuls ces plugins
+# peuvent appeler celui-ci via call_plugin. Absent ou [] = tout refuser.
+allowed_callers:
+  - xpay
+framework_version: ">=2.0.0"
+
+# ── Configuration du plugin ───────────────────────────────────────────────────
+config:
+  # Activation du blocage 402 si licence non active sur routes protégées
+  enforce: true
+
+  # Routes exclues de la vérification de licence
+  excluded_prefixes:
+    # Le moteur de DocTypes et son Desk : la PLATEFORME, jamais un module vendu à l'unité (décision
+    # du 3 nov. 2026). Le gate par chemin ne saurait de toute façon pas les distinguer : les modules
+    # métier (accounts, stock, selling…) sont des plugins, mais toutes leurs routes sont servies par
+    # le moteur sous ce seul préfixe, donc `_module_for_path` rendrait « xcore-doctype » pour chacun.
+    # Ces modules-là se gardent par les grants (`source_plugin` + `entitled_plugins` d'xauth).
+    - "/app/xcore-doctype"
+    - "/docs"
+    - "/redoc"
+    - "/openapi"
+    - "/health"
+    - "/xlicense/verify"
+    - "/app/auth/login"
+    - "/app/auth/register"
+    - "/app/auth/refresh"
+    - "/app/auth/logout"
+    - "/app/auth/select-tenant"
+    - "/app/auth/oauth"
+    - "/app/auth/me"
+    - "/app/auth/tenants"
+    - "/app/auth/setup"
+    - "/app/auth/invites"
+    - "/app/auth/password/forgot"
+    - "/app/auth/password/reset"
+    - "/app/xlicense/me"
+    - "/app/xlicense/plans"
+    - "/app/xlicense/licenses"
+    - "/app/xlicense/verify"
+    - "/app/xlicense/modules"
+    # Le prestataire de paiement appelle sans jeton : sans cette exclusion, un tenant impayé ne
+    # pourrait plus recevoir l'événement qui le remet en règle. La signature garde la route.
+    - "/app/xlicense/webhook"
+    - "/app/xpay/billing/checkout"
+    - "/app/xform/public/*"
+
+  # Routes protégées (si vide, toutes les routes non exclues sont protégées)
+  protected_prefixes: []
+
+  # Où le prestataire de paiement renvoie l'abonné : `<desk_url>/#/billing?module=…&session_id=…`.
+  # Construit par le serveur, jamais par le navigateur (une adresse de retour venue du client serait une
+  # redirection ouverte). Vide : le prestataire retombe sur /success et /cancel de SON domaine.
+  desk_url: "http://localhost:8000/app/xcore-doctype/desk"
+
+  # Le tarif de DÉPART d'un module, appliqué à sa seule ENTRÉE au catalogue (ensuite c'est l'écran
+  # « Modules et tarifs » qui décide, et aucun redémarrage ne défait un prix posé là).
+  # `price_env` nomme la variable du bloc `env:` qui porte l'identifiant de tarif chez le prestataire :
+  # l'identifiant ne se recopie pas ici, il vit déjà à un seul endroit.
+  # Tout module non listé arrive GRATUIT — mettre en vente reste un acte explicite.
+  paid_modules:
+    sales:
+      label: Ventes
+      price: 19.99
+      currency: EUR
+      period: month
+      price_env: STRIPE_PRICE_PRO
+    stock:
+      label: Stock
+      price: 9.99
+      currency: EUR
+      period: month
+      price_env: STRIPE_PRICE_BASIC
+    crm:
+      label: Relation client
+      price: 14.99
+      currency: EUR
+      period: month
+      price_env: STRIPE_PRICE_ENTERPRISE
+
+# ── Variables d'environnement ─────────────────────────────────────────────────
+# Chargées depuis app/xauth/.env avant résolution des ${VAR}
+
+#envconfiguration:
+#  inject: true
+#  env_file: .env
+
+env:
+  # Clés RS256 de licence. Chemin relatif = relatif à la RACINE de l'application (dossier de
+  # integration.yaml), pas au répertoire courant. Surcharge par variable d'environnement :
+  # XLICENSE_PRIVATE_KEY_PATH / XLICENSE_PUBLIC_KEY_PATH (chemins absolus).
+  # conf/private.pem n'est JAMAIS versionné : sans lui le plugin démarre en état DÉGRADÉ
+  # (routes de licence en 503, cause dans les journaux et /health), sans bloquer les autres plugins.
+  # Génération : openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out conf/private.pem
+  #              openssl rsa -pubout -in conf/private.pem -out conf/public.pem
+  JWT_PRIVATE_KEY_PATH: ./conf/private.pem
+  JWT_PUBLIC_KEY_PATH: ./conf/public.pem
+  STRIPE_PRICE_PRO: price_1TeD0SGSkawqAdX1w3KxgagE
+  STRIPE_PRICE_ENTERPRISE: price_1TeD38GSkawqAdX1orU6qH0b
+  STRIPE_PRICE_LIFETIME: price_1TeD3YGSkawqAdX12MmyhQJr
+  STRIPE_PRICE_BASIC: price_1TeCycGSkawqAdX1WNSVKLXY
+
+# ── Événements émis ──────────────────────────────────────────────────────────
+events_emitted:
+  xlicense.license.created:
+    description: "Licence créée pour un tenant"
+    payload_schema:
+      license_id: string
+      tenant_id: string
+      plan_id: string
+      state: string
+      expires_at: string
+  xlicense.license.transitioned:
+    description: "Transition d'état d'une licence"
+    payload_schema:
+      license_id: string
+      tenant_id: string
+      from_state: string
+      to_state: string
+      reason: string
+  xlicense.license.renewed:
+    description: "Licence renouvelée après paiement"
+    payload_schema:
+      license_id: string
+      tenant_id: string
+      expires_at: string
+  xlicense.license.expired:
+    description: "Licence expirée automatiquement"
+    payload_schema:
+      license_id: string
+      tenant_id: string
+  xlicense.license.key_rotated:
+    description: "Clé de licence régénérée"
+    payload_schema:
+      license_id: string
+      tenant_id: string
+  xlicense.license.plan_changed:
+    description: "Plan de licence modifié"
+    payload_schema:
+      license_id: string
+      tenant_id: string
+      plan_id: string
+      reason: string
+
+# ── Permissions inter-plugins ─────────────────────────────────────────────────
+permissions:
+  - resource: "registry"
+    actions: ["*"]
+    effect: allow
+  - resource: "xlicense.*"
+    actions: ["*"]
+    effect: allow
+
+# ── Ressources ────────────────────────────────────────────────────────────────
+resources:
+  timeout_seconds: 30
+  max_memory_mb: 256
+  rate_limit:
+    calls: 1000
+    period_seconds: 60
