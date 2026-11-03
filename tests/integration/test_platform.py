@@ -38,3 +38,28 @@ async def test_the_platform_plugins_load_beside_the_engine(tmp_path, monkeypatch
         assert any(p.startswith("/app/xlicense/") for p in paths), sorted(p for p in paths if "license" in p)
         assert any(p.startswith("/app/xpulse/") for p in paths), sorted(p for p in paths if "pulse" in p)
         assert any(e["plugin"] == "xlicense" for e in h.rbac_declared)
+
+
+async def test_a_write_signals_its_type_on_the_organisation_channel_xpulse_serves(tmp_path, monkeypatch):
+    """Bout à bout sur un vrai hôte : une écriture par l'API publie `doc.changed` sur le canal `tenant-<id>` d'`ext.pubsub` (celui
+    qu'xpulse relaie en SSE à ses seuls membres), avec le TYPE seulement ; le canal d'une autre organisation ne reçoit rien."""
+    import asyncio
+    import json
+
+    keys(tmp_path, monkeypatch)
+    async with boot_host(tmp_path, link_plugins=PLATFORM) as h:
+        pubsub = h.xcore.services.get("ext.pubsub")
+
+        async def first(channel):
+            async for chunk in pubsub.stream([channel], user_id="-", unfiltered_channels={channel}):
+                return json.loads(chunk.split("data: ", 1)[1])
+
+        mine, theirs = asyncio.create_task(first("tenant-acme")), asyncio.create_task(first("tenant-globex"))
+        await asyncio.sleep(0.05)  # les deux abonnements sont posés avant l'écriture
+        r = await h.http("POST", "/doc/Customer", token=h.token(), json={"data": {"customer_name": "Secrète SA", "type": "Particulier"}})
+        assert r.status_code == 201, r.text
+        signal = await asyncio.wait_for(mine, 5)
+        assert signal == {"event_type": "doc.changed", "tenant_id": "acme", "doctype": "Customer"}  # ni nom ni valeur
+        await asyncio.sleep(0.1)
+        assert not theirs.done()
+        theirs.cancel()

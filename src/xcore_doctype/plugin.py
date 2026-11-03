@@ -40,6 +40,7 @@ from .csv_import import import_csv
 from . import devtools
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
+from .realtime import NoRealtime, Realtime, RealtimeNotifier
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
 from .user_permissions import make_user_permission_hooks
 from .notification_rules import RULE_HOOK, ExtensionMailer, Mailer, NoMailer, NotificationRules, make_rule_hook
@@ -205,7 +206,9 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root = APIRouter()
         root.include_router(build_router(self.documents, self._settings, developer=desk.developer_mode))
         root.include_router(build_files_router(file_service, self._settings))  # téléverser, liens signés : une identité est exigée
-        directory, notifier = self._directory(block.get("directory")), self._notifier(block.get("notifications"))
+        self.documents.realtime = self._realtime(block.get("realtime"))
+        directory = self._directory(block.get("directory"))
+        notifier = RealtimeNotifier(self._notifier(block.get("notifications")), self.documents.realtime)
         collab = CollaborationService(self.documents, file_service, directory, notifier)
         # Les règles de notification de l'organisation (DocType `Notification Rule` du plugin `system`) : cloche et e-mail, après le commit.
         rules = NotificationRules(self.documents, directory=directory, notifier=notifier, logger=self.logger, **self._rule_delivery(block.get("notifications")))
@@ -281,6 +284,22 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             return Sealer(raw)
         except ValueError as e:
             raise ConfigurationError(str(e)) from None
+
+    def _realtime(self, raw: Any) -> Any:
+        """Les signaux temps réel du Desk (realtime.py) sur l'extension `ext.pubsub` de l'hôte, que relaie le plugin `xpulse` (SSE).
+        Sans l'extension, ou avec `doctype.realtime: false`, rien n'est signalé : le Desk relit à la demande, comme avant."""
+        if raw is not None and not isinstance(raw, bool):
+            raise ConfigurationError("doctype.realtime doit être true ou false")
+        if raw is False:
+            return NoRealtime()
+        try:
+            pubsub = self.get_service("ext.pubsub")
+        except Exception:  # noqa: BLE001 - l'absence de l'extension n'est pas une erreur
+            pubsub = None
+        if pubsub is None:
+            return NoRealtime()
+        self.logger.info("realtime signals published on ext.pubsub")
+        return Realtime(pubsub, self.logger)
 
     def _blob_store(self, raw: Any) -> BlobStore:
         """Le magasin de fichiers : l'extension `ext.storage` de l'hôte si elle existe (local, s3, r2, supabase), sinon un dossier local."""

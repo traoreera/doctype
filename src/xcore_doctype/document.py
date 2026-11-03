@@ -112,6 +112,7 @@ from .workspaces import (
     SpacerBlock,
 )
 from .translations import Translations
+from .realtime import NoRealtime
 from .versions import diff, snapshot
 
 MAX_PAGE = 200
@@ -198,6 +199,7 @@ class DocumentService:
         self._timezone, self._clock = timezone, clock
         self.files: Any = None  # le `FileService`, posé par le plugin après coup (il a besoin de ce service)
         self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
+        self.realtime: Any = NoRealtime()  # les signaux temps réel (`realtime.Realtime` sur ext.pubsub), posés par le plugin s'il y a un bus
         self.translations = Translations()  # les catalogues des plugins (translations.py) : libellés dans la langue de la requête
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
 
@@ -1454,6 +1456,7 @@ class DocumentService:
             {"doctype": doctype, "old_name": name, "name": new, "tenant_id": ctx.tenant_id, "user": ctx.user_id},
         )
         self._dispatch(relinked)  # les documents qui le citaient ont changé de valeur (le renommé lui-même : un changement de nom, pas une modification)
+        await self.realtime.doc_changed(ctx.tenant_id, {e.doctype for e in relinked})
         return self._present(doc)
 
     # ── Soumission (documents soumettables) ───────────────────
@@ -1833,6 +1836,7 @@ class DocumentService:
         """Après le commit, ce que les hooks ont écrit dans la transaction : les règles de notification le voient, et les hooks `after_insert` /
         `after_save` des documents écrits s'exécutent (journalisés en cas d'échec, comme ceux d'une écriture ordinaire). Jamais si la transaction échoue."""
         self._dispatch(writes.events)
+        await self.realtime.doc_changed(ctx.tenant_id, {e.doctype for e in writes.events})  # ce que les hooks ont écrit change aussi à l'écran
         for compiled, doc, old in writes.saved:
             await self._after_hooks(ctx, compiled, doc, old)
 
@@ -2689,6 +2693,9 @@ class DocumentService:
 
     async def _emit(self, topic: str, payload: dict[str, Any]) -> None:
         # Pas de contenu du document : l'EventBus est global au processus, ses abonnés ne sont pas filtrés par tenant.
+        if payload.get("tenant_id") and payload.get("doctype"):
+            # Le navigateur : « un document de ce TYPE a changé » (realtime.py : ni nom ni valeur sur le canal de l'organisation).
+            await self.realtime.doc_changed(payload["tenant_id"], [payload["doctype"]])
         if self._events is None:
             return
         try:
