@@ -1,0 +1,33 @@
+# La licence de MON organisation : son état, son plan, ses échéances. DocType VIRTUEL (`source: xlicense`) sur la
+# table `licenses`, en LECTURE SEULE de bout en bout.
+#
+# Rien ici n'est modifiable depuis un écran, et c'est voulu : une licence naît d'un essai posé à la création de
+# l'organisation, d'un paiement confirmé chez le prestataire, ou d'un geste de la plateforme. Une case à cocher qui
+# donnerait de la valeur à une licence serait une faille, pas une commodité — xlicense n'expose d'ailleurs aucune
+# route HTTP de création ou d'activation, pour la même raison.
+#
+# Une organisation peut cumuler plusieurs licences (un plan plus un module acheté à part) : d'où une LISTE, et non
+# un document unique — que le moteur refuse de toute façon pour un type virtuel.
+schema_version: 1
+name: License
+label: Licence
+module: xlicense
+icon: id-card
+source: xlicense
+title_field: plan
+fields:
+  - { fieldname: state, label: État, fieldtype: Select, options: [trial, active, suspended, expired, revoked], read_only: true, in_list_view: true }
+  - { fieldname: plan, label: Formule, fieldtype: Text, read_only: true, in_list_view: true }
+  - { fieldname: issued_at, label: Émise le, fieldtype: Datetime, read_only: true, in_list_view: true }
+  - { fieldname: expires_at, label: Échéance, fieldtype: Datetime, read_only: true, in_list_view: true, description: "Fin de l'essai, ou de la période réglée" }
+  - { fieldname: last_validation_at, label: Dernière vérification, fieldtype: Datetime, read_only: true }
+layout:
+  - section: Licence
+    columns: [[state, plan], [issued_at, expires_at, last_validation_at]]
+permissions:
+  read: [{ grant: xlicense:license:read, description: "Voir la licence de son organisation" }]
+  write: []
+  create: []
+  delete: []
+views:
+  default: list

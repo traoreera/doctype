@@ -3,13 +3,15 @@ import Button from 'primevue/button'
 import Popover from 'primevue/popover'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useServices } from '@/lib/services'
 import { t } from '@/i18n'
 import { relativeTime } from '@/lib/format'
 import type { AuthNotification } from '@/lib/xauth'
 import { decodeEntities, safeTarget, useNotifications } from '@/stores/notifications'
 
-/** La cloche : les notifications d'xauth, relues toutes les minutes tant que l'onglet est visible. */
+/** La cloche : les notifications d'xauth, relues dès qu'xpulse signale une nouvelle (temps réel), et toutes les minutes tant que l'onglet est visible. */
 const store = useNotifications()
+const offBell = useServices().realtime?.onBell(() => void store.refresh())
 const router = useRouter()
 const pop = ref()
 const POLL_MS = 60_000
@@ -21,7 +23,10 @@ onMounted(() => {
     if (typeof document === 'undefined' || document.visibilityState !== 'hidden') void store.refresh()
   }, POLL_MS)
 })
-onBeforeUnmount(() => clearInterval(timer))
+onBeforeUnmount(() => {
+  clearInterval(timer)
+  offBell?.()
+})
 
 function toggle(e: Event): void {
   pop.value.toggle(e)

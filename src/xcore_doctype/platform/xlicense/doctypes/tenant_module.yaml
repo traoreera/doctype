@@ -1,0 +1,38 @@
+# Ce que MON organisation a pris : son entitlement réel. DocType VIRTUEL (`source: xlicense`) sur
+# `license_tenant_modules` ; la clé d'un document est le code du module.
+#
+# Créer un document = PRENDRE un module. Le supprimer = le RENDRE. C'est le geste de la marketplace, et il n'a
+# besoin d'aucun écran sur mesure : la liste, les filtres, le rapport et l'export viennent du moteur.
+#
+# Un module PAYANT ne s'active pas ici : la source refuse la création en disant de passer par le paiement
+# (`POST /me/modules/{code}/checkout`), et refuse le retrait d'un module payé (il se résilie chez le prestataire,
+# l'accès courant jusqu'à la fin de la période réglée). Pendant l'essai, tout est utilisable sans rien prendre.
+schema_version: 1
+name: Tenant Module
+label: Mes modules
+module: xlicense
+icon: th-large
+source: xlicense
+title_field: label
+fields:
+  - { fieldname: module, label: Module, fieldtype: Link, options: Module, required: true, in_list_view: true, description: "Au catalogue de l'instance" }
+  - { fieldname: label, label: Nom, fieldtype: Text, read_only: true, in_list_view: true }
+  - { fieldname: source, label: Origine, fieldtype: Select, options: [free, paid, granted], read_only: true, in_list_view: true, description: "Gratuit, payé par abonnement, ou accordé par la plateforme" }
+  - { fieldname: current, label: Actif, fieldtype: Boolean, read_only: true, in_list_view: true, description: "Une échéance passée ne compte plus" }
+  - { fieldname: started_at, label: Depuis, fieldtype: Datetime, read_only: true }
+  - { fieldname: expires_at, label: Jusqu'au, fieldtype: Datetime, read_only: true, description: "Fin de la période réglée après une résiliation ; vide tant que l'abonnement court" }
+  - { fieldname: subscription, label: Abonnement, fieldtype: Text, read_only: true, description: "La référence chez le prestataire de paiement" }
+layout:
+  - section: Module
+    columns: [[module, label, source], [current, started_at, expires_at]]
+  - section: Facturation
+    columns: [[subscription]]
+permissions:
+  read: [{ grant: xlicense:tenant_module:read, description: "Voir les modules de son organisation" }]
+  write: []
+  # Même grant pour prendre et pour rendre : c'est le même pouvoir, celui de choisir les modules de
+  # l'organisation. Sa description doit être identique partout (le moteur refuse deux libellés pour un grant).
+  create: [{ grant: xlicense:tenant_module:write, description: "Choisir les modules de son organisation" }]
+  delete: [{ grant: xlicense:tenant_module:write, description: "Choisir les modules de son organisation" }]
+views:
+  default: list

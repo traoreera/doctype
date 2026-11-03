@@ -1269,6 +1269,8 @@ export const en: Messages = {
     amendedToast: 'Amendment created: fix it, then submit it',
     frozen: 'This document is frozen: it is no longer edited, it is cancelled (then amended).',
     frozenEditable: 'This document is submitted: only the planned fields remain editable.',
+    changedElsewhere: 'This document was just changed elsewhere. Your input is kept; reload it before saving.',
+    reloadChanged: 'Reload',
     nameLabel: 'Name',
     saveShortcut: 'Save (Ctrl+S)',
     rowN: (n: number) => `row ${n}`,

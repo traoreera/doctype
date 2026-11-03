@@ -36,6 +36,10 @@ def hermetic_services(config: dict) -> dict:
         if isinstance(block, dict) and block.get("backend") == "redis":
             block["backend"] = "memory"
             block.pop("url", None)
+    # La diffusion (pubsub) : en mémoire, dans le processus de l'hôte de test.
+    pubsub = (services.get("extensions") or {}).get("pubsub")
+    if isinstance(pubsub, dict) and isinstance(pubsub.get("config"), dict):
+        pubsub["config"] = {"provider": "memory"}
     return config
 
 

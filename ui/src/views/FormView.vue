@@ -19,6 +19,7 @@ import { supportsTags } from '@/lib/tags'
 import HistoryPanel from '@/components/HistoryPanel.vue'
 import TableField from '@/components/TableField.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
+import { useLiveDoctype } from '@/composables/useLive'
 import ExtensionSlot from '@/extensions/ExtensionSlot.vue'
 import { useExtensions, type Owned } from '@/extensions/host'
 import type { FormAction, FormContext } from '@/extensions/types'
@@ -66,6 +67,8 @@ const loading = ref(true)
 const saving = ref(false)
 const loadError = ref<{ title: string; detail: string } | null>(null)
 const banner = ref<string | null>(null)
+/** Quelqu'un d'autre a enregistré ce document pendant que j'y tapais (temps réel) : je garde ma saisie et je choisis de relire. */
+const changedElsewhere = ref(false)
 const errors = ref<Record<string, string>>({})
 const collapsed = ref<Record<number, boolean>>({})
 const formId = `f${Math.random().toString(36).slice(2, 8)}`
@@ -200,6 +203,7 @@ function init(m: DocTypeMeta, rec: DocRecord | null, copy?: Values, keepTab = fa
   }
   errors.value = {}
   banner.value = null
+  changedElsewhere.value = false
   collapsed.value = Object.fromEntries(m.layout.map((s, i) => [i, s.collapsible && s.collapsed]))
 }
 
@@ -628,6 +632,27 @@ async function reloadRecord(): Promise<void> {
   if (mine !== loadTicket || props.doctype !== doctype || props.name !== rec.name) return
   init(m, rec, undefined, true)
 }
+// Temps réel : un document de ce type a changé quelque part. On relit le MIEN (avec mes droits) ; s'il a une version plus récente, une
+// page intacte suit en silence, une page en cours de saisie le dit sans rien écraser.
+useLiveDoctype(() => props.doctype, () => void onLiveChange())
+async function onLiveChange(): Promise<void> {
+  const rec = record.value
+  if (!meta.value || !rec || rec.version <= 0 || isNew.value || saving.value) return
+  const mine = loadTicket
+  let fresh: DocRecord
+  try {
+    fresh = await api.get(props.doctype, rec.name)
+  } catch {
+    return // supprimé ou plus lisible : la prochaine action le dira
+  }
+  if (mine !== loadTicket || record.value?.name !== fresh.name || fresh.version <= (record.value?.version ?? 0)) return
+  if (touched.value) changedElsewhere.value = true
+  else init(meta.value, fresh, undefined, true)
+}
+async function reloadElsewhere(): Promise<void> {
+  changedElsewhere.value = false
+  await reloadRecord()
+}
 function runExtension(action: Owned<FormAction>): void {
   const ctx = extContext.value
   if (ctx) void extensions.run(action.extension, (tools) => action.run({ ...ctx, ...tools, reload: reloadRecord }))
@@ -860,6 +885,10 @@ onBeforeUnmount(() => {
           </li>
           <li v-if="errorLines.length > 6" class="desk-muted">{{ t.form.moreErrors(errorLines.length - 6) }}</li>
         </ul>
+      </Message>
+      <Message v-if="changedElsewhere" severity="warn" class="banner-error" data-testid="form-changed-elsewhere">
+        {{ t.form.changedElsewhere }}
+        <Button :label="t.form.reloadChanged" text size="small" data-testid="form-reload-changed" @click="reloadElsewhere" />
       </Message>
       <Message v-if="frozen && submittable" severity="info" class="banner-error" data-testid="form-frozen">{{ editableAfterSubmit ? t.form.frozenEditable : t.form.frozen }}</Message>
       <Message v-if="copiedFrom" severity="info" class="banner-error" data-testid="form-copy">{{ t.form.duplicatedFrom(copiedFrom) }}</Message>

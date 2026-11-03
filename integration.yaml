@@ -70,25 +70,44 @@ services:
         timeout: 10
         max_retries: 3
         queue_size: 100
+    # Les extensions de la plateforme sont LIVRÉES par le paquet (`xcore_doctype.ext.*`) : rien à copier dans l'hôte.
+    # pubsub : la diffusion entre processus (Redis en développement ; `memory` dans un seul processus, et dans les tests).
     pubsub:
-      module: extensions.pubsub.service:PubSubClient
+      module: xcore_doctype.ext.pubsub.service:PubSubClient
       config:
         provider: redis
         redis:
           url: redis://localhost:6379
+    # xpay : le prestataire de paiement (Stripe) des abonnements d'xlicense. Sans clés, il reste indisponible et
+    # la facturation le dit ; rien d'autre n'en dépend.
     xpay:
-      module: extensions.xpay.service:PayProvider
+      module: xcore_doctype.ext.xpay.service:PayProvider
       config:
         secret_key: ${STRIPE_SECRET_KEY}
         publishable_key: ${STRIPE_PUBLISHABLE_KEY}
         webhook_secret: ${STRIPE_WEBHOOK_SECRET}
         domain: ${DOMAIN_NAIME_PAYMENT}
     
+    # websocket : les canaux temps réel ouverts au navigateur (documents en direct du Desk).
     websocket:
-      module: extensions.xwebsocket.main:WsManager
+      module: xcore_doctype.ext.xwebsocket.main:WsManager
       config:
         channel:
         - user
+    # storage : les fichiers des documents (champs Image/Attach, pièces jointes, images d'impression). `local` sous
+    # data/storage en développement ; s3, r2 ou supabase en production (voir xcore_doctype/extensions/xstorage/main.py).
+    storage:
+      module: xcore_doctype.ext.xstorage.main:StorageService
+      config:
+        backend: local
+        max_size_mb: 10
+        # La liste par défaut d'xstorage refuse .html, .md, .json… Le moteur juge déjà lui-même (une image est reconnue à ses
+        # octets, une pièce jointe est TOUJOURS téléchargée, jamais affichée) : en développement on accepte donc aussi ces
+        # formats-là. Ce que l'opérateur refuse ici, le moteur le renvoie en 415 (`file_type_not_allowed`), jamais en 500.
+        allowed_extensions: [.pdf, .doc, .docx, .odt, .rtf, .txt, .md, .html, .htm, .json, .xml, .xls, .xlsx, .csv, .ods,
+                             .jpg, .jpeg, .png, .gif, .webp, .svg, .bmp, .tiff, .zip, .tar, .gz, .rar, .7z, .ppt, .pptx, .odp]
+        local:
+          path: data/storage
 
 
   scheduler:

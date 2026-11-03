@@ -22,6 +22,20 @@ class FileService:
     def __init__(self, documents: DocumentService, store: F.BlobStore, signer: F.UrlSigner) -> None:
         self._docs, self._store, self._signer = documents, store, signer
 
+    async def _save(self, content: bytes, name: str, namespace: str) -> Any:
+        """Le stockage de l'hôte (`ext.storage`) a SA politique en plus de la nôtre (extensions permises, taille) : son refus est
+        celui de l'opérateur, rendu comme notre propre refus (415/413), jamais en 500. Reconnu au NOM de la classe, car l'extension
+        de l'hôte n'est pas forcément celle du paquet (même contrat, autre module)."""
+        try:
+            return await self._store.save(content, name, namespace)
+        except Exception as e:
+            kinds = {c.__name__ for c in type(e).__mro__}
+            if "FileTypeNotAllowedError" in kinds:
+                raise F.FileTypeRefused("Ce type de fichier est refusé par le stockage de la plateforme") from None
+            if "FileTooLargeError" in kinds:
+                raise F.FileError("file_too_large", "Fichier trop volumineux pour le stockage de la plateforme", 413) from None
+            raise
+
     # ── Téléverser ────────────────────────────────────────────
     def _file_field(self, doctype: str, fieldname: str) -> tuple[Any, FieldDef]:
         compiled = self._docs._doctype(doctype)
@@ -48,7 +62,7 @@ class FileService:
         limit = field.max_mb or F.DEFAULT_MAX_MB
         mime, name = F.check_upload(kind=field.fieldtype, content=content, filename=filename or "", declared_type=content_type, limit_mb=limit)
         namespace = _namespace(ctx.tenant_id, definition.name)
-        blob = await self._store.save(content, name, namespace)
+        blob = await self._save(content, name, namespace)
         file_id = _new_id()
         try:
             async with self._docs._query(ctx) as q:
@@ -68,7 +82,7 @@ class FileService:
         Un fichier joint n'est jamais une image « en ligne » inconnue : seul un vrai PNG/JPEG/GIF/WebP s'affiche, le reste se télécharge."""
         mime, name = F.check_upload(kind="Attach", content=content, filename=filename or "", declared_type=content_type, limit_mb=F.DEFAULT_MAX_MB)
         namespace = _namespace(ctx.tenant_id, doctype)
-        blob = await self._store.save(content, name, namespace)
+        blob = await self._save(content, name, namespace)
         file_id = _new_id()
         try:
             async with self._docs._query(ctx) as q:
@@ -90,7 +104,7 @@ class FileService:
         PNG, JPEG, GIF, WebP reconnus à leurs octets — jamais un SVG, qui porte du script."""
         mime, name = F.check_upload(kind="Image", content=content, filename=filename or "", declared_type=content_type, limit_mb=F.PRINT_IMAGE_MAX_MB)
         namespace = _namespace(ctx.tenant_id, doctype)
-        blob = await self._store.save(content, name, namespace)
+        blob = await self._save(content, name, namespace)
         file_id = _new_id()
         try:
             async with self._docs._query(ctx) as q:

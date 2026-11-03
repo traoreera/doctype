@@ -1267,6 +1267,8 @@ export const fr = {
     amendedToast: 'Amendement créé : corrigez-le puis soumettez-le',
     frozen: 'Ce document est figé : on ne le modifie plus, on l’annule (puis on l’amende).',
     frozenEditable: 'Ce document est soumis : seuls les champs prévus restent modifiables.',
+    changedElsewhere: 'Ce document vient d’être modifié ailleurs. Votre saisie est conservée ; relisez-le avant d’enregistrer.',
+    reloadChanged: 'Relire',
     nameLabel: 'Nom',
     saveShortcut: 'Enregistrer (Ctrl+S)',
     rowN: (n: number) => `ligne ${n}`,

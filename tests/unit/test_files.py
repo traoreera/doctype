@@ -71,7 +71,7 @@ class MemoryStore:
 
 
 @pytest.fixture
-def env(db, tables):
+def env(db, tables, tmp_path):
     reg = DocTypeRegistry()
     reg.register(parse_definition(EMPLOYEE))
     docs = DocumentService(reg, db, tables, _Log())
@@ -79,7 +79,7 @@ def env(db, tables):
     signer = F.UrlSigner("s" * 32, clock=lambda: clock[0])
     svc = FileService(docs, store, signer)
     docs.files = svc
-    return type("Env", (), {"docs": docs, "files": svc, "store": store, "clock": clock, "signer": signer})
+    return type("Env", (), {"docs": docs, "files": svc, "store": store, "clock": clock, "signer": signer, "tmp": tmp_path})
 
 
 async def up(env, ctx=HR, field="photo", content=None, name="moi.png", mime="image/png"):
@@ -192,6 +192,21 @@ class TestUpload:
     async def test_an_attachment_keeps_any_content_but_gets_a_safe_type(self, env):
         r = await up(env, field="contract", content=b"%PDF-1.7 ...", name="contrat.pdf", mime="application/pdf")
         assert r["content_type"] == "application/pdf"
+
+    async def test_the_host_storage_refusal_is_a_clean_refusal_not_a_500(self, env):
+        # Le vrai `ext.storage` (xstorage) a sa propre liste d'extensions et sa taille : son refus devient le nôtre (415/413).
+        from xcore_doctype.ext.xstorage.backends import LocalBackend
+        from xcore_doctype.ext.xstorage.uploader import FileUploader
+
+        uploader = FileUploader(LocalBackend(str(env.tmp / "blobs")), max_size_mb=1, allowed_ext={".pdf"})
+        env.files._store = uploader
+        with pytest.raises(F.FileTypeRefused) as refused:
+            await up(env, field="contract", content=b"<html>", name="page.html", mime="text/html")
+        assert refused.value.status == 415
+        with pytest.raises(F.FileError) as big:
+            await up(env, field="contract", content=b"%PDF" + b"x" * (1024 * 1024 + 1), name="gros.pdf", mime="application/pdf")
+        assert (big.value.code, big.value.status) == ("file_too_large", 413)
+        assert (await up(env, field="contract", content=b"%PDF-1.7", name="ok.pdf", mime="application/pdf"))["filename"] == "ok.pdf"
 
     async def test_only_a_file_field_takes_a_file(self, env):
         with pytest.raises(ValidationFailed, match="n'est pas un champ Image ou Attach"):

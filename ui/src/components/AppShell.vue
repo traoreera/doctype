@@ -60,6 +60,9 @@ onMounted(() => {
   const why = (reason: string) => (reason.length > 160 ? `${reason.slice(0, 159)}…` : reason)
   if (extensions.failures.length) notify.warn(t.extensions.failed(extensions.failures.map((f) => `${f.name} (${why(f.reason)})`).join(', ')))
 })
+// Le temps réel (xpulse) : un flux par session et par organisation, relancé quand le jeton change (renouvellement, autre organisation).
+watch(() => [session.token, session.tenant], () => services.realtime?.restart(), { immediate: true })
+onBeforeUnmount(() => services.realtime?.stop())
 onMounted(async () => {
   recents.load()
   void tasks.refresh() // la pastille de « Mes tâches »

@@ -15,6 +15,7 @@ import SelectButton from 'primevue/selectbutton'
 import { useConfirm } from 'primevue/useconfirm'
 import type { MenuItem } from 'primevue/menuitem'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { useLiveDoctype } from '@/composables/useLive'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import BlockEditor from '@/components/BlockEditor.vue'
 import BulkActions from '@/components/BulkActions.vue'
@@ -479,6 +480,11 @@ watch([() => props.doctype, current], () => (dashEditing.value = false))
 
 watch(current, (view, old) => {
   if (view === 'list' && old !== 'list' && meta.value) void fetchPage()
+})
+
+// Temps réel : un document de ce type a changé dans l'organisation, la page de liste se relit (avec les droits de l'utilisateur).
+useLiveDoctype(() => props.doctype, () => {
+  if (current.value === 'list' && meta.value && !loading.value) void fetchPage()
 })
 
 // Recherche rapide : on attend la fin de la frappe.
