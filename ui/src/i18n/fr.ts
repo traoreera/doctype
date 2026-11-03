@@ -1349,6 +1349,7 @@ export const fr = {
     failed: 'Le paiement n’a pas pu être vérifié.',
     noSession: 'Cette page attend un retour du prestataire de paiement.',
     myModules: 'Mes modules',
+    group: 'Abonnement',
     portal: 'Gérer ma facturation',
     unavailable: 'La facturation n’est pas installée sur cette instance.',
     modulesIntro: 'Les applications de votre organisation : celles que vous avez prises et celles que vous pouvez ajouter.',

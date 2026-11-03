@@ -276,3 +276,36 @@ describe('un réglage n’a pas d’autre adresse que les Paramètres', () => {
     expect(r.currentRoute.value.name).toBe('list')
   })
 })
+
+
+describe('Paramètres › Abonnement : « Mes modules »', () => {
+  const MINE = { state: 'active', valid: true, trial: false, all_modules: false, can_manage: true, modules: [{ code: 'crm', label: 'CRM', description: null, free: true, price: 0, currency: 'EUR', period: 'month', active: true, sellable: true, taken: false, source: null, expires_at: null, usable: false }] }
+  const open = async (path: string, license: unknown) => {
+    const r = settingsRouter()
+    await r.push(path)
+    const { w } = mountWith({ template: '<RouterView />' }, {}, { doctypes: async () => [], workspaces: async () => [] }, r, { license })
+    await flushPromises()
+    await flushPromises()
+    return { w, r }
+  }
+
+  it('avec la facturation installée : une rubrique « Abonnement › Mes modules » qui ouvre la page sur place', async () => {
+    const { w, r } = await open('/settings', { modules: vi.fn(async () => MINE) })
+    const link = w.find('[data-testid="billing-modules"]')
+    expect(w.find('[data-testid="settings-group-billing"]').text()).toContain('Abonnement')
+    expect(link.text()).toContain('Mes modules')
+    await r.push('/settings/~modules')
+    await flushPromises()
+    await flushPromises()
+    expect(w.find('[data-testid="system-title"]').text()).toBe('Mes modules')
+    await vi.waitFor(() => expect(w.find('[data-module="crm"]').exists()).toBe(true)) // la page se charge à la demande
+    expect(w.findAll('h1').map((h) => h.text())).not.toContain('Mes modules Mes modules') // un seul titre
+    expect(w.find('[data-testid="settings-unknown"]').exists()).toBe(false)
+  })
+
+  it('sans facturation : ni rubrique, ni page (l’adresse est « inconnue »)', async () => {
+    const { w } = await open('/settings/~modules', null)
+    expect(w.find('[data-testid="settings-group-billing"]').exists()).toBe(false)
+    expect(w.find('[data-testid="settings-unknown"]').exists()).toBe(true)
+  })
+})

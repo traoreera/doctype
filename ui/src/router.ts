@@ -36,7 +36,8 @@ export function createDeskRouter(pinia: Pinia): Router {
       // serveur (voir BillingReturnView). L'adresse est construite par xlicense, jamais par le navigateur.
       { path: '/billing', name: 'billing', component: () => import('@/views/BillingReturnView.vue') },
       // « Mes modules » : le catalogue de l'instance, ce que l'organisation a pris, prendre / payer / rendre (xlicense).
-      { path: '/modules', name: 'modules', component: () => import('@/views/ModulesView.vue') },
+      // L'ancienne adresse de « Mes modules » : la page vit maintenant dans Paramètres › Abonnement (favoris et liens déjà donnés suivent).
+      { path: '/modules', name: 'modules', redirect: { name: 'settings', params: { doctype: '~modules' } } },
       { path: '/shared', name: 'shared', component: () => import('@/views/SharedView.vue') },
       // Les fichiers des documents que je peux lire (champs Image/Attach, pièces jointes) : lister, télécharger, détacher.
       { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
