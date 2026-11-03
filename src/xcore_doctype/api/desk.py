@@ -21,7 +21,7 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Request
@@ -175,6 +175,7 @@ def build_desk_router(
     at: str = "/desk",
     api_base: str | None = None,
     catch_all: bool = True,
+    realtime: Callable[[], bool] | None = None,
 ) -> APIRouter:
     """Les routes du Desk sous `at` (`/desk` dans le plugin ; `/` ou un autre chemin pour `mount_desk`).
 
@@ -182,6 +183,9 @@ def build_desk_router(
     `catch_all=False` : seulement `index.html`, `assets/` et `shared/` au lieu de `<at>/{chemin}` — monté à la racine d'une
     application, une route attrape-tout masquerait toutes les routes que l'application déclare APRÈS (FastAPI essaie dans l'ordre).
     `extensions` None : pas de route `ext/` (le plugin passe toujours les siennes).
+    `realtime` : vrai quand le Desk peut ouvrir le flux temps réel d'xpulse (jugé à chaque `config.json` : l'ordre de chargement des
+    plugins n'y change rien). Absent (mount_desk) : jamais. Sans cette annonce le Desk demandait le flux partout, et un hôte sans xpulse
+    répondait 404 à chaque page : une erreur de console permanente (mesuré dans le scénario Chromium de la caisse d'erp).
     """
     base = at.rstrip("/")
     if base and (not base.startswith("/") or "{" in base):
@@ -235,6 +239,7 @@ def build_desk_router(
                 "login_url": _login_url(settings.login_url, served),
                 "extensions": [{"name": e.name, "url": e.url} for e in extensions.served()],
                 "developer": settings.developer_mode,  # le Desk n'offre le constructeur de DocTypes que si l'opérateur l'a ouvert
+                "realtime": bool(realtime and realtime()),  # le flux d'xpulse existe : le Desk ne le demande que dans ce cas
             },
             headers={**common, "Cache-Control": "no-store"},
         )

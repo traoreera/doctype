@@ -9,6 +9,9 @@ export interface DeskConfig {
   extensions?: { name: string; url: string }[]
   /** Le mode développeur (constructeur de DocTypes) est ouvert par l'opérateur (`doctype.desk.developer_mode`). */
   developer?: boolean
+  /** Le flux temps réel d'xpulse existe sur cet hôte (`config.json` `realtime`) : sans cette annonce, le Desk ne le demande pas
+   * (un hôte sans xpulse répondrait 404 à chaque page, une erreur de console permanente). */
+  realtime?: boolean
 }
 
 declare global {
@@ -72,13 +75,14 @@ export async function loadConfig(
 
   try {
     const res = await transport.request({ method: 'GET', url: new URL('config.json', where.href).toString(), headers: { Accept: 'application/json' } })
-    const body = res.json as { api_base?: unknown; login_url?: unknown; extensions?: unknown; developer?: unknown } | null
+    const body = res.json as { api_base?: unknown; login_url?: unknown; extensions?: unknown; developer?: unknown; realtime?: unknown } | null
     if (res.status === 200 && body && typeof body.api_base === 'string') {
       return {
         baseUrl: trimSlash(body.api_base),
         loginUrl: typeof body.login_url === 'string' ? body.login_url : null,
         extensions: readExtensions(body.extensions, where.href),
         developer: body.developer === true,
+        realtime: body.realtime === true,
       }
     }
   } catch {
