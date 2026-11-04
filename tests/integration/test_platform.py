@@ -108,3 +108,30 @@ async def test_config_json_announces_real_time_only_when_xpulse_serves_it(tmp_pa
     async with boot_host(tmp_path / "sans") as h:  # ext.pubsub est là (hermetic_services), xpulse non
         r = await h.client.get(f"{h.base}/desk/config.json")
         assert r.status_code == 200 and r.json()["realtime"] is False, r.text
+
+
+async def _state(h, name: str) -> str | None:
+    plugins = (await h.ipc("GET", "/status")).json()["plugins"]
+    return next((p["state"] for p in plugins if p["name"] == name), None)
+
+
+async def test_xprint_ships_the_erp_print_templates_on_a_real_host(tmp_path):
+    """`xprint` (YAML seul) sur un vrai hôte, avec le jeu `doctypes/` de l'ERP chargé par le moteur : la facture de vente propose le
+    gabarit livré, en français. Le Python du plugin tient en quelques lignes — et c'est ce test qui a montré qu'il lui manquait
+    `AutoDispatchMixin` (xcore refuse d'instancier un TrustedBase sans `handle`)."""
+    from pathlib import Path
+
+    erp = Path(__file__).resolve().parents[2] / "doctypes"
+    async with boot_host(tmp_path, doctype_config={"doctypes_dirs": [str(erp)]}, link_plugins={"xprint": platform_plugins_dir() / "xprint"}) as h:
+        assert await _state(h, "xprint") == "ready"
+        t = h.token(permissions=["accounts:sales_invoice:read", "selling:quotation:read"])
+        for doctype, label in (("Sales Invoice", "Facture"), ("Quotation", "Devis")):
+            r = await h.http("GET", f"/print-templates/{doctype}", token=t)
+            assert r.status_code == 200, r.text
+            assert {"name": "standard", "label": label, "source": "plugin"} in r.json()["templates"]
+
+
+async def test_xprint_without_the_erp_loads_and_skips_every_template(tmp_path):
+    """Sans aucun module ERP, xprint démarre quand même : un type absent n'est pas une faute, il n'a rien à imprimer."""
+    async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"xprint": platform_plugins_dir() / "xprint"}) as h:
+        assert await _state(h, "xprint") == "ready"

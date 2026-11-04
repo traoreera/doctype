@@ -40,7 +40,7 @@ Elle écrit :
 |---|---|---|
 | `app/xcore-doctype/` | le moteur (`plugin.yaml` + un petit `src/main.py`) | le code oui, **`plugin.yaml` non** (c'est votre copie, gardée sauf `--force`) |
 | `app/system/` | les réglages de base (`System Settings`), les règles de notification, les restrictions d'utilisateur | oui (un fichier que vous y ajoutez est gardé, avec un avertissement) |
-| `app/xlicense/`, `app/xpulse/` | la plateforme : licences/modules, temps réel | le code oui, `plugin.yaml` non |
+| `app/xlicense/`, `app/xpulse/`, `app/xprint/` | la plateforme : licences/modules, temps réel, gabarits d'impression des pièces ERP | le code oui, `plugin.yaml` non |
 
 Puis elle affiche un diagnostic (`xcore-doctype doctor` le refait à tout moment) : base synchrone, `xcore.setup(app)` manquant,
 tenancy incohérente, plugin `auth` absent, manifeste qui ferme encore les extensions…
@@ -302,6 +302,10 @@ blocks:
       - { field: montant, align: right, width: 35 }
   - { type: totals, fields: [total_ht, tva, total_ttc] }
 ```
+
+Exemples complets, en document libre (`content`, libellés en français) : le plugin
+[`xprint`](../src/xcore_doctype/platform/xprint) livre devis, commande, facture, bon de livraison, commande fournisseur et reçu de
+paiement pour les DocTypes ERP de `doctypes/`.
 
 Blocs : `title`, `fields`, `table`, `totals`, `text`, `spacer`, `page_break`. Aucun code : `{{ name }}`, `{{ doctype }}` et
 `{{ doc.<champ> }}` seulement. Sans gabarit, le moteur en fabrique un depuis le `layout` : aucun document n'est inimprimable. Chaque

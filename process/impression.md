@@ -728,3 +728,23 @@ gabarit gagne, `none`, lecteur sans grant, autre organisation, pas un PDF, fichi
 `system`, liste fermée, ancien gabarit nommé), `test_system_plugin` (un vrai hôte : dépôt par l'API, lecteur sans
 grant, autre organisation), `ui/e2e/print.e2e.mjs` (le choix « Sans le fond » dans Chromium).
 
+## 15. `xprint` : les gabarits des pièces ERP, en YAML seul (4 nov.)
+
+À la question « fais-moi le plugin d'impression », la réponse retenue est la plus légère : un plugin de PLATEFORME (posé par
+`install` comme `xlicense`/`xpulse`) qui ne contient que des gabarits YAML pour six pièces du jeu `doctypes/` — devis, confirmation de
+commande, facture, bon de livraison, bon de commande fournisseur, reçu de paiement — et dix lignes de Python pour les charger. Le
+moteur d'impression, lui, reste dans le moteur (le sortir dans un plugin était l'autre option, un chantier bien plus lourd, écarté).
+
+- **Documents libres (`content`), pas des piles de blocs** : un bloc `fields`/`totals` imprime le libellé du DocType, en anglais dans
+  `doctypes/` (les traductions ne s'appliquent pas à l'impression) ; un document libre écrit « Total TTC » lui-même. Les lignes et les
+  taxes restent des blocs `table` incorporés (styles de la galerie, en-tête répété, sous-totaux possibles).
+- **Champs non imprimables évités** : les adresses mises en forme (`address_display`, `TextEditor`) et les conditions (`terms`) sont
+  refusées par le moteur ; les gabarits citent les liens (`customer_address`, `tc_name`), imprimés par leur titre.
+- **Chargement tolérant aux modules absents, intolérant aux défauts** : un dossier par DocType, `DocTypeChannel.has` (ajouté pour
+  cela) décide ; un gabarit fautif fait échouer le plugin. Avec un plugin par module, la copie du manifeste doit `requires` ces modules.
+- **Vu en image dans le vrai moteur** (facture, reçu, bon de livraison) : deux défauts corrigés avant de livrer — le style « Encadré »
+  grise la PREMIÈRE ligne d'un tableau de mise en page (le cadre des totaux a donc une vraie ligne d'en-tête « Récapitulatif »), et un
+  paragraphe vide n'a pas de hauteur (les cases de signature portent des espaces insécables).
+
+Reste : les dates s'impriment en ISO (`2026-11-04`), le défaut de `printing._cell` déjà noté au §10 ter.
+
