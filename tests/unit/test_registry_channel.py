@@ -173,8 +173,10 @@ class TestChannel:
         # `load_print_templates` : des gabarits d'impression livrés par un plugin (process/impression.md §2). Le canal
         # ne sait toujours que DÉPOSER et RETIRER — jamais lire ni modifier le registre. `load_translations` dépose un
         # catalogue de libellés, retiré avec le plugin comme le reste.
+        # `has` répond seulement « ce type est-il chargé ? » (ni définition ni donnée) : ce dont a besoin un plugin qui SERT les
+        # types d'autres plugins (xprint ne charge que les gabarits d'un type présent). Ce qu'un `load_*` raté apprendrait aussi.
         assert public == {"load_dir", "load_workspaces", "load_print_templates", "load_extensions", "load_desk",
-                          "load_translations", "unregister_owner", "settled"}
+                          "load_translations", "unregister_owner", "settled", "has"}
 
 
 class TestLiveRegistry:
