@@ -1,0 +1,38 @@
+# La FACTURE de vente. Un document libre (`content`) plutôt qu'une pile de blocs : les libellés sont écrits ici, en français, alors
+# qu'un bloc `fields`/`totals` imprimerait ceux du DocType (en anglais dans `doctypes/`). Les montants viennent du serveur (`compute:`),
+# la devise s'ajoute d'elle-même (`currency_from`), le papier à en-tête de l'organisation se pose dessous.
+schema_version: 1
+doctype: Sales Invoice
+name: standard
+label: Facture
+page: { size: A4, orientation: portrait, top: 18, bottom: 18, left: 15, right: 15 }
+content: >-
+  <table data-style="plain"><tbody><tr>
+  <td style="width:55%"><h1>FACTURE</h1><p>N° <strong><span data-value="name">N°</span></strong></p></td>
+  <td style="text-align:right"><p><strong><span data-value="doc.company">Société</span></strong></p></td>
+  </tr></tbody></table>
+  <table data-style="boxed"><tbody>
+  <tr><th>Facturé à</th><th>Références</th></tr>
+  <tr><td><p><strong><span data-value="doc.customer_name">Client</span></strong></p>
+  <p><span data-value="doc.customer_address">Adresse</span></p>
+  <p>N° contribuable : <span data-value="doc.tax_id">NIF</span></p></td>
+  <td><p>Date : <span data-value="doc.posting_date">Date</span></p>
+  <p>Échéance : <span data-value="doc.due_date">Échéance</span></p>
+  <p>Votre commande : <span data-value="doc.po_no">Bon de commande</span></p></td></tr>
+  </tbody></table>
+  <p></p>
+  <div data-block='{"type":"table","field":"items","style":"accent","columns":[{"field":"item_code","label":"Réf.","width":14},{"field":"item_name","label":"Désignation","width":38},{"field":"qty","label":"Qté","align":"right","width":10},{"field":"uom","label":"Unité","width":10},{"field":"rate","label":"Prix unitaire","align":"right","width":14},{"field":"amount","label":"Montant","align":"right","width":14}]}'></div>
+  <div data-block='{"type":"table","field":"taxes","label":"Taxes","style":"ruled","density":"compact","columns":[{"field":"description","label":"Taxe","width":60},{"field":"rate","label":"Taux (%)","align":"right","width":15},{"field":"tax_amount","label":"Montant","align":"right","width":25}]}'></div>
+  <table data-style="plain"><tbody><tr>
+  <td style="width:55%"><p>Arrêtée la présente facture à la somme de :</p><p><strong><span data-value="doc.in_words">Montant en lettres</span></strong></p></td>
+  <td><table data-style="boxed"><tbody>
+  <tr><th colspan="2">Récapitulatif</th></tr>
+  <tr><td>Total HT</td><td style="text-align:right"><span data-value="doc.net_total">Total HT</span></td></tr>
+  <tr><td>Remise</td><td style="text-align:right"><span data-value="doc.discount_amount">Remise</span></td></tr>
+  <tr><td>Taxes</td><td style="text-align:right"><span data-value="doc.total_taxes_and_charges">Taxes</span></td></tr>
+  <tr><td><strong>Total TTC</strong></td><td style="text-align:right"><strong><span data-value="doc.grand_total">Total TTC</span></strong></td></tr>
+  <tr><td>Reste à payer</td><td style="text-align:right"><span data-value="doc.outstanding_amount">Reste à payer</span></td></tr>
+  </tbody></table></td>
+  </tr></tbody></table>
+  <p>Conditions : <span data-value="doc.tc_name">Conditions générales</span></p>
+  <p style="text-align:center">Merci de votre confiance.</p>

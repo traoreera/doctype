@@ -48,7 +48,7 @@ def system_plugin_dir() -> Path:
     return Path(str(resources.files("xcore_doctype") / "system_plugin_dir"))
 
 
-PLATFORM_PLUGINS = ("xlicense", "xpulse")  # livrés par le paquet, posés par `xcore-doctype install` à côté du moteur
+PLATFORM_PLUGINS = ("xlicense", "xpulse", "xprint")  # livrés par le paquet, posés par `xcore-doctype install` à côté du moteur
 
 
 def platform_plugins_dir() -> Path:

@@ -2,7 +2,7 @@
  * Extension du Desk du plugin `biblio` (D28, doc/extensions.md) : la partie JavaScript d'un plugin.
  *
  * Un module ES prêt à servir (écrit à la main, sans build) : `vue` et `@xcore-doctype/desk` sont des noms nus que l'import map du Desk
- * résout vers SA copie de Vue et son SDK. Servie seulement si l'opérateur l'autorise : `doctype.desk.extensions: [biblio]`.
+ * résout vers SA copie de Vue et son SDK. Servie dès que `src/main.py` l'a déclarée (`load_desk`), sauf si l'opérateur restreint la liste.
  * Tout ce qu'elle lit passe par l'API avec la session de l'utilisateur : ses droits s'appliquent, le serveur reste juge.
  */
 import { defineComponent, h, onMounted, ref } from 'vue'

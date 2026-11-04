@@ -26,7 +26,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         registry = self.get_service("doctype_registry")
         registry.load_dir(self.ctx.name, ROOT / "doctypes")  # tout ou rien : une erreur de YAML empêche le chargement
         registry.load_workspaces(self.ctx.name, ROOT / "workspaces")  # après les DocTypes : ses blocs les visent
-        registry.load_desk(self.ctx.name, ROOT / "desk")  # servi seulement si l'opérateur l'autorise (doctype.desk.extensions)
+        registry.load_desk(self.ctx.name, ROOT / "desk")  # servi d'office (l'opérateur peut restreindre : doctype.desk.extensions)
 
         # UN seul `rbac.declare` pour tout le plugin, après le chargement : biblio:livre:read, biblio:emprunt:write…
         grants = self.get_service("doctype_grants").for_plugin(self.ctx.name)

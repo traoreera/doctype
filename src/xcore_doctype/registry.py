@@ -1084,6 +1084,11 @@ class DocTypeChannel:
         (`doctype.desk.extensions`) ; sinon elle est journalisée et le plugin reste utilisable sans elle."""
         return self._desk.register(owner, directory)
 
+    def has(self, doctype: str) -> bool:
+        """Ce DocType est-il chargé ? Pour un plugin qui SERT d'autres plugins (des gabarits d'impression pour leurs types, `xprint`) et
+        ne doit charger que ce qui vise un type présent : un module absent n'est pas une faute."""
+        return self._registry.has(doctype)
+
     def unregister_owner(self, owner: str) -> list[str]:
         self._desk.unregister(owner)
         self._translations.unload(owner)
