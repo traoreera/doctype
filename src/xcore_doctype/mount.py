@@ -10,7 +10,9 @@ Le plugin sert déjà le Desk sous `<préfixe>/xcore-doctype/desk/` (`api/desk.p
 
 Monté à la racine, le Desk ne pose PAS de route attrape-tout : seulement `/`, `/index.html`, `/config.json`, `/assets/…` et
 `/shared/…`, pour ne jamais masquer une route que l'application déclare après lui (le Desk route par `#`, il n'a besoin de rien d'autre).
-Les extensions JavaScript (D28) restent servies par le plugin seul : elles dépendent des plugins chargés.
+Les extensions JavaScript (D28) restent servies par le PLUGIN (elles dépendent des plugins chargés et de la liste blanche de son
+manifeste) : le `config.json` d'ici renvoie à celui du plugin (`extensions_from`), où le Desk lit la liste et l'annonce du temps réel.
+Sans ce renvoi, un Desk monté ailleurs ne chargeait plus aucune extension.
 """
 
 from __future__ import annotations
@@ -55,5 +57,5 @@ def mount_desk(app: FastAPI, config: Config | None = None, **route: Any) -> None
     # Les mêmes règles que le bloc `doctype.desk` du manifeste : une seule validation de `login_url` et du build.
     block = {"login_url": config.login_url, "developer_mode": config.developer, "dist_dir": str(config.dist_dir or DEFAULT_DIST)}
     settings = DeskSettings.from_plugin_config({"doctype": {"desk": block}})
-    router = build_desk_router(settings, at=config.path, api_base=_check_api_base(config.api_base), catch_all=False)
+    router = build_desk_router(settings, at=config.path, api_base=_check_api_base(config.api_base), catch_all=False, extensions_from=True)
     app.include_router(router, include_in_schema=False, **route)

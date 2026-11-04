@@ -109,23 +109,31 @@ class DeskSettings:
         return cls(**out)
 
 
+def _origin(url: str | None) -> str | None:
+    if url and url.startswith(("http://", "https://")):
+        parts = urlsplit(url)
+        return f"{parts.scheme}://{parts.netloc}"
+    return None
+
+
 def _csp(login_url: str | None, script_hashes: tuple[str, ...] = (), api_base: str | None = None) -> str:
     """Politique stricte. Les styles en ligne restent permis : PrimeVue injecte ses feuilles de style à l'exécution.
 
     `script_hashes` : l'empreinte de l'import map d'`index.html` (D28), le seul script en ligne permis ; jamais `'unsafe-inline'`.
-    `api_base` : une API servie sur une AUTRE origine (`mount_desk`) doit être nommée dans `connect-src`, comme la connexion.
+    `api_base` : une API servie sur une AUTRE origine (`mount_desk`) doit être nommée dans `connect-src`, comme la connexion — et dans
+    `script-src`, parce que les extensions JavaScript (D28) sont servies par le PLUGIN, donc depuis l'origine de l'API.
     """
     connect = ["'self'"]
     for url in (login_url, api_base):
-        if url and url.startswith(("http://", "https://")):
-            parts = urlsplit(url)
-            origin = f"{parts.scheme}://{parts.netloc}"
-            if origin not in connect:
-                connect.append(origin)
+        origin = _origin(url)
+        if origin and origin not in connect:
+            connect.append(origin)
+    api_origin = _origin(api_base)
+    scripts = ["'self'", *([api_origin] if api_origin else [])]
     return "; ".join(
         [
             "default-src 'self'",
-            " ".join(["script-src 'self'", *(f"'sha256-{h}'" for h in script_hashes)]),
+            " ".join(["script-src", *scripts, *(f"'sha256-{h}'" for h in script_hashes)]),
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data:",
             "font-src 'self' data:",
@@ -176,6 +184,7 @@ def build_desk_router(
     api_base: str | None = None,
     catch_all: bool = True,
     realtime: Callable[[], bool] | None = None,
+    extensions_from: bool = False,
 ) -> APIRouter:
     """Les routes du Desk sous `at` (`/desk` dans le plugin ; `/` ou un autre chemin pour `mount_desk`).
 
@@ -184,7 +193,8 @@ def build_desk_router(
     application, une route attrape-tout masquerait toutes les routes que l'application déclare APRÈS (FastAPI essaie dans l'ordre).
     `extensions` None : pas de route `ext/` (le plugin passe toujours les siennes).
     `realtime` : vrai quand le Desk peut ouvrir le flux temps réel d'xpulse (jugé à chaque `config.json` : l'ordre de chargement des
-    plugins n'y change rien). Absent (mount_desk) : jamais. Sans cette annonce le Desk demandait le flux partout, et un hôte sans xpulse
+    plugins n'y change rien). Absent (mount_desk) : `config.json` renvoie à celui du PLUGIN (`extensions_from`), qui seul sait quelles
+    extensions il sert et si xpulse est là — sinon un Desk monté ailleurs perdait toutes ses extensions (le défaut signalé le 4 nov.). Sans cette annonce le Desk demandait le flux partout, et un hôte sans xpulse
     répondait 404 à chaque page : une erreur de console permanente (mesuré dans le scénario Chromium de la caisse d'erp).
     """
     base = at.rstrip("/")
@@ -240,6 +250,8 @@ def build_desk_router(
                 "extensions": [{"name": e.name, "url": e.url} for e in extensions.served()],
                 "developer": settings.developer_mode,  # le Desk n'offre le constructeur de DocTypes que si l'opérateur l'a ouvert
                 "realtime": bool(realtime and realtime()),  # le flux d'xpulse existe : le Desk ne le demande que dans ce cas
+                # Monté hors du plugin : le Desk lit la liste des extensions (et `realtime`) dans le `config.json` du PLUGIN.
+                **({"extensions_from": f"{served}/desk/config.json"} if extensions_from else {}),
             },
             headers={**common, "Cache-Control": "no-store"},
         )
