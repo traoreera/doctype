@@ -22,7 +22,7 @@ class Plugin(TrustedBase):
         registry = self.get_service("doctype_registry")
         registry.load_dir(self.ctx.name, DOCTYPES)
         registry.load_workspaces(self.ctx.name, DOCTYPES.parent / "workspaces")  # APRÈS les DocTypes : les raccourcis les visent
-        # 4. son extension du Desk (D28) : servie seulement si l'opérateur l'autorise (`doctype.desk.extensions`).
+        # 4. son extension du Desk (D28) : servie d'office (l'opérateur peut restreindre : `doctype.desk.extensions`).
         registry.load_desk(self.ctx.name, DOCTYPES.parent / "desk")
         # 5. ses gabarits d'impression, APRÈS les DocTypes : leurs blocs visent les champs du type, et une faute
         # (un champ absent, une colonne qui n'existe pas) sort ICI et non à la première facture imprimée.

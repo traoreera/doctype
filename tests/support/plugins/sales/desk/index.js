@@ -3,7 +3,7 @@
  *
  * Un module ES déjà prêt (ici écrit à la main, sans build) : `vue` et `@xcore-doctype/desk` sont des noms nus que l'import map du Desk
  * résout vers SA copie de Vue et son SDK. Un vrai plugin construirait ce fichier (Vite, `external: ['vue', '@xcore-doctype/desk']`).
- * Servie seulement si l'opérateur l'autorise : `doctype.desk.extensions: [sales]`.
+ * Servie dès que le plugin l'a déclarée (`load_desk`), sauf si l'opérateur restreint la liste (`doctype.desk.extensions`).
  */
 import { computed, defineComponent, h, onMounted, ref } from 'vue'
 import { Button, defineExtension, useDesk } from '@xcore-doctype/desk'
