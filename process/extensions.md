@@ -94,8 +94,12 @@ blocks:
 Un plugin livre un module ES (déjà construit) que le Desk charge au démarrage. C'est du **code de confiance** dans la page de
 l'utilisateur : il a sa session, ses droits, tout ce que le Desk peut faire. D'où :
 
-- **Liste blanche de l'opérateur** : `doctype.desk.extensions` dans le manifeste d'xcore-doctype, liste de noms de plugins (`["*"]` :
-  tous). Absente ou vide : aucune extension chargée (fermé par défaut). Une extension non autorisée est journalisée, jamais servie.
+- **Ce que l'opérateur règle** : `doctype.desk.extensions` dans le manifeste d'xcore-doctype. **Depuis le 4 nov., absente = toutes**
+  (`["*"]`) : la liste, c'est le CODE des plugins (`load_desk`), et seul un plugin de confiance — dans le processus, pas en bac à
+  sable — peut l'appeler. Des noms RESTREIGNENT, `[]` ferme tout ; une extension écartée est journalisée, jamais servie. (Avant :
+  fermé par défaut, et chaque nom à recopier dans le manifeste installé, que `install` ne réécrit pas — une extension oubliée ne
+  se chargeait pas, sans rien dire à l'écran. `xcore-doctype install` avertit désormais quand un manifeste installé porte encore
+  l'ancien `[]` livré.)
 - **Même origine** : les fichiers sont servis par le routeur PUBLIC du Desk sous `desk/ext/<plugin>/…` (même garde qu'un fichier du
   build : pas de traversée, pas de lien symbolique qui sort du dossier, types de média explicites, `no-cache`). La CSP reste
   `script-src 'self'` (plus l'empreinte de l'import map, ci-dessous) : un plugin ne peut pas faire charger un script d'un autre domaine.

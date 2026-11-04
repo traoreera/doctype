@@ -126,6 +126,11 @@ def diagnose(config_path: Path, plugins_dir: Path | None = None) -> list[Finding
             binding = (manifest_data.get("doctype") or {}).get("enforce_tenant_binding", True)
             desk = (manifest_data.get("doctype") or {}).get("desk") or {}
             desk_login = desk.get("login_url") if isinstance(desk, dict) else None
+            if isinstance(desk, dict) and desk.get("extensions") == []:
+                # L'ancienne valeur LIVRÉE (avant le 4 nov.) : un manifeste installé est gardé, il fermerait donc toutes les extensions
+                # alors que le défaut les sert désormais. On le dit plutôt que de réécrire le fichier de l'opérateur.
+                out.append(Finding("warn", "doctype.desk.extensions vaut [] dans le manifeste installé : AUCUNE extension du Desk n'est servie. "
+                                           "C'était l'ancien défaut ; retirez la ligne pour servir celle de chaque plugin qui en déclare une"))
         except (OSError, ValueError, yaml.YAMLError) as e:
             out.append(Finding("error", f"{manifest} illisible : {e}"))
         else:

@@ -63,8 +63,10 @@ class DeskSettings:
     # Où le Desk envoie email et mot de passe (xauth : `/app/auth/login`). None : le Desk demande un jeton collé (développement).
     login_url: str | None = None
     dist_dir: Path = DEFAULT_DIST
-    # Les plugins dont l'extension JavaScript est servie (D28) : des noms, ou `*` pour tous. Vide : aucune (fermé par défaut).
-    extensions: tuple[str, ...] = field(default=())
+    # Les plugins dont l'extension JavaScript est servie (D28). Par DÉFAUT toutes (`*`) : la liste, c'est le code des plugins — un plugin
+    # qui appelle `load_desk` déclare son extension, et seul un plugin de confiance (dans le processus) le peut. L'opérateur peut
+    # RESTREINDRE (des noms) ou fermer (`[]`) ; il n'a plus à recopier chaque nom (décision du 4 nov., process/extensions.md).
+    extensions: tuple[str, ...] = field(default=("*",))
     # Le constructeur de DocTypes (mode développeur, devtools.py) : il ne fait que juger une définition et en rendre le YAML, mais c'est
     # un outil de développement — fermé par défaut, comme le developer mode de Frappe.
     developer_mode: bool = False

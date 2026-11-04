@@ -72,8 +72,8 @@ Un plugin peut aller au-delà de ses propres DocTypes (détails et règles : `pr
   `doctype_registry.load_extensions(self.ctx.name, dossier)` ;
 - **ajouter des blocs à l'espace d'un autre module** : un fichier de `workspaces/` avec `contributes_to: stock` au lieu de `name` ;
 - **livrer une extension JavaScript du Desk** (pages, panneaux et actions de fiche, actions de liste, blocs d'espace, commandes) :
-  un module ES `desk/index.js` déclaré par `doctype_registry.load_desk(self.ctx.name, dossier)`, que l'opérateur autorise dans
-  `doctype.desk.extensions` (fermé par défaut). Il importe `vue` et `@xcore-doctype/desk` (la copie du Desk, par une import map), est
+  un module ES `desk/index.js` déclaré par `doctype_registry.load_desk(self.ctx.name, dossier)` et chargé d'office (l'opérateur peut
+  restreindre ou fermer par `doctype.desk.extensions`). Il importe `vue` et `@xcore-doctype/desk` (la copie du Desk, par une import map), est
   servi depuis la même origine sous la CSP stricte, et une panne de l'extension n'arrête jamais le Desk.
 
 ```js

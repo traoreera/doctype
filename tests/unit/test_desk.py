@@ -261,7 +261,10 @@ class TestDeveloperMode:
 
 class TestExtensions:
     def test_settings_name_the_allowed_plugins(self):
-        assert DeskSettings.from_plugin_config({}).extensions == ()
+        # Par défaut TOUTES : la liste, c'est le code des plugins (`load_desk`) ; l'opérateur restreint ou ferme s'il le veut.
+        assert DeskSettings.from_plugin_config({}).extensions == ("*",)
+        assert DeskSettings.from_plugin_config({"doctype": {"desk": {"extensions": None}}}).extensions == ("*",)
+        assert DeskSettings.from_plugin_config({"doctype": {"desk": {"extensions": []}}}).extensions == ()
         assert DeskSettings.from_plugin_config({"doctype": {"desk": {"extensions": ["sales", "*"]}}}).extensions == ("sales", "*")
         for bad in ("sales", ["Sales"], ["../x"], [1]):
             with pytest.raises(ConfigurationError, match="extensions"):
@@ -345,3 +348,20 @@ class TestExtensions:
         digest = base64.b64encode(hashlib.sha256(body.encode()).digest()).decode()
         assert f"script-src 'self' 'sha256-{digest}';" in csp
         assert "unsafe-inline'" not in csp.split("style-src")[0]
+
+
+def test_install_warns_when_the_installed_manifest_still_closes_every_extension(tmp_path):
+    """L'ancien défaut LIVRÉ était `extensions: []` ; un manifeste installé est gardé, il fermerait tout en silence."""
+    from xcore_doctype.cli import diagnose
+
+    (tmp_path / "app" / "xcore-doctype").mkdir(parents=True)
+    (tmp_path / "integration.yaml").write_text("plugins:\n  directory: ./app\n", encoding="utf-8")
+    manifest = tmp_path / "app" / "xcore-doctype" / "plugin.yaml"
+
+    def said(text: str) -> list[str]:
+        manifest.write_text(text, encoding="utf-8")
+        return [f.message for f in diagnose(tmp_path / "integration.yaml", tmp_path / "app")]
+
+    assert any("AUCUNE extension du Desk" in m for m in said("doctype:\n  desk:\n    extensions: []\n"))
+    assert not any("AUCUNE extension du Desk" in m for m in said("doctype:\n  desk:\n    extensions: [sales]\n"))
+    assert not any("AUCUNE extension du Desk" in m for m in said("doctype:\n  desk:\n    enabled: true\n"))
