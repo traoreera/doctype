@@ -11,7 +11,7 @@ import { writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { deflateSync } from 'node:zlib'
-import { api, assert, config, launch, reporter } from './helpers.mjs'
+import { api, assert, config, launch, reporter, writePdf } from './helpers.mjs'
 
 const cfg = config()
 const { browser, page, problems } = await launch()
@@ -44,29 +44,6 @@ function logo() {
   const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(Buffer.concat(Array(h).fill(row)))), chunk('IEND', Buffer.alloc(0))])
   const path = join(tmpdir(), `xdt-logo-${process.pid}.png`)
   writeFileSync(path, png)
-  return path
-}
-
-/** Un PDF d'UNE page A4, VALIDE (table des renvois exacte : pypdf le relit pour le poser en fond). */
-function background() {
-  const objects = [
-    '<< /Type /Catalog /Pages 2 0 R >>',
-    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R >>',
-  ]
-  const stream = '0.18 0.24 0.31 rg 0 772 595 70 re f'
-  objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`)
-  let out = '%PDF-1.4\n'
-  const offsets = []
-  objects.forEach((body, i) => {
-    offsets.push(out.length)
-    out += `${i + 1} 0 obj\n${body}\nendobj\n`
-  })
-  const xref = out.length
-  out += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n` + offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')
-  out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
-  const path = join(tmpdir(), `xdt-fond-${process.pid}.pdf`)
-  writeFileSync(path, out, 'latin1')
   return path
 }
 
@@ -189,7 +166,7 @@ try {
   await r.step('le FOND PDF se dépose depuis le panneau « Page », se règle, et l’aperçu PDF le contient', async () => {
     const toPage = page.getByTestId('pb-open-page')
     if (await toPage.isVisible()) await toPage.click()
-    await page.getByTestId('pb-background-file').setInputFiles(background())
+    await page.getByTestId('pb-background-file').setInputFiles(writePdf(`xdt-fond-${process.pid}.pdf`))
     await page.getByTestId('pb-background-name').getByText(/xdt-fond-.*\.pdf/).waitFor()
     await page.getByTestId('pb-background-top').locator('input').fill('25')
     await page.getByTestId('pb-background-top').locator('input').press('Tab')

@@ -13,9 +13,7 @@ from xcore_doctype.registry import DocTypeRegistry
 
 from xcore_doctype.errors import InvalidDefinition
 from xcore_doctype.printing import (
-    footer_markup,
     generated_template,
-    letterhead_markup,
     PRINT_SPECIALS,
     parse_template,
     render_html,
@@ -101,9 +99,10 @@ class TestTheVocabularyIsClosed:
             template(blocks=[{"type": "table", "field": "lignes", "group_by": "entrepot", "subtotal": ["pu"],
                               "columns": [{"field": "article"}]}])
 
-    def test_a_letterhead_is_a_name_or_a_pdf_never_both(self):
-        with pytest.raises(InvalidDefinition, match="OU"):
-            template(letterhead={"name": "default", "pdf": "a" * 32})
+    def test_a_named_letterhead_of_before_is_forgotten_not_refused(self):
+        """Le `Letter Head` nommé n'existe plus (§14) : un gabarit qui le citait reste LISIBLE, le nom est oublié."""
+        assert template(letterhead={"name": "default"}).letterhead.pdf is None
+        assert template(letterhead={"name": "x", "pdf": "a" * 32}).letterhead.pdf == "a" * 32
 
     def test_a_background_pdf_is_a_file_id_never_a_url(self):
         """Le point de sécurité du §6 : jamais une URL, jamais un chemin."""
@@ -354,40 +353,6 @@ class TestTemplatesShippedByAPlugin:
         with pytest.raises(InvalidDefinition, match="nope"):
             r.load_print_templates(d, owner="ventes")
         assert r.print_templates("Facture") == []
-
-
-class TestTheLetterheadMarkup:
-    """Le papier à en-tête est rendu ICI, mais ses OCTETS sont lus par le service : c'est la frontière du module pur (§5/§6)."""
-
-    def test_an_embedded_image_is_placed_at_the_top(self):
-        uri = "data:image/png;base64,iVBORw0KGgo="
-        out = render_html(template(), INVOICE, DATA, name="FA-1", children=CHILDREN,
-                          letterhead_html=letterhead_markup(uri))
-        assert f'<div class=lh><img src="{uri}" alt=""></div>' in out
-        assert out.index("class=lh") < out.index("<h1>")  # en tête du flux, donc sur la première page
-
-    @pytest.mark.parametrize("bad", [
-        "https://exemple.invalid/logo.png",  # une URL distante : exactement la faille que §6 ferme
-        "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",  # un SVG porte du script
-        "data:text/html;base64,PGI+",
-        'data:image/png;base64,abc" onerror="alert(1)',  # une tentative de sortir de l'attribut
-        "javascript:alert(1)",
-    ])
-    def test_anything_that_is_not_an_embedded_image_is_refused(self, bad):
-        with pytest.raises(ValueError, match="incorporée"):
-            letterhead_markup(bad)
-
-    def test_no_image_is_no_markup(self):
-        assert letterhead_markup(None) == "" and letterhead_markup("") == ""
-
-    def test_the_footer_is_escaped_and_comes_last(self):
-        out = render_html(template(), INVOICE, DATA, name="FA-1", children=CHILDREN,
-                          footer_html=footer_markup("SARL <Durand> & Fils"))
-        assert "SARL &lt;Durand&gt; &amp; Fils" in out and "<Durand>" not in out
-        assert out.index("class=lf") > out.index("<h1>")
-
-    def test_no_footer_is_no_markup(self):
-        assert footer_markup(None) == "" and footer_markup("") == ""
 
 
 class TestTheReservedMargins:

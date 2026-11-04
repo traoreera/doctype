@@ -29,7 +29,7 @@ import threading
 import pytest
 
 from xcore_doctype import pdf as engine
-from xcore_doctype.printing import footer_markup, letterhead_markup, parse_template, render_html
+from xcore_doctype.printing import parse_template, render_html
 from xcore_doctype.schema import parse_definition
 
 pytestmark = pytest.mark.skipif(
@@ -235,14 +235,16 @@ class TestTheRendererHasNoNetwork:
         assert engine.to_pdf(html).startswith(b"%PDF")
 
     def test_an_embedded_image_prints_despite_that_refusal(self):
-        """Le fait qui n'était PAS acquis : une URL `data:` n'atteint pas le récupérateur, donc le logo du
-        papier à en-tête s'imprime alors que tout le réseau est fermé.
+        """Le fait qui n'était PAS acquis : une URL `data:` n'atteint pas le récupérateur, donc le logo d'un
+        document libre s'imprime alors que tout le réseau est fermé.
 
         Vérifié par l'XObject image du PDF, et pas par sa taille : un PNG invalide est perdu SILENCIEUSEMENT
         (PlutoPrint avertit et continue), et le PDF amputé pèse alors le même poids à quelques octets près.
         C'est arrivé en écrivant ce test — la mesure par la taille l'avait laissé passer."""
-        with_image = engine.to_pdf(invoice_html(letterhead_html=letterhead_markup(RED_PNG),
-                                                footer_html=footer_markup("SARL — RCS Paris 123")))
+        logo = "a" * 32
+        free = parse_template({"schema_version": 1, "doctype": "Facture",
+                               "content": f'<p><img data-file="{logo}" style="width:20mm"> SARL — RCS Paris 123</p>'})
+        with_image = engine.to_pdf(render_html(free, INVOICE, {}, name="FA-1", children=CHILDREN, images={logo: RED_PNG}))
         assert with_image.startswith(b"%PDF")
         assert "RCS Paris 123" in "".join(pages(with_image))
         assert images(with_image) == [(8, 8)]

@@ -119,19 +119,20 @@ class FileService:
             raise
         return {"id": file_id, "filename": name, "content_type": mime, "size": len(content)}
 
-    async def print_file(self, tenant: str, doctype: str, file_id: str) -> tuple[bytes, str] | None:
-        """Les octets d'un fichier de gabarit (image ou fond PDF), pour l'impression — ou `None`.
+    async def print_file(self, tenant: str, doctype: str, file_id: str, *, fieldname: str = F.PRINT_FIELD) -> tuple[bytes, str] | None:
+        """Les octets d'un fichier qu'imprimer emploie (image ou fond PDF d'un gabarit) — ou `None`.
 
-        SEULEMENT un fichier déposé pour un gabarit de CE type (`_print`, même DocType) : un gabarit ne peut pas
-        citer l'identifiant d'un autre fichier du tenant (une pièce jointe de la paie, un bulletin en PDF) pour le
-        faire sortir sur papier. L'identifiant vient d'un gabarit, donc d'un client : c'est ici qu'il se juge.
+        SEULEMENT un fichier de CE (type, champ) : par défaut le champ réservé `_print` d'un gabarit, ou le fond de
+        l'organisation (`System Settings.print_background`). Un gabarit ne peut donc pas citer l'identifiant d'un
+        autre fichier du tenant (une pièce jointe de la paie, un bulletin en PDF) pour le faire sortir sur papier.
+        L'identifiant vient d'un gabarit, donc d'un client : c'est ici qu'il se juge.
         """
         if not F.FILE_ID_RE.match(file_id):
             return None
         sys = RequestContext.system(tenant, "print template file")
         async with self._docs._query(sys) as q:
             row = (await q.get_files({file_id})).get(file_id)
-        if row is None or row["fieldname"] != F.PRINT_FIELD or row["doctype"] != doctype:
+        if row is None or row["fieldname"] != fieldname or row["doctype"] != doctype:
             return None
         blob = await self._store.read(row["blob_id"], row["namespace"], row["stored_name"])
         return None if blob is None else (blob, row["content_type"])

@@ -20,6 +20,10 @@ Chromium (`ui/e2e/print.e2e.mjs`).
 Et les étapes 6 et 7 : le DocType `Letter Head` livré avec le plugin `system`, et l'éditeur de gabarits
 (`#/print/<Type>`), devenu le 29 oct. un éditeur FAÇON TRAITEMENT DE TEXTE avec images placées librement (§12).
 
+**Depuis le 4 nov. (§14), le papier à en-tête est UN PDF de fond, et rien d'autre** : celui de l'organisation
+(Paramètres › Général), ou celui d'un gabarit qui en a un. Le DocType `Letter Head` décrit plus bas (§5, étape 6)
+a été RETIRÉ ; ce qui en est dit reste pour l'histoire.
+
 Et le 4 nov. (§13) : le TÉLÉVERSEMENT du fond PDF depuis l'écran, la galerie des STYLES DE TABLEAU, et un
 allègement de l'éditeur, du code et du PDF. La question qui bloquait le fond — « à quoi le fichier est-il
 rattaché ? » — a reçu la réponse que les images de §12 avaient déjà donnée : ni à `Letter Head`, ni à un champ de
@@ -687,4 +691,40 @@ passe maintenant par la règle d'insertion commune, puis le curseur va dans sa p
   en cherchant dans le PDF (c'est ce qui faisait échouer trois tests de `test_pdf_engine.py` selon la machine).
 - **Dépendances.** Rien d'ajouté (ni Python, ni npm). Les deux paquets du PDF restent optionnels (`[pdf]`) ; pypdf
   ne sert qu'au fond et ne peut pas partir sans lui.
+
+## 14. Un seul papier à en-tête : le PDF de l'organisation (4 nov.)
+
+**La question de l'utilisateur :** « n'est-il pas plus simple de charger l'en-tête et le pied de page par le PDF, et
+de supprimer tout ce qui en parle dans les DocTypes ? » Oui : deux mécanismes faisaient la même chose. `Letter Head`
+(un logo en haut de la PREMIÈRE page et un texte de pied) était un sous-ensemble strict du fond PDF, qui porte
+l'en-tête, le pied et les mentions sur chaque page. Décision (choisie par l'utilisateur) : **un PDF par
+ORGANISATION**, employé par toutes les impressions, et un gabarit peut garder le sien.
+
+- **Où.** `System Settings` (plugin `system`, Paramètres › Général) gagne la section « Impression » :
+  `print_background` (Attach, 5 Mo), `print_background_pages` (« Toutes les pages » | « Première page
+  seulement »), `print_offset_top` / `print_offset_bottom` (mm). C'est un formulaire ordinaire : aucun écran à
+  écrire, le dépôt passe par `/upload/System Settings/print_background`, les droits sont ceux des réglages
+  (administrateur).
+- **Qui l'emploie.** Toute impression — gabarit de l'organisation, gabarit LIVRÉ par un plugin, gabarit FABRIQUÉ —
+  sauf un gabarit qui a son propre fond (`letterhead.pdf`, §13), qui passe avant. `?letterhead=none` (et
+  `letterhead: none` de l'aperçu) imprime sans ; c'est la seule valeur qui ait encore un sens.
+- **Lu comment.** En contexte SYSTÈME, sur une liste FERMÉE (`print_service.BACKGROUND_FIELDS`), le précédent de
+  `preferences.py` : un lecteur de factures sans aucun grant sur les réglages imprime sur le papier de
+  l'entreprise. Le fichier lu est SEULEMENT celui de ce champ de ce document (`FileService.print_file(…,
+  fieldname="print_background")`), reconnu PDF à ses OCTETS (un Attach garde le type déclaré par le navigateur).
+  Absent, effacé, pas un PDF, plugin `system` non chargé : on imprime sans, jamais d'erreur.
+- **Ce qui est parti.** `letter_head.yaml` (et son raccourci de l'espace Administration, ses traductions —
+  `xcore-doctype install` retire le fichier d'une instance existante par `.shipped`), `printing.letterhead_markup`
+  / `footer_markup` et leur feuille (`div.lh`, `div.lf`), les paramètres `letterhead_html` / `footer_html` de
+  `render_html`, `print_service._letterhead_doc` / `_embedded`, le sentinelle `default`. `LetterheadRef.name`
+  n'existe plus, mais un gabarit enregistré avant qui le portait reste LISIBLE (le nom est oublié, sinon le gabarit
+  entier serait ignoré).
+- **Desk.** Le dialogue « Imprimer » ne propose « Avec le fond / Sans le fond » que s'il y a un fond (ou qu'on
+  vient de l'enlever) ; le panneau « Page » de l'éditeur parle du fond PROPRE au gabarit et renvoie à Paramètres ›
+  Général pour celui de l'organisation.
+
+Preuves : `test_print_service.TestTheOrganisationBackground` (toutes les impressions, première page seulement, le
+gabarit gagne, `none`, lecteur sans grant, autre organisation, pas un PDF, fichier d'un autre champ, sans le plugin
+`system`, liste fermée, ancien gabarit nommé), `test_system_plugin` (un vrai hôte : dépôt par l'API, lecteur sans
+grant, autre organisation), `ui/e2e/print.e2e.mjs` (le choix « Sans le fond » dans Chromium).
 

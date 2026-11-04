@@ -4,13 +4,15 @@ import InputNumber from 'primevue/inputnumber'
 import Select from 'primevue/select'
 import SelectButton from 'primevue/selectbutton'
 import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { t } from '@/i18n'
 import type { Letterhead, Page } from '@/lib/printedit'
 
 /**
- * La PAGE, dans le panneau de droite quand rien n'est choisi : format, orientation, marges, et le FOND PDF (le
- * papier préimprimé de l'entreprise, `process/impression.md` §5) — déposé ici, imprimé SOUS le contenu, sur la
- * première page ou sur toutes, avec des zones réservées en haut et en bas où le contenu ne descend pas.
+ * La PAGE, dans le panneau de droite quand rien n'est choisi : format, orientation, marges, et le FOND PDF PROPRE
+ * à ce gabarit (`process/impression.md` §14) — déposé ici, imprimé SOUS le contenu, sur la première page ou sur
+ * toutes, avec des zones réservées en haut et en bas où le contenu ne descend pas. Sans lui, le gabarit prend le
+ * papier à en-tête de l'ORGANISATION (Paramètres › Général), d'où le lien.
  *
  * Le fond n'existe qu'au PDF : la feuille et l'aperçu HTML ne le montrent pas, d'où « Aperçu PDF ».
  * Présentation seulement : la vue fait les appels (dépôt, aperçu).
@@ -77,6 +79,7 @@ const setBackground = (patch: Partial<Letterhead>) => emit('letterhead', { ...(p
 
     <h2 class="pp-title">{{ t.printBuilder.background }}</h2>
     <p class="desk-muted pp-hint">{{ t.printBuilder.backgroundHint }}</p>
+    <RouterLink to="/settings" class="pp-link" data-testid="pb-organisation-background"><i class="pi pi-cog" aria-hidden="true" /> {{ t.printBuilder.organisationBackground }}</RouterLink>
     <input ref="fileInput" type="file" accept="application/pdf,.pdf" class="pp-file" data-testid="pb-background-file" @change="picked" />
     <template v-if="letterhead?.pdf">
       <p class="pp-chosen" data-testid="pb-background-name"><i class="pi pi-file-pdf" aria-hidden="true" /> {{ backgroundName || t.printBuilder.pdfChosen }}</p>
@@ -163,6 +166,14 @@ const setBackground = (patch: Partial<Letterhead>) => emit('letterhead', { ...(p
   color: var(--p-text-muted-color);
   padding: 0;
   margin-bottom: 0.25rem;
+}
+
+.pp-link {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--p-primary-color);
 }
 
 .pp-file {

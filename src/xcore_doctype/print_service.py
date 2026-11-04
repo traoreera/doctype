@@ -13,10 +13,12 @@ Trois règles gouvernent ce fichier :
 - **Rien n'est écrit.** Imprimer est une lecture : `GET` ne stocke rien, et l'archivage légal d'un PDF est un
   geste distinct qui reste dehors en v1 (§8).
 
-Le papier à en-tête se lit en contexte SYSTÈME, sur une liste FERMÉE de champs — le précédent exact de
-`preferences.py` : le logo de l'organisation s'affiche pour tout le monde alors que `System Settings` est
-réservé aux administrateurs. Un en-tête est de la présentation d'entreprise, pas un document métier : on ne
-peut pas refuser d'imprimer une facture parce que son lecteur n'a pas de grant sur `Letter Head`.
+Le papier à en-tête est UN PDF de fond (en-tête, pied de page, mentions : tout est dedans, §14) : celui du
+gabarit s'il en a un, sinon celui de l'ORGANISATION, déposé dans Paramètres › Général (`System Settings`). Ce
+dernier se lit en contexte SYSTÈME, sur une liste FERMÉE de champs — le précédent exact de `preferences.py` : le
+papier de l'entreprise s'imprime pour tout le monde alors que `System Settings` est réservé aux administrateurs.
+Un en-tête est de la présentation d'entreprise, pas un document métier : on ne refuse pas d'imprimer une facture
+parce que son lecteur n'a aucun grant sur les réglages.
 """
 
 from __future__ import annotations
@@ -31,17 +33,18 @@ from .context import RequestContext
 from .document import DocumentService
 from .errors import DoctypeError, InvalidDefinition, NotFound, ValidationFailed
 from .file_service import FileService
-from .files import PDF_TYPE
 from .overrides import KIND_PRINT, validate_print_override
 from .permissions import scope_for
 from .printing import PrintTemplate
 
-LETTERHEAD_DOCTYPE = "Letter Head"
-# Les champs d'un `Letter Head` que l'impression lit, et AUCUN autre : un champ sensible ajouté plus tard à ce
-# DocType ne sortira jamais par ici sans qu'on l'ajoute exprès (la règle de `preferences.py`).
-LETTERHEAD_FIELDS = ("image", "footer_text", "is_default", "disabled")
-DEFAULT_LETTERHEAD = "default"  # le sentinelle : « celui que l'organisation a marqué par défaut »
-NO_LETTERHEAD = "none"  # ce que le gabarit (§4) et la requête (§7) disent pour imprimer sans en-tête
+# Le fond PDF de l'ORGANISATION vit dans ses réglages de base. Les champs que l'impression en lit, et AUCUN
+# autre : un réglage sensible ajouté plus tard à `System Settings` ne sortira jamais par ici (la règle de
+# `preferences.py`).
+SETTINGS_DOCTYPE = "System Settings"
+BACKGROUND_FIELD = "print_background"
+BACKGROUND_FIELDS = (BACKGROUND_FIELD, "print_background_pages", "print_offset_top", "print_offset_bottom")
+FIRST_PAGE_ONLY = "Première page seulement"  # la valeur du Select `print_background_pages` (sinon : toutes)
+NO_LETTERHEAD = "none"  # ce que la requête (§7) dit pour imprimer SANS le fond
 # Ce qu'un <img> incorporé peut porter. Le reste (un SVG, un PDF) n'entre pas dans une balise image.
 EMBEDDABLE = ("image/png", "image/jpeg", "image/gif", "image/webp")
 # Autant de titres par DocType visé que le filtre `in` en accepte (`FILTER_OPS` : 100). Au-delà, les liens
@@ -168,7 +171,7 @@ class PrintService:
         if letterhead is not None and not isinstance(letterhead, str):
             raise ValidationFailed("letterhead doit être un texte (le nom d'un papier à en-tête, ou « none »)")
         titles = await self._titles(ctx, found, compiled, record["data"])
-        head, foot, background = await self._letterhead(ctx, compiled, found, letterhead)
+        background = await self._background(ctx, compiled, found, letterhead)
         extra = "" if background is None else printing.reserved_margins_css(found.page, top=background.top, bottom=background.bottom)
         html = printing.render_html(
             found,
@@ -176,8 +179,6 @@ class PrintService:
             record["data"],
             name=record["name"],
             children=compiled.children_by_field,
-            letterhead_html=head,
-            footer_html=foot,
             css_extra=extra,
             titles=titles,
             images=await self._images(ctx, compiled, found),
@@ -387,72 +388,58 @@ class PrintService:
         page = await self._docs.list(ctx, doctype, limit=1)
         return {"doctype": compiled.definition.name, "name": page["items"][0]["name"] if page["items"] else None}
 
-    # ── Le papier à en-tête ───────────────────────────────────
-    async def _letterhead(self, ctx: RequestContext, compiled: Any, template: PrintTemplate, asked: Any) -> tuple[str, str, Background | None]:
-        """`(en-tête HTML, pied HTML, fond PDF)`. Un en-tête absent n'est jamais une erreur : on imprime sans.
+    # ── Le fond PDF (le papier à en-tête) ─────────────────────
+    async def _background(self, ctx: RequestContext, compiled: Any, template: PrintTemplate, asked: Any) -> Background | None:
+        """Le fond sur lequel ce document s'imprime : celui du GABARIT s'il en a un, sinon celui de l'ORGANISATION
+        (Paramètres › Général), ou aucun. `?letterhead=none` imprime sans.
 
-        C'est délibéré — un papier à en-tête supprimé, désactivé, ou un plugin `system` pas encore installé ne
-        doit pas rendre une facture inimprimable. La mention obligatoire est dans les BLOCS, pas dans l'en-tête.
+        Un fond absent n'est JAMAIS une erreur — fichier effacé, pas un PDF, plugin `system` pas installé : on
+        imprime sans. Une facture ne devient pas inimprimable parce que son papier a disparu ; les mentions
+        obligatoires qui comptent sont dans le document.
         """
-        ref = template.letterhead
         if asked == NO_LETTERHEAD:
-            return "", "", None
-        if asked:
-            ref = printing.LetterheadRef(name=asked)  # la requête remplace ce que le gabarit dit (§7)
-        if ref is None:
-            return "", "", None
-        if ref.pdf is not None:
+            return None
+        ref = template.letterhead
+        if ref is not None and ref.pdf is not None:
             # Seulement un fond déposé pour un gabarit de CE type (`print_file`) : l'identifiant vient d'un gabarit,
             # donc d'un client, et sans ce contrôle un auteur de gabarit ferait sortir n'importe quel PDF du tenant
             # (un bulletin de paie) en fond de facture. La règle des images (§12), et pour la même raison.
             found = await self._files.print_file(ctx.tenant_id, compiled.definition.name, ref.pdf)
-            if found is None or found[1] != PDF_TYPE:
-                return "", "", None
-            return "", "", Background(found[0], ref.pages == "all", ref.offset_top, ref.offset_bottom)
-        if ref.name is None:
-            return "", "", None
-        row = await self._letterhead_doc(ctx, ref.name)
-        if row is None or row.get("disabled"):
-            return "", "", None
-        image = None
-        if isinstance(row.get("image"), str) and row["image"]:
-            image = await self._embedded(ctx, row["image"])
-        return printing.letterhead_markup(image), printing.footer_markup(row.get("footer_text")), None
+            if found is None or not _is_pdf(found):
+                return None
+            return Background(found[0], ref.pages == "all", ref.offset_top, ref.offset_bottom)
+        return await self._organisation_background(ctx)
 
-    async def _letterhead_doc(self, ctx: RequestContext, wanted: str) -> dict[str, Any] | None:
-        """Le `Letter Head` demandé, réduit à `LETTERHEAD_FIELDS`, lu en contexte système (voir l'en-tête du module).
-
-        `default` est un sentinelle : celui que l'organisation a MARQUÉ par défaut. S'il n'y en a aucun, on
-        retombe sur un document qui s'appellerait littéralement « default » — le sentinelle ne crée donc pas
-        d'impasse (le choix de `api/desk.py`, dont `login_url: auth` est aussi un sentinelle).
-        """
-        if LETTERHEAD_DOCTYPE not in self._docs._registry.names():
-            return None  # le plugin `system` n'est pas chargé : il n'y a pas d'en-tête, ce n'est pas une faute
-        sys = RequestContext.system(ctx.tenant_id, "print letterhead")
+    async def _organisation_background(self, ctx: RequestContext) -> Background | None:
+        """Le fond de l'organisation : `System Settings`, lu en contexte SYSTÈME sur `BACKGROUND_FIELDS` seulement."""
+        if SETTINGS_DOCTYPE not in self._docs._registry.names():
+            return None  # le plugin `system` n'est pas chargé : pas de fond, ce n'est pas une faute
+        sys = RequestContext.system(ctx.tenant_id, "print background")
         try:
-            if wanted == DEFAULT_LETTERHEAD:
-                page = await self._docs.list(sys, LETTERHEAD_DOCTYPE, filters={"is_default": True}, limit=1)
-                if page["items"]:
-                    return _only(page["items"][0]["data"])
-            record = await self._docs.get(sys, LETTERHEAD_DOCTYPE, wanted)
+            record = await self._docs.get(sys, SETTINGS_DOCTYPE, SETTINGS_DOCTYPE)
         except DoctypeError:
             return None
-        return _only(record["data"])
-
-    async def _embedded(self, ctx: RequestContext, file_id: str) -> str | None:
-        """L'image d'un en-tête en URL `data:` : le moteur n'a pas d'accès réseau, c'est NOUS qui lisons (§6).
-
-        Seulement un fichier `xdt_file` de CE tenant, et seulement un type d'image qu'une balise `<img>` sait
-        montrer : un SVG est refusé ici comme il l'est au téléversement (il porte du script).
-        """
-        found = await self._files.content(ctx.tenant_id, file_id, reason="print letterhead image")
-        if found is None or found[1] not in EMBEDDABLE:
+        data = {k: record["data"].get(k) for k in BACKGROUND_FIELDS}
+        file_id = data[BACKGROUND_FIELD]
+        if not isinstance(file_id, str) or not file_id:
             return None
-        return f"data:{found[1]};base64,{base64.b64encode(found[0]).decode('ascii')}"
+        # Le fichier de CE champ de CE document, et pas un autre : la valeur est écrite par un administrateur à
+        # travers un champ Attach validé, mais le contrôle ne coûte rien et ferme la porte pour de bon.
+        found = await self._files.print_file(ctx.tenant_id, SETTINGS_DOCTYPE, file_id, fieldname=BACKGROUND_FIELD)
+        if found is None or not _is_pdf(found):
+            return None  # un Attach accepte tout fichier : ce qui n'est pas un PDF est ignoré, pas une erreur
+        return Background(found[0], data["print_background_pages"] != FIRST_PAGE_ONLY,
+                          _zone(data["print_offset_top"]), _zone(data["print_offset_bottom"]))
 
 
-def _only(data: Mapping[str, Any]) -> dict[str, Any]:
-    return {k: data.get(k) for k in LETTERHEAD_FIELDS}
+def _is_pdf(found: tuple[bytes, str]) -> bool:
+    """Un PDF reconnu à ses OCTETS : un Attach garde le type que le navigateur a DÉCLARÉ, qui ne prouve rien."""
+    return found[0].startswith(b"%PDF-")
+
+
+def _zone(value: Any) -> int:
+    """Une zone réservée en mm, bornée comme celle d'un gabarit (0-150) : un réglage aberrant ne vide pas la page."""
+    return min(max(value, 0), 150) if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _filename(doctype: str, name: str, template: PrintTemplate) -> str:

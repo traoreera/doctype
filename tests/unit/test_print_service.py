@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import struct
 import zlib
+from pathlib import Path
 
 import pytest
+import yaml
 
 from tests.conftest import make_ctx
 from xcore_doctype import files as F
@@ -49,18 +51,14 @@ SETTINGS = {
     "schema_version": 1, "name": "Reglages", "module": "sales", "single": True,
     "fields": [{"fieldname": "nom", "fieldtype": "Text"}],
 }
-# Le `Letter Head` du plugin `system` arrive à l'étape 6 de §11 ; le MÉCANISME se prouve ici avec sa forme (§5).
-LETTER_HEAD = {
-    "schema_version": 1, "name": "Letter Head", "module": "system",
-    "fields": [
-        {"fieldname": "image", "fieldtype": "Image"},
-        {"fieldname": "footer_text", "fieldtype": "LongText"},
-        {"fieldname": "is_default", "fieldtype": "Boolean"},
-        {"fieldname": "disabled", "fieldtype": "Boolean"},
-        # Le FOND préimprimé de §5 : un PDF téléversé, donc un champ `Attach` (une image ne reçoit pas un PDF).
-        {"fieldname": "background", "fieldtype": "Attach"},
-    ],
-    "naming": "prompt",
+# Les réglages de base, TELS QUE le plugin `system` les livre : c'est là que vit le fond PDF de l'organisation (§14).
+SYSTEM_SETTINGS = yaml.safe_load(
+    (Path(__file__).resolve().parents[2] / "src/xcore_doctype/system_plugin_dir/doctypes/system_settings.yaml").read_text()
+)
+# Un autre type imprimable, avec un champ Attach : ce qu'un gabarit ne doit JAMAIS pouvoir citer comme fond.
+QUOTE = {
+    "schema_version": 1, "name": "Devis", "module": "sales",
+    "fields": [{"fieldname": "client", "fieldtype": "Text"}, {"fieldname": "piece", "fieldtype": "Attach"}],
 }
 
 TEMPLATE = {
@@ -68,8 +66,8 @@ TEMPLATE = {
     "blocks": [{"type": "title", "text": "Facture {{ name }}"}, {"type": "fields", "fields": ["client"]}],
 }
 
-ALL = ["sales:facture:read", "sales:facture:write", "system:letter_head:read", "system:letter_head:write",
-       "sales:reglages:read", "sales:reglages:write"]
+ALL = ["sales:facture:read", "sales:facture:write", "system:system_settings:read", "system:system_settings:write",
+       "sales:reglages:read", "sales:reglages:write", "sales:devis:read", "sales:devis:write"]
 ALICE = make_ctx("acme", "alice", permissions=ALL)
 MINE = make_ctx("acme", "alice", permissions=["sales:facture:own", "sales:facture:write"])
 BOB = make_ctx("acme", "bob", permissions=ALL)
@@ -101,7 +99,7 @@ class MemoryStore:
 @pytest.fixture
 def env(db, tables):
     reg = DocTypeRegistry()
-    for raw in (LINE, INVOICE, SETTINGS, LETTER_HEAD):
+    for raw in (LINE, INVOICE, SETTINGS, SYSTEM_SETTINGS, QUOTE):
         reg.register(parse_definition(raw))
     reg.validate_links()
     docs = DocumentService(reg, db, tables, Log(), sealer=Sealer("k" * 32))
@@ -264,112 +262,87 @@ class TestWhatDoesNotPrint:
             await env.printer.render(ALICE, "Facture", name, template=bad)
 
 
-class TestTheLetterhead:
-    """§5 : un `Letter Head` par son nom, son image INCORPORÉE (§6), et son absence n'est jamais une erreur."""
+class TestTheOrganisationBackground:
+    """§14 : UN fond PDF pour toute l'organisation (Paramètres › Général), employé par toutes les impressions — les
+    gabarits livrés et fabriqués compris —, sauf un gabarit qui a le sien. Son absence n'est jamais une erreur."""
 
-    async def head(self, env, name="Entête", image=None, **extra):
-        data = {"is_default": False, "disabled": False, **extra}
-        if image is not None:
-            data["image"] = image
-        return await env.docs.create(ALICE, "Letter Head", data, name=name)
-
-    async def image(self, env, content=None, content_type=None):
-        meta = await env.files.upload(ALICE, "Letter Head", "image", content=content or png(),
-                                      filename="entete.png", content_type=content_type)
+    async def settle(self, env, content=b"%PDF-1.4 papier", ctx=ALICE, **extra):
+        meta = await env.files.upload(ctx, "System Settings", "print_background", content=content, filename="papier.pdf",
+                                      content_type="application/pdf")
+        await env.docs.update(ctx, "System Settings", "System Settings", {"print_background": meta["id"], **extra}, version=0)
         return meta["id"]
 
-    async def test_the_image_is_embedded_never_a_url(self, env):
-        """Le moteur n'a pas d'accès réseau : c'est NOUS qui lisons le fichier et l'incorporons."""
-        ship(env, letterhead={"name": "Entête"})
-        await self.head(env, image=await self.image(env))
-        out = await env.printer.render(ALICE, "Facture", await invoice(env))
-        assert "src=\"data:image/png;base64," in out["html"] and "http" not in out["html"].split("<body>")[1]
+    async def test_every_print_uses_it_even_a_generated_template(self, env):
+        await self.settle(env, print_offset_top=40, print_offset_bottom=15)
+        out = await env.printer.render(ALICE, "Facture", await invoice(env))  # aucun gabarit : le fabriqué
+        assert out["background"] is True and "@page{margin-top:60mm;margin-bottom:35mm}" in out["html"]
 
-    async def test_the_footer_text_is_printed_and_escaped(self, env):
-        ship(env, letterhead={"name": "Entête"})
-        await self.head(env, footer_text="SARL <Durand> — RCS 1234")
-        out = await env.printer.render(ALICE, "Facture", await invoice(env))
-        assert "SARL &lt;Durand&gt; — RCS 1234" in out["html"]
+    async def test_first_page_only_and_the_pdf_itself(self, env, monkeypatch):
+        from xcore_doctype import print_service as S
 
-    async def test_default_takes_the_one_marked_by_default(self, env):
-        ship(env, letterhead={"name": "default"})
-        await self.head(env, name="Ancien", footer_text="PAS CELUI-LÀ")
-        await self.head(env, name="Actuel", footer_text="CELUI-LÀ", is_default=True)
-        out = await env.printer.render(ALICE, "Facture", await invoice(env))
-        assert "CELUI-LÀ" in out["html"] and "PAS CELUI-LÀ" not in out["html"]
+        seen = {}
+        monkeypatch.setattr(S, "_pdf_bytes", lambda html, background: seen.setdefault("bg", background) and b"%PDF-1.7")
+        await self.settle(env, print_background_pages="Première page seulement")
+        await env.printer.pdf(ALICE, "Facture", await invoice(env))
+        assert seen["bg"].content == b"%PDF-1.4 papier" and seen["bg"].every_page is False
 
-    async def test_a_disabled_letterhead_prints_without_one(self, env):
-        ship(env, letterhead={"name": "Entête"})
-        await self.head(env, footer_text="désactivé", disabled=True)
-        out = await env.printer.render(ALICE, "Facture", await invoice(env))
-        assert "désactivé" not in out["html"]
+    async def test_a_template_s_own_background_wins(self, env, monkeypatch):
+        from xcore_doctype import print_service as S
 
-    async def test_a_missing_letterhead_is_never_an_error(self, env):
-        """Délibéré : un en-tête supprimé ne doit pas rendre une facture inimprimable."""
-        ship(env, letterhead={"name": "Jamais créé"})
-        out = await env.printer.render(ALICE, "Facture", await invoice(env))
-        assert "Durand" in out["html"]
+        seen = {}
+        monkeypatch.setattr(S, "_pdf_bytes", lambda html, background: seen.setdefault("bg", background) and b"%PDF-1.7")
+        await self.settle(env)
+        own = await env.printer.upload_background(ALICE, "Facture", content=b"%PDF-1.4 propre", filename="f.pdf", content_type=None)
+        ship(env, letterhead={"pdf": own["id"]})
+        await env.printer.pdf(ALICE, "Facture", await invoice(env))
+        assert seen["bg"].content == b"%PDF-1.4 propre"
 
-    async def test_an_absent_letter_head_doctype_is_never_an_error(self, env):
-        """Le plugin `system` n'est pas forcément chargé : l'impression continue sans en-tête."""
-        env.reg.unregister_owner("system")
-        ship(env, letterhead={"name": "default"})
-        assert "Durand" in (await env.printer.render(ALICE, "Facture", await invoice(env)))["html"]
-
-    async def test_the_request_replaces_what_the_template_says(self, env):
-        ship(env, letterhead={"name": "Entête"})
-        await self.head(env, footer_text="DU GABARIT")
-        await self.head(env, name="Autre", footer_text="DE LA REQUÊTE")
-        out = await env.printer.render(ALICE, "Facture", await invoice(env), letterhead="Autre")
-        assert "DE LA REQUÊTE" in out["html"] and "DU GABARIT" not in out["html"]
-
-    async def test_none_prints_without_any_letterhead(self, env):
-        ship(env, letterhead={"name": "Entête"})
-        await self.head(env, footer_text="PAS CETTE FOIS")
+    async def test_none_prints_without_it(self, env):
+        await self.settle(env)
         out = await env.printer.render(ALICE, "Facture", await invoice(env), letterhead="none")
-        assert "PAS CETTE FOIS" not in out["html"]
+        assert out["background"] is False
 
-    async def test_a_reader_with_no_grant_on_letter_head_still_gets_it(self, env):
-        """C'est le précédent de `preferences.py` : l'en-tête est de la présentation d'entreprise, lue en contexte système."""
-        ship(env, letterhead={"name": "Entête"})
-        await self.head(env, footer_text="RCS 1234")
+    async def test_a_reader_with_no_grant_on_the_settings_still_gets_it(self, env):
+        """Le précédent de `preferences.py` : le papier de l'entreprise est de la présentation, lue en contexte système."""
+        await self.settle(env)
         reader = make_ctx("acme", "rita", permissions=["sales:facture:read"])
-        assert "RCS 1234" in (await env.printer.render(reader, "Facture", await invoice(env)))["html"]
+        assert (await env.printer.render(reader, "Facture", await invoice(env)))["background"] is True
 
-    async def test_another_tenants_letterhead_is_invisible(self, env):
-        ship(env, letterhead={"name": "Entête"})
-        await self.head(env, footer_text="CHEZ ACME")
+    async def test_another_tenants_background_is_invisible(self, env):
+        await self.settle(env)
         hana = make_ctx("globex", "hana", permissions=ALL)
         await env.docs.create(hana, "Facture", {"client": "G"})
-        out = await env.printer.render(hana, "Facture", (await env.docs.list(hana, "Facture"))["items"][0]["name"])
-        assert "CHEZ ACME" not in out["html"]
+        name = (await env.docs.list(hana, "Facture"))["items"][0]["name"]
+        assert (await env.printer.render(hana, "Facture", name))["background"] is False
 
-    async def test_a_file_of_another_tenant_is_never_read(self, env):
-        """Deux verrous, et le premier est le plus fort : le moteur REFUSE de poser le fichier d'un autre tenant sur
-        un document (`_check_files`), donc le cas ne peut même pas exister ; et la lecture est de toute façon bornée
-        au tenant (`FileService.content`), ce qui tient aussi pour l'identifiant d'un gabarit livré."""
-        hana = make_ctx("globex", "hana", permissions=ALL)
-        meta = await env.files.upload(hana, "Letter Head", "image", content=png(), filename="g.png", content_type=None)
-        with pytest.raises(ValidationFailed):
-            await self.head(env, image=meta["id"])
-        assert await env.files.content("acme", meta["id"], reason="test") is None
-        assert await env.printer._embedded(ALICE, meta["id"]) is None
-        assert await env.printer._embedded(ALICE, "0" * 32) is None
+    async def test_a_file_that_is_not_a_pdf_is_ignored_not_an_error(self, env):
+        """Un Attach accepte tout fichier et garde le type DÉCLARÉ : le PDF se reconnaît à ses octets."""
+        await self.settle(env, content=png())
+        out = await env.printer.render(ALICE, "Facture", await invoice(env))
+        assert out["background"] is False and "Durand" in out["html"]
 
-    async def test_an_svg_is_never_embedded(self, env):
-        """Un SVG porte du script : refusé au téléversement d'un champ Image, et refusé ici aussi."""
-        from xcore_doctype.printing import letterhead_markup
+    async def test_only_the_settings_field_s_own_file_is_read(self, env):
+        """Le fichier de CE champ de CE document : un PDF d'ailleurs, même du tenant, n'est jamais un fond."""
+        elsewhere = await env.files.upload(ALICE, "Devis", "piece", content=b"%PDF-1.4 paie", filename="paie.pdf", content_type=None)
+        assert await env.files.print_file("acme", "System Settings", elsewhere["id"], fieldname="print_background") is None
 
-        with pytest.raises(ValueError, match="incorporée"):
-            letterhead_markup("https://exemple.invalid/logo.svg")
+    async def test_without_the_system_plugin_printing_goes_on(self, env):
+        """Le plugin `system` n'est pas forcément chargé : l'impression continue sans fond."""
+        env.reg.unregister_owner("system")
+        out = await env.printer.render(ALICE, "Facture", await invoice(env))
+        assert out["background"] is False and "Durand" in out["html"]
 
-
-class TestTheOnlyFieldsRead:
-    async def test_a_field_added_to_letter_head_never_leaks(self, env):
-        """La liste est FERMÉE (`LETTERHEAD_FIELDS`) : un réglage sensible ajouté plus tard ne sort pas par l'impression."""
+    async def test_only_the_background_fields_are_read(self, env):
+        """La liste est FERMÉE : un réglage sensible ajouté plus tard à `System Settings` ne sort pas par l'impression."""
         from xcore_doctype import print_service
 
-        assert set(print_service.LETTERHEAD_FIELDS) == {"image", "footer_text", "is_default", "disabled"}
+        assert set(print_service.BACKGROUND_FIELDS) == {"print_background", "print_background_pages", "print_offset_top", "print_offset_bottom"}
+
+    async def test_a_template_saved_with_a_named_letterhead_still_reads(self, env):
+        """Avant le 4 nov. un gabarit pouvait citer un `Letter Head` par son nom : il reste lisible (sinon IGNORÉ)."""
+        await self.settle(env)
+        ship(env, letterhead={"name": "Papier 2026"})
+        assert (await env.printer.render(ALICE, "Facture", await invoice(env)))["background"] is True
 
 
 class TestThePdfRoute:
@@ -426,13 +399,13 @@ class TestThePdfBackground:
     async def test_any_other_pdf_of_the_tenant_is_never_a_background(self, env):
         """Le verrou : un gabarit cite un IDENTIFIANT, donc ce qu'un client a écrit. Un PDF déposé ailleurs (le
         bulletin de paie, la pièce jointe d'un autre document) ne sort jamais en fond de facture."""
-        elsewhere = await env.files.upload(ALICE, "Letter Head", "background", content=b"%PDF-1.4 paie", filename="paie.pdf",
+        elsewhere = await env.files.upload(ALICE, "Devis", "piece", content=b"%PDF-1.4 paie", filename="paie.pdf",
                                            content_type="application/pdf")
         ship(env, letterhead={"pdf": elsewhere["id"]})
         assert (await env.printer.render(ALICE, "Facture", await invoice(env)))["background"] is False
 
     async def test_a_background_of_another_type_is_never_used(self, env):
-        other = await self.background(env, doctype="Letter Head")
+        other = await self.background(env, doctype="Devis")
         ship(env, letterhead={"pdf": other})
         assert (await env.printer.render(ALICE, "Facture", await invoice(env)))["background"] is False
 

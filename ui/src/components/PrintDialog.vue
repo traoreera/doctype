@@ -55,10 +55,15 @@ const choices = computed(() =>
     label: tpl.source === 'plugin' ? tpl.label : `${tpl.label} (${t.print.sources[tpl.source] ?? tpl.source})`,
   })),
 )
-const letterheads = computed(() => [
+const letterheads = [
   { value: '' as const, label: t.print.letterheadDefault },
   { value: 'none' as const, label: t.print.letterheadNone },
-])
+]
+/**
+ * Le papier à en-tête est le FOND PDF (celui du gabarit, sinon celui de l'organisation) : on ne propose de
+ * l'enlever que s'il y en a un — ou qu'on vient de l'enlever, pour pouvoir le remettre.
+ */
+const offerBackground = computed(() => !!rendered.value?.background || letterhead.value === 'none')
 
 // `immediate` : un dialogue monté DÉJÀ ouvert doit charger lui aussi (c'est le cas d'un test, et ce serait
 // celui d'un lien direct vers l'impression). Sans cela, seul un passage de fermé à ouvert déclencherait.
@@ -149,7 +154,7 @@ async function pdf(): Promise<void> {
           <span>{{ t.print.template }}</span>
           <Select v-model="chosen" :options="choices" option-label="label" option-value="value" size="small" data-testid="print-template" />
         </label>
-        <label class="print-field">
+        <label v-if="offerBackground" class="print-field">
           <span>{{ t.print.letterhead }}</span>
           <Select v-model="letterhead" :options="letterheads" option-label="label" option-value="value" size="small" data-testid="print-letterhead" />
         </label>

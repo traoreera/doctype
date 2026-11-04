@@ -185,10 +185,6 @@ class TestImages:
         assert out.index('<div class="doc">') < out.index("im front")  # dans le conteneur positionné
         assert "div.doc{position:relative;" in out and "img.im.front{position:absolute" in out
 
-    def test_the_letterhead_is_inside_the_positioned_wrapper(self):
-        t = doc("<p>a</p>")
-        out = render_html(t, DEF, {}, name="FA-1", letterhead_html='<div class=lh>LH</div>')
-        assert out.index('<div class="doc">') < out.index("LH")
 
 
 class TestLoadTimeRefusals:
@@ -230,7 +226,7 @@ class TestPrintImages:
 
     async def test_an_image_of_another_type_is_never_printed(self, env):
         name = await invoice(env)
-        up = await env.files.save_print_file(ALICE, "Letter Head", content=png(), filename="x.png", content_type="image/png")
+        up = await env.files.save_print_file(ALICE, "Devis", content=png(), filename="x.png", content_type="image/png")
         out = await env.printer.preview(ALICE, "Facture", name, await _template_with(env, up["id"]))
         assert "data:image" not in out["html"]
 

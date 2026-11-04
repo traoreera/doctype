@@ -18,7 +18,7 @@ from ..errors import DoctypeError
 from ..files import PRINT_BACKGROUND_MAX_MB, PRINT_IMAGE_MAX_MB, content_disposition
 from ..print_service import PrintService
 
-# Le nom d'un gabarit et celui d'un papier à en-tête : bornés ici pour que rien de démesuré n'atteigne le service.
+# Le nom d'un gabarit, et `letterhead` (seul `none` a un sens : imprimer SANS le fond PDF) : bornés ici pour que rien de démesuré n'atteigne le service.
 _NAME = {"max_length": 140}
 
 
@@ -31,7 +31,7 @@ class PrintOverrideBody(BaseModel):
 
 
 class PrintPreviewBody(BaseModel):
-    """Un gabarit en BROUILLON, plus le papier à en-tête à employer pour l'aperçu (`none` pour aucun)."""
+    """Un gabarit en BROUILLON, et `letterhead: none` pour l'aperçu SANS le fond PDF."""
 
     model_config = ConfigDict(extra="forbid")
     template: dict

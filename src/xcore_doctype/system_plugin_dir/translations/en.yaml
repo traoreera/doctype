@@ -11,7 +11,6 @@ messages:
   "Affiché en haut du Desk à la place de « Desk »": "Shown at the top of the Desk instead of “Desk”"
   Annulation: Cancellation
   Canal: Channel
-  "Celui qu'un gabarit obtient quand il demande « default »": "The one a template gets when it asks for “default”"
   Champ désignant un destinataire: Field naming a recipient
   Champ surveillé: Watched field
   Changement de valeur: Value change
@@ -24,16 +23,13 @@ messages:
   Destinataires: Recipients
   Droits: Rights
   Déclencheur: Trigger
-  Désactivé: Disabled
   E-mail: E-mail
   E-mail du membre: Member e-mail
-  "En haut de la PREMIÈRE page. Un en-tête répété à chaque page est le travail du fond PDF, déclaré dans le gabarit": "At the top of the FIRST page. A header repeated on every page is the PDF background's job, declared in the template"
   "Ex. : Warehouse. Le nom du type, tel que l'affiche l'adresse de sa liste": "E.g. Warehouse. The type's name, as its list's address shows it"
   "Ex. : {{ doctype }} {{ name }} soumis par {{ actor }} ; un champ du document s'écrit {{ doc.champ }}": "E.g. {{ doctype }} {{ name }} submitted by {{ actor }}; a field of the document is written {{ doc.field }}"
   "Facultatif : la restriction ne vaut que pour ce type (le type lui-même, ou un type qui le cite)": "Optional: the restriction applies only to this type (the type itself, or a type that cites it)"
   "Facultative, dans la langue des conditions des formulaires (ex. : status == 'Ouvert' and priority == 'Haute')": "Optional, in the language of form conditions (e.g. status == 'Open' and priority == 'High')"
   Format de date: Date format
-  "Gardé, mais plus imprimé : les documents sortent alors sans en-tête": "Kept, but no longer printed: documents then print without a letterhead"
   Identifiant: Identifier
   Image: Image
   Impression: Printing
@@ -47,7 +43,6 @@ messages:
   Logo: Logo
   Membre: Member
   Membres prévenus: Notified members
-  Mentions: Legal notice
   Message: Message
   Modification: Change
   Nom de l'organisation: Organisation name
@@ -55,11 +50,8 @@ messages:
   Notifications: Notifications
   Objet: Subject
   Organisation: Organisation
-  Papier à en-tête: Letterhead
-  Par défaut: Default
   Paramètres généraux: General settings
   Permission utilisateur: User permission
-  Pied de page: Footer
   Prévenir l'auteur du document: Notify the document's author
   Prévenir les personnes assignées: Notify the assignees
   Restriction: Restriction
@@ -69,9 +61,17 @@ messages:
   Soumission: Submission
   Suppression: Deletion
   "Teinte des boutons et des éléments actifs ; vide = la teinte par défaut": "Tint of buttons and active elements; empty = the default tint"
-  "Texte brut imprimé en fin de document (SARL au capital de…, RCS, TVA intracommunautaire)": "Plain text printed at the end of the document (company capital, registration, VAT number)"
   "Texte brut. Variables : {{ doctype }}, {{ name }}, {{ event }}, {{ actor }}, {{ link }}, {{ doc.champ }}": "Plain text. Variables: {{ doctype }}, {{ name }}, {{ event }}, {{ actor }}, {{ link }}, {{ doc.field }}"
   Type de document: Document type
   "Un champ du document qui contient l'e-mail ou l'identifiant d'un membre (ex. : approver)": "A field of the document holding a member's e-mail or identifier (e.g. approver)"
   Valeur permise: Allowed value
   Événement: Event
+  Fond PDF des impressions: PDF background for printing
+  "Votre papier à en-tête (logo, coordonnées, pied de page, mentions), en PDF : toutes les impressions s'impriment PAR-DESSUS, sauf un gabarit qui a son propre fond": "Your letterhead (logo, address, footer, legal notices), as a PDF: every printout is printed ON TOP of it, except a template that has its own background"
+  Fond sur: Background on
+  Toutes les pages: All pages
+  Première page seulement: First page only
+  Zone réservée en haut (mm): Reserved area at the top (mm)
+  Zone réservée en bas (mm): Reserved area at the bottom (mm)
+  "La hauteur que le fond occupe en haut de chaque page : le contenu commence en dessous": "The height the background takes at the top of each page: the content starts below it"
+  "La hauteur que le fond occupe en bas de chaque page : le contenu s'arrête au-dessus": "The height the background takes at the bottom of each page: the content stops above it"
