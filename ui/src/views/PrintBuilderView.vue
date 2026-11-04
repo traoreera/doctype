@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { NodeSelection } from '@tiptap/pm/state'
+import { NodeSelection, TextSelection } from '@tiptap/pm/state'
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import SelectButton from 'primevue/selectbutton'
+import PagePanel from '@/components/printdoc/PagePanel.vue'
+import TablePanel from '@/components/printdoc/TablePanel.vue'
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import BlockPanel from '@/components/printbuilder/BlockPanel.vue'
 import PrintDocEditor, { type Selected } from '@/components/printdoc/PrintDocEditor.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
+import { downloadBytes } from '@/lib/download'
+import type { TableCommand, TableStyle } from '@/lib/tablestyles'
 import { t } from '@/i18n'
 import { PX_PER_MM, blocksToContent, newEmbedded, round1, tokenHtml } from '@/lib/printdoc'
 import { docContext } from '@/components/printdoc/extensions'
@@ -30,6 +34,7 @@ import {
   updateColumn,
   type Block,
   type Draft,
+  type Letterhead,
 } from '@/lib/printedit'
 import { useServices } from '@/lib/services'
 import type { DocTypeMeta } from '@/lib/types'
@@ -43,6 +48,10 @@ import { useMeta } from '@/stores/meta'
  * depuis le panneau « Insérer »), le tableau des lignes, les totaux, des images qu'on place librement, des
  * tableaux de mise en page. Le panneau de droite règle ce qu'on a cliqué (une image, un tableau des lignes).
  * La bascule « Aperçu imprimé » montre ce que le SERVEUR imprime, et c'est lui qui fait foi.
+ *
+ * Le panneau de droite règle ce qui a le curseur ou la sélection : une image, un tableau des lignes, un tableau
+ * de mise en page (style et outils, `TablePanel`) — et sinon la PAGE (format, marges, fond PDF : `PagePanel`).
+ * Allégé le 4 nov. : plus de barre de page au-dessus de la feuille, une barre de mise en forme réduite.
  *
  * Un gabarit à BLOCS (celui d'un plugin, ou le fabriqué) s'ouvre CONVERTI en document : on part de ce qui
  * s'imprime aujourd'hui, et l'enregistrement le remplace par un document libre (le format livré ne change pas).
@@ -82,13 +91,25 @@ const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const docEditor = shallowRef<InstanceType<typeof PrintDocEditor> | null>(null)
 const selected = ref<Selected | null>(null)
+/** Le style du tableau de mise en page où est le curseur, ou `null` hors d'un tableau. */
+const tableStyle = ref<TableStyle | null>(null)
+const backgroundBusy = ref(false)
+/**
+ * La PAGE demandée explicitement (« Page et fond PDF ») alors que quelque chose est choisi : à l'ouverture, TipTap
+ * sélectionne souvent le dernier bloc (le tableau des totaux), et la page n'était plus atteignable qu'en cliquant
+ * du texte. Le prochain choix sur la feuille rend la main au panneau de ce choix.
+ */
+const pageOpen = ref(false)
+const choice = computed(() => `${selected.value?.type ?? ''}:${selected.value?.pos ?? ''}:${tableStyle.value ?? ''}`)
+watch(choice, () => (pageOpen.value = false))
+const somethingChosen = computed(() => !!imageAttrs.value || !!embedded.value || !!tableStyle.value)
+const pdfPreviewing = ref(false)
 /** Le bloc incorporé choisi, dans la forme d'édition de `printedit` (clés de colonnes stables le temps du choix). */
 const blockDraft = ref<Draft | null>(null)
 const chosenColumn = ref<string | null>(null)
 let ticket = 0
 
 const label = computed(() => meta.value?.label || props.doctype)
-const sizes = ['A3', 'A4', 'A5', 'B4', 'B5', 'Letter', 'Legal', 'Ledger']
 const payload = computed(() => {
   const out: Record<string, unknown> = { name: draft.value.name, page: { ...draft.value.page }, content: content.value }
   if (draft.value.label) out.label = draft.value.label
@@ -127,7 +148,8 @@ async function load(): Promise<void> {
     draft.value = fromTemplate(current.template)
     const raw = current.template as { content?: string; blocks?: Record<string, unknown>[] }
     content.value = typeof raw.content === 'string' ? raw.content : blocksToContent(raw.blocks ?? [], meta.value)
-    void files.resolve([...content.value.matchAll(/data-file="([0-9a-f]{32})"/g)].map((m) => m[1]!))
+    const background = draft.value.letterhead?.pdf
+    void files.resolve([...[...content.value.matchAll(/data-file="([0-9a-f]{32})"/g)].map((m) => m[1]!), ...(background ? [background] : [])])
     source.value = current.source
     editable.value = current.editable
     initial.value = JSON.stringify(payload.value)
@@ -214,6 +236,41 @@ async function reset(): Promise<void> {
 }
 
 const setPage = (p: Partial<Draft['page']>) => (draft.value = { ...draft.value, page: { ...draft.value.page, ...p } })
+const setLetterhead = (lh: Letterhead | null) => (draft.value = { ...draft.value, letterhead: lh })
+
+// ── Le fond PDF (§5) : déposé pour CE type, imprimé sous le contenu ──
+const backgroundName = computed(() => files.info(draft.value.letterhead?.pdf)?.filename ?? null)
+async function uploadBackground(file: File): Promise<void> {
+  backgroundBusy.value = true
+  try {
+    const made = await api.printBackground(props.doctype, file)
+    await files.resolve([made.id], { force: true })
+    const was = draft.value.letterhead
+    // Un papier à en-tête est un `Letter Head` OU un fond PDF (le serveur refuse les deux) : le fond remplace.
+    setLetterhead({ pdf: made.id, pages: was?.pages ?? 'all', offset_top: was?.offset_top ?? 0, offset_bottom: was?.offset_bottom ?? 0 })
+  } catch (e) {
+    notify.error(describeError(e))
+  } finally {
+    backgroundBusy.value = false
+  }
+}
+/** Le fond n'existe qu'au PDF : on télécharge le PDF du BROUILLON, rendu par le serveur sur le document d'exemple. */
+async function previewPdf(): Promise<void> {
+  if (!example.value) return
+  pdfPreviewing.value = true
+  try {
+    const file = await api.printPreviewPdf(props.doctype, example.value, payload.value)
+    downloadBytes(file.filename, file.bytes, 'application/pdf')
+  } catch (e) {
+    notify.error(describeError(e))
+  } finally {
+    pdfPreviewing.value = false
+  }
+}
+
+// ── Le tableau de mise en page sous le curseur ──
+const setTableStyle = (style: TableStyle) => editor()?.chain().focus().updateAttributes('table', { tableStyle: style }).run()
+const tableCommand = (name: TableCommand) => editor()?.chain().focus()[name]().run()
 
 // ── Insérer ──
 const editor = () => docEditor.value?.editor ?? null
@@ -223,13 +280,13 @@ watch(docEditor, (c) => c?.editor?.on('focus', () => (placed = true)))
 /**
  * Insère au curseur. Un bloc ou une image SÉLECTIONNÉS ne sont jamais remplacés (le comportement de base d'un
  * éditeur, qui surprend ici : cliquer « Totaux » faisait disparaître le tableau des lignes qu'on venait de régler) —
- * on insère juste après.
+ * on insère juste après. Un TEXTE sélectionné non plus : on insère après lui, il ne disparaît pas.
  */
 function insert(html: string | Record<string, unknown>): void {
   const e = editor()
   if (!e || !editable.value) return
   const sel = e.state.selection
-  if (sel instanceof NodeSelection) e.chain().focus().insertContentAt(sel.to, html).run()
+  if (sel instanceof NodeSelection || (!sel.empty && placed)) e.chain().focus().insertContentAt(sel.to, html).run()
   else if (!placed) e.chain().focus().insertContentAt(e.state.doc.content.size, html).run()
   else e.chain().focus().insertContent(html).run()
 }
@@ -245,7 +302,31 @@ function insertBlock(type: 'table' | 'totals' | 'fields', tableField?: string): 
   if (!meta.value) return
   insert({ type: 'embeddedBlock', attrs: { block: newEmbedded(type, meta.value, tableField) } })
 }
-const insertTable = () => editor()?.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: false }).updateAttributes('table', { borders: 'none' }).run()
+/**
+ * Un tableau de MISE EN PAGE (le logo à gauche, l'adresse à droite), deux sur deux, né SANS bordure ; la galerie
+ * l'habille. Inséré par `insert`, comme tout le reste : `insertTable` de TipTap REMPLAÇAIT la sélection (le texte
+ * qu'on venait de mettre en gras disparaissait, vu dans Chromium).
+ */
+function insertTable(): void {
+  const e = editor()
+  if (!e) return
+  const known = new Set<number>()
+  e.state.doc.descendants((node, pos) => void (node.type.name === 'table' && known.add(pos)))
+  const cell = { type: 'tableCell', content: [{ type: 'paragraph' }] }
+  const row = { type: 'tableRow', content: [cell, cell] }
+  insert({ type: 'table', attrs: { tableStyle: 'plain' }, content: [row, row] })
+  // Le curseur dans la PREMIÈRE cellule du nouveau tableau, comme `insertTable` : on y écrit, et le panneau de droite
+  // montre aussitôt son style et ses outils. Le nouveau est le tableau dont la position n'existait pas avant.
+  let made: number | null = null
+  e.state.doc.descendants((node, pos) => {
+    if (made === null && node.type.name === 'table' && !known.has(pos)) made = pos
+    return made === null
+  })
+  if (made !== null) {
+    const at: number = made
+    e.chain().focus().command(({ tr }) => (tr.setSelection(TextSelection.near(tr.doc.resolve(at + 1))), true)).run()
+  }
+}
 const insertBreak = () => insert({ type: 'pageBreak' })
 
 async function uploadImage(event: Event): Promise<void> {
@@ -349,6 +430,7 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
         </p>
       </div>
       <div class="pb-actions">
+        <SelectButton v-if="meta" v-model="mode" :options="modes" option-label="label" option-value="value" :allow-empty="false" size="small" data-testid="pb-mode" />
         <RouterLink :to="`/app/${encodeURIComponent(doctype)}`"><Button :label="t.printBuilder.backToList" icon="pi pi-arrow-left" text severity="secondary" size="small" /></RouterLink>
         <Button
           v-if="source === 'organisation'"
@@ -376,35 +458,6 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
     <Message v-if="failure" severity="error" data-testid="pb-error">{{ failure }}</Message>
     <Message v-else-if="!editable && !loading" severity="info" size="small" data-testid="pb-readonly">{{ t.printBuilder.readOnly }}</Message>
     <Message v-if="problem" severity="error" data-testid="pb-refused">{{ problem }}</Message>
-
-    <!-- La page : format, orientation, marges, et la bascule entre l'éditeur et l'aperçu du serveur -->
-    <div v-if="meta" class="pb-toolbar">
-      <label class="pb-inline">
-        <span>{{ t.printBuilder.pageSize }}</span>
-        <Select :model-value="draft.page.size" :options="sizes.map((s) => ({ value: s, label: s }))" option-label="label" option-value="value" :disabled="!editable" size="small" data-testid="pb-page-size" @update:model-value="setPage({ size: $event })" />
-      </label>
-      <label class="pb-inline">
-        <span>{{ t.printBuilder.orientation }}</span>
-        <Select
-          :model-value="draft.page.orientation"
-          :options="[{ value: 'portrait', label: t.printBuilder.portrait }, { value: 'landscape', label: t.printBuilder.landscape }]"
-          option-label="label"
-          option-value="value"
-          :disabled="!editable"
-          size="small"
-          data-testid="pb-orientation"
-          @update:model-value="setPage({ orientation: $event })"
-        />
-      </label>
-      <fieldset class="pb-inline pb-margins">
-        <legend>{{ t.printBuilder.margins }}</legend>
-        <label v-for="side in (['top', 'right', 'bottom', 'left'] as const)" :key="side" class="pb-margin">
-          <span>{{ t.printBuilder.sides[side] }}</span>
-          <InputNumber :model-value="draft.page[side]" :min="0" :max="100" :disabled="!editable" size="small" input-class="pb-margin-input" :data-testid="`pb-margin-${side}`" @update:model-value="setPage({ [side]: $event ?? 0 })" />
-        </label>
-      </fieldset>
-      <SelectButton v-model="mode" :options="modes" option-label="label" option-value="value" :allow-empty="false" size="small" class="pb-mode" data-testid="pb-mode" />
-    </div>
 
     <div v-if="meta" class="pb-grid">
       <!-- Insérer : cliquer place au curseur ; une valeur se glisse aussi dans le texte -->
@@ -452,6 +505,7 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
           :link-title="links.title"
           :image-url="files.url"
           @select="onSelect"
+          @table="(s) => (tableStyle = s)"
         />
         <div v-show="mode === 'preview'" class="pb-preview">
           <p v-if="!example" class="desk-muted" data-testid="pb-no-example">{{ t.printBuilder.noPreview }}</p>
@@ -465,7 +519,18 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
 
       <!-- Les propriétés de ce qu'on a cliqué -->
       <aside class="pb-props" :aria-label="t.printBuilder.properties">
-        <template v-if="imageAttrs">
+        <Button
+          v-if="somethingChosen && !pageOpen"
+          :label="t.printBuilder.pageAndBackground"
+          icon="pi pi-file"
+          text
+          size="small"
+          class="pb-to-page"
+          data-testid="pb-open-page"
+          @click="pageOpen = true"
+        />
+        <template v-if="pageOpen" />
+        <template v-else-if="imageAttrs">
           <h2 class="pb-panel-title" data-testid="pd-props-title">{{ t.printDoc.image }}</h2>
           <label class="pb-field">
             <span>{{ t.printDoc.wrap }}</span>
@@ -511,10 +576,22 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
           <Button :label="t.printDoc.removeBlock" icon="pi pi-trash" text severity="danger" size="small" :disabled="!editable" data-testid="pd-remove" @click="removeSelected" />
         </template>
 
-        <template v-else>
-          <h2 class="pb-panel-title">{{ t.printBuilder.properties }}</h2>
-          <p class="desk-muted pb-hint">{{ t.printDoc.nothingChosen }}</p>
-        </template>
+        <TablePanel v-else-if="tableStyle" :table-style="tableStyle" :editable="editable" @style="setTableStyle" @command="tableCommand" />
+
+        <PagePanel
+          v-if="pageOpen || !somethingChosen"
+          :page="draft.page"
+          :letterhead="draft.letterhead"
+          :editable="editable"
+          :background-name="backgroundName"
+          :uploading="backgroundBusy"
+          :can-preview="!!example && !empty"
+          :previewing="pdfPreviewing"
+          @page="setPage"
+          @letterhead="setLetterhead"
+          @upload="uploadBackground"
+          @preview="previewPdf"
+        />
       </aside>
     </div>
   </section>
@@ -554,59 +631,6 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
   gap: 0.5rem;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.pb-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  align-items: flex-end;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-border-radius-md, 6px);
-  background: var(--p-content-background);
-}
-
-.pb-inline {
-  display: grid;
-  gap: 0.2rem;
-  font-size: 0.8rem;
-  border: 0;
-  margin: 0;
-  padding: 0;
-}
-
-.pb-inline > span,
-.pb-inline > legend {
-  color: var(--p-text-muted-color);
-  padding: 0;
-}
-
-.pb-margins {
-  display: flex;
-  gap: 0.35rem;
-  align-items: flex-end;
-}
-
-.pb-margins > legend {
-  float: left;
-  width: 100%;
-  margin-bottom: 0.2rem;
-}
-
-.pb-margin {
-  display: grid;
-  gap: 0.1rem;
-  font-size: 0.7rem;
-  color: var(--p-text-muted-color);
-}
-
-.pb-margin :deep(.pb-margin-input) {
-  width: 3.5rem;
-}
-
-.pb-mode {
-  margin-left: auto;
 }
 
 .pb-grid {
@@ -679,6 +703,10 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-border-radius-md, 6px);
   background: var(--p-content-background);
+}
+
+.pb-to-page {
+  justify-self: start;
 }
 
 .pb-item {

@@ -1,6 +1,8 @@
 import { Extension, Node, VueNodeViewRenderer } from '@tiptap/vue-3'
-import { Table } from '@tiptap/extension-table'
+import { Table, TableView } from '@tiptap/extension-table'
+import type { Node as PmNode } from '@tiptap/pm/model'
 import { reactive } from 'vue'
+import { layoutTableStyle } from '@/lib/tablestyles'
 import type { DocTypeMeta } from '@/lib/types'
 import EmbeddedBlockView from './EmbeddedBlockView.vue'
 import PageBreakView from './PageBreakView.vue'
@@ -132,17 +134,41 @@ export const PageBreak = Node.create({
   addNodeView: () => VueNodeViewRenderer(PageBreakView),
 })
 
-/** Un tableau de MISE EN PAGE (deux colonnes : le logo à gauche, l'adresse à droite), avec ou sans bordures. */
+/**
+ * Un tableau de MISE EN PAGE (deux colonnes : le logo à gauche, l'adresse à droite), habillé d'un style de la
+ * galerie (`lib/tablestyles`). Il n'écrit que `data-style` ; l'ancien `data-borders` se LIT encore, pour qu'un
+ * gabarit d'avant la galerie s'ouvre avec le style qu'il imprimait.
+ */
+/**
+ * La vue du tableau, qui SUIT son style : celle de TipTap ne pose les attributs qu'à sa création (`update` ne refait
+ * que les colonnes), si bien qu'un style choisi dans la galerie s'enregistrait et s'imprimait mais que la feuille
+ * gardait l'ancien (vu dans Chromium).
+ */
+class StyledTableView extends TableView {
+  constructor(node: PmNode, cellMinWidth: number, view?: unknown, attrs?: Record<string, unknown>) {
+    super(node, cellMinWidth, view as never, attrs)
+    this.table.setAttribute('data-style', String(node.attrs.tableStyle))
+  }
+
+  override update(node: PmNode): boolean {
+    if (!super.update(node)) return false
+    this.table.setAttribute('data-style', String(node.attrs.tableStyle))
+    return true
+  }
+}
+
 export const LayoutTable = Table.extend({
+  addOptions() {
+    return { ...this.parent!(), View: StyledTableView }
+  },
   addAttributes() {
     return {
       ...this.parent?.(),
-      borders: {
-        default: 'all',
-        parseHTML: (el) => (el.getAttribute('data-borders') === 'none' ? 'none' : 'all'),
-        renderHTML: (a) => ({ 'data-borders': a.borders }),
+      tableStyle: {
+        default: 'bordered',
+        parseHTML: (el) => layoutTableStyle(el),
+        renderHTML: (a) => ({ 'data-style': a.tableStyle }),
       },
     }
   },
 })
-

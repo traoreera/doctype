@@ -2,10 +2,12 @@
 
 Ce que ces tests défendent, chacun par une mutation qui le casse :
 - `index.html` part sous la CSP stricte (empreinte de l'import map, jamais `'unsafe-inline'`) et `X-Frame-Options` ;
-- `config.json` dit ce que l'opérateur a configuré, sous la clé `extensions` que le Desk lit (vide : le montage n'en sert pas) ;
+- `config.json` dit ce que l'opérateur a configuré, et RENVOIE au `config.json` du plugin pour les extensions (D28) et le temps réel
+  (`extensions_from`) : sans ce renvoi, un Desk monté ne chargeait plus aucune extension ;
 - monté à la racine, il ne masque AUCUNE route que l'application déclare après lui ;
 - traversée refusée, et le client ne choisit pas le dossier servi ;
-- une API sur une autre origine est nommée dans `connect-src` ; une adresse invalide est refusée au montage.
+- une API sur une autre origine est nommée dans `connect-src` ET `script-src` (les extensions viennent du plugin) ; une adresse
+  invalide est refusée au montage.
 """
 
 from __future__ import annotations
@@ -61,7 +63,9 @@ def test_the_page_carries_the_strict_policy(dist):
 
 def test_config_says_what_the_operator_configured(dist):
     body = client(dist, api_base="/api/doc/", login_url="/auth/login", developer=True).get("/config.json").json()
-    assert body == {"api_base": "/api/doc", "login_url": "/auth/login", "extensions": [], "developer": True, "realtime": False}  # mount_desk : jamais de flux xpulse
+    # Les extensions et le temps réel : c'est le PLUGIN qui sait, le Desk lit son `config.json` (`lib/config.fromPlugin`).
+    assert body == {"api_base": "/api/doc", "login_url": "/auth/login", "extensions": [], "developer": True, "realtime": False,
+                    "extensions_from": "/api/doc/desk/config.json"}
 
 
 def test_mounted_at_the_root_it_hides_no_later_route(dist):
@@ -95,6 +99,24 @@ def test_another_origin_for_the_api_is_allowed_to_connect(dist):
     csp = client(dist, api_base="https://api.example.com/app/xcore-doctype", login_url="https://auth.example.com/app/auth/login").get("/").headers["content-security-policy"]
     connect = next(p for p in csp.split("; ") if p.startswith("connect-src"))
     assert connect == "connect-src 'self' https://auth.example.com https://api.example.com"
+    script = next(p for p in csp.split("; ") if p.startswith("script-src"))
+    assert script.startswith("script-src 'self' https://api.example.com 'sha256-")  # les extensions, servies par le plugin
+    assert "auth.example.com" not in script  # la connexion n'a pas à servir de script
+
+
+def test_the_plugin_s_own_desk_never_points_elsewhere(dist):
+    """Le Desk du plugin a sa liste lui-même : pas de renvoi, et `script-src` reste `'self'` seul."""
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    from xcore_doctype.api.desk import DeskSettings, build_desk_router
+
+    app = FastAPI()
+    settings = DeskSettings.from_plugin_config({"doctype": {"desk": {"dist_dir": str(dist)}}})
+    app.include_router(build_desk_router(settings), prefix="/app/xcore-doctype")
+    c = TestClient(app)
+    assert "extensions_from" not in c.get("/app/xcore-doctype/desk/config.json").json()
+    script = next(p for p in c.get("/app/xcore-doctype/desk/").headers["content-security-policy"].split("; ") if p.startswith("script-src"))
+    assert script.startswith("script-src 'self' 'sha256-")
 
 
 @pytest.mark.parametrize("config", [{"api_base": "//evil.example"}, {"api_base": "javascript:alert(1)"}, {"login_url": "ftp://x"}, {"path": "erp"}])

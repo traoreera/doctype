@@ -72,6 +72,7 @@ def host(tmp_path, request):
     extensions = getattr(request, "param", {}).get("extensions")
     developer = getattr(request, "param", {}).get("developer", False)
     platform = getattr(request, "param", {}).get("platform", False)
+    mounted = getattr(request, "param", {}).get("mounted")  # un chemin (`/erp`) : le Desk AUSSI monté hors du plugin (`mount_desk`)
     config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["services"]["databases"]["default"]["url"] = f"sqlite+aiosqlite:///{tmp_path / 'e2e.db'}"
     config["tenancy"] = {"enabled": True, "isolate_db": False}
@@ -84,6 +85,11 @@ def host(tmp_path, request):
         "@asynccontextmanager\nasync def lifespan(app: FastAPI):\n    await xcore.boot(app)\n    yield\n    await xcore.shutdown()\n\n\n"
         'app = FastAPI(title=".", version="0.1.0", lifespan=lifespan)\n\n'
         "xcore.setup(app)\n\n\n@app.get(\"/health\")\nasync def health():\n    return {\"status\": \"ok\"}\n"
+        + (
+            "\n\nfrom xcore_doctype.mount import Config, mount_desk\n\n"
+            f"mount_desk(app, Config(path={mounted!r}, api_base={PREFIX!r}, login_url=None))\n"
+            if mounted else ""
+        )
     )
     (tmp_path / "app").mkdir()
     # Une COPIE du plugin : ce scénario se connecte par jeton collé (plugin de test `auth`, HMAC), pas par xauth : `login_url` y est retiré.
@@ -148,7 +154,7 @@ def host(tmp_path, request):
         log.close()
 
 
-def _scenario(host: str, script: str, *, permissions: list[str] | None = None, **extra_env: str) -> subprocess.CompletedProcess:
+def _scenario(host: str, script: str, *, permissions: list[str] | None = None, desk: str | None = None, **extra_env: str) -> subprocess.CompletedProcess:
     missing = _chromium_missing()
     if missing:
         pytest.skip(missing)
@@ -160,7 +166,7 @@ def _scenario(host: str, script: str, *, permissions: list[str] | None = None, *
     )
     env = {
         **os.environ,
-        "DESK_URL": f"{host}/desk/",
+        "DESK_URL": desk or f"{host}/desk/",
         "DESK_API": host,
         "DESK_TOKEN": token,
         "DESK_TENANT": tenant,
@@ -182,6 +188,15 @@ def test_a_plugins_desk_extension_runs_in_the_browser_under_the_csp(host):
     """D28 : l'extension de `sales` (autorisée par l'opérateur) se charge par l'import map, sous la CSP stricte, et étend le Desk."""
     run = _scenario(host, "e2e/extensions.e2e.mjs")
     assert run.returncode == 0, f"scénario des extensions en échec :\n{run.stdout}\n{run.stderr}"
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"extensions": ["sales"], "mounted": "/erp"}], indirect=True)
+def test_a_desk_mounted_elsewhere_still_loads_the_plugins_extensions(host):
+    """Le défaut signalé le 4 nov. : monté hors du plugin (`mount_desk`, sous `/erp`), le Desk ne chargeait plus aucune extension.
+    Son `config.json` renvoie maintenant à celui du plugin (`extensions_from`) : le MÊME scénario que dans le plugin, sous la CSP du montage."""
+    run = _scenario(host, "e2e/extensions.e2e.mjs", desk=host.removesuffix(PREFIX) + "/erp/")
+    assert run.returncode == 0, f"scénario des extensions (Desk monté) en échec :\n{run.stdout}\n{run.stderr}"
 
 
 @pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")

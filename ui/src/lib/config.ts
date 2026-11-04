@@ -24,8 +24,9 @@ declare global {
 const trimSlash = (s: string) => s.replace(/\/+$/, '')
 
 /**
- * Les extensions annoncées par `config.json`, gardées seulement si elles sont bien formées ET servies par la MÊME origine que le Desk
- * (la CSP l'exigerait de toute façon : on n'essaie même pas de charger autre chose).
+ * Les extensions annoncées par un `config.json`, gardées seulement si elles sont bien formées ET servies par l'origine de ce
+ * `config.json` (`href`) — celle du Desk, ou celle de l'API quand le Desk est monté ailleurs et lit la liste du plugin ; la CSP
+ * n'autorise que ces deux-là, on n'essaie même pas de charger autre chose.
  */
 export function readExtensions(raw: unknown, href: string): { name: string; url: string }[] {
   if (!Array.isArray(raw)) return []
@@ -60,6 +61,40 @@ function fromLocation(pathname: string): string {
   return trimSlash(i >= 0 ? pathname.slice(0, i) : pathname)
 }
 
+interface ConfigBody {
+  api_base?: unknown
+  login_url?: unknown
+  extensions?: unknown
+  developer?: unknown
+  realtime?: unknown
+  /** Un Desk MONTÉ hors du plugin (`mount_desk`) : le `config.json` du plugin, seul à savoir ses extensions et si xpulse est là. */
+  extensions_from?: unknown
+}
+
+/**
+ * Un Desk monté ailleurs que dans le plugin (à la racine, sous `/erp`…) n'a pas la liste des extensions : il la lit dans le
+ * `config.json` du PLUGIN, avec l'annonce du temps réel. Seulement si cette adresse est sous l'API annoncée (on ne suit pas un renvoi
+ * vers n'importe où) ; injoignable : aucune extension, comme avant, mais le Desk démarre.
+ */
+async function fromPlugin(transport: Transport, raw: string, baseUrl: string, href: string): Promise<Pick<DeskConfig, 'extensions' | 'realtime'>> {
+  let url: URL
+  try {
+    url = new URL(raw, href)
+  } catch {
+    return {}
+  }
+  const api = new URL(`${baseUrl}/`, href)
+  if (url.origin !== api.origin || !url.pathname.startsWith(api.pathname)) return {}
+  try {
+    const res = await transport.request({ method: 'GET', url: url.toString(), headers: { Accept: 'application/json' } })
+    const body = res.json as ConfigBody | null
+    if (res.status !== 200 || !body) return {}
+    return { extensions: readExtensions(body.extensions, url.toString()), realtime: body.realtime === true }
+  } catch {
+    return {}
+  }
+}
+
 /**
  * Où est l'API ? Par ordre : l'hôte (application desktop) ; `config.json` servi à côté de l'application par le plugin, qui
  * connaît son préfixe ; à défaut, ce qu'on déduit de l'URL de la page. En développement (Vite), le plugin ne tourne pas à
@@ -75,15 +110,17 @@ export async function loadConfig(
 
   try {
     const res = await transport.request({ method: 'GET', url: new URL('config.json', where.href).toString(), headers: { Accept: 'application/json' } })
-    const body = res.json as { api_base?: unknown; login_url?: unknown; extensions?: unknown; developer?: unknown; realtime?: unknown } | null
+    const body = res.json as ConfigBody | null
     if (res.status === 200 && body && typeof body.api_base === 'string') {
-      return {
+      const config: DeskConfig = {
         baseUrl: trimSlash(body.api_base),
         loginUrl: typeof body.login_url === 'string' ? body.login_url : null,
         extensions: readExtensions(body.extensions, where.href),
         developer: body.developer === true,
         realtime: body.realtime === true,
       }
+      if (typeof body.extensions_from === 'string') Object.assign(config, await fromPlugin(transport, body.extensions_from, config.baseUrl, where.href))
+      return config
     }
   } catch {
     // injoignable ou pas du JSON : on retombe sur le défaut

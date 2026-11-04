@@ -82,4 +82,51 @@ describe('configuration', () => {
     const cfg = await loadConfig(transport({ status: 200, json: { api_base: 5 } }), at('/p/desk/'))
     expect(cfg.baseUrl).toBe('/p')
   })
+
+describe('un Desk MONTÉ hors du plugin (mount_desk) lit ses extensions chez le plugin', () => {
+  /** Deux réponses : le config.json du montage, puis celui du plugin. */
+  const two = (mounted: Record<string, unknown>, plugin: HttpResponse | Error): Transport & { urls: string[] } => {
+    const urls: string[] = []
+    return {
+      urls,
+      async request(req: HttpRequest) {
+        urls.push(req.url)
+        if (urls.length === 1) return { status: 200, json: mounted }
+        if (plugin instanceof Error) throw plugin
+        return plugin
+      },
+    }
+  }
+  const ext = { name: 'sales', url: 'ext/sales/index.js?v=abc' }
+
+  it('suit `extensions_from` : la liste et l’annonce du temps réel viennent du plugin, URL résolues chez lui', async () => {
+    const t = two({ api_base: '/app/xcore-doctype', extensions: [], extensions_from: '/app/xcore-doctype/desk/config.json' },
+      { status: 200, json: { api_base: '/app/xcore-doctype', extensions: [ext], realtime: true } })
+    const cfg = await loadConfig(t, at('/erp/'))
+    expect(t.urls).toEqual(['http://host:8000/erp/config.json', 'http://host:8000/app/xcore-doctype/desk/config.json'])
+    expect(cfg.extensions).toEqual([{ name: 'sales', url: 'http://host:8000/app/xcore-doctype/desk/ext/sales/index.js?v=abc' }])
+    expect(cfg.realtime).toBe(true)
+  })
+
+  it('une API sur une autre origine : les extensions viennent de CETTE origine (la CSP la nomme)', async () => {
+    const t = two({ api_base: 'https://api.example.com/app/xcore-doctype', extensions_from: 'https://api.example.com/app/xcore-doctype/desk/config.json' },
+      { status: 200, json: { extensions: [ext, { name: 'evil', url: 'https://cdn.example.net/x.js' }] } })
+    const cfg = await loadConfig(t, at('/'))
+    expect(cfg.extensions).toEqual([{ name: 'sales', url: 'https://api.example.com/app/xcore-doctype/desk/ext/sales/index.js?v=abc' }])
+  })
+
+  it('un renvoi hors de l’API annoncée n’est pas suivi', async () => {
+    const t = two({ api_base: '/app/xcore-doctype', extensions_from: 'https://ailleurs.example.net/config.json' }, { status: 200, json: { extensions: [ext] } })
+    const cfg = await loadConfig(t, at('/'))
+    expect(t.urls).toHaveLength(1)
+    expect(cfg.extensions).toEqual([])
+  })
+
+  it('le plugin injoignable : aucune extension, mais le Desk démarre', async () => {
+    const cfg = await loadConfig(two({ api_base: '/p', extensions_from: '/p/desk/config.json' }, new Error('down')), at('/'))
+    expect(cfg.baseUrl).toBe('/p')
+    expect(cfg.extensions).toEqual([])
+  })
+})
+
 })

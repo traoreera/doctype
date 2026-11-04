@@ -20,14 +20,14 @@ Chromium (`ui/e2e/print.e2e.mjs`).
 Et les étapes 6 et 7 : le DocType `Letter Head` livré avec le plugin `system`, et l'éditeur de gabarits
 (`#/print/<Type>`), devenu le 29 oct. un éditeur FAÇON TRAITEMENT DE TEXTE avec images placées librement (§12).
 
-**Pas encore fait :** le TÉLÉVERSEMENT du PDF d'en-tête depuis l'écran. Le serveur le superpose déjà
-(`pdf.overlay`, testé) et le modèle de l'éditeur porte ses réglages, mais une question reste OUVERTE et je
-préfère l'écrire que de l'inventer : **à quoi le fichier téléversé est-il rattaché ?** `api.upload` exige un
-couple (DocType, champ) existant, or le fond est cité depuis un GABARIT, pas depuis un champ de document. Deux
-voies : (a) donner à `Letter Head` un champ `Attach` « fond », ce qui unifierait les deux formes d'en-tête mais
-contredirait §5, qui met `pdf`/`pages`/`offset` dans le gabarit à dessein ; (b) téléverser vers ce champ juste
-pour obtenir un identifiant, que le gabarit cite ensuite — mécaniquement juste, conceptuellement tordu. La
-réponse change le schéma de `Letter Head` : elle se prend avant d'écrire, pas pendant.
+**Depuis le 4 nov. (§14), le papier à en-tête est UN PDF de fond, et rien d'autre** : celui de l'organisation
+(Paramètres › Général), ou celui d'un gabarit qui en a un. Le DocType `Letter Head` décrit plus bas (§5, étape 6)
+a été RETIRÉ ; ce qui en est dit reste pour l'histoire.
+
+Et le 4 nov. (§13) : le TÉLÉVERSEMENT du fond PDF depuis l'écran, la galerie des STYLES DE TABLEAU, et un
+allègement de l'éditeur, du code et du PDF. La question qui bloquait le fond — « à quoi le fichier est-il
+rattaché ? » — a reçu la réponse que les images de §12 avaient déjà donnée : ni à `Letter Head`, ni à un champ de
+document, mais au TYPE, par le champ réservé `_print` (§13).
 
 Une facture qu'on ne peut pas imprimer n'est pas une facture — elle ne sort pas de l'entreprise, et les mentions
 obligatoires n'existent nulle part. Le besoin est réglementaire, pas cosmétique. Il ne figurait dans aucune de nos
@@ -625,3 +625,106 @@ téléphone.
   de ligne peuvent différer d'un mot. L'« Aperçu imprimé » fait foi.
 - Les nombres et les dates du SERVEUR restent en `2026-10-29` / `37.5` (l'éditeur montre `29/10/2026` /
   `37,5`) : c'est un défaut de `printing._cell`, noté au §10 ter, à trancher à part.
+
+## 13. Allègement, fond PDF à l'écran, galerie de styles (4 nov.)
+
+Trois demandes de l'utilisateur, dans cet ordre : « allège au maximum le système d'impression », « on doit pouvoir
+téléverser le PDF de fond », « termine par le choix des styles du tableau ». « Alléger » a été précisé en quatre
+sens : l'éditeur, le code, le PDF (poids et vitesse) et les dépendances.
+
+### Le fond PDF se dépose à l'écran
+
+- **Rattachement.** Un fond est un fichier `xdt_file` au champ réservé `_print` du TYPE, exactement comme une image
+  de gabarit (§12) : `POST /print-background/{doctype}` (multipart, HTTP seulement comme l'image), `%PDF-` reconnu
+  aux OCTETS (un PNG renommé `.pdf` : 415), 5 Mo au plus (`PRINT_BACKGROUND_MAX_MB`), sous le verrou de
+  l'enregistrement du gabarit (périmètre d'écriture total). `Letter Head` ne change pas : §5 met `pdf`/`pages`/
+  `offset_*` dans le gabarit, et c'est là qu'ils restent.
+- **Faille fermée.** Avant, l'impression lisait `letterhead.pdf` par `FileService.content` : N'IMPORTE QUEL PDF du
+  tenant dont on connaissait l'identifiant (un bulletin de paie joint à un autre document) sortait en fond de
+  facture. Le fond passe désormais par `FileService.print_file` (ex-`print_image`) : seulement un fichier `_print`
+  de CE type, et seulement un PDF. Prouvé par `test_print_service.TestThePdfBackground` (PDF d'ailleurs, d'un autre
+  type, image du gabarit : tous ignorés).
+- **Voir le fond.** Il n'existe qu'au PDF : ni la feuille ni l'aperçu HTML ne le montrent. `POST
+  /print-preview/{dt}/{name}/pdf` (et l'IPC `doc.print.preview.pdf`) rend le PDF d'un BROUILLON avec son fond ; le
+  Desk le TÉLÉCHARGE (« Aperçu PDF »), parce que la CSP du Desk n'autorise aucun cadre `blob:`.
+- **Desk.** Le panneau de droite, quand rien n'est choisi, est la PAGE (`PagePanel.vue`) : format, orientation,
+  marges, puis « Fond PDF » — déposer, première page ou toutes, zones réservées haut/bas, aperçu PDF, remplacer,
+  retirer. À l'ouverture TipTap sélectionne souvent le dernier bloc (les totaux) : un bouton « Page et fond PDF »
+  reste donc toujours en haut du panneau. Un fond remplace un `Letter Head` nommé (le serveur refuse les deux).
+
+### La galerie des styles de tableau
+
+Six styles, une liste FERMÉE et PARTAGÉE (`print_document.TABLE_STYLES`, `lib/tablestyles.ts`, vecteur commun
+`tests/vectors/table_styles.json`) : `bordered` (Quadrillé), `ruled` (Filets), `plain` (Sans bordure), `striped`
+(Zébré), `accent` (En-tête foncé), `boxed` (Encadré). Le tableau des lignes (`TableBlock.style`) ET un tableau de
+mise en page (`<table data-style>`) choisissent dans la même galerie et s'impriment par les mêmes règles
+(`print_document.table_css()`) : l'« en-tête » est la ligne de `th` du tableau des lignes, la PREMIÈRE ligne d'un
+tableau de mise en page (TipTap n'y met pas de `thead`). PlutoPrint suit `:first-child` et `:nth-child` — mesuré
+avant d'écrire, et les six styles rendus en image par le vrai moteur. L'ancien `data-borders` (`all`/`none`) se LIT
+toujours (`table_style`, `layoutTableStyle`) : un gabarit d'avant imprime pareil ; l'éditeur n'écrit plus que
+`data-style`. À l'écran, `components/printdoc/table-styles.css` est le jumeau de `table_css()` (tout ce qui porte
+`.print-sheet` est du papier : la feuille et les vignettes) ; couleurs `--desk-paper-stripe|accent|accent-ink`.
+`TableStyleGallery.vue` est un groupe radio (flèches, un seul arrêt de tabulation) de vignettes dessinées avec
+ces règles.
+
+Deux défauts que seul Chromium a montrés (`ui/e2e/printbuilder.e2e.mjs`) : la vue de tableau de TipTap ne pose
+ses attributs qu'à la création (`update` ne refait que les colonnes), donc un style choisi s'imprimait mais la
+feuille gardait l'ancien (`StyledTableView`) ; et `insertTable` REMPLAÇAIT le texte sélectionné — le tableau
+passe maintenant par la règle d'insertion commune, puis le curseur va dans sa première cellule.
+
+### L'allègement
+
+- **Éditeur.** La barre au-dessus de la page ne garde que ce qu'une facture emploie (style, taille, gras,
+  italique, souligné, couleur, trois alignements, deux listes, annuler) ; barré, surlignage, justifié, filet et
+  « rétablir » sont partis de la barre (le serveur accepte toujours ce qu'un ancien gabarit en contient). La barre
+  de PAGE au-dessus de la feuille a disparu (dans le panneau), la bascule « Mise en page / Aperçu imprimé » est
+  dans l'en-tête, les outils d'un tableau de mise en page sont dans le panneau de droite (`TablePanel.vue`).
+- **Code.** `print_service` n'a plus qu'UN chemin de rendu (`_compose`) pour l'impression, l'aperçu et l'aperçu
+  PDF — l'aperçu recopiait l'appel de rendu ; les deux dépôts passent par `_upload` ; 21 clés i18n mortes de
+  l'ancien éditeur à blocs retirées ; `lib/printdoc.newEmbedded` emploie les listes de `printedit` au lieu de les
+  recopier.
+- **PDF.** Rendu HORS de la boucle d'événements (`asyncio.to_thread`) : PlutoPrint calcule en C et bloquait toute
+  l'application pendant le rendu (une demi-seconde au premier appel). La fusion du fond recompresse les flux et
+  n'écrit qu'une fois les objets identiques : une facture de 3 pages avec fond passe de 121 Ko à 28 Ko (24 Ko de
+  contenu, 6 Ko de fond). Et `font-variant-ligatures:no-contextual` : avec Inter, le tiret ENTRE DEUX CHIFFRES
+  devenait une variante sans correspondance Unicode — « FA-2026-00001 » s'imprimait mais ne se retrouvait plus
+  en cherchant dans le PDF (c'est ce qui faisait échouer trois tests de `test_pdf_engine.py` selon la machine).
+- **Dépendances.** Rien d'ajouté (ni Python, ni npm). Les deux paquets du PDF restent optionnels (`[pdf]`) ; pypdf
+  ne sert qu'au fond et ne peut pas partir sans lui.
+
+## 14. Un seul papier à en-tête : le PDF de l'organisation (4 nov.)
+
+**La question de l'utilisateur :** « n'est-il pas plus simple de charger l'en-tête et le pied de page par le PDF, et
+de supprimer tout ce qui en parle dans les DocTypes ? » Oui : deux mécanismes faisaient la même chose. `Letter Head`
+(un logo en haut de la PREMIÈRE page et un texte de pied) était un sous-ensemble strict du fond PDF, qui porte
+l'en-tête, le pied et les mentions sur chaque page. Décision (choisie par l'utilisateur) : **un PDF par
+ORGANISATION**, employé par toutes les impressions, et un gabarit peut garder le sien.
+
+- **Où.** `System Settings` (plugin `system`, Paramètres › Général) gagne la section « Impression » :
+  `print_background` (Attach, 5 Mo), `print_background_pages` (« Toutes les pages » | « Première page
+  seulement »), `print_offset_top` / `print_offset_bottom` (mm). C'est un formulaire ordinaire : aucun écran à
+  écrire, le dépôt passe par `/upload/System Settings/print_background`, les droits sont ceux des réglages
+  (administrateur).
+- **Qui l'emploie.** Toute impression — gabarit de l'organisation, gabarit LIVRÉ par un plugin, gabarit FABRIQUÉ —
+  sauf un gabarit qui a son propre fond (`letterhead.pdf`, §13), qui passe avant. `?letterhead=none` (et
+  `letterhead: none` de l'aperçu) imprime sans ; c'est la seule valeur qui ait encore un sens.
+- **Lu comment.** En contexte SYSTÈME, sur une liste FERMÉE (`print_service.BACKGROUND_FIELDS`), le précédent de
+  `preferences.py` : un lecteur de factures sans aucun grant sur les réglages imprime sur le papier de
+  l'entreprise. Le fichier lu est SEULEMENT celui de ce champ de ce document (`FileService.print_file(…,
+  fieldname="print_background")`), reconnu PDF à ses OCTETS (un Attach garde le type déclaré par le navigateur).
+  Absent, effacé, pas un PDF, plugin `system` non chargé : on imprime sans, jamais d'erreur.
+- **Ce qui est parti.** `letter_head.yaml` (et son raccourci de l'espace Administration, ses traductions —
+  `xcore-doctype install` retire le fichier d'une instance existante par `.shipped`), `printing.letterhead_markup`
+  / `footer_markup` et leur feuille (`div.lh`, `div.lf`), les paramètres `letterhead_html` / `footer_html` de
+  `render_html`, `print_service._letterhead_doc` / `_embedded`, le sentinelle `default`. `LetterheadRef.name`
+  n'existe plus, mais un gabarit enregistré avant qui le portait reste LISIBLE (le nom est oublié, sinon le gabarit
+  entier serait ignoré).
+- **Desk.** Le dialogue « Imprimer » ne propose « Avec le fond / Sans le fond » que s'il y a un fond (ou qu'on
+  vient de l'enlever) ; le panneau « Page » de l'éditeur parle du fond PROPRE au gabarit et renvoie à Paramètres ›
+  Général pour celui de l'organisation.
+
+Preuves : `test_print_service.TestTheOrganisationBackground` (toutes les impressions, première page seulement, le
+gabarit gagne, `none`, lecteur sans grant, autre organisation, pas un PDF, fichier d'un autre champ, sans le plugin
+`system`, liste fermée, ancien gabarit nommé), `test_system_plugin` (un vrai hôte : dépôt par l'API, lecteur sans
+grant, autre organisation), `ui/e2e/print.e2e.mjs` (le choix « Sans le fond » dans Chromium).
+

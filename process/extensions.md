@@ -94,8 +94,12 @@ blocks:
 Un plugin livre un module ES (déjà construit) que le Desk charge au démarrage. C'est du **code de confiance** dans la page de
 l'utilisateur : il a sa session, ses droits, tout ce que le Desk peut faire. D'où :
 
-- **Liste blanche de l'opérateur** : `doctype.desk.extensions` dans le manifeste d'xcore-doctype, liste de noms de plugins (`["*"]` :
-  tous). Absente ou vide : aucune extension chargée (fermé par défaut). Une extension non autorisée est journalisée, jamais servie.
+- **Ce que l'opérateur règle** : `doctype.desk.extensions` dans le manifeste d'xcore-doctype. **Depuis le 4 nov., absente = toutes**
+  (`["*"]`) : la liste, c'est le CODE des plugins (`load_desk`), et seul un plugin de confiance — dans le processus, pas en bac à
+  sable — peut l'appeler. Des noms RESTREIGNENT, `[]` ferme tout ; une extension écartée est journalisée, jamais servie. (Avant :
+  fermé par défaut, et chaque nom à recopier dans le manifeste installé, que `install` ne réécrit pas — une extension oubliée ne
+  se chargeait pas, sans rien dire à l'écran. `xcore-doctype install` avertit désormais quand un manifeste installé porte encore
+  l'ancien `[]` livré.)
 - **Même origine** : les fichiers sont servis par le routeur PUBLIC du Desk sous `desk/ext/<plugin>/…` (même garde qu'un fichier du
   build : pas de traversée, pas de lien symbolique qui sort du dossier, types de média explicites, `no-cache`). La CSP reste
   `script-src 'self'` (plus l'empreinte de l'import map, ci-dessous) : un plugin ne peut pas faire charger un script d'un autre domaine.
@@ -196,3 +200,27 @@ contrôle au chargement et l'action `doc.check_unique` n'avaient jamais pu tourn
 **Écarts et limites.** Pas de bac à sable (iframe) : l'opérateur autorise du code qu'il a choisi d'installer, comme un plugin `trusted`
 côté serveur. Pas de version d'API autre que 1 (une extension `apiVersion: 2` est refusée avec un message, pas devinée). Les
 extensions ne sont chargées qu'au démarrage du Desk (un plugin rechargé exige de recharger la page).
+
+## Un Desk MONTÉ hors du plugin charge les extensions du plugin (4 nov.)
+
+**Le défaut signalé :** « après avoir monté le frontend, les extensions ne se chargent plus ». Exact, et par construction :
+`mount_desk` (servir le Desk à la racine, sous `/erp`…) répondait un `config.json` à `extensions: []` — les extensions sont
+déclarées au PLUGIN (`load_desk`) et filtrées par SA liste blanche (`doctype.desk.extensions`), que le montage ne voit pas.
+L'annonce du temps réel (`realtime`) avait le même défaut : toujours fausse sur un Desk monté.
+
+**La correction :** le `config.json` d'un Desk monté porte `extensions_from` = `<api_base>/desk/config.json`, celui du plugin.
+Le Desk (`lib/config.fromPlugin`) y lit la liste des extensions et `realtime`, en résolvant les URL chez le plugin
+(`…/desk/ext/<plugin>/index.js?v=…`). Garde-fous : un renvoi qui ne pointe pas SOUS l'API annoncée n'est pas suivi ; une extension
+n'est gardée que si elle vient de l'origine de ce `config.json` ; plugin injoignable = aucune extension, le Desk démarre. Quand
+l'API est sur une AUTRE origine, la CSP du montage la nomme aussi dans `script-src` (les modules viennent de là) ; le Desk du
+plugin, lui, ne change pas (`script-src 'self'`, pas de renvoi). L'import map (`vue`, `@xcore-doctype/desk`) reste servie par le
+montage (`shared/`), donc une extension partage la MÊME instance de Vue que le Desk qui la charge.
+
+**Condition :** le Desk du plugin doit rester ACTIVÉ (`doctype.desk.enabled`, vrai par défaut) — c'est lui qui sert `config.json`
+et `ext/`. La liste blanche reste celle du manifeste d'xcore-doctype.
+
+**Preuves :** `tests/unit/test_mount.py` (le renvoi, `script-src` avec l'origine de l'API, le Desk du plugin inchangé),
+`ui/tests/config.spec.ts` (suivre le renvoi, autre origine, renvoi hors de l'API refusé, plugin injoignable), et dans Chromium
+`test_desk_browser.py::test_a_desk_mounted_elsewhere_still_loads_the_plugins_extensions` — le MÊME scénario que les extensions
+du plugin (`extensions.e2e.mjs`), joué sur un Desk monté sous `/erp` ; sans la correction, quatre de ses étapes échouent (vérifié).
+

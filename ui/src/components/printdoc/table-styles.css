@@ -1,0 +1,66 @@
+/*
+ * Les styles de tableau de l'impression, À L'ÉCRAN : le jumeau de `print_document.table_css()` (le PDF). Une seule
+ * feuille pour le tableau des lignes (`table.lines.<style>`), un tableau de mise en page (`table[data-style]`, tel
+ * que TipTap le dessine) et les vignettes de la galerie : tout ce qui porte `.print-sheet` est du PAPIER.
+ *
+ * L'« en-tête » : les `th` du tableau des lignes, la PREMIÈRE ligne d'un tableau de mise en page — comme au PDF.
+ * Les couleurs sont celles du papier (`--desk-paper-*`, jamais redéfinies en sombre).
+ */
+.print-sheet table.lines,
+.print-sheet table[data-style] {
+  border-collapse: collapse;
+}
+
+/* Quadrillé */
+.print-sheet table.lines.bordered :is(th, td),
+.print-sheet table[data-style='bordered'] :is(th, td) {
+  border: 0.2mm solid var(--desk-paper-muted);
+}
+.print-sheet table.lines.bordered th,
+.print-sheet table[data-style='bordered'] tr:first-child > * {
+  background: var(--desk-paper-head);
+}
+
+/* Filets */
+.print-sheet table.lines.ruled :is(th, td),
+.print-sheet table[data-style='ruled'] :is(th, td) {
+  border-bottom: 0.2mm solid var(--desk-paper-rule);
+}
+.print-sheet table.lines.ruled th,
+.print-sheet table[data-style='ruled'] tr:first-child > * {
+  background: var(--desk-paper-head);
+}
+
+/* Zébré */
+.print-sheet table.lines.striped th,
+.print-sheet table[data-style='striped'] tr:first-child > * {
+  font-weight: 700;
+  border-bottom: 0.3mm solid var(--desk-paper-muted);
+}
+.print-sheet table.lines.striped tbody tr:nth-child(even) td,
+.print-sheet table[data-style='striped'] tr:nth-child(even) > * {
+  background: var(--desk-paper-stripe);
+}
+
+/* En-tête foncé */
+.print-sheet table.lines.accent :is(th, td),
+.print-sheet table[data-style='accent'] :is(th, td) {
+  border-bottom: 0.2mm solid var(--desk-paper-rule);
+}
+.print-sheet table.lines.accent th,
+.print-sheet table[data-style='accent'] tr:first-child > * {
+  background: var(--desk-paper-accent);
+  color: var(--desk-paper-accent-ink);
+  font-weight: 700;
+}
+
+/* Encadré */
+.print-sheet table.lines.boxed,
+.print-sheet table[data-style='boxed'] {
+  border: 0.3mm solid var(--desk-paper-muted);
+}
+.print-sheet table.lines.boxed th,
+.print-sheet table[data-style='boxed'] tr:first-child > * {
+  background: var(--desk-paper-head);
+  border-bottom: 0.3mm solid var(--desk-paper-muted);
+}

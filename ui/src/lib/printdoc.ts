@@ -10,7 +10,8 @@
  *   sur ce qui s'imprime aujourd'hui, pas sur une page blanche ;
  * - **la page** : ses dimensions en millimètres, pour dessiner la feuille à l'échelle et placer une image.
  */
-import type { DocTypeMeta } from './types'
+import { NUMERIC, UNPRINTABLE } from './printedit'
+import type { DocTypeMeta, FieldMeta } from './types'
 
 // ── Les styles permis (le jumeau de `print_document.STYLES` / `_STYLE_ON`) ──
 const COLOR = String.raw`#[0-9a-f]{3}|#[0-9a-f]{6}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d{1,3})\s*)?\)|[a-z]{3,20}`
@@ -147,18 +148,17 @@ export function blocksToContent(blocks: Record<string, unknown>[], meta: DocType
 }
 
 /** Un bloc incorporé NEUF : le tableau des lignes avec ses premières colonnes, les totaux, une grille de champs. */
+const printable = (f: FieldMeta): boolean => f.fieldtype !== 'Table' && !UNPRINTABLE.includes(f.fieldtype as never) && !f.hidden
+const numeric = (f: FieldMeta): boolean => NUMERIC.includes(f.fieldtype as never)
+
 export function newEmbedded(type: 'table' | 'totals' | 'fields', meta: DocTypeMeta, tableField?: string): Record<string, unknown> {
-  const printable = meta.fields.filter((f) => !['Table', 'Password', 'JSON', 'TextEditor', 'Image', 'Attach'].includes(f.fieldtype) && !f.hidden)
-  if (type === 'totals') {
-    const numeric = meta.fields.filter((f) => ['Number', 'Int', 'Percent', 'Decimal', 'Currency'].includes(f.fieldtype))
-    return { type, fields: numeric.slice(-3).map((f) => f.fieldname) }
-  }
-  if (type === 'fields') return { type, columns: 2, fields: printable.slice(0, 4).map((f) => f.fieldname) }
+  if (type === 'totals') return { type, fields: meta.fields.filter(numeric).slice(-3).map((f) => f.fieldname) }
+  if (type === 'fields') return { type, columns: 2, fields: meta.fields.filter(printable).slice(0, 4).map((f) => f.fieldname) }
   const table = meta.fields.find((f) => f.fieldtype === 'Table' && (!tableField || f.fieldname === tableField))
   const child = table && typeof table.options === 'string' ? meta.children?.[table.options] : undefined
   const columns = (child?.fields ?? [])
-    .filter((f) => !['Table', 'Password', 'JSON', 'TextEditor', 'Image', 'Attach'].includes(f.fieldtype) && !f.hidden)
+    .filter(printable)
     .slice(0, 5)
-    .map((f) => ({ field: f.fieldname, ...(['Number', 'Int', 'Percent', 'Decimal', 'Currency'].includes(f.fieldtype) ? { align: 'right' } : {}) }))
+    .map((f) => ({ field: f.fieldname, ...(numeric(f) ? { align: 'right' } : {}) }))
   return { type, field: table?.fieldname, style: 'bordered', density: 'normal', repeat_header: true, columns }
 }

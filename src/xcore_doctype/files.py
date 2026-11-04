@@ -40,6 +40,10 @@ ATTACHMENT_FIELD = "_attachment"
 # process/impression.md §12) : elles appartiennent au TYPE, pas à un document. Réservé comme le précédent.
 PRINT_FIELD = "_print"
 PRINT_IMAGE_MAX_MB = 5
+# Le FOND PDF d'un gabarit (papier préimprimé, process/impression.md §5) : même champ réservé que les images, même
+# borne. Un fond sert à toutes les pages d'une facture ; au-delà de 5 Mo, ce n'est plus un papier à en-tête.
+PRINT_BACKGROUND_MAX_MB = 5
+PDF_TYPE = "application/pdf"
 
 # Les formats d'image qu'on accepte, reconnus à leurs premiers octets. SVG est exclu exprès : c'est du XML qui peut porter du script.
 _IMAGE_SIGNATURES: tuple[tuple[bytes, str, str], ...] = (
@@ -155,7 +159,7 @@ class UrlSigner:
 
 
 def check_upload(*, kind: str, content: bytes, filename: str, declared_type: str | None, limit_mb: int) -> tuple[str, str]:
-    """Valide un téléversement. Retourne `(type de média, nom nettoyé)` à enregistrer. `kind` : `Image` ou `Attach`."""
+    """Valide un téléversement. Retourne `(type de média, nom nettoyé)` à enregistrer. `kind` : `Image`, `Pdf` ou `Attach`."""
     if not content:
         raise ValidationFailed("Le fichier est vide", code="file_empty")
     if len(content) > limit_mb * 1024 * 1024:
@@ -166,6 +170,11 @@ def check_upload(*, kind: str, content: bytes, filename: str, declared_type: str
         if seen is None:
             raise FileTypeRefused("Image attendue : PNG, JPEG, GIF ou WebP (le contenu est vérifié, pas le nom)")
         return seen[0], name
+    if kind == "Pdf":
+        # Reconnu à ses octets comme une image, jamais à son nom : un PDF commence par `%PDF-`.
+        if not content.startswith(b"%PDF-"):
+            raise FileTypeRefused("PDF attendu (le contenu est vérifié, pas le nom)")
+        return PDF_TYPE, name
     # Un fichier joint : on garde le type déclaré, nettoyé, mais il ne sera servi qu'en téléchargement.
     declared = (declared_type or "").split(";", 1)[0].strip().lower()
     if not re.fullmatch(r"[a-z0-9.+-]+/[a-z0-9.+-]+", declared):

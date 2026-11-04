@@ -55,8 +55,6 @@ _Text = Annotated[str, StringConstraints(min_length=1, max_length=MAX_TEXT)]
 PRINT_SPECIALS = ("doctype", "name")
 _OUT_OF_PLACE = tuple(s for s in SPECIALS if s not in PRINT_SPECIALS)
 _TOKEN = re.compile(r"\{\{([^{}]*)\}\}")
-# Une image d'impression est INCORPORÉE : c'est le verrou de §6, et il se vérifie ici, dans le code pur.
-_DATA_URI = re.compile(r"^data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$")
 
 # Les titres des documents que les LIENS du gabarit désignent : `(DocType cible, nom) -> titre`. Résolus par
 # l'appelant (lui seul a les droits et la base) ; un lien absent de la table garde son identifiant.
@@ -177,7 +175,7 @@ class TableBlock(_Model):
     type: Literal["table"]
     field: _Fieldname  # le champ Table du document
     columns: Annotated[list[TableColumn], PydanticField(min_length=1, max_length=MAX_PRINT_COLUMNS)]
-    style: Literal["bordered", "ruled", "plain"] = "bordered"
+    style: print_document.TableStyle = "bordered"  # la galerie partagée avec les tableaux de mise en page
     density: Literal["compact", "normal"] = "normal"
     # L'en-tête se répète à chaque page : c'est du CSS paginé (`table-header-group`), vérifié contre le moteur.
     repeat_header: bool = True
@@ -229,9 +227,12 @@ EMBEDDED_BLOCK: TypeAdapter[Any] = TypeAdapter(
 
 
 class LetterheadRef(_Model):
-    """Le papier à en-tête : un `Letter Head` par son nom, ou un PDF de FOND sur lequel on imprime."""
+    """Le FOND PDF propre à ce gabarit (process/impression.md §5, §14), qui passe avant celui de l'organisation.
 
-    name: str | None = None
+    Le papier à en-tête est UN PDF, et rien d'autre : l'en-tête, le pied de page et les mentions sont dedans. Le
+    DocType `Letter Head` (un logo et un texte de pied) a été retiré le 4 nov. — deux façons de faire la même chose.
+    """
+
     # L'identifiant d'un fichier `xdt_file` du tenant. JAMAIS une URL ni un chemin (process/impression.md §6).
     pdf: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{32}$")] | None = None
     pages: Literal["first", "all"] = "all"
@@ -239,11 +240,14 @@ class LetterheadRef(_Model):
     offset_top: Annotated[int, PydanticField(ge=0, le=150)] = 0
     offset_bottom: Annotated[int, PydanticField(ge=0, le=150)] = 0
 
-    @model_validator(mode="after")
-    def _check(self) -> "LetterheadRef":
-        if self.name is not None and self.pdf is not None:
-            raise ValueError("un papier à en-tête est un `Letter Head` OU un PDF de fond, pas les deux")
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def _forget_the_named_letterhead(cls, raw: Any) -> Any:
+        """Un gabarit enregistré avant le 4 nov. peut citer un `Letter Head` par son nom : ce papier n'existe plus,
+        et le gabarit doit rester lisible (sinon il serait IGNORÉ et l'organisation perdrait sa mise en page)."""
+        if isinstance(raw, Mapping) and "name" in raw:
+            raw = {k: v for k, v in raw.items() if k != "name"}
+        return raw
 
 
 class PrintTemplate(_Model):
@@ -441,8 +445,6 @@ def render_html(
     *,
     name: str,
     children: Mapping[str, Any] | None = None,
-    letterhead_html: str = "",
-    footer_html: str = "",
     css_extra: str = "",
     titles: Titles = None,
     images: Mapping[str, str] | None = None,
@@ -454,8 +456,7 @@ def render_html(
     absente de la table ne s'imprime pas).
 
     `children` : par champ Table, la définition du DocType de ses lignes (pour les libellés et les échelles).
-    `letterhead_html` / `footer_html` : le papier à en-tête déjà rendu par l'appelant (lui seul sait lire un
-    fichier du tenant) ; `css_extra` : ce qui passe APRÈS la feuille de style, donc ce qui gagne (les marges
+    `css_extra` : ce qui passe APRÈS la feuille de style, donc ce qui gagne (les marges
     réservées par un fond PDF, `reserved_margins_css`).
     """
     fields = definition.field_map
@@ -463,8 +464,8 @@ def render_html(
     money = Money(definition, data, children or {}, linked or {})
     body: list[str] = []
     if template.document is not None:
-        # Le document libre est ENVELOPPÉ, papier à en-tête compris : une image « devant le texte » se place depuis
-        # le coin de la zone imprimable de la première page, comme dans l'éditeur.
+        # Le document libre est ENVELOPPÉ : une image « devant le texte » se place depuis le coin de la zone
+        # imprimable de la première page, comme dans l'éditeur.
         def value(token: str) -> str:
             if token in ("name", "doctype"):
                 return escape(values[token])
@@ -477,8 +478,7 @@ def render_html(
             block=lambda b: _render_block(b, definition, data, fields, children or {}, values, titles, money),
             image=lambda fid: (images or {}).get(fid),
         )
-        body.append(f'<div class="doc">{letterhead_html}{inner}{footer_html}</div>')
-        letterhead_html = footer_html = ""
+        body.append(f'<div class="doc">{inner}</div>')
     else:
         for block in template.blocks or []:
             body.append(_render_block(block, definition, data, fields, children or {}, values, titles, money))
@@ -490,9 +490,7 @@ def render_html(
         + (print_document.STYLESHEET if template.document is not None else "")
         + escape(css_extra, quote=False)
         + "</style></head><body>"
-        + letterhead_html
         + "".join(body)
-        + footer_html
         + "</body></html>"
     )
 
@@ -543,33 +541,6 @@ def linked_values(
 def content_files(template: PrintTemplate) -> list[str]:
     """Les fichiers (images) qu'un document libre cite : le service les résout en URL `data:`."""
     return list(template.document.files) if template.document is not None else []
-
-
-def letterhead_markup(image: str | None) -> str:
-    """L'en-tête du papier à en-tête, en HTML (process/impression.md §5).
-
-    Nommée `_markup` et non `_html` pour ne pas porter le nom du PARAMÈTRE de `render_html` : un paramètre
-    masque la fonction homonyme dans tout le corps, et le prochain qui voudrait l'appeler de là obtiendrait une
-    chaîne. Pur : l'appelant a déjà LU le fichier.
-
-    `image` est une URL `data:` — jamais une URL distante (§6 : le moteur n'accède pas au réseau, et c'est NOUS
-    qui résolvons un fichier du tenant). Elle n'est pas échappée parce que rien n'en vient d'un client : le
-    service la fabrique depuis les octets qu'il a lus, et `_DATA_URI` la vérifie.
-
-    L'image est posée EN TÊTE DU FLUX, donc sur la première page. Un en-tête qui se répète à chaque page est le
-    travail du FOND PDF (`letterhead.pdf`, `pages: all`), mesuré et fiable, pas celui d'une boîte `@page` : une
-    seule voie par besoin.
-    """
-    if not image:
-        return ""
-    if not _DATA_URI.match(image):  # une URL distante dans un <img> serait exactement la faille que §6 ferme
-        raise ValueError("l'image d'un papier à en-tête doit être incorporée (data:)")
-    return f'<div class=lh><img src="{image}" alt=""></div>'
-
-
-def footer_markup(text: str | None) -> str:
-    """Le pied du papier à en-tête : du texte, échappé, en fin de flux (le gabarit ne le place pas, il n'est pas un bloc)."""
-    return f"<div class=lf>{escape(text)}</div>" if text else ""
 
 
 def reserved_margins_css(page: PageSetup, *, top: int = 0, bottom: int = 0) -> str:
@@ -670,10 +641,11 @@ def _stylesheet(page: PageSetup) -> str:
     size = f"{page.size} {page.orientation}" if page.orientation == "landscape" else page.size
     return (
         f"@page{{size:{size};margin:{page.top}mm {page.right}mm {page.bottom}mm {page.left}mm}}"
-        "body{font-family:sans-serif;font-size:10pt;color:#000;margin:0}"
+        # `no-contextual` : une police comme Inter remplace le tiret ENTRE DEUX CHIFFRES par une variante sans
+        # correspondance Unicode — « FA-2026-00001 » s'imprimait juste mais ne se retrouvait plus en cherchant dans
+        # le PDF (le texte extrait portait U+E088). Un numéro de facture doit se copier et se chercher.
+        "body{font-family:sans-serif;font-size:10pt;color:#000;margin:0;font-variant-ligatures:no-contextual}"
         "h1{font-size:16pt;margin:0 0 5mm}h2{font-size:11pt;margin:5mm 0 2mm}"
-        "div.lh{margin:0 0 6mm}div.lh img{max-width:100%}"
-        "div.lf{margin:8mm 0 0;font-size:8pt;color:#555;white-space:pre-wrap}"
         "p.t{margin:2mm 0;white-space:pre-wrap}"
         "span.k{font-size:8pt;color:#555}"
         "table.fields{width:100%;border-collapse:collapse;margin-bottom:4mm}"
@@ -681,10 +653,8 @@ def _stylesheet(page: PageSetup) -> str:
         "table.lines{width:100%;border-collapse:collapse}"
         "table.lines thead{display:table-header-group}"  # l'en-tête se répète : mesuré sur 11 pages
         "table.lines tbody tr{page-break-inside:avoid}"
-        "table.lines.bordered th,table.lines.bordered td{border:0.2mm solid #888}"
-        "table.lines.ruled th,table.lines.ruled td{border-bottom:0.2mm solid #bbb}"
-        "table.lines.bordered th,table.lines.ruled th{background:#eee}"
-        "table.lines.normal th,table.lines.normal td{padding:1.2mm 2mm}"
+        + print_document.table_css()
+        + "table.lines.normal th,table.lines.normal td{padding:1.2mm 2mm}"
         "table.lines.compact th,table.lines.compact td{padding:0.6mm 1.5mm;font-size:9pt}"
         "tr.grp td{font-weight:bold;background:#f4f4f4}"
         "tr.sub td{font-weight:bold;border-top:0.3mm solid #888}"

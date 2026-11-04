@@ -427,6 +427,19 @@ export class ApiClient {
     return this.call('POST', `/print-image/${encodeURIComponent(doctype)}`, { body })
   }
 
+  /** Dépose le FOND PDF d'un gabarit de ce type (le papier préimprimé, imprimé sous le contenu). Même verrou que l'image. */
+  printBackground(doctype: string, file: File): Promise<FileMeta> {
+    const body = new FormData()
+    body.append('file', file, file.name)
+    return this.call('POST', `/print-background/${encodeURIComponent(doctype)}`, { body })
+  }
+
+  /** Le PDF d'un gabarit en BROUILLON : le seul aperçu qui montre le fond PDF. N'écrit rien, demande de lire le document. */
+  async printPreviewPdf(doctype: string, name: string, template: Record<string, unknown>): Promise<{ bytes: Uint8Array; filename: string }> {
+    const res = await this.bytes('POST', `/print-preview/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}/pdf`, { body: { template } })
+    return { bytes: res.bytes, filename: filenameFromDisposition(res.disposition) ?? `${doctype} ${name}.pdf` }
+  }
+
   /** Un document d'exemple pour l'aperçu, ou `null` : le gabarit s'édite alors sans aperçu. */
   printExample(doctype: string): Promise<{ doctype: string; name: string | null }> {
     return this.call('GET', `/print-example/${encodeURIComponent(doctype)}`)
@@ -584,15 +597,16 @@ export class ApiClient {
   protected async bytes(
     method: HttpMethod,
     path: string,
-    opts: { params?: URLSearchParams; retried?: boolean } = {},
+    opts: { params?: URLSearchParams; body?: unknown; retried?: boolean } = {},
   ): Promise<{ bytes: Uint8Array; contentType: string; disposition: string }> {
     const { baseUrl, token, tenant } = this.context()
     const query = opts.params && [...opts.params.keys()].length ? `?${opts.params.toString()}` : ''
     const headers: Record<string, string> = { Accept: '*/*' }
+    if (opts.body !== undefined) headers['Content-Type'] = 'application/json'
     if (token) headers.Authorization = `Bearer ${token}`
     if (tenant) headers['X-Tenant-ID'] = tenant
     headers['Accept-Language'] = language // les libellés des types (`/meta`, espaces) dans la langue de la page
-    const res = await this.transport.request({ method, url: `${baseUrl}${path}${query}`, headers, binary: true })
+    const res = await this.transport.request({ method, url: `${baseUrl}${path}${query}`, headers, binary: true, ...(opts.body !== undefined ? { body: opts.body } : {}) })
     if (res.status >= 200 && res.status < 300 && res.bytes) {
       return { bytes: res.bytes, contentType: res.contentType ?? '', disposition: res.disposition ?? '' }
     }

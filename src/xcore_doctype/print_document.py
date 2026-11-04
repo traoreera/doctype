@@ -33,7 +33,7 @@ import re
 from dataclasses import dataclass, field
 from html import escape
 from html.parser import HTMLParser
-from typing import Any, Callable, Iterator
+from typing import Any, Callable, Iterator, Literal, get_args
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -55,7 +55,7 @@ TAGS: dict[str, frozenset[str]] = {
     "strong": frozenset(), "b": frozenset(), "em": frozenset(), "i": frozenset(), "u": frozenset(), "s": frozenset(),
     "sub": frozenset(), "sup": frozenset(), "br": frozenset(), "hr": frozenset(),
     "span": frozenset({"style", "data-value"}),
-    "table": frozenset({"style", "data-borders"}), "colgroup": frozenset(), "col": frozenset({"style"}),
+    "table": frozenset({"style", "data-style", "data-borders"}), "colgroup": frozenset(), "col": frozenset({"style"}),
     "thead": frozenset(), "tbody": frozenset(), "tr": frozenset(),
     "td": frozenset({"style", "colspan", "rowspan", "colwidth"}), "th": frozenset({"style", "colspan", "rowspan", "colwidth"}),
     "img": frozenset({"data-file", "data-wrap", "style"}),
@@ -63,6 +63,41 @@ TAGS: dict[str, frozenset[str]] = {
 }
 VOID = frozenset({"br", "hr", "img", "col"})
 WRAPS = ("inline", "left", "right", "front")
+
+# Les STYLES DE TABLEAU, une liste fermée et PARTAGÉE : le tableau des lignes (`TableBlock.style`) et un tableau de
+# mise en page (`<table data-style>`) choisissent dans la même galerie et s'impriment par les mêmes règles
+# (`table_css`). Le Desk dessine la galerie avec la même liste (`tests/vectors/table_styles.json`).
+TableStyle = Literal["bordered", "ruled", "plain", "striped", "accent", "boxed"]
+TABLE_STYLES: tuple[str, ...] = get_args(TableStyle)
+# L'ancien attribut d'un tableau de mise en page (avant la galerie) : `all` = quadrillé, `none` = sans bordure.
+# Toujours LU, pour les gabarits enregistrés avant ; l'éditeur n'écrit plus que `data-style`.
+_LEGACY_BORDERS = {"all": "bordered", "none": "plain"}
+
+
+def table_style(attrs: dict[str, str]) -> str:
+    """Le style d'un tableau de mise en page : `data-style`, sinon l'ancien `data-borders`, sinon quadrillé."""
+    if "data-style" in attrs:
+        return attrs["data-style"]
+    return _LEGACY_BORDERS.get(attrs.get("data-borders", "all"), "bordered")
+
+
+def table_css() -> str:
+    """Les règles des styles de tableau, pour les DEUX sortes de tableau. Une seule écriture, donc un seul rendu.
+
+    L'« en-tête » n'est pas le même élément : les `th` du tableau des lignes, la PREMIÈRE ligne d'un tableau de
+    mise en page (TipTap n'y met pas de `thead`). PlutoPrint suit `:first-child` et `:nth-child` (mesuré).
+    """
+    cell = lambda s: f"table.lines.{s} th,table.lines.{s} td,table.lay.{s} td,table.lay.{s} th"  # noqa: E731
+    head = lambda s: f"table.lines.{s} th,table.lay.{s} tr:first-child>*"  # noqa: E731
+    body = lambda s: f"table.lines.{s} tbody tr:nth-child(even) td,table.lay.{s} tr:nth-child(even)>*"  # noqa: E731
+    return (
+        f"{cell('bordered')}{{border:0.2mm solid #888}}{head('bordered')}{{background:#eee}}"
+        f"{cell('ruled')}{{border-bottom:0.2mm solid #bbb}}{head('ruled')}{{background:#eee}}"
+        f"{head('striped')}{{font-weight:bold;border-bottom:0.3mm solid #555}}{body('striped')}{{background:#f2f4f7}}"
+        f"{cell('accent')}{{border-bottom:0.2mm solid #ccc}}{head('accent')}{{background:#2f3e4e;color:#fff;font-weight:bold}}"
+        "table.lines.boxed,table.lay.boxed{border:0.3mm solid #555}"
+        f"{head('boxed')}{{background:#eee;border-bottom:0.3mm solid #555}}"
+    )
 
 # Les propriétés de style permises, et la forme de leur valeur. Une couleur est une couleur, une taille une
 # taille BORNÉE : jamais un `url(`, une `expression(`, un `position` choisi par l'auteur.
@@ -267,8 +302,10 @@ def parse(content: str, block_adapter: TypeAdapter[Any] | None = None) -> Parsed
                     b._fault(f"<{child.tag}> : colwidth doit être une liste d'entiers")
             if child.tag == "ol" and "start" in a and not (a["start"].isdigit() and int(a["start"]) <= 10_000):
                 b._fault("<ol> : start doit être un entier")
-            if child.tag == "table" and a.get("data-borders", "all") not in ("all", "none"):
+            if child.tag == "table" and a.get("data-borders", "all") not in _LEGACY_BORDERS:
                 b._fault("<table> : data-borders doit être all ou none")
+            if child.tag == "table" and a.get("data-style", "bordered") not in TABLE_STYLES:
+                b._fault(f"<table> : data-style doit être {', '.join(TABLE_STYLES)}")
             if child.tag == "div":
                 if ("data-block" in a) == ("data-page-break" in a):
                     b._fault("<div> : seulement un bloc incorporé (data-block) ou un saut de page (data-page-break)")
@@ -370,7 +407,7 @@ def _render(node: Node | str, value: Callable[[str], str], block: Callable[[Any]
         if key in a and a[key].isdigit():
             attrs += f' {key}="{int(a[key])}"'
     if tag == "table":
-        attrs += f' class="lay {"none" if a.get("data-borders") == "none" else "all"}"'
+        attrs += f' class="lay {table_style(a)}"'
     if tag in VOID:
         return f"<{tag}{attrs}>"
     inner = "".join(_render(c, value, block, image) for c in node.children)
@@ -390,7 +427,6 @@ STYLESHEET = (
     "div.doc hr{border:0;border-top:0.2mm solid #888;margin:3mm 0}"
     "table.lay{border-collapse:collapse;width:100%;margin:0 0 2mm}"
     "table.lay td,table.lay th{padding:1mm 1.5mm;vertical-align:top}"
-    "table.lay.all td,table.lay.all th{border:0.2mm solid #888}"
     "table.lay p{margin:0}"
     "img.im{max-width:100%}img.im.left{float:left;margin:0 3mm 2mm 0}img.im.right{float:right;margin:0 0 2mm 3mm}"
     "img.im.front{position:absolute;max-width:none;z-index:2}"

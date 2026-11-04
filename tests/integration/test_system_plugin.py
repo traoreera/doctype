@@ -97,32 +97,20 @@ def test_the_shipped_plugin_is_valid_and_ships_with_the_package():
     from xcore_doctype.cli import check
 
     lines, findings = check([system_plugin_dir() / "doctypes"], "system")
-    # System Settings, Notification Rule et sa table de destinataires, User Permission, Letter Head
-    assert "5 DocType(s) valides" in lines[0] and not [f for f in findings if f.level == "error"]
+    # System Settings, Notification Rule et sa table de destinataires, User Permission
+    assert "4 DocType(s) valides" in lines[0] and not [f for f in findings if f.level == "error"]
     dev_link = ROOT / "app" / "system"  # lien de confort de l'hôte de développement : présent seulement sur le poste du développeur
     if dev_link.exists() or dev_link.is_symlink():
         assert dev_link.resolve() == system_plugin_dir().resolve()
 
 
-LETTERHEAD = ["system:letter_head:read", "system:letter_head:write"]
+async def test_the_organisation_background_prints_under_every_document_for_whoever_can_read_it(tmp_path):
+    """Le papier à en-tête de l'entreprise = UN PDF déposé dans Paramètres › Général (process/impression.md §14) :
+    toutes les impressions l'emploient, même un gabarit LIVRÉ qui ne dit rien d'un fond.
 
-
-def with_letterhead() -> dict:
-    """Le plugin `system` tel qu'il est LIVRÉ, avec le papier à en-tête et l'espace « Administration »."""
-    files = {
-        f"doctypes/{n}.yaml": (system_plugin_dir() / "doctypes" / f"{n}.yaml").read_text(encoding="utf-8")
-        for n in ("system_settings", "letter_head")
-    }
-    files["workspaces/system.yaml"] = (system_plugin_dir() / "workspaces" / "system.yaml").read_text(encoding="utf-8")
-    return {"system": ((system_plugin_dir() / "src" / "main.py").read_text(encoding="utf-8"), files)}
-
-
-async def test_a_letter_head_is_printed_on_a_document_by_whoever_can_only_read_it(tmp_path):
-    """Le papier à en-tête livré (process/impression.md §5, étape 6) : son image et son pied s'impriment.
-
-    Le point qui compte : il est lu en contexte SYSTÈME, donc un lecteur SANS aucun grant sur `Letter Head`
-    l'obtient quand même. Autrement un commercial qui lit les factures imprimerait sans en-tête — l'en-tête est
-    de la présentation d'entreprise, pas un document métier (le précédent de `preferences.py`).
+    Le point qui compte : il est lu en contexte SYSTÈME, donc un lecteur SANS aucun grant sur les réglages l'obtient
+    quand même. Autrement un commercial qui lit les factures imprimerait sans en-tête — l'en-tête est de la
+    présentation d'entreprise, pas un document métier (le précédent de `preferences.py`).
     """
     import yaml as _yaml
 
@@ -130,48 +118,48 @@ async def test_a_letter_head_is_printed_on_a_document_by_whoever_can_only_read_i
         "schema_version": 1, "name": "Bill", "module": "shop",
         "fields": [{"fieldname": "customer", "fieldtype": "Text", "required": True}],
     }
-    template = {
-        "schema_version": 1, "doctype": "Bill", "name": "standard", "label": "Facture",
-        "letterhead": {"name": "default"},
-        "blocks": [{"type": "fields", "fields": ["customer"]}],
-    }
+    template = {"schema_version": 1, "doctype": "Bill", "name": "standard", "label": "Facture",
+                "blocks": [{"type": "fields", "fields": ["customer"]}]}
     shop = (
         MAIN_WITH_PRINT,
         {"doctypes/bill.yaml": _yaml.safe_dump(invoice), "print/standard.yaml": _yaml.safe_dump(template)},
     )
-    async with boot_host(tmp_path, inline_plugins={**with_letterhead(), "shop": shop}) as h:
-        admin = h.token(sub="ada", permissions=[*LETTERHEAD, "shop:bill:read", "shop:bill:write"])
-        made = await h.http("POST", "/doc/Letter Head", token=admin, json={
-            "data": {"is_default": True, "disabled": False, "footer_text": "SARL Durand — RCS Paris 123 456 789"},
-            "name": "Papier 2026",
-        })
-        assert made.status_code == 201, made.text
+    async with boot_host(tmp_path, inline_plugins={**SYSTEM, "shop": shop}) as h:
+        admin = h.token(sub="ada", permissions=[*ADMIN, "shop:bill:read", "shop:bill:write"])
+        up = await h.http("POST", "/upload/System Settings/print_background", token=admin,
+                          files={"file": ("papier.pdf", b"%PDF-1.4 papier", "application/pdf")})
+        assert up.status_code == 201, up.text
+        settled = await h.http("PUT", "/doc/System Settings/System Settings", token=admin, json={
+            "version": 0, "data": {"print_background": up.json()["id"], "print_offset_top": 30}})
+        assert settled.status_code == 200, settled.text
         bill = await h.http("POST", "/doc/Bill", token=admin, json={"data": {"customer": "Durand"}})
         name = bill.json()["name"]
 
-        # Un lecteur SANS grant sur `Letter Head` : il obtient quand même le pied de page.
+        # Un lecteur SANS grant sur les réglages : le fond s'applique quand même, avec sa zone réservée.
         reader = h.token(sub="rita", permissions=["shop:bill:read"])
         printed = await h.http("GET", f"/print/Bill/{name}", token=reader)
         assert printed.status_code == 200, printed.text
-        assert "RCS Paris 123 456 789" in printed.json()["html"]
-
-        # Désactivé : on imprime SANS en-tête, et ce n'est pas une erreur.
-        current = await h.http("GET", "/doc/Letter Head/Papier 2026", token=admin)
-        off = await h.http("PUT", "/doc/Letter Head/Papier 2026", token=admin, json={
-            "version": current.json()["version"],
-            "data": {"is_default": True, "disabled": True, "footer_text": "SARL Durand — RCS Paris 123 456 789"},
-        })
-        assert off.status_code == 200, off.text
-        again = await h.http("GET", f"/print/Bill/{name}", token=reader)
-        assert again.status_code == 200 and "RCS Paris" not in again.json()["html"]
+        assert printed.json()["background"] is True and "@page{margin-top:50mm" in printed.json()["html"]
+        assert (await h.http("GET", f"/print/Bill/{name}?letterhead=none", token=reader)).json()["background"] is False
+        # Une autre organisation n'a pas ce fond.
+        other = h.token(sub="gus", tenant="globex", permissions=["shop:bill:read", "shop:bill:write"])
+        theirs = await h.http("POST", "/doc/Bill", token=other, tenant="globex", json={"data": {"customer": "G"}})
+        out = await h.http("GET", f"/print/Bill/{theirs.json()['name']}", token=other, tenant="globex")
+        assert out.json()["background"] is False
 
 
-async def test_the_administration_workspace_offers_the_letter_head(tmp_path):
-    async with boot_host(tmp_path, inline_plugins=with_letterhead()) as h:
-        admin = h.token(sub="ada", permissions=[*LETTERHEAD, *ADMIN])
+async def test_the_administration_workspace_no_longer_offers_a_letter_head(tmp_path):
+    """`Letter Head` a été retiré (§14) : le papier à en-tête est le fond PDF des réglages."""
+    code, files = SYSTEM["system"]
+    shipped = {**files}
+    for kind, name in (("workspaces", "system"), ("doctypes", "user_permission")):
+        shipped[f"{kind}/{name}.yaml"] = (system_plugin_dir() / kind / f"{name}.yaml").read_text(encoding="utf-8")
+    async with boot_host(tmp_path, inline_plugins={"system": (code, shipped)}) as h:
+        admin = h.token(sub="ada", permissions=[*ADMIN, "system:user_permission:read"])
         spaces = (await h.http("GET", "/workspaces", token=admin)).json()
         system = next(w for w in spaces if w["name"] == "system")
-        assert "Letter Head" in [b.get("doctype") for b in system["blocks"]]
+        assert "Letter Head" not in [b.get("doctype") for b in system["blocks"]]
+        assert (await h.http("GET", "/meta/Letter Head", token=admin)).status_code == 404
 
 
 async def test_labels_follow_accept_language_and_each_user_keeps_a_language(tmp_path):
@@ -186,7 +174,7 @@ async def test_labels_follow_accept_language_and_each_user_keeps_a_language(tmp_
         fields = {f["fieldname"]: f for f in english["fields"]}
         assert fields["language"]["label"] == "Language" and fields["language"]["options"] == ["fr", "en"]
         assert fields["language"]["option_labels"] == {"fr": "French", "en": "English"}
-        assert [s["section"] for s in english["layout"]] == ["Organisation", "Regional"]
+        assert [s["section"] for s in english["layout"]] == ["Organisation", "Regional", "Printing"]
 
         bob = h.token(sub="bob", permissions=[])
         r = await h.http("PUT", "/preferences/language", token=bob, json={"language": "en"})

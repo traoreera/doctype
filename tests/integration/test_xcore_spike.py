@@ -49,6 +49,8 @@ EXPECTED_ROUTES = sorted(
         ("GET", "/print-templates/{doctype}"),
         ("GET", "/print-example/{doctype}"),
         ("POST", "/print-image/{doctype}"),
+        ("POST", "/print-background/{doctype}"),
+        ("POST", "/print-preview/{doctype}/{name}/pdf"),
         ("GET", "/override/print/{doctype}"),
         ("POST", "/override/print/{doctype}"),
         ("DELETE", "/override/print/{doctype}"),

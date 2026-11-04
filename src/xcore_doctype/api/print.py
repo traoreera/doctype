@@ -1,4 +1,4 @@
-"""Routes d'impression (process/impression.md §7). Trois routes, toutes en lecture : imprimer, c'est lire.
+"""Routes d'impression (process/impression.md §7). Imprimer, c'est lire ; seul l'éditeur de gabarits écrit.
 
 Un routeur à part, comme les fichiers, parce que l'une d'elles ne rend pas du JSON mais des octets — et qu'une
 réponse binaire mérite ses propres en-têtes (`nosniff`, aucune mise en cache publique).
@@ -15,10 +15,10 @@ from pydantic import BaseModel, ConfigDict
 
 from ..context import ContextSettings, RequestContext, http_context
 from ..errors import DoctypeError
-from ..files import PRINT_IMAGE_MAX_MB, content_disposition
+from ..files import PRINT_BACKGROUND_MAX_MB, PRINT_IMAGE_MAX_MB, content_disposition
 from ..print_service import PrintService
 
-# Le nom d'un gabarit et celui d'un papier à en-tête : bornés ici pour que rien de démesuré n'atteigne le service.
+# Le nom d'un gabarit, et `letterhead` (seul `none` a un sens : imprimer SANS le fond PDF) : bornés ici pour que rien de démesuré n'atteigne le service.
 _NAME = {"max_length": 140}
 
 
@@ -31,7 +31,7 @@ class PrintOverrideBody(BaseModel):
 
 
 class PrintPreviewBody(BaseModel):
-    """Un gabarit en BROUILLON, plus le papier à en-tête à employer pour l'aperçu (`none` pour aucun)."""
+    """Un gabarit en BROUILLON, et `letterhead: none` pour l'aperçu SANS le fond PDF."""
 
     model_config = ConfigDict(extra="forbid")
     template: dict
@@ -77,16 +77,7 @@ def build_print_router(printer: PrintService, settings: ContextSettings) -> APIR
             content, filename = await printer.pdf(ctx, doctype, name, template=template, letterhead=letterhead)
         except DoctypeError as e:
             _raise(e)
-        return Response(
-            content,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": content_disposition(filename, inline=False),
-                "X-Content-Type-Options": "nosniff",
-                # Un document d'une organisation ne se met jamais en cache ailleurs que chez son lecteur.
-                "Cache-Control": "private, no-store",
-            },
-        )
+        return _pdf_response(content, filename)
 
     # ── L'éditeur de gabarits (§10) ───────────────────────────
     @router.get("/override/print/{doctype}")
@@ -121,6 +112,24 @@ def build_print_router(printer: PrintService, settings: ContextSettings) -> APIR
         except DoctypeError as e:
             _raise(e)
 
+    @router.post("/print-preview/{doctype}/{name}/pdf")
+    async def print_preview_pdf(doctype: str, name: str, body: PrintPreviewBody, ctx: RequestContext = Depends(ctx_dep)):
+        """Le PDF d'un gabarit en BROUILLON : le seul aperçu qui montre le fond PDF. Une lecture, comme l'aperçu HTML."""
+        try:
+            content, filename = await printer.preview_pdf(ctx, doctype, name, body.template, body.letterhead)
+        except DoctypeError as e:
+            _raise(e)
+        return _pdf_response(content, filename)
+
+    @router.post("/print-background/{doctype}", status_code=201)
+    async def print_background(doctype: str, file: UploadFile = File(...), ctx: RequestContext = Depends(ctx_dep)):
+        """Dépose le FOND PDF d'un gabarit de ce type (§5). Le verrou de l'enregistrement : périmètre d'écriture total."""
+        content = await file.read(PRINT_BACKGROUND_MAX_MB * 1024 * 1024 + 1)  # un octet de trop suffit à refuser
+        try:
+            return await printer.upload_background(ctx, doctype, content=content, filename=file.filename, content_type=file.content_type)
+        except DoctypeError as e:
+            _raise(e)
+
     @router.post("/print-image/{doctype}", status_code=201)
     async def print_image(doctype: str, file: UploadFile = File(...), ctx: RequestContext = Depends(ctx_dep)):
         """Dépose une image pour un gabarit de ce type (§12). Le verrou de l'enregistrement : périmètre d'écriture total."""
@@ -143,3 +152,16 @@ def build_print_router(printer: PrintService, settings: ContextSettings) -> APIR
 
 def _raise(e: DoctypeError) -> None:
     raise HTTPException(status_code=e.status, detail=e.as_detail()) from e
+
+
+def _pdf_response(content: bytes, filename: str) -> Response:
+    return Response(
+        content,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": content_disposition(filename, inline=False),
+            "X-Content-Type-Options": "nosniff",
+            # Un document d'une organisation ne se met jamais en cache ailleurs que chez son lecteur.
+            "Cache-Control": "private, no-store",
+        },
+    )

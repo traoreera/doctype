@@ -31,6 +31,9 @@
   --desk-paper-muted: #5f6672;
   --desk-paper-rule: #d0d4da;
   --desk-paper-head: #f3f4f6;
+  --desk-paper-stripe: #f2f4f7; /* les lignes paires d'un tableau « zébré » */
+  --desk-paper-accent: #2f3e4e; /* l'en-tête d'un tableau « en-tête foncé » (print_document.table_css) */
+  --desk-paper-accent-ink: #fff;
 
   /* Graphiques : la palette catégorielle documentée (dataviz/palette.md), ordre FIXE, validée daltonisme et contraste sur ces surfaces
      (validate_palette.js). Trois teintes claires (aqua, jaune, magenta) restent sous 3:1 sur blanc : le dessin s'accompagne donc toujours

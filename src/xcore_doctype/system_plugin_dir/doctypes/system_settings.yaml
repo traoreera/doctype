@@ -1,5 +1,6 @@
 # Les réglages de BASE de l'application : un seul document par organisation. Édité dans Paramètres > Général.
 # Le Desk applique le nom, le logo, la couleur et le format de date à tous les utilisateurs de l'organisation (voir preferences.py) ;
+# l'impression emploie le FOND PDF (le papier à en-tête de l'entreprise) pour tous les documents (print_service.py, impression.md §14) ;
 # lire ou modifier ce document demande les grants `system:system_settings:read|write` (un administrateur).
 schema_version: 1
 name: System Settings
@@ -13,9 +14,15 @@ fields:
   - { fieldname: logo, label: Logo, fieldtype: Image, max_mb: 2, description: "Affiché en haut du Desk (PNG, JPEG, GIF ou WebP)" }
   - { fieldname: brand_color, label: Couleur de l'organisation, fieldtype: Color, description: Teinte des boutons et des éléments actifs ; vide = la teinte par défaut }
   - { fieldname: date_format, label: Format de date, fieldtype: Select, options: [JJ/MM/AAAA, AAAA-MM-JJ, MM/JJ/AAAA], default: JJ/MM/AAAA }
+  - { fieldname: print_background, label: Fond PDF des impressions, fieldtype: Attach, max_mb: 5, description: "Votre papier à en-tête (logo, coordonnées, pied de page, mentions), en PDF : toutes les impressions s'impriment PAR-DESSUS, sauf un gabarit qui a son propre fond" }
+  - { fieldname: print_background_pages, label: Fond sur, fieldtype: Select, options: [Toutes les pages, Première page seulement], default: Toutes les pages }
+  - { fieldname: print_offset_top, label: Zone réservée en haut (mm), fieldtype: Int, default: 0, description: "La hauteur que le fond occupe en haut de chaque page : le contenu commence en dessous" }
+  - { fieldname: print_offset_bottom, label: Zone réservée en bas (mm), fieldtype: Int, default: 0, description: "La hauteur que le fond occupe en bas de chaque page : le contenu s'arrête au-dessus" }
   - { fieldname: language, label: Langue, fieldtype: Select, options: [fr, en], default: fr, description: "La langue du Desk pour toute l'organisation (fr : français, en : anglais) ; chacun peut choisir la sienne dans « Mon profil »" }
 layout:
   - section: Organisation
     columns: [[organization_name, brand_color], [logo]]
   - section: Régional
     columns: [[date_format, language]]
+  - section: Impression
+    columns: [[print_background, print_background_pages], [print_offset_top, print_offset_bottom]]

@@ -10,12 +10,12 @@
  * - le document n'est JAMAIS analysé en nœuds vivants de la page du Desk (c'est tout l'intérêt de `srcdoc`) ;
  * - `contentWindow.print` est ATTEIGNABLE depuis la page (l'erreur qu'on vient de corriger) ;
  * - rien n'exécute de script dans ce cadre (`allow-scripts` absent, et on le prouve en y mettant un script) ;
- * - le changement de gabarit redemande l'aperçu ;
+ * - le changement de gabarit redemande l'aperçu, et « Sans le fond » le redemande sans le fond PDF ;
  * - le PDF se télécharge et commence par `%PDF` quand le serveur a le moteur ; sinon le dialogue le DIT.
  *
  * Et tout cela sous la vraie CSP du Desk, qui n'autorise pas `unsafe-inline`.
  */
-import { api, assert, config, launch, reporter } from './helpers.mjs'
+import { api, assert, config, launch, reporter, pdfBytes } from './helpers.mjs'
 
 const cfg = config()
 const { browser, page, problems } = await launch()
@@ -31,6 +31,20 @@ try {
     const made = await api(cfg, 'POST', '/doc/Customer', { data: { customer_name: 'Société Durand & Fils', type: 'Entreprise', company_id: 'FR-12345' } })
     assert(made.status === 201, `création du client : ${made.status} ${JSON.stringify(made.json)}`)
     invoice = made.json.name
+
+    // Un FOND PDF propre au gabarit du client (§14) : déposé, puis cité par le gabarit de l'organisation.
+    const form = new FormData()
+    form.append('file', new Blob([pdfBytes()], { type: 'application/pdf' }), 'papier.pdf')
+    const up = await fetch(`${cfg.api}/print-background/Customer`, {
+      method: 'POST', body: form, headers: { Authorization: `Bearer ${cfg.token}`, 'X-Tenant-ID': cfg.tenant },
+    })
+    const uploaded = await up.json()
+    assert(up.status === 201, `fond : ${up.status} ${JSON.stringify(uploaded)}`)
+    const current = await api(cfg, 'GET', '/override/print/Customer')
+    const tpl = { ...current.json.template, letterhead: { pdf: uploaded.id, offset_top: 20 } }
+    delete tpl.doctype
+    const saved = await api(cfg, 'POST', '/override/print/Customer', { template: tpl })
+    assert(saved.status === 200, `gabarit : ${saved.status} ${JSON.stringify(saved.json)}`)
 
     await page.goto(`${cfg.desk}#/app/Customer/${encodeURIComponent(invoice)}`)
     await page.waitForURL(/#\/login/)
@@ -50,11 +64,11 @@ try {
     assert(srcdoc.includes(invoice), `le numéro du document manque : ${srcdoc.slice(0, 300)}`)
 
     // Le document rendu doit être analysé DANS le cadre et nulle part ailleurs. On le mesure par les classes de
-    // NOTRE feuille de style d'impression (`table.fields`, `table.lines`, `div.lh`), qui n'existent que là :
+    // NOTRE feuille de style d'impression (`table.fields`, `table.lines`), qui n'existent que là :
     // chercher le nom du client dans la page ne prouverait rien, puisque le titre de la fiche l'affiche aussi —
     // c'est l'erreur que la première version de ce test a commise.
     const where = await page.evaluate(() => {
-      const marks = 'table.fields, table.lines, table.totaux, div.lh, div.lf'
+      const marks = 'table.fields, table.lines, table.totaux'
       const f = document.querySelector('[data-testid="print-frame"]')
       return {
         inFrame: f.contentDocument ? f.contentDocument.querySelectorAll(marks).length : -1,
@@ -96,9 +110,10 @@ try {
     assert(ran === false, 'un script a tourné dans le cadre : le bac à sable ne tient pas')
   }, page)
 
-  await r.step('changer de papier à en-tête redemande l’aperçu au serveur', async () => {
-    // On mesure la REQUÊTE, pas le HTML : sans papier à en-tête déclaré, les deux rendus sont identiques au
-    // caractère près, donc comparer les `srcdoc` ne prouverait rien (et attendre une différence bloquerait).
+  await r.step('« Sans le fond » redemande l’aperçu au serveur, sans le fond PDF', async () => {
+    // Le dialogue DIT qu'un fond complète l'aperçu (il n'existe qu'au PDF) et n'offre le choix que dans ce cas.
+    await page.getByTestId('print-background').waitFor()
+    // On mesure la REQUÊTE : le fond n'est pas dans le HTML, seule la zone réservée change.
     const asked = []
     const listen = (req) => {
       if (/\/print\/Customer\//.test(req.url())) asked.push(new URL(req.url()).search)
@@ -106,7 +121,7 @@ try {
     page.on('request', listen)
     try {
       await page.getByTestId('print-letterhead').click()
-      await page.getByRole('option', { name: 'Aucun' }).click()
+      await page.getByRole('option', { name: 'Sans le fond' }).click()
       await page.waitForTimeout(800) // le temps d'une relecture : il n'y a pas d'événement à attendre
       assert(
         asked.some((q) => q.includes('letterhead=none')),
@@ -117,6 +132,8 @@ try {
     }
     const after = await frameAttr('srcdoc')
     assert(after.includes(invoice), `l'aperçu a disparu après le changement : ${after.slice(0, 200)}`)
+    await page.getByTestId('print-background').waitFor({ state: 'detached' }) // plus de fond annoncé
+    assert(await page.getByTestId('print-letterhead').isVisible(), 'le choix doit rester pour remettre le fond')
     await r.shot(page, 'print-02-sans-entete')
   }, page)
 

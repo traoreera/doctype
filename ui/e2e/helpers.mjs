@@ -1,6 +1,7 @@
 /** Petits outils du scénario de bout en bout : un vrai navigateur, un vrai serveur xcore, aucune simulation. */
 import { chromium } from 'playwright-core'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 export function config() {
@@ -74,4 +75,32 @@ export async function api(cfg, method, path, body) {
   })
   const text = await res.text()
   return { status: res.status, json: text ? JSON.parse(text) : null }
+}
+
+/** Un PDF d'UNE page A4, VALIDE (table des renvois exacte : pypdf le relit pour le poser en fond). */
+export function pdfBytes() {
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R >>',
+  ]
+  const stream = '0.18 0.24 0.31 rg 0 772 595 70 re f'
+  objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`)
+  let out = '%PDF-1.4\n'
+  const offsets = []
+  objects.forEach((body, i) => {
+    offsets.push(out.length)
+    out += `${i + 1} 0 obj\n${body}\nendobj\n`
+  })
+  const xref = out.length
+  out += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n` + offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')
+  out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
+  return Buffer.from(out, 'latin1')
+}
+
+/** Ce PDF écrit dans le dossier temporaire, pour un `<input type=file>`. */
+export function writePdf(name) {
+  const path = join(tmpdir(), name)
+  writeFileSync(path, pdfBytes())
+  return path
 }
