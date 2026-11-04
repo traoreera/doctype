@@ -177,7 +177,7 @@ class TableBlock(_Model):
     type: Literal["table"]
     field: _Fieldname  # le champ Table du document
     columns: Annotated[list[TableColumn], PydanticField(min_length=1, max_length=MAX_PRINT_COLUMNS)]
-    style: Literal["bordered", "ruled", "plain"] = "bordered"
+    style: print_document.TableStyle = "bordered"  # la galerie partagée avec les tableaux de mise en page
     density: Literal["compact", "normal"] = "normal"
     # L'en-tête se répète à chaque page : c'est du CSS paginé (`table-header-group`), vérifié contre le moteur.
     repeat_header: bool = True
@@ -670,7 +670,10 @@ def _stylesheet(page: PageSetup) -> str:
     size = f"{page.size} {page.orientation}" if page.orientation == "landscape" else page.size
     return (
         f"@page{{size:{size};margin:{page.top}mm {page.right}mm {page.bottom}mm {page.left}mm}}"
-        "body{font-family:sans-serif;font-size:10pt;color:#000;margin:0}"
+        # `no-contextual` : une police comme Inter remplace le tiret ENTRE DEUX CHIFFRES par une variante sans
+        # correspondance Unicode — « FA-2026-00001 » s'imprimait juste mais ne se retrouvait plus en cherchant dans
+        # le PDF (le texte extrait portait U+E088). Un numéro de facture doit se copier et se chercher.
+        "body{font-family:sans-serif;font-size:10pt;color:#000;margin:0;font-variant-ligatures:no-contextual}"
         "h1{font-size:16pt;margin:0 0 5mm}h2{font-size:11pt;margin:5mm 0 2mm}"
         "div.lh{margin:0 0 6mm}div.lh img{max-width:100%}"
         "div.lf{margin:8mm 0 0;font-size:8pt;color:#555;white-space:pre-wrap}"
@@ -681,10 +684,8 @@ def _stylesheet(page: PageSetup) -> str:
         "table.lines{width:100%;border-collapse:collapse}"
         "table.lines thead{display:table-header-group}"  # l'en-tête se répète : mesuré sur 11 pages
         "table.lines tbody tr{page-break-inside:avoid}"
-        "table.lines.bordered th,table.lines.bordered td{border:0.2mm solid #888}"
-        "table.lines.ruled th,table.lines.ruled td{border-bottom:0.2mm solid #bbb}"
-        "table.lines.bordered th,table.lines.ruled th{background:#eee}"
-        "table.lines.normal th,table.lines.normal td{padding:1.2mm 2mm}"
+        + print_document.table_css()
+        + "table.lines.normal th,table.lines.normal td{padding:1.2mm 2mm}"
         "table.lines.compact th,table.lines.compact td{padding:0.6mm 1.5mm;font-size:9pt}"
         "tr.grp td{font-weight:bold;background:#f4f4f4}"
         "tr.sub td{font-weight:bold;border-top:0.3mm solid #888}"

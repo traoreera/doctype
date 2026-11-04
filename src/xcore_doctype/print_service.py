@@ -21,6 +21,7 @@ peut pas refuser d'imprimer une facture parce que son lecteur n'a pas de grant s
 
 from __future__ import annotations
 
+import asyncio
 import base64
 from typing import Any, Mapping, NamedTuple
 
@@ -30,6 +31,7 @@ from .context import RequestContext
 from .document import DocumentService
 from .errors import DoctypeError, InvalidDefinition, NotFound, ValidationFailed
 from .file_service import FileService
+from .files import PDF_TYPE
 from .overrides import KIND_PRINT, validate_print_override
 from .permissions import scope_for
 from .printing import PrintTemplate
@@ -148,8 +150,6 @@ class PrintService:
         self._docs._enter(ctx, "doc.print", doctype, name)
         if template is not None and not isinstance(template, str):
             raise ValidationFailed("template doit être un texte (le nom d'un gabarit)")
-        if letterhead is not None and not isinstance(letterhead, str):
-            raise ValidationFailed("letterhead doit être un texte (le nom d'un papier à en-tête, ou « none »)")
         compiled = self._printable(doctype)
         record = await self._docs.get(ctx, doctype, name)  # LE contrôle de droit : lire le document (§6)
         chosen = await self._all(ctx, compiled)
@@ -157,8 +157,18 @@ class PrintService:
         if wanted not in chosen:
             raise NotFound("print_template_not_found", f"Gabarit {wanted!r} introuvable pour {doctype}")
         found = chosen[wanted][0]
+        html, background = await self._compose(ctx, compiled, found, record, letterhead)
+        return html, found, background
+
+    async def _compose(
+        self, ctx: RequestContext, compiled: Any, found: PrintTemplate, record: Mapping[str, Any], letterhead: Any
+    ) -> tuple[str, Background | None]:
+        """Le HTML d'un document LU (droit déjà jugé) avec un gabarit : UN seul chemin, pour l'impression comme pour
+        l'aperçu d'un brouillon — l'aperçu de l'éditeur ne peut donc pas diverger de ce qui s'imprime."""
+        if letterhead is not None and not isinstance(letterhead, str):
+            raise ValidationFailed("letterhead doit être un texte (le nom d'un papier à en-tête, ou « none »)")
         titles = await self._titles(ctx, found, compiled, record["data"])
-        head, foot, background = await self._letterhead(ctx, found, letterhead)
+        head, foot, background = await self._letterhead(ctx, compiled, found, letterhead)
         extra = "" if background is None else printing.reserved_margins_css(found.page, top=background.top, bottom=background.bottom)
         html = printing.render_html(
             found,
@@ -173,7 +183,7 @@ class PrintService:
             images=await self._images(ctx, compiled, found),
             linked=await self._currencies(ctx, compiled, record["data"]),
         )
-        return html, found, background
+        return html, background
 
     async def _titles(self, ctx: RequestContext, template: PrintTemplate, compiled: Any, data: Mapping[str, Any]) -> dict[tuple[str, str], str]:
         """Les TITRES des documents que les liens du gabarit désignent : « Société Durand », pas « c99464b32801 ».
@@ -227,10 +237,7 @@ class PrintService:
     async def pdf(self, ctx: RequestContext, doctype: str, name: str, *, template: Any = None, letterhead: Any = None) -> tuple[bytes, str]:
         """Le PDF et son nom de fichier. `503 pdf_engine_missing` si le paquet manque — l'aperçu HTML, lui, marche."""
         html, found, background = await self._html(ctx, doctype, name, template=template, letterhead=letterhead)
-        content = pdf_engine.to_pdf(html)
-        if background is not None:
-            content = pdf_engine.overlay(content, background.content, every_page=background.every_page)
-        return content, _filename(doctype, name, found)
+        return await _render_pdf(html, background), _filename(doctype, name, found)
 
     # ── L'éditeur de gabarits (§10) ───────────────────────────
     async def override(self, ctx: RequestContext, doctype: str, template: Any = None) -> dict[str, Any]:
@@ -313,35 +320,48 @@ class PrintService:
         lui, exige le périmètre total ; voir ce qu'on obtiendrait ne le demande pas.
         """
         self._docs._enter(ctx, "doc.print.preview", doctype, name)
+        html, background, record = await self._draft(ctx, doctype, name, config, letterhead)
+        return {"doctype": doctype, "name": record["name"], "html": html, "background": background is not None}
+
+    async def preview_pdf(self, ctx: RequestContext, doctype: str, name: str, config: Any, letterhead: Any = None) -> tuple[bytes, str]:
+        """Le PDF d'un gabarit en BROUILLON : le seul aperçu qui montre le FOND PDF (il n'existe qu'au PDF, §5)."""
+        self._docs._enter(ctx, "doc.print.preview.pdf", doctype, name)
+        html, background, record = await self._draft(ctx, doctype, name, config, letterhead)
+        return await _render_pdf(html, background), f"{doctype} {record['name']} (aperçu).pdf"
+
+    async def _draft(self, ctx: RequestContext, doctype: str, name: str, config: Any, letterhead: Any) -> tuple[str, Background | None, dict[str, Any]]:
         compiled = self._printable(doctype)
         cleaned = validate_print_override(compiled, config)
         found = printing.parse_template(cleaned, source="gabarit en brouillon")
         record = await self._docs.get(ctx, doctype, name)  # LE contrôle de droit : lire le document
-        titles = await self._titles(ctx, found, compiled, record["data"])
-        head, foot, background = await self._letterhead(ctx, found, letterhead)
-        extra = "" if background is None else printing.reserved_margins_css(found.page, top=background.top, bottom=background.bottom)
-        html = printing.render_html(
-            found, compiled.definition, record["data"], name=record["name"], children=compiled.children_by_field,
-            letterhead_html=head, footer_html=foot, css_extra=extra, titles=titles,
-            images=await self._images(ctx, compiled, found),
-            linked=await self._currencies(ctx, compiled, record["data"]),
-        )
-        return {"doctype": doctype, "name": record["name"], "html": html, "background": background is not None}
+        html, background = await self._compose(ctx, compiled, found, record, letterhead)
+        return html, background, record
 
     async def upload_image(
         self, ctx: RequestContext, doctype: str, *, content: bytes, filename: str | None, content_type: str | None
     ) -> dict[str, Any]:
-        """Dépose une image pour un gabarit de ce type (le logo, un tampon, une signature : §12).
+        """Dépose une image pour un gabarit de ce type (le logo, un tampon, une signature : §12)."""
+        return await self._upload(ctx, doctype, "doc.print.image", content=content, filename=filename, content_type=content_type, kind="Image")
 
-        Le MÊME verrou que l'enregistrement du gabarit (périmètre d'écriture total) : une image ne sert qu'à un
-        gabarit, et qui ne peut pas l'enregistrer n'a rien à y déposer.
-        """
-        self._docs._enter(ctx, "doc.print.image", doctype)
+    async def upload_background(
+        self, ctx: RequestContext, doctype: str, *, content: bytes, filename: str | None, content_type: str | None
+    ) -> dict[str, Any]:
+        """Dépose le FOND PDF d'un gabarit de ce type (le papier préimprimé de l'entreprise, §5)."""
+        return await self._upload(ctx, doctype, "doc.print.background", content=content, filename=filename, content_type=content_type, kind="Pdf")
+
+    async def _upload(
+        self, ctx: RequestContext, doctype: str, action: str, *, content: bytes, filename: str | None, content_type: str | None, kind: str
+    ) -> dict[str, Any]:
+        """Le MÊME verrou que l'enregistrement du gabarit (périmètre d'écriture total) : un fichier de gabarit ne
+        sert qu'à un gabarit, et qui ne peut pas l'enregistrer n'a rien à y déposer."""
+        self._docs._enter(ctx, action, doctype)
         compiled = self._printable(doctype)
         write = self._docs._scope(ctx, compiled, "write")
         async with self._docs._query(ctx) as q:
             self._check_author(write, compiled, restricted=await q.restricted(write))
-        return await self._files.save_print_image(ctx, compiled.definition.name, content=content, filename=filename, content_type=content_type)
+        return await self._files.save_print_file(
+            ctx, compiled.definition.name, content=content, filename=filename, content_type=content_type, kind=kind
+        )
 
     async def _images(self, ctx: RequestContext, compiled: Any, template: PrintTemplate) -> dict[str, str]:
         """Les images d'un document libre en URL `data:`, lues par NOUS (§6 : le moteur n'a pas de réseau).
@@ -351,7 +371,7 @@ class PrintService:
         """
         out: dict[str, str] = {}
         for file_id in printing.content_files(template):
-            found = await self._files.print_image(ctx.tenant_id, compiled.definition.name, file_id)
+            found = await self._files.print_file(ctx.tenant_id, compiled.definition.name, file_id)
             if found is not None and found[1] in EMBEDDABLE:
                 out[file_id] = f"data:{found[1]};base64,{base64.b64encode(found[0]).decode('ascii')}"
         return out
@@ -368,7 +388,7 @@ class PrintService:
         return {"doctype": compiled.definition.name, "name": page["items"][0]["name"] if page["items"] else None}
 
     # ── Le papier à en-tête ───────────────────────────────────
-    async def _letterhead(self, ctx: RequestContext, template: PrintTemplate, asked: Any) -> tuple[str, str, Background | None]:
+    async def _letterhead(self, ctx: RequestContext, compiled: Any, template: PrintTemplate, asked: Any) -> tuple[str, str, Background | None]:
         """`(en-tête HTML, pied HTML, fond PDF)`. Un en-tête absent n'est jamais une erreur : on imprime sans.
 
         C'est délibéré — un papier à en-tête supprimé, désactivé, ou un plugin `system` pas encore installé ne
@@ -382,8 +402,11 @@ class PrintService:
         if ref is None:
             return "", "", None
         if ref.pdf is not None:
-            found = await self._files.content(ctx.tenant_id, ref.pdf, reason="print letterhead background")
-            if found is None or found[1] != "application/pdf":
+            # Seulement un fond déposé pour un gabarit de CE type (`print_file`) : l'identifiant vient d'un gabarit,
+            # donc d'un client, et sans ce contrôle un auteur de gabarit ferait sortir n'importe quel PDF du tenant
+            # (un bulletin de paie) en fond de facture. La règle des images (§12), et pour la même raison.
+            found = await self._files.print_file(ctx.tenant_id, compiled.definition.name, ref.pdf)
+            if found is None or found[1] != PDF_TYPE:
                 return "", "", None
             return "", "", Background(found[0], ref.pages == "all", ref.offset_top, ref.offset_bottom)
         if ref.name is None:
@@ -436,3 +459,17 @@ def _filename(doctype: str, name: str, template: PrintTemplate) -> str:
     """Le nom du fichier proposé au téléchargement. `content_disposition` le nettoie ensuite pour l'en-tête HTTP."""
     label = template.label or doctype
     return f"{label} {name}.pdf"
+
+
+async def _render_pdf(html: str, background: Background | None) -> bytes:
+    """Le PDF, rendu HORS de la boucle d'événements : PlutoPrint calcule en C pendant des dizaines de millisecondes
+    (une demi-seconde au premier appel, le temps de charger les polices), et pendant ce temps-là l'application
+    entière ne répondait plus. Un fil de travail par impression ; le moteur ne partage rien entre deux `Book`."""
+    return await asyncio.to_thread(_pdf_bytes, html, background)
+
+
+def _pdf_bytes(html: str, background: Background | None) -> bytes:
+    content = pdf_engine.to_pdf(html)
+    if background is not None:
+        content = pdf_engine.overlay(content, background.content, every_page=background.every_page)
+    return content

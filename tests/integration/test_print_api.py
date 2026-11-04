@@ -177,3 +177,37 @@ async def test_the_pdf_travels_base64_over_ipc(tmp_path):
         content = base64.b64decode(made["pdf_base64"])
         assert content.startswith(b"%PDF") and made["size"] == len(content)
         assert made["filename"].endswith(".pdf") and made["content_type"] == "application/pdf"
+
+
+@needs_engine
+async def test_a_background_uploaded_over_http_prints_under_the_draft_and_the_saved_template(tmp_path):
+    """Le fond PDF de bout en bout, par les routes du Desk : déposé (multipart), employé par l'aperçu PDF d'un
+    BROUILLON (HTTP et IPC), puis par l'impression une fois le gabarit enregistré — et il est SOUS le texte."""
+    import io
+
+    import pypdf
+
+    paper = engine.to_pdf("<html><body><h1>PAPIER PRÉIMPRIMÉ</h1></body></html>")
+    async with boot_host(tmp_path, inline_plugins=plugins()) as h:
+        ada = h.token(sub="ada", permissions=GRANTS)
+        name = await bill(h, ada)
+        up = await h.http("POST", "/print-background/Bill", token=ada, files={"file": ("papier.pdf", paper, "application/pdf")})
+        assert up.status_code == 201, up.text
+        fake = await h.http("POST", "/print-background/Bill", token=ada, files={"file": ("faux.pdf", b"<html>", "application/pdf")})
+        assert fake.status_code == 415  # reconnu à ses octets, pas à son nom
+        draft = {"name": "standard", "content": "<p>Corps de la facture</p>", "letterhead": {"pdf": up.json()["id"], "offset_top": 30}}
+
+        r = await h.http("POST", f"/print-preview/Bill/{name}/pdf", token=ada, json={"template": draft})
+        assert r.status_code == 200 and r.headers["content-type"] == "application/pdf", r.text
+        assert "attachment" in r.headers["content-disposition"] and r.headers["cache-control"] == "private, no-store"
+        text = pypdf.PdfReader(io.BytesIO(r.content)).pages[0].extract_text()
+        assert "PAPIER PRÉIMPRIMÉ" in text and "Corps de la facture" in text
+
+        made = await h.action("doc.print.preview.pdf", {"doctype": "Bill", "name": name, "template": draft}, token=ada)
+        assert base64.b64decode(made["pdf_base64"]).startswith(b"%PDF") and made["filename"].endswith("(aperçu).pdf")
+
+        assert (await h.http("POST", "/override/print/Bill", token=ada, json={"template": draft})).status_code == 200
+        printed = await h.http("GET", f"/print/Bill/{name}", token=ada)
+        assert printed.json()["background"] is True and "@page{margin-top:50mm" in printed.json()["html"]
+        final = await h.http("GET", f"/print/Bill/{name}/pdf", token=ada)
+        assert "PAPIER PRÉIMPRIMÉ" in pypdf.PdfReader(io.BytesIO(final.content)).pages[0].extract_text()

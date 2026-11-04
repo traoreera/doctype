@@ -1,0 +1,4 @@
+{
+  "_comment": "La galerie des styles de tableau, dans son ORDRE d'affichage : print_document.TABLE_STYLES (serveur) et ui/src/lib/tablestyles.ts (Desk) la relisent et échouent si elles divergent.",
+  "styles": ["bordered", "ruled", "plain", "striped", "accent", "boxed"]
+}

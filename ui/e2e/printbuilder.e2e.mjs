@@ -4,7 +4,8 @@
  * Ce que ce scénario prouve, et que les tests de composant ne peuvent pas : qu'on écrit et met en forme la pièce
  * sur la feuille, qu'une valeur du document s'insère dans le texte, qu'une image se téléverse, se pose « devant le
  * texte » et se DÉPLACE à la souris au millimètre, que ce qu'on enregistre est ce que l'impression (HTML et PDF)
- * emploie ensuite, et que « Revenir à l'original » rend la main au gabarit de l'application.
+ * emploie ensuite, et que « Revenir à l'original » rend la main au gabarit de l'application. Depuis le 4 nov. : la
+ * galerie des styles de tableau (tableau des lignes ET tableau de mise en page) et le FOND PDF déposé à l'écran.
  */
 import { writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -43,6 +44,29 @@ function logo() {
   const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(Buffer.concat(Array(h).fill(row)))), chunk('IEND', Buffer.alloc(0))])
   const path = join(tmpdir(), `xdt-logo-${process.pid}.png`)
   writeFileSync(path, png)
+  return path
+}
+
+/** Un PDF d'UNE page A4, VALIDE (table des renvois exacte : pypdf le relit pour le poser en fond). */
+function background() {
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R >>',
+  ]
+  const stream = '0.18 0.24 0.31 rg 0 772 595 70 re f'
+  objects.push(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`)
+  let out = '%PDF-1.4\n'
+  const offsets = []
+  objects.forEach((body, i) => {
+    offsets.push(out.length)
+    out += `${i + 1} 0 obj\n${body}\nendobj\n`
+  })
+  const xref = out.length
+  out += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n` + offsets.map((o) => `${String(o).padStart(10, '0')} 00000 n \n`).join('')
+  out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`
+  const path = join(tmpdir(), `xdt-fond-${process.pid}.pdf`)
+  writeFileSync(path, out, 'latin1')
   return path
 }
 
@@ -137,6 +161,47 @@ try {
     await r.shot(page, 'printbuilder-02-image')
   }, page)
 
+  await r.step('la GALERIE : le tableau des lignes prend « En-tête foncé », dessiné comme au PDF', async () => {
+    const lines = page.getByTestId('pd-content').locator('[data-kind="table"]')
+    await lines.click()
+    await page.getByTestId('table-style-accent').click()
+    const table = lines.locator('table.lines')
+    await page.waitForFunction(() => document.querySelector('[data-kind="table"] table.lines')?.classList.contains('accent'))
+    const head = await table.locator('th').first().evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).color])
+    assert(head[0] === 'rgb(47, 62, 78)' && head[1] === 'rgb(255, 255, 255)', `en-tête : ${head}`)
+    assert((await page.getByTestId('table-style-accent').getAttribute('aria-checked')) === 'true', 'la vignette choisie n’est pas cochée')
+  }, page)
+
+  await r.step('un TABLEAU DE MISE EN PAGE : ses outils et la même galerie dans le panneau de droite', async () => {
+    // Le curseur en fin de document (sinon un tableau inséré au milieu d'un paragraphe le COUPE, comme dans Word).
+    await page.getByTestId('pd-content').locator('p').last().click()
+    await page.keyboard.press('Control+End')
+    await page.getByTestId('pd-insert-table').click()
+    await page.getByTestId('pd-table-panel').waitFor()
+    assert((await page.getByTestId('table-style-plain').getAttribute('aria-checked')) === 'true', 'un tableau de mise en page naît sans bordure')
+    await page.getByTestId('table-style-striped').click()
+    await page.getByTestId('pd-add-row').click()
+    const style = await page.getByTestId('pd-content').locator('.tableWrapper table').last().getAttribute('data-style')
+    assert(style === 'striped', `data-style : ${style}`)
+    await r.shot(page, 'printbuilder-02b-tableau')
+  }, page)
+
+  await r.step('le FOND PDF se dépose depuis le panneau « Page », se règle, et l’aperçu PDF le contient', async () => {
+    const toPage = page.getByTestId('pb-open-page')
+    if (await toPage.isVisible()) await toPage.click()
+    await page.getByTestId('pb-background-file').setInputFiles(background())
+    await page.getByTestId('pb-background-name').getByText(/xdt-fond-.*\.pdf/).waitFor()
+    await page.getByTestId('pb-background-top').locator('input').fill('25')
+    await page.getByTestId('pb-background-top').locator('input').press('Tab')
+    await r.shot(page, 'printbuilder-02c-fond')
+    // L'aperçu PDF du BROUILLON : un téléchargement si le moteur est là, sinon le refus 503 dit en notification.
+    const download = page.waitForEvent('download', { timeout: 15000 }).catch(() => null)
+    await page.getByTestId('pb-background-preview').click()
+    const got = await download
+    if (got) assert(/\(aperçu\)\.pdf$/.test(got.suggestedFilename()), `nom : ${got.suggestedFilename()}`)
+    else await page.getByText(/plutoprint/).waitFor()
+  }, page)
+
   await r.step('ENREGISTRER : l’impression et le PDF emploient ce document', async () => {
     await page.waitForTimeout(600)
     await page.getByTestId('pb-save').click()
@@ -145,6 +210,8 @@ try {
     const html = printed.json.html
     assert(/<p style="text-align:center"><strong>Merci de votre confiance, Durand/.test(html), `texte mis en forme absent de l'impression : ${html.slice(-600)}`)
     assert(/<img class="im front" src="data:image\/png;base64,[^"]+" alt="" style="width:40mm;left:-?[\d.]+mm;top:-?[\d.]+mm">/.test(html), 'image absente ou mal placée à l’impression')
+    assert(html.includes('class="lines accent') && html.includes('class="lay striped"'), 'les styles de tableau choisis ne s’impriment pas')
+    assert(printed.json.background === true && html.includes('@page{margin-top:45mm'), 'le fond PDF et sa zone réservée ne sont pas employés')
     const res = await fetch(`${cfg.api}/print/Invoice/${encodeURIComponent(invoice)}/pdf`, {
       headers: { Authorization: `Bearer ${cfg.token}`, 'X-Tenant-ID': cfg.tenant },
     })

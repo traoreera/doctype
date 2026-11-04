@@ -15,7 +15,7 @@ import pytest
 from tests.conftest import make_ctx
 from xcore_doctype import files as F
 from xcore_doctype.document import DocumentService
-from xcore_doctype.errors import NotFound, PermissionDenied, ValidationFailed
+from xcore_doctype.errors import DoctypeError, NotFound, PermissionDenied, ValidationFailed
 from xcore_doctype.file_service import FileService
 from xcore_doctype.overrides import KIND_PRINT, validate_print_override
 from xcore_doctype.print_service import SOURCE_GENERATED, SOURCE_ORG, SOURCE_PLUGIN, PrintService, target_of
@@ -401,10 +401,61 @@ class TestThePdfRoute:
 class TestThePdfBackground:
     """§5 : le papier à en-tête peut être un PDF, et nos blocs s'impriment PAR-DESSUS."""
 
-    async def background(self, env, ctx=ALICE, content=b"%PDF-1.4 faux"):
-        meta = await env.files.upload(ctx, "Letter Head", "background", content=content, filename="fond.pdf",
-                                      content_type="application/pdf")
+    async def background(self, env, ctx=ALICE, content=b"%PDF-1.4 faux", doctype="Facture"):
+        meta = await env.printer.upload_background(ctx, doctype, content=content, filename="fond.pdf", content_type="application/pdf")
         return meta["id"]
+
+    async def test_a_background_is_uploaded_for_the_type_and_recognised_by_its_bytes(self, env):
+        out = await env.printer.upload_background(ALICE, "Facture", content=b"%PDF-1.7 x", filename="papier.pdf", content_type="text/plain")
+        assert out["content_type"] == "application/pdf" and out["filename"] == "papier.pdf"
+        with pytest.raises(DoctypeError) as e:  # le NOM ne fait pas le type : un PNG renommé est refusé
+            await env.printer.upload_background(ALICE, "Facture", content=png(), filename="faux.pdf", content_type="application/pdf")
+        assert e.value.code == "file_type_not_allowed" and e.value.status == 415
+
+    async def test_uploading_a_background_takes_the_template_s_lock(self, env):
+        """Le chemin des images (`_upload`), donc le même verrou : l'écrivain partiel est prouvé dans test_print_document."""
+        with pytest.raises(PermissionDenied):
+            await env.printer.upload_background(STRANGER, "Facture", content=b"%PDF-1.4 x", filename="f.pdf", content_type="application/pdf")
+
+    async def test_a_background_too_large_is_refused(self, env):
+        big = b"%PDF-1.4 " + b"0" * (5 * 1024 * 1024)
+        with pytest.raises(DoctypeError) as e:
+            await env.printer.upload_background(ALICE, "Facture", content=big, filename="f.pdf", content_type="application/pdf")
+        assert e.value.code == "file_too_large" and e.value.status == 413
+
+    async def test_any_other_pdf_of_the_tenant_is_never_a_background(self, env):
+        """Le verrou : un gabarit cite un IDENTIFIANT, donc ce qu'un client a écrit. Un PDF déposé ailleurs (le
+        bulletin de paie, la pièce jointe d'un autre document) ne sort jamais en fond de facture."""
+        elsewhere = await env.files.upload(ALICE, "Letter Head", "background", content=b"%PDF-1.4 paie", filename="paie.pdf",
+                                           content_type="application/pdf")
+        ship(env, letterhead={"pdf": elsewhere["id"]})
+        assert (await env.printer.render(ALICE, "Facture", await invoice(env)))["background"] is False
+
+    async def test_a_background_of_another_type_is_never_used(self, env):
+        other = await self.background(env, doctype="Letter Head")
+        ship(env, letterhead={"pdf": other})
+        assert (await env.printer.render(ALICE, "Facture", await invoice(env)))["background"] is False
+
+    async def test_an_image_of_the_template_is_not_a_background(self, env):
+        image = await env.printer.upload_image(ALICE, "Facture", content=png(), filename="logo.png", content_type="image/png")
+        ship(env, letterhead={"pdf": image["id"]})
+        assert (await env.printer.render(ALICE, "Facture", await invoice(env)))["background"] is False
+
+    async def test_a_draft_previews_as_a_pdf_with_its_background(self, env, monkeypatch):
+        """L'aperçu PDF d'un BROUILLON : le seul qui montre le fond. Même droit que l'aperçu HTML (lire)."""
+        from xcore_doctype import print_service as S
+
+        seen = {}
+        monkeypatch.setattr(S, "_pdf_bytes", lambda html, background: seen.setdefault("args", (html, background)) and b"%PDF-1.7")
+        file_id = await self.background(env)
+        name = await invoice(env)
+        draft = {"name": "standard", "content": "<p>Bonjour</p>", "letterhead": {"pdf": file_id, "offset_top": 30}}
+        content, filename = await env.printer.preview_pdf(ALICE, "Facture", name, draft)
+        html, background = seen["args"]
+        assert content == b"%PDF-1.7" and filename.endswith("(aperçu).pdf")
+        assert background is not None and background.content.startswith(b"%PDF-1.4") and "Bonjour" in html
+        with pytest.raises(NotFound):
+            await env.printer.preview_pdf(MINE, "Facture", await invoice(env, ctx=BOB), draft)
 
     async def test_the_preview_says_a_background_completes_it(self, env):
         """L'aperçu à l'écran ne montre pas le fond (il n'existe qu'au PDF) : le Desk doit pouvoir le DIRE."""

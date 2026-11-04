@@ -96,13 +96,15 @@ class FileService:
             raise
         return {"id": att["id"], "file_id": file_id, "owner": att["owner"], "creation": att["creation"], "filename": name, "content_type": mime, "size": len(content)}
 
-    async def save_print_image(
-        self, ctx: RequestContext, doctype: str, *, content: bytes, filename: str | None, content_type: str | None
+    async def save_print_file(
+        self, ctx: RequestContext, doctype: str, *, content: bytes, filename: str | None, content_type: str | None, kind: str = "Image"
     ) -> dict[str, Any]:
-        """Dépose une IMAGE de gabarit d'impression pour ce type (champ réservé `_print`). Les droits sont jugés par
-        l'appelant (`print_service`, le même verrou que l'enregistrement du gabarit), pas ici. Une image seulement :
-        PNG, JPEG, GIF, WebP reconnus à leurs octets — jamais un SVG, qui porte du script."""
-        mime, name = F.check_upload(kind="Image", content=content, filename=filename or "", declared_type=content_type, limit_mb=F.PRINT_IMAGE_MAX_MB)
+        """Dépose un fichier de GABARIT d'impression pour ce type (champ réservé `_print`) : une IMAGE (le logo, un
+        tampon : PNG, JPEG, GIF, WebP reconnus à leurs octets, jamais un SVG, qui porte du script) ou, `kind="Pdf"`,
+        le FOND PDF préimprimé. Les droits sont jugés par l'appelant (`print_service`, le même verrou que
+        l'enregistrement du gabarit), pas ici."""
+        limit = F.PRINT_BACKGROUND_MAX_MB if kind == "Pdf" else F.PRINT_IMAGE_MAX_MB
+        mime, name = F.check_upload(kind=kind, content=content, filename=filename or "", declared_type=content_type, limit_mb=limit)
         namespace = _namespace(ctx.tenant_id, doctype)
         blob = await self._save(content, name, namespace)
         file_id = _new_id()
@@ -117,16 +119,16 @@ class FileService:
             raise
         return {"id": file_id, "filename": name, "content_type": mime, "size": len(content)}
 
-    async def print_image(self, tenant: str, doctype: str, file_id: str) -> tuple[bytes, str] | None:
-        """Les octets d'une image de gabarit, pour l'incorporer à l'impression — ou `None`.
+    async def print_file(self, tenant: str, doctype: str, file_id: str) -> tuple[bytes, str] | None:
+        """Les octets d'un fichier de gabarit (image ou fond PDF), pour l'impression — ou `None`.
 
-        SEULEMENT une image déposée pour un gabarit de CE type (`_print`, même DocType) : un gabarit ne peut pas
-        citer l'identifiant d'un autre fichier du tenant (une pièce jointe de la paie, un document d'un autre type)
-        pour le faire sortir sur papier. L'identifiant vient d'un gabarit, donc d'un client : c'est ici qu'il se juge.
+        SEULEMENT un fichier déposé pour un gabarit de CE type (`_print`, même DocType) : un gabarit ne peut pas
+        citer l'identifiant d'un autre fichier du tenant (une pièce jointe de la paie, un bulletin en PDF) pour le
+        faire sortir sur papier. L'identifiant vient d'un gabarit, donc d'un client : c'est ici qu'il se juge.
         """
         if not F.FILE_ID_RE.match(file_id):
             return None
-        sys = RequestContext.system(tenant, "print template image")
+        sys = RequestContext.system(tenant, "print template file")
         async with self._docs._query(sys) as q:
             row = (await q.get_files({file_id})).get(file_id)
         if row is None or row["fieldname"] != F.PRINT_FIELD or row["doctype"] != doctype:

@@ -106,7 +106,10 @@ def overlay(content: bytes, background: bytes, *, every_page: bool) -> bytes:
         merged = pypdf.PageObject.create_blank_page(width=under.mediabox.width, height=under.mediabox.height)
         merged.merge_page(under)  # le fond dessous...
         merged.merge_page(page)  # ...notre contenu dessus
-        writer.add_page(merged)
+        writer.add_page(merged).compress_content_streams()  # la fusion DÉCOMPRESSE les flux : on les recompresse
+    # Le fond, ses polices et ses images étaient recopiés à CHAQUE page : une facture de 3 pages pesait 121 Ko pour
+    # 24 Ko de contenu et 6 Ko de fond (mesuré). Les objets identiques ne sont plus écrits qu'une fois.
+    writer.compress_identical_objects()  # doublons ET objets orphelins (les défauts)
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()

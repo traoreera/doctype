@@ -6,6 +6,7 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import { computed } from 'vue'
+import TableStyleGallery from '@/components/printdoc/TableStyleGallery.vue'
 import { t } from '@/i18n'
 import {
   KIND_LABELS,
@@ -60,7 +61,6 @@ const alignOptions = [
   { value: 'right', label: t.printBuilder.align.right },
   { value: 'center', label: t.printBuilder.align.center },
 ]
-const styleOptions = (['bordered', 'ruled', 'plain'] as const).map((v) => ({ value: v, label: t.printBuilder.styles[v] }))
 const densityOptions = (['compact', 'normal'] as const).map((v) => ({ value: v, label: t.printBuilder.densities[v] }))
 const tableOptions = computed(() => tables.value.map((f) => ({ value: f.fieldname, label: f.label || f.fieldname })))
 const groupOptions = computed(() => [
@@ -194,10 +194,10 @@ const groupOptions = computed(() => [
             />
           </div>
         </fieldset>
-        <label class="pb-field">
+        <div class="pb-field">
           <span>{{ t.printBuilder.style }}</span>
-          <Select :model-value="block.style ?? 'bordered'" :options="styleOptions" option-label="label" option-value="value" :disabled="!editable" size="small" data-testid="pb-style" @update:model-value="emit('update', { style: $event })" />
-        </label>
+          <TableStyleGallery :model-value="block.style ?? 'bordered'" :label="t.printBuilder.style" :disabled="!editable" @update:model-value="emit('update', { style: $event })" />
+        </div>
         <label class="pb-field">
           <span>{{ t.printBuilder.density }}</span>
           <Select :model-value="block.density ?? 'normal'" :options="densityOptions" option-label="label" option-value="value" :disabled="!editable" size="small" @update:model-value="emit('update', { density: $event })" />

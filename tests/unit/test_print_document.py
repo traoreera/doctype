@@ -32,6 +32,7 @@ DEF = parse_definition({
 })
 TABLE = {"type": "table", "field": "lignes", "columns": [{"field": "article"}, {"field": "montant", "align": "right"}]}
 IMG = "a" * 32
+VECTORS = __import__("pathlib").Path(__file__).resolve().parent.parent / "vectors"
 
 
 def doc(content: str, **extra):
@@ -129,8 +130,44 @@ class TestTheRenderNeverCopiesTheInput:
         assert '<div class="pb"></div>' in html('<p>a</p><div data-page-break=""></div><p>b</p>')
 
     def test_layout_tables_say_their_borders(self):
-        out = html('<table data-borders="none"><tbody><tr><td><p>a</p></td></tr></tbody></table>')
-        assert '<table class="lay none">' in out
+        """L'ancien attribut d'avant la galerie se lit TOUJOURS : un gabarit enregistré avant imprime pareil."""
+        assert '<table class="lay plain">' in html('<table data-borders="none"><tbody><tr><td><p>a</p></td></tr></tbody></table>')
+        assert '<table class="lay bordered">' in html('<table data-borders="all"><tbody><tr><td><p>a</p></td></tr></tbody></table>')
+        assert '<table class="lay bordered">' in html('<table><tbody><tr><td><p>a</p></td></tr></tbody></table>')
+
+
+class TestTableStyles:
+    """La galerie de styles : UNE liste, partagée par le tableau des lignes et les tableaux de mise en page."""
+
+    @pytest.mark.parametrize("style", D.TABLE_STYLES)
+    def test_a_layout_table_takes_any_style_of_the_gallery(self, style):
+        out = html(f'<table data-style="{style}"><tbody><tr><td><p>a</p></td></tr></tbody></table>')
+        assert f'<table class="lay {style}">' in out
+
+    def test_data_style_wins_over_the_old_attribute(self):
+        out = html('<table data-style="striped" data-borders="none"><tbody><tr><td><p>a</p></td></tr></tbody></table>')
+        assert '<table class="lay striped">' in out
+
+    def test_an_unknown_style_is_refused_not_cleaned(self):
+        assert any("data-style" in p for p in problems_of('<table data-style="neon"><tbody><tr><td>a</td></tr></tbody></table>'))
+        assert any("data-borders" in p for p in problems_of('<table data-borders="dotted"><tbody><tr><td>a</td></tr></tbody></table>'))
+
+    @pytest.mark.parametrize("style", D.TABLE_STYLES)
+    def test_the_lines_table_takes_the_same_gallery(self, style):
+        out = html(f"<div data-block='{json.dumps({**TABLE, 'style': style})}'></div>")
+        assert f'class="lines {style} normal"' in out
+
+    def test_every_style_but_plain_has_rules_for_both_kinds_of_table(self):
+        css = D.table_css()
+        for style in D.TABLE_STYLES:
+            if style == "plain":
+                assert f".{style}" not in css  # « sans bordure » : rien du tout, c'est son sens
+                continue
+            assert f"table.lines.{style}" in css and f"table.lay.{style}" in css
+
+    def test_the_gallery_is_the_one_the_desk_draws(self):
+        shared = json.loads((VECTORS / "table_styles.json").read_text())
+        assert tuple(shared["styles"]) == D.TABLE_STYLES
 
 
 class TestImages:
@@ -193,7 +230,7 @@ class TestPrintImages:
 
     async def test_an_image_of_another_type_is_never_printed(self, env):
         name = await invoice(env)
-        up = await env.files.save_print_image(ALICE, "Letter Head", content=png(), filename="x.png", content_type="image/png")
+        up = await env.files.save_print_file(ALICE, "Letter Head", content=png(), filename="x.png", content_type="image/png")
         out = await env.printer.preview(ALICE, "Facture", name, await _template_with(env, up["id"]))
         assert "data:image" not in out["html"]
 

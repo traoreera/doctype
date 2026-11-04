@@ -872,6 +872,19 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return await self._run("doc.print.preview", op)
 
+    @action("doc.print.preview.pdf")
+    async def doc_print_preview_pdf(self, payload: dict) -> dict:
+        """Le PDF d'un gabarit NON enregistré (le seul aperçu qui montre le fond PDF), en base64 comme `doc.print.pdf`."""
+
+        async def op(ctx: RequestContext) -> dict:
+            content, filename = await self.printer.preview_pdf(
+                ctx, _need(payload, "doctype"), _need(payload, "name"), _need(payload, "template"), payload.get("letterhead")
+            )
+            return {"filename": filename, "content_type": "application/pdf", "size": len(content),
+                    "pdf_base64": base64.b64encode(content).decode("ascii")}
+
+        return await self._run("doc.print.preview.pdf", op)
+
     @action("doc.save")
     async def doc_save(self, payload: dict) -> dict:
         """Sans `name` : création (`new_name` : le nom choisi d'un DocType `naming: prompt`). Avec `name` : mise à jour, `version` obligatoire (D15)."""

@@ -11,14 +11,21 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { t } from '@/i18n'
 import { PX_PER_MM, normalizeHtml, pageMm, type PageGeometry } from '@/lib/printdoc'
 import type { DocTypeMeta } from '@/lib/types'
+import { isTableStyle, type TableStyle } from '@/lib/tablestyles'
 import { EmbeddedBlock, LayoutTable, PageBreak, PrintDocStorage, PrintImage, ValueToken, docContext, type PrintDocContext } from './extensions'
+import './table-styles.css'
 
 /**
  * L'éditeur du document d'impression, façon traitement de texte (`process/impression.md` §12) : une FEUILLE aux
  * dimensions du format, marges comprises, dessinée à l'échelle de l'écran, sur laquelle on écrit et met en forme
- * comme dans Word — styles de paragraphe, gras, couleur, taille, alignement, listes, tableaux de mise en page —
- * avec les valeurs du document insérées dans le texte, des images qu'on place où l'on veut, et le tableau des
- * lignes. Les traits pointillés marquent où le contenu passera à la page suivante.
+ * comme dans Word — styles de paragraphe, gras, couleur, taille, alignement, listes —, avec les valeurs du document
+ * insérées dans le texte, des images qu'on place où l'on veut, des tableaux et le tableau des lignes. Les traits
+ * pointillés marquent où le contenu passera à la page suivante.
+ *
+ * La barre d'outils ne garde que ce qu'une facture emploie (allègement du 4 nov.) : barré, surlignage, justifié,
+ * filet et « rétablir » sont partis (Ctrl+Maj+Z rétablit toujours), et les outils d'un tableau vivent dans le
+ * panneau de droite quand le curseur y est (`table` : son style, ou `null` hors d'un tableau). Le serveur accepte
+ * toujours ce qu'un gabarit plus ancien en contient.
  *
  * Ce que l'éditeur enregistre est son HTML, NETTOYÉ des styles qu'un collage apporte et que le serveur refuserait
  * (`normalizeHtml`) ; le serveur revalide tout (`print_document`) et reste l'autorité.
@@ -40,7 +47,7 @@ const props = defineProps<{
   linkTitle: (target: string, name: string) => string
   imageUrl: (fileId: string) => string | null
 }>()
-const emit = defineEmits<{ 'update:modelValue': [html: string]; select: [node: Selected | null] }>()
+const emit = defineEmits<{ 'update:modelValue': [html: string]; select: [node: Selected | null]; table: [style: TableStyle | null] }>()
 
 const editor = useEditor({
   content: props.modelValue,
@@ -63,7 +70,12 @@ const editor = useEditor({
   editorProps: { attributes: { class: 'pd-content', 'data-testid': 'pd-content', 'aria-label': t.printDoc.content } },
   onUpdate: ({ editor: e }) => emit('update:modelValue', normalizeHtml(e.getHTML())),
   onSelectionUpdate: ({ editor: e }) => emit('select', selectedNode(e.state.selection)),
-  onTransaction: ({ editor: e }) => emit('select', selectedNode(e.state.selection)),
+  onTransaction: ({ editor: e }) => {
+    emit('select', selectedNode(e.state.selection))
+    // Le curseur dans un tableau de mise en page : le panneau de droite en montre le style et les outils.
+    const style: unknown = e.getAttributes('table').tableStyle
+    emit('table', !e.isActive('table') ? null : isTableStyle(style) ? style : 'bordered')
+  },
 })
 
 function selectedNode(sel: unknown): Selected | null {
@@ -167,9 +179,6 @@ function setFontSize(v: string | null): void {
   else run((c) => c.unsetFontSize())
 }
 const color = computed(() => (editor.value?.getAttributes('textStyle').color as string | undefined) ?? '#000000')
-const highlight = computed(() => (editor.value?.getAttributes('textStyle').backgroundColor as string | undefined) ?? '#ffffff')
-const inTable = computed(() => active('table'))
-const tableBorders = computed(() => (editor.value?.getAttributes('table').borders as string | undefined) ?? 'all')
 
 defineExpose({ editor })
 </script>
@@ -183,49 +192,23 @@ defineExpose({ editor })
       <Button text size="small" :severity="active('bold') ? 'primary' : 'secondary'" :aria-label="t.printDoc.bold" :title="t.printDoc.bold" data-testid="pd-bold" @click="run((c) => c.toggleBold())"><b>G</b></Button>
       <Button text size="small" :severity="active('italic') ? 'primary' : 'secondary'" :aria-label="t.printDoc.italic" :title="t.printDoc.italic" @click="run((c) => c.toggleItalic())"><i>I</i></Button>
       <Button text size="small" :severity="active('underline') ? 'primary' : 'secondary'" :aria-label="t.printDoc.underline" :title="t.printDoc.underline" @click="run((c) => c.toggleUnderline())"><u>S</u></Button>
-      <Button text size="small" :severity="active('strike') ? 'primary' : 'secondary'" :aria-label="t.printDoc.strike" :title="t.printDoc.strike" @click="run((c) => c.toggleStrike())"><s>ab</s></Button>
       <label class="pd-color" :title="t.printDoc.color">
         <span class="pd-color-a" :style="{ borderBottomColor: color }">A</span>
         <input type="color" :value="color" :aria-label="t.printDoc.color" data-testid="pd-color" @input="run((c) => c.setColor(($event.target as HTMLInputElement).value))" />
-      </label>
-      <label class="pd-color" :title="t.printDoc.highlight">
-        <i class="pi pi-palette" aria-hidden="true" />
-        <input type="color" :value="highlight" :aria-label="t.printDoc.highlight" @input="run((c) => c.setBackgroundColor(($event.target as HTMLInputElement).value))" />
       </label>
       <span class="pd-sep" />
       <Button icon="pi pi-align-left" text size="small" :aria-label="t.printDoc.alignLeft" @click="run((c) => c.setTextAlign('left'))" />
       <Button icon="pi pi-align-center" text size="small" :aria-label="t.printDoc.alignCenter" data-testid="pd-center" @click="run((c) => c.setTextAlign('center'))" />
       <Button icon="pi pi-align-right" text size="small" :aria-label="t.printDoc.alignRight" data-testid="pd-right" @click="run((c) => c.setTextAlign('right'))" />
-      <Button icon="pi pi-align-justify" text size="small" :aria-label="t.printDoc.justify" @click="run((c) => c.setTextAlign('justify'))" />
       <span class="pd-sep" />
       <Button icon="pi pi-list" text size="small" :severity="active('bulletList') ? 'primary' : 'secondary'" :aria-label="t.printDoc.bullets" @click="run((c) => c.toggleBulletList())" />
       <Button label="1." text size="small" :severity="active('orderedList') ? 'primary' : 'secondary'" :aria-label="t.printDoc.numbers" @click="run((c) => c.toggleOrderedList())" />
-      <Button icon="pi pi-minus" text size="small" :aria-label="t.printDoc.rule" @click="run((c) => c.setHorizontalRule())" />
       <span class="pd-sep" />
       <Button icon="pi pi-undo" text size="small" :aria-label="t.printDoc.undo" :disabled="!editor.can().undo()" @click="run((c) => c.undo())" />
-      <Button icon="pi pi-refresh" text size="small" :aria-label="t.printDoc.redo" :disabled="!editor.can().redo()" @click="run((c) => c.redo())" />
-      <!-- Les outils du tableau, quand le curseur y est -->
-      <template v-if="inTable">
-        <span class="pd-sep" />
-        <Button :label="t.printDoc.addRow" icon="pi pi-plus" text size="small" data-testid="pd-add-row" @click="run((c) => c.addRowAfter())" />
-        <Button :label="t.printDoc.addColumn" icon="pi pi-plus" text size="small" data-testid="pd-add-col" @click="run((c) => c.addColumnAfter())" />
-        <Button icon="pi pi-arrows-h" text size="small" :aria-label="t.printDoc.mergeCells" :title="t.printDoc.mergeCells" @click="run((c) => c.mergeOrSplit())" />
-        <Button
-          :icon="tableBorders === 'none' ? 'pi pi-table' : 'pi pi-stop'"
-          text
-          size="small"
-          :aria-label="tableBorders === 'none' ? t.printDoc.showBorders : t.printDoc.hideBorders"
-          :title="tableBorders === 'none' ? t.printDoc.showBorders : t.printDoc.hideBorders"
-          data-testid="pd-borders"
-          @click="run((c) => c.updateAttributes('table', { borders: tableBorders === 'none' ? 'all' : 'none' }))"
-        />
-        <Button icon="pi pi-trash" text size="small" severity="danger" :aria-label="t.printDoc.deleteRow" :title="t.printDoc.deleteRow" @click="run((c) => c.deleteRow())" />
-        <Button :label="t.printDoc.deleteTable" text size="small" severity="danger" @click="run((c) => c.deleteTable())" />
-      </template>
     </div>
 
     <div ref="stage" class="pd-stage" :style="stageStyle" data-testid="pd-stage">
-      <div ref="paper" class="pd-paper" :style="paperStyle" data-testid="pd-paper">
+      <div ref="paper" class="pd-paper print-sheet" :style="paperStyle" data-testid="pd-paper">
         <EditorContent v-if="editor" :editor="editor" class="pd-body" />
       </div>
     </div>
@@ -371,9 +354,10 @@ defineExpose({ editor })
   margin: 3mm 0;
 }
 
-/* Les tableaux de mise en page (TipTap les enveloppe dans `.tableWrapper`) : sans bordure à l'impression si
-   on le choisit, en pointillé ici pour qu'on les voie. Limité à `.tableWrapper` : sinon ces règles encadraient
-   aussi la grille de champs et les totaux incorporés, que le PDF n'encadre pas (vu dans Chromium). */
+/* Les tableaux de mise en page (TipTap les enveloppe dans `.tableWrapper`). Leurs bordures sont celles de leur
+   STYLE (`table-styles.css`, jumeau du PDF) ; ici, seulement un repère pointillé en CONTOUR (`outline`, qui ne se
+   bat pas avec une bordure) pour qu'on voie les cellules d'un tableau sans bordure. Limité à `.tableWrapper` :
+   sinon ces règles encadraient aussi la grille de champs et les totaux incorporés (vu dans Chromium). */
 .pd-body :deep(.pd-content .tableWrapper table) {
   border-collapse: collapse;
   width: 100%;
@@ -385,14 +369,10 @@ defineExpose({ editor })
 .pd-body :deep(.pd-content .tableWrapper th) {
   padding: 1mm 1.5mm;
   vertical-align: top;
-  border: 0.2mm solid var(--desk-paper-muted);
+  outline: 1px dashed var(--desk-paper-rule);
+  outline-offset: -1px;
   position: relative;
   min-width: 1em;
-}
-
-.pd-body :deep(.pd-content .tableWrapper table[data-borders='none'] td),
-.pd-body :deep(.pd-content .tableWrapper table[data-borders='none'] th) {
-  border: 1px dashed var(--desk-paper-rule);
 }
 
 .pd-body :deep(.pd-content .tableWrapper td p),
@@ -552,21 +532,6 @@ defineExpose({ editor })
 .pd-body :deep(.pd-block table) {
   border-collapse: collapse;
   width: 100%;
-}
-
-.pd-body :deep(.pd-block table.lines.bordered th),
-.pd-body :deep(.pd-block table.lines.bordered td) {
-  border: 0.2mm solid var(--desk-paper-muted);
-}
-
-.pd-body :deep(.pd-block table.lines.ruled th),
-.pd-body :deep(.pd-block table.lines.ruled td) {
-  border-bottom: 0.2mm solid var(--desk-paper-rule);
-}
-
-.pd-body :deep(.pd-block table.lines.bordered th),
-.pd-body :deep(.pd-block table.lines.ruled th) {
-  background: var(--desk-paper-head);
 }
 
 .pd-body :deep(.pd-block table.lines th),

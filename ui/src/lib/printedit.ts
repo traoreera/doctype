@@ -8,12 +8,12 @@
  * de 1 à 100 dont la somme ne dépasse pas 100, un `subtotal` qui exige un `group_by` et ne nomme que des colonnes
  * présentes, aucun champ qui ne s'imprime pas (secret, fichier, structure).
  */
+import type { TableStyle } from './tablestyles'
 import type { DocTypeMeta, FieldMeta } from './types'
 
 export const MAX_BLOCKS = 100
 export const MAX_COLUMNS = 12
 export const MAX_FIELDS = 60
-export const MAX_TEXT = 2000
 
 /** Ce qu'un bloc ne peut pas imprimer : le serveur le refuse (`printing.UNPRINTABLE`). */
 export const UNPRINTABLE = ['Password', 'JSON', 'TextEditor', 'Image', 'Attach'] as const
@@ -48,7 +48,7 @@ export interface Block {
    * `tableColumns` et `fieldColumns` lèvent l'ambiguïté là où elle compte.
    */
   columns?: Column[] | number
-  style?: 'bordered' | 'ruled' | 'plain'
+  style?: TableStyle
   density?: 'compact' | 'normal'
   repeat_header?: boolean
   group_by?: string | null
