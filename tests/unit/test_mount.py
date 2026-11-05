@@ -65,7 +65,7 @@ def test_config_says_what_the_operator_configured(dist):
     body = client(dist, api_base="/api/doc/", login_url="/auth/login", developer=True).get("/config.json").json()
     # Les extensions et le temps réel : c'est le PLUGIN qui sait, le Desk lit son `config.json` (`lib/config.fromPlugin`).
     assert body == {"api_base": "/api/doc", "login_url": "/auth/login", "extensions": [], "developer": True, "realtime": False,
-                    "extensions_from": "/api/doc/desk/config.json"}
+                    "automations": False, "extensions_from": "/api/doc/desk/config.json"}
 
 
 def test_mounted_at_the_root_it_hides_no_later_route(dist):

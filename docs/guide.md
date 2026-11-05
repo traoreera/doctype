@@ -579,7 +579,15 @@ l'organisation, **au nom de qui a approuvé** : xflow ne garde que son identifia
 Un flux absent, en panne ou refusé est journalisé (`flow not started`, `flow refused`) ; **l'approbation reste faite**. Seul le NOM du
 flux se vérifie au chargement : un flux se déploie par organisation chez xflow.
 
-Le flux se déploie par l'API d'xflow (droit `xflow:workflows:write`) :
+**Le plus simple : Paramètres › Automatisations › « Nouvelle automatisation »** (droit `xflow:workflows:write`). Le formulaire
+demande un nom (celui que cite `flow:`), un déclencheur (à la demande, événement, planifié, webhook) et des étapes exécutées dans
+l'ordre : pour chacune, une action `plugin.action` proposée par le catalogue (toutes les actions des plugins chargés, `doc.save`,
+`doc.submit`, `xpulse.publish`…) et sa charge utile en JSON, où un clic insère une variable (`{{ trigger.name }}`…). L'onglet JSON
+montre la définition entière et sert pour le reste du langage d'xflow (conditions, boucles, parallèle, attente) : un flux que le
+formulaire ne sait pas montrer s'y ouvre directement, jamais tronqué. « Modifier » redéploie sous le même nom, « Supprimer » le retire
+(et arrête son cron). Le refus d'xflow s'affiche sous le formulaire.
+
+Le même flux se déploie aussi par l'API d'xflow :
 
 ```bash
 curl -X POST "$BASE/app/xflow/flows" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{
@@ -593,12 +601,13 @@ curl -X POST "$BASE/app/xflow/flows" -H "Authorization: Bearer $TOKEN" -H "Conte
 ```
 
 L'étape `doc.save` écrit avec les droits de l'approbateur : sans `achats:purchase_order:write`, elle échoue (et l'exécution le dit),
-elle ne contourne rien. Les autres déclencheurs d'xflow restent disponibles : un **événement** du bus (`doctype.<Type>.after_submit`,
-`after_transition`…) ou un **cron**, qui s'exécutent au nom de qui a DÉPLOYÉ le flux.
+elle ne contourne rien. Les autres déclencheurs d'xflow restent disponibles : un **événement** du bus
+(`{"type": "event", "event_name": "doctype.Sales Invoice.after_submit"}`) ou une **planification**
+(`{"type": "schedule", "cron": "0 9 * * 1-5"}`), qui s'exécutent au nom de qui a DÉPLOYÉ le flux.
 
 Dans le Desk : l'éditeur de circuit (« ⋯ › Circuit d'approbation ») marque d'un éclair une transition qui lance un flux, et
-**Paramètres › Automatisations** liste les flux de l'organisation, leurs dernières exécutions (état, origine, erreur) et lance un flux
-« à la demande ». Réglage : `doctype.flows: false` dans le manifeste du moteur coupe les lancements ; `{plugin, action}` les envoie
+**Paramètres › Automatisations** crée, modifie et supprime les flux de l'organisation, montre leurs dernières exécutions (état, origine,
+erreur) et lance un flux « à la demande ». Réglage : `doctype.flows: false` dans le manifeste du moteur coupe les lancements ; `{plugin, action}` les envoie
 ailleurs.
 
 **Ce qu'il faut côté xauth** : l'action IPC `xauth.user.permissions` (les grants d'un membre), avec `xflow` dans ses

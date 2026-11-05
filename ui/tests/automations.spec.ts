@@ -109,3 +109,140 @@ describe('Paramètres › Automatisations', () => {
     expect(w.find('[data-testid="automations-failure"]').text()).toContain('Organisation différente')
   })
 })
+
+import { definitionOf, draftOf, emptyDraft, eventSuggestions, readActions } from '@/lib/automations'
+
+describe('l’éditeur : un brouillon de formulaire ↔ la définition déployée', () => {
+  it('enchaîne les étapes dans l’ordre (sans on_success, xflow s’arrêterait après la première)', () => {
+    const draft = emptyDraft()
+    draft.name = 'suivi'
+    draft.steps = [
+      { id: 'a', target: 'xcore-doctype.doc.save', payload: '{"doctype": "Suivi", "data": {"demande": "{{ trigger.name }}"}}', extra: {} },
+      { id: 'b', target: 'xpulse.xpulse.publish', payload: '{"user_id": "{{ trigger.user }}", "text": "ok"}', extra: { timeout_seconds: 5 } },
+    ]
+    const { definition } = definitionOf(draft)
+    expect(definition).toEqual({
+      name: 'suivi', trigger: { type: 'manual' },
+      steps: [
+        { id: 'a', type: 'action', plugin: 'xcore-doctype', action: 'doc.save', payload: { doctype: 'Suivi', data: { demande: '{{ trigger.name }}' } }, on_success: 'b' },
+        { timeout_seconds: 5, id: 'b', type: 'action', plugin: 'xpulse', action: 'xpulse.publish', payload: { user_id: '{{ trigger.user }}', text: 'ok' }, on_success: null },
+      ],
+    })
+    // …et la relecture rend le même brouillon (ce que le formulaire ne montre pas voyage dans `extra`), charge utile remise en forme.
+    const back = draftOf(definition).draft!
+    expect(back.steps.map((x) => [x.id, x.target, JSON.parse(x.payload), x.extra])).toEqual(draft.steps.map((x) => [x.id, x.target, JSON.parse(x.payload), x.extra]))
+    expect(definitionOf(back).definition).toEqual(definition)
+  })
+
+  it('dit chaque faute avant le déploiement', () => {
+    const draft = { ...emptyDraft(), name: 'a b', trigger: 'schedule' as const, cron: '0 9 *' }
+    draft.steps = [
+      { id: 'x', target: 'sans-point', payload: '[1]', extra: {} },
+      { id: 'x', target: 'p.a', payload: '{', extra: {} },
+    ]
+    const { problems } = definitionOf(draft)
+    expect(problems).toHaveLength(6)
+    expect(problems.join('\n')).toMatch(/Nom/)
+    expect(problems.join('\n')).toMatch(/cron/)
+    expect(problems.join('\n')).toMatch(/déjà pris/)
+    expect(definitionOf({ ...emptyDraft(), name: 'e', trigger: 'event' }).problems.join()).toMatch(/événement/)
+  })
+
+  it('un événement et un cron vont dans le déclencheur', () => {
+    const ev = definitionOf({ ...emptyDraft(), name: 'e', trigger: 'event', event: 'doctype.Demande.after_submit' }).definition!
+    expect(ev.trigger).toEqual({ type: 'event', event_name: 'doctype.Demande.after_submit' })
+    const cr = definitionOf({ ...emptyDraft(), name: 'c', trigger: 'schedule', cron: '0 9 * * 1-5' }).definition!
+    expect(cr.trigger).toEqual({ type: 'schedule', cron: '0 9 * * 1-5' })
+  })
+
+  it('ce que le formulaire ne sait pas montrer s’ouvre en JSON, avec la raison', () => {
+    const step = { id: 'a', type: 'action', plugin: 'p', action: 'x', payload: {} }
+    expect(draftOf({ name: 'f', steps: [{ id: 'c', type: 'condition' }] }).reason).toMatch(/condition/)
+    expect(draftOf({ name: 'f', steps: [{ ...step, on_success: 'zz' }] }).reason).toMatch(/ordre/)
+    expect(draftOf({ name: 'f', steps: [{ ...step, on_failure: 'b' }] }).reason).toMatch(/échec/)
+    expect(draftOf({ name: 'f', trigger: { type: 'schedule', interval_seconds: 60 }, steps: [step] }).reason).toMatch(/périodique/)
+    expect(draftOf({ name: 'f', steps: [] }).reason).toMatch(/aucune/)
+  })
+
+  it('propose les événements que le moteur émet pour chaque type, puis le catalogue d’xflow', () => {
+    const list = eventSuggestions(['Demande'], ['xauth.login', 'doctype.Demande.after_save'])
+    expect(list.slice(0, 2)).toEqual(['doctype.Demande.after_save', 'doctype.Demande.after_submit'])
+    expect(list.filter((e) => e === 'doctype.Demande.after_save')).toHaveLength(1)
+    expect(list.at(-1)).toBe('xauth.login')
+    expect(readActions({ actions: [{ qualified_name: 'z.b' }, { qualified_name: 'a.x', description: 'd' }, { nom: 1 }] })).toEqual([
+      { name: 'a.x', description: 'd' }, { name: 'z.b', description: '' },
+    ])
+  })
+})
+
+describe('Paramètres › Automatisations : créer et modifier', () => {
+  function client(stored: Record<string, unknown> | null = null) {
+    return {
+      get: vi.fn(async (path: string) => {
+        if (path === '/flows') return FLOWS
+        if (path === '/executions') return RUNS
+        if (path === '/registry') return { status: 'ok', actions: [{ qualified_name: 'xcore-doctype.doc.save', description: 'Créer ou modifier' }] }
+        if (path === '/events') return { status: 'ok', events: [] }
+        return { status: 'ok', workflow: stored }
+      }),
+      post: vi.fn(async (_path: string, _body?: unknown) => ({ status: 'ok', workflow_name: 'nouveau' })),
+      delete: vi.fn(async () => ({ status: 'ok' })),
+    }
+  }
+  const field = (testid: string) => document.querySelector(`[data-testid="${testid}"]`) as HTMLInputElement | HTMLTextAreaElement
+
+  async function type(testid: string, value: string) {
+    const el = field(testid)
+    el.value = value
+    el.dispatchEvent(new Event('input'))
+    await flushPromises()
+  }
+
+  it('crée un flux depuis le formulaire et le déploie', async () => {
+    const c = client()
+    const w = await page(c)
+    await w.find('[data-testid="automations-create"]').trigger('click')
+    await flushPromises()
+    await type('flow-name', 'nouveau')
+    await type('flow-step-payload-0', '{"doctype": "Suivi", "data": {"demande": "{{ trigger.name }}"}}')
+    ;(document.querySelector('[data-testid="flow-deploy"]') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(c.post).toHaveBeenCalledWith('/flows', {
+      name: 'nouveau', trigger: { type: 'manual' },
+      steps: [{ id: 'etape_1', type: 'action', plugin: 'xcore-doctype', action: 'doc.save', payload: { doctype: 'Suivi', data: { demande: '{{ trigger.name }}' } }, on_success: null }],
+    })
+    expect(c.get).toHaveBeenCalledWith('/registry')
+  })
+
+  it('un refus d’xflow reste dans l’éditeur, sous le formulaire', async () => {
+    const c = client()
+    c.post.mockResolvedValueOnce({ status: 'error', code: 'register_error', msg: 'Type de step inconnu' } as never)
+    const w = await page(c)
+    await w.find('[data-testid="automations-create"]').trigger('click')
+    await flushPromises()
+    await type('flow-name', 'x')
+    ;(document.querySelector('[data-testid="flow-deploy"]') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(field('flow-server-error')?.textContent).toContain('Type de step inconnu')
+  })
+
+  it('modifie un flux : son nom ne change plus, et un flux que le formulaire ne sait pas montrer s’ouvre en JSON', async () => {
+    const stored = { name: 'suivi', trigger: { type: 'manual' }, steps: [{ id: 'a', type: 'action', plugin: 'p', action: 'x', payload: {}, on_success: null }], deployed_by: 'alice' }
+    const w = await page(client(stored))
+    await w.find('[data-testid="flow-edit-suivi"]').trigger('click')
+    await flushPromises()
+    expect((field('flow-name') as HTMLInputElement).disabled).toBe(true)
+    expect((field('flow-name') as HTMLInputElement).value).toBe('suivi')
+    w.unmount()
+    mounted.splice(0)
+    document.body.innerHTML = ''
+
+    const branchy = { name: 'suivi', steps: [{ id: 'c', type: 'condition', condition: { left: '1' } }] }
+    const w2 = await page(client(branchy))
+    await w2.find('[data-testid="flow-edit-suivi"]').trigger('click')
+    await flushPromises()
+    expect(document.querySelector('[data-testid="flow-json-only"]')?.textContent).toMatch(/condition/)
+    expect((field('flow-json') as HTMLTextAreaElement).value).toContain('"type": "condition"')
+    expect((field('flow-json') as HTMLTextAreaElement).value).not.toContain('deployed_by')
+  })
+})

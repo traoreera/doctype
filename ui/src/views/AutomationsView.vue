@@ -1,25 +1,31 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import { useConfirm } from 'primevue/useconfirm'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import FlowEditor from '@/components/automations/FlowEditor.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
-import { readFlows, readRuns, statusTone, type FlowSummary, type RunSummary } from '@/lib/automations'
+import { eventSuggestions, readActions, readFlows, readRuns, statusTone, type FlowSummary, type RunSummary } from '@/lib/automations'
 import { formatTimestamp } from '@/lib/format'
 import { useServices } from '@/lib/services'
+import { useMeta } from '@/stores/meta'
 
 /**
  * Paramètres › Automatisations : les flux xflow de l'organisation et leurs dernières exécutions (`lib/automations.ts`).
- * Ce que l'écran ne fait PAS : écrire un flux (il se déploie par l'API d'xflow, ou le livre un plugin). Il dit ce qui existe, ce qui a
- * tourné, comment ça s'est terminé, et lance un flux « à la demande ». xflow juge chaque appel : un 403 se lit « réservé ».
+ * Il dit ce qui existe, ce qui a tourné et comment ça s'est terminé ; il CRÉE, modifie et supprime un flux (`FlowEditor`, déployé par
+ * `POST /flows` : xflow le juge et retient qui l'a déployé), et lance un flux « à la demande ». xflow juge chaque appel : un 403 se
+ * lit « réservé ».
  * `embedded` : rendu dans les Paramètres, qui portent déjà le titre.
  */
 defineProps<{ embedded?: boolean }>()
 
 const { automations } = useServices()
 const notify = useNotify()
+const confirm = useConfirm()
+const meta = useMeta()
 
 const flows = ref<FlowSummary[]>([])
 const runs = ref<RunSummary[]>([])
@@ -73,6 +79,90 @@ async function start(flow: FlowSummary): Promise<void> {
   }
 }
 
+// ── L'éditeur ──────────────────────────────────────────────────────────────────
+const editorOpen = ref(false)
+const editing = ref<Record<string, unknown> | null>(null)
+const saving = ref(false)
+const serverError = ref<string | null>(null)
+const secret = ref<{ name: string; value: string } | null>(null)
+const actions = ref<{ name: string; description: string }[]>([])
+const events = ref<string[]>([])
+
+/** Ce que l'éditeur propose : les actions du catalogue d'xflow et les événements des types de document. Une panne n'empêche pas d'écrire. */
+async function loadChoices(): Promise<void> {
+  if (!automations) return
+  const [registry, catalog, summaries] = await Promise.all([
+    automations.get('/registry').catch(() => null),
+    automations.get('/events').catch(() => null),
+    meta.loadSummaries().catch(() => []),
+  ])
+  actions.value = readActions(registry)
+  const listed = (catalog as { events?: { name?: unknown }[] } | null)?.events ?? []
+  events.value = eventSuggestions(summaries.map((s) => s.name), listed.map((e) => String(e.name ?? '')).filter(Boolean))
+}
+
+async function openEditor(flow: FlowSummary | null): Promise<void> {
+  serverError.value = null
+  editing.value = null
+  if (flow && automations) {
+    try {
+      const body = (await automations.get(`/flows/${encodeURIComponent(flow.name)}`)) as { workflow?: Record<string, unknown> }
+      const problem = refused(body)
+      if (problem) throw new Refused(problem)
+      editing.value = body.workflow ?? null
+    } catch (e) {
+      return void (e instanceof Refused ? notify.warn(e.message) : notify.error(e))
+    }
+  }
+  editorOpen.value = true
+  if (!actions.value.length) void loadChoices()
+}
+
+async function deploy(definition: Record<string, unknown>): Promise<void> {
+  if (!automations) return
+  saving.value = true
+  serverError.value = null
+  try {
+    const answer = (await automations.post('/flows', definition)) as { webhook_secret?: unknown }
+    const problem = refused(answer)
+    if (problem) throw new Refused(problem)
+    const name = String(definition.name ?? '')
+    if (typeof answer.webhook_secret === 'string') secret.value = { name, value: answer.webhook_secret }
+    editorOpen.value = false
+    notify.success(t.automations.saved(name))
+    await load()
+  } catch (e) {
+    serverError.value = e instanceof Refused ? e.message : describeError(e)
+  } finally {
+    saving.value = false
+  }
+}
+
+function remove(flow: FlowSummary): void {
+  confirm.require({
+    header: t.automations.remove,
+    message: t.automations.removeConfirm(flow.name),
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: t.automations.remove,
+    rejectLabel: t.automations.cancel,
+    acceptProps: { severity: 'danger' },
+    rejectProps: { severity: 'secondary', text: true },
+    accept: async () => {
+      if (!automations) return
+      try {
+        const answer = await automations.delete(`/flows/${encodeURIComponent(flow.name)}`)
+        const problem = refused(answer)
+        if (problem) throw new Refused(problem)
+        notify.success(t.automations.removed(flow.name))
+        await load()
+      } catch (e) {
+        if (e instanceof Refused) notify.warn(e.message)
+        else notify.error(e)
+      }
+    },
+  })
+}
+
 const label = (map: Record<string, string>, key: string | null) => (key ? map[key] ?? key : '—')
 const empty = computed(() => !loading.value && !failure.value && !reserved.value)
 </script>
@@ -89,8 +179,14 @@ const empty = computed(() => !loading.value && !failure.value && !reserved.value
       <section class="desk-card auto-section">
         <div class="auto-head">
           <h2>{{ t.automations.flows }}</h2>
-          <Button :label="t.automations.refresh" icon="pi pi-refresh" text size="small" data-testid="automations-refresh" @click="load" />
+          <div class="auto-head-actions">
+            <Button :label="t.automations.refresh" icon="pi pi-refresh" text size="small" data-testid="automations-refresh" @click="load" />
+            <Button :label="t.automations.create" icon="pi pi-plus" size="small" data-testid="automations-create" @click="openEditor(null)" />
+          </div>
         </div>
+        <Message v-if="secret" severity="warn" :closable="true" data-testid="automations-secret" @close="secret = null">
+          {{ t.automations.secret }} — <code>{{ secret.name }}</code> : <code class="auto-secret">{{ secret.value }}</code>
+        </Message>
         <p v-if="!flows.length" class="desk-muted" data-testid="automations-no-flows">{{ t.automations.noFlows }}</p>
         <table v-else class="auto-table" data-testid="automations-flows">
           <thead>
@@ -102,6 +198,8 @@ const empty = computed(() => !loading.value && !failure.value && !reserved.value
               <td :data-label="t.automations.trigger">{{ label(t.automations.triggers, f.trigger) }}</td>
               <td :data-label="t.automations.description">{{ f.description || '—' }}</td>
               <td class="auto-actions">
+                <Button icon="pi pi-pencil" text rounded size="small" :aria-label="`${t.automations.edit} ${f.name}`" :data-testid="`flow-edit-${f.name}`" @click="openEditor(f)" />
+                <Button icon="pi pi-trash" text rounded size="small" severity="danger" :aria-label="`${t.automations.remove} ${f.name}`" :data-testid="`flow-remove-${f.name}`" @click="remove(f)" />
                 <Button
                   v-if="f.trigger === 'manual'"
                   :label="t.automations.run"
@@ -146,6 +244,16 @@ const empty = computed(() => !loading.value && !failure.value && !reserved.value
         </table>
       </section>
     </template>
+
+    <FlowEditor
+      v-model:visible="editorOpen"
+      :definition="editing"
+      :actions="actions"
+      :events="events"
+      :saving="saving"
+      :server-error="serverError"
+      @deploy="deploy"
+    />
   </div>
 </template>
 
@@ -195,6 +303,15 @@ const empty = computed(() => !loading.value && !failure.value && !reserved.value
 .auto-actions {
   text-align: right;
   white-space: nowrap;
+}
+
+.auto-head-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.auto-secret {
+  overflow-wrap: anywhere;
 }
 
 .auto-error {

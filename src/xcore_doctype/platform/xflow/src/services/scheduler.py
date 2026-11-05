@@ -88,9 +88,9 @@ class WorkflowScheduler:
         except Exception:
             return False
 
-    async def unregister_by_workflow(self, workflow_name: str) -> bool:
-        job_id = f"wf_sched_{workflow_name}"
-        return await self.unregister(job_id)
+    async def unregister_by_workflow(self, tenant_id: str, workflow_name: str) -> bool:
+        # Le MÊME identifiant que `register` : sans l'organisation, supprimer un flux planifié laissait son job tourner.
+        return await self.unregister(f"wf_sched_{tenant_id}_{workflow_name}")
 
     def list_scheduled(self) -> List[Dict[str, str]]:
         return [{"job_id": jid, "workflow_name": wn} for jid, wn in self._jobs.items()]
