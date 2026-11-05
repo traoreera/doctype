@@ -587,6 +587,24 @@ montre la définition entière et sert pour le reste du langage d'xflow (conditi
 formulaire ne sait pas montrer s'y ouvre directement, jamais tronqué. « Modifier » redéploie sous le même nom, « Supprimer » le retire
 (et arrête son cron). Le refus d'xflow s'affiche sous le formulaire.
 
+Pas à pas (captures du scénario Chromium `ui/e2e/automations.e2e.mjs`, face au vrai xflow) :
+
+1. **Paramètres › Automatisations**, « Nouvelle automatisation ».
+   ![La page, vide](captures/automations/auto-01-vide.png)
+2. Le formulaire : un nom, un déclencheur, une étape. L'action se choisit dans la liste (ici `xcore-doctype.doc.save`), la charge
+   utile dit quoi écrire ; les puces insèrent une variable.
+   ![Le formulaire](captures/automations/auto-02-formulaire.png)
+3. L'onglet JSON montre la même définition (et sert pour les conditions, boucles, etc.).
+   ![Le JSON](captures/automations/auto-03-json.png)
+4. « Déployer » : le flux est listé, avec Modifier, Supprimer et — pour un flux à la demande — « Lancer ».
+   ![Déployé](captures/automations/auto-04-deploye.png)
+5. « Lancer » : l'exécution apparaît, « Réussi » ou « Échoué » avec son erreur.
+   ![L'exécution](captures/automations/auto-05-execution.png)
+6. Le document que l'étape a écrit existe, au nom de qui a lancé le flux.
+   ![Le client créé](captures/automations/auto-06-client-cree.png)
+7. « Modifier » rouvre le formulaire (le nom ne change plus), « Supprimer » retire le flux et son historique.
+   ![Modifié](captures/automations/auto-07-modifie.png)
+
 Le même flux se déploie aussi par l'API d'xflow :
 
 ```bash

@@ -136,5 +136,13 @@ async def test_the_desk_s_editor_cycle_catalogue_deploy_edit_delete(tmp_path):
         assert [(f["name"], f["description"]) for f in listed] == [("suivi", "v2")]  # un seul flux, modifié
         stored = (await h.client.get(f"{url}/flows/suivi", headers=h.headers(writer, "acme"))).json()["workflow"]
         assert stored["deployed_by"] == "alice" and stored["steps"][0]["action"] == "doc.save"
-        assert (await h.client.delete(f"{url}/flows/suivi", headers=h.headers(writer, "acme"))).json()["status"] in ("ok", "success")
+        ran = await h.client.post(f"{url}/run/suivi", json={}, headers=h.headers(h.token(sub="alice", permissions=["xflow:runs:write"]), "acme"))
+        assert ran.status_code == 200, ran.text
+        for _ in range(100):  # un flux qui a TOURNÉ : sa suppression répondait 500 (ses exécutions pointent vers ses versions)
+            runs = (await h.client.get(f"{url}/executions", headers=h.headers(h.token(sub="alice", permissions=["xflow:runs:read"]), "acme"))).json()["runs"]
+            if runs and runs[0]["status"] not in ("pending", "running"):
+                break
+            await asyncio.sleep(0.05)
+        deleted = await h.client.delete(f"{url}/flows/suivi", headers=h.headers(writer, "acme"))
+        assert deleted.status_code == 200 and deleted.json()["status"] in ("ok", "success"), deleted.text
         assert (await h.client.get(f"{url}/flows", headers=h.headers(writer, "acme"))).json()["workflows"] == []

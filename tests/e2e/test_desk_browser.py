@@ -72,7 +72,10 @@ def host(tmp_path, request):
     extensions = getattr(request, "param", {}).get("extensions")
     developer = getattr(request, "param", {}).get("developer", False)
     platform = getattr(request, "param", {}).get("platform", False)
-    mounted = getattr(request, "param", {}).get("mounted")  # un chemin (`/erp`) : le Desk AUSSI monté hors du plugin (`mount_desk`)
+    mounted = getattr(request, "param", {}).get("mounted")
+    # Les droits que l'auth de test rend à `xauth.user.permissions` (identifiant -> grants) : ce qu'xflow redemande pour agir au nom
+    # d'un utilisateur. Sans eux, une étape `doc.*` d'un flux échoue (« utilisateur inconnu »), comme avec un compte parti.
+    auth_grants = getattr(request, "param", {}).get("auth_grants")  # un chemin (`/erp`) : le Desk AUSSI monté hors du plugin (`mount_desk`)
     config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["services"]["databases"]["default"]["url"] = f"sqlite+aiosqlite:///{tmp_path / 'e2e.db'}"
     config["tenancy"] = {"enabled": True, "isolate_db": False}
@@ -104,7 +107,12 @@ def host(tmp_path, request):
         data = yaml.safe_load(manifest.read_text())
         data.setdefault("doctype", {}).setdefault("desk", {})["extensions"] = extensions
         manifest.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
-    install_dev_auth(tmp_path / "app" / "auth", link=True)  # le plugin de TEST, nommé `auth` : les plugins du dépôt le `requires`
+    install_dev_auth(tmp_path / "app" / "auth", link=auth_grants is None)  # le plugin de TEST, nommé `auth` : les plugins du dépôt le `requires`
+    if auth_grants is not None:  # une COPIE, dont le manifeste reçoit les droits et nomme qui peut l'appeler (le moteur, xflow)
+        auth_manifest = tmp_path / "app" / "auth" / "plugin.yaml"
+        data = yaml.safe_load(auth_manifest.read_text())
+        data.update(grants=auth_grants, allowed_callers=["xcore-doctype", "xflow"], permissions=[{"resource": "xauth.*", "actions": ["*"], "effect": "allow"}])
+        auth_manifest.write_text(yaml.safe_dump(data, allow_unicode=True, sort_keys=False))
     (tmp_path / "app" / "geo").symlink_to(FIXTURES / "geo")  # le référentiel partagé (pays, devises) que `stock` requires
     (tmp_path / "app" / "stock").symlink_to(FIXTURES / "stock")  # le stock : articles, entrepôts, mouvements soumettables
     (tmp_path / "app" / "sales").symlink_to(FIXTURES / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
@@ -261,3 +269,16 @@ def test_the_platform_live_documents_and_my_modules_in_the_browser(host):
     `xauth.tenant_access`, l'administrateur de la plateforme passe (et peut mettre des modules en rayon)."""
     run = _scenario(host, "e2e/platform.e2e.mjs", permissions=["admin:*"])
     assert run.returncode == 0, f"scénario de la plateforme en échec :\n{run.stdout}\n{run.stderr}"
+
+
+XFLOW_GRANTS = ["xflow:workflows:read", "xflow:workflows:write", "xflow:runs:read", "xflow:runs:write"]
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"platform": True, "auth_grants": {"alice": GRANTS + XFLOW_GRANTS}}], indirect=True)
+def test_an_automation_is_created_run_and_followed_from_the_desk(host):
+    """Paramètres › Automatisations dans Chromium, face au vrai xflow : créer un flux par le formulaire (action proposée par le
+    catalogue, variable insérée), le voir en JSON, le déployer, le lancer, voir son exécution réussie ET le document que son étape a
+    écrit au nom d'alice ; le modifier, puis le supprimer."""
+    run = _scenario(host, "e2e/automations.e2e.mjs", permissions=XFLOW_GRANTS)
+    assert run.returncode == 0, f"scénario des automatisations en échec :\n{run.stdout}\n{run.stderr}"

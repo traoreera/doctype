@@ -58,6 +58,7 @@ async function load(): Promise<void> {
     failure.value = reserved.value ? null : e instanceof Refused ? e.message : describeError(e) || t.automations.loadFailed
   } finally {
     loading.value = false
+    loaded.value = true
   }
 }
 onMounted(load)
@@ -164,7 +165,9 @@ function remove(flow: FlowSummary): void {
 }
 
 const label = (map: Record<string, string>, key: string | null) => (key ? map[key] ?? key : '—')
-const empty = computed(() => !loading.value && !failure.value && !reserved.value)
+// Le contenu reste affiché pendant qu'on RELIT (actualiser, après un lancement ou un déploiement) : seule la première lecture le cache.
+const loaded = ref(false)
+const empty = computed(() => loaded.value && !failure.value && !reserved.value)
 </script>
 
 <template>
