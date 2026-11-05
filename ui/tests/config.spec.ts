@@ -24,7 +24,7 @@ describe('configuration', () => {
     const t = transport({ status: 200, json: { api_base: '/app/xcore-doctype/', login_url: '/app/auth/login' } })
     const cfg = await loadConfig(t, at('/app/xcore-doctype/desk/'))
     expect(t.urls).toEqual(['http://host:8000/app/xcore-doctype/desk/config.json'])
-    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login', extensions: [], developer: false, realtime: false })
+    expect(cfg).toEqual({ baseUrl: '/app/xcore-doctype', loginUrl: '/app/auth/login', extensions: [], developer: false, realtime: false, automations: false })
   })
 
   it('le mode développeur n’est ouvert que si le serveur dit exactement `true`', async () => {
@@ -38,6 +38,8 @@ describe('configuration', () => {
 
   it('le temps réel n’existe que si le serveur l’annonce exactement `true` (sinon aucun flux n’est demandé)', async () => {
     expect((await loadConfig(transport({ status: 200, json: { api_base: '/p', realtime: true } }), at('/p/desk/'))).realtime).toBe(true)
+    expect((await loadConfig(transport({ status: 200, json: { api_base: '/p', automations: true } }), at('/p/desk/'))).automations).toBe(true)
+    expect((await loadConfig(transport({ status: 200, json: { api_base: '/p', automations: 'true' } }), at('/p/desk/'))).automations).toBe(false)
     for (const realtime of ['true', 1, null, undefined]) {
       expect((await loadConfig(transport({ status: 200, json: { api_base: '/p', realtime } }), at('/p/desk/'))).realtime).toBe(false)
     }
@@ -52,6 +54,17 @@ describe('configuration', () => {
     }
     expect(services(false).realtime).toBeNull()
     expect(services(true).realtime).not.toBeNull()
+  })
+
+  it('le Desk ne crée le client d’xflow (Paramètres › Automatisations) que sur annonce', async () => {
+    const { createDesk } = await import('@/desk')
+    const { SERVICES } = await import('@/lib/services')
+    const services = (automations: boolean) => {
+      const desk = createDesk({ request: async () => ({ status: 200, json: null }) }, { baseUrl: '/app/xcore-doctype', loginUrl: null, automations })
+      return desk.app._context.provides[SERVICES as symbol] as { automations: unknown }
+    }
+    expect(services(false).automations).toBeNull()
+    expect(services(true).automations).not.toBeNull()
   })
 
   it('sans login_url : jeton collé', async () => {

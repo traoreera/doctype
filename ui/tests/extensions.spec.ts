@@ -10,7 +10,7 @@ import BlockGrid from '@/components/BlockGrid.vue'
 import ExtensionSlot from '@/extensions/ExtensionSlot.vue'
 import { ExtensionHost, EXTENSIONS, EXTENSION_CONTEXT } from '@/extensions/host'
 import { loadExtensions } from '@/extensions/loader'
-import type { DeskHandle } from '@/extensions/types'
+import type { DeskHandle, RealtimeMessage } from '@/extensions/types'
 import { buildCommands } from '@/lib/commands'
 import { readExtensions } from '@/lib/config'
 import { PluginClient, pluginBase, type ClientContext } from '@/lib/api'
@@ -404,5 +404,56 @@ describe('diagnostic d’un module introuvable (loader.diagnoseImport)', () => {
     })
     expect(host.failures[0]!.reason).toMatch(/se nomme "other"/)
     expect(probed).toBe(false)
+  })
+})
+
+describe('desk.realtime : les messages temps réel des plugins', () => {
+  function withRealtime() {
+    const listeners = new Set<(m: RealtimeMessage) => void>()
+    const realtime = { onMessage: (cb: (m: RealtimeMessage) => void) => (listeners.add(cb), () => listeners.delete(cb)) }
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: Dummy }] })
+    const notify = { success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+    const host = new ExtensionHost({ api: {} as never, router, notify, plugin: () => ({}) as never, realtime: realtime as never })
+    const emit = (m: Partial<RealtimeMessage>) => listeners.forEach((cb) => cb({ scope: 'personal', type: 'message', text: null, data: {}, ...m }))
+    return { host, emit, listeners }
+  }
+
+  it('ne passe que le type demandé, retire tout avec l’extension, et une erreur de l’abonné reste chez lui', async () => {
+    const { host, emit, listeners } = withRealtime()
+    const got: string[] = []
+    const all: string[] = []
+    await loadExtensions(host, [{ name: 'whatsapp', url: '/w.js' }], {
+      importer: ok('whatsapp', (desk) => {
+        expect(desk.realtime.available).toBe(true)
+        desk.realtime.on('whatsapp.received', (m) => got.push(m.text ?? ''))
+        desk.realtime.on('*', (m) => all.push(m.type))
+        desk.realtime.on('whatsapp.boom', () => {
+          throw new Error('cassé')
+        })
+      }),
+    })
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    emit({ type: 'whatsapp.received', text: 'Bonjour' })
+    emit({ type: 'whatsapp.boom' })
+    emit({ type: 'autre' })
+    expect(got).toEqual(['Bonjour'])
+    expect(all).toEqual(['whatsapp.received', 'whatsapp.boom', 'autre'])
+    host.drop('whatsapp')
+    expect(listeners.size).toBe(0)
+  })
+
+  it('un composant se désabonne lui-même, un type invalide fait échouer l’extension, et sans xpulse rien n’arrive ni n’échoue', async () => {
+    const { host, listeners } = withRealtime()
+    const off = host.context('whatsapp').realtime.on('whatsapp.received', () => {})
+    expect(listeners.size).toBe(1)
+    off()
+    expect(listeners.size).toBe(0)
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    await loadExtensions(host, [{ name: 'bad', url: '/b.js' }], { importer: ok('bad', (desk) => void desk.realtime.on('Majuscules', () => {})) })
+    expect(host.failures.map((f) => f.name)).toEqual(['bad'])
+    const { host: bare } = makeHost()
+    const handle = bare.context('x').realtime
+    expect(handle.available).toBe(false)
+    expect(() => handle.on('x.y', () => {})()).not.toThrow()
   })
 })

@@ -19,6 +19,8 @@ export type {
   ListContext,
   Notifier,
   PluginClient,
+  RealtimeHandle,
+  RealtimeMessage,
   RouteContribution,
   SidebarLink,
   Tools,

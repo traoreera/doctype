@@ -12,6 +12,8 @@ export interface DeskConfig {
   /** Le flux temps réel d'xpulse existe sur cet hôte (`config.json` `realtime`) : sans cette annonce, le Desk ne le demande pas
    * (un hôte sans xpulse répondrait 404 à chaque page, une erreur de console permanente). */
   realtime?: boolean
+  /** xflow est chargé (`config.json` `automations`) : Paramètres › Automatisations existe. */
+  automations?: boolean
 }
 
 declare global {
@@ -67,6 +69,7 @@ interface ConfigBody {
   extensions?: unknown
   developer?: unknown
   realtime?: unknown
+  automations?: unknown
   /** Un Desk MONTÉ hors du plugin (`mount_desk`) : le `config.json` du plugin, seul à savoir ses extensions et si xpulse est là. */
   extensions_from?: unknown
 }
@@ -76,7 +79,7 @@ interface ConfigBody {
  * `config.json` du PLUGIN, avec l'annonce du temps réel. Seulement si cette adresse est sous l'API annoncée (on ne suit pas un renvoi
  * vers n'importe où) ; injoignable : aucune extension, comme avant, mais le Desk démarre.
  */
-async function fromPlugin(transport: Transport, raw: string, baseUrl: string, href: string): Promise<Pick<DeskConfig, 'extensions' | 'realtime'>> {
+async function fromPlugin(transport: Transport, raw: string, baseUrl: string, href: string): Promise<Pick<DeskConfig, 'extensions' | 'realtime' | 'automations'>> {
   let url: URL
   try {
     url = new URL(raw, href)
@@ -89,7 +92,7 @@ async function fromPlugin(transport: Transport, raw: string, baseUrl: string, hr
     const res = await transport.request({ method: 'GET', url: url.toString(), headers: { Accept: 'application/json' } })
     const body = res.json as ConfigBody | null
     if (res.status !== 200 || !body) return {}
-    return { extensions: readExtensions(body.extensions, url.toString()), realtime: body.realtime === true }
+    return { extensions: readExtensions(body.extensions, url.toString()), realtime: body.realtime === true, automations: body.automations === true }
   } catch {
     return {}
   }
@@ -118,6 +121,7 @@ export async function loadConfig(
         extensions: readExtensions(body.extensions, where.href),
         developer: body.developer === true,
         realtime: body.realtime === true,
+        automations: body.automations === true,
       }
       if (typeof body.extensions_from === 'string') Object.assign(config, await fromPlugin(transport, body.extensions_from, config.baseUrl, where.href))
       return config

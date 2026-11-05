@@ -135,6 +135,12 @@ ces routes, `..` même encodé ou suivi de `?`, est refusé), `notify`, `router`
 construite, même origine). Les composants réutilisables (`CellValue`, `FieldControl`, `LinkField`, une sélection de PrimeVue), `t` (la
 langue) et `useDesk()` (dans un composant : les mêmes outils) s'importent du SDK. Tout le reste du Desk est privé.
 
+`desk.realtime` (5 nov., `docs/guide.md` §3.7) : `on(type, cb)` reçoit les messages qu'un plugin publie par `xpulse.publish` /
+`xpulse.broadcast` avec son `event_type` (`{scope, type, text, data}`, le texte déséchappé), jamais les signaux du moteur
+(`doc.changed`, `bell.changed`) ; ce que `setup` écoute part avec l'extension, `useDesk().realtime.on` renvoie de quoi se désabonner ;
+`available` est faux sans xpulse et rien n'échoue. Un abonné qui lève est contenu. Le navigateur n'appelle jamais une action IPC (elle
+exige la clé serveur) : l'extension appelle une route de SON plugin par `plugin`, et la route appelle l'IPC.
+
 - **Une seule copie de Vue.** L'extension importe `vue` et `@xcore-doctype/desk` comme des noms nus ; l'`index.html` du Desk porte une
   **import map** qui les fait pointer vers `shared/vue.js` et `shared/sdk.js`, deux points d'entrée du build aux noms FIXES (le reste du
   build garde ses noms par empreinte). L'auteur construit son extension avec ces deux modules en `external`. La CSP autorise l'import

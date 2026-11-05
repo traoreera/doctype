@@ -109,7 +109,8 @@ def _write_plugin(
     manifest_path.write_text(yaml.safe_dump(manifest, allow_unicode=True))
 
 
-def _write_dev_auth(dest: Path, members: dict[str, list[dict[str, str]]] | None = None, callers: list[str] | None = None) -> None:
+def _write_dev_auth(dest: Path, members: dict[str, list[dict[str, str]]] | None = None, callers: list[str] | None = None,
+                    grants: dict[str, list[str]] | None = None) -> None:
     install_dev_auth(dest)
     manifest = yaml.safe_load((dest / "plugin.yaml").read_text())
     manifest["env"] = {"DEV_AUTH_SECRET": DEV_SECRET}  # le secret de test, en clair : un hôte de test jetable
@@ -117,6 +118,8 @@ def _write_dev_auth(dest: Path, members: dict[str, list[dict[str, str]]] | None 
     manifest["permissions"] = [{"resource": "xauth.*", "actions": ["*"], "effect": "allow"}]
     if members is not None:
         manifest["members"] = members
+    if grants is not None:
+        manifest["grants"] = grants
     (dest / "plugin.yaml").write_text(yaml.safe_dump(manifest))
 
 
@@ -319,11 +322,12 @@ async def boot_host(
     xauth: bool = False,
     auth_members: dict[str, list[dict[str, str]]] | None = None,
     auth_callers: list[str] | None = None,
+    auth_grants: dict[str, list[str]] | None = None,
 ):
     """`operator_doctypes=False` : le dossier de l'opérateur reste vide, seuls les plugins apportent des DocTypes. `plugin_permissions` : des
     entrées ajoutées au bloc `permissions` du manifeste de xcore-doctype (l'ouverture d'une action d'opérateur `ops.*`).
     `link_plugins` : plugins du dépôt (nom -> dossier) liés dans `app/`. `inline_plugins` : nom -> (main.py, fichiers annexes),
-    avec un manifeste de confiance qui `requires: [xcore-doctype]`. `auth_callers` : les `allowed_callers` du plugin de test (défaut : le moteur). `auth_members` : l'annuaire que le plugin de test imite (`xauth.users.list.tenant` : organisation -> [{id, email}]). `xauth=True` : le VRAI xauth (`app/auth`) remplace le plugin de test (nommé `auth`, comme xauth : les plugins du dépôt le `requires`)
+    avec un manifeste de confiance qui `requires: [xcore-doctype]`. `auth_callers` : les `allowed_callers` du plugin de test (défaut : le moteur). `auth_grants` : les grants de chaque identifiant que le plugin de test rend à `xauth.user.permissions` (xflow). `auth_members` : l'annuaire que le plugin de test imite (`xauth.users.list.tenant` : organisation -> [{id, email}]). `xauth=True` : le VRAI xauth (`app/auth`) remplace le plugin de test (nommé `auth`, comme xauth : les plugins du dépôt le `requires`)
     (clés JWT et compte administrateur jetables ; voir `XAUTH_ADMIN`) : les jetons viennent de `POST /app/auth/login`. Le vrai xauth
     (`app/auth`) n'est PAS dans le dépôt : sans lui sur le poste, `xauth=True` saute avec cette raison."""
     if xauth and not XAUTH_DIR.is_dir():
@@ -358,7 +362,7 @@ async def boot_host(
     if with_doctype_plugin:
         _write_plugin(root / "app" / "xcore-doctype", permissions=permissions, binding=binding, doctypes_dir=doctypes,
                       doctype_config=doctype_config, extra_permissions=plugin_permissions)
-    restore_env = _write_xauth(root) if xauth else (_write_dev_auth(root / "app" / "auth", auth_members, auth_callers), None)[1]
+    restore_env = _write_xauth(root) if xauth else (_write_dev_auth(root / "app" / "auth", auth_members, auth_callers, auth_grants), None)[1]
 
     config = hermetic_services(yaml.safe_load((ROOT / "integration.yaml").read_text()))  # jamais de Redis dans un test
     config["plugins"]["directory"] = str(root / "app")

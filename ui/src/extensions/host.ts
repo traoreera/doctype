@@ -5,6 +5,7 @@
 import { defineComponent, h, inject, markRaw, shallowReactive, type Component } from 'vue'
 import type { Router } from 'vue-router'
 import type { ApiClient } from '@/lib/api'
+import type { RealtimeClient, RealtimeMessage } from '@/lib/realtime'
 import ExtensionPage from './ExtensionPage.vue'
 import { EXTENSIONS } from './keys'
 import {
@@ -19,6 +20,7 @@ import {
   type ListContext,
   type Notifier,
   type PluginClient,
+  type RealtimeHandle,
   type RouteContribution,
   type SidebarLink,
   type Tools,
@@ -36,11 +38,14 @@ export interface HostDeps {
   router: Router
   notify: Notifier
   plugin(name: string): PluginClient
+  /** Le flux xpulse du Desk, s'il existe (`config.json` `realtime`). */
+  realtime?: RealtimeClient | null
 }
 
 const NAME_RE = /^[a-z0-9_]+$/
 const ROUTE_RE = /^[a-z0-9][a-z0-9_:/-]{0,120}$/
 const BLOCK_RE = /^[a-z0-9_-]{1,40}$/
+const MESSAGE_TYPE_RE = /^(?:\*|[a-z0-9_.:-]{1,64})$/
 
 function need(ok: unknown, what: string): void {
   if (!ok) throw new TypeError(what)
@@ -79,7 +84,34 @@ export class ExtensionHost {
   /** Ce qu'une action reçoit pour parler au serveur et à l'utilisateur, au nom de son extension. */
   tools(name: string): Tools {
     const d = this.required()
-    return { api: d.api, plugin: d.plugin(name), notify: d.notify, router: d.router }
+    return { api: d.api, plugin: d.plugin(name), notify: d.notify, router: d.router, realtime: this.realtime(name) }
+  }
+
+  /** Le temps réel au nom d'une extension : chaque abonnement est retiré avec elle (échec, délai), ou plus tôt par ce que `on` renvoie. */
+  realtime(name: string): RealtimeHandle {
+    const client = this.required().realtime ?? null
+    const host = this
+    return Object.freeze({
+      available: client !== null,
+      on(type: string, cb: (message: RealtimeMessage) => void): () => void {
+        need(typeof type === 'string' && MESSAGE_TYPE_RE.test(type) && typeof cb === 'function', `realtime.on : type (${MESSAGE_TYPE_RE}) et fonction attendus`)
+        if (!client || host.closed.has(name)) return () => {}
+        let off: (() => void) | null = client.onMessage((m) => {
+          if (type !== '*' && m.type !== type) return
+          try {
+            cb(m)
+          } catch (e) {
+            console.warn(`[extension ${name}] realtime.on(${type}) a levé une erreur`, e)
+          }
+        })
+        const undo = () => {
+          off?.()
+          off = null
+        }
+        host.onDrop(name, undo)
+        return undo
+      },
+    })
   }
 
   /** Ce qu'un composant d'extension reçoit par `useDesk()`. */
@@ -107,6 +139,7 @@ export class ExtensionHost {
       plugin: d.plugin(name),
       router: d.router,
       notify: d.notify,
+      realtime: host.realtime(name),
       routes: {
         add(route: RouteContribution) {
           need(route && typeof route.path === 'string' && ROUTE_RE.test(route.path), `routes.add : chemin invalide ${route?.path}`)

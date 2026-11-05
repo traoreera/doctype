@@ -128,7 +128,7 @@ class TestFiles:
 class TestConfig:
     async def test_it_tells_the_desk_where_the_api_is_from_the_request_itself(self, c):
         r = await c.get(f"{PREFIX}/desk/config.json")
-        assert r.json() == {"api_base": PREFIX, "login_url": None, "extensions": [], "developer": False, "realtime": False}
+        assert r.json() == {"api_base": PREFIX, "login_url": None, "extensions": [], "developer": False, "realtime": False, "automations": False}
         assert r.headers["cache-control"] == "no-store"
 
     @pytest.mark.parametrize("prefix", ["/plugin/xcore-doctype", "/a/b/c/d", "/x"])
@@ -153,7 +153,7 @@ class TestConfig:
             assert (await client.get(f"{prefix}/desk/config.json")).json()["login_url"] == login
 
     async def test_it_contains_nothing_secret(self, c):
-        assert set((await c.get(f"{PREFIX}/desk/config.json")).json()) == {"api_base", "login_url", "extensions", "developer", "realtime"}  # realtime : un booléen (le flux existe), rien de secret
+        assert set((await c.get(f"{PREFIX}/desk/config.json")).json()) == {"api_base", "login_url", "extensions", "developer", "realtime", "automations"}  # realtime : un booléen (le flux existe), rien de secret
 
 
 class TestNotBuilt:

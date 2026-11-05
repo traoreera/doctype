@@ -19,17 +19,19 @@ const devConfig = (): Plugin => ({
       let extensions: { name: string; url: string }[] = []
       let developer = false // le mode développeur (constructeur de DocTypes) : celui que le manifeste du backend ouvre
       let realtime = false // le flux d'xpulse : seulement si le backend l'annonce (sinon le Desk le demanderait et recevrait 404)
+      let automations = false // xflow chargé : Paramètres › Automatisations
       try {
         const backend = await fetch(`${process.env.DESK_API_URL ?? 'http://127.0.0.1:8000'}/app/xcore-doctype/desk/config.json`)
-        const body = (await backend.json()) as { extensions?: { name: string; url: string }[]; developer?: boolean; realtime?: boolean }
+        const body = (await backend.json()) as { extensions?: { name: string; url: string }[]; developer?: boolean; realtime?: boolean; automations?: boolean }
         developer = body.developer === true
         realtime = body.realtime === true
+        automations = body.automations === true
         extensions = (body.extensions ?? []).map((e) => ({ name: e.name, url: `/app/xcore-doctype/desk/${e.url}` }))
       } catch {
         // backend pas encore démarré
       }
       res.setHeader('Content-Type', 'application/json')
-      res.end(JSON.stringify({ api_base: '/app/xcore-doctype', login_url: process.env.DESK_LOGIN_URL || null, extensions, developer, realtime }))
+      res.end(JSON.stringify({ api_base: '/app/xcore-doctype', login_url: process.env.DESK_LOGIN_URL || null, extensions, developer, realtime, automations }))
     })
   },
 })

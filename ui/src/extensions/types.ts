@@ -5,7 +5,10 @@
 import type { Component } from 'vue'
 import type { Router } from 'vue-router'
 import type { ApiClient } from '@/lib/api'
+import type { RealtimeMessage } from '@/lib/realtime'
 import type { DocRecord, DocTypeMeta } from '@/lib/types'
+
+export type { RealtimeMessage } from '@/lib/realtime'
 
 export const EXTENSION_API_VERSION = 1
 
@@ -26,6 +29,17 @@ export interface PluginClient {
   delete<T = unknown>(path: string): Promise<T>
 }
 
+/**
+ * Le temps réel d'xpulse : les messages que son plugin (ou un autre) publie par `xpulse.publish` (à un membre, canal `notification`)
+ * ou `xpulse.broadcast` (canal `tenant-<id>`, toute l'organisation), filtrés par leur `event_type`. Préfixez vos types du nom du plugin
+ * (`whatsapp.received`). Sans xpulse (`available === false`), rien n'arrive et rien n'échoue.
+ */
+export interface RealtimeHandle {
+  readonly available: boolean
+  /** `type` : `[a-z0-9_.:-]`, 64 caractères au plus, ou `*` pour tout. Renvoie de quoi se désabonner (un composant le fait en `onUnmounted`). */
+  on(type: string, cb: (message: RealtimeMessage) => void): () => void
+}
+
 export interface Notifier {
   success(message: string): void
   info(message: string): void
@@ -40,6 +54,7 @@ export interface Tools {
   plugin: PluginClient
   notify: Notifier
   router: Router
+  realtime: RealtimeHandle
 }
 
 /** Ce qu'un composant d'extension obtient par `useDesk()` (SDK) : les outils, au nom de son extension. */
@@ -123,6 +138,8 @@ export interface DeskHandle {
   readonly plugin: PluginClient
   readonly router: Router
   readonly notify: Notifier
+  /** Les messages temps réel des plugins ; ce qui est écouté ici est retiré avec l'extension. */
+  readonly realtime: RealtimeHandle
   routes: { add(route: RouteContribution): void }
   sidebar: { add(link: SidebarLink): void }
   form: { action(action: FormAction): void; panel(panel: FormPanel): void }

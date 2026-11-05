@@ -235,6 +235,11 @@ onMounted(load)
               <dd><code v-if="chosenRow.yamlCondition">{{ chosenRow.yamlCondition }}</code><span v-else class="desk-muted">{{ t.workflowBuilder.none }}</span></dd>
               <dt>{{ t.flowOverride.notOwner }}</dt>
               <dd>{{ chosenRow.locked ? t.workflowBuilder.yes : t.workflowBuilder.no }}</dd>
+              <dt>{{ t.workflowBuilder.flow }}</dt>
+              <dd data-testid="wf-flow">
+                <template v-if="chosenRow.flow"><code>{{ chosenRow.flow }}</code> <span class="desk-muted wf-help">{{ t.workflowBuilder.flowHint }}</span></template>
+                <span v-else class="desk-muted">{{ t.workflowBuilder.none }}</span>
+              </dd>
             </dl>
 
             <h3 class="wf-section">{{ t.workflowBuilder.fromOrg }}</h3>

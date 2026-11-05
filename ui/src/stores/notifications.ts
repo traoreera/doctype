@@ -7,8 +7,7 @@ import type { AuthNotification } from '@/lib/xauth'
  * Les notifications d'xauth (la cloche de la barre du haut). Une commodité : sans xauth (jeton collé) il n'y a pas de cloche, et une panne laisse la
  * liste telle qu'elle est. Le serveur échappe le HTML de `title`/`message` : on le défait pour l'AFFICHER (Vue échappe à son tour, jamais de `v-html`).
  */
-const ENTITIES: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#x27;': "'", '&#39;': "'" }
-export const decodeEntities = (text: string | null): string => (text ?? '').replace(/&(?:amp|lt|gt|quot|#x27|#39);/g, (m) => ENTITIES[m] ?? m)
+export { decodeEntities } from '@/lib/entities'
 
 /**
  * Où mène une notification : une adresse du Desk (`#/…`) ou une adresse https. Tout le reste (`javascript:`, `data:`, chemin quelconque) ne mène nulle part :

@@ -11,6 +11,11 @@ entry_point: src/main.py
 # la même numérotation, et c'est le contrat (le jeton, rbac.declare) qui compte, pas un numéro.
 requires: [auth]
 
+# Les modules publient leurs messages par IPC (`xpulse.publish`, `xpulse.broadcast`) : tout plugin de confiance peut l'appeler (il
+# vit déjà dans le processus). Un opérateur qui veut restreindre nomme ici les plugins permis. Sans cette ligne, xcore répond
+# `ipc_denied` à TOUS les appels de plugin (mesuré).
+allowed_callers: ["*"]
+
 # ── Imports autorisés ────────────────────────────────────────────────────────
 allowed_imports:
   - fastapi

@@ -11,6 +11,9 @@ messages:
   "Affiché en haut du Desk à la place de « Desk »": "Shown at the top of the Desk instead of “Desk”"
   Annulation: Cancellation
   Canal: Channel
+  Canal d'un plugin: Plugin channel
+  Canal du plugin seul: Plugin channel only
+  "Facultatif : le nom d'un canal qu'un plugin fournit (ex. : whatsapp). La notification lui est envoyée en plus de la cloche ou de l'e-mail": "Optional: the name of a channel a plugin provides (e.g. whatsapp). The notification is sent to it as well as to the bell or e-mail"
   Champ désignant un destinataire: Field naming a recipient
   Champ surveillé: Watched field
   Changement de valeur: Value change

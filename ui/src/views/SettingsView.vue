@@ -23,12 +23,18 @@ import FormView from '@/views/FormView.vue'
 const props = defineProps<{ doctype?: string }>()
 
 const meta = useMeta()
-const { auth, api, license } = useServices()
+const { auth, api, license, automations } = useServices()
 
 // « Abonnement » : les modules de l'organisation (xlicense). La rubrique n'existe que si la facturation est installée ; la page dit elle-même
 // qui peut agir (l'administrateur de l'organisation, rejugé par le serveur).
 const BILLING: Record<string, Component> = { modules: defineAsyncComponent(() => import('@/views/ModulesView.vue')) }
 const billingKeys = computed(() => (license ? Object.keys(BILLING) : []))
+// « Automatisations » : les flux xflow de l'organisation, seulement si `config.json` annonce xflow ; la page dit elle-même si c'est réservé.
+const AUTOMATION: Record<string, Component> = { automations: defineAsyncComponent(() => import('@/views/AutomationsView.vue')) }
+const automationKeys = computed(() => (automations ? Object.keys(AUTOMATION) : []))
+// Les rubriques qui ne viennent ni d'xauth ni d'un DocType : rendues « embarquées » (la page des Paramètres porte le titre).
+const extraKeys = computed(() => [...billingKeys.value, ...automationKeys.value])
+const extraTitle = (key: string) => (billingKeys.value.includes(key) ? t.billing.myModules : t.automations.title)
 
 // Les pages d'administration d'xauth (comptes, membres, rôles, courrier, audit, API) : des rubriques « système », adresse `/settings/~<clé>`. Elles n'existent que
 // connecté à xauth ; chacune dit elle-même si l'utilisateur n'a pas le droit de s'en servir.
@@ -63,7 +69,12 @@ const systemKeys = computed(() => railItems.value.filter((i) => !i.doctype).map(
 // Tant que mes permissions ne sont pas lues, une adresse de rubrique réservée n'est pas « inconnue » : on attend de savoir (sinon un rechargement de page la nie un instant).
 const knownKeys = computed(() => (session.permissions === null && auth ? Object.keys(SYSTEM) : systemKeys.value))
 const section = computed(() => (props.doctype?.startsWith('~') ? props.doctype.slice(1) : null))
-const sectionView = computed(() => (section.value === null ? null : (BILLING[section.value] && billingKeys.value.includes(section.value) ? BILLING[section.value] : SYSTEM[section.value]) ?? null))
+const sectionView = computed(() => {
+  if (section.value === null) return null
+  if (billingKeys.value.includes(section.value)) return BILLING[section.value] ?? null
+  if (automationKeys.value.includes(section.value)) return AUTOMATION[section.value] ?? null
+  return SYSTEM[section.value] ?? null
+})
 const session = useSession()
 const theme = useTheme()
 const workspaces = useWorkspaces()
@@ -122,7 +133,7 @@ watch([() => props.doctype, general], () => {
 })
 /** Une rubrique demandée qui n'est pas un réglage lisible (adresse périmée, droits retirés) : on le dit, on ne montre pas un formulaire. */
 const unknown = computed(() =>
-  section.value !== null ? !knownKeys.value.includes(section.value) && !billingKeys.value.includes(section.value) : !!props.doctype && !!meta.summaries && !selected.value && !general.value.some((d) => d.name === props.doctype),
+  section.value !== null ? !knownKeys.value.includes(section.value) && !extraKeys.value.includes(section.value) : !!props.doctype && !!meta.summaries && !selected.value && !general.value.some((d) => d.name === props.doctype),
 )
 
 const modes: { value: ThemeMode; label: string; icon: string }[] = [
@@ -214,15 +225,28 @@ onBeforeRouteUpdate((to, from) => {
             <i class="pi pi-th-large" />{{ t.billing.myModules }}
           </RouterLink>
         </div>
-        <p v-if="meta.summaries && !groups.length && !railItems.length && !billingKeys.length" class="desk-muted settings-none" data-testid="settings-empty">{{ t.settings.none }}</p>
+        <div v-if="automationKeys.length" class="settings-group" data-testid="settings-group-automations">
+          <h4 class="settings-module">{{ t.automations.group }}</h4>
+          <RouterLink
+            v-for="key in automationKeys"
+            :key="key"
+            class="settings-item"
+            :to="{ name: 'settings', params: { doctype: `~${key}` } }"
+            exact-active-class="active"
+            :data-testid="`automation-${key}`"
+          >
+            <i class="pi pi-bolt" />{{ t.automations.title }}
+          </RouterLink>
+        </div>
+        <p v-if="meta.summaries && !groups.length && !railItems.length && !extraKeys.length" class="desk-muted settings-none" data-testid="settings-empty">{{ t.settings.none }}</p>
       </nav>
 
       <div class="settings-pane" data-testid="settings-pane">
         <p v-if="unknown" class="desk-card settings-unknown" data-testid="settings-unknown">{{ t.settings.unknown }}</p>
 
         <template v-else-if="section !== null">
-          <div class="desk-page-head"><h1 data-testid="system-title">{{ billingKeys.includes(section) ? t.billing.myModules : t.admin.sections[section] }}</h1></div>
-          <component :is="sectionView" :key="section" :embedded="billingKeys.includes(section) || undefined" />
+          <div class="desk-page-head"><h1 data-testid="system-title">{{ extraKeys.includes(section) ? extraTitle(section) : t.admin.sections[section] }}</h1></div>
+          <component :is="sectionView" :key="section" :embedded="extraKeys.includes(section) || undefined" />
         </template>
 
         <FormView v-else-if="selected" :key="selected.name" :doctype="selected.name" :name="selected.name" embedded data-testid="settings-form" @dirty="markDirty(selected.name, $event)" />

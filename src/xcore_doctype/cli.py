@@ -144,6 +144,18 @@ def diagnose(config_path: Path, plugins_dir: Path | None = None) -> list[Finding
             else:
                 out.append(Finding("ok", f"tenancy cohérente (xcore : {'activée' if on else 'désactivée'}, enforce_tenant_binding : {str(binding).lower()})"))
 
+    # xpulse : un manifeste installé avant le 5 nov. n'a pas `allowed_callers` (gardé par `install`) ; xcore refuse alors `ipc_denied` à
+    # tout module qui publie un message temps réel (`xpulse.publish`, docs/guide.md §3.7). On le dit, sans réécrire le fichier.
+    pulse = app_dir / "xpulse" / "plugin.yaml"
+    if pulse.is_file():
+        try:
+            callers = _load_yaml(pulse).get("allowed_callers")
+        except (OSError, ValueError, yaml.YAMLError):
+            callers = None
+        if not callers:
+            out.append(Finding("warn", f"{pulse} n'a pas d'allowed_callers : xcore refusera (ipc_denied) les appels des modules à xpulse.publish "
+                                       "et xpulse.broadcast. Ajoutez allowed_callers: [\"*\"] (ou les noms des plugins permis)"))
+
     # Le Desk se connecte à un plugin d'authentification : sans lui, l'adresse de connexion répond 404. On ne peut pas deviner le rôle d'un
     # plugin arbitraire ; on signale l'absence du nom conventionnel `auth` (xauth, `app/auth`) quand le Desk attend une connexion.
     if desk_login is not None and not (app_dir / "auth").is_dir():

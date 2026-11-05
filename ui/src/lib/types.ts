@@ -70,6 +70,8 @@ export interface WorkflowTransition {
   /** Condition métier jugée par le SERVEUR sur le document stocké : le Desk ne l'évalue pas, il lit `api.transitions`. */
   condition?: string
   description?: string
+  /** Le flux xflow que la transition lance après son commit (`flows.py`). */
+  flow?: string
 }
 
 export interface WorkflowDef {

@@ -112,6 +112,7 @@ from .workspaces import (
     SpacerBlock,
 )
 from .translations import Translations
+from .flows import NoFlows
 from .realtime import NoRealtime
 from .versions import diff, snapshot
 
@@ -200,6 +201,7 @@ class DocumentService:
         self.files: Any = None  # le `FileService`, posé par le plugin après coup (il a besoin de ce service)
         self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
         self.realtime: Any = NoRealtime()  # les signaux temps réel (`realtime.Realtime` sur ext.pubsub), posés par le plugin s'il y a un bus
+        self.flows: Any = NoFlows()  # les flux xflow qui suivent une transition (`flows.FlowLauncher`), posés par le plugin
         self.translations = Translations()  # les catalogues des plugins (translations.py) : libellés dans la langue de la requête
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
 
@@ -1741,6 +1743,11 @@ class DocumentService:
         )
         self._rules(ctx, compiled, doc, recorded, None)
         await self._settle(ctx, written)
+        if transition.flow:  # après le commit, en tâche de fond, au nom de l'acteur (flows.py) ; son sort ne change rien ici
+            self.flows.start(ctx, transition.flow, {
+                "doctype": doctype, "name": doc.name, "version": doc.version, "docstatus": doc.docstatus,
+                "action": transition.action, "from": state, "to": transition.to, "user": ctx.user_id,
+            })
         return self._present(doc)
 
     async def _transition(self, ctx: RequestContext, doctype: str, name: str, version: Any, action: str) -> dict[str, Any]:
