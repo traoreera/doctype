@@ -7,7 +7,7 @@ from importlib import metadata
 import pytest
 import yaml
 
-from xcore_doctype import __version__, plugin_dir
+from xcore_doctype import __version__, platform_plugins_dir, plugin_dir
 from xcore_doctype.cli import diagnose, install, main
 
 GOOD_MAIN = "app = FastAPI()\nxcore.setup(app)\n"
@@ -485,3 +485,21 @@ def test_install_lays_the_platform_plugins_and_keeps_their_manifests(tmp_path):
     assert not stale.exists()  # le paquet ne le livre plus
     install(app, force=True)
     assert "# réglé par l'opérateur" not in manifest.read_text()
+
+
+def test_diagnose_warns_when_the_installed_xpulse_names_no_caller(tmp_path):
+    """Un xpulse installé avant le 5 nov. (manifeste gardé) n'a pas `allowed_callers` : xcore refuse alors tout `xpulse.publish` d'un module."""
+    from xcore_doctype.cli import diagnose
+
+    (tmp_path / "app" / "xpulse").mkdir(parents=True)
+    (tmp_path / "integration.yaml").write_text("plugins:\n  directory: ./app\n", encoding="utf-8")
+    pulse = tmp_path / "app" / "xpulse" / "plugin.yaml"
+
+    def said(text: str) -> bool:
+        pulse.write_text(text, encoding="utf-8")
+        return any("allowed_callers" in f.message for f in diagnose(tmp_path / "integration.yaml", tmp_path / "app"))
+
+    assert said("name: xpulse\n")
+    assert not said('name: xpulse\nallowed_callers: ["*"]\n')
+    shipped = (platform_plugins_dir() / "xpulse" / "plugin.yaml").read_text(encoding="utf-8")
+    assert not said(shipped)  # ce que le paquet livre est bon

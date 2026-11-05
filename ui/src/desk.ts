@@ -118,6 +118,7 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
   const extensions = new ExtensionHost({
     api,
     router,
+    realtime,
     notify: app.runWithContext(() => useNotify()),
     plugin(name) {
       let client = plugins.get(name)

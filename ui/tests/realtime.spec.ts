@@ -74,6 +74,31 @@ describe('RealtimeClient', () => {
     rt.stop()
   })
 
+  it('hands a plugin’s own messages to onMessage, decoded and typed, never the engine’s signals', async () => {
+    const frames = [
+      'event: notification\ndata: {"user_id":"u1","event_type":"whatsapp.received","text":"De &lt;Kon\u00e9&gt; &amp; fils","from":"+225"}\n\n',
+      'event: tenant-acme\ndata: {"tenant_id":"acme","text":"Inventaire ce soir"}\n\n',
+      'event: tenant-acme\ndata: {"event_type":"doc.changed","tenant_id":"acme","doctype":"Invoice"}\n\n',
+      'event: notification\ndata: {"event_type":"bell.changed","user_id":"u1"}\n\n',
+      'event: notification\ndata: [1, 2]\n\n',
+    ]
+    const { transport } = fake([{ status: 200, chunks: frames, hang: true }])
+    const rt = new RealtimeClient({ transport, context: ctx() })
+    const seen: unknown[] = []
+    rt.onMessage(() => {
+      throw new Error('un abonné cassé ne prive pas les autres')
+    })
+    rt.onMessage((m) => seen.push(m))
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    rt.restart()
+    await flush()
+    expect(seen).toEqual([
+      { scope: 'personal', type: 'whatsapp.received', text: 'De <Koné> & fils', data: { from: '+225' } },
+      { scope: 'organisation', type: 'message', text: 'Inventaire ce soir', data: {} },
+    ])
+    rt.stop()
+  })
+
   it('gives up on 404 (xpulse absent) without retrying', async () => {
     const sleep = vi.fn(async () => {})
     const { transport, requests } = fake([{ status: 404 }])

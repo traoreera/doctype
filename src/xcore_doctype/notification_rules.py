@@ -27,6 +27,7 @@ from .context import RequestContext
 from .directory import Directory, NoDirectory, Person
 from .errors import DocumentValidationError, DoctypeError
 from .expr import ExprError, compile_expr, evaluate, referenced_fields
+from .channels import NAME_RE as CHANNEL_NAME_RE, ChannelRegistry, Notification
 from .notifier import MAX_RECIPIENTS, NoNotifier, Notifier
 from .permissions import scope_for
 from .schema import DECIMAL_TYPES, FILE_TYPES
@@ -55,7 +56,8 @@ EVENTS = {
     "Suppression": "delete",
 }
 EVENT_WORDS = {"create": "créé", "update": "modifié", "submit": "soumis", "cancel": "annulé", "delete": "supprimé"}
-CHANNELS = {"Cloche": (True, False), "E-mail": (False, True), "Cloche et e-mail": (True, True)}
+PLUGIN_ONLY = "Canal du plugin seul"
+CHANNELS = {"Cloche": (True, False), "E-mail": (False, True), "Cloche et e-mail": (True, True), PLUGIN_ONLY: (False, False)}
 # Un modèle ne cite pas ce qui n'a pas de sens en texte brut, ni ce qui ne doit pas sortir : un secret, une table, un fichier, du HTML.
 UNQUOTABLE_TYPES = ("Password", "Table", "JSON", "TextEditor", *FILE_TYPES)
 # Un champ qui désigne un destinataire contient un texte : une adresse ou un identifiant.
@@ -134,9 +136,10 @@ class Delivery:
 # ── Vérification d'une règle (hook `validate` de `Notification Rule`) ───────────────────────────
 
 
-def rule_problems(registry: Any, data: Mapping[str, Any]) -> list[dict[str, str]]:
+def rule_problems(registry: Any, data: Mapping[str, Any], channels: ChannelRegistry | None = None) -> list[dict[str, str]]:
     """Les défauts d'une règle, champ par champ (vide = la règle est bonne). Pure : sert au hook et, à l'évaluation, à écarter une règle
-    que la définition de son type a rendue invalide depuis (un champ retiré)."""
+    que la définition de son type a rendue invalide depuis (un champ retiré). `channels` : les canaux des plugins, jugés à
+    l'ENREGISTREMENT seulement (à l'évaluation, un canal dont le plugin est déchargé est journalisé, la cloche part quand même)."""
     errors: list[dict[str, str]] = []
 
     def bad(field: str, message: str) -> None:
@@ -172,6 +175,15 @@ def rule_problems(registry: Any, data: Mapping[str, Any]) -> list[dict[str, str]
             opaque = sorted(n for n in used if fields[n].fieldtype in ("Table", "Password", "JSON", *DECIMAL_TYPES))
             if opaque:
                 bad("condition", f"{', '.join(opaque)} ne peut pas servir dans une condition (table, secret, JSON ou décimal)")
+    plugin_channel = data.get("plugin_channel")
+    if plugin_channel is not None and plugin_channel != "":
+        if not isinstance(plugin_channel, str) or not CHANNEL_NAME_RE.fullmatch(plugin_channel):
+            bad("plugin_channel", "Nom de canal invalide (minuscules, chiffres, _)")
+        elif channels is not None and not channels.has(plugin_channel):
+            known = ", ".join(channels.names()) or "aucun : aucun plugin chargé n'en déclare"
+            bad("plugin_channel", f"Aucun plugin ne fournit le canal « {plugin_channel} » (disponibles : {known})")
+    elif data.get("channel") == PLUGIN_ONLY:
+        bad("plugin_channel", "Nommez le canal du plugin qui doit envoyer la notification")
     recipient = data.get("recipient_field")
     if isinstance(recipient, str) and recipient:
         if recipient not in fields or fields[recipient].fieldtype not in RECIPIENT_FIELD_TYPES:
@@ -227,12 +239,12 @@ def _text(value: Any) -> str:
     return _CONTROL.sub(" ", str(value))[:MAX_VALUE]
 
 
-def make_rule_hook(documents: "DocumentService") -> Callable[["HookEvent"], Awaitable[None]]:
+def make_rule_hook(documents: "DocumentService", channels: ChannelRegistry | None = None) -> Callable[["HookEvent"], Awaitable[None]]:
     """Le hook `validate` de `Notification Rule` : la règle est cohérente, et son auteur lit TOUS les documents du type qu'elle diffuse."""
 
     async def check(event: "HookEvent") -> None:
         registry = documents._registry
-        problems = rule_problems(registry, event.data)
+        problems = rule_problems(registry, event.data, channels)
         if not problems and not event.ctx.is_system:
             target = registry.get(event.data["document_type"]).definition
             read = scope_for(target, event.ctx, "read")
@@ -263,6 +275,7 @@ class NotificationRules:
         notifier: Notifier | None = None,
         mailer: Mailer | None = None,
         desk_url: str | None = None,
+        channels: ChannelRegistry | None = None,
         logger: Any = None,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -270,6 +283,7 @@ class NotificationRules:
         self._directory: Directory = directory or NoDirectory()
         self._notifier: Notifier = notifier or NoNotifier()
         self._mailer: Mailer = mailer or NoMailer()
+        self._channels = channels  # les canaux des plugins (channels.py) ; `notifier` est le notificateur NU : la diffusion se fait ici
         self._desk_url = desk_url.rstrip("/") if desk_url else None
         self._log, self._clock = logger, clock
         self._pending: set[asyncio.Task[None]] = set()
@@ -336,11 +350,19 @@ class NotificationRules:
                 if delivery is None:
                     continue
                 bell, mail = CHANNELS.get(rule.get("channel"), (True, False))  # type: ignore[arg-type]
+                link = None if event.kind == "delete" else _link(event.doctype, event.name)
                 if bell and delivery.user_ids:
                     await self._notifier.notify(
-                        event.tenant_id, delivery.user_ids, title=delivery.subject, message=delivery.message or None,
-                        link=None if event.kind == "delete" else _link(event.doctype, event.name), kind="RULE",
+                        event.tenant_id, delivery.user_ids, title=delivery.subject, message=delivery.message or None, link=link, kind="RULE",
                     )
+                named = rule.get("plugin_channel") or None
+                if self._channels is not None and (bell or named):
+                    note = Notification(event.tenant_id, delivery.user_ids, delivery.subject, delivery.message or None, link, "RULE",
+                                        delivery.emails, event.doctype, event.name, delivery.rule)
+                    if named:
+                        self._channels.deliver(named, note)
+                    if bell:  # ce qui sonne la cloche va aussi aux canaux qui écoutent tout (une seule fois au canal nommé)
+                        self._channels.broadcast(note, skip=[named] if named else ())
                 if mail:
                     for address in delivery.emails:
                         await self._mailer.send(address, delivery.subject, self._mail_body(delivery, event))

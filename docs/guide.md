@@ -360,6 +360,7 @@ Puis : lien symbolique dans `app/` (`ln -s ../mon_module app/mon_module`), relan
 | `doctype_writer` | **écrire** : `await writer.as_request(request)` dans une route du plugin (droits de l'utilisateur), `writer.system(plugin, tenant, raison)` pour une tâche planifiée (seulement les types du plugin) |
 | `doctype_documents` | **lire** en contexte système, nommé par sa raison : `system(tenant, raison).list(…) / .get(…)` |
 | `doctype_sources` | brancher une source externe pour un DocType virtuel (`source: <nom>`) |
+| `doctype_channels` | déclarer un **canal de notification** (WhatsApp, SMS…) : `register(plugin, nom, coroutine, listen_all=…)`, voir §3.6 |
 
 Méthodes du *writer* : `get`, `list`, `create`, `update`, `submit`, `cancel`, `amend`, `transition`, `delete`, et `ensure(doctype,
 data, unique=<champ>)` pour une tâche rejouable (crée ou retrouve, sans doublon même en concurrence).
@@ -422,6 +423,136 @@ historique, import CSV, impression. Pour chaque type, le menu « ⋯ » donne au
 - et sur chaque espace, **Personnaliser** ses blocs, pour l'organisation ou pour soi.
 
 Rien de tout cela n'écrit de fichier : une personnalisation vit en base, par organisation ; une définition vit dans un plugin.
+
+### 3.5 Appeler son plugin depuis le Desk
+
+**Le navigateur n'appelle jamais une action IPC.** Le routeur IPC d'xcore exige la clé serveur `X-Plugin-Key` (`app.secret_key`), qui
+ne doit pas quitter le serveur. Le chemin est toujours le même : le plugin expose une **route HTTP**, l'extension du Desk l'appelle, et
+c'est la route (côté serveur) qui écrit des documents ou appelle des actions IPC d'autres plugins.
+
+Côté plugin, la route (montée par xcore sous `<plugin_prefix>/<plugin>/…`) :
+
+```python
+from fastapi import APIRouter, HTTPException, Request
+
+class Plugin(AutoDispatchMixin, TrustedBase):
+    async def on_load(self) -> None:
+        ...
+        self._router = self._routes()
+
+    def get_router(self) -> APIRouter | None:
+        return self._router
+
+    def _routes(self) -> APIRouter:
+        router, writers = APIRouter(), self.get_service("doctype_writer")
+
+        @router.post("/envoyer/{name}")
+        async def envoyer(name: str, request: Request) -> dict:
+            docs = await writers.as_request(request)        # l'utilisateur de la requête : 401 sans jeton, ses grants s'appliquent
+            facture = await docs.get("Sales Invoice", name) # 404 s'il ne peut pas la lire, comme l'API
+            ctx = docs.context                              # ctx.user_id, ctx.tenant_id : jamais lus dans le corps de la requête
+            result = await self.call_plugin("xpulse", "xpulse.publish", {   # l'IPC, CÔTÉ SERVEUR
+                "user_id": ctx.user_id, "text": f"Facture {name} envoyée", "event_type": "whatsapp.sent", "data": {"name": name},
+            })
+            if result.get("status") == "error":
+                raise HTTPException(502, {"code": "send_failed", "msg": "Envoi refusé"})
+            return {"ok": True, "total": facture["data"].get("grand_total")}
+
+        return router
+```
+
+Côté Desk, l'extension (`desk/index.js`) :
+
+```js
+setup(desk) {
+  desk.form.action({
+    doctype: 'Sales Invoice', label: 'Envoyer par WhatsApp', icon: 'send',
+    when: ({ record }) => record?.docstatus === 1,          // ne protège rien : la route juge chaque appel
+    run: async ({ name, plugin, notify }) => {
+      await plugin.post(`/envoyer/${encodeURIComponent(name)}`)   // -> <prefix>/<votre plugin>/envoyer/…
+      notify.success('Envoyée')
+    },
+  })
+}
+```
+
+`plugin.get/post/put/patch/delete` (dans une action, une commande, ou `useDesk().plugin` dans un composant) n'atteint QUE les routes de
+**son** plugin, avec la session du Desk : jeton, organisation (`X-Tenant-ID`), renouvellement sur un 401. Un chemin qui tenterait d'en
+sortir (`..`, `//`, une URL complète) est refusé avant tout envoi. Pour lire ou écrire des documents depuis l'extension, `api` (le
+client du moteur) suffit ; une route n'est utile que pour ce que l'API ne fait pas (un service externe, une action IPC, un calcul).
+
+### 3.6 Les canaux de notification : WhatsApp, SMS, Slack…
+
+Le moteur prévient les gens par la cloche (xauth) et l'e-mail. Un plugin y ajoute **son** canal par le service `doctype_channels` :
+
+```python
+class Plugin(AutoDispatchMixin, TrustedBase):
+    async def on_load(self) -> None:
+        self.get_service("doctype_channels").register(self.ctx.name, "whatsapp", self.envoyer, label="WhatsApp", listen_all=True)
+
+    async def on_unload(self) -> None:
+        self.get_service("doctype_channels").unregister_owner(self.ctx.name)
+
+    async def envoyer(self, n) -> None:                    # n : xcore_doctype.channels.Notification
+        if n.kind not in ("ASSIGNMENT", "RULE"):           # VOTRE filtre : le moteur passe tout, le plugin choisit
+            return
+        for user_id in n.user_ids:
+            numero = await self.numero_de(n.tenant_id, user_id)   # à vous : un DocType « Contact WhatsApp », un champ du profil…
+            if numero:
+                await self.api_whatsapp.send(numero, f"{n.title}\n{n.message or ''}")
+```
+
+Ce que reçoit `envoyer` (une `Notification`, gelée) : `tenant_id`, `user_ids`, `title`, `message`, `link` (`#/app/<type>/<nom>`),
+`kind` (`RULE`, `ASSIGNMENT`, `MENTION`, `SHARE`), `emails` (les adresses que l'annuaire connaît), `doctype` et `name` (le document
+concerné, s'il y en a un), `rule` (le nom de la règle). **Jamais le contenu du document** : s'il vous le faut, relisez-le par
+`doctype_documents.system(n.tenant_id, "whatsapp").get(n.doctype, n.name)`.
+
+Deux façons de recevoir :
+
+- **`listen_all=True`** : tout ce qui fait sonner la cloche (assignations, @mentions, partages, règles au canal « Cloche »), juste après elle ;
+- **une règle qui nomme le canal** : dans Paramètres › Général › Règles de notification, le champ « Canal d'un plugin » (`whatsapp`) ;
+  le canal « Canal du plugin seul » n'envoie QUE là (ni cloche, ni e-mail). Un nom qu'aucun plugin chargé ne fournit est refusé à
+  l'enregistrement de la règle, avec la liste de ceux qui existent ; un plugin déchargé depuis est journalisé, la cloche part quand même.
+  Un canal qui écoute tout ET que la règle nomme la reçoit une seule fois.
+
+Un envoi part en tâche de fond, borné à 15 s : une API WhatsApp lente, en panne ou une exception de votre code sont **journalisées**,
+jamais remontées, et n'annulent jamais l'écriture qui a causé la notification. Le nom d'un canal : `[a-z][a-z0-9_]`, 32 caractères au
+plus, propriété du plugin qui l'a déclaré.
+
+### 3.7 Le temps réel : publier, écouter
+
+Le Desk ouvre un seul flux SSE vers xpulse (`<prefix>/xpulse/stream`) sur deux canaux : `notification` (à l'utilisateur seul) et
+`tenant-<organisation>` (tous ses membres). Le moteur y publie déjà `doc.changed` (les listes et fiches se relisent seules) et
+`bell.changed` (la cloche). Un plugin y publie **ses** messages par IPC, avec un type et des données :
+
+```python
+await self.call_plugin("xpulse", "xpulse.publish", {         # à UN membre (canal personnel)
+    "user_id": user_id, "text": "Nouveau message de Koné", "event_type": "whatsapp.received", "data": {"from": "+225…"},
+})
+await self.call_plugin("xpulse", "xpulse.broadcast", {       # à toute l'organisation
+    "channels": [f"tenant-{tenant_id}"], "text": "Inventaire ce soir", "event_type": "stock.notice",
+})
+```
+
+L'appel exige que le manifeste d'xpulse autorise le module (`allowed_callers: ["*"]`, livré depuis le 5 nov.) ; un xpulse installé
+avant garde son manifeste et répond `ipc_denied` : `xcore-doctype install` le signale, ajoutez la ligne à votre copie.
+
+`event_type` : `[a-z0-9_.:-]`, 64 caractères, préfixé du nom du plugin par convention (`doc.changed` et `bell.changed` sont refusés :
+ils appartiennent au moteur). `data` : un objet JSON de 8 Ko au plus, sans les clés d'enveloppe (`user_id`, `tenant_id`, `event_type`,
+`text`, `channel`). Le texte est échappé par xpulse ; `data` ne l'est pas : affichez-le comme du TEXTE (Vue le fait), jamais en HTML.
+Un message à l'organisation est vu par TOUS ses membres : n'y mettez rien qu'un membre sans droit ne doive voir.
+
+L'extension écoute par `desk.realtime` :
+
+```js
+setup(desk) {
+  desk.realtime.on('whatsapp.received', (m) => desk.notify.info(m.text))   // m : { scope, type, text, data }
+}
+```
+
+Ce que `setup` écoute est retiré avec l'extension. Dans un composant, `useDesk().realtime.on(...)` renvoie de quoi se désabonner, à
+appeler dans `onUnmounted`. `'*'` reçoit tous les types. Sans xpulse (`desk.realtime.available === false`), rien n'arrive et rien
+n'échoue. Le canal `ext.websocket` existe aussi côté serveur, mais le Desk ne l'utilise pas : SSE suffit pour pousser vers le navigateur.
 
 ---
 

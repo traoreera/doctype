@@ -98,16 +98,17 @@ class Mail:
 
 
 class Env:
-    def __init__(self, db, tables, *, members=MEMBERS, bell=None, desk_url="https://erp.acme.test/app/xcore-doctype/desk"):
+    def __init__(self, db, tables, *, members=MEMBERS, bell=None, desk_url="https://erp.acme.test/app/xcore-doctype/desk", channels=None):
         self.reg = DocTypeRegistry()
         self.reg.load_dir(system_plugin_dir() / "doctypes", owner="system")
         self.reg.register(ticket_def(), owner="helpdesk")
         self.reg.register(memo_def(), owner="helpdesk")
         self.log, self.hooks = Log(), HookRegistry()
         self.svc = DocumentService(self.reg, db, tables, self.log, hooks=self.hooks, sealer=Sealer("clé-de-test-assez-longue"))
-        self.hooks.register(RULE_HOOK, make_rule_hook(self.svc), owner="xcore-doctype")
+        self.hooks.register(RULE_HOOK, make_rule_hook(self.svc, channels), owner="xcore-doctype")
         self.bell, self.mail = bell or Bell(), Mail()
-        self.rules = NotificationRules(self.svc, directory=People(members), notifier=self.bell, mailer=self.mail, desk_url=desk_url, logger=self.log)
+        self.rules = NotificationRules(self.svc, directory=People(members), notifier=self.bell, mailer=self.mail, desk_url=desk_url,
+                                       channels=channels, logger=self.log)
         self.svc.notifications = self.rules
 
     async def rule(self, ctx=ADMIN, **data):

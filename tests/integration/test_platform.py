@@ -135,3 +135,66 @@ async def test_xprint_without_the_erp_loads_and_skips_every_template(tmp_path):
     """Sans aucun module ERP, xprint démarre quand même : un type absent n'est pas une faute, il n'a rien à imprimer."""
     async with boot_host(tmp_path, operator_doctypes=False, link_plugins={"xprint": platform_plugins_dir() / "xprint"}) as h:
         assert await _state(h, "xprint") == "ready"
+
+
+async def test_a_plugin_publishes_a_typed_message_the_desk_s_extensions_can_listen_to(tmp_path, monkeypatch):
+    """`xpulse.publish` porte un `event_type` et des `data` (ce qu'une extension écoute par `desk.realtime.on(type, …)`) ; un type
+    réservé au moteur, une clé d'enveloppe ou un `data` trop gros sont refusés avant toute publication."""
+    import asyncio
+    import json
+
+    keys(tmp_path, monkeypatch)
+    async with boot_host(tmp_path, link_plugins=PLATFORM) as h:
+        pubsub = h.xcore.services.get("ext.pubsub")
+
+        async def first():
+            async for chunk in pubsub.stream(["notification"], user_id="rita"):
+                return json.loads(chunk.split("data: ", 1)[1])
+
+        got = asyncio.create_task(first())
+        await asyncio.sleep(0.05)
+        payload = {"channels": ["notification"], "user_id": "rita", "text": "Message de <Koné>", "event_type": "whatsapp.received",
+                   "data": {"from": "+225 07 00 00 00", "count": 2}}
+        result = await h.action("xpulse.publish", payload, token=h.token(), plugin="xpulse")
+        assert result.get("status", "ok") == "ok", result
+        message = await asyncio.wait_for(got, 5)
+        assert message == {"event_type": "whatsapp.received", "from": "+225 07 00 00 00", "count": 2, "user_id": "rita",
+                           "text": "Message de &lt;Koné&gt;"}
+        for bad in ({"event_type": "doc.changed"}, {"event_type": "Majuscules"}, {"data": {"user_id": "bob"}}, {"data": {"x": "y" * 9000}}):
+            refused = await h.action("xpulse.publish", {**payload, **bad}, token=h.token(), plugin="xpulse")
+            assert refused.get("status") == "error" and refused.get("code") == "invalid_message", (bad, refused)
+
+
+PHONE = """
+from xcore.sdk import TrustedBase, error
+
+
+class Plugin(TrustedBase):
+    async def on_load(self):
+        pass
+
+    async def handle(self, action, payload):
+        return error("no actions", "unknown_action")
+"""
+
+
+async def test_a_module_plugin_may_call_xpulse_publish(tmp_path, monkeypatch):
+    """Le chemin documenté (docs/guide.md §3.7) : un module appelle `xpulse.publish` par `call_plugin`. Sans `allowed_callers` dans le
+    manifeste d'xpulse, xcore répondait `ipc_denied` à tout plugin."""
+    import asyncio
+    import json
+
+    keys(tmp_path, monkeypatch)
+    async with boot_host(tmp_path, link_plugins=PLATFORM, inline_plugins={"phone": (PHONE, {})}) as h:
+        pubsub = h.xcore.services.get("ext.pubsub")
+
+        async def first():
+            async for chunk in pubsub.stream(["notification"], user_id="rita"):
+                return json.loads(chunk.split("data: ", 1)[1])
+
+        got = asyncio.create_task(first())
+        await asyncio.sleep(0.05)
+        phone = h.xcore.plugins._loader.get("phone")._instance
+        result = await phone.call_plugin("xpulse", "xpulse.publish", {"user_id": "rita", "text": "x", "event_type": "phone.ring"})
+        assert result.get("status", "ok") == "ok", result
+        assert (await asyncio.wait_for(got, 5))["event_type"] == "phone.ring"

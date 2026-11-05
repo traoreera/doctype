@@ -40,6 +40,7 @@ from .csv_import import import_csv
 from . import devtools
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
+from .channels import ChannelNotifier, ChannelRegistry
 from .realtime import NoRealtime, Realtime, RealtimeNotifier
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
 from .user_permissions import make_user_permission_hooks
@@ -53,6 +54,7 @@ from .sources import DocumentSources
 
 HOOKS_SERVICE = "doctype_hooks"  # service exporté : `self.get_service("doctype_hooks").register(...)`
 GRANTS_SERVICE = "doctype_grants"  # service exporté : `self.get_service("doctype_grants").for_plugin(nom)`
+CHANNELS_SERVICE = "doctype_channels"  # service exporté : les canaux de notification des plugins (WhatsApp, SMS…), voir channels.py
 WRITER_SERVICE = "doctype_writer"  # service exporté : écriture des plugins, `.as_request(request)` (bouton) ou `.system(plugin, tenant, raison)` (tâche)
 DOCUMENTS_SERVICE = "doctype_documents"  # service exporté : lecture système, `.system(tenant, raison)` (contrôles, rapports)
 SOURCES_SERVICE = "doctype_sources"  # service exporté : `self.get_service("doctype_sources").register(nom_plugin, "ma_source", source)` (DocTypes virtuels)
@@ -79,6 +81,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     _developer: bool = False  # `doctype.desk.developer_mode` (devtools.py) : fermé tant que le manifeste ne l'ouvre pas
     file_library: FileLibrary | None = None
     printer: PrintService | None = None
+    channels: ChannelRegistry | None = None
     documents: DocumentService | None = None
     _tables: SystemTables | None = None
     _settings: ContextSettings | None = None
@@ -211,12 +214,15 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root.include_router(build_files_router(file_service, self._settings))  # téléverser, liens signés : une identité est exigée
         self.documents.realtime = self._realtime(block.get("realtime"))
         directory = self._directory(block.get("directory"))
-        notifier = RealtimeNotifier(self._notifier(block.get("notifications")), self.documents.realtime)
+        bell = RealtimeNotifier(self._notifier(block.get("notifications")), self.documents.realtime)
+        self.channels = ChannelRegistry(self.logger)
+        notifier = ChannelNotifier(bell, self.channels, directory)  # assignations, mentions, partages : la cloche, puis les canaux qui écoutent tout
         collab = CollaborationService(self.documents, file_service, directory, notifier)
         # Les règles de notification de l'organisation (DocType `Notification Rule` du plugin `system`) : cloche et e-mail, après le commit.
-        rules = NotificationRules(self.documents, directory=directory, notifier=notifier, logger=self.logger, **self._rule_delivery(block.get("notifications")))
+        rules = NotificationRules(self.documents, directory=directory, notifier=bell, channels=self.channels, logger=self.logger,
+                                  **self._rule_delivery(block.get("notifications")))
         self.documents.notifications = rules
-        hook_registry.register(RULE_HOOK, make_rule_hook(self.documents), owner=self.ctx.name)
+        hook_registry.register(RULE_HOOK, make_rule_hook(self.documents, self.channels), owner=self.ctx.name)
         # Les permissions utilisateur (DocType `User Permission` du plugin `system`) : cohérentes, et le membre traduit par l'annuaire.
         for hook_name, hook in make_user_permission_hooks(self.documents, directory).items():
             hook_registry.register(hook_name, hook, owner=self.ctx.name)
@@ -251,6 +257,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         self.ctx.services[DOCUMENTS_SERVICE] = SystemReaders(self.documents)
         # ...et y écrivent : un bouton avec les droits de l'utilisateur, une tâche en système sur les types de son module (M4).
         self.ctx.services[WRITER_SERVICE] = DocumentWriters(self.documents, self._settings)
+        # ...et y déclarent un canal de notification (WhatsApp…) : ce que la cloche reçoit, et ce que les règles leur adressent.
+        self.ctx.services[CHANNELS_SERVICE] = self.channels
         # Un champ `unique` posé sur un type qui a déjà des documents refuse le chargement si des valeurs sont déjà en double (D25).
         for name in registry.names():
             compiled = registry.get(name)
@@ -348,6 +356,9 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     async def on_unload(self) -> None:
         if self.documents is not None and self.documents.notifications is not None:
             await self.documents.notifications.close()
+        if self.channels is not None:
+            await self.channels.close()
+            self.ctx.services.pop(CHANNELS_SERVICE, None)
         if self.registry is not None:
             self.registry.clear()
         if self.hook_registry is not None:
@@ -359,7 +370,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             self.ctx.services.pop(REGISTRY_SERVICE, None)
             self.ctx.services.pop(DOCUMENTS_SERVICE, None)
             self.ctx.services.pop(WRITER_SERVICE, None)
-        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = self.printer = None
+        self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = self.printer = self.channels = None
 
     def get_router(self) -> APIRouter | None:
         return self._router
