@@ -1347,7 +1347,7 @@ export const en: Messages = {
     loadFailed: 'The automations could not be read.',
     triggers: { manual: 'On demand', event: 'Event', cron: 'Scheduled', interval: 'Periodic', webhook: 'Webhook', ipc: 'Plugin call' } as Record<string, string>,
     statuses: { pending: 'Queued', running: 'Running', success: 'Succeeded', failed: 'Failed', cancelled: 'Cancelled', paused: 'Paused', timeout: 'Timed out' } as Record<string, string>,
-    origins: { manual: 'By hand', event: 'Event', ipc: 'Transition / plugin', scheduler: 'Scheduled', webhook: 'Webhook' } as Record<string, string>,
+    origins: { manual: 'By hand', event: 'Event', ipc: 'Transition or plugin', scheduler: 'Scheduled', webhook: 'Incoming call' } as Record<string, string>,
   },
   billing: {
     payHeader: 'Paid module',

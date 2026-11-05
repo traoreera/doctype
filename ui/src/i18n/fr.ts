@@ -1343,9 +1343,9 @@ export const fr = {
     refresh: 'Actualiser',
     reserved: 'Réservé : il faut le droit de consulter les automatisations (xflow:workflows:read).',
     loadFailed: 'Les automatisations n’ont pas pu être lues.',
-    triggers: { manual: 'À la demande', event: 'Événement', cron: 'Planifié', interval: 'Périodique', webhook: 'Webhook', ipc: 'Appel de plugin' } as Record<string, string>,
+    triggers: { manual: 'À la demande', event: 'Événement', cron: 'Planifié', interval: 'Périodique', webhook: 'Appel entrant (webhook)', ipc: 'Appel de plugin' } as Record<string, string>,
     statuses: { pending: 'En file', running: 'En cours', success: 'Réussi', failed: 'Échoué', cancelled: 'Annulé', paused: 'En pause', timeout: 'Délai dépassé' } as Record<string, string>,
-    origins: { manual: 'À la main', event: 'Événement', ipc: 'Transition / plugin', scheduler: 'Planifié', webhook: 'Webhook' } as Record<string, string>,
+    origins: { manual: 'À la main', event: 'Événement', ipc: 'Transition ou plugin', scheduler: 'Planifié', webhook: 'Appel entrant' } as Record<string, string>,
   },
   billing: {
     payHeader: 'Module payant',
