@@ -41,6 +41,11 @@ jobs:
       XCORE_DOCTYPE_SKIP_DELIVERY: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Modules embarqués (vendor/)
+        run: make vendor-sync
 
       - uses: actions/setup-python@v5
         with:
@@ -97,6 +102,11 @@ jobs:
       XCORE_DOCTYPE_SKIP_E2E: "1"
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Modules embarqués (vendor/)
+        run: make vendor-sync
 
       - uses: actions/setup-python@v5
         with:

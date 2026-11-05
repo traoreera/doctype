@@ -20,5 +20,12 @@ alembic/
 alembic.ini
 /extensions/
 
+# Modules embarqués générés depuis vendor/ (sous-modules git) : `make vendor-sync`
+/src/xcore_doctype/platform/
+/src/xcore_doctype/ext/pubsub/
+/src/xcore_doctype/ext/xstorage/
+/src/xcore_doctype/ext/xwebsocket/
+/src/xcore_doctype/ext/xpay/
+
 # Arbres git des agents (worktrees) : jamais versionnés
 .claude/worktrees/

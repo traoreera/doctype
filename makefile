@@ -47,7 +47,13 @@ help: ## Afficher cette aide
 # ============================================================
 # 📦 Installation
 # ============================================================
-install: install-py install-ui ## Installer les dépendances Python (Poetry) et Node (pnpm)
+install: vendor-init vendor-sync install-py install-ui ## Installer les sous-modules (vendor/), les dépendances Python (Poetry) et Node (pnpm)
+
+vendor-init: ## Récupérer les sous-modules vendor/ (après un clone)
+	@git submodule update --init --recursive
+
+vendor-sync: ## Générer les modules embarqués depuis vendor/ (fait par dev, test et build)
+	@python3 scripts/sync_vendor.py
 
 install-py: ## Installer les dépendances Pythont-of-the-Box System Endpoint
 	@poetry install
@@ -76,7 +82,7 @@ dev: env $(UI)/node_modules ## Backend + frontend ensemble (Ctrl-C arrête les d
 	@echo "▶ backend  http://$(HOST):$(PORT)   ▶ frontend  http://localhost:$(UI_PORT)   ▶ connexion : ADMIN_EMAIL / ADMIN_PASSWORD de .env"
 	@$(MAKE) -j2 dev-backend dev-frontend
 
-dev-backend: env ## Backend seul : uvicorn + xcore, rechargé quand le Python ou un DocType (YAML) change
+dev-backend: vendor-sync env ## Backend seul : uvicorn + xcore, rechargé quand le Python ou un DocType (YAML) change
 	@[ "$(HOST)" = "127.0.0.1" ] || echo "⚠️  HOST=$(HOST) : le compte administrateur de .env (ADMIN_EMAIL, ADMIN_PASSWORD) est joignable depuis le réseau"
 	@$(LOAD_ENV); exec poetry run uvicorn main:app --host $(HOST) --port $(PORT) \
 		--reload --reload-dir src --reload-dir app --reload-include '*.yaml'
@@ -84,7 +90,7 @@ dev-backend: env ## Backend seul : uvicorn + xcore, rechargé quand le Python ou
 dev-frontend: $(UI)/node_modules ## Frontend seul : Vite avec rechargement à chaud (le backend doit tourner)
 	@DESK_API_URL=http://127.0.0.1:$(PORT) DESK_LOGIN_URL=/app/auth/login pnpm -C $(UI) dev --host 127.0.0.1 --port $(UI_PORT) --strictPort
 
-serve: build-ui env ## Desk CONSTRUIT servi par le backend (comme en livraison), sans rechargement
+serve: vendor-sync build-ui env ## Desk CONSTRUIT servi par le backend (comme en livraison), sans rechargement
 	@echo "▶ Desk  http://$(HOST):$(PORT)/app/xcore-doctype/desk/"
 	@$(LOAD_ENV); exec poetry run uvicorn main:app --host $(HOST) --port $(PORT)
 
@@ -101,20 +107,20 @@ token: env ## Jeton d'accès d'xauth (FIELD=tenant_id pour l'organisation) : le 
 build-ui: $(UI)/node_modules ## Construire le Desk dans src/xcore_doctype/ui/dist (types vérifiés)
 	@pnpm -C $(UI) build
 
-build: build-ui ## Construire le wheel avec le Desk embarqué (dist/)
+build: vendor-sync build-ui ## Construire le wheel avec le Desk embarqué (dist/)
 	@poetry build
 
 
 # ============================================================
 # 🧪 Tests
 # ============================================================
-test: ## Tous les tests Python (SQLite ; PostgreSQL ignoré sans PG_URL), navigateur et livraison compris
+test: vendor-sync ## Tous les tests Python (SQLite ; PostgreSQL ignoré sans PG_URL), navigateur et livraison compris
 	@poetry run pytest -q
 
-test-unit: ## Tests unitaires Python seuls (rapide)
+test-unit: vendor-sync ## Tests unitaires Python seuls (rapide)
 	@poetry run pytest tests/unit -q
 
-test-pg: ## Tous les tests Python aussi sur PostgreSQL (PG_URL=postgresql+asyncpg://user@host:port/base)
+test-pg: vendor-sync ## Tous les tests Python aussi sur PostgreSQL (PG_URL=postgresql+asyncpg://user@host:port/base)
 	@test -n "$(PG_URL)" || { echo "PG_URL manquant, ex. make test-pg PG_URL=postgresql+asyncpg://postgres@127.0.0.1:54329/xdt"; exit 1; }
 	@XCORE_DOCTYPE_TEST_PG_URL='$(PG_URL)' poetry run pytest -q
 
@@ -124,13 +130,13 @@ test-ui: $(UI)/node_modules ## Tests du Desk (vitest)
 typecheck-ui: $(UI)/node_modules ## Vérification de types du Desk (vue-tsc)
 	@pnpm -C $(UI) typecheck
 
-e2e: build-ui ## Scénario navigateur seul : vrai Chromium contre un vrai hôte (Desk reconstruit d'abord)
+e2e: vendor-sync build-ui ## Scénario navigateur seul : vrai Chromium contre un vrai hôte (Desk reconstruit d'abord)
 	@poetry run pytest tests/e2e -v
 
-install-check: build-ui ## Le wheel dans un venv vierge + une instance xcore neuve (xcli init) : le critère de livraison
+install-check: vendor-sync build-ui ## Le wheel dans un venv vierge + une instance xcore neuve (xcli init) : le critère de livraison
 	@poetry run pytest tests/delivery -v
 
-check: build-ui test test-ui ## Tout vérifier : types, build, tests Python (e2e et livraison compris) et tests du Desk
+check: vendor-sync build-ui test test-ui ## Tout vérifier : types, build, tests Python (e2e et livraison compris) et tests du Desk
 
 expr-vectors: ## Régénérer tests/vectors/expr_asts.json après un changement de la grammaire des conditions
 	@poetry run python scripts/gen_expr_asts.py
@@ -152,6 +158,7 @@ clean-all: clean clean-ui ## clean + clean-ui + node_modules (puis `make install
 
 .PHONY: help install install-py install-ui env \
         dev dev-backend dev-frontend serve token member \
+        vendor-init vendor-sync \
         build-ui build \
         test test-unit test-pg test-ui typecheck-ui e2e install-check check expr-vectors \
         clean clean-ui clean-all

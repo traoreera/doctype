@@ -1,0 +1,30 @@
+[submodule "vendor/auth"]
+	path = vendor/auth
+	url = https://github.com/traoreera/Orchauth.git
+[submodule "vendor/xflow"]
+	path = vendor/xflow
+	url = https://github.com/xcore-team/xcore-flows.git
+[submodule "vendor/xlicense"]
+	path = vendor/xlicense
+	url = https://github.com/xcore-team/XLicense.git
+[submodule "vendor/xpulse"]
+	path = vendor/xpulse
+	url = https://github.com/Donna-hub-s/xpulses.git
+[submodule "vendor/xprint"]
+	path = vendor/xprint
+	url = https://github.com/traoreera/xprint.git
+[submodule "vendor/pubsub"]
+	path = vendor/pubsub
+	url = https://github.com/traoreera/extpubsub.git
+[submodule "vendor/xstorage"]
+	path = vendor/xstorage
+	url = https://github.com/traoreera/extxstorage.git
+[submodule "vendor/xwebsocket"]
+	path = vendor/xwebsocket
+	url = https://github.com/xcore-team/xwebsocket.git
+[submodule "vendor/xpay"]
+	path = vendor/xpay
+	url = https://github.com/traoreera/xpay.git
+[submodule "vendor/xmailler"]
+	path = vendor/xmailler
+	url = https://github.com/xcore-team/xmailler.git
