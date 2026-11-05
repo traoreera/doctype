@@ -27,6 +27,9 @@ class WorkflowRegistryService:
         return await self.register(tenant_id, definition)
 
     async def register(self, tenant_id: str, definition: WorkflowDefinition) -> WorkflowDefinition:
+        if self._scheduler is not None and definition.trigger.type != TriggerType.SCHEDULE:
+            # Un flux planifié redéployé avec un autre déclencheur (« Modifier » dans le Desk) : son ancien job s'arrête.
+            await self._scheduler.unregister_by_workflow(tenant_id, definition.name)
         if (
             definition.trigger.type == TriggerType.SCHEDULE
             and self._scheduler is not None
@@ -46,7 +49,7 @@ class WorkflowRegistryService:
             return None
 
         if self._scheduler is not None:
-            await self._scheduler.unregister_by_workflow(workflow_name)
+            await self._scheduler.unregister_by_workflow(tenant_id, workflow_name)
 
         await self._store.delete_definition(tenant_id, workflow_name)
         logger.info("Workflow '%s' supprimé (tenant=%s).", workflow_name, tenant_id)

@@ -68,6 +68,26 @@ def _tenant_of(user: Any) -> str:
     return str(tenant)
 
 
+def _merged_actions(from_file: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Le catalogue des actions qu'une étape peut appeler. Celui d'xflow vient d'un FICHIER (`schemas.json`, écrit par
+    `xcli plugin security validate --save`) presque toujours absent : l'éditeur du Desk n'avait alors rien à proposer. On y ajoute le
+    registre VIVANT d'xcore, où chaque plugin chargé inscrit ses actions (`AutoDispatchMixin`), le fichier gagnant sur un doublon."""
+    out = {a.get("qualified_name"): a for a in from_file if a.get("qualified_name")}
+    try:
+        from xcore.kernel.schema.registry import schema_registry
+        live = schema_registry.all()
+    except Exception:  # noqa: BLE001 - un registre illisible : le catalogue du fichier seul
+        live = []
+    for sch in live:
+        key = f"{sch.plugin}.{sch.action}"
+        out.setdefault(key, {
+            "qualified_name": key, "plugin": sch.plugin, "action": sch.action, "version": sch.version or "",
+            "description": sch.description or "", "input_schema": {k: str(v) for k, v in (sch.input or {}).items()},
+            "output_schema": {k: str(v) for k, v in (sch.output or {}).items()},
+        })
+    return sorted(out.values(), key=lambda a: a["qualified_name"])
+
+
 def _context_tenant() -> Optional[str]:
     """L'organisation de l'appel en cours (posée par xcore pour un appel de plugin ou une requête), ou None."""
     try:
@@ -543,7 +563,7 @@ class Plugin(RoutedPlugin, AutoDispatchMixin, TrustedBase):
     @action("registry")
     @schema(version="1.0", output={"actions": list})
     async def ipc_registry(self, payload: Dict[str, Any]) -> dict:
-        return self._ok(actions=self._discovery.list_available_actions())
+        return self._ok(actions=_merged_actions(self._discovery.list_available_actions()))
 
     @action("ai_generate")
     @schema(
@@ -676,7 +696,8 @@ class Plugin(RoutedPlugin, AutoDispatchMixin, TrustedBase):
         return await self.ipc_cancel_run({"tenant_id": _tenant_of(users), "run_id": run_id})
 
     @route("/registry", method="GET", tags=["xflow"])
-    async def http_registry(self) -> dict:
+    async def http_registry(self, users: AuthPayload = Depends(require_permission("xflow:workflows:read"))) -> dict:
+        # Le catalogue des actions appelables : réservé à qui lit les automatisations (il était servi sans identité).
         return await self.ipc_registry({})
 
     @route("/flows/{workflow_name}/webhook", method="GET", tags=["xflow"])

@@ -118,3 +118,23 @@ async def test_config_json_announces_automations_only_when_xflow_is_loaded(tmp_p
         assert (await h.client.get(f"{h.base}/desk/config.json")).json()["automations"] is True
     async with boot_host(tmp_path / "sans", operator_doctypes=False) as h:
         assert (await h.client.get(f"{h.base}/desk/config.json")).json()["automations"] is False
+
+
+async def test_the_desk_s_editor_cycle_catalogue_deploy_edit_delete(tmp_path):
+    """Ce que fait Paramètres › Automatisations : le catalogue des actions (complété par le registre VIVANT d'xcore, le fichier
+    d'xflow étant absent), déployer, redéployer sous le même nom (modifier), supprimer. Le catalogue exige une identité."""
+    async with await _host(tmp_path, {}) as h:
+        writer = h.token(sub="alice", permissions=["xflow:workflows:read", "xflow:workflows:write"])
+        url = f"{h.prefix}/xflow"
+        assert (await h.client.get(f"{url}/registry")).status_code in (401, 403)
+        names = {a["qualified_name"] for a in (await h.client.get(f"{url}/registry", headers=h.headers(writer, "acme"))).json()["actions"]}
+        assert {"xcore-doctype.doc.save", "xcore-doctype.doc.submit"} <= names
+        flow = {**FLOW, "description": "v1"}
+        assert (await h.client.post(f"{url}/flows", json=flow, headers=h.headers(writer, "acme"))).json()["status"] in ("ok", "success")
+        assert (await h.client.post(f"{url}/flows", json={**flow, "description": "v2"}, headers=h.headers(writer, "acme"))).json()["status"] in ("ok", "success")
+        listed = (await h.client.get(f"{url}/flows", headers=h.headers(writer, "acme"))).json()["workflows"]
+        assert [(f["name"], f["description"]) for f in listed] == [("suivi", "v2")]  # un seul flux, modifié
+        stored = (await h.client.get(f"{url}/flows/suivi", headers=h.headers(writer, "acme"))).json()["workflow"]
+        assert stored["deployed_by"] == "alice" and stored["steps"][0]["action"] == "doc.save"
+        assert (await h.client.delete(f"{url}/flows/suivi", headers=h.headers(writer, "acme"))).json()["status"] in ("ok", "success")
+        assert (await h.client.get(f"{url}/flows", headers=h.headers(writer, "acme"))).json()["workflows"] == []
