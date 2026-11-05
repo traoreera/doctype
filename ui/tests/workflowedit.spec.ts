@@ -11,7 +11,7 @@ const DEF: WorkflowDef = {
   ],
   transitions: [
     { action: 'Soumettre', from: 'Brouillon', to: 'À approuver' },
-    { action: 'Approuver', from: 'À approuver', to: 'Approuvé', not_owner: true },
+    { action: 'Approuver', from: 'À approuver', to: 'Approuvé', not_owner: true, flow: 'commande_fournisseur' },
     { action: 'Refuser', from: 'À approuver', to: 'Refusé', condition: 'motif' },
   ],
 }
@@ -27,6 +27,11 @@ describe('les lignes de l’éditeur d’automate', () => {
   it('montrent coché et VERROUILLÉ ce que le YAML impose déjà (le serveur refuse qu’on y touche)', () => {
     const [, approve] = flowRows(DEF, {})
     expect(approve).toMatchObject({ action: 'Approuver', locked: true, notOwner: true })
+  })
+
+  it('disent quel flux xflow suit une transition (le YAML seul le décide : l’organisation ne le change pas)', () => {
+    const rows = flowRows(DEF, { transitions: { Approuver: { closed: true } } })
+    expect(rows.map((r) => r.flow)).toEqual([null, 'commande_fournisseur', null])
   })
 
   it('sans habillage ni automate, il n’y a rien à montrer', () => {

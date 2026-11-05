@@ -1,5 +1,5 @@
 import { inject, type InjectionKey } from 'vue'
-import type { ApiClient } from './api'
+import type { ApiClient, PluginClient } from './api'
 import type { DeskConfig } from './config'
 import type { RealtimeClient } from './realtime'
 import type { TabSync } from './tabsync'
@@ -19,6 +19,8 @@ export interface Services {
   license?: XlicenseClient | null
   /** Le temps réel par xpulse (`lib/realtime.ts`) : cloche et documents en direct ; `null`/absent = le Desk relit comme avant. */
   realtime?: RealtimeClient | null
+  /** Les routes d'xflow (`<préfixe>/xflow/…`) avec la session, quand `config.json` annonce `automations` ; `null` sinon. */
+  automations?: PluginClient | null
   /** Ce que les onglets d'une même session se passent (jeton de renouvellement, déconnexion) ; défaut : le navigateur (`lib/tabsync`). */
   tabs?: TabSync
 }

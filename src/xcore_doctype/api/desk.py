@@ -187,6 +187,7 @@ def build_desk_router(
     catch_all: bool = True,
     realtime: Callable[[], bool] | None = None,
     extensions_from: bool = False,
+    automations: Callable[[], bool] | None = None,
 ) -> APIRouter:
     """Les routes du Desk sous `at` (`/desk` dans le plugin ; `/` ou un autre chemin pour `mount_desk`).
 
@@ -252,6 +253,7 @@ def build_desk_router(
                 "extensions": [{"name": e.name, "url": e.url} for e in extensions.served()],
                 "developer": settings.developer_mode,  # le Desk n'offre le constructeur de DocTypes que si l'opérateur l'a ouvert
                 "realtime": bool(realtime and realtime()),  # le flux d'xpulse existe : le Desk ne le demande que dans ce cas
+                "automations": bool(automations and automations()),  # xflow est chargé : Paramètres › Automatisations existe
                 # Monté hors du plugin : le Desk lit la liste des extensions (et `realtime`) dans le `config.json` du PLUGIN.
                 **({"extensions_from": f"{served}/desk/config.json"} if extensions_from else {}),
             },

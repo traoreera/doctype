@@ -446,6 +446,16 @@ Deux moteurs, deux métiers, une couture nette :
   justement se déclencher sur un événement (`TriggerType.EVENT`). Le moteur dit *ce qui est arrivé* ; xflow décide *ce qu'on en
   fait*. Aucun des deux n'a besoin de connaître l'intérieur de l'autre.
 
+**Fait le 5 novembre 2026.** xflow est livré AVEC le moteur (`src/xcore_doctype/platform/xflow`, posé par `install`) et une
+transition le nomme (`flow:` dans le YAML, `flows.py`) : lancé après le commit, au nom de l'acteur, sans jamais défaire la transition
+(`docs/guide.md` §3.8 ; preuve de bout en bout sur un vrai hôte : `tests/integration/test_xflow_host.py`, l'étape écrit avec
+`owner = l'approbateur`). En le faisant tourner hors d'`app/xflows`, sept défauts d'xflow sont apparus et ont été corrigés : sa chaîne
+Alembic importait `app.xflows` (refus de démarrer en production ailleurs) ; ses permissions nommaient `xflow.trigger` &co alors que
+ses actions s'appellent `trigger`… (TOUTES refusées) ; deux `@action` empilés n'enregistraient qu'un nom (`trigger`, `deploy`,
+`list_runs`, `pause` n'existaient pas) ; `allowed_callers: [xform]` refusait le moteur ; la charge utile choisissait l'organisation
+(un plugin lançait les flux d'une autre) ; `deployed_by` pouvait venir du corps (un run planifié au nom de n'importe qui) ; un run
+d'ÉVÉNEMENT partait sans identité. Restent : l'attente non durable (`wait` en mémoire, `wait_for_event` non implémenté).
+
 ### 3.4 Rendre `xflow` multi-tenant et identifié (23 octobre 2026)
 
 Décision de l'utilisateur : « je veux un moteur générique et général au lieu de tout refaire ». L'examen donne raison à cette

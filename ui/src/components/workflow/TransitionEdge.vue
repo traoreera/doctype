@@ -7,7 +7,7 @@ import type { TransitionEdge } from '@/lib/workflowgraph'
 /**
  * Une transition : une flèche, et son action en étiquette. L'étiquette est un BOUTON (choisir la transition au clavier), et porte ce
  * qui la resserre : barrée et en pointillés si l'organisation l'a fermée, un filtre si une condition s'applique (de l'application ou de
- * l'organisation), un cadenas si l'auteur du document ne peut pas la faire.
+ * l'organisation), un cadenas si l'auteur du document ne peut pas la faire, un éclair si elle lance un flux xflow.
  */
 const props = defineProps<{
   id: string
@@ -47,6 +47,7 @@ const conditioned = computed(() => !!props.data.condition || !!props.data.yamlCo
       {{ data.action }}
       <span v-if="conditioned" class="pi pi-filter" :title="t.flowOverride.condition" aria-hidden="true" />
       <span v-if="data.notOwner" class="pi pi-lock" :title="t.flowOverride.notOwner" aria-hidden="true" />
+      <span v-if="data.flow" class="pi pi-bolt" :title="`${t.workflowBuilder.flow} : ${data.flow}`" aria-hidden="true" data-testid="wf-edge-flow" />
     </button>
   </EdgeLabelRenderer>
 </template>

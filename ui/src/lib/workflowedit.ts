@@ -24,6 +24,8 @@ export interface FlowRow {
   closed: boolean
   condition: string
   notOwner: boolean
+  /** Le flux xflow lancé après la transition (YAML), ou null. */
+  flow: string | null
 }
 
 const tweaks = (config: WorkflowOverride | null | undefined): Record<string, TransitionTweak> =>
@@ -43,6 +45,7 @@ export function flowRows(definition: WorkflowDef | null | undefined, config: Wor
       closed: mine.closed === true,
       condition: typeof mine.condition === 'string' ? mine.condition : '',
       notOwner: t.not_owner === true || mine.not_owner === true,
+      flow: t.flow ?? null,
     }
   })
 }

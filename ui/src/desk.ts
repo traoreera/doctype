@@ -102,7 +102,31 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
     },
     onUnauthorized: async () => (await useSession(pinia).refresh()) === 'ok',
   })
-  const services: Services = { transport, config, api, auth, license, realtime }
+  // Le client des routes HTTP d'UN plugin (`<préfixe>/<plugin>/…`) avec la session du Desk : celui des extensions (D28), et celui
+  // des automatisations (xflow, seulement s'il est annoncé par `config.json`).
+  const plugins = new Map<string, PluginClient>()
+  function pluginClient(name: string): PluginClient {
+    let client = plugins.get(name)
+    if (!client) {
+      client = new PluginClient(
+        transport,
+        () => {
+          const s = useSession(pinia)
+          return { baseUrl: pluginBase(config.baseUrl, name), token: s.token, tenant: s.tenant }
+        },
+        async () => {
+          const s = useSession(pinia)
+          if ((await s.refresh()) === 'ok') return true
+          s.expire()
+          return false
+        },
+      )
+      plugins.set(name, client)
+    }
+    return client
+  }
+  const automations = config.automations ? pluginClient('xflow') : null
+  const services: Services = { transport, config, api, auth, license, realtime, automations }
 
   const router = createDeskRouter(pinia)
   const app = createApp(App)
@@ -114,32 +138,12 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
   app.use(ConfirmationService)
 
   // Les extensions des plugins (D28) : leurs appels passent par la même session que le Desk, leurs notifications par la même file.
-  const plugins = new Map<string, PluginClient>()
   const extensions = new ExtensionHost({
     api,
     router,
     realtime,
     notify: app.runWithContext(() => useNotify()),
-    plugin(name) {
-      let client = plugins.get(name)
-      if (!client) {
-        client = new PluginClient(
-          transport,
-          () => {
-            const s = useSession(pinia)
-            return { baseUrl: pluginBase(config.baseUrl, name), token: s.token, tenant: s.tenant }
-          },
-          async () => {
-            const s = useSession(pinia)
-            if ((await s.refresh()) === 'ok') return true
-            s.expire()
-            return false
-          },
-        )
-        plugins.set(name, client)
-      }
-      return client
-    },
+    plugin: pluginClient,
   })
   app.provide(EXTENSIONS, extensions)
 

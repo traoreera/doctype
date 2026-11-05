@@ -40,7 +40,7 @@ Elle écrit :
 |---|---|---|
 | `app/xcore-doctype/` | le moteur (`plugin.yaml` + un petit `src/main.py`) | le code oui, **`plugin.yaml` non** (c'est votre copie, gardée sauf `--force`) |
 | `app/system/` | les réglages de base (`System Settings`), les règles de notification, les restrictions d'utilisateur | oui (un fichier que vous y ajoutez est gardé, avec un avertissement) |
-| `app/xlicense/`, `app/xpulse/`, `app/xprint/` | la plateforme : licences/modules, temps réel, gabarits d'impression des pièces ERP | le code oui, `plugin.yaml` non |
+| `app/xlicense/`, `app/xpulse/`, `app/xprint/`, `app/xflow/` | la plateforme : licences/modules, temps réel, gabarits d'impression des pièces ERP, automatisations | le code oui, `plugin.yaml` non |
 
 Puis elle affiche un diagnostic (`xcore-doctype doctor` le refait à tout moment) : base synchrone, `xcore.setup(app)` manquant,
 tenancy incohérente, plugin `auth` absent, manifeste qui ferme encore les extensions…
@@ -553,6 +553,57 @@ setup(desk) {
 Ce que `setup` écoute est retiré avec l'extension. Dans un composant, `useDesk().realtime.on(...)` renvoie de quoi se désabonner, à
 appeler dans `onUnmounted`. `'*'` reçoit tous les types. Sans xpulse (`desk.realtime.available === false`), rien n'arrive et rien
 n'échoue. Le canal `ext.websocket` existe aussi côté serveur, mais le Desk ne l'utilise pas : SSE suffit pour pousser vers le navigateur.
+
+### 3.8 Le workflow et ses automatisations (xflow)
+
+Deux moteurs, chacun son métier :
+
+- **le workflow du moteur** garde l'ÉTAT du document : états, qui a le droit de transiter (un grant par transition), `not_owner`,
+  conditions, gel au `docstatus`, boutons de la fiche. Il vit dans le YAML du DocType et dans la même transaction que le document ;
+- **xflow** (plugin de plateforme, posé par `install`) orchestre ce qui SUIT : appeler des actions d'autres plugins, conditions,
+  boucles, réessais, cron, webhooks, journal de chaque exécution.
+
+Une transition nomme le flux qui la suit :
+
+```yaml
+workflow:
+  states: [{name: Brouillon}, {name: Approuvée, docstatus: submitted}]
+  transitions:
+    - {action: Approuver, from: Brouillon, to: Approuvée, not_owner: true, flow: commande_fournisseur}
+```
+
+Après le COMMIT de l'approbation, le moteur demande à xflow `trigger` (action IPC) de lancer `commande_fournisseur` dans
+l'organisation, **au nom de qui a approuvé** : xflow ne garde que son identifiant et redemande ses droits à xauth
+(`xauth.user.permissions`) quand le flux tourne. Le flux reçoit `trigger.doctype`, `trigger.name`, `trigger.version`,
+`trigger.action`, `trigger.from`, `trigger.to`, `trigger.user` — jamais le contenu : une étape qui en a besoin le relit par `doc.get`.
+Un flux absent, en panne ou refusé est journalisé (`flow not started`, `flow refused`) ; **l'approbation reste faite**. Seul le NOM du
+flux se vérifie au chargement : un flux se déploie par organisation chez xflow.
+
+Le flux se déploie par l'API d'xflow (droit `xflow:workflows:write`) :
+
+```bash
+curl -X POST "$BASE/app/xflow/flows" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{
+  "name": "commande_fournisseur",
+  "trigger": {"type": "manual"},
+  "steps": [{
+    "id": "creer", "type": "action", "plugin": "xcore-doctype", "action": "doc.save",
+    "payload": {"doctype": "Purchase Order", "data": {"demande": "{{ trigger.name }}"}}
+  }]
+}'
+```
+
+L'étape `doc.save` écrit avec les droits de l'approbateur : sans `achats:purchase_order:write`, elle échoue (et l'exécution le dit),
+elle ne contourne rien. Les autres déclencheurs d'xflow restent disponibles : un **événement** du bus (`doctype.<Type>.after_submit`,
+`after_transition`…) ou un **cron**, qui s'exécutent au nom de qui a DÉPLOYÉ le flux.
+
+Dans le Desk : l'éditeur de circuit (« ⋯ › Circuit d'approbation ») marque d'un éclair une transition qui lance un flux, et
+**Paramètres › Automatisations** liste les flux de l'organisation, leurs dernières exécutions (état, origine, erreur) et lance un flux
+« à la demande ». Réglage : `doctype.flows: false` dans le manifeste du moteur coupe les lancements ; `{plugin, action}` les envoie
+ailleurs.
+
+**Ce qu'il faut côté xauth** : l'action IPC `xauth.user.permissions` (les grants d'un membre), avec `xflow` dans ses
+`allowed_callers`. **Limites connues** : l'étape `wait` d'xflow attend en mémoire (un redémarrage l'interrompt) et `wait_for_event` n'est pas implémenté ; la liste des exécutions renvoie le résultat de chaque étape à qui a
+`xflow:runs:read` (l'écran ne l'affiche pas).
 
 ---
 

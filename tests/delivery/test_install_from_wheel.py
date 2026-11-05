@@ -215,7 +215,7 @@ class TestRunningInstance:
         assert js.status_code == 200 and js.headers["content-type"].startswith("text/javascript")
         conf = httpx.get(f"{running}/desk/config.json").json()
         # xauth est l'authentification par défaut ; les extensions du Desk sont servies d'office (la liste, c'est le code des plugins).
-        assert {k: v for k, v in conf.items() if k != "extensions"} == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login", "developer": False, "realtime": False}
+        assert {k: v for k, v in conf.items() if k != "extensions"} == {"api_base": "/app/xcore-doctype", "login_url": "/app/auth/login", "developer": False, "realtime": False, "automations": False}
         assert all(e["url"].startswith(f"ext/{e['name']}/index.js?v=") for e in conf["extensions"])
 
     def test_the_api_needs_an_identity(self, running):

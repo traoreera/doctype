@@ -260,7 +260,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root.include_router(build_public_files_router(file_service))  # servir : la signature de l'URL fait foi (pas de jeton dans une balise <img>)
         desk_extensions = DeskExtensions(desk.extensions, self.logger)  # D28 : ce que les plugins livrent au Desk, filtré par l'opérateur
         if desk.enabled:
-            root.include_router(build_desk_router(desk, desk_extensions, realtime=self._realtime_served))
+            root.include_router(build_desk_router(desk, desk_extensions, realtime=self._realtime_served, automations=self._automations_served))
         self._router = root
         # Les plugins qui dépendent de nous (`requires: [xcore-doctype]`) y enregistrent leurs hooks de confiance...
         self.ctx.services[HOOKS_SERVICE] = hook_registry
@@ -344,6 +344,14 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         try:
             return bool(registry is not None and registry.has(XPULSE))
         except Exception:  # noqa: BLE001 - un registre illisible : pas de temps réel annoncé, le Desk relit comme avant
+            return False
+
+    def _automations_served(self) -> bool:
+        """Le Desk peut montrer les automatisations : le plugin `xflow` est chargé (jugé à chaque `config.json`, comme xpulse)."""
+        registry = getattr(self.ctx, "registry", None)
+        try:
+            return bool(registry is not None and registry.has("xflow"))
+        except Exception:  # noqa: BLE001
             return False
 
     def _blob_store(self, raw: Any) -> BlobStore:

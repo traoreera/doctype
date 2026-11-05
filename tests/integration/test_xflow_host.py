@@ -111,3 +111,10 @@ async def test_an_xflow_action_naming_another_organisation_is_refused(tmp_path):
         token = h.token(sub="alice", permissions=["xflow:workflows:read"])
         refused = await h.action("list_workflows", {"tenant_id": "globex"}, token=token, tenant="acme", plugin="xflow")
         assert refused.get("status") == "error" and refused.get("code") == "tenant_mismatch", refused
+
+
+async def test_config_json_announces_automations_only_when_xflow_is_loaded(tmp_path):
+    async with await _host(tmp_path, {}) as h:
+        assert (await h.client.get(f"{h.base}/desk/config.json")).json()["automations"] is True
+    async with boot_host(tmp_path / "sans", operator_doctypes=False) as h:
+        assert (await h.client.get(f"{h.base}/desk/config.json")).json()["automations"] is False
