@@ -9,6 +9,7 @@ import type { TransitionEdge } from '@/lib/workflowgraph'
  * qui la resserre : barrée et en pointillés si l'organisation l'a fermée, un filtre si une condition s'applique (de l'application ou de
  * l'organisation), un cadenas si l'auteur du document ne peut pas la faire, un éclair si elle lance un flux xflow.
  */
+defineOptions({ inheritAttrs: false })
 const props = defineProps<{
   id: string
   sourceX: number

@@ -1,0 +1,622 @@
+# Plan comptable de KOUNANDY TRANSPORT : codes de compte SAGE 100 Comptabilité i7 (export du 04/11/26, 370 comptes à 8 chiffres),
+# rattachés à la hiérarchie SYSCOHADA révisé (classes, comptes à 2 et 3 chiffres) de syscohada_revise.yaml.
+#
+# - les comptes feuilles portent le NUMÉRO SAGE tel qu'exporté et son intitulé Sage (tronqué par l'export à ~40 caractères) ;
+# - `parent` = le compte SYSCOHADA à 3 chiffres (à 2 chiffres quand le plan n'en a pas) : voir correspondance_sage_syscohada.xlsx ;
+# - `root_type` / `report_type` hérités du parent ; `account_type` hérité du premier ancêtre qui en porte un, posé sur les feuilles
+#   seulement (les groupes n'en ont pas) ;
+# - seuls les groupes ayant au moins un compte Sage sont repris ; les anomalies du plan Sage sont signalées en commentaire et
+#   NON corrigées, pour que les numéros restent ceux de Sage.
+# À FAIRE VALIDER PAR UN EXPERT-COMPTABLE AVANT LA PRODUCTION.
+chart: SYSCOHADA révisé - KOUNANDY TRANSPORT (codes Sage)
+version: 2017
+accounts:
+  # ── Classe 1 : ressources durables ──
+  - {number: "1", name: "Comptes de ressources durables", group: true}
+  - {number: "10", name: "Capital", group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "101", name: "Capital social", group: true, parent: "10", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10110000", name: "Capital souscrit non appelé", parent: "101", root_type: Equity, report_type: Balance Sheet, account_type: Equity}
+  - {number: "10120000", name: "Capital souscrit appelé non versé", parent: "101", root_type: Equity, report_type: Balance Sheet, account_type: Equity}
+  - {number: "10130000", name: "Capital souscrit appelé versé non a", parent: "101", root_type: Equity, report_type: Balance Sheet, account_type: Equity}
+  - {number: "10140000", name: "Capital souscrit appelé versé amort", parent: "101", root_type: Equity, report_type: Balance Sheet, account_type: Equity}
+  - {number: "105", name: "Primes liées au capital social", group: true, parent: "10", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10510000", name: "Primes d'émission", parent: "105", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10520000", name: "Primes d'apport", parent: "105", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10530000", name: "Primes de fusion", parent: "105", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10540000", name: "Primes de conversion d'obligations", parent: "105", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10580000", name: "Autres primes", parent: "105", root_type: Equity, report_type: Balance Sheet}
+  - {number: "106", name: "Écarts de réévaluation", group: true, parent: "10", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10610000", name: "Écarts de réévaluation légale", parent: "106", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10620000", name: "Ecart de réévaluation libre", parent: "106", root_type: Equity, report_type: Balance Sheet}
+  - {number: "109", name: "Apporteurs, capital souscrit non appelé", group: true, parent: "10", root_type: Equity, report_type: Balance Sheet}
+  - {number: "10900000", name: "APPORTEURS CAPITAL SOUSCRIT NON APP", parent: "109", root_type: Equity, report_type: Balance Sheet}
+  - {number: "11", name: "Réserves", group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "11000000", name: "Réserves", parent: "11", root_type: Equity, report_type: Balance Sheet}
+  - {number: "12", name: "Report à nouveau", group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "121", name: "Report à nouveau créditeur", group: true, parent: "12", root_type: Equity, report_type: Balance Sheet}
+  - {number: "12100000", name: "Report à nouveau créditeurs", parent: "121", root_type: Equity, report_type: Balance Sheet}
+  - {number: "129", name: "Report à nouveau débiteur", group: true, parent: "12", root_type: Equity, report_type: Balance Sheet}
+  - {number: "12900000", name: "Report à nouveau débiteurs", parent: "129", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13", name: "Résultat net de l'exercice", group: true, parent: "1", root_type: Equity, report_type: Balance Sheet}
+  - {number: "130", name: "Résultat en instance d'affectation", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13000000", name: "Résultat en instance d'affectation", parent: "130", root_type: Equity, report_type: Balance Sheet}
+  - {number: "131", name: "Résultat net : bénéfice", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13100000", name: "RÉSULTAT NET BÉNÉFICE", parent: "131", root_type: Equity, report_type: Balance Sheet}
+  - {number: "132", name: "Marge commerciale (MC)", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13200000", name: "MARGE COMMERCIALE (MC)", parent: "132", root_type: Equity, report_type: Balance Sheet}
+  - {number: "133", name: "Valeur ajoutée (VA)", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13300000", name: "VALEUR AJOUTÉE (V A )", parent: "133", root_type: Equity, report_type: Balance Sheet}
+  - {number: "134", name: "Excédent brut d'exploitation (EBE)", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13400000", name: "EXCÉDENT BRUT D'EXPLOITATION (E B E", parent: "134", root_type: Equity, report_type: Balance Sheet}  # ANOMALIE : intitulé EBE en double (135 = résultat d'exploitation)
+  - {number: "135", name: "Résultat d'exploitation (RE)", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13500000", name: "EXCÉDENT BRUT D'EXPLOITATION (E B E", parent: "135", root_type: Equity, report_type: Balance Sheet}  # ANOMALIE : intitulé EBE en double (135 = résultat d'exploitation)
+  - {number: "136", name: "Résultat financier (RF)", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13600000", name: "RÉSULTAT FINANCIER (R F )", parent: "136", root_type: Equity, report_type: Balance Sheet}
+  - {number: "137", name: "Résultat des activités ordinaires (RAO)", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13700000", name: "RÉSULTAT DES ACTIVITÉS ORDINAIRES (", parent: "137", root_type: Equity, report_type: Balance Sheet}
+  - {number: "139", name: "Résultat net : perte", group: true, parent: "13", root_type: Equity, report_type: Balance Sheet}
+  - {number: "13900000", name: "RESULTAT NET - PERTE", parent: "139", root_type: Equity, report_type: Balance Sheet}
+  - {number: "16", name: "Emprunts et dettes assimilées", group: true, parent: "1", root_type: Liability, report_type: Balance Sheet}
+  - {number: "161", name: "Emprunts obligataires", group: true, parent: "16", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16110000", name: "Emprunts obligataires ordinaires", parent: "161", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16120000", name: "Emprunts obligataires convertibles", parent: "161", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16130000", name: "Emprunts obligataires remboursables", parent: "161", root_type: Liability, report_type: Balance Sheet}
+  - {number: "162", name: "Emprunts et dettes auprès des établissements de crédit", group: true, parent: "16", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16200000", name: "EMPRUNTS ET DETTES AUPRES DES ÉTABL", parent: "162", root_type: Liability, report_type: Balance Sheet}
+  - {number: "163", name: "Avances reçues de l'État", group: true, parent: "16", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16300000", name: "AVANCES REÇUES DE L'ÉTAT", parent: "163", root_type: Liability, report_type: Balance Sheet}
+  - {number: "164", name: "Avances reçues et comptes courants bloqués", group: true, parent: "16", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16400000", name: "AVANCES REÇUES ET COMPTES COURANTS", parent: "164", root_type: Liability, report_type: Balance Sheet}
+  - {number: "165", name: "Dépôts et cautionnements reçus", group: true, parent: "16", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16500000", name: "DÉPÔTS ET CAUTIONNEMENTS REÇUS", parent: "165", root_type: Liability, report_type: Balance Sheet}
+  - {number: "166", name: "Intérêts courus", group: true, parent: "16", root_type: Liability, report_type: Balance Sheet}
+  - {number: "16620000", name: "Intérêts courusSur emprunts et dett", parent: "166", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19", name: "Provisions pour risques et charges", group: true, parent: "1", root_type: Liability, report_type: Balance Sheet}
+  - {number: "191", name: "Provisions pour litiges", group: true, parent: "19", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19100000", name: "PROVISIONS POUR LITIGES", parent: "191", root_type: Liability, report_type: Balance Sheet}
+  - {number: "192", name: "Provisions pour garanties données aux clients", group: true, parent: "19", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19200000", name: "PROVISIONS POUR GARANTIES DONNÉES A", parent: "192", root_type: Liability, report_type: Balance Sheet}
+  - {number: "193", name: "Provisions pour pertes sur marchés à achèvement futur", group: true, parent: "19", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19300000", name: "PROVISIONS POUR PERTES SUR MARCHÉS", parent: "193", root_type: Liability, report_type: Balance Sheet}
+  - {number: "194", name: "Provisions pour pertes de change", group: true, parent: "19", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19400000", name: "PROVISIONS POUR PERTES DE CHANGE", parent: "194", root_type: Liability, report_type: Balance Sheet}
+  - {number: "195", name: "Provisions pour impôts", group: true, parent: "19", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19500000", name: "PROVISIONS POUR IMPÔTS", parent: "195", root_type: Liability, report_type: Balance Sheet}
+  - {number: "196", name: "Provisions pour pensions et obligations similaires", group: true, parent: "19", root_type: Liability, report_type: Balance Sheet}
+  - {number: "19600000", name: "PROVISIONS POUR PENSIONS ET OBLIGAT", parent: "196", root_type: Liability, report_type: Balance Sheet}
+
+  # ── Classe 2 : actif immobilisé ──
+  - {number: "2", name: "Comptes d'actif immobilisé", group: true, root_type: Asset, report_type: Balance Sheet}
+  - {number: "21", name: "Immobilisations incorporelles", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "211", name: "Frais de développement", group: true, parent: "21", root_type: Asset, report_type: Balance Sheet}
+  - {number: "21100000", name: "FRAIS DE DÉVELOPPEMENT", parent: "211", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "212", name: "Brevets, licences, concessions et droits similaires", group: true, parent: "21", root_type: Asset, report_type: Balance Sheet}
+  - {number: "21210000", name: "Brevets", parent: "212", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "21220000", name: "Licences", parent: "212", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "21230000", name: "Concessions de service public", parent: "212", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "21280000", name: "Autres concessions et droits simila", parent: "212", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "213", name: "Logiciels et sites internet", group: true, parent: "21", root_type: Asset, report_type: Balance Sheet}
+  - {number: "21310000", name: "Logiciels", parent: "213", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "21320000", name: "Sites internet", parent: "213", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "22", name: "Terrains", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "222", name: "Terrains nus", group: true, parent: "22", root_type: Asset, report_type: Balance Sheet}
+  - {number: "22210000", name: "Terrains à bâtir", parent: "222", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "22280000", name: "Autres terrains nus", parent: "222", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "223", name: "Terrains bâtis", group: true, parent: "22", root_type: Asset, report_type: Balance Sheet}
+  - {number: "22310000", name: "Terrains bâtis pour bâtiments indus", parent: "223", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "22320000", name: "Terrains bâtis pour bâtiments admin", parent: "223", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "22340000", name: "Terrains bâtis pour bâtiments affec", parent: "223", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23", name: "Bâtiments, installations techniques et agencements", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "231", name: "Bâtiments industriels, agricoles, administratifs et commerciaux", group: true, parent: "23", root_type: Asset, report_type: Balance Sheet}
+  - {number: "23110000", name: "Bâtiments industriels", parent: "231", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23120000", name: "Bâtiments agricoles", parent: "231", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23130000", name: "Bâtiments administratifs et commerc", parent: "231", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23140000", name: "Bâtiments affectés au logement du p", parent: "231", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23150000", name: "Bâtiments immeubles de placement", parent: "231", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23160000", name: "Bâtiments de location acquisition", parent: "231", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "234", name: "Aménagements, agencements et installations techniques", group: true, parent: "23", root_type: Asset, report_type: Balance Sheet}
+  - {number: "23410000", name: "Installations complexes spécialisée", parent: "234", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23420000", name: "Installations complexes spécialisée", parent: "234", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23430000", name: "Installations à caractère spécifiqu", parent: "234", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23440000", name: "Installations à caractère spécifiqu", parent: "234", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23450000", name: "Aménagements et agencements des bât", parent: "234", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "235", name: "Aménagements de bureaux", group: true, parent: "23", root_type: Asset, report_type: Balance Sheet}
+  - {number: "23510000", name: "Installations générales", parent: "235", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "23580000", name: "Autres aménagements de bureau", parent: "235", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "238", name: "Autres installations et agencements", group: true, parent: "23", root_type: Asset, report_type: Balance Sheet}
+  - {number: "23800000", name: "AUTRES INSTALLATIONS ET AGENCEMENTS", parent: "238", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "239", name: "Bâtiments et installations en cours", group: true, parent: "23", root_type: Asset, report_type: Balance Sheet}
+  - {number: "23910000", name: "Batiments en cours", parent: "239", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24", name: "Matériel, mobilier et actifs biologiques", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "24000000", name: "Matériel", parent: "24", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}  # ATTENTION : numéro générique à côté de ses subdivisions
+  - {number: "241", name: "Matériel et outillage industriel et commercial", group: true, parent: "24", root_type: Asset, report_type: Balance Sheet}
+  - {number: "24110000", name: "Matériel industriel", parent: "241", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24120000", name: "Outillage industriel", parent: "241", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24130000", name: "Matériel commercial", parent: "241", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24140000", name: "Outillage commercial", parent: "241", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24160000", name: "Matériel et outillage industriel et", parent: "241", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "243", name: "Matériel d'emballage récupérable et identifiable", group: true, parent: "24", root_type: Asset, report_type: Balance Sheet}
+  - {number: "24300000", name: "MATÉRIEL D’EMBALLAGE RÉCUPÉRABLE ET", parent: "243", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "244", name: "Matériel et mobilier", group: true, parent: "24", root_type: Asset, report_type: Balance Sheet}
+  - {number: "24410000", name: "Matériel de bureau", parent: "244", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24420000", name: "Matériel informatique", parent: "244", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24430000", name: "Matériel bureautique", parent: "244", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24440000", name: "Mobilier de bureau", parent: "244", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24450000", name: "Matériel et Mobilier immeubles de p", parent: "244", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24460000", name: "Matériel et mobilier de location ac", parent: "244", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24470000", name: "Matériel et mobilier des logements", parent: "244", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "245", name: "Matériel de transport", group: true, parent: "24", root_type: Asset, report_type: Balance Sheet}
+  - {number: "24510000", name: "Matériel automobile", parent: "245", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "24580000", name: "Autres matériels de transports", parent: "245", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "248", name: "Autres matériels et mobiliers", group: true, parent: "24", root_type: Asset, report_type: Balance Sheet}
+  - {number: "24800000", name: "Autres matériels et mobiliers", parent: "248", root_type: Asset, report_type: Balance Sheet, account_type: Fixed Asset}
+  - {number: "25", name: "Avances et acomptes versés sur immobilisations", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "251", name: "Avances et acomptes versés sur immobilisations incorporelles", group: true, parent: "25", root_type: Asset, report_type: Balance Sheet}
+  - {number: "25100000", name: "AVANCES ET ACOMPTES VERSÉS SUR IMMO", parent: "251", root_type: Asset, report_type: Balance Sheet}
+  - {number: "252", name: "Avances et acomptes versés sur immobilisations corporelles", group: true, parent: "25", root_type: Asset, report_type: Balance Sheet}
+  - {number: "25200000", name: "AVANCES ET ACOMPTES VERSES SUR IMMO", parent: "252", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26", name: "Titres de participation", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "261", name: "Titres de participation dans des sociétés sous contrôle exclusif", group: true, parent: "26", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26100000", name: "TITRES DE PARTICIPATION DANS DES SO", parent: "261", root_type: Asset, report_type: Balance Sheet}
+  - {number: "262", name: "Titres de participation dans des sociétés sous contrôle conjoint", group: true, parent: "26", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26200000", name: "TITRES DE PARTICIPATION DANS DES SO", parent: "262", root_type: Asset, report_type: Balance Sheet}
+  - {number: "263", name: "Titres de participation dans des sociétés conférant une influence notable", group: true, parent: "26", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26300000", name: "TITRES DE PARTICIPATION DANS DES SO", parent: "263", root_type: Asset, report_type: Balance Sheet}
+  - {number: "265", name: "Participations dans des organismes professionnels", group: true, parent: "26", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26500000", name: "PARTICIPATIONS DANS DES ORGANISMES", parent: "265", root_type: Asset, report_type: Balance Sheet}
+  - {number: "266", name: "Parts dans des groupements d'intérêt économique (GIE)", group: true, parent: "26", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26600000", name: "PARTS DANS DES GROUPEMENTS D’INTÉRÊ", parent: "266", root_type: Asset, report_type: Balance Sheet}
+  - {number: "268", name: "Autres titres de participation", group: true, parent: "26", root_type: Asset, report_type: Balance Sheet}
+  - {number: "26800000", name: "AUTRES TITRES DE PARTICIPATION", parent: "268", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27", name: "Autres immobilisations financières", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "271", name: "Prêts et créances non commerciales", group: true, parent: "27", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27120000", name: "Prêts aux associés", parent: "271", root_type: Asset, report_type: Balance Sheet}
+  - {number: "272", name: "Prêts au personnel", group: true, parent: "27", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27200000", name: "PRÊTS AU PERSONNEL", parent: "272", root_type: Asset, report_type: Balance Sheet}
+  - {number: "273", name: "Créances sur l'État", group: true, parent: "27", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27300000", name: "CRÉANCES SUR L’ÉTAT", parent: "273", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27310000", name: "Retenues de garantie", parent: "273", root_type: Asset, report_type: Balance Sheet}
+  - {number: "274", name: "Titres immobilisés", group: true, parent: "27", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27400000", name: "TITRES IMMOBILISÉS", parent: "274", root_type: Asset, report_type: Balance Sheet}
+  - {number: "275", name: "Dépôts et cautionnements versés", group: true, parent: "27", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27500000", name: "DÉPÔTS ET CAUTIONNEMENTS VERSÉS", parent: "275", root_type: Asset, report_type: Balance Sheet}
+  - {number: "276", name: "Intérêts courus", group: true, parent: "27", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27600000", name: "Intérêts courus", parent: "276", root_type: Asset, report_type: Balance Sheet}
+  - {number: "278", name: "Immobilisations financières diverses", group: true, parent: "27", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27840000", name: "Banques dépôts à terme", parent: "278", root_type: Asset, report_type: Balance Sheet}
+  - {number: "27880000", name: "AUTRES IMMO FINAN", parent: "278", root_type: Asset, report_type: Balance Sheet}
+  - {number: "28", name: "Amortissements", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "281", name: "Amortissements des immobilisations incorporelles", group: true, parent: "28", root_type: Asset, report_type: Balance Sheet}
+  - {number: "28110000", name: "Amortissements des frais de dévelop", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28120000", name: "Amortissements des brevets licences", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28130000", name: "Amortissements des logiciels et sit", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28140000", name: "Amortissements des marques", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28150000", name: "Amortissements du fonds commercial", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28160000", name: "Amortissements du droit au bail", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28170000", name: "Amortissements des investissements", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28180000", name: "Amortissements des autres droits et", parent: "281", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "283", name: "Amortissements des bâtiments, installations techniques et agencements", group: true, parent: "28", root_type: Asset, report_type: Balance Sheet}
+  - {number: "28310000", name: "Amortissements des bâtiments indust", parent: "283", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28340000", name: "AMORTISSEMENT AGENCEMENT ET INST", parent: "283", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "284", name: "Amortissements du matériel", group: true, parent: "28", root_type: Asset, report_type: Balance Sheet}
+  - {number: "28400000", name: "AMORTISSEMENT DU MATERIEL", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}  # ATTENTION : numéro générique à côté de ses subdivisions
+  - {number: "28410000", name: "Amortissements du matériel et outil", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28420000", name: "Amortissements du matériel et outil", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28430000", name: "Amortissements du matériel d'emball", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28440000", name: "Amortissements du matériel et mobil", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28450000", name: "Amortissement du matériel de transp", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28460000", name: "Amortissements des actifs biologiqu", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28470000", name: "Amortissements des agencements et a", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "28480000", name: "Amortissements des autres matériels", parent: "284", root_type: Asset, report_type: Balance Sheet, account_type: Accumulated Depreciation}
+  - {number: "29", name: "Dépréciations des immobilisations", group: true, parent: "2", root_type: Asset, report_type: Balance Sheet}
+  - {number: "291", name: "Dépréciations des immobilisations incorporelles", group: true, parent: "29", root_type: Asset, report_type: Balance Sheet}
+  - {number: "29100000", name: "DÉPRÉCIATIONS DES IMMOBILISATIONS I", parent: "291", root_type: Asset, report_type: Balance Sheet}
+  - {number: "292", name: "Dépréciations des terrains", group: true, parent: "29", root_type: Asset, report_type: Balance Sheet}
+  - {number: "29200000", name: "DÉPRÉCIATION DES TERRAINS", parent: "292", root_type: Asset, report_type: Balance Sheet}
+  - {number: "293", name: "Dépréciations des bâtiments, installations techniques et agencements", group: true, parent: "29", root_type: Asset, report_type: Balance Sheet}
+  - {number: "29300000", name: "DÉPRÉCIATIONS DES BÂTIMENTS INSTALL", parent: "293", root_type: Asset, report_type: Balance Sheet}
+  - {number: "294", name: "Dépréciations du matériel", group: true, parent: "29", root_type: Asset, report_type: Balance Sheet}
+  - {number: "29400000", name: "DÉPRÉCIATIONS DE MATÉRIEL DU MOBILI", parent: "294", root_type: Asset, report_type: Balance Sheet}
+  - {number: "295", name: "Dépréciations des avances et acomptes versés sur immobilisations", group: true, parent: "29", root_type: Asset, report_type: Balance Sheet}
+  - {number: "29500000", name: "DÉPRÉCIATIONS DES AVANCES ET ACOMPT", parent: "295", root_type: Asset, report_type: Balance Sheet}
+  - {number: "296", name: "Dépréciations des titres de participation", group: true, parent: "29", root_type: Asset, report_type: Balance Sheet}
+  - {number: "29600000", name: "DÉPRÉCIATIONS DES TITRES DE PARTICI", parent: "296", root_type: Asset, report_type: Balance Sheet}
+  - {number: "297", name: "Dépréciations des autres immobilisations financières", group: true, parent: "29", root_type: Asset, report_type: Balance Sheet}
+  - {number: "29700000", name: "DÉPRÉCIATIONS DES AUTRES IMMOBILISA", parent: "297", root_type: Asset, report_type: Balance Sheet}
+
+  # ── Classe 3 : stocks ──
+  - {number: "3", name: "Comptes de stocks", group: true, root_type: Asset, report_type: Balance Sheet}
+  - {number: "31", name: "Marchandises", group: true, parent: "3", root_type: Asset, report_type: Balance Sheet}
+  - {number: "311", name: "Marchandises A", group: true, parent: "31", root_type: Asset, report_type: Balance Sheet}
+  - {number: "31100000", name: "MARCHANDISES A", parent: "311", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "32", name: "Matières premières et fournitures liées", group: true, parent: "3", root_type: Asset, report_type: Balance Sheet}
+  - {number: "321", name: "Matières A", group: true, parent: "32", root_type: Asset, report_type: Balance Sheet}
+  - {number: "32100000", name: "MATIÈRES A", parent: "321", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "323", name: "Fournitures (A, B)", group: true, parent: "32", root_type: Asset, report_type: Balance Sheet}
+  - {number: "32300000", name: "FOURNITURES (A B)", parent: "323", root_type: Asset, report_type: Balance Sheet, account_type: Stock}
+  - {number: "39", name: "Dépréciations des stocks et encours de production", group: true, parent: "3", root_type: Asset, report_type: Balance Sheet}
+  - {number: "39100000", name: "DÉPRÉCIATIONS DES STOCKS DE MARCHAN", parent: "39", root_type: Asset, report_type: Balance Sheet}
+  - {number: "39200000", name: "DÉPRÉCIATIONS DES STOCKS DE MATIÈRE", parent: "39", root_type: Asset, report_type: Balance Sheet}
+
+  # ── Classe 4 : tiers ──
+  - {number: "4", name: "Comptes de tiers", group: true}
+  - {number: "40", name: "Fournisseurs et comptes rattachés", group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "401", name: "Fournisseurs, dettes en compte", group: true, parent: "40", root_type: Liability, report_type: Balance Sheet}
+  - {number: "40110000", name: "FOURNISSEURS", parent: "401", root_type: Liability, report_type: Balance Sheet, account_type: Payable}
+  - {number: "402", name: "Fournisseurs, effets à payer", group: true, parent: "40", root_type: Liability, report_type: Balance Sheet}
+  - {number: "40210000", name: "Fournisseurs Effets à payer", parent: "402", root_type: Liability, report_type: Balance Sheet, account_type: Payable}
+  - {number: "408", name: "Fournisseurs, factures non parvenues", group: true, parent: "40", root_type: Liability, report_type: Balance Sheet}
+  - {number: "40810000", name: "Fournisseurs facture non parvenue", parent: "408", root_type: Liability, report_type: Balance Sheet, account_type: Stock Received But Not Billed}
+  - {number: "40820000", name: "Fournisseurs groupe facture non pa", parent: "408", root_type: Liability, report_type: Balance Sheet, account_type: Stock Received But Not Billed}
+  - {number: "409", name: "Fournisseurs débiteurs (avances, acomptes versés, rabais à obtenir)", group: true, parent: "40", root_type: Asset, report_type: Balance Sheet}
+  - {number: "40910000", name: "Fournisseurs avances et acomptes ve", parent: "409", root_type: Asset, report_type: Balance Sheet}
+  - {number: "40920000", name: "Fournisseurs Groupe avances et aco", parent: "409", root_type: Asset, report_type: Balance Sheet}
+  - {number: "40980000", name: "Fournisseurs rabais remises ristour", parent: "409", root_type: Asset, report_type: Balance Sheet}
+  - {number: "41", name: "Clients et comptes rattachés", group: true, parent: "4", root_type: Asset, report_type: Balance Sheet}
+  - {number: "411", name: "Clients", group: true, parent: "41", root_type: Asset, report_type: Balance Sheet}
+  - {number: "41110000", name: "CLIENTS ORDINAIRES", parent: "411", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "413", name: "Clients, chèques, effets et autres valeurs impayés", group: true, parent: "41", root_type: Asset, report_type: Balance Sheet}
+  - {number: "41310000", name: "Clients chèques impayés", parent: "413", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "41320000", name: "Clients effets impayés", parent: "413", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "41330000", name: "Clients cartes de crédit impayées", parent: "413", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "41380000", name: "Clients autres valeurs impayées", parent: "413", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "416", name: "Créances clients litigieuses ou douteuses", group: true, parent: "41", root_type: Asset, report_type: Balance Sheet}
+  - {number: "41610000", name: "Créances litigieuses", parent: "416", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "41620000", name: "Créances douteuses", parent: "416", root_type: Asset, report_type: Balance Sheet, account_type: Receivable}
+  - {number: "418", name: "Clients, produits à recevoir", group: true, parent: "41", root_type: Asset, report_type: Balance Sheet}
+  - {number: "41810000", name: "Clients factures à établir", parent: "418", root_type: Asset, report_type: Balance Sheet}
+  - {number: "41860000", name: "Clients intérêts courus", parent: "418", root_type: Asset, report_type: Balance Sheet}
+  - {number: "419", name: "Clients créditeurs (avances et acomptes reçus)", group: true, parent: "41", root_type: Liability, report_type: Balance Sheet}
+  - {number: "41910000", name: "Clients avances et acomptes reçus", parent: "419", root_type: Liability, report_type: Balance Sheet}
+  - {number: "41920000", name: "Clients groupe avances et acomptes", parent: "419", root_type: Liability, report_type: Balance Sheet}
+  - {number: "41980000", name: "clients Rabais remises ristournes e", parent: "419", root_type: Liability, report_type: Balance Sheet}
+  - {number: "42", name: "Personnel", group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "421", name: "Personnel, avances et acomptes", group: true, parent: "42", root_type: Asset, report_type: Balance Sheet}
+  - {number: "42110000", name: "Personnel avances", parent: "421", root_type: Asset, report_type: Balance Sheet}
+  - {number: "42120000", name: "Personnel acomptes", parent: "421", root_type: Asset, report_type: Balance Sheet}
+  - {number: "422", name: "Personnel, rémunérations dues", group: true, parent: "42", root_type: Liability, report_type: Balance Sheet}
+  - {number: "42200000", name: "Personnel rémunérations dues", parent: "422", root_type: Liability, report_type: Balance Sheet}
+  - {number: "428", name: "Personnel, charges à payer et produits à recevoir", group: true, parent: "42", root_type: Liability, report_type: Balance Sheet}
+  - {number: "42810000", name: "Dettes provisionnées pour congés à", parent: "428", root_type: Liability, report_type: Balance Sheet}
+  - {number: "43", name: "Organismes sociaux", group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "431", name: "Sécurité sociale", group: true, parent: "43", root_type: Liability, report_type: Balance Sheet}
+  - {number: "43130000", name: "Caisse de retraite obligatoire", parent: "431", root_type: Liability, report_type: Balance Sheet}
+  - {number: "433", name: "Autres organismes sociaux", group: true, parent: "43", root_type: Liability, report_type: Balance Sheet}
+  - {number: "43330000", name: "Assurances et organismes de santé", parent: "433", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44", name: "État et collectivités publiques", group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44000000", name: "DETTES FISCALES GENERALES", parent: "44", root_type: Liability, report_type: Balance Sheet}
+  - {number: "441", name: "État, impôt sur les bénéfices", group: true, parent: "44", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44110000", name: "IMPOT SUR BENEFICE", parent: "441", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "442", name: "État, autres impôts et taxes", group: true, parent: "44", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44210000", name: "Impôts et taxes d'État", parent: "442", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44220000", name: "Impôts et taxes pour les collectivi", parent: "442", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44230000", name: "Impôts et taxes recouvrables sur de", parent: "442", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44240000", name: "Impôts et taxes recouvrables sur de", parent: "442", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44260000", name: "Droits de douane", parent: "442", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44280000", name: "Autres impôts et taxes", parent: "442", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "443", name: "État, TVA facturée", group: true, parent: "44", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44310000", name: "T V A Facturée sur ventes", parent: "443", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44320000", name: "T V A Facturée sur prestations de s", parent: "443", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44330000", name: "T V A Facturée sur travaux", parent: "443", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44340000", name: "T V A Facturée sur production livré", parent: "443", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44350000", name: "T V A Sur factures à établir", parent: "443", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "444", name: "État, TVA due", group: true, parent: "44", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44410000", name: "État T V A due", parent: "444", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44490000", name: "État crédit de T V A à reporter", parent: "444", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "445", name: "État, TVA récupérable", group: true, parent: "44", root_type: Asset, report_type: Balance Sheet}
+  - {number: "44510000", name: "T V A récupérable sur immobilisatio", parent: "445", root_type: Asset, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44520000", name: "T V A récupérable sur achats", parent: "445", root_type: Asset, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44530000", name: "T V A récupérable sur transport", parent: "445", root_type: Asset, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44540000", name: "T V A récupérable sur services exté", parent: "445", root_type: Asset, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44550000", name: "T V A récupérable sur factures non", parent: "445", root_type: Asset, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44560000", name: "T V A transférée par d'autres entit", parent: "445", root_type: Asset, report_type: Balance Sheet, account_type: Tax}
+  - {number: "447", name: "État, impôts retenus à la source", group: true, parent: "44", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44710000", name: "Impôt Général sur le revenu", parent: "447", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44711000", name: "Retenue 5%", parent: "447", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44712000", name: "Retenue 10%", parent: "447", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44713000", name: "Retenue 25%", parent: "447", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44720000", name: "Impôts sur salaires", parent: "447", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "44780000", name: "Autres impôts et contributions", parent: "447", root_type: Liability, report_type: Balance Sheet, account_type: Tax}
+  - {number: "449", name: "État, créances et dettes diverses", group: true, parent: "44", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44910000", name: "Bénéfice Industriel Commercial", parent: "449", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44920000", name: "État avances et acomptes versés sur", parent: "449", root_type: Liability, report_type: Balance Sheet}
+  - {number: "44921000", name: "Acompte 5% Retenue", parent: "449", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46", name: "Apporteurs, associés et groupe", group: true, parent: "4", root_type: Liability, report_type: Balance Sheet}
+  - {number: "461", name: "Apporteurs, opérations sur le capital", group: true, parent: "46", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46110000", name: "Apporteurs apports en nature", parent: "461", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46120000", name: "Apporteurs apports en numéraire", parent: "461", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46130000", name: "Apporteurs capital appelé non versé", parent: "461", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46160000", name: "Apporteurs versements anticipés", parent: "461", root_type: Liability, report_type: Balance Sheet}
+  - {number: "462", name: "Associés, comptes courants", group: true, parent: "46", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46210000", name: "Associé comptes courants Principal", parent: "462", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46260000", name: "Associé comptes courants Intérêts c", parent: "462", root_type: Liability, report_type: Balance Sheet}
+  - {number: "465", name: "Associés, dividendes à payer", group: true, parent: "46", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46500000", name: "Associés dividendes à payer", parent: "465", root_type: Liability, report_type: Balance Sheet}
+  - {number: "466", name: "Groupe, comptes courants", group: true, parent: "46", root_type: Liability, report_type: Balance Sheet}
+  - {number: "46600000", name: "Groupe compte courant", parent: "466", root_type: Liability, report_type: Balance Sheet}
+  - {number: "47", name: "Débiteurs et créditeurs divers", group: true, parent: "4", root_type: Asset, report_type: Balance Sheet}
+  - {number: "471", name: "Débiteurs et créditeurs divers", group: true, parent: "47", root_type: Asset, report_type: Balance Sheet}
+  - {number: "47110000", name: "Débiteurs divers", parent: "471", root_type: Asset, report_type: Balance Sheet}
+  - {number: "47120000", name: "Créditeurs divers", parent: "471", root_type: Asset, report_type: Balance Sheet}
+  - {number: "47150000", name: "Rémunérations d’administrateurs", parent: "471", root_type: Asset, report_type: Balance Sheet}
+  - {number: "475", name: "Comptes transitoires, ajustement spécial lié à la révision", group: true, parent: "47", root_type: Asset, report_type: Balance Sheet}
+  - {number: "47510000", name: "Comptes transitoire Ajustement spéc", parent: "475", root_type: Asset, report_type: Balance Sheet}
+  - {number: "47520000", name: "Comptes transitoire Ajustement spéc", parent: "475", root_type: Asset, report_type: Balance Sheet}
+  - {number: "476", name: "Charges constatées d'avance", group: true, parent: "47", root_type: Asset, report_type: Balance Sheet}
+  - {number: "47600000", name: "Charges constatÉes d'avance", parent: "476", root_type: Asset, report_type: Balance Sheet}
+  - {number: "477", name: "Produits constatés d'avance", group: true, parent: "47", root_type: Liability, report_type: Balance Sheet}
+  - {number: "47700000", name: "Produits constatÉs d'avance", parent: "477", root_type: Liability, report_type: Balance Sheet}
+  - {number: "478", name: "Écarts de conversion - Actif", group: true, parent: "47", root_type: Asset, report_type: Balance Sheet}
+  - {number: "47800000", name: "Écarts de conversion – Actif", parent: "478", root_type: Asset, report_type: Balance Sheet}
+  - {number: "479", name: "Écarts de conversion - Passif", group: true, parent: "47", root_type: Liability, report_type: Balance Sheet}
+  - {number: "47900000", name: "Écarts de conversion – Passif", parent: "479", root_type: Liability, report_type: Balance Sheet}
+  - {number: "48", name: "Créances et dettes hors activités ordinaires (HAO)", group: true, parent: "4", root_type: Asset, report_type: Balance Sheet}
+  - {number: "481", name: "Fournisseurs d'investissements", group: true, parent: "48", root_type: Liability, report_type: Balance Sheet}
+  - {number: "48110000", name: "Fournisseurs d'investissements Immo", parent: "481", root_type: Liability, report_type: Balance Sheet}
+  - {number: "48120000", name: "Fournisseurs d'investis. Immob inc", parent: "481", root_type: Liability, report_type: Balance Sheet}
+  - {number: "48120001", name: "Fournisseurs d'Immo corporelles", parent: "481", root_type: Liability, report_type: Balance Sheet}
+  - {number: "49", name: "Dépréciations et provisions pour risques à court terme (tiers)", group: true, parent: "4", root_type: Asset, report_type: Balance Sheet}
+  - {number: "490", name: "Dépréciations des comptes fournisseurs", group: true, parent: "49", root_type: Asset, report_type: Balance Sheet}
+  - {number: "49000000", name: "DÉPRÉCIATIONS DES COMPTES FOURNISSE", parent: "490", root_type: Asset, report_type: Balance Sheet}
+  - {number: "491", name: "Dépréciations des comptes clients", group: true, parent: "49", root_type: Asset, report_type: Balance Sheet}
+  - {number: "49110000", name: "DépréciationS des comptes clients l", parent: "491", root_type: Asset, report_type: Balance Sheet}
+  - {number: "49120000", name: "DépréciationS des comptes clients d", parent: "491", root_type: Asset, report_type: Balance Sheet}
+  - {number: "499", name: "Provisions pour risques à court terme", group: true, parent: "49", root_type: Liability, report_type: Balance Sheet}
+  - {number: "49910000", name: "PROVISION RISQUE D'EXPLOITATION CT", parent: "499", root_type: Liability, report_type: Balance Sheet}
+
+  # ── Classe 5 : trésorerie ──
+  - {number: "5", name: "Comptes de trésorerie", group: true, root_type: Asset, report_type: Balance Sheet}
+  - {number: "51", name: "Valeurs à encaisser", group: true, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "513", name: "Chèques à encaisser", group: true, parent: "51", root_type: Asset, report_type: Balance Sheet}
+  - {number: "51300000", name: "Chèques à encaisser", parent: "513", root_type: Asset, report_type: Balance Sheet}
+  - {number: "514", name: "Chèques à l'encaissement", group: true, parent: "51", root_type: Asset, report_type: Balance Sheet}
+  - {number: "51400000", name: "Chèques à l'encaissement", parent: "514", root_type: Asset, report_type: Balance Sheet}
+  - {number: "515", name: "Cartes de crédit à encaisser", group: true, parent: "51", root_type: Asset, report_type: Balance Sheet}
+  - {number: "51500000", name: "Cartes de crédit à encaisser", parent: "515", root_type: Asset, report_type: Balance Sheet}
+  - {number: "52", name: "Banques", group: true, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "521", name: "Banques locales", group: true, parent: "52", root_type: Asset, report_type: Balance Sheet}
+  - {number: "52110000", name: "Banques Locales", parent: "521", root_type: Asset, report_type: Balance Sheet, account_type: Bank}
+  - {number: "52110001", name: "BSIC", parent: "521", root_type: Asset, report_type: Balance Sheet, account_type: Bank}
+  - {number: "525", name: "Banques, dépôts à terme", group: true, parent: "52", root_type: Asset, report_type: Balance Sheet}
+  - {number: "52500000", name: "Banque dépôt à terme", parent: "525", root_type: Asset, report_type: Balance Sheet, account_type: Bank}
+  - {number: "526", name: "Banques, intérêts courus", group: true, parent: "52", root_type: Asset, report_type: Balance Sheet}
+  - {number: "52610000", name: "Banque intérêts courus charges à pa", parent: "526", root_type: Asset, report_type: Balance Sheet}
+  - {number: "52670000", name: "Banque intérêts courus produits à r", parent: "526", root_type: Asset, report_type: Balance Sheet}
+  - {number: "55", name: "Instruments de monnaie électronique", group: true, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "551", name: "Monnaie électronique, carte prépayée", group: true, parent: "55", root_type: Asset, report_type: Balance Sheet}
+  - {number: "55100000", name: "Monnaie électronique carte carburan", parent: "551", root_type: Asset, report_type: Balance Sheet}
+  - {number: "552", name: "Monnaie électronique, téléphone portable", group: true, parent: "55", root_type: Asset, report_type: Balance Sheet}
+  - {number: "55200000", name: "Monnaie électronique téléphone port", parent: "552", root_type: Asset, report_type: Balance Sheet}
+  - {number: "554", name: "Porte-monnaie électronique", group: true, parent: "55", root_type: Asset, report_type: Balance Sheet}
+  - {number: "55400000", name: "Porte monnaie électronique", parent: "554", root_type: Asset, report_type: Balance Sheet}
+  - {number: "57", name: "Caisse", group: true, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "571", name: "Caisse siège social", group: true, parent: "57", root_type: Asset, report_type: Balance Sheet}
+  - {number: "57110000", name: "Caisse en monnaie nationale", parent: "571", root_type: Asset, report_type: Balance Sheet, account_type: Cash}
+  - {number: "57111000", name: "CAISSE MENU DEPENSE", parent: "571", root_type: Asset, report_type: Balance Sheet, account_type: Cash}
+  - {number: "57112000", name: "CAISSE RECETTE", parent: "571", root_type: Asset, report_type: Balance Sheet, account_type: Cash}
+  - {number: "58", name: "Régies d'avances, accréditifs et virements internes", group: true, parent: "5", root_type: Asset, report_type: Balance Sheet}
+  - {number: "585", name: "Virements de fonds", group: true, parent: "58", root_type: Asset, report_type: Balance Sheet}
+  - {number: "58500000", name: "Virement de fonds", parent: "585", root_type: Asset, report_type: Balance Sheet}
+
+  # ── Classe 6 : charges des activités ordinaires ──
+  - {number: "6", name: "Comptes de charges des activités ordinaires", group: true, root_type: Expense, report_type: Profit and Loss}
+  - {number: "60", name: "Achats et variations de stocks", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "601", name: "Achats de marchandises", group: true, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60110000", name: "Achats de marchandises", parent: "601", root_type: Expense, report_type: Profit and Loss, account_type: Cost of Goods Sold}
+  - {number: "60112000", name: "ACHAT DE DENREES", parent: "601", root_type: Expense, report_type: Profit and Loss, account_type: Cost of Goods Sold}
+  - {number: "60190000", name: "Rabais remises et ristournes obtenu", parent: "601", root_type: Expense, report_type: Profit and Loss, account_type: Cost of Goods Sold}
+  - {number: "602", name: "Achats de matières premières et fournitures liées", group: true, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60210000", name: "Achats de matières premières et fou", parent: "602", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60290000", name: "Rabais remises et ristournes obtenu", parent: "602", root_type: Expense, report_type: Profit and Loss}
+  - {number: "603", name: "Variations des stocks de biens achetés", group: true, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60310000", name: "Variations des stocks de marchandis", parent: "603", root_type: Expense, report_type: Profit and Loss, account_type: Stock Adjustment}
+  - {number: "60320000", name: "Variations des stocks d'autres appr", parent: "603", root_type: Expense, report_type: Profit and Loss, account_type: Stock Adjustment}
+  - {number: "60330000", name: "Variations des stocks d'autres appr", parent: "603", root_type: Expense, report_type: Profit and Loss, account_type: Stock Adjustment}
+  - {number: "604", name: "Achats stockés de matières et fournitures consommables", group: true, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60410000", name: "Matières consommables", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60420000", name: "Matières combustibles", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60430000", name: "Produits d'entretien", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60440000", name: "Fournitures d'atelier et d'usine", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60450000", name: "Frais sur achats", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60460000", name: "Fournitures de magasin", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60470000", name: "Fournitures de bureau", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60490000", name: "Rabais remises et ristournes obtenu", parent: "604", root_type: Expense, report_type: Profit and Loss}
+  - {number: "605", name: "Autres achats", group: true, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60510000", name: "Fournitures non stockables eau", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "605110000", name: "EAU LAAFI", parent: "605", root_type: Expense, report_type: Profit and Loss}  # ANOMALIE : 9 chiffres au lieu de 8 (à corriger dans Sage)
+  - {number: "60512000", name: "ONEA", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60520000", name: "Fournitures non stockables électri", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60530000", name: "Fournitures non stockables – autres", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60540000", name: "Fournitures d'entretien non stockab", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60550000", name: "Fournitures de bureau non stockable", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60560000", name: "Achats de petit matériel et outilla", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60570000", name: "Achats d'études et prestations de s", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60580000", name: "Achats de travaux matériels et équi", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60581000", name: "Autres achats", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60590000", name: "Rabais remises et ristournes obtenu", parent: "605", root_type: Expense, report_type: Profit and Loss}
+  - {number: "608", name: "Achats d'emballages", group: true, parent: "60", root_type: Expense, report_type: Profit and Loss}
+  - {number: "60810000", name: "ACHAT D'EMBALLAGE PERDU", parent: "608", root_type: Expense, report_type: Profit and Loss}
+  - {number: "61", name: "Transports", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "613", name: "Transports pour le compte de tiers", group: true, parent: "61", root_type: Expense, report_type: Profit and Loss}
+  - {number: "61300000", name: "TRANSPORT POUR LE COMPTE DE TIERS", parent: "613", root_type: Expense, report_type: Profit and Loss}
+  - {number: "618", name: "Autres frais de transport", group: true, parent: "61", root_type: Expense, report_type: Profit and Loss}
+  - {number: "61800000", name: "Autres frais de transport", parent: "618", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62", name: "Services extérieurs A", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "621", name: "Sous-traitance générale", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62100000", name: "Sous traitance générale", parent: "621", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62110000", name: "Sous traitance labo", parent: "621", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62114000", name: "Autres sous traitance", parent: "621", root_type: Expense, report_type: Profit and Loss}
+  - {number: "622", name: "Locations et charges locatives", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62220000", name: "Locations de bâtiments", parent: "622", root_type: Expense, report_type: Profit and Loss}
+  - {number: "623", name: "Redevances de location-acquisition", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62300000", name: "LOCATION DE MATERIEL", parent: "623", root_type: Expense, report_type: Profit and Loss}
+  - {number: "624", name: "Entretien, réparations et maintenance", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62410000", name: "ENTRETIEN ET REPARATION DES BIENS I", parent: "624", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62420000", name: "Entretien et réparations des biens", parent: "624", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62430000", name: "Maintenance", parent: "624", root_type: Expense, report_type: Profit and Loss}
+  - {number: "625", name: "Primes d'assurance", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62510000", name: "Assurance obligatoire dommage const", parent: "625", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62520000", name: "Assurance transport", parent: "625", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62530000", name: "Risques d'exploitation", parent: "625", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62550000", name: "Insolvabilité clients", parent: "625", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62580000", name: "AUTRE PRIMES D'ASSURANCE", parent: "625", root_type: Expense, report_type: Profit and Loss}
+  - {number: "626", name: "Études, recherches et documentation", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62650000", name: "Documentation générale", parent: "626", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62660000", name: "Documentation technique", parent: "626", root_type: Expense, report_type: Profit and Loss}
+  - {number: "627", name: "Publicité, publications, relations publiques", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62710000", name: "ANNONCE, INSERTION", parent: "627", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62720000", name: "Frais de colloques séminaires confé", parent: "627", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62730000", name: "Échantillons", parent: "627", root_type: Expense, report_type: Profit and Loss}
+  - {number: "628", name: "Frais de télécommunications", group: true, parent: "62", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62810000", name: "Frais de téléphone", parent: "628", root_type: Expense, report_type: Profit and Loss}
+  - {number: "62880000", name: "Autres frais de télécommunications", parent: "628", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63", name: "Services extérieurs B", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "631", name: "Frais bancaires", group: true, parent: "63", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63110000", name: "FRAIS BANCAIRE", parent: "631", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63180000", name: "Autres frais bancaires", parent: "631", root_type: Expense, report_type: Profit and Loss}
+  - {number: "632", name: "Rémunérations d'intermédiaires et de conseils", group: true, parent: "63", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63220000", name: "Commissions et courtages sur ventes", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63240000", name: "Honoraires des professions règlemen", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63241000", name: "Honoraires médécins generalistes", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63242000", name: "Honoraires médécins spécialistes", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63243000", name: "frais de gardiennage", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63250000", name: "Frais d'actes et de contentieux", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63270000", name: "Rémunération des autres prestataire", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63280000", name: "Divers frais", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63281000", name: "DIVERS FRAIS-EXTRAS", parent: "632", root_type: Expense, report_type: Profit and Loss}
+  - {number: "634", name: "Redevances pour brevets, licences, logiciels", group: true, parent: "63", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63420000", name: "Redevances pour brevets licences", parent: "634", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63430000", name: "Redevances pour logiciels", parent: "634", root_type: Expense, report_type: Profit and Loss}
+  - {number: "637", name: "Rémunérations de personnel extérieur à l'entité", group: true, parent: "63", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63710000", name: "Personnel intérimaire", parent: "637", root_type: Expense, report_type: Profit and Loss}
+  - {number: "63720000", name: "Personnel détaché ou prêté à l'enti", parent: "637", root_type: Expense, report_type: Profit and Loss}
+  - {number: "638", name: "Autres charges externes", group: true, parent: "63", root_type: Expense, report_type: Profit and Loss}
+  - {number: "6383000", name: "ALIMENTATION RETAURATION", parent: "638", root_type: Expense, report_type: Profit and Loss}  # ANOMALIE : 7 chiffres au lieu de 8 (à corriger dans Sage)
+  - {number: "64", name: "Impôts et taxes", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "641", name: "Impôts et taxes directs", group: true, parent: "64", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64110000", name: "Impôts fonciers et taxes annexes", parent: "641", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64120000", name: "Patentes licences et taxes annexes", parent: "641", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64130000", name: "Taxes sur appointements et salaires", parent: "641", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64140000", name: "Taxes d'apprentissage", parent: "641", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64150000", name: "Formation professionnelle continue", parent: "641", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64180000", name: "Autres impôts et taxes directs", parent: "641", root_type: Expense, report_type: Profit and Loss}
+  - {number: "646", name: "Droits d'enregistrement", group: true, parent: "64", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64600000", name: "Droit d'enregistrement", parent: "646", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64610000", name: "Droits de mutation", parent: "646", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64620000", name: "Droits de timbre", parent: "646", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64680000", name: "AUTRE DROITS", parent: "646", root_type: Expense, report_type: Profit and Loss}
+  - {number: "647", name: "Pénalités et amendes fiscales", group: true, parent: "64", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64710000", name: "Pénalités d'assiette impôts directs", parent: "647", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64720000", name: "Pénalités d'assiette impôts indirec", parent: "647", root_type: Expense, report_type: Profit and Loss}
+  - {number: "648", name: "Autres impôts et taxes", group: true, parent: "64", root_type: Expense, report_type: Profit and Loss}
+  - {number: "64800000", name: "AUTRES IMPOTS ET TAXES", parent: "648", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65", name: "Autres charges", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "651", name: "Pertes sur créances clients et autres débiteurs", group: true, parent: "65", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65110000", name: "PERTE SUR CREANCE CLIENT", parent: "651", root_type: Expense, report_type: Profit and Loss}
+  - {number: "658", name: "Charges diverses", group: true, parent: "65", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65810000", name: "Indemnités de fonction et autres ré", parent: "658", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65820000", name: "Dons", parent: "658", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65880000", name: "Autres charges diverses", parent: "658", root_type: Expense, report_type: Profit and Loss}
+  - {number: "659", name: "Charges pour dépréciations et provisions pour risques à court terme d'exploitation", group: true, parent: "65", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65910000", name: "Charges pour dépréciations et provi", parent: "659", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65930000", name: "Charges pour dépréciations et provi", parent: "659", root_type: Expense, report_type: Profit and Loss}
+  - {number: "65940000", name: "Charges pour dépréciations et provi", parent: "659", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66", name: "Charges de personnel", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "661", name: "Rémunérations directes versées au personnel national", group: true, parent: "66", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66110000", name: "Appointements salaires et commissio", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66120000", name: "Primes et gratifications", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66130000", name: "Congés payés", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66140000", name: "Indemnités de préavis de licencieme", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66150000", name: "Indemnités de maladie versées aux t", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66160000", name: "Supplément familial", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66170000", name: "Avantage en nature", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66180000", name: "Autres rémunérations directes", parent: "661", root_type: Expense, report_type: Profit and Loss}
+  - {number: "662", name: "Rémunérations directes versées au personnel non national", group: true, parent: "66", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66210000", name: "Appointements salaires et commissio", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66220000", name: "Primes et gratifications", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66230000", name: "Congés payés", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66240000", name: "Indemnités de préavis de licencieme", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66250000", name: "Indemnités de maladie versées aux t", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66260000", name: "Supplément familial", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66270000", name: "Avantage en nature", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66280000", name: "Autres rémunérations directes", parent: "662", root_type: Expense, report_type: Profit and Loss}
+  - {number: "663", name: "Indemnités forfaitaires versées au personnel", group: true, parent: "66", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66310000", name: "INDEMENITES DE LOGEMENT", parent: "663", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66340000", name: "INDEMENITES DE TRANSPORT", parent: "663", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66380000", name: "INDEMNITES DE FONCTION", parent: "663", root_type: Expense, report_type: Profit and Loss}
+  - {number: "664", name: "Charges sociales", group: true, parent: "66", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66410000", name: "Charges sociales sur rémunération d", parent: "664", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66420000", name: "Charges sociales sur rémunération d", parent: "664", root_type: Expense, report_type: Profit and Loss}
+  - {number: "667", name: "Rémunération transférée de personnel extérieur", group: true, parent: "66", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66710000", name: "Personnel intérimaire", parent: "667", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66720000", name: "Personnel détaché ou prêté à l’enti", parent: "667", root_type: Expense, report_type: Profit and Loss}
+  - {number: "668", name: "Autres charges sociales", group: true, parent: "66", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66840000", name: "Médecine du travail et pharmacie", parent: "668", root_type: Expense, report_type: Profit and Loss}
+  - {number: "66850000", name: "Assurances et organisme de santé", parent: "668", root_type: Expense, report_type: Profit and Loss}
+  - {number: "68", name: "Dotations aux amortissements", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "681", name: "Dotations aux amortissements d'exploitation", group: true, parent: "68", root_type: Expense, report_type: Profit and Loss}
+  - {number: "68120000", name: "Dotations aux amortissements des im", parent: "681", root_type: Expense, report_type: Profit and Loss, account_type: Depreciation}
+  - {number: "68130000", name: "Dotations aux amortissements des im", parent: "681", root_type: Expense, report_type: Profit and Loss, account_type: Depreciation}
+  - {number: "69", name: "Dotations aux provisions et aux dépréciations", group: true, parent: "6", root_type: Expense, report_type: Profit and Loss}
+  - {number: "691", name: "Dotations aux provisions et dépréciations d'exploitation", group: true, parent: "69", root_type: Expense, report_type: Profit and Loss}
+  - {number: "69110000", name: "Dotations aux provisions Pour risqu", parent: "691", root_type: Expense, report_type: Profit and Loss}
+  - {number: "69130000", name: "Dotations aux dépréciations des imm", parent: "691", root_type: Expense, report_type: Profit and Loss}
+  - {number: "69140000", name: "Dotations aux dépréciations des imm", parent: "691", root_type: Expense, report_type: Profit and Loss}
+  - {number: "697", name: "Dotations aux provisions et dépréciations financières", group: true, parent: "69", root_type: Expense, report_type: Profit and Loss}
+  - {number: "69710000", name: "Dotations aux provisions pour risqu", parent: "697", root_type: Expense, report_type: Profit and Loss}
+  - {number: "69720000", name: "Dotations aux dépréciations des imm", parent: "697", root_type: Expense, report_type: Profit and Loss}
+
+  # ── Classe 7 : produits des activités ordinaires ──
+  - {number: "7", name: "Comptes de produits des activités ordinaires", group: true, root_type: Income, report_type: Profit and Loss}
+  - {number: "70", name: "Ventes", group: true, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "701", name: "Ventes de marchandises", group: true, parent: "70", root_type: Income, report_type: Profit and Loss}
+  - {number: "70110000", name: "Vente de marchandises", parent: "701", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70111000", name: "Vente d'hydrocarbures", parent: "701", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70130000", name: "Vente de marchandises aux entités d", parent: "701", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70190000", name: "Rabais remises ristournes obtenus (", parent: "701", root_type: Income, report_type: Profit and Loss, account_type: Income Account}  # ANOMALIE : rabais sur ventes = « accordés »
+  - {number: "702", name: "Ventes de produits finis", group: true, parent: "70", root_type: Income, report_type: Profit and Loss}
+  - {number: "70210000", name: "Vente de produits finis", parent: "702", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70230000", name: "Vente de produits finis aux entités", parent: "702", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70290000", name: "Rabais remises ristournes obtenus (", parent: "702", root_type: Income, report_type: Profit and Loss, account_type: Income Account}  # ANOMALIE : rabais sur ventes = « accordés »
+  - {number: "705", name: "Travaux facturés", group: true, parent: "70", root_type: Income, report_type: Profit and Loss}
+  - {number: "70510000", name: "Travaux facturés", parent: "705", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70530000", name: "Travaux facturés aux entités du gro", parent: "705", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70590000", name: "Rabais remises ristournes obtenus (", parent: "705", root_type: Income, report_type: Profit and Loss, account_type: Income Account}  # ANOMALIE : rabais sur ventes = « accordés »
+  - {number: "706", name: "Services vendus", group: true, parent: "70", root_type: Income, report_type: Profit and Loss}
+  - {number: "70610000", name: "Services vendus", parent: "706", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70630000", name: "Services vendus aux entités du grou", parent: "706", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70690000", name: "Rabais remises ristournes obtenus (", parent: "706", root_type: Income, report_type: Profit and Loss, account_type: Income Account}  # ANOMALIE : rabais sur ventes = « accordés »
+  - {number: "707", name: "Produits accessoires", group: true, parent: "70", root_type: Income, report_type: Profit and Loss}
+  - {number: "70730000", name: "Locations", parent: "707", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "70780000", name: "Autres produits accessoires", parent: "707", root_type: Income, report_type: Profit and Loss, account_type: Income Account}
+  - {number: "72", name: "Production immobilisée", group: true, parent: "7", root_type: Income, report_type: Profit and Loss}
+  - {number: "724", name: "Production auto-consommée", group: true, parent: "72", root_type: Income, report_type: Profit and Loss}
+  - {number: "72400000", name: "Production auto consommée", parent: "724", root_type: Income, report_type: Profit and Loss}
+
+  # ── Classe 8 : autres charges et autres produits (HAO) ──
+  - {number: "8", name: "Comptes des autres charges et des autres produits", group: true}
+  - {number: "81", name: "Valeurs comptables des cessions d'immobilisations", group: true, parent: "8", root_type: Expense, report_type: Profit and Loss}
+  - {number: "811", name: "Valeurs comptables des cessions d'immobilisations incorporelles", group: true, parent: "81", root_type: Expense, report_type: Profit and Loss}
+  - {number: "81100000", name: "Immobilisations incorporelles", parent: "811", root_type: Expense, report_type: Profit and Loss}
+  - {number: "812", name: "Valeurs comptables des cessions d'immobilisations corporelles", group: true, parent: "81", root_type: Expense, report_type: Profit and Loss}
+  - {number: "81200000", name: "Immobilisations corporelles", parent: "812", root_type: Expense, report_type: Profit and Loss}
+  - {number: "816", name: "Valeurs comptables des cessions d'immobilisations financières", group: true, parent: "81", root_type: Expense, report_type: Profit and Loss}
+  - {number: "81600000", name: "Immobilisations financiÉres", parent: "816", root_type: Expense, report_type: Profit and Loss}
+  - {number: "82", name: "Produits des cessions d'immobilisations", group: true, parent: "8", root_type: Income, report_type: Profit and Loss}
+  - {number: "821", name: "Produits des cessions d'immobilisations incorporelles", group: true, parent: "82", root_type: Income, report_type: Profit and Loss}
+  - {number: "82100000", name: "Immobilisations incorporelles", parent: "821", root_type: Income, report_type: Profit and Loss}
+  - {number: "822", name: "Produits des cessions d'immobilisations corporelles", group: true, parent: "82", root_type: Income, report_type: Profit and Loss}
+  - {number: "82200000", name: "Immobilisations corporelles", parent: "822", root_type: Income, report_type: Profit and Loss}
+  - {number: "826", name: "Produits des cessions d'immobilisations financières", group: true, parent: "82", root_type: Income, report_type: Profit and Loss}
+  - {number: "82600000", name: "Immobilisations financières", parent: "826", root_type: Income, report_type: Profit and Loss}
+  - {number: "83", name: "Charges hors activités ordinaires", group: true, parent: "8", root_type: Expense, report_type: Profit and Loss}
+  - {number: "831", name: "Charges HAO constatées", group: true, parent: "83", root_type: Expense, report_type: Profit and Loss}
+  - {number: "83100000", name: "Charges H A O Constatées", parent: "831", root_type: Expense, report_type: Profit and Loss}
+  - {number: "89", name: "Impôts sur le résultat", group: true, parent: "8", root_type: Expense, report_type: Profit and Loss}
+  - {number: "891", name: "Impôts sur les bénéfices de l'exercice", group: true, parent: "89", root_type: Expense, report_type: Profit and Loss}
+  - {number: "89110000", name: "Impôts sur les bénéfices de l'exerc", parent: "891", root_type: Expense, report_type: Profit and Loss}
+  - {number: "895", name: "Impôt minimum forfaitaire (IMF)", group: true, parent: "89", root_type: Expense, report_type: Profit and Loss}
+  - {number: "89500000", name: "Impôt Minimum Forfaitaire (I M F )", parent: "895", root_type: Expense, report_type: Profit and Loss}
+  - {number: "899", name: "Dégrèvements d'impôts sur résultats antérieurs", group: true, parent: "89", root_type: Expense, report_type: Profit and Loss}
+  - {number: "89910000", name: "Dégrèvements", parent: "899", root_type: Expense, report_type: Profit and Loss}
+  - {number: "89940000", name: "Annulations pour pertes rétroactive", parent: "899", root_type: Expense, report_type: Profit and Loss}

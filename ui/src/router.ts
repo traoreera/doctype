@@ -39,6 +39,13 @@ export function createDeskRouter(pinia: Pinia): Router {
       // L'ancienne adresse de « Mes modules » : la page vit maintenant dans Paramètres › Abonnement (favoris et liens déjà donnés suivent).
       { path: '/modules', name: 'modules', redirect: { name: 'settings', params: { doctype: '~modules' } } },
       { path: '/shared', name: 'shared', component: () => import('@/views/SharedView.vue') },
+      // Les automatisations (xflow) : une entrée de la barre latérale comme tout plugin, pas une rubrique des réglages. Le TRACÉ d'un
+      // flux a sa propre page, pleine largeur : un graphe ne tient pas dans une boîte de dialogue (`FlowBuilderView`).
+      { path: '/automations', name: 'automations', component: () => import('@/views/AutomationsView.vue') },
+      { path: '/automations/new', name: 'flow-new', component: () => import('@/views/FlowBuilderView.vue') },
+      { path: '/automations/:name', name: 'flow', component: () => import('@/views/FlowBuilderView.vue'), props: true },
+      // L'ancienne adresse (les automatisations vivaient dans les Paramètres) : les liens déjà donnés suivent.
+      { path: '/settings/~automations', redirect: { name: 'automations' } },
       // Les fichiers des documents que je peux lire (champs Image/Attach, pièces jointes) : lister, télécharger, détacher.
       { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
       { path: '/api/:doctype?', name: 'api-docs', component: () => import('@/views/ApiDocsView.vue'), props: true },

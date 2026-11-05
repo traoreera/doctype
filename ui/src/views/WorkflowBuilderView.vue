@@ -48,9 +48,25 @@ const loading = ref(true)
 const selected = ref<{ kind: 'state' | 'transition'; id: string } | null>(null)
 
 const label = computed(() => meta.value?.label || props.doctype)
+function starterWorkflow(): WorkflowDef {
+  return {
+    states: [
+      { name: 'Brouillon', docstatus: 'draft' },
+      { name: 'En cours', docstatus: 'draft' },
+      { name: 'Terminé', docstatus: 'submitted' },
+    ],
+    transitions: [
+      { action: 'Soumettre', from: 'Brouillon', to: 'En cours' },
+      { action: 'Valider', from: 'En cours', to: 'Terminé' },
+    ],
+  }
+}
 /** Adapter le circuit : modifier TOUS les documents du type (`rights.write === 'all'`, ni restreint ni partagé seulement). */
 const allowed = computed(() => meta.value?.rights.write === 'all')
-const dirty = computed(() => JSON.stringify(draft.value) !== JSON.stringify(saved.value))
+const dirty = computed(() => {
+  if (!meta.value?.workflow) return JSON.stringify(definition.value ?? starterWorkflow()) !== JSON.stringify(starterWorkflow())
+  return JSON.stringify(draft.value) !== JSON.stringify(saved.value)
+})
 const stuck = computed(() => deadEnds(definition.value, draft.value))
 const rows = computed(() => flowRows(definition.value, draft.value))
 
@@ -97,6 +113,32 @@ function choose(kind: 'state' | 'transition', id: string): void {
   selected.value = selected.value?.kind === kind && selected.value.id === id ? null : { kind, id }
 }
 
+function addState(): void {
+  const current = definition.value ?? starterWorkflow()
+  const name = window.prompt(t.workflowBuilder.addStatePrompt, `Nouveau statut ${current.states.length + 1}`)?.trim()
+  if (!name) return
+  if (current.states.some((s) => s.name === name)) {
+    notify.warn(t.workflowBuilder.duplicateState)
+    return
+  }
+  definition.value = { ...current, states: [...current.states, { name, docstatus: 'draft' }] }
+  selected.value = { kind: 'state', id: name }
+}
+
+function addTransition(fromName?: string): void {
+  const current = definition.value ?? starterWorkflow()
+  const source = fromName ?? (selected.value?.kind === 'state' ? selected.value.id : current.states[0]?.name)
+  const target = window.prompt(t.workflowBuilder.addTransitionPrompt, 'Nouveau statut')?.trim()
+  const action = window.prompt(t.workflowBuilder.addTransitionActionPrompt, `Vers ${target ?? 'suivant'}`)?.trim()
+  if (!source || !target || !action) return
+  if (current.transitions.some((t) => t.action === action)) {
+    notify.warn(t.workflowBuilder.duplicateTransition)
+    return
+  }
+  definition.value = { ...current, transitions: [...current.transitions, { action, from: source, to: target }] }
+  selected.value = { kind: 'transition', id: action }
+}
+
 function set(action: string, key: TweakKey, value: boolean | string): void {
   draft.value = withTweak(draft.value, action, key, value)
   problem.value = null
@@ -108,7 +150,11 @@ async function load(): Promise<void> {
   try {
     meta.value = await metaStore.get(props.doctype)
     if (!meta.value.workflow) {
-      definition.value = null
+      definition.value = starterWorkflow()
+      grants.value = {}
+      saved.value = {}
+      draft.value = {}
+      readPositions()
       return
     }
     // L'automate du YAML, pas celui de `/meta` : une transition que l'organisation a fermée n'y figure plus, on ne pourrait plus la rouvrir.
@@ -129,6 +175,10 @@ async function save(): Promise<void> {
   saving.value = true
   problem.value = null
   try {
+    if (!meta.value?.workflow) {
+      notify.info(t.workflowBuilder.noWorkflow)
+      return
+    }
     if (hasTweaks(draft.value)) await api.saveWorkflowOverride(props.doctype, draft.value)
     else await api.removeWorkflowOverride(props.doctype) // un habillage vide se retire : l'application reprend la main
     saved.value = draft.value
@@ -171,9 +221,11 @@ onMounted(load)
       <h1 data-testid="wf-title">{{ t.workflowBuilder.title(label) }}</h1>
       <span class="desk-spacer" />
       <Button :as="RouterLink" :to="{ name: 'list', params: { doctype } }" :label="t.workflowBuilder.toList" icon="pi pi-list" text severity="secondary" size="small" />
-      <template v-if="definition && allowed">
-        <Button :label="t.override.reset" severity="secondary" outlined size="small" :disabled="saving || !hasTweaks(saved)" data-testid="wf-reset" @click="reset" />
-        <Button :label="t.save" icon="pi pi-check" size="small" :loading="saving" :disabled="!dirty || stuck.length > 0" data-testid="wf-save" @click="save" />
+      <template v-if="definition">
+        <Button v-if="!meta?.workflow || allowed" :label="t.workflowBuilder.addState" severity="secondary" outlined size="small" data-testid="wf-add-state" @click="addState" />
+        <Button v-if="selected?.kind === 'state'" :label="t.workflowBuilder.addTransition" severity="secondary" outlined size="small" data-testid="wf-add-transition" @click="addTransition(selected.id)" />
+        <Button v-if="meta?.workflow && allowed" :label="t.override.reset" severity="secondary" outlined size="small" :disabled="saving || !hasTweaks(saved)" data-testid="wf-reset" @click="reset" />
+        <Button v-if="meta?.workflow && allowed" :label="t.save" icon="pi pi-check" size="small" :loading="saving" :disabled="!dirty || stuck.length > 0" data-testid="wf-save" @click="save" />
       </template>
     </div>
 

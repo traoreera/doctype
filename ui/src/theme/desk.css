@@ -3867,6 +3867,232 @@ a.p-button:hover {
 .wf-link-closed { text-decoration: line-through; color: var(--p-text-muted-color); }
 .wf-legend { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.3rem; font-size: 0.85rem; color: var(--p-text-muted-color); }
 
+/* ── Éditeur d'automatisation (FlowBuilderView, façon n8n) : palette | canevas | propriétés ──
+   Aucune couleur écrite ici : les jetons PrimeVue et la palette de graphiques (`--chart-*`, déjà validée en clair et en sombre)
+   donnent à chaque type d'étape sa teinte, et le nœud ne s'en sert que par `--fl-tone`. */
+/* L'éditeur prend TOUTE la place : ni la largeur maximale d'une page de lecture (78 rem), ni le centrage. Le canevas est ce qu'on
+   regarde — la barre du haut tient sur une ligne, la palette et le panneau défilent chez eux. */
+.fl-page {
+  max-width: none;
+  margin: 0;
+}
+.fl-head {
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+.fl-title {
+  flex: none;
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fl-name {
+  flex: 0 1 18rem;
+  min-width: 8rem;
+}
+.fl-steps { margin-top: 0.5rem; }
+.fl-body {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 320px;
+  gap: 0.75rem;
+  height: calc(100vh - 11rem);
+  min-height: 420px;
+}
+.fl-canvas {
+  position: relative;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--desk-radius);
+  background: var(--p-content-background);
+  overflow: hidden;
+}
+.fl-canvas .vue-flow { height: 100%; }
+.fl-palette, .fl-panel { overflow: auto; max-height: 100%; }
+.fl-json { max-width: 60rem; }
+@media (max-width: 1100px) {
+  .fl-body { grid-template-columns: 180px minmax(0, 1fr); height: auto; }
+  .fl-canvas { min-height: 480px; }
+  .fl-palette, .fl-panel { max-height: none; }
+  .fl-panel { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .fl-body { grid-template-columns: minmax(0, 1fr); }
+  .fl-canvas { min-height: 420px; }
+}
+/* Le mot d'accueil d'un flux vide : au milieu du canevas, et il ne prend jamais le clic. */
+.fl-empty {
+  position: absolute;
+  inset: auto 1rem 1rem;
+  margin: 0;
+  text-align: center;
+  color: var(--p-text-muted-color);
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+/* La palette : une puce par type d'étape, à glisser. */
+.fl-palette {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--desk-radius);
+  background: var(--p-content-background);
+}
+.fl-palette-title { margin: 0; font-size: 0.95rem; }
+.fl-palette-hint { margin: 0 0 0.3rem; font-size: 0.75rem; }
+.fl-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--desk-radius);
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  font: inherit;
+  text-align: left;
+  cursor: grab;
+}
+.fl-chip:hover { border-color: var(--fl-tone, var(--p-primary-color)); }
+.fl-chip:focus-visible { outline: 2px solid var(--p-primary-color); outline-offset: 2px; }
+.fl-chip-icon,
+.fl-node-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--fl-tone, var(--p-primary-color)) 18%, transparent);
+  color: var(--fl-tone, var(--p-primary-color));
+  font-size: 0.85rem;
+}
+.fl-chip-text { display: grid; min-width: 0; }
+.fl-chip-label { font-size: 0.85rem; font-weight: 600; }
+.fl-chip-hint {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 0.7rem;
+  line-height: 1.25;
+  color: var(--p-text-muted-color);
+}
+
+/* Un nœud : la carte d'une étape. */
+.fl-node {
+  display: grid;
+  gap: 0.3rem;
+  width: 200px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--p-content-border-color);
+  border-top: 3px solid var(--fl-tone, var(--p-surface-400));
+  border-radius: var(--desk-radius);
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--p-surface-900) 10%, transparent);
+}
+.fl-node:focus-visible { outline: 2px solid var(--p-primary-color); outline-offset: 2px; }
+.fl-node-selected { border-color: var(--p-primary-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-primary-color) 30%, transparent); }
+.fl-node-incomplete { border-bottom-color: var(--pill-warn-fg); }
+.fl-node-orphan { opacity: 0.75; border-style: dashed; }
+.fl-trigger { border-radius: 18px var(--desk-radius) var(--desk-radius) 18px; --fl-tone: var(--p-primary-color); }
+.fl-node-head { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.fl-node-titles { display: grid; min-width: 0; }
+.fl-node-name { font-weight: 600; font-size: 0.9rem; overflow-wrap: anywhere; }
+.fl-node-kind { font-size: 0.7rem; color: var(--p-text-muted-color); }
+.fl-node-summary {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fl-node-tags { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.fl-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+}
+.fl-tag-warn { background: var(--pill-warn-bg); color: var(--pill-warn-fg); }
+
+/* La teinte par type d'étape : la palette de graphiques, déjà vérifiée dans les deux thèmes. */
+.fl-kind-action { --fl-tone: var(--chart-1); }
+.fl-kind-condition { --fl-tone: var(--chart-3); }
+.fl-kind-switch { --fl-tone: var(--chart-4); }
+.fl-kind-parallel { --fl-tone: var(--chart-5); }
+.fl-kind-foreach { --fl-tone: var(--chart-6); }
+.fl-kind-wait { --fl-tone: var(--chart-7); }
+.fl-kind-transform { --fl-tone: var(--chart-2); }
+.fl-kind-template { --fl-tone: var(--chart-8); }
+.fl-kind-ai { --fl-tone: var(--p-primary-color); }
+.fl-kind-unknown { --fl-tone: var(--p-surface-400); }
+
+/* Les sorties : une ligne par chemin possible, sa poignée au bord droit de la carte (c'est elle qu'on tire pour relier). */
+.fl-outlets { display: grid; gap: 0.15rem; margin-top: 0.1rem; }
+.fl-outlet {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 18px;
+  padding-right: 0.35rem;
+}
+.fl-outlet-label { font-size: 0.7rem; color: var(--p-text-muted-color); }
+.fl-outlet-yes .fl-outlet-label { color: var(--pill-ok-fg); }
+.fl-outlet-no .fl-outlet-label,
+.fl-outlet-fail .fl-outlet-label { color: var(--pill-bad-fg); }
+.fl-node .vue-flow__handle {
+  width: 9px;
+  height: 9px;
+  min-width: 0;
+  min-height: 0;
+  border: 2px solid var(--p-content-background);
+  background: var(--fl-tone, var(--p-surface-400));
+}
+/* L'entrée est une seule poignée, sur tout le flanc gauche : on y lâche une flèche sans viser. */
+.fl-node .vue-flow__handle-left { top: 1.4rem; left: -5px; }
+.fl-node .fl-handle-out { position: absolute; right: -9px; top: 50%; transform: translateY(-50%); }
+.fl-trigger .vue-flow__handle { background: var(--p-primary-color); }
+
+/* Les flèches : la teinte dit le chemin (réussi, échec, vrai, faux). */
+.fl-canvas .vue-flow__edge-path { stroke: var(--p-text-muted-color); stroke-width: 1.6; }
+.fl-canvas .fl-edge-fail .vue-flow__edge-path,
+.fl-canvas .fl-edge-no .vue-flow__edge-path { stroke: var(--pill-bad-fg); stroke-dasharray: 6 4; }
+.fl-canvas .fl-edge-yes .vue-flow__edge-path { stroke: var(--pill-ok-fg); }
+.fl-canvas .fl-edge-loop .vue-flow__edge-path { stroke-dasharray: 2 3; }
+.fl-canvas .fl-edge-selected .vue-flow__edge-path { stroke: var(--p-primary-color); stroke-width: 2.6; }
+.fl-canvas .vue-flow__arrowhead polyline { stroke: var(--p-text-muted-color); fill: var(--p-text-muted-color); }
+.fl-canvas .vue-flow__connectionline .vue-flow__connection-path { stroke: var(--p-primary-color); stroke-width: 2; }
+
+/* Le panneau de propriétés : les champs reprennent ceux de l'éditeur de circuit (`.wf-field`, `.wf-section`…). */
+.fl-panel-body { display: grid; gap: 0.1rem; }
+.fl-panel-foot { margin-top: 1rem; display: flex; justify-content: flex-end; }
+.fl-case { display: flex; align-items: center; gap: 0.4rem; margin: 0.2rem 0; font-size: 0.85rem; }
+.fl-case > :first-child { flex: 1 1 auto; min-width: 0; }
+/* Une valeur : sa source à gauche (fixe, du déclencheur, d'une étape), ce qu'elle vaut à droite. */
+.fl-value-row { display: flex; gap: 0.35rem; align-items: center; }
+.fl-value-row > * { min-width: 0; flex: 1 1 auto; }
+.fl-value-source { flex: 0 0 8.5rem; }
+/* Une ligne de valeur à écrire, avec son bouton « retirer ». */
+.fl-row { display: flex; gap: 0.3rem; align-items: flex-end; }
+.fl-row > :first-child { flex: 1 1 auto; min-width: 0; }
+.fe-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; }
+.fl-secret { overflow-wrap: anywhere; }
+
 /* ── Form Builder (« Personnaliser », FormBuilderView) : palette | formulaire | propriétés ── */
 .fb-body {
   display: grid;

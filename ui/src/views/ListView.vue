@@ -557,7 +557,7 @@ const moreItems = computed<MenuItem[]>(() => [
   { label: t.sidebar.toggle, icon: 'pi pi-align-left', command: toggleSidebar, disabled: current.value !== 'list' },
   { label: t.devBuilder.menuEdit, icon: 'pi pi-wrench', testid: 'list-dev-doctype', command: () => void router.push({ name: 'dev-doctype', params: { doctype: props.doctype } }), visible: deskConfig.developer === true && !!meta.value && !meta.value.virtual },
   { label: t.formBuilder.menu, icon: 'pi pi-objects-column', testid: 'list-customize', command: () => void router.push({ name: 'customize', params: { doctype: props.doctype } }), visible: !!meta.value && meta.value.rights.write !== 'none' && !meta.value.virtual },
-  { label: t.workflowBuilder.menu, icon: 'pi pi-sitemap', testid: 'list-workflow', command: () => void router.push({ name: 'workflow', params: { doctype: props.doctype } }), visible: !!meta.value?.workflow },
+  { label: t.workflowBuilder.menu, icon: 'pi pi-sitemap', testid: 'list-workflow', command: () => void router.push({ name: 'workflow', params: { doctype: props.doctype } }), visible: !!meta.value && !meta.value.virtual },
   { label: t.trash.menu, icon: 'pi pi-trash', testid: 'list-trash', command: () => void router.push({ name: 'trash', params: { doctype: props.doctype } }), visible: !!meta.value && !meta.value.single && !meta.value.virtual },
   { label: t.importCsv.menu, icon: 'pi pi-upload', testid: 'import-csv', command: () => (importing.value = true), visible: canImport.value },
   { label: t.printBuilder.menu, icon: 'pi pi-file-edit', testid: 'list-print', command: () => void router.push({ name: 'print-builder', params: { doctype: props.doctype } }), visible: !!meta.value && !meta.value.single && !meta.value.virtual },

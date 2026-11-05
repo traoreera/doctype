@@ -3,12 +3,14 @@ import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { ApiError } from '@/lib/api'
-import { asUtc, readFlows, readRuns, statusTone } from '@/lib/automations'
+import { asUtc, eventSuggestions, readActions, readFlows, readRuns, statusTone } from '@/lib/automations'
 import { SERVICES } from '@/lib/services'
+import StepPanel from '@/components/flow/StepPanel.vue'
 import AutomationsView from '@/views/AutomationsView.vue'
+import FlowBuilderView from '@/views/FlowBuilderView.vue'
 
 // Ce que répond xflow (forme mesurée sur un vrai hôte, tests/integration/test_xflow_host.py).
 const FLOWS = {
@@ -65,8 +67,25 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
+// Vue Flow mesure son conteneur : jsdom n'a pas ResizeObserver.
+beforeAll(() => {
+  globalThis.ResizeObserver ??= class {
+    observe(): void { }
+    unobserve(): void { }
+    disconnect(): void { }
+  } as unknown as typeof ResizeObserver
+})
+
+/** Les vraies adresses : la liste mène à l'éditeur, qui est une PAGE (`#/automations/<nom>`), pas une boîte de dialogue. */
+const ROUTES = [
+  { path: '/', name: 'automations', component: AutomationsView },
+  { path: '/automations/new', name: 'flow-new', component: FlowBuilderView },
+  { path: '/automations/:name', name: 'flow', component: FlowBuilderView, props: true },
+  { path: '/app/:doctype/:name', name: 'form', component: AutomationsView },
+]
+
 async function page(automations: unknown) {
-  const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: AutomationsView }, { path: '/app/:doctype/:name', name: 'form', component: AutomationsView }] })
+  const router = createRouter({ history: createMemoryHistory(), routes: ROUTES })
   await router.push('/')
   const w = mount({ template: '<RouterView />' }, {
     attachTo: document.body,
@@ -80,7 +99,7 @@ async function page(automations: unknown) {
   return w
 }
 
-describe('Paramètres › Automatisations', () => {
+describe('Automatisations : la liste', () => {
   it('montre les flux et les exécutions, et lance un flux à la demande', async () => {
     const client = {
       get: vi.fn(async (path: string) => (path === '/flows' ? FLOWS : RUNS)),
@@ -110,139 +129,201 @@ describe('Paramètres › Automatisations', () => {
   })
 })
 
-import { definitionOf, draftOf, emptyDraft, eventSuggestions, readActions } from '@/lib/automations'
-
-describe('l’éditeur : un brouillon de formulaire ↔ la définition déployée', () => {
-  it('enchaîne les étapes dans l’ordre (sans on_success, xflow s’arrêterait après la première)', () => {
-    const draft = emptyDraft()
-    draft.name = 'suivi'
-    draft.steps = [
-      { id: 'a', target: 'xcore-doctype.doc.save', payload: '{"doctype": "Suivi", "data": {"demande": "{{ trigger.name }}"}}', extra: {} },
-      { id: 'b', target: 'xpulse.xpulse.publish', payload: '{"user_id": "{{ trigger.user }}", "text": "ok"}', extra: { timeout_seconds: 5 } },
-    ]
-    const { definition } = definitionOf(draft)
-    expect(definition).toEqual({
-      name: 'suivi', trigger: { type: 'manual' },
-      steps: [
-        { id: 'a', type: 'action', plugin: 'xcore-doctype', action: 'doc.save', payload: { doctype: 'Suivi', data: { demande: '{{ trigger.name }}' } }, on_success: 'b' },
-        { timeout_seconds: 5, id: 'b', type: 'action', plugin: 'xpulse', action: 'xpulse.publish', payload: { user_id: '{{ trigger.user }}', text: 'ok' }, on_success: null },
-      ],
-    })
-    // …et la relecture rend le même brouillon (ce que le formulaire ne montre pas voyage dans `extra`), charge utile remise en forme.
-    const back = draftOf(definition).draft!
-    expect(back.steps.map((x) => [x.id, x.target, JSON.parse(x.payload), x.extra])).toEqual(draft.steps.map((x) => [x.id, x.target, JSON.parse(x.payload), x.extra]))
-    expect(definitionOf(back).definition).toEqual(definition)
-  })
-
-  it('dit chaque faute avant le déploiement', () => {
-    const draft = { ...emptyDraft(), name: 'a b', trigger: 'schedule' as const, cron: '0 9 *' }
-    draft.steps = [
-      { id: 'x', target: 'sans-point', payload: '[1]', extra: {} },
-      { id: 'x', target: 'p.a', payload: '{', extra: {} },
-    ]
-    const { problems } = definitionOf(draft)
-    expect(problems).toHaveLength(6)
-    expect(problems.join('\n')).toMatch(/Nom/)
-    expect(problems.join('\n')).toMatch(/cron/)
-    expect(problems.join('\n')).toMatch(/déjà pris/)
-    expect(definitionOf({ ...emptyDraft(), name: 'e', trigger: 'event' }).problems.join()).toMatch(/événement/)
-  })
-
-  it('un événement et un cron vont dans le déclencheur', () => {
-    const ev = definitionOf({ ...emptyDraft(), name: 'e', trigger: 'event', event: 'doctype.Demande.after_submit' }).definition!
-    expect(ev.trigger).toEqual({ type: 'event', event_name: 'doctype.Demande.after_submit' })
-    const cr = definitionOf({ ...emptyDraft(), name: 'c', trigger: 'schedule', cron: '0 9 * * 1-5' }).definition!
-    expect(cr.trigger).toEqual({ type: 'schedule', cron: '0 9 * * 1-5' })
-  })
-
-  it('ce que le formulaire ne sait pas montrer s’ouvre en JSON, avec la raison', () => {
-    const step = { id: 'a', type: 'action', plugin: 'p', action: 'x', payload: {} }
-    expect(draftOf({ name: 'f', steps: [{ id: 'c', type: 'condition' }] }).reason).toMatch(/condition/)
-    expect(draftOf({ name: 'f', steps: [{ ...step, on_success: 'zz' }] }).reason).toMatch(/ordre/)
-    expect(draftOf({ name: 'f', steps: [{ ...step, on_failure: 'b' }] }).reason).toMatch(/échec/)
-    expect(draftOf({ name: 'f', trigger: { type: 'schedule', interval_seconds: 60 }, steps: [step] }).reason).toMatch(/périodique/)
-    expect(draftOf({ name: 'f', steps: [] }).reason).toMatch(/aucune/)
-  })
-
-  it('propose les événements que le moteur émet pour chaque type, puis le catalogue d’xflow', () => {
-    const list = eventSuggestions(['Demande'], ['xauth.login', 'doctype.Demande.after_save'])
-    expect(list.slice(0, 2)).toEqual(['doctype.Demande.after_save', 'doctype.Demande.after_submit'])
-    expect(list.filter((e) => e === 'doctype.Demande.after_save')).toHaveLength(1)
-    expect(list.at(-1)).toBe('xauth.login')
-    expect(readActions({ actions: [{ qualified_name: 'z.b' }, { qualified_name: 'a.x', description: 'd' }, { nom: 1 }] })).toEqual([
-      { name: 'a.x', description: 'd' }, { name: 'z.b', description: '' },
-    ])
-  })
-})
-
-describe('Paramètres › Automatisations : créer et modifier', () => {
+describe('l’éditeur d’automatisation : la page, le graphe et le panneau', () => {
   function client(stored: Record<string, unknown> | null = null) {
     return {
       get: vi.fn(async (path: string) => {
         if (path === '/flows') return FLOWS
         if (path === '/executions') return RUNS
-        if (path === '/registry') return { status: 'ok', actions: [{ qualified_name: 'xcore-doctype.doc.save', description: 'Créer ou modifier' }] }
-        if (path === '/events') return { status: 'ok', events: [] }
         return { status: 'ok', workflow: stored }
       }),
       post: vi.fn(async (_path: string, _body?: unknown) => ({ status: 'ok', workflow_name: 'nouveau' })),
       delete: vi.fn(async () => ({ status: 'ok' })),
     }
   }
-  const field = (testid: string) => document.querySelector(`[data-testid="${testid}"]`) as HTMLInputElement | HTMLTextAreaElement
 
+  /** Les types de l'organisation : l'éditeur propose leurs champs au lieu de faire taper du JSON. */
+  const CUSTOMER = {
+    name: 'Customer', label: 'Client', list_columns: [], layout: [],
+    rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
+    fields: [
+      { fieldname: 'customer_name', label: 'Nom', fieldtype: 'Text', required: true, hidden: false, in_list_view: true },
+      { fieldname: 'type', label: 'Catégorie', fieldtype: 'Select', options: ['Particulier', 'Société'], required: false, hidden: false, in_list_view: false },
+      { fieldname: 'total', label: 'Total', fieldtype: 'Currency', required: false, hidden: false, in_list_view: false, read_only: true },
+    ],
+  }
+  const api = {
+    doctypes: vi.fn(async () => [{ name: 'Customer', label: 'Client', module: 'sales', create: true }]),
+    meta: vi.fn(async () => CUSTOMER),
+  }
+
+  async function builder(automations: unknown, at = '/automations/new') {
+    const router = createRouter({ history: createMemoryHistory(), routes: ROUTES })
+    await router.push(at)
+    await router.isReady()
+    const w = mount({ template: '<RouterView />' }, {
+      attachTo: document.body,
+      global: {
+        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
+        provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api, automations } },
+      },
+    })
+    mounted.push(w)
+    await flushPromises()
+    return { w, router }
+  }
+
+  const q = (testid: string) => document.body.querySelector(`[data-testid="${testid}"]`) as HTMLElement | null
   async function type(testid: string, value: string) {
-    const el = field(testid)
+    const el = q(testid) as HTMLInputElement | HTMLTextAreaElement
     el.value = value
     el.dispatchEvent(new Event('input'))
     await flushPromises()
   }
 
-  it('crée un flux depuis le formulaire et le déploie', async () => {
+  it('la liste mène à l’éditeur, et « Nouvelle automatisation » ouvre la page vide', async () => {
+    const { w } = await builder(client(), '/')
+    expect(w.find('[data-testid="automations-create"]').attributes('href')).toContain('/automations/new')
+    expect(w.find('[data-testid="flow-edit-suivi"]').attributes('href')).toContain('/automations/suivi')
+  })
+
+  it('un flux neuf n’a que son déclencheur ; poser une étape la relie, et elle vise le document déclencheur', async () => {
+    const { w } = await builder(client())
+    expect(q('fl-node-trigger')).not.toBeNull()
+    expect(q('fl-empty')).not.toBeNull()
+    // Aucun JSON, aucune accolade : la palette ne propose que ce qui se règle dans des listes.
+    expect(q('fl-add-transform')).toBeNull()
+    expect(q('fl-add-template')).toBeNull()
+
+    await w.find('[data-testid="fl-add-action"]').trigger('click')
+    expect(q('fl-node-action_1')).not.toBeNull()
+    expect(q('fl-step-panel')).not.toBeNull()
+    expect(q('fl-gesture')).not.toBeNull()
+    await w.find('[data-testid="fl-add-condition"]').trigger('click')
+    expect(q('fl-node-condition_1')).not.toBeNull()
+  })
+
+  it('déploie l’appel exact du geste choisi : ni JSON tapé, ni accolade écrite à la main', async () => {
     const c = client()
-    const w = await page(c)
-    await w.find('[data-testid="automations-create"]').trigger('click')
+    const { w, router } = await builder(c)
+    await type('fl-name', 'nouveau')
+    await w.find('[data-testid="fl-add-action"]').trigger('click')
+    // Choisir « Soumettre le document » dans la liste des gestes : c'est le seul geste de l'utilisateur, et il vise d'office le
+    // document déclencheur. (La liste PrimeVue ne s'ouvre pas en jsdom : on émet ce que le panneau émet.)
+    w.findComponent(StepPanel).vm.$emit('patch', {
+      plugin: 'xcore-doctype',
+      action: 'doc.submit',
+      payload: { doctype: '{{ trigger.doctype }}', name: '{{ trigger.name }}', version: '{{ trigger.version }}' },
+    })
     await flushPromises()
-    await type('flow-name', 'nouveau')
-    await type('flow-step-payload-0', '{"doctype": "Suivi", "data": {"demande": "{{ trigger.name }}"}}')
-    ;(document.querySelector('[data-testid="flow-deploy"]') as HTMLButtonElement).click()
+    ;(q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     expect(c.post).toHaveBeenCalledWith('/flows', {
-      name: 'nouveau', trigger: { type: 'manual' },
-      steps: [{ id: 'etape_1', type: 'action', plugin: 'xcore-doctype', action: 'doc.save', payload: { doctype: 'Suivi', data: { demande: '{{ trigger.name }}' } }, on_success: null }],
+      name: 'nouveau',
+      trigger: { type: 'manual' },
+      steps: [
+        {
+          id: 'action_1',
+          type: 'action',
+          plugin: 'xcore-doctype',
+          action: 'doc.submit',
+          payload: { doctype: '{{ trigger.doctype }}', name: '{{ trigger.name }}', version: '{{ trigger.version }}' },
+        },
+      ],
     })
-    expect(c.get).toHaveBeenCalledWith('/registry')
+    expect(router.currentRoute.value.params.name).toBe('nouveau') // la création est devenue une modification
   })
 
-  it('un refus d’xflow reste dans l’éditeur, sous le formulaire', async () => {
+  it('dit les fautes sans appeler xflow', async () => {
     const c = client()
-    c.post.mockResolvedValueOnce({ status: 'error', code: 'register_error', msg: 'Type de step inconnu' } as never)
-    const w = await page(c)
-    await w.find('[data-testid="automations-create"]').trigger('click')
+    const { w } = await builder(c)
+    ;(q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
-    await type('flow-name', 'x')
-    ;(document.querySelector('[data-testid="flow-deploy"]') as HTMLButtonElement).click()
+    expect(document.body.textContent).toContain('Nom')
+    expect(c.post).not.toHaveBeenCalled()
+
+    await type('fl-name', 'bon_nom')
+    await w.find('[data-testid="fl-add-action"]').trigger('click')
+    ;(q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
-    expect(field('flow-server-error')?.textContent).toContain('Type de step inconnu')
+    // L'étape est posée sans type de document : le flux ne part pas, et la faute nomme l'étape.
+    expect(q('fl-problem')?.textContent).toContain('action_1')
+    expect(c.post).not.toHaveBeenCalled()
   })
 
-  it('modifie un flux : son nom ne change plus, et un flux que le formulaire ne sait pas montrer s’ouvre en JSON', async () => {
-    const stored = { name: 'suivi', trigger: { type: 'manual' }, steps: [{ id: 'a', type: 'action', plugin: 'p', action: 'x', payload: {}, on_success: null }], deployed_by: 'alice' }
-    const w = await page(client(stored))
-    await w.find('[data-testid="flow-edit-suivi"]').trigger('click')
+  it('un refus d’xflow reste dans la page, sans rien perdre du tracé', async () => {
+    const c = client({
+      name: 'refus',
+      trigger: { type: 'manual' },
+      steps: [{ id: 'action_1', type: 'action', plugin: 'xcore-doctype', action: 'doc.save', payload: { doctype: 'Customer', data: { customer_name: 'X' } } }],
+    })
+    c.post.mockResolvedValueOnce({ status: 'error', code: 'register_error', msg: 'Type de step inconnu' } as never)
+    await builder(c, '/automations/refus')
+    ;(q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
-    expect((field('flow-name') as HTMLInputElement).disabled).toBe(true)
-    expect((field('flow-name') as HTMLInputElement).value).toBe('suivi')
-    w.unmount()
-    mounted.splice(0)
-    document.body.innerHTML = ''
+    expect(q('fl-server-error')?.textContent).toContain('Type de step inconnu')
+    expect(q('fl-node-action_1')).not.toBeNull()
+  })
 
-    const branchy = { name: 'suivi', steps: [{ id: 'c', type: 'condition', condition: { left: '1' } }] }
-    const w2 = await page(client(branchy))
-    await w2.find('[data-testid="flow-edit-suivi"]').trigger('click')
+  it('modifie un flux : son nom ne change plus, et tout ce que le panneau ne montre pas revient tel quel', async () => {
+    const stored = {
+      name: 'suivi',
+      trigger: { type: 'manual' },
+      steps: [
+        { id: 'verifie', type: 'condition', condition: { left: '{{ trigger.to }}', operator: '==', right: 'Approuvée' }, if_true: 'ouvrir' },
+        { id: 'ouvrir', type: 'action', plugin: 'p', action: 'x', payload: {}, retry: { max_attempts: 4 } },
+      ],
+      deployed_by: 'alice',
+    }
+    const c = client(stored)
+    const { w } = await builder(c, '/automations/suivi')
+    expect((q('fl-name') as HTMLInputElement).disabled).toBe(true)
+    expect((q('fl-name') as HTMLInputElement).value).toBe('suivi')
+    // Une condition se DESSINE : deux nœuds, et la comparaison du départ se lit dans le panneau — « Nouvel état », pas `trigger.to`.
+    expect(q('fl-node-verifie')).not.toBeNull()
+    expect(q('fl-node-ouvrir')).not.toBeNull()
+    expect(q('fl-step-panel')?.textContent).toContain('Nouvel état')
+    expect(document.body.textContent).not.toContain('{{ trigger.to }}')
+    expect(w.findAll('.fl-outlet-yes').length).toBeGreaterThan(0)
+    ;(q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
-    expect(document.querySelector('[data-testid="flow-json-only"]')?.textContent).toMatch(/condition/)
-    expect((field('flow-json') as HTMLTextAreaElement).value).toContain('"type": "condition"')
-    expect((field('flow-json') as HTMLTextAreaElement).value).not.toContain('deployed_by')
+    const sent = c.post.mock.calls[0]![1] as Record<string, unknown>
+    expect((sent.steps as Record<string, unknown>[])[1]).toMatchObject({ retry: { max_attempts: 4 } })
+    expect(sent).not.toHaveProperty('deployed_by') // le serveur le réécrit de toute façon
+  })
+
+  it('ce que l’écran ne sait pas régler est montré, gardé intact, et redéployé tel quel', async () => {
+    const stored = {
+      name: 'suivi',
+      trigger: { type: 'event', event_name: 'xauth.login' },
+      steps: [
+        { id: 'bizarre', type: 'quantique', truc: 1 },
+        { id: 'maison', type: 'action', plugin: 'compta', action: 'cloturer', payload: { exercice: 2026 } },
+      ],
+    }
+    const c = client(stored)
+    await builder(c, '/automations/suivi')
+    expect(q('fl-node-bizarre')).not.toBeNull()
+    expect(q('fl-unknown-kind')).not.toBeNull() // l'étape d'un type que l'écran ne règle pas
+    expect(q('fl-event-other')).not.toBeNull() // l'événement d'un autre plugin
+    ;(q('fl-deploy') as HTMLButtonElement).click()
+    await flushPromises()
+    const sent = c.post.mock.calls[0]?.[1] as Record<string, unknown>
+    expect(sent.trigger).toMatchObject({ type: 'event', event_name: 'xauth.login' })
+    expect(sent.steps).toMatchObject([
+      { id: 'bizarre', type: 'quantique', truc: 1 },
+      { id: 'maison', plugin: 'compta', action: 'cloturer', payload: { exercice: 2026 } },
+    ])
+  })
+
+  it('un 403 d’xflow se lit « réservé », jamais une panne', async () => {
+    const c = client()
+    c.get.mockImplementation((async (path: string) => {
+      if (path === '/flows/suivi') throw new ApiError(403, 'forbidden', 'Interdit')
+      return { status: 'ok', actions: [], events: [] }
+    }) as never)
+    await builder(c, '/automations/suivi')
+    expect(q('fl-reserved')).not.toBeNull()
+    expect(q('fl-failure')).toBeNull()
   })
 })

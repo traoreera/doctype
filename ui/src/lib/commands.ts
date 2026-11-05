@@ -40,11 +40,13 @@ export interface CommandSources {
   developer?: boolean
   /** La facturation (xlicense) est installée : « Mes modules » se propose (Paramètres › Abonnement). */
   billing?: boolean
+  /** xflow est installé : « Automatisations » se propose. */
+  automations?: boolean
   /** Les commandes que les extensions ajoutent (D28). */
   extensions?: readonly { extension: string; label: string; icon?: string; keywords?: string; run: () => unknown }[]
 }
 
-export function buildCommands({ workspaces, summaries, recents, extensions = [], developer = false, billing = false }: CommandSources): Command[] {
+export function buildCommands({ workspaces, summaries, recents, extensions = [], developer = false, billing = false, automations = false }: CommandSources): Command[] {
   const out: Command[] = []
   const labelOf = (doctype: string) => summaries.find((d) => d.name === doctype)?.label ?? doctype
   for (const r of recents) {
@@ -67,6 +69,10 @@ export function buildCommands({ workspaces, summaries, recents, extensions = [],
   if (summaries.length) out.push(make({ id: 'api-docs', label: t.apiDocs.title, icon: 'code', group: 'go', to: { name: 'api-docs' } }, 'api rest swagger curl documentation developpeur'))
   if (billing) {
     out.push(make({ id: 'modules', label: t.billing.myModules, hint: t.billing.group, icon: 'th-large', group: 'go', to: { name: 'settings', params: { doctype: '~modules' } } }, 'modules abonnement facturation paiement catalogue acheter prendre'))
+  }
+  if (automations) {
+    out.push(make({ id: 'automations', label: t.automations.title, icon: 'bolt', group: 'go', to: { name: 'automations' } }, 'automatisations flux xflow declencheur execution'))
+    out.push(make({ id: 'flow-new', label: t.automations.create, icon: 'plus', group: 'new', to: { name: 'flow-new' } }, 'automatisation flux xflow creer nouveau'))
   }
   extensions.forEach((c, i) => {
     out.push(make({ id: `ext:${c.extension}:${i}`, label: c.label, hint: t.extensions.palette, icon: c.icon ?? 'bolt', group: 'extension', extension: { name: c.extension, run: c.run } }, `${c.keywords ?? ''} ${c.extension}`))

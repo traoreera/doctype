@@ -164,6 +164,7 @@ function skipToContent(): void {
 /** L'espace de la page courante : celui qu'on déplie d'office, et celui qu'on met en évidence. */
 /** Un compte qui peut lire au moins un document unique voit « Paramètres ». */
 const hasSettings = computed(() => (meta.summaries ?? []).some((d) => d.single))
+const hasAutomations = computed(() => !!services.automations)
 
 const currentSpace = computed(() => {
   if (route.name === 'workspace') return String(route.params.name)
@@ -316,6 +317,10 @@ const items = computed(() => [
         <span v-if="tasks.openCount" class="nav-badge" data-testid="tasks-count" :aria-label="`${tasks.openCount}`">{{ tasks.openCount }}</span>
       </RouterLink>
       <RouterLink class="desk-link" :to="{ name: 'shared' }" data-testid="nav-shared"><i class="pi pi-share-alt" />{{ t.share.withMe }}</RouterLink>
+      <!-- xflow installé : les automatisations sont une entrée à part entière, comme tout plugin apporté au Desk. -->
+      <RouterLink v-if="hasAutomations" class="desk-link" :to="{ name: 'automations' }" data-testid="nav-automations">
+        <i class="pi pi-bolt" />{{ t.automations.title }}
+      </RouterLink>
       <h6>{{ t.workspace.spaces }}</h6>
       <div v-for="w in workspaces.items ?? []" :key="w.name" class="ws-item" :data-testid="`ws-${w.name}`">
         <div class="desk-link ws-row" :class="{ 'router-link-active': currentSpace === w.name }">
@@ -361,7 +366,7 @@ const items = computed(() => [
           <i :class="piIcon(l.icon, 'bolt')" aria-hidden="true" />{{ l.label }}
         </RouterLink>
       </template>
-      <div class="desk-sidebar-foot" v-if="hasSettings">
+      <div v-if="hasSettings" class="desk-sidebar-foot">
         <RouterLink class="desk-link" :to="{ name: 'settings' }" data-testid="nav-settings"><i class="pi pi-cog" />{{ t.settings.title }}</RouterLink>
       </div>
     </nav>

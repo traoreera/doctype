@@ -29,12 +29,10 @@ const { auth, api, license, automations } = useServices()
 // qui peut agir (l'administrateur de l'organisation, rejugé par le serveur).
 const BILLING: Record<string, Component> = { modules: defineAsyncComponent(() => import('@/views/ModulesView.vue')) }
 const billingKeys = computed(() => (license ? Object.keys(BILLING) : []))
-// « Automatisations » : les flux xflow de l'organisation, seulement si `config.json` annonce xflow ; la page dit elle-même si c'est réservé.
-const AUTOMATION: Record<string, Component> = { automations: defineAsyncComponent(() => import('@/views/AutomationsView.vue')) }
-const automationKeys = computed(() => (automations ? Object.keys(AUTOMATION) : []))
 // Les rubriques qui ne viennent ni d'xauth ni d'un DocType : rendues « embarquées » (la page des Paramètres porte le titre).
-const extraKeys = computed(() => [...billingKeys.value, ...automationKeys.value])
-const extraTitle = (key: string) => (billingKeys.value.includes(key) ? t.billing.myModules : t.automations.title)
+// Les automatisations (xflow) n'en sont PAS une : elles ont leur entrée dans la barre latérale et leurs propres pages, parce que
+// tracer un flux demande toute la largeur. Les Paramètres n'en gardent qu'un lien (`#/automations`).
+const extraKeys = computed(() => billingKeys.value)
 
 // Les pages d'administration d'xauth (comptes, membres, rôles, courrier, audit, API) : des rubriques « système », adresse `/settings/~<clé>`. Elles n'existent que
 // connecté à xauth ; chacune dit elle-même si l'utilisateur n'a pas le droit de s'en servir.
@@ -72,7 +70,6 @@ const section = computed(() => (props.doctype?.startsWith('~') ? props.doctype.s
 const sectionView = computed(() => {
   if (section.value === null) return null
   if (billingKeys.value.includes(section.value)) return BILLING[section.value] ?? null
-  if (automationKeys.value.includes(section.value)) return AUTOMATION[section.value] ?? null
   return SYSTEM[section.value] ?? null
 })
 const session = useSession()
@@ -225,16 +222,9 @@ onBeforeRouteUpdate((to, from) => {
             <i class="pi pi-th-large" />{{ t.billing.myModules }}
           </RouterLink>
         </div>
-        <div v-if="automationKeys.length" class="settings-group" data-testid="settings-group-automations">
+        <div v-if="automations" class="settings-group" data-testid="settings-group-automations">
           <h4 class="settings-module">{{ t.automations.group }}</h4>
-          <RouterLink
-            v-for="key in automationKeys"
-            :key="key"
-            class="settings-item"
-            :to="{ name: 'settings', params: { doctype: `~${key}` } }"
-            exact-active-class="active"
-            :data-testid="`automation-${key}`"
-          >
+          <RouterLink class="settings-item" :to="{ name: 'automations' }" data-testid="automation-automations">
             <i class="pi pi-bolt" />{{ t.automations.title }}
           </RouterLink>
         </div>
@@ -245,7 +235,7 @@ onBeforeRouteUpdate((to, from) => {
         <p v-if="unknown" class="desk-card settings-unknown" data-testid="settings-unknown">{{ t.settings.unknown }}</p>
 
         <template v-else-if="section !== null">
-          <div class="desk-page-head"><h1 data-testid="system-title">{{ extraKeys.includes(section) ? extraTitle(section) : t.admin.sections[section] }}</h1></div>
+          <div class="desk-page-head"><h1 data-testid="system-title">{{ extraKeys.includes(section) ? t.billing.myModules : t.admin.sections[section] }}</h1></div>
           <component :is="sectionView" :key="section" :embedded="extraKeys.includes(section) || undefined" />
         </template>
 

@@ -277,8 +277,9 @@ XFLOW_GRANTS = ["xflow:workflows:read", "xflow:workflows:write", "xflow:runs:rea
 @pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
 @pytest.mark.parametrize("host", [{"platform": True, "auth_grants": {"alice": GRANTS + XFLOW_GRANTS}}], indirect=True)
 def test_an_automation_is_created_run_and_followed_from_the_desk(host):
-    """Paramètres › Automatisations dans Chromium, face au vrai xflow : créer un flux par le formulaire (action proposée par le
-    catalogue, variable insérée), le voir en JSON, le déployer, le lancer, voir son exécution réussie ET le document que son étape a
-    écrit au nom d'alice ; le modifier, puis le supprimer."""
+    """Les Automatisations dans Chromium, face au vrai xflow : l'entrée de la barre latérale, puis l'éditeur PLEINE PAGE (palette |
+    graphe | propriétés) — une étape GLISSÉE de la palette sur le canevas, une deuxième reliée à la première en tirant sa poignée
+    « Réussi » (ce qu'xflow exécute vraiment) —, le déployer, le lancer, voir son exécution réussie ET le document que son étape a
+    écrit au nom d'alice ; le rouvrir (le graphe revient tel qu'il a été tracé, positions comprises), le modifier, le supprimer."""
     run = _scenario(host, "e2e/automations.e2e.mjs", permissions=XFLOW_GRANTS)
     assert run.returncode == 0, f"scénario des automatisations en échec :\n{run.stdout}\n{run.stderr}"

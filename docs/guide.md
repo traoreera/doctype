@@ -579,31 +579,39 @@ l'organisation, **au nom de qui a approuvé** : xflow ne garde que son identifia
 Un flux absent, en panne ou refusé est journalisé (`flow not started`, `flow refused`) ; **l'approbation reste faite**. Seul le NOM du
 flux se vérifie au chargement : un flux se déploie par organisation chez xflow.
 
-**Le plus simple : Paramètres › Automatisations › « Nouvelle automatisation »** (droit `xflow:workflows:write`). Le formulaire
-demande un nom (celui que cite `flow:`), un déclencheur (à la demande, événement, planifié, webhook) et des étapes exécutées dans
-l'ordre : pour chacune, une action `plugin.action` proposée par le catalogue (toutes les actions des plugins chargés, `doc.save`,
-`doc.submit`, `xpulse.publish`…) et sa charge utile en JSON, où un clic insère une variable (`{{ trigger.name }}`…). L'onglet JSON
-montre la définition entière et sert pour le reste du langage d'xflow (conditions, boucles, parallèle, attente) : un flux que le
-formulaire ne sait pas montrer s'y ouvre directement, jamais tronqué. « Modifier » redéploie sous le même nom, « Supprimer » le retire
-(et arrête son cron). Le refus d'xflow s'affiche sous le formulaire.
+**Le plus simple : « Automatisations » dans la barre latérale, puis « Nouvelle automatisation »** (droit
+`xflow:workflows:write`). L'éditeur prend toute la page : la **palette** des étapes à gauche, le **flux en graphe** au milieu, les
+**propriétés** de ce qu'on a choisi à droite. On glisse une étape de la palette sur le canevas (ou on clique pour la poser au bout du
+flux) et on tire une **poignée** d'un nœud vers un autre pour les enchaîner ; au clavier, les listes « Va vers » du panneau font la
+même chose. Les neuf types d'étape d'xflow sont dessinés — action, condition, aiguillage, parallèle, pour-chaque, attente, extraction,
+texte, IA — et les flèches sont exactement les clés que le moteur suit (`on_success`, `on_failure`, « vrai »/« faux », un cas d'un
+aiguillage, une branche d'un parallèle, le corps d'une boucle). Un nœud dit ce qui lui manque encore (« Incomplète ») et s'il n'est
+jamais atteint, avant même de déployer.
+
+Le flux garde tout ce que l'éditeur ne montre pas (un `retry`, des webhooks sortants, un `initial_payload`) et le place du graphe
+voyage avec lui : un collègue qui le rouvre voit le même dessin. L'onglet **JSON** montre le MÊME flux pour le reste du langage
+d'xflow. « Déployer » redéploie sous le même nom (le nom ne change plus après le premier déploiement), « Supprimer » retire le flux
+et arrête son cron. Le refus d'xflow reste affiché dans la page, sans rien perdre du tracé.
 
 Pas à pas (captures du scénario Chromium `ui/e2e/automations.e2e.mjs`, face au vrai xflow) :
 
-1. **Paramètres › Automatisations**, « Nouvelle automatisation ».
+1. **Automatisations** (barre latérale), « Nouvelle automatisation ».
    ![La page, vide](captures/automations/auto-01-vide.png)
-2. Le formulaire : un nom, un déclencheur, une étape. L'action se choisit dans la liste (ici `xcore-doctype.doc.save`), la charge
-   utile dit quoi écrire ; les puces insèrent une variable.
-   ![Le formulaire](captures/automations/auto-02-formulaire.png)
-3. L'onglet JSON montre la même définition (et sert pour les conditions, boucles, etc.).
-   ![Le JSON](captures/automations/auto-03-json.png)
-4. « Déployer » : le flux est listé, avec Modifier, Supprimer et — pour un flux à la demande — « Lancer ».
-   ![Déployé](captures/automations/auto-04-deploye.png)
-5. « Lancer » : l'exécution apparaît, « Réussi » ou « Échoué » avec son erreur.
-   ![L'exécution](captures/automations/auto-05-execution.png)
-6. Le document que l'étape a écrit existe, au nom de qui a lancé le flux.
-   ![Le client créé](captures/automations/auto-06-client-cree.png)
-7. « Modifier » rouvre le formulaire (le nom ne change plus), « Supprimer » retire le flux et son historique.
-   ![Modifié](captures/automations/auto-07-modifie.png)
+2. L'éditeur : palette, canevas et propriétés. Seul le déclencheur est là.
+   ![L'éditeur](captures/automations/auto-02-editeur.png)
+3. Une étape glissée de la palette se pose sous le curseur et se relie au déclencheur ; l'action se choisit dans la liste (ici
+   `xcore-doctype.doc.save`), la charge utile dit quoi écrire, les puces insèrent une variable.
+   ![L'étape posée](captures/automations/auto-03-etape-posee.png)
+4. Une deuxième étape, reliée à la première en tirant sa poignée « Réussi ».
+   ![Reliée](captures/automations/auto-04-reliee.png)
+5. « Déployer » : le flux est listé, avec Modifier, Supprimer et — pour un flux à la demande — « Lancer ».
+   ![Déployé](captures/automations/auto-05-deploye.png)
+6. « Lancer » : l'exécution apparaît, « Réussi » ou « Échoué » avec son erreur.
+   ![L'exécution](captures/automations/auto-06-execution.png)
+7. Le document que l'étape a écrit existe, au nom de qui a lancé le flux.
+   ![Le client créé](captures/automations/auto-07-client-cree.png)
+8. Rouvrir le flux : le graphe revient tel qu'il a été tracé, et l'onglet JSON montre la même définition.
+   ![Le JSON](captures/automations/auto-08-json.png)
 
 Le même flux se déploie aussi par l'API d'xflow :
 
@@ -624,8 +632,8 @@ elle ne contourne rien. Les autres déclencheurs d'xflow restent disponibles : u
 (`{"type": "schedule", "cron": "0 9 * * 1-5"}`), qui s'exécutent au nom de qui a DÉPLOYÉ le flux.
 
 Dans le Desk : l'éditeur de circuit (« ⋯ › Circuit d'approbation ») marque d'un éclair une transition qui lance un flux, et
-**Paramètres › Automatisations** crée, modifie et supprime les flux de l'organisation, montre leurs dernières exécutions (état, origine,
-erreur) et lance un flux « à la demande ». Réglage : `doctype.flows: false` dans le manifeste du moteur coupe les lancements ; `{plugin, action}` les envoie
+**Automatisations** (barre latérale) liste les flux de l'organisation avec leurs dernières exécutions (état, origine, erreur), lance un
+flux « à la demande », en supprime un, et ouvre l'éditeur pleine page pour en tracer un. Réglage : `doctype.flows: false` dans le manifeste du moteur coupe les lancements ; `{plugin, action}` les envoie
 ailleurs.
 
 **Ce qu'il faut côté xauth** : l'action IPC `xauth.user.permissions` (les grants d'un membre), avec `xflow` dans ses

@@ -11,9 +11,9 @@ import WorkflowBuilderView from '@/views/WorkflowBuilderView.vue'
 // Vue Flow mesure son conteneur : jsdom n'a pas ResizeObserver.
 beforeAll(() => {
   globalThis.ResizeObserver ??= class {
-    observe(): void {}
-    unobserve(): void {}
-    disconnect(): void {}
+    observe(): void { }
+    unobserve(): void { }
+    disconnect(): void { }
   } as unknown as typeof ResizeObserver
 })
 
@@ -44,7 +44,7 @@ async function open(m: DocTypeMeta, config: WorkflowOverride = {}) {
     meta: vi.fn(async () => m),
     workflowOverride: vi.fn(async () => ({ doctype: 'Leave Request', config, definition: LEAVE, grants: GRANTS })),
     saveWorkflowOverride: vi.fn(async (_d: string, c: WorkflowOverride) => ({ doctype: 'Leave Request', config: c })),
-    removeWorkflowOverride: vi.fn(async () => {}),
+    removeWorkflowOverride: vi.fn(async () => { }),
   }
   const router = createRouter({
     history: createMemoryHistory(),
@@ -91,7 +91,7 @@ describe('l’éditeur du circuit d’approbation (le graphe)', () => {
     expect((q('wf-save') as HTMLButtonElement).disabled).toBe(true) // rien à enregistrer
     q('wf-edge-Refuser')!.click()
     await flushPromises()
-    ;(q('wf-closed')!.querySelector('input') as HTMLInputElement).click()
+      ; (q('wf-closed')!.querySelector('input') as HTMLInputElement).click()
     await flushPromises()
     expect(q('wf-edge-Refuser')?.className).toContain('wf-edge-label-closed')
     q('wf-save')!.click()
@@ -103,7 +103,7 @@ describe('l’éditeur du circuit d’approbation (le graphe)', () => {
     await open(meta(), { transitions: { Approuver: { closed: true }, Refuser: { closed: true } } })
     q('wf-edge-Reprendre')!.click()
     await flushPromises()
-    ;(q('wf-closed')!.querySelector('input') as HTMLInputElement).click()
+      ; (q('wf-closed')!.querySelector('input') as HTMLInputElement).click()
     await flushPromises()
     expect(q('wf-deadend')?.textContent).toContain('À approuver')
     expect(q('wf-state-À approuver')?.className).toContain('wf-state-stuck')
@@ -114,7 +114,7 @@ describe('l’éditeur du circuit d’approbation (le graphe)', () => {
     const { api } = await open(meta(), { transitions: { Refuser: { closed: true } } })
     q('wf-edge-Refuser')!.click()
     await flushPromises()
-    ;(q('wf-closed')!.querySelector('input') as HTMLInputElement).click()
+      ; (q('wf-closed')!.querySelector('input') as HTMLInputElement).click()
     await flushPromises()
     q('wf-save')!.click()
     await flushPromises()
@@ -131,9 +131,24 @@ describe('l’éditeur du circuit d’approbation (le graphe)', () => {
     expect((q('wf-closed')!.querySelector('input') as HTMLInputElement).disabled).toBe(true)
   })
 
+  it('crée un circuit de départ et ajoute un état personnalisé quand il n’y a pas de workflow', async () => {
+    const { api } = await open(meta(ALL, null))
+    expect(q('wf-none')).toBeNull()
+    expect(q('wf-state-Brouillon')).not.toBeNull()
+    expect(q('wf-add-state')).not.toBeNull()
+
+    const prompt = vi.fn(() => 'Validation')
+    vi.stubGlobal('prompt', prompt)
+    q('wf-add-state')!.click()
+    await flushPromises()
+    expect(q('wf-state-Validation')).not.toBeNull()
+    expect(api.workflowOverride).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
   it('un type sans circuit le dit', async () => {
     const { api } = await open(meta(ALL, null))
-    expect(q('wf-none')).not.toBeNull()
+    expect(q('wf-none')).toBeNull()
     expect(api.workflowOverride).not.toHaveBeenCalled()
   })
 })

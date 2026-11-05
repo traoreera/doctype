@@ -682,8 +682,9 @@ const moreItems = computed<MoreItem[]>(() => {
   // « Personnaliser » : le Form Builder, une page (onglets, sections, champs à glisser), à la manière de Frappe.
   if (writable.value) out.push({ label: t.formBuilder.menu, icon: 'pi pi-objects-column', testid: 'form-layout-edit', command: () => void router.push({ name: 'customize', params: { doctype: props.doctype } }) })
   // Le circuit d'approbation (§3.2, §3.6) : son éditeur est une page (le graphe), que tout lecteur du type ouvre ; seul qui modifie
-  // TOUS ses documents y adapte quelque chose (la page le dit et grise le reste).
-  if (meta.value?.workflow) {
+  // TOUS ses documents y adapte quelque chose (la page le dit et grise le reste). L’éditeur doit aussi apparaître quand le type n’a
+  // pas encore de workflow : on crée le circuit à partir de zéro et on le sauve ensuite.
+  if (meta.value && !meta.value.virtual) {
     out.push({ label: t.workflowBuilder.menu, icon: 'pi pi-sitemap', testid: 'flow-edit', command: () => void router.push({ name: 'workflow', params: { doctype: props.doctype } }) })
   }
   if (canDelete.value && !props.embedded) {

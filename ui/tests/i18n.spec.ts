@@ -55,6 +55,7 @@ const SAME_IN_BOTH = new Set([
   'Collapsible', 'Thème', 'Compte', 'Organisation', 'Profil', 'Total', 'Jeton', 'Langue',
   'French', 'English', 'Français', 'MFA', 'Connections', 'API', 'Zoom', 'Tags', 'Label', 'Labels',
   'Menu', 'inactive', 'mention', 'auto', 'Orientation', 'Centre', 'Image…', 'Routes', 'unique',
+  'Expression', 'Branches', 'Service', 'contains',
 ])
 
 describe('la langue de la page', () => {

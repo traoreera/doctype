@@ -1,0 +1,77 @@
+/**
+ * Les VALEURS d'une automatisation, pour quelqu'un qui n'écrit pas de code.
+ *
+ * xflow remplace `{{ trigger.name }}` dans les charges utiles de ses étapes. Personne ne doit avoir à taper ces accolades : l'écran
+ * propose une LISTE (« une valeur fixe », « du document déclencheur », « du document créé à l'étape X ») et ce module traduit le choix
+ * en jeton, et le jeton en choix. Les accolades restent une affaire de machine.
+ *
+ * Tout est pur et testé à part (`tests/flowvalues.spec.ts`).
+ *
+ * Une valeur FIXE garde son type JSON (un nombre reste un nombre) : le moteur écrit en types stricts et refuse `"12"` pour un
+ * nombre (CLAUDE.md « Writes are strict »). Un jeton, lui, est toujours une chaîne : c'est xflow qui le résout à l'exécution.
+ */
+
+/** Ce que la charge d'un déclencheur porte (`flows.py` : le moteur met ces clés et rien d'autre). */
+export const TRIGGER_KEYS = ['name', 'doctype', 'user', 'action', 'from', 'to', 'version'] as const
+export type TriggerKey = (typeof TRIGGER_KEYS)[number]
+
+export type FlowValue =
+  /** Ce que l'utilisateur a tapé ou choisi : rendu tel quel, avec son type. */
+  | { kind: 'fixed'; value: unknown }
+  /** Une information du document qui a déclenché le flux. */
+  | { kind: 'trigger'; key: TriggerKey }
+  /** Le document qu'une étape précédente a lu ou créé (son nom : c'est ce qui sert à le reprendre). */
+  | { kind: 'step'; step: string }
+  /**
+   * Une expression écrite ailleurs (à la main, par un autre outil) : on la MONTRE et on la garde telle quelle, l'écran n'en fabrique
+   * jamais. Sans ça, ouvrir un flux venu d'ailleurs l'abîmerait.
+   */
+  | { kind: 'raw'; text: string }
+
+const TRIGGER_RE = /^\{\{\s*trigger\.([a-z_]+)\s*\}\}$/
+const STEP_RE = /^\{\{\s*steps\.([A-Za-z0-9_-]+)\.result\.doc\.name\s*\}\}$/
+
+/** Le jeton (ou la valeur) qu'xflow recevra. */
+export function writeValue(value: FlowValue): unknown {
+  switch (value.kind) {
+    case 'fixed':
+      return value.value
+    case 'trigger':
+      return `{{ trigger.${value.key} }}`
+    case 'step':
+      return `{{ steps.${value.step}.result.doc.name }}`
+    case 'raw':
+      return value.text
+  }
+}
+
+/** Ce que l'écran doit montrer d'une valeur stockée. Ne refuse jamais : ce qu'on ne reconnaît pas reste une expression. */
+export function readValue(raw: unknown): FlowValue {
+  if (typeof raw !== 'string') return { kind: 'fixed', value: raw }
+  const trigger = TRIGGER_RE.exec(raw)
+  if (trigger && (TRIGGER_KEYS as readonly string[]).includes(trigger[1]!)) return { kind: 'trigger', key: trigger[1] as TriggerKey }
+  const step = STEP_RE.exec(raw)
+  if (step) return { kind: 'step', step: step[1]! }
+  if (raw.includes('{{')) return { kind: 'raw', text: raw }
+  return { kind: 'fixed', value: raw }
+}
+
+/** Le texte d'une valeur fixe dans un champ de saisie (une valeur absente se saisit vide, pas « undefined »). */
+export function fixedText(value: FlowValue): string {
+  if (value.kind !== 'fixed') return ''
+  if (value.value === null || value.value === undefined) return ''
+  return typeof value.value === 'object' ? JSON.stringify(value.value) : String(value.value)
+}
+
+/**
+ * Une valeur fixe saisie pour un champ de ce TYPE. Le moteur n'accepte aucune conversion : un nombre doit partir en nombre, un
+ * booléen en booléen, un montant exact en chaîne canonique (`decimals.ts`), le reste en texte.
+ */
+export function fixedValue(text: string, fieldtype?: string): unknown {
+  const t = text.trim()
+  if (fieldtype === 'Boolean') return t === 'true' || t === 'oui' || t === '1'
+  if (fieldtype === 'Number' || fieldtype === 'Int' || fieldtype === 'Percent' || fieldtype === 'Rating') {
+    return t === '' ? '' : Number.isFinite(Number(t)) ? Number(t) : text
+  }
+  return text
+}
