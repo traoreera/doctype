@@ -472,6 +472,7 @@ def test_install_lays_the_platform_plugins_and_keeps_their_manifests(tmp_path):
     for name in PLATFORM_PLUGINS:
         assert (app / name / "plugin.yaml").is_file() and (app / name / "src" / "main.py").is_file()
         assert not list((app / name).rglob("__pycache__"))
+    assert (app / "xflow" / "migrations" / "env.py").is_file()  # sa chaîne Alembic voyage avec lui (elle ne dépend plus de `app/xflows`)
     manifest = app / "xlicense" / "plugin.yaml"
     manifest.write_text(manifest.read_text() + "\n# réglé par l'opérateur\n")
     stale = app / "xlicense" / "src" / "ancien.py"

@@ -41,6 +41,7 @@ from . import devtools
 from .directory import DEFAULT_ACTION, DEFAULT_PLUGIN, DEFAULT_TTL, Directory, NoDirectory, XauthDirectory
 from .grants import GrantCatalog
 from .channels import ChannelNotifier, ChannelRegistry
+from .flows import FlowLauncher, NoFlows
 from .realtime import NoRealtime, Realtime, RealtimeNotifier
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
 from .user_permissions import make_user_permission_hooks
@@ -135,6 +136,28 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
         return XauthNotifier(call, plugin=plugin, action=act, logger=self.logger)
 
+    def _flows(self, raw: Any) -> Any:
+        """Qui lance le flux d'une transition (`doctype.flows`) : xflow par défaut (`plugin: xflow`, `action: trigger`), `false` pour
+        jamais. xflow absent n'est pas une erreur de configuration : chaque lancement le journalise (flows.py), la transition est faite."""
+        if raw is False:
+            return NoFlows()
+        raw = raw if raw is not None and raw is not True else {}
+        if not isinstance(raw, dict):
+            raise ConfigurationError("doctype.flows doit être false ou un objet {plugin, action}")
+        plugin, act = raw.get("plugin", "xflow"), raw.get("action", "trigger")
+        if not isinstance(plugin, str) or not isinstance(act, str):
+            raise ConfigurationError("doctype.flows : `plugin` et `action` sont des textes")
+        caller = self.ctx.caller
+        if caller is None:
+            return NoFlows()
+        me = self.ctx.name
+
+        async def call(target: str, act_: str, payload: dict[str, Any], tenant_id: str, principal: Any) -> Any:
+            # Le principal de la TRANSITION : xflow en retient l'identifiant (jamais les droits) pour agir en son nom.
+            return await caller(target, act_, payload, caller=me, tenant_id=tenant_id, principal=principal)
+
+        return FlowLauncher(call, self.logger, plugin=plugin, action=act)
+
     def _rule_delivery(self, raw: Any) -> dict[str, Any]:
         """L'e-mail des règles de notification : l'extension `ext.email` de l'hôte quand elle existe (`doctype.notifications.email: false` la coupe),
         et `desk_url`, l'adresse du Desk que l'e-mail cite (sans elle, pas de lien : le moteur ne devine pas l'adresse publique de l'hôte)."""
@@ -213,6 +236,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root.include_router(build_router(self.documents, self._settings, developer=desk.developer_mode))
         root.include_router(build_files_router(file_service, self._settings))  # téléverser, liens signés : une identité est exigée
         self.documents.realtime = self._realtime(block.get("realtime"))
+        self.documents.flows = self._flows(block.get("flows"))  # ce qui suit une transition (`flow:` dans le workflow), chez xflow
         directory = self._directory(block.get("directory"))
         bell = RealtimeNotifier(self._notifier(block.get("notifications")), self.documents.realtime)
         self.channels = ChannelRegistry(self.logger)
@@ -356,6 +380,8 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     async def on_unload(self) -> None:
         if self.documents is not None and self.documents.notifications is not None:
             await self.documents.notifications.close()
+        if self.documents is not None:
+            await self.documents.flows.close()
         if self.channels is not None:
             await self.channels.close()
             self.ctx.services.pop(CHANNELS_SERVICE, None)

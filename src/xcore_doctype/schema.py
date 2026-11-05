@@ -540,6 +540,9 @@ class WorkflowState(BaseModel):
     docstatus: Literal["draft", "submitted", "cancelled"] = "draft"
 
 
+FLOW_NAME = r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$"  # le nom d'un flux xflow que nomme une transition (`WorkflowTransition.flow`)
+
+
 class WorkflowTransition(BaseModel):
     """Le passage d'un état à un autre, et qui a le droit de le faire.
 
@@ -560,6 +563,9 @@ class WorkflowTransition(BaseModel):
     # Séparation des pouvoirs : celui qui a créé le document ne peut pas faire cette transition (approuver sa propre demande).
     not_owner: StrictBool = False
     description: Annotated[str, StringConstraints(min_length=1, max_length=500)] | None = None
+    # Le flux xflow qui SUIT la transition (flows.py) : lancé après le commit, au nom de qui l'a faite ; jamais dans la transaction,
+    # et son échec ne défait pas la transition. Il se déploie par organisation chez xflow : seul son NOM se vérifie ici.
+    flow: Annotated[str, StringConstraints(pattern=FLOW_NAME)] | None = None
 
 
 class WorkflowDef(BaseModel):
