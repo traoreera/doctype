@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import Select from 'primevue/select'
 import Message from 'primevue/message'
 import { useConfirm } from 'primevue/useconfirm'
 import { computed, onMounted, ref } from 'vue'
@@ -7,9 +9,12 @@ import { RouterLink } from 'vue-router'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
-import { readFlows, readRuns, statusTone, type FlowSummary, type RunSummary } from '@/lib/automations'
+import LinkField from '@/components/LinkField.vue'
+import { DOCUMENT_KEYS, fixedDoctypeOf, readFlows, readRuns, statusTone, triggerKeysUsed, type FlowSummary, type RunSummary } from '@/lib/automations'
 import { formatTimestamp } from '@/lib/format'
 import { useServices } from '@/lib/services'
+import type { DocTypeSummary } from '@/lib/types'
+import { useMeta } from '@/stores/meta'
 
 /**
  * Automatisations : les flux xflow de l'organisation et leurs dernières exécutions (`lib/automations.ts`).
@@ -19,7 +24,8 @@ import { useServices } from '@/lib/services'
  * tient pas dans une boîte de dialogue. xflow juge chaque appel : un 403 se lit « réservé », jamais une panne.
  */
 
-const { automations } = useServices()
+const { automations, api } = useServices()
+const metaStore = useMeta()
 const notify = useNotify()
 const confirm = useConfirm()
 
@@ -59,11 +65,55 @@ async function load(): Promise<void> {
 }
 onMounted(load)
 
+/**
+ * Lancer un flux à la main. Un flux qui lit « Du déclencheur » un DOCUMENT (son numéro, son type…) n'a rien à lire si on le lance
+ * sans : l'étape échouait sur « champ obligatoire manquant : 'name' » (constaté). On demande donc d'abord sur quel document agir, et
+ * on envoie ce que lui enverrait une transition (type, numéro, version, état du document).
+ */
+const asking = ref<FlowSummary | null>(null)
+const pick = ref<{ doctype: string; name: string | null }>({ doctype: '', name: null })
+const doctypes = ref<DocTypeSummary[]>([])
+
 async function start(flow: FlowSummary): Promise<void> {
   if (!automations) return
   running.value = flow.name
   try {
-    const answer = await automations.post(`/run/${encodeURIComponent(flow.name)}`, {})
+    const body = (await automations.get(`/flows/${encodeURIComponent(flow.name)}`)) as { workflow?: unknown }
+    const keys = triggerKeysUsed(body?.workflow)
+    if (keys.some((k) => (DOCUMENT_KEYS as readonly string[]).includes(k))) {
+      doctypes.value = (await metaStore.loadSummaries().catch(() => [])).filter((d) => !d.single)
+      pick.value = { doctype: fixedDoctypeOf(body?.workflow) ?? '', name: null }
+      asking.value = flow
+      return
+    }
+    await launch(flow, {})
+  } catch (e) {
+    notify.error(e)
+  } finally {
+    running.value = null
+  }
+}
+
+async function startOn(): Promise<void> {
+  const flow = asking.value
+  if (!flow || !pick.value.doctype || !pick.value.name) return
+  running.value = flow.name
+  try {
+    const doc = await api.get(pick.value.doctype, pick.value.name)
+    asking.value = null
+    await launch(flow, { doctype: pick.value.doctype, name: doc.name, version: doc.version, docstatus: doc.docstatus ?? 0 })
+  } catch (e) {
+    notify.error(e)
+  } finally {
+    running.value = null
+  }
+}
+
+async function launch(flow: FlowSummary, payload: Record<string, unknown>): Promise<void> {
+  if (!automations) return
+  running.value = flow.name
+  try {
+    const answer = await automations.post(`/run/${encodeURIComponent(flow.name)}`, payload)
     const problem = refused(answer)
     if (problem) throw new Refused(problem)
     notify.success(t.automations.started_(flow.name))
@@ -199,6 +249,40 @@ const empty = computed(() => loaded.value && !failure.value && !reserved.value)
         </table>
       </section>
     </template>
+
+    <!-- Lancer sur un document : celui que le flux lit « Du déclencheur ». -->
+    <Dialog
+      :visible="!!asking"
+      modal
+      :header="asking ? t.automations.runOnTitle(asking.name) : ''"
+      :style="{ width: 'min(28rem, 92vw)' }"
+      data-testid="run-on"
+      @update:visible="asking = $event ? asking : null"
+    >
+      <p class="desk-muted">{{ t.automations.runOnHint }}</p>
+      <label class="wf-field" for="run-on-doctype">
+        <span>{{ t.automations.runOnDoctype }}</span>
+        <Select
+          input-id="run-on-doctype"
+          :model-value="pick.doctype"
+          :options="doctypes.map((d) => ({ value: d.name, label: d.label }))"
+          option-label="label"
+          option-value="value"
+          filter
+          size="small"
+          data-testid="run-on-doctype"
+          @update:model-value="pick = { doctype: String($event ?? ''), name: null }"
+        />
+      </label>
+      <label v-if="pick.doctype" class="wf-field" for="run-on-name">
+        <span>{{ t.automations.runOnDocument }}</span>
+        <LinkField :key="pick.doctype" v-model="pick.name" :target="pick.doctype" input-id="run-on-name" data-testid="run-on-name" />
+      </label>
+      <template #footer>
+        <Button :label="t.cancel" text severity="secondary" size="small" @click="asking = null" />
+        <Button :label="t.automations.run" icon="pi pi-play" size="small" :disabled="!pick.doctype || !pick.name" :loading="!!running" data-testid="run-on-go" @click="startOn" />
+      </template>
+    </Dialog>
   </div>
 </template>
 

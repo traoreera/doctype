@@ -71,7 +71,7 @@ export function readRuns(body: unknown): RunSummary[] {
         status: text(r.status) ?? 'pending',
         startedAt: asUtc(r.started_at),
         finishedAt: asUtc(r.finished_at),
-        error: text(r.error),
+        error: humanError(text(r.error)),
         via: text(context._triggered_by),
         document: doctype && name ? { doctype, name, action: text(trigger.action) } : null,
       }
@@ -101,4 +101,39 @@ export const TRIGGER_KINDS: TriggerKind[] = ['manual', 'event', 'schedule', 'web
 export function definitionText(definition: unknown): string {
   const { deployed_by: _, ...rest } = (definition && typeof definition === 'object' ? definition : {}) as Record<string, unknown>
   return JSON.stringify(rest, null, 2)
+}
+
+
+/**
+ * L'erreur d'une exécution, lisible : xflow rend « Retry épuisé après 1 tentatives : {'status': 'error', 'msg': "…", 'code': …} »
+ * (la représentation Python de la réponse de l'étape). On en garde le MESSAGE, et le nombre d'essais quand il y en a eu plusieurs ;
+ * une erreur d'une autre forme est rendue telle quelle.
+ */
+export function humanError(raw: string | null): string | null {
+  if (!raw) return raw
+  const retry = /^Retry épuisé après (\d+) tentatives?\s*:\s*([\s\S]*)$/.exec(raw)
+  const body = retry ? retry[2]! : raw
+  const msg = /['"]msg['"]\s*:\s*(['"])([\s\S]*?)\1\s*[,}]/.exec(body)
+  if (!msg) return raw
+  const tries = retry ? Number(retry[1]) : 1
+  return tries > 1 ? `${msg[2]} (${tries} essais)` : msg[2]!
+}
+
+/** Les clés du déclencheur qu'un flux lit (`{{ trigger.<clé> }}` n'importe où dans sa définition). */
+export function triggerKeysUsed(definition: unknown): string[] {
+  const text = JSON.stringify(definition ?? {})
+  return [...new Set([...text.matchAll(/\{\{\s*trigger\.([a-z_][a-z0-9_]*)\s*\}\}/g)].map((m) => m[1]!))].sort()
+}
+
+/** Les clés qui désignent un DOCUMENT : un flux qui en lit une, lancé à la main, doit savoir sur quel document agir. */
+export const DOCUMENT_KEYS = ['doctype', 'name', 'version', 'docstatus'] as const
+
+/** Le type de document que le flux nomme en dur dans ses étapes (le premier trouvé) : proposé d'office au lancement. */
+export function fixedDoctypeOf(definition: unknown): string | null {
+  const steps = (definition as { steps?: unknown } | null)?.steps
+  for (const step of Array.isArray(steps) ? steps : []) {
+    const doctype = (step as { payload?: { doctype?: unknown } } | null)?.payload?.doctype
+    if (typeof doctype === 'string' && doctype && !doctype.includes('{{')) return doctype
+  }
+  return null
 }
