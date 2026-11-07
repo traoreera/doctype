@@ -228,6 +228,10 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
           plugin: 'xcore-doctype',
           action: 'doc.submit',
           payload: { doctype: '{{ trigger.doctype }}', name: '{{ trigger.name }}', version: '{{ trigger.version }}' },
+          // Posée d'un clic À DROITE du déclencheur (une carte + 60 px), sa position voyage dans la définition comme celle d'une étape
+          // déposée à la souris : sans elle, elle atterrissait hors du cadre (le défaut du 7 nov.).
+          _x: 270,
+          _y: 0,
         },
       ],
     })
