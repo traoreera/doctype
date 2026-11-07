@@ -291,14 +291,18 @@ describe('le graphe donné à Vue Flow', () => {
     expect(graphOf(flat).nodes.find((n) => n.id === 'alerter')!.position.x).toBe(600)
   })
 
-  it('ce que le nœud écrit sous son titre dit ce que l’étape fait', () => {
+  it('le nœud dit en français ce que l’étape fait : un geste, jamais un nom d’action ni une accolade', () => {
     const summaries = model.steps.map(stepSummary)
-    expect(summaries[0]).toBe('xcore-doctype.doc.get')
-    expect(summaries[1]).toContain('> 0')
+    expect(summaries[0]).toBe('Lire un document · Sales Invoice') // et non « xcore-doctype.doc.get »
+    expect(summaries[1]).toBe('lire › outstanding est plus grand que 0') // et non « {{ steps.lire.result.doc.data.outstanding }} > 0 »
+    expect(summaries[2]).toBe('mail.send') // une action étrangère : on ne sait pas la nommer autrement
     const step = (raw: Record<string, unknown>) => readFlow({ steps: [{ id: 'x', ...raw }] }).steps[0]!
     expect(stepSummary(step({ type: 'wait', delay_seconds: 90 }))).toBe('90 s')
     expect(stepSummary(step({ type: 'parallel', branches: [[], []] }))).toBe('2 branches')
-    expect(stepSummary(step({ type: 'condition', condition: { left: 'x', operator: 'is_null' } }))).toBe('x is_null')
-    expect(stepSummary(step({ type: 'action' }))).toBe('Choisissez une action')
+    expect(stepSummary(step({ type: 'condition', condition: { left: 'x', operator: 'is_null' } }))).toBe('x est vide')
+    // Un geste sur le document déclencheur se lit sans qu'aucun jeton ne paraisse.
+    expect(stepSummary(step({ type: 'action', plugin: 'xcore-doctype', action: 'doc.submit', payload: { doctype: '{{ trigger.doctype }}' } }))).toBe(
+      'Soumettre un document · Du déclencheur',
+    )
   })
 })

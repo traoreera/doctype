@@ -583,15 +583,20 @@ flux se vérifie au chargement : un flux se déploie par organisation chez xflow
 `xflow:workflows:write`). L'éditeur prend toute la page : la **palette** des étapes à gauche, le **flux en graphe** au milieu, les
 **propriétés** de ce qu'on a choisi à droite. On glisse une étape de la palette sur le canevas (ou on clique pour la poser au bout du
 flux) et on tire une **poignée** d'un nœud vers un autre pour les enchaîner ; au clavier, les listes « Va vers » du panneau font la
-même chose. Les neuf types d'étape d'xflow sont dessinés — action, condition, aiguillage, parallèle, pour-chaque, attente, extraction,
-texte, IA — et les flèches sont exactement les clés que le moteur suit (`on_success`, `on_failure`, « vrai »/« faux », un cas d'un
-aiguillage, une branche d'un parallèle, le corps d'une boucle). Un nœud dit ce qui lui manque encore (« Incomplète ») et s'il n'est
-jamais atteint, avant même de déployer.
+même chose.
 
-Le flux garde tout ce que l'éditeur ne montre pas (un `retry`, des webhooks sortants, un `initial_payload`) et le place du graphe
-voyage avec lui : un collègue qui le rouvre voit le même dessin. L'onglet **JSON** montre le MÊME flux pour le reste du langage
-d'xflow. « Déployer » redéploie sous le même nom (le nom ne change plus après le premier déploiement), « Supprimer » retire le flux
-et arrête son cron. Le refus d'xflow reste affiché dans la page, sans rien perdre du tracé.
+**Rien ne se tape : tout se choisit.** Une étape « Action » demande d'abord *que faire* — créer un document, le modifier, le
+soumettre, l'annuler, faire avancer son circuit, le supprimer, assigner une tâche, ajouter un commentaire, relire un document — puis
+seulement ce que ce geste demande : quel type de document, lequel, et les valeurs à écrire, champ par champ, prises dans la
+définition du type. Chaque valeur est **une liste, pas une formule** : une valeur fixe, une information du document déclencheur
+(« Son numéro », « Qui a agi », « Nouvel état »…) ou le document d'une étape précédente — et l'un de ses champs. Le déclencheur se
+dit de la même façon : « quand une *Facture* est *soumise* », ou « tous les *lundis* à *9 h* ». Il n'y a ni JSON, ni `{{ … }}`, ni
+expression cron à écrire.
+
+Le flux garde tout ce que l'éditeur ne montre pas (un `retry`, des webhooks sortants, une étape venue d'un autre plugin) et le place
+du graphe voyage avec lui : un collègue qui le rouvre voit le même dessin. Un nœud dit ce qui lui manque encore (« Incomplète ») et
+s'il n'est jamais atteint, avant même de déployer. « Déployer » redéploie sous le même nom (le nom ne change plus après le premier
+déploiement), « Supprimer » retire le flux et arrête son cron. Le refus d'xflow reste affiché dans la page, sans rien perdre du tracé.
 
 Pas à pas (captures du scénario Chromium `ui/e2e/automations.e2e.mjs`, face au vrai xflow) :
 
@@ -599,10 +604,10 @@ Pas à pas (captures du scénario Chromium `ui/e2e/automations.e2e.mjs`, face au
    ![La page, vide](captures/automations/auto-01-vide.png)
 2. L'éditeur : palette, canevas et propriétés. Seul le déclencheur est là.
    ![L'éditeur](captures/automations/auto-02-editeur.png)
-3. Une étape glissée de la palette se pose sous le curseur et se relie au déclencheur ; l'action se choisit dans la liste (ici
-   `xcore-doctype.doc.save`), la charge utile dit quoi écrire, les puces insèrent une variable.
+3. Une étape glissée de la palette se pose sous le curseur et se relie au déclencheur. Le panneau demande *que faire* (« Créer un
+   document »), sur quel type (« Client ») et quelles valeurs écrire : les champs du type se proposent, leurs valeurs se choisissent.
    ![L'étape posée](captures/automations/auto-03-etape-posee.png)
-4. Une deuxième étape, reliée à la première en tirant sa poignée « Réussi ».
+4. Une deuxième étape, reliée à la première en tirant sa poignée « Réussi » ; sa cible est « le document de l'étape action_1 ».
    ![Reliée](captures/automations/auto-04-reliee.png)
 5. « Déployer » : le flux est listé, avec Modifier, Supprimer et — pour un flux à la demande — « Lancer ».
    ![Déployé](captures/automations/auto-05-deploye.png)
@@ -610,8 +615,8 @@ Pas à pas (captures du scénario Chromium `ui/e2e/automations.e2e.mjs`, face au
    ![L'exécution](captures/automations/auto-06-execution.png)
 7. Le document que l'étape a écrit existe, au nom de qui a lancé le flux.
    ![Le client créé](captures/automations/auto-07-client-cree.png)
-8. Rouvrir le flux : le graphe revient tel qu'il a été tracé, et l'onglet JSON montre la même définition.
-   ![Le JSON](captures/automations/auto-08-json.png)
+8. Rouvrir le flux : le graphe revient tel qu'il a été tracé, et le panneau s'ouvre sur le déclencheur.
+   ![Rouvert](captures/automations/auto-08-rouvert.png)
 
 Le même flux se déploie aussi par l'API d'xflow :
 

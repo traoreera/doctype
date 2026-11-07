@@ -29,6 +29,8 @@ const props = defineProps<{
   others: string[]
   /** Les étapes, AVANT celle-ci, dont on peut reprendre le document (lire, créer). */
   sources: string[]
+  /** Les champs du document de chaque étape source, quand son type est connu (« le total de la facture lue »). */
+  stepFields: Record<string, { value: string; label: string }[]>
   /** Les types de document de l'organisation (`/meta`), pour les listes. */
   doctypes: DocTypeSummary[]
   /** La définition du type visé par l'étape, quand il est connu : ses champs se proposent au lieu de se taper. */
@@ -197,6 +199,7 @@ function addCase(): void {
           :model-value="payload.name"
           :label="t.flowBuilder.fields.target"
           :steps="sources"
+          :step-fields="stepFields"
           :disabled="disabled"
           :hint="t.flowBuilder.fields.targetHint"
           testid="fl-target"
@@ -208,6 +211,7 @@ function addCase(): void {
           :model-value="payload.assignee"
           :label="t.flowBuilder.fields.assignee"
           :steps="sources"
+          :step-fields="stepFields"
           :disabled="disabled"
           :hint="t.flowBuilder.fields.assigneeHint"
           testid="fl-assignee"
@@ -218,6 +222,7 @@ function addCase(): void {
           :model-value="payload.description"
           :label="t.flowBuilder.fields.taskDescription"
           :steps="sources"
+          :step-fields="stepFields"
           :disabled="disabled"
           testid="fl-task-description"
           @update:model-value="setPayload('description', $event || undefined)"
@@ -228,6 +233,7 @@ function addCase(): void {
           :label="t.flowBuilder.fields.dueDate"
           fieldtype="Date"
           :steps="sources"
+          :step-fields="stepFields"
           :disabled="disabled"
           testid="fl-due-date"
           @update:model-value="setPayload('due_date', $event || undefined)"
@@ -237,6 +243,7 @@ function addCase(): void {
           :model-value="payload.content"
           :label="t.flowBuilder.fields.content"
           :steps="sources"
+          :step-fields="stepFields"
           :disabled="disabled"
           testid="fl-content"
           @update:model-value="setPayload('content', $event)"
@@ -247,6 +254,7 @@ function addCase(): void {
           :label="t.flowBuilder.fields.transition"
           :options="(target?.workflow?.transitions ?? []).map((x) => x.action)"
           :steps="sources"
+          :step-fields="stepFields"
           :disabled="disabled"
           testid="fl-transition"
           @update:model-value="setPayload('action', $event)"
@@ -264,6 +272,7 @@ function addCase(): void {
                 :fieldtype="fieldOf(name)?.fieldtype"
                 :options="Array.isArray(fieldOf(name)?.options) ? (fieldOf(name)!.options as string[]) : undefined"
                 :steps="sources"
+                :step-fields="stepFields"
                 :disabled="disabled"
                 :testid="`fl-data-${name}`"
                 @update:model-value="setRow(name, $event)"
@@ -310,6 +319,7 @@ function addCase(): void {
         :model-value="condition.left"
         :label="t.flowBuilder.fields.left"
         :steps="sources"
+        :step-fields="stepFields"
         :disabled="disabled"
         testid="fl-cond-left"
         @update:model-value="setCondition({ left: $event })"
@@ -333,6 +343,7 @@ function addCase(): void {
         :model-value="condition.right"
         :label="t.flowBuilder.fields.right"
         :steps="sources"
+        :step-fields="stepFields"
         :disabled="disabled"
         testid="fl-cond-right"
         @update:model-value="setCondition({ right: $event })"
@@ -345,6 +356,7 @@ function addCase(): void {
         :model-value="raw.expression"
         :label="t.flowBuilder.fields.expression"
         :steps="sources"
+        :step-fields="stepFields"
         :disabled="disabled"
         testid="fl-switch-expr"
         @update:model-value="emit('patch', { expression: $event })"
@@ -395,6 +407,7 @@ function addCase(): void {
         :model-value="raw.items"
         :label="t.flowBuilder.fields.items"
         :steps="sources"
+        :step-fields="stepFields"
         :disabled="disabled"
         :hint="t.flowBuilder.fields.itemsHint"
         testid="fl-items"

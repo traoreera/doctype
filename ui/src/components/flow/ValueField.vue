@@ -20,6 +20,8 @@ const props = defineProps<{
   options?: string[]
   /** Les étapes dont on peut reprendre le document (celles qui lisent ou créent, avant celle-ci). */
   steps?: string[]
+  /** Les champs du document de chaque étape, quand son type est connu : on choisit « le total de la facture lue ». */
+  stepFields?: Record<string, { value: string; label: string }[]>
   hint?: string
   disabled?: boolean
   testid?: string
@@ -107,16 +109,29 @@ const set = (v: FlowValue) => emit('update:modelValue', writeValue(v))
         @update:model-value="set({ kind: 'trigger', key: $event })"
       />
 
-      <!-- D'une étape précédente : le document qu'elle a lu ou créé. -->
-      <Select
-        v-else-if="value.kind === 'step'"
-        :model-value="value.step"
-        :options="steps ?? []"
-        :disabled="disabled"
-        size="small"
-        :data-testid="testid"
-        @update:model-value="set({ kind: 'step', step: String($event) })"
-      />
+      <!-- D'une étape précédente : le document qu'elle a lu ou créé, ou l'un de ses champs. -->
+      <template v-else-if="value.kind === 'step'">
+        <Select
+          :model-value="value.step"
+          :options="steps ?? []"
+          :disabled="disabled"
+          size="small"
+          :data-testid="testid"
+          @update:model-value="set({ kind: 'step', step: String($event), field: value.kind === 'step' ? value.field : undefined })"
+        />
+        <!-- `$name` : le document lui-même (son numéro). Une valeur vide laisserait la liste muette — PrimeVue la lit comme « rien de choisi ». -->
+        <Select
+          :model-value="value.field ?? '$name'"
+          :options="[{ value: '$name', label: t.flowBuilder.values.docName }, ...(stepFields?.[value.step] ?? [])]"
+          option-label="label"
+          option-value="value"
+          :disabled="disabled"
+          size="small"
+          :aria-label="t.flowBuilder.values.whichValue"
+          :data-testid="testid ? `${testid}-field` : undefined"
+          @update:model-value="set({ kind: 'step', step: value.kind === 'step' ? value.step : '', field: $event === '$name' ? undefined : String($event) })"
+        />
+      </template>
 
       <!-- Une expression écrite ailleurs : montrée, gardée, jamais réécrite ici. -->
       <InputText v-else :model-value="value.text" disabled size="small" class="fe-code" :data-testid="testid" />

@@ -93,7 +93,7 @@ export function withAction(raw: Record<string, unknown>, id: ActionId): Record<s
 
 // ── Le déclencheur ───────────────────────────────────────────────────────────────────────────────────────────────
 
-/** Les moments qu'un document émet (`lib/automations.DOC_EVENTS` : la même liste, du côté de l'éditeur). */
+/** Les moments qu'un document émet (la liste fermée de l'éditeur, comme les gestes ci-dessus). */
 export const MOMENTS = ['after_save', 'after_submit', 'after_cancel', 'after_delete', 'after_transition', 'after_rename'] as const
 export type Moment = (typeof MOMENTS)[number]
 

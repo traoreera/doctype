@@ -45,6 +45,27 @@ async function dragStep(kind, at) {
   await page.waitForTimeout(150)
 }
 
+/** Ce qu'xflow a stocké, lu par SON API (l'autre plugin du même hôte) : la vérité sur ce que l'écran a traduit. */
+async function storedFlow(name) {
+  const base = cfg.api.replace(/\/xcore-doctype$/, '/xflow')
+  const res = await fetch(`${base}/flows/${encodeURIComponent(name)}`, {
+    headers: { Authorization: `Bearer ${cfg.token}`, 'X-Tenant-ID': cfg.tenant },
+  })
+  const body = await res.json()
+  return body?.workflow ?? {}
+}
+
+/**
+ * Choisir dans une liste PrimeVue : on l'ouvre, puis on clique l'option — ce que fait la personne devant l'écran. Échap d'abord :
+ * une liste restée ouverte (un pas précédent interrompu) avalerait le clic suivant, et l'erreur paraîtrait trois pas plus loin.
+ */
+async function pick(testid, option) {
+  await page.keyboard.press('Escape')
+  await page.getByTestId(testid).click()
+  await page.getByRole('option', { name: option, exact: true }).first().click()
+  await page.locator('.p-select-overlay').waitFor({ state: 'hidden' }).catch(() => undefined)
+}
+
 console.log('Desk — Automatisations (xflow)')
 try {
   await r.step('la page des automatisations, depuis la barre latérale', async () => {
@@ -69,25 +90,38 @@ try {
     await r.shot(page, 'auto-02-editeur')
   }, page)
 
-  await r.step('une étape glissée de la palette se pose, reliée au déclencheur', async () => {
+  await r.step('une étape glissée de la palette se pose, reliée au déclencheur, et se règle dans des listes', async () => {
     await dragStep('action', { x: 150, y: 90 })
     await page.getByTestId('fl-node-action_1').waitFor()
-    const action = page.getByTestId('fl-step-action')
-    assert((await action.inputValue()) === 'xcore-doctype.doc.save', `action proposée : ${await action.inputValue()}`)
-    await page.getByTestId('fl-step-payload').fill(`{\n  "doctype": "Customer",\n  "data": {"customer_name": "${CLIENT}", "type": "Particulier"}\n}`)
+    // Le geste proposé est « Créer un document » : du français, pas « xcore-doctype.doc.save ».
+    assert((await page.getByTestId('fl-gesture').innerText()).includes('Créer un document'), await page.getByTestId('fl-gesture').innerText())
+    assert((await page.locator('[data-testid="fl-step-panel"]').innerText()).includes('{{') === false, 'aucune accolade dans le panneau')
+    await pick('fl-doctype', 'Client')
+    // Les champs du type choisi se proposent : on en ajoute deux et on les remplit.
+    await pick('fl-new-field', 'Nom')
+    await page.getByTestId('fl-add-field').click()
+    await page.getByTestId('fl-data-customer_name').fill(CLIENT)
+    await pick('fl-new-field', 'Type')
+    await page.getByTestId('fl-add-field').click()
+    await pick('fl-data-type', 'Particulier')
     // La flèche du déclencheur vers l'étape : c'est elle qui fait qu'xflow l'exécute.
     assert((await page.locator('.vue-flow__edge').count()) >= 1, 'aucune flèche depuis le déclencheur')
-    assert((await page.locator('[data-testid="fl-step-panel"] .fe-var', { hasText: 'trigger.name' }).count()) === 1, 'les variables à insérer')
     await r.shot(page, 'auto-03-etape-posee')
   }, page)
 
   await r.step('une deuxième étape, reliée à la première en tirant sa poignée « Réussi »', async () => {
-    await dragStep('template', { x: 150, y: 420 })
-    await page.getByTestId('fl-node-template_1').waitFor()
-    await page.getByTestId('fl-template').fill('Bonjour {{ trigger.name }}')
-    // La poignée « Réussi » de l'action vers l'entrée du texte : un vrai glisser de souris, ce que fait un utilisateur.
+    await dragStep('action', { x: 150, y: 420 })
+    await page.getByTestId('fl-node-action_2').waitFor()
+    // « Lire un document » : sa cible est, au choix, le document créé à l'étape précédente — sans écrire la moindre expression.
+    // (Le type est choisi explicitement : un flux lancé À LA MAIN n'a pas de document déclencheur dont il hériterait.)
+    await pick('fl-gesture', 'Lire un document')
+    await page.getByRole('button', { name: 'En choisir un autre' }).click()
+    await pick('fl-doctype', 'Client')
+    await pick('fl-target-source', 'D’une étape')
+    await pick('fl-target', 'action_1')
+    // La poignée « Réussi » de la première vers l'entrée de la seconde : un vrai glisser de souris, ce que fait un utilisateur.
     const out = page.getByTestId('fl-out-action_1-on_success')
-    const target = page.getByTestId('fl-node-template_1')
+    const target = page.getByTestId('fl-node-action_2')
     const from = await out.boundingBox()
     const to = await target.boundingBox()
     await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2)
@@ -125,19 +159,26 @@ try {
     await r.shot(page, 'auto-07-client-cree')
   }, page)
 
-  await r.step('réouvrir le flux : le graphe revient tel quel, et le même flux se lit en JSON', async () => {
+  await r.step('réouvrir le flux : le graphe revient tel qu’il a été tracé, et ce qu’xflow a gardé est exact', async () => {
     await page.goto(`${cfg.desk}#/automations/${NAME}`)
     await page.getByTestId('fl-node-action_1').waitFor()
-    await page.getByTestId('fl-node-template_1').waitFor()
+    await page.getByTestId('fl-node-action_2').waitFor()
     assert(await page.getByTestId('fl-name').isDisabled(), 'le nom ne change plus après le premier déploiement')
-    await page.getByTestId('fl-mode').click()
-    const json = JSON.parse(await page.getByTestId('fl-json').inputValue())
-    assert(json.name === NAME && json.steps[0].plugin === 'xcore-doctype', JSON.stringify(json))
-    assert(json.steps[0].on_success === 'template_1', `enchaînement : ${JSON.stringify(json.steps[0])}`)
-    assert(typeof json.steps[0]._x === 'number', `la position du nœud voyage avec le flux : ${JSON.stringify(json.steps[0])}`)
-    assert(!('deployed_by' in json), 'le serveur réécrit deployed_by : il ne repart pas du navigateur')
-    await r.shot(page, 'auto-08-json')
-    await page.getByTestId('fl-mode').click()
+    // On rouvre sur le déclencheur : l'identité du flux (ce qui le met en route, sa description) est là, sans rien chercher.
+    await page.getByTestId('fl-trigger-panel').waitFor()
+    // Ce que le navigateur montre vient de ce qu'xflow stocke : on le relit par son API pour vérifier la traduction.
+    const stored = await storedFlow(NAME)
+    const [first] = stored.steps ?? []
+    assert(first?.plugin === 'xcore-doctype' && first?.action === 'doc.save', JSON.stringify(first))
+    assert(first?.payload?.doctype === 'Customer', `le type choisi : ${JSON.stringify(first?.payload)}`)
+    assert(first?.payload?.data?.customer_name === CLIENT, `les valeurs choisies : ${JSON.stringify(first?.payload)}`)
+    assert(first?.payload?.data?.type === 'Particulier', `la valeur de liste choisie : ${JSON.stringify(first?.payload)}`)
+    const second = (stored.steps ?? [])[1]
+    assert(second?.action === 'doc.get', `le geste de la deuxième étape : ${JSON.stringify(second)}`)
+    assert(second?.payload?.name === '{{ steps.action_1.result.doc.name }}', `sa cible : ${JSON.stringify(second?.payload)}`)
+    assert(first?.on_success === 'action_2', `enchaînement : ${JSON.stringify(first)}`)
+    assert(typeof first?._x === 'number', `la position du nœud voyage avec le flux : ${JSON.stringify(first)}`)
+    await r.shot(page, 'auto-08-rouvert')
     await page.getByTestId('fl-description').fill('Crée un client de bienvenue (v2)')
     await page.getByTestId('fl-deploy').click()
     await page.getByTestId('fl-to-list').click()

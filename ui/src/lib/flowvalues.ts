@@ -20,8 +20,8 @@ export type FlowValue =
   | { kind: 'fixed'; value: unknown }
   /** Une information du document qui a déclenché le flux. */
   | { kind: 'trigger'; key: TriggerKey }
-  /** Le document qu'une étape précédente a lu ou créé (son nom : c'est ce qui sert à le reprendre). */
-  | { kind: 'step'; step: string }
+  /** Le document qu'une étape précédente a lu ou créé : son nom, ou la valeur de l'un de ses champs. */
+  | { kind: 'step'; step: string; field?: string }
   /**
    * Une expression écrite ailleurs (à la main, par un autre outil) : on la MONTRE et on la garde telle quelle, l'écran n'en fabrique
    * jamais. Sans ça, ouvrir un flux venu d'ailleurs l'abîmerait.
@@ -29,7 +29,8 @@ export type FlowValue =
   | { kind: 'raw'; text: string }
 
 const TRIGGER_RE = /^\{\{\s*trigger\.([a-z_]+)\s*\}\}$/
-const STEP_RE = /^\{\{\s*steps\.([A-Za-z0-9_-]+)\.result\.doc\.name\s*\}\}$/
+/** Le nom du document d'une étape, ou la valeur d'un de ses champs : les deux formes qu'`xcore-doctype` rend (`{doc: {name, data}}`). */
+const STEP_RE = /^\{\{\s*steps\.([A-Za-z0-9_-]+)\.result\.doc\.(?:name|data\.([A-Za-z0-9_]+))\s*\}\}$/
 
 /** Le jeton (ou la valeur) qu'xflow recevra. */
 export function writeValue(value: FlowValue): unknown {
@@ -39,7 +40,7 @@ export function writeValue(value: FlowValue): unknown {
     case 'trigger':
       return `{{ trigger.${value.key} }}`
     case 'step':
-      return `{{ steps.${value.step}.result.doc.name }}`
+      return `{{ steps.${value.step}.result.doc.${value.field ? `data.${value.field}` : 'name'} }}`
     case 'raw':
       return value.text
   }
@@ -51,7 +52,7 @@ export function readValue(raw: unknown): FlowValue {
   const trigger = TRIGGER_RE.exec(raw)
   if (trigger && (TRIGGER_KEYS as readonly string[]).includes(trigger[1]!)) return { kind: 'trigger', key: trigger[1] as TriggerKey }
   const step = STEP_RE.exec(raw)
-  if (step) return { kind: 'step', step: step[1]! }
+  if (step) return step[2] ? { kind: 'step', step: step[1]!, field: step[2] } : { kind: 'step', step: step[1]! }
   if (raw.includes('{{')) return { kind: 'raw', text: raw }
   return { kind: 'fixed', value: raw }
 }

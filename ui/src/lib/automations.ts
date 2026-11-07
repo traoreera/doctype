@@ -97,26 +97,6 @@ export const FLOW_NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$/
 export type TriggerKind = 'manual' | 'event' | 'schedule' | 'webhook'
 export const TRIGGER_KINDS: TriggerKind[] = ['manual', 'event', 'schedule', 'webhook']
 
-/** Ce qu'une étape peut citer : la charge du déclencheur (une transition y met ces clés, `flows.py`) et les résultats des étapes. */
-export const VARIABLES = ['trigger.doctype', 'trigger.name', 'trigger.action', 'trigger.from', 'trigger.to', 'trigger.user', 'trigger.version']
-
-/** Ce qu'un champ « événement » propose : les événements que le moteur émet pour chaque type, puis ceux qu'xflow catalogue. */
-export const DOC_EVENTS = ['after_save', 'after_submit', 'after_cancel', 'after_delete', 'after_transition', 'after_rename'] as const
-export function eventSuggestions(doctypes: readonly string[], catalogued: readonly string[] = []): string[] {
-  const fromDocs = doctypes.flatMap((dt) => DOC_EVENTS.map((e) => `doctype.${dt}.${e}`))
-  return [...new Set([...fromDocs, ...catalogued])]
-}
-
-/** Le catalogue des actions (`GET /registry`) : leurs noms `plugin.action`, triés. */
-export function readActions(body: unknown): { name: string; description: string }[] {
-  const list = (body as { actions?: unknown } | null)?.actions
-  if (!Array.isArray(list)) return []
-  return list
-    .filter((a): a is Record<string, unknown> => !!a && typeof a === 'object' && typeof (a as { qualified_name?: unknown }).qualified_name === 'string')
-    .map((a) => ({ name: a.qualified_name as string, description: typeof a.description === 'string' ? a.description : '' }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-}
-
 /** Le texte JSON d'une définition à montrer : sans `deployed_by`, que le serveur réécrit de toute façon. */
 export function definitionText(definition: unknown): string {
   const { deployed_by: _, ...rest } = (definition && typeof definition === 'object' ? definition : {}) as Record<string, unknown>

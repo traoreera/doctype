@@ -1431,6 +1431,8 @@ export const en: Messages = {
       trigger: 'From the trigger',
       step: 'From a step',
       raw: 'Expression',
+      docName: 'Its number',
+      whichValue: 'which value',
       rawHint: 'This expression comes from elsewhere: it is kept as it is.',
       triggerKeys: {
         name: 'Its number',
@@ -1507,6 +1509,7 @@ export const en: Messages = {
     } as Record<'action' | 'condition' | 'switch' | 'parallel' | 'foreach' | 'wait' | 'transform' | 'template' | 'ai', { label: string; hint: string }>,
     summary: {
       noAction: 'Pick an action',
+      fromTrigger: 'From the trigger',
       noCondition: 'Set the comparison',
       noExpression: 'Set the expression',
       noItems: 'Name the list to walk',

@@ -6,7 +6,7 @@ import ToastService from 'primevue/toastservice'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { ApiError } from '@/lib/api'
-import { asUtc, eventSuggestions, readActions, readFlows, readRuns, statusTone } from '@/lib/automations'
+import { asUtc, readFlows, readRuns, statusTone } from '@/lib/automations'
 import { SERVICES } from '@/lib/services'
 import StepPanel from '@/components/flow/StepPanel.vue'
 import AutomationsView from '@/views/AutomationsView.vue'
@@ -279,9 +279,12 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     const { w } = await builder(c, '/automations/suivi')
     expect((q('fl-name') as HTMLInputElement).disabled).toBe(true)
     expect((q('fl-name') as HTMLInputElement).value).toBe('suivi')
-    // Une condition se DESSINE : deux nœuds, et la comparaison du départ se lit dans le panneau — « Nouvel état », pas `trigger.to`.
+    // On rouvre sur le DÉCLENCHEUR : l'identité du flux est là sans rien chercher.
+    expect(q('fl-trigger-panel')).not.toBeNull()
+    // Une condition se DESSINE : deux nœuds, et sa comparaison se lit dans le panneau — « Nouvel état », pas `trigger.to`.
     expect(q('fl-node-verifie')).not.toBeNull()
     expect(q('fl-node-ouvrir')).not.toBeNull()
+    await w.find('[data-testid="fl-node-verifie"]').trigger('click')
     expect(q('fl-step-panel')?.textContent).toContain('Nouvel état')
     expect(document.body.textContent).not.toContain('{{ trigger.to }}')
     expect(w.findAll('.fl-outlet-yes').length).toBeGreaterThan(0)
@@ -302,10 +305,13 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
       ],
     }
     const c = client(stored)
-    await builder(c, '/automations/suivi')
+    const { w } = await builder(c, '/automations/suivi')
     expect(q('fl-node-bizarre')).not.toBeNull()
+    expect(q('fl-event-other')).not.toBeNull() // l'événement d'un autre plugin, montré sur le déclencheur
+    await w.find('[data-testid="fl-node-bizarre"]').trigger('click')
     expect(q('fl-unknown-kind')).not.toBeNull() // l'étape d'un type que l'écran ne règle pas
-    expect(q('fl-event-other')).not.toBeNull() // l'événement d'un autre plugin
+    await w.find('[data-testid="fl-node-maison"]').trigger('click')
+    expect(q('fl-foreign-action')?.textContent).toContain('compta.cloturer')
     ;(q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     const sent = c.post.mock.calls[0]?.[1] as Record<string, unknown>
@@ -320,7 +326,7 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     const c = client()
     c.get.mockImplementation((async (path: string) => {
       if (path === '/flows/suivi') throw new ApiError(403, 'forbidden', 'Interdit')
-      return { status: 'ok', actions: [], events: [] }
+      return { status: 'ok' }
     }) as never)
     await builder(c, '/automations/suivi')
     expect(q('fl-reserved')).not.toBeNull()

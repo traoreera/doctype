@@ -103,11 +103,35 @@ const chosenEdge = computed(() => {
 })
 const others = computed(() => model.value.steps.filter((s) => s.id !== chosenStep.value?.id).map((s) => s.id))
 /** Les étapes dont une valeur peut reprendre le document : celles qui lisent ou créent, avant celle qu'on règle. */
-const sources = computed(() => {
+const sourceSteps = computed(() => {
   const here = model.value.steps.findIndex((s) => s.id === chosenStep.value?.id)
   const before = here < 0 ? model.value.steps : model.value.steps.slice(0, here)
-  return before.filter((s) => s.kind === 'action' && ['read', 'create'].includes(actionOf(s.raw) ?? '')).map((s) => s.id)
+  return before.filter((s) => s.kind === 'action' && ['read', 'create'].includes(actionOf(s.raw) ?? ''))
 })
+const sources = computed(() => sourceSteps.value.map((s) => s.id))
+/** Le type de document de chaque étape source, quand elle en nomme un : c'est lui qui donne les champs à proposer. */
+const sourceTypes = computed(() => {
+  const out: Record<string, string> = {}
+  for (const s of sourceSteps.value) {
+    const payload = s.raw.payload && typeof s.raw.payload === 'object' ? (s.raw.payload as Record<string, unknown>) : {}
+    const doctype = payload.doctype
+    if (typeof doctype === 'string' && doctype && !doctype.includes('{{')) out[s.id] = doctype
+  }
+  return out
+})
+/** Les champs qu'une valeur peut reprendre d'une étape source (« le total de la facture lue »). */
+const stepFields = computed(() => {
+  const out: Record<string, { value: string; label: string }[]> = {}
+  for (const [step, doctype] of Object.entries(sourceTypes.value)) {
+    const fields = metaStore.metas[doctype]?.fields
+    if (fields) out[step] = fields.filter((f) => f.fieldtype !== 'Table' && f.fieldtype !== 'Password').map((f) => ({ value: f.fieldname, label: f.label ?? f.fieldname }))
+  }
+  return out
+})
+// Les définitions des types visés par les étapes sources : lues une fois, gardées par le cache du magasin.
+watch(sourceTypes, (types) => {
+  for (const doctype of Object.values(types)) void metaStore.get(doctype).catch(() => undefined)
+}, { immediate: true })
 
 const nodes = computed(() => graph.value.nodes.map((n) => ({ ...n, selected: selected.value === n.id })))
 const edges = computed(() =>
@@ -247,7 +271,9 @@ async function load(): Promise<void> {
     if (problem) throw new Refused(problem)
     model.value = readFlow(body.workflow)
     saved.value = current.value
-    choose(model.value.entry ?? model.value.steps[0]?.id ?? TRIGGER_NODE)
+    // On ouvre sur le DÉCLENCHEUR : c'est l'identité du flux (ce qui le met en route, sa description). Les étapes, elles, se
+    // choisissent sur le graphe — ouvrir sur la première cachait la description du flux, qui n'était alors plus atteignable.
+    choose(TRIGGER_NODE)
   } catch (e) {
     reserved.value = e instanceof ApiError && e.status === 403
     failure.value = reserved.value ? null : e instanceof Refused ? e.message : describeError(e) || t.automations.loadFailed
@@ -363,6 +389,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm(t.flowBuilder.leave))
           :step="chosenStep"
           :others="others"
           :sources="sources"
+          :step-fields="stepFields"
           :doctypes="doctypes"
           :target="targetMeta"
           @patch="model = patchStep(model, chosenStep.id, $event)"

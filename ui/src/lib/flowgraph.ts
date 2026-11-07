@@ -590,7 +590,8 @@ export function edgeParts(id: string): { source: string; key: string } | null {
 function shownValue(raw: unknown): string {
   const value = readValue(raw)
   if (value.kind === 'trigger') return t.flowBuilder.values.triggerKeys[value.key]
-  if (value.kind === 'step') return value.step
+  // Le nœud n'a pas les libellés du type visé (le panneau, lui, les a) : il nomme l'étape et le champ repris.
+  if (value.kind === 'step') return value.field ? `${value.step} › ${value.field}` : value.step
   if (value.kind === 'raw') return value.text
   if (value.value === null || value.value === undefined) return ''
   return typeof value.value === 'object' ? JSON.stringify(value.value) : String(value.value)
@@ -602,20 +603,29 @@ export function stepSummary(step: FlowStep): string {
   const labels = t.flowBuilder.summary
   switch (step.kind) {
     case 'action': {
-      const name = `${text(raw.plugin)}.${text(raw.action)}`
-      return name === '.' ? labels.noAction : name
+      // Le nœud dit le GESTE, pas l'appel : « Soumettre un document · Facture ». L'appel ne paraît que pour une action étrangère,
+      // qu'on ne sait pas nommer autrement.
+      const gesture = actionOf(raw)
+      if (!gesture) {
+        const name = `${text(raw.plugin)}.${text(raw.action)}`
+        return name === '.' ? labels.noAction : name
+      }
+      const payload = object(raw.payload)
+      const doctype = readValue(payload.doctype).kind === 'fixed' ? text(payload.doctype) : labels.fromTrigger
+      return doctype ? `${t.flowBuilder.gestures[gesture].label} · ${doctype}` : t.flowBuilder.gestures[gesture].label
     }
     case 'condition': {
       const c = object(raw.condition)
       const op = text(c.operator) || '=='
-      return [shownValue(c.left), op, UNARY_OPERATORS.includes(op as Operator) ? '' : shownValue(c.right)].filter(Boolean).join(' ') || labels.noCondition
+      const said = t.flowBuilder.operators[op] ?? op
+      return [shownValue(c.left), said, UNARY_OPERATORS.includes(op as Operator) ? '' : shownValue(c.right)].filter(Boolean).join(' ') || labels.noCondition
     }
     case 'switch':
       return shownValue(raw.expression) || labels.noExpression
     case 'parallel':
       return labels.branches(list(raw.branches).length)
     case 'foreach':
-      return text(raw.items) || labels.noItems
+      return shownValue(raw.items) || labels.noItems
     case 'wait':
       return number(raw.delay_seconds) !== null ? labels.delay(number(raw.delay_seconds)!) : text(raw.wait_for_event) || labels.noDelay
     case 'transform':

@@ -1432,6 +1432,8 @@ export const fr = {
       trigger: 'Du déclencheur',
       step: 'D’une étape',
       raw: 'Expression',
+      docName: 'Son numéro',
+      whichValue: 'quelle valeur',
       rawHint: 'Cette expression vient d’ailleurs : elle est gardée telle quelle.',
       triggerKeys: {
         name: 'Son numéro',
@@ -1510,6 +1512,7 @@ export const fr = {
     } as Record<'action' | 'condition' | 'switch' | 'parallel' | 'foreach' | 'wait' | 'transform' | 'template' | 'ai', { label: string; hint: string }>,
     summary: {
       noAction: 'Choisissez une action',
+      fromTrigger: 'Du déclencheur',
       noCondition: 'Posez la comparaison',
       noExpression: 'Posez l’expression',
       noItems: 'Nommez la liste à parcourir',
