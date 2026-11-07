@@ -4256,3 +4256,25 @@ a.p-button:hover {
 }
 /* Les nœuds que les plugins déclarent (`lib/flowcatalog`) : une seconde rubrique de la palette. */
 .fl-palette-sub { margin-top: 0.6rem; font-size: 0.85rem; }
+/* « Nœuds personnalisés » (FlowNodesView) : la liste des nœuds de l'organisation | le nœud ouvert. */
+.flow-nodes .fn-body { display: grid; grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.flow-nodes .fn-list { display: grid; gap: 0.4rem; min-width: 0; }
+.flow-nodes .fn-list-title { margin: 0; font-size: 0.95rem; }
+.flow-nodes .fn-chip-open { outline: 2px solid var(--p-primary-color); outline-offset: 1px; }
+.flow-nodes .fn-shadowed { font-style: italic; }
+.flow-nodes .fn-editor { min-width: 0; display: grid; gap: 0.6rem; align-content: start; }
+.flow-nodes .fn-placeholder { padding: 2rem 1rem; text-align: center; border: 1px dashed var(--p-content-border-color); border-radius: 8px; }
+.flow-nodes .fn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.6rem; }
+.flow-nodes .fn-icon-row { display: flex; align-items: center; gap: 0.5rem; }
+.flow-nodes .fn-icon-row > .p-inputtext { flex: 1 1 auto; min-width: 0; }
+.flow-nodes .fn-row { display: grid; grid-template-columns: minmax(8rem, 1.3fr) minmax(8rem, 1fr) minmax(7rem, 1fr) auto auto; gap: 0.5rem; align-items: end; padding: 0.5rem; border: 1px solid var(--p-content-border-color); border-radius: 8px; }
+.flow-nodes .fn-row-output { grid-template-columns: minmax(8rem, 1.3fr) minmax(8rem, 1fr) auto; }
+.flow-nodes .fn-options { grid-column: 1 / -1; }
+.flow-nodes .fn-check { display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; min-height: 2rem; }
+.flow-nodes .fn-actions { display: flex; align-items: center; gap: 0.5rem; }
+.flow-nodes .fn-problem { margin: 0; }
+@media (max-width: 900px) {
+  .flow-nodes .fn-body { grid-template-columns: 1fr; }
+  .flow-nodes .fn-row, .flow-nodes .fn-row-output { grid-template-columns: 1fr 1fr; }
+}
+.fl-palette-more { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; margin-top: 0.2rem; }

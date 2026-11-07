@@ -4,6 +4,7 @@
   étape suivante peut le reprendre (`{{ steps.<étape>.result.message_id }}`).
 - `POST <préfixe>/mailer/receive` : « reçoit » un e-mail pour l'organisation de l'appelant et émet l'événement `mailer.received`
   (avec `tenant_id` : xflow ne lance alors que les flux de cette organisation).
+- `mail.log` (action IPC NON décrite) : celle qu'une organisation décrit elle-même dans le Desk (nœud d'organisation).
 - `on_load` passe sa section `xflow:` au moteur, qui la sert à l'éditeur (`GET /flow-catalog`).
 """
 
@@ -48,3 +49,11 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         with OUTBOX.open("a", encoding="utf-8") as out:
             out.write(json.dumps(line, ensure_ascii=False) + "\n")
         return ok(message_id=message_id)
+
+    @action("mail.log")
+    async def log(self, payload: dict) -> dict:
+        """Une action que le plugin ne DÉCRIT pas : l'organisation la décrit dans le Desk, et l'éditeur la montre comme un nœud."""
+        entry = uuid.uuid4().hex
+        with OUTBOX.open("a", encoding="utf-8") as out:
+            out.write(json.dumps({"log": entry, "note": payload.get("note")}, ensure_ascii=False) + "\n")
+        return ok(entry=entry)

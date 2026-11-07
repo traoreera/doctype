@@ -80,3 +80,61 @@ async def test_a_faulty_section_fails_the_plugin_s_load():
         with pytest.raises(InvalidDefinition, match=words):
             catalog.declare("mailer", bad)
     assert catalog.as_dict() == {"nodes": [], "events": []}
+
+
+ORG_NODE = {
+    "plugin": "mailer", "action": "mail.log", "label": "Noter dans le journal", "icon": "book",
+    "fields": [{"name": "note", "label": "Note", "type": "longtext", "required": True}],
+    "outputs": [{"path": "entry", "label": "Numéro de la note"}],
+}
+
+
+async def test_an_organisation_describes_a_node_in_the_desk_and_a_flow_runs_it(tmp_path):
+    """Un nœud décrit À L'ÉCRAN (flow_nodes_service.py) : rangé pour CETTE organisation seulement, réservé à qui peut déployer, effacé
+    par un plugin qui décrit la même action, et exécuté par xflow comme n'importe quelle action du plugin."""
+    mailer = tmp_path / "mailer"
+    shutil.copytree(FIXTURES / "mailer", mailer, ignore=shutil.ignore_patterns("__pycache__", "outbox.jsonl"))
+    async with boot_host(
+        tmp_path / "h", link_plugins={"xflow": platform_plugins_dir() / "xflow", "mailer": mailer},
+        auth_callers=["xcore-doctype", "xflow"], auth_grants={"alice": CUSTOMER + XFLOW},
+    ) as h:
+        alice = h.token(sub="alice", permissions=CUSTOMER + XFLOW)
+        bob = h.token(sub="bob", permissions=CUSTOMER)  # lit, ne déploie pas
+        other = h.token(sub="carol", tenant="globex", permissions=CUSTOMER + XFLOW)
+
+        refused = await h.http("PUT", "/flow-nodes", token=bob, json={"node": ORG_NODE})
+        assert refused.status_code == 403 and refused.json()["detail"]["code"] == "flow_node_reserved"
+        bad = await h.http("PUT", "/flow-nodes", token=alice, json={"node": {**ORG_NODE, "fields": [{"name": "Note", "label": "x"}]}})
+        assert bad.status_code == 422 and bad.json()["detail"]["code"] == "invalid_flow_node"
+
+        saved = await h.http("PUT", "/flow-nodes", token=alice, json={"node": ORG_NODE})
+        assert saved.status_code == 200, saved.text
+        listed = (await h.http("GET", "/flow-nodes", token=bob)).json()
+        assert listed["can_edit"] is False and [n["action"] for n in listed["nodes"]] == ["mail.log"]
+        assert listed["nodes"][0]["shadowed"] is False
+        catalog = (await h.http("GET", "/flow-catalog", token=bob)).json()
+        assert [(n["action"], n["source"]) for n in catalog["nodes"]] == [("mail.send", "plugin"), ("mail.log", "organisation")]
+        # Une autre organisation ne le voit pas : il est rangé par tenant.
+        assert [n["action"] for n in (await h.http("GET", "/flow-catalog", token=other, tenant="globex")).json()["nodes"]] == ["mail.send"]
+
+        # Le décrire pour une action que le plugin décrit déjà : la description du plugin l'emporte dans la palette.
+        await h.http("PUT", "/flow-nodes", token=alice, json={"node": {**ORG_NODE, "action": "mail.send", "label": "Autre"}})
+        assert [n["source"] for n in (await h.http("GET", "/flow-catalog", token=alice)).json()["nodes"]] == ["plugin", "organisation"]
+        shadow = {n["action"]: n["shadowed"] for n in (await h.http("GET", "/flow-nodes", token=alice)).json()["nodes"]}
+        assert shadow == {"mail.log": False, "mail.send": True}
+        assert (await h.http("DELETE", "/flow-nodes/mailer/mail.send", token=alice)).status_code == 200
+        assert (await h.http("DELETE", "/flow-nodes/mailer/mail.send", token=alice)).status_code == 404
+
+        # Un flux qui appelle le nœud de l'organisation : xflow l'exécute, et l'étape reçoit la valeur saisie.
+        flow = {"name": "journal", "trigger": {"type": "manual"},
+                "steps": [{"id": "noter", "type": "action", "plugin": "mailer", "action": "mail.log", "payload": {"note": "Bonjour"}}]}
+        deployed = await h.client.post(f"{h.prefix}/xflow/flows", json=flow, headers=h.headers(alice, "acme"))
+        assert deployed.json().get("status") in ("ok", "success"), deployed.text
+        started = await h.client.post(f"{h.prefix}/xflow/run/journal", json={}, headers=h.headers(alice, "acme"))
+        assert started.status_code < 300, started.text
+        outbox = mailer / "outbox.jsonl"
+        for _ in range(200):
+            if outbox.exists() and outbox.read_text().strip():
+                break
+            await asyncio.sleep(0.05)
+        assert [json.loads(line).get("note") for line in outbox.read_text().splitlines()] == ["Bonjour"]

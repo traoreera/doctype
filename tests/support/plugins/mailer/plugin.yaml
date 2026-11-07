@@ -15,6 +15,10 @@ permissions:
   - resource: "mail.send"
     actions: ["execute"]
     effect: allow
+  # `mail.log` n'est PAS décrite ci-dessous : c'est l'action qu'une organisation décrit elle-même dans le Desk (nœud d'organisation).
+  - resource: "mail.log"
+    actions: ["execute"]
+    effect: allow
 
 xflow:
   nodes:

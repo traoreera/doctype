@@ -717,6 +717,27 @@ Ce qu'il faut savoir :
   l'éditeur.
 - **Les champs obligatoires.** Un champ `required` laissé vide marque la carte « Incomplète », et le déploiement est refusé.
 
+**Sans toucher au plugin : « Nœuds personnalisés ».** Une action IPC qu'aucun plugin ne décrit peut aussi être décrite DANS LE
+DESK : Automatisations › « Nœuds personnalisés » (ou « Décrire une autre action… » sous la palette). On y donne :
+
+- le nom affiché et une icône ;
+- l'application (le plugin) et le nom de son action ;
+- les champs, dont la clé se déduit du libellé ;
+- les valeurs que l'action rend.
+
+Le nœud est rangé en base, pour **cette organisation seulement**, jamais dans un fichier (même règle que les champs personnalisés). Il
+apparaît dans la palette sous « Des applications » et se règle comme un nœud de plugin.
+
+- **Qui peut le décrire.** Il faut le droit de déployer des automatisations (`xflow:workflows:write`). Les autres membres le consultent
+  sans pouvoir le modifier.
+- **Décrire n'accorde rien.** Le plugin doit toujours nommer `xflow` dans ses `allowed_callers` et ouvrir l'action dans ses `permissions`.
+- **Si le plugin décrit aussi l'action**, sa description l'emporte dans la palette. Celle de l'organisation reste listée, marquée comme
+  doublée, pour qu'on puisse la retirer.
+
+API : `GET /flow-nodes` (la liste et `can_edit`), `PUT /flow-nodes` (`{node, replacing?}`), `DELETE /flow-nodes/{plugin}/{action}`. Les
+actions IPC jumelles sont `doc.flow_nodes.list|save|delete`, et `GET /flow-catalog` sert les deux sources, chaque nœud portant son
+`source`.
+
 Preuve sur un vrai hôte : `tests/integration/test_xflow_plugin_nodes.py`, avec le plugin de test `tests/support/plugins/mailer`. Un
 e-mail reçu crée un client, puis le plugin répond avec le numéro de ce client, au nom de qui a déployé le flux.
 

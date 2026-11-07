@@ -127,6 +127,20 @@ export class ApiClient {
     return this.call('GET', '/flow-catalog')
   }
 
+  /** Les nœuds que l'organisation a décrits à l'écran (`flow_nodes_service.py`), et si l'appelant peut les modifier. */
+  flowNodes(): Promise<{ nodes: unknown[]; can_edit: boolean }> {
+    return this.call('GET', '/flow-nodes')
+  }
+
+  /** Créer ou remplacer un nœud de l'organisation ; `replacing` : sa clé d'avant, quand on change son plugin ou son action. */
+  saveFlowNode(node: Record<string, unknown>, replacing?: { plugin: string; action: string }): Promise<Record<string, unknown>> {
+    return this.call('PUT', '/flow-nodes', { body: { node, ...(replacing ? { replacing } : {}) } })
+  }
+
+  async deleteFlowNode(plugin: string, action: string): Promise<void> {
+    await this.call('DELETE', `/flow-nodes/${encodeURIComponent(plugin)}/${encodeURIComponent(action)}`)
+  }
+
   // ── Documents ───────────────────────────────────────────
   list(doctype: string, q: ListQuery = {}): Promise<ListResult> {
     const params = new URLSearchParams()

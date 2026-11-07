@@ -39,6 +39,10 @@ export interface PluginNode {
   icon: string
   fields: PluginNodeField[]
   outputs: { path: string; label: string }[]
+  /** D'où vient la description : le manifeste d'un plugin, ou l'organisation (décrite à l'écran, « Nœuds personnalisés »). */
+  source?: 'plugin' | 'organisation'
+  /** Un nœud de l'organisation qu'un plugin décrit AUSSI : la description du plugin l'emporte dans la palette. */
+  shadowed?: boolean
 }
 
 export interface PluginEvent {
@@ -83,6 +87,8 @@ export function readCatalog(body: unknown): FlowCatalog {
             description: str(f.description) || undefined,
           })),
         outputs: list(n.outputs).filter((o) => str(o.path)).map((o) => ({ path: str(o.path), label: str(o.label) || str(o.path) })),
+        ...(n.source === 'organisation' || n.source === 'plugin' ? { source: n.source } : {}),
+        ...(n.shadowed === true ? { shadowed: true } : {}),
       })),
     events: list(b.events)
       .filter((e) => str(e.name) && str(e.label))

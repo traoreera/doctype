@@ -42,6 +42,8 @@ export function createDeskRouter(pinia: Pinia): Router {
       // Les automatisations (xflow) : une entrée de la barre latérale comme tout plugin, pas une rubrique des réglages. Le TRACÉ d'un
       // flux a sa propre page, pleine largeur : un graphe ne tient pas dans une boîte de dialogue (`FlowBuilderView`).
       { path: '/automations', name: 'automations', component: () => import('@/views/AutomationsView.vue') },
+      // Les nœuds que l'organisation décrit elle-même (une action IPC qu'aucun plugin n'a décrite) : avant `/:name`, qui l'avalerait.
+      { path: '/automations/nodes', name: 'flow-nodes', component: () => import('@/views/FlowNodesView.vue') },
       { path: '/automations/new', name: 'flow-new', component: () => import('@/views/FlowBuilderView.vue') },
       { path: '/automations/:name', name: 'flow', component: () => import('@/views/FlowBuilderView.vue'), props: true },
       // L'ancienne adresse (les automatisations vivaient dans les Paramètres) : les liens déjà donnés suivent.

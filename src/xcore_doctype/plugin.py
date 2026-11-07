@@ -46,6 +46,7 @@ from .realtime import NoRealtime, Realtime, RealtimeNotifier
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
 from .user_permissions import make_user_permission_hooks
 from .notification_rules import RULE_HOOK, ExtensionMailer, Mailer, NoMailer, NotificationRules, make_rule_hook
+from .flow_nodes_service import FlowNodes
 from .preferences import Preferences
 from .hooks import ActionHooks, HookRegistry, HookSettings
 from .registry import DocTypeChannel, DocTypeRegistry
@@ -418,10 +419,23 @@ class Plugin(AutoDispatchMixin, TrustedBase):
 
     @action("meta.flow_catalog")
     async def meta_flow_catalog(self, payload: dict) -> dict:
-        async def op(ctx: RequestContext) -> dict:
-            return self.documents.flow_catalog.as_dict()
+        return await self._run("meta.flow_catalog", lambda ctx: FlowNodes(self.documents).catalog(ctx))
 
-        return await self._run("meta.flow_catalog", op)
+    @action("doc.flow_nodes.list")
+    async def doc_flow_nodes_list(self, payload: dict) -> dict:
+        return await self._run("doc.flow_nodes.list", lambda ctx: FlowNodes(self.documents).list(ctx))
+
+    @action("doc.flow_nodes.save")
+    async def doc_flow_nodes_save(self, payload: dict) -> dict:
+        old = payload.get("replacing") if isinstance(payload.get("replacing"), dict) else None
+        replacing = (str(old.get("plugin", "")), str(old.get("action", ""))) if old else None
+        return await self._run("doc.flow_nodes.save", lambda ctx: FlowNodes(self.documents).save(ctx, payload.get("node"), replacing=replacing))
+
+    @action("doc.flow_nodes.delete")
+    async def doc_flow_nodes_delete(self, payload: dict) -> dict:
+        return await self._run(
+            "doc.flow_nodes.delete", lambda ctx: FlowNodes(self.documents).delete(ctx, str(payload.get("plugin", "")), str(payload.get("action", "")))
+        )
 
     @action("meta.workspaces")
     async def meta_workspaces(self, payload: dict) -> dict:

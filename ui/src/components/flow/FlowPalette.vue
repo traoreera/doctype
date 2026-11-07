@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { t } from '@/i18n'
 import { nodeKey, type PluginNode } from '@/lib/flowcatalog'
 import { STEP_ICONS, STEP_MIME, type StepKind } from '@/lib/flowgraph'
@@ -51,8 +52,8 @@ function start(event: DragEvent, kind: string): void {
       </span>
     </button>
 
+    <h3 class="fl-palette-title fl-palette-sub">{{ t.flowBuilder.pluginNodes }}</h3>
     <template v-if="props.nodes?.length">
-      <h3 class="fl-palette-title fl-palette-sub">{{ t.flowBuilder.pluginNodes }}</h3>
       <button
         v-for="node in props.nodes"
         :key="nodeKey(node)"
@@ -71,5 +72,9 @@ function start(event: DragEvent, kind: string): void {
         </span>
       </button>
     </template>
+    <!-- Une action qu'aucun plugin ne décrit : l'organisation la décrit elle-même (« Nœuds personnalisés »). -->
+    <RouterLink :to="{ name: 'flow-nodes' }" class="fl-palette-more" data-testid="fl-describe-node">
+      <i class="pi pi-plus-circle" aria-hidden="true" />{{ t.flowBuilder.describeNode }}
+    </RouterLink>
   </aside>
 </template>

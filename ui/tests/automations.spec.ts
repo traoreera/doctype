@@ -11,6 +11,7 @@ import { SERVICES } from '@/lib/services'
 import StepPanel from '@/components/flow/StepPanel.vue'
 import AutomationsView from '@/views/AutomationsView.vue'
 import FlowBuilderView from '@/views/FlowBuilderView.vue'
+import FlowNodesView from '@/views/FlowNodesView.vue'
 
 // Ce que répond xflow (forme mesurée sur un vrai hôte, tests/integration/test_xflow_host.py).
 const FLOWS = {
@@ -79,6 +80,7 @@ beforeAll(() => {
 /** Les vraies adresses : la liste mène à l'éditeur, qui est une PAGE (`#/automations/<nom>`), pas une boîte de dialogue. */
 const ROUTES = [
   { path: '/', name: 'automations', component: AutomationsView },
+  { path: '/automations/nodes', name: 'flow-nodes', component: FlowNodesView },
   { path: '/automations/new', name: 'flow-new', component: FlowBuilderView },
   { path: '/automations/:name', name: 'flow', component: FlowBuilderView, props: true },
   { path: '/app/:doctype/:name', name: 'form', component: AutomationsView },
@@ -411,5 +413,73 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     await builder(c, '/automations/suivi')
     expect(q('fl-reserved')).not.toBeNull()
     expect(q('fl-failure')).toBeNull()
+  })
+})
+
+describe('Nœuds personnalisés : l’organisation décrit une action qu’aucun plugin ne décrit', () => {
+  async function nodesPage(api: Record<string, unknown>) {
+    const router = createRouter({ history: createMemoryHistory(), routes: ROUTES })
+    await router.push('/automations/nodes')
+    await router.isReady()
+    const w = mount({ template: '<RouterView />' }, {
+      attachTo: document.body,
+      global: {
+        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
+        provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api, automations: {} } },
+      },
+    })
+    mounted.push(w)
+    await flushPromises()
+    return w
+  }
+  const q = (testid: string) => document.body.querySelector(`[data-testid="${testid}"]`) as HTMLElement | null
+  async function type(testid: string, value: string) {
+    const el = q(testid) as HTMLInputElement
+    el.value = value
+    el.dispatchEvent(new Event('input'))
+    await flushPromises()
+  }
+
+  it('crée un nœud : le libellé d’un champ donne sa clé, et l’appel exact part au serveur', async () => {
+    const saveFlowNode = vi.fn(async (node: Record<string, unknown>) => node)
+    const flowNodes = vi.fn(async () => ({ nodes: [], can_edit: true }))
+    await nodesPage({ flowNodes, flowCatalog: vi.fn(async () => ({ nodes: [{ plugin: 'mailer', action: 'mail.send', label: 'Envoyer', fields: [], outputs: [] }] })), saveFlowNode })
+    expect(q('fn-empty')).not.toBeNull()
+    ;(q('fn-create') as HTMLButtonElement).click()
+    await flushPromises()
+    expect((q('fn-save') as HTMLButtonElement).disabled).toBe(true) // rien de saisi : trois fautes dites
+    expect(document.body.querySelectorAll('[data-testid="fn-problem"]').length).toBe(3)
+    await type('fn-label', 'Noter dans le journal')
+    await type('fn-plugin', 'mailer')
+    await type('fn-action', 'mail.log')
+    ;(q('fn-add-field') as HTMLButtonElement).click()
+    await flushPromises()
+    await type('fn-field-label-0', 'Note du jour')
+    expect((q('fn-field-name-0') as HTMLInputElement).value).toBe('note_du_jour')
+    ;(q('fn-add-output') as HTMLButtonElement).click()
+    await flushPromises()
+    await type('fn-output-label-0', 'Numéro de la note')
+    await type('fn-output-path-0', 'entry')
+    expect(q('fn-problem')).toBeNull()
+    ;(q('fn-save') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(saveFlowNode).toHaveBeenCalledWith({
+      plugin: 'mailer', action: 'mail.log', label: 'Noter dans le journal', icon: 'bolt',
+      fields: [{ name: 'note_du_jour', label: 'Note du jour', type: 'text', required: false }],
+      outputs: [{ path: 'entry', label: 'Numéro de la note' }],
+    }, undefined)
+    expect(flowNodes).toHaveBeenCalledTimes(2) // relue après l'enregistrement
+  })
+
+  it('sans le droit de déployer, on consulte sans rien pouvoir changer', async () => {
+    const node = { plugin: 'mailer', action: 'mail.log', label: 'Noter', icon: 'book', fields: [{ name: 'note', label: 'Note', type: 'text' }], outputs: [], shadowed: true }
+    await nodesPage({ flowNodes: vi.fn(async () => ({ nodes: [node], can_edit: false })), flowCatalog: vi.fn(async () => ({ nodes: [] })) })
+    expect(q('fn-reserved')).not.toBeNull()
+    expect(q('fn-create')).toBeNull()
+    expect(q('fn-node-mailer:mail.log')?.textContent).toContain('Le plugin décrit aussi cette action')
+    ;(q('fn-node-mailer:mail.log') as HTMLButtonElement).click()
+    await flushPromises()
+    expect((q('fn-label') as HTMLInputElement).disabled).toBe(true)
+    expect(q('fn-save')).toBeNull()
   })
 })

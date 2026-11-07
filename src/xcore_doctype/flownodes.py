@@ -171,3 +171,33 @@ class FlowCatalog:
             nodes += [{"plugin": owner, **n.model_dump(mode="json", exclude_none=True)} for n in section.nodes]
             events += [{"plugin": owner, **e.model_dump(mode="json", exclude_none=True)} for e in section.events]
         return {"nodes": nodes, "events": events}
+
+
+# ── Les nœuds déclarés À L'ÉCRAN par une organisation ─────────────────────────────────────────────────────────────────
+#
+# Même description qu'un nœud de plugin, plus le plugin qu'il appelle (il n'est plus implicite). Rangés en base, par organisation,
+# dans la table des habillages (`KIND_FLOW_NODE`, cible `<plugin>:<action>`), jamais dans un fichier : le registre est commun à tout le
+# processus, et un nœud décrit par une organisation ne doit apparaître que chez elle (la règle des champs personnalisés, §3.5).
+
+KIND_FLOW_NODE = "flow_node"
+MAX_ORG_NODES = 100
+# Qui peut décrire un nœud : qui peut déployer une automatisation (il pourrait de toute façon écrire l'étape à la main), ou
+# l'administrateur de la plateforme. Décrire n'accorde rien : l'appel part d'xflow au nom de l'utilisateur du flux.
+DECLARE_GRANTS = frozenset({"xflow:workflows:write", "admin:*"})
+
+
+class OrgFlowNode(FlowNodeDef):
+    plugin: Annotated[str, StringConstraints(pattern=_OWNER.pattern)]
+
+
+def parse_org_node(raw: Any) -> OrgFlowNode:
+    """Un nœud saisi à l'écran, vérifié comme celui d'un manifeste ; les fautes (une par ligne) refusent l'enregistrement (422)."""
+    try:
+        return OrgFlowNode.model_validate(raw)
+    except ValidationError as e:
+        lines = [f"{'.'.join(str(p) for p in err['loc']) or 'nœud'} : {err['msg']}" for err in e.errors()]
+        raise InvalidDefinition("nœud d'automatisation :\n" + "\n".join(lines)) from None
+
+
+def org_target(plugin: str, action: str) -> str:
+    return f"{plugin}:{action}"

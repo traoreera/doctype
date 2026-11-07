@@ -12,6 +12,7 @@ from typing import Any, Awaitable, Callable, NoReturn, TypeVar
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict
 
+from ..flow_nodes_service import FlowNodes
 from ..context import ContextSettings, RequestContext, http_context
 from ..csv_import import import_csv
 from .. import devtools
@@ -117,11 +118,30 @@ def build_router(documents: DocumentService, settings: ContextSettings, *, devel
     async def workspaces(ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.fetch_workspaces(ctx))
 
+    flow_nodes = FlowNodes(documents)
+
     @router.get("/flow-catalog")
     async def flow_catalog(ctx: RequestContext = Depends(ctx_dep)):
-        # Ce que les plugins ouvrent à l'éditeur d'automatisations (flownodes.py) : de la description, rien d'exécutable ni de secret.
-        # Une identité est exigée comme partout ; c'est xflow qui juge ensuite qui peut déployer et lancer un flux.
-        return documents.flow_catalog.as_dict()
+        # Ce que les plugins ET l'organisation ouvrent à l'éditeur d'automatisations (flownodes.py, flow_nodes_service.py) : de la
+        # description, rien d'exécutable ni de secret. C'est xflow qui juge ensuite qui peut déployer et lancer un flux.
+        return await _guard(flow_nodes.catalog(ctx))
+
+    @router.get("/flow-nodes")
+    async def flow_nodes_list(ctx: RequestContext = Depends(ctx_dep)):
+        """Les nœuds que l'organisation a décrits à l'écran, et si l'appelant peut les modifier."""
+        return await _guard(flow_nodes.list(ctx))
+
+    @router.put("/flow-nodes")
+    async def flow_nodes_save(body: dict, ctx: RequestContext = Depends(ctx_dep)):
+        """`{node: {...}, replacing?: {plugin, action}}` : créer ou remplacer un nœud de l'organisation."""
+        body = body or {}
+        old = body.get("replacing") if isinstance(body.get("replacing"), dict) else None
+        replacing = (str(old.get("plugin", "")), str(old.get("action", ""))) if old else None
+        return await _guard(flow_nodes.save(ctx, body.get("node"), replacing=replacing))
+
+    @router.delete("/flow-nodes/{plugin}/{action}")
+    async def flow_nodes_delete(plugin: str, action: str, ctx: RequestContext = Depends(ctx_dep)):
+        return await _guard(flow_nodes.delete(ctx, plugin, action))
 
     @router.get("/meta/{doctype}")
     async def meta_get(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
