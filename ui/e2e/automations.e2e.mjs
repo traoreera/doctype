@@ -212,6 +212,36 @@ try {
     }
     await r.shot(page, 'auto-11-ajout-au-clic')
   }, page)
+
+  await r.step('« Lancer » un flux qui lit le document déclencheur demande lequel, et l’exécution réussit (le défaut du 7 nov.)', async () => {
+    // Le cas rapporté : « Lire un document » visant « Du déclencheur › Son numéro », lancé à la main, échouait sur « champ obligatoire
+    // manquant : 'name' » — un lancement à la main n'envoyait aucun document.
+    const base = cfg.api.replace(/\/xcore-doctype$/, '/xflow')
+    const client = (await api(cfg, 'POST', '/doc/Customer', { data: { customer_name: 'Client à relire', type: 'Particulier' } })).json
+    const flow = { name: 'relire', trigger: { type: 'manual' }, steps: [{ id: 'lire', type: 'action', plugin: 'xcore-doctype', action: 'doc.get',
+      payload: { doctype: 'Customer', name: '{{ trigger.name }}' } }] }
+    const deployed = await fetch(`${base}/flows`, { method: 'POST', headers: { Authorization: `Bearer ${cfg.token}`, 'X-Tenant-ID': cfg.tenant, 'Content-Type': 'application/json' }, body: JSON.stringify(flow) })
+    assert(deployed.ok, `déploiement : ${deployed.status}`)
+    page.once('dialog', (d) => d.accept()) // l'étape précédente laisse l'éditeur avec des étapes non déployées : « Quitter quand même ? »
+    await page.goto(`${cfg.desk}#/automations`)
+    await page.waitForURL(/#\/automations$/)
+    await page.reload()
+    await page.getByTestId('flow-run-relire').click()
+    await page.getByTestId('run-on').waitFor()
+    await page.locator('#run-on-name').fill('Client à relire')
+    await page.getByRole('option').filter({ hasText: 'Client à relire' }).first().click()
+    await r.shot(page, 'auto-12-lancer-sur-un-document')
+    await page.getByTestId('run-on-go').click()
+    const ok = page.locator('[data-testid^="run-"] .status-pill.ok')
+    const before = await ok.count()
+    for (let i = 0; i < 40 && (await ok.count()) <= before; i++) {
+      await page.waitForTimeout(250)
+      await page.getByTestId('automations-refresh').click()
+    }
+    const runs = await (await fetch(`${base}/executions?workflow_name=relire`, { headers: { Authorization: `Bearer ${cfg.token}`, 'X-Tenant-ID': cfg.tenant } })).json()
+    const last = (runs.runs ?? [])[0]
+    assert(last?.status === 'success' && last.trigger_payload?.name === client.name, `exécution : ${JSON.stringify(last)}`)
+  }, page)
 } finally {
   await browser.close()
 }

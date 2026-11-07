@@ -6,7 +6,7 @@ import ToastService from 'primevue/toastservice'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { ApiError } from '@/lib/api'
-import { asUtc, readFlows, readRuns, statusTone } from '@/lib/automations'
+import { asUtc, fixedDoctypeOf, humanError, readFlows, readRuns, statusTone, triggerKeysUsed } from '@/lib/automations'
 import { SERVICES } from '@/lib/services'
 import StepPanel from '@/components/flow/StepPanel.vue'
 import AutomationsView from '@/views/AutomationsView.vue'
@@ -116,7 +116,8 @@ describe('Automatisations : la liste', () => {
     await w.find('[data-testid="flow-run-suivi"]').trigger('click')
     await flushPromises()
     expect(client.post).toHaveBeenCalledWith('/run/suivi', {})
-    expect(client.get).toHaveBeenCalledTimes(4) // relu après le lancement
+    expect(client.get).toHaveBeenCalledWith('/flows/suivi') // sa définition, pour savoir s'il lit un document déclencheur
+    expect(client.get).toHaveBeenCalledTimes(5) // + relu après le lancement
   })
 
   it('un 403 se lit « réservé », jamais une panne', async () => {
@@ -483,3 +484,54 @@ describe('Nœuds personnalisés : l’organisation décrit une action qu’aucun
     expect(q('fn-save')).toBeNull()
   })
 })
+
+describe('lancer à la main : le document, et une erreur qu’on peut lire', () => {
+  it('garde le message de l’étape, pas la représentation Python de sa réponse', () => {
+    expect(humanError(`Retry épuisé après 1 tentatives : {'status': 'error', 'msg': "champ obligatoire manquant : 'name'", 'code': 'missing_field'}`))
+      .toBe("champ obligatoire manquant : 'name'")
+    expect(humanError(`Retry épuisé après 3 tentatives : {'status': 'error', 'msg': 'xauth injoignable', 'code': 'x'}`)).toBe('xauth injoignable (3 essais)')
+    expect(humanError('xauth ne reconnaît plus alice')).toBe('xauth ne reconnaît plus alice')
+    expect(humanError(null)).toBeNull()
+  })
+
+  it('sait quelles clés du déclencheur un flux lit, et le type qu’il nomme', () => {
+    const flow = { trigger: { type: 'manual' }, steps: [{ id: 'a', payload: { doctype: 'Country', name: '{{ trigger.name }}' } }, { id: 'b', payload: { x: '{{trigger.user}}' } }] }
+    expect(triggerKeysUsed(flow)).toEqual(['name', 'user'])
+    expect(fixedDoctypeOf(flow)).toBe('Country')
+    expect(fixedDoctypeOf({ steps: [{ payload: { doctype: '{{ trigger.doctype }}' } }] })).toBeNull()
+  })
+
+  it('un flux qui lit le document déclencheur demande lequel avant de partir, puis l’envoie comme une transition', async () => {
+    const stored = { name: 'test', trigger: { type: 'manual' }, steps: [{ id: 'lire', type: 'action', plugin: 'xcore-doctype', action: 'doc.get', payload: { doctype: 'Customer', name: '{{ trigger.name }}' } }] }
+    const automations = {
+      get: vi.fn(async (path: string) => (path === '/flows' ? { status: 'ok', workflows: [{ name: 'test', trigger: 'manual' }] } : path === '/executions' ? { status: 'ok', runs: [] } : { status: 'ok', workflow: stored })),
+      post: vi.fn(async () => ({ status: 'pending' })),
+    }
+    const api = {
+      doctypes: vi.fn(async () => [{ name: 'Customer', label: 'Client', module: 'sales' }]),
+      meta: vi.fn(async () => ({ name: 'Customer', label: 'Client', fields: [], layout: [], list_columns: [], rights: {} })),
+      get: vi.fn(async () => ({ name: 'CUST-1', version: 3, docstatus: 0, data: {} })),
+      list: vi.fn(async () => ({ items: [], total: 0 })),
+    }
+    const router = createRouter({ history: createMemoryHistory(), routes: ROUTES })
+    await router.push('/')
+    const w = mount({ template: '<RouterView />' }, {
+      attachTo: document.body,
+      global: { plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router], provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api, automations } } },
+    })
+    mounted.push(w)
+    await flushPromises()
+    await w.find('[data-testid="flow-run-test"]').trigger('click')
+    await flushPromises()
+    expect(automations.post).not.toHaveBeenCalled() // rien ne part sans le document
+    expect(document.body.querySelector('[data-testid="run-on"]')).not.toBeNull()
+    const link = w.findComponent({ name: 'LinkField' })
+    expect(link.props('target')).toBe('Customer') // le type que le flux nomme, proposé d'office
+    link.vm.$emit('update:modelValue', 'CUST-1')
+    await flushPromises()
+    ;(document.body.querySelector('[data-testid="run-on-go"]') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(automations.post).toHaveBeenCalledWith('/run/test', { doctype: 'Customer', name: 'CUST-1', version: 3, docstatus: 0 })
+  })
+})
+
