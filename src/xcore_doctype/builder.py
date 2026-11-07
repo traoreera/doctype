@@ -221,6 +221,8 @@ class WorkflowRules:
     closed: frozenset[str] = frozenset()
     conditions: Mapping[str, Node] = dataclass_field(default_factory=dict)
     not_owner: frozenset[str] = frozenset()
+    # L'automatisation (flux xflow) que l'organisation lance après une transition de l'APPLICATION qui n'en nomme pas (action -> flux).
+    flows: Mapping[str, str] = dataclass_field(default_factory=dict)
 
     def allows(self, action: str, data: Mapping[str, Any]) -> bool:
         """La transition est-elle ouverte par CETTE organisation sur ce document ? (la condition du YAML se juge à part)."""

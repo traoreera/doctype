@@ -1778,8 +1778,11 @@ class DocumentService:
         )
         self._rules(ctx, compiled, doc, recorded, None)
         await self._settle(ctx, written)
-        if transition.flow:  # après le commit, en tâche de fond, au nom de l'acteur (flows.py) ; son sort ne change rien ici
-            self.flows.start(ctx, transition.flow, {
+        # L'automatisation qui suit : celle de la transition (YAML, ou ajoutée par l'organisation), sinon celle que l'organisation a
+        # posée sur une transition de l'application (§3.6).
+        flow = transition.flow or org.flows.get(transition.action)
+        if flow:  # après le commit, en tâche de fond, au nom de l'acteur (flows.py) ; son sort ne change rien ici
+            self.flows.start(ctx, flow, {
                 "doctype": doctype, "name": doc.name, "version": doc.version, "docstatus": doc.docstatus,
                 "action": transition.action, "from": state, "to": transition.to, "user": ctx.user_id,
             })

@@ -98,6 +98,42 @@ try {
     await page.getByTestId('wf-state-Visée').waitFor()
   }, page)
 
+  await r.step('lier une automatisation à « Soumettre » : une soumission la lance pour de vrai, au nom de qui a soumis', async () => {
+    // Une automatisation de l'organisation (le vrai xflow) : elle crée un client nommé d'après la demande soumise.
+    const base = cfg.api.replace(/\/xcore-doctype$/, '/xflow')
+    const flow = {
+      name: 'accuse_reception', description: 'Accuse réception d’une demande', trigger: { type: 'manual' },
+      steps: [{ id: 'noter', type: 'action', plugin: 'xcore-doctype', action: 'doc.save',
+        payload: { doctype: 'Customer', data: { customer_name: 'Reçu {{ trigger.name }}', type: 'Particulier' } } }],
+    }
+    const deployed = await fetch(`${base}/flows`, { method: 'POST', headers: { Authorization: `Bearer ${cfg.token}`, 'X-Tenant-ID': cfg.tenant, 'Content-Type': 'application/json' }, body: JSON.stringify(flow) })
+    assert(deployed.ok, `déploiement : ${deployed.status} ${await deployed.text()}`)
+    await page.reload()
+    await page.getByTestId('wf-edge-Soumettre').click()
+    await page.getByTestId('wf-panel-title').filter({ hasText: 'Soumettre' }).waitFor()
+    await page.keyboard.press('Escape')
+    await page.getByTestId('wf-flow-pick').click()
+    await page.getByRole('option', { name: 'accuse_reception — Accuse réception d’une demande', exact: true }).click()
+    await page.getByTestId('wf-flow-open').waitFor()
+    await page.locator('.p-select-overlay').waitFor({ state: 'hidden' }).catch(() => undefined)
+    // Un libellé long ne doit pas élargir la page (constaté : la liste poussait le panneau, tout glissait de 40 px).
+    const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+    assert(over <= 1, `la page déborde de ${over} px`)
+    await r.shot(page, 'workflow-09-automatisation')
+    await page.getByTestId('wf-save').click()
+    await page.getByText('Circuit d’approbation enregistré.').waitFor()
+    await page.locator('[data-testid="wf-edge-Soumettre"] [data-testid="wf-edge-flow"]').waitFor() // l'éclair
+    const doc = (await api(cfg, 'POST', '/doc/Demande', { data: { objet: 'Séminaire', jours: 1, commentaire: 'ok' } })).json
+    const sent = await api(cfg, 'POST', `/doc/Demande/${encodeURIComponent(doc.name)}/transition`, { action: 'Soumettre', version: doc.version })
+    assert(sent.status < 300, `soumettre : ${sent.status} ${JSON.stringify(sent.json)}`)
+    let found = []
+    for (let i = 0; i < 60 && !found.length; i++) {
+      await page.waitForTimeout(250)
+      found = (await api(cfg, 'GET', `/list/Customer?filters=${encodeURIComponent(JSON.stringify({ customer_name: `Reçu ${doc.name}` }))}`)).json.items ?? []
+    }
+    assert(found.length === 1 && found[0].owner === 'alice', `client créé par l’automatisation : ${JSON.stringify(found)}`)
+  }, page)
+
   await r.step('téléphone : le panneau passe sous le canevas, rien ne déborde', async () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.reload() // un chargement À cette largeur : sinon le menu, ouvert sur ordinateur, est encore en train de se replier

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Mapping, Sequence
 
 from pydantic import TypeAdapter, ValidationError
@@ -31,7 +32,7 @@ from .dashboards import MAX_BLOCKS, DashboardBlock, check_measured
 from .decimals import canonical
 from .errors import InvalidDefinition, ValidationFailed
 from .expr import ExprError, compile_expr, referenced_fields
-from .schema import DECIMAL_TYPES, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField, complete_layout, layout_tab_problems
+from .schema import DECIMAL_TYPES, FLOW_NAME, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField, complete_layout, layout_tab_problems
 from .workspaces import WorkspaceDef, parse_workspace
 
 __all__ = [
@@ -530,7 +531,7 @@ def changed_rules(compiled: Any, before: Any, after: Any) -> list[str]:
 
 # Un habillage d'automate reste lisible : au plus une retouche par transition du YAML, et le YAML en borne déjà le nombre.
 MAX_WORKFLOW_TWEAKS = 100
-_TRANSITION_KEYS = ("closed", "condition", "not_owner")
+_TRANSITION_KEYS = ("closed", "condition", "not_owner", "flow")
 # Ce qu'une organisation AJOUTE à l'automate du YAML (process/programme.md §3.6, décision du 7 nov.) : des états et des transitions,
 # rangés dans le même habillage. Une transition ajoutée s'ouvre par un grant que le type DÉCLARE déjà (`workflow_grant_choices`) :
 # un grant inventé ici, xauth ne le connaîtrait pas et personne ne pourrait jamais faire la transition.
@@ -616,6 +617,16 @@ def validate_workflow_override(compiled: Any, config: object) -> dict[str, Any]:
                 problems.append(f"{action}.not_owner: le type l'impose déjà")
             else:
                 kept[key] = True
+        if "flow" in spec:
+            # L'automatisation qui SUIT la transition : pas un droit, une suite. Elle s'ajoute là où l'application n'en lance pas ;
+            # remplacer celle de l'application lui retirerait ce qu'elle a prévu (pour la changer, on change le plugin).
+            name = spec["flow"]
+            if not isinstance(name, str) or not re.match(FLOW_NAME, name):
+                problems.append(f"{action}.flow : nom d'automatisation invalide ({name!r})")
+            elif t.flow:
+                problems.append(f"{action}.flow : l'application lance déjà {t.flow!r} après cette transition")
+            else:
+                kept["flow"] = name
         if "condition" in spec:
             source = spec["condition"]
             if not isinstance(source, str) or not source.strip():
@@ -730,7 +741,7 @@ def effective_workflow(compiled: Any, config: Any) -> tuple[Any, WorkflowRules]:
                 closed.add(t.action)
         if t.not_owner:
             not_owner.add(t.action)
-    return merged, WorkflowRules(frozenset(closed), conditions, frozenset(not_owner))
+    return merged, WorkflowRules(frozenset(closed), conditions, frozenset(not_owner), rules.flows)
 
 
 def _dead_ends(wf: Any, closed: set[str]) -> list[str]:
@@ -757,9 +768,14 @@ def workflow_rules(compiled: Any, config: Any) -> WorkflowRules:
     closed: set[str] = set()
     not_owner: set[str] = set()
     conditions = {}
+    flows: dict[str, str] = {}
+    yaml_flows = {t.action for t in wf.transitions if t.flow}
     for action, spec in tweaks.items():
         if action not in actions or not isinstance(spec, dict):
             continue
+        flow = spec.get("flow")
+        if isinstance(flow, str) and re.match(FLOW_NAME, flow) and action not in yaml_flows:
+            flows[action] = flow
         if spec.get("closed") is True:
             closed.add(action)
         if spec.get("not_owner") is True:
@@ -770,9 +786,9 @@ def workflow_rules(compiled: Any, config: Any) -> WorkflowRules:
                 conditions[action] = compile_expr(source, [f.fieldname for f in compiled.definition.fields])
             except ExprError:
                 continue  # devenue invalide (un champ a disparu) : le YAML seul juge cette transition
-    if not (closed or not_owner or conditions):
+    if not (closed or not_owner or conditions or flows):
         return NO_WORKFLOW_RULES
-    return WorkflowRules(frozenset(closed), conditions, frozenset(not_owner))
+    return WorkflowRules(frozenset(closed), conditions, frozenset(not_owner), flows)
 
 
 def apply_workflow_override(meta: dict[str, Any], rules: WorkflowRules, merged: Any = None) -> None:
@@ -795,6 +811,8 @@ def apply_workflow_override(meta: dict[str, Any], rules: WorkflowRules, merged: 
             continue
         if action in rules.not_owner:
             t["not_owner"] = True
+        if action in rules.flows and not t.get("flow"):
+            t["flow"] = rules.flows[action]
         kept.append(t)
     wf["transitions"] = kept
 

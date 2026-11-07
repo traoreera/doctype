@@ -618,6 +618,12 @@ Pas à pas (captures du scénario Chromium `ui/e2e/automations.e2e.mjs`, face au
 8. Rouvrir le flux : le graphe revient tel qu'il a été tracé, et le panneau s'ouvre sur le déclencheur.
    ![Rouvert](captures/automations/auto-08-rouvert.png)
 
+**Lier une automatisation à une transition, sans YAML.** Dans « ⋯ › Circuit d'approbation », choisissez la transition, puis
+« Automatisation à lancer ensuite » : la liste montre les automatisations de l'organisation (« Créer une automatisation » ouvre l'éditeur
+si elle n'existe pas encore). Enregistrez : l'éclair apparaît sur la flèche, et l'automatisation part après chaque transition, au nom
+de la personne qui l'a faite et avec ses droits. Cela vaut pour une transition ajoutée par l'organisation comme pour une transition de
+l'application qui n'en lance pas déjà une — celle que l'application a prévue ne se remplace pas.
+
 Le même flux se déploie aussi par l'API d'xflow :
 
 ```bash

@@ -39,7 +39,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-async function open(m: DocTypeMeta, config: WorkflowOverride = {}) {
+async function open(m: DocTypeMeta, config: WorkflowOverride = {}, automations: unknown = undefined) {
   const api = {
     meta: vi.fn(async () => m),
     workflowOverride: vi.fn(async () => ({ doctype: 'Leave Request', config, definition: LEAVE, grants: GRANTS, grant_choices: { 'hr:leave_request:write': 'Créer/modifier Demande de congé', ...Object.fromEntries(Object.values(GRANTS).map((g) => [g, g])) }, submittable: true })),
@@ -51,13 +51,15 @@ async function open(m: DocTypeMeta, config: WorkflowOverride = {}) {
     routes: [
       { path: '/workflow/:doctype', name: 'workflow', component: WorkflowBuilderView, props: true },
       { path: '/app/:doctype', name: 'list', component: { render: () => null } },
+      { path: '/automations/new', name: 'flow-new', component: { render: () => null } },
+      { path: '/automations/:name', name: 'flow', component: { render: () => null } },
     ],
   })
   await router.push('/workflow/Leave%20Request')
   await router.isReady()
   wrapper = mount({ template: '<RouterView />' }, {
     attachTo: document.body,
-    global: { plugins: [PrimeVue, ToastService, createPinia(), router], provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api } } },
+    global: { plugins: [PrimeVue, ToastService, createPinia(), router], provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api, automations } } },
   })
   await flushPromises()
   return { w: wrapper, api }
@@ -186,5 +188,29 @@ describe('l’éditeur du circuit d’approbation (le graphe)', () => {
     expect(q('wf-none')).not.toBeNull()
     expect(q('wf-add-state')).toBeNull()
     expect(api.workflowOverride).not.toHaveBeenCalled()
+  })
+
+  it('une transition de l’application lance une automatisation choisie dans la liste de l’organisation', async () => {
+    const automations = { get: vi.fn(async () => ({ status: 'ok', workflows: [{ name: 'accuse_reception', description: 'Accuse réception', trigger: 'manual' }] })) }
+    const { w, api } = await open(meta(), {}, automations)
+    q('wf-edge-Soumettre')!.click()
+    await flushPromises()
+    expect(automations.get).toHaveBeenCalledWith('/flows')
+    const pick = w.findAllComponents({ name: 'Select' }).find((c) => c.attributes('data-testid') === 'wf-flow-pick')!
+    expect((pick.props('options') as { value: string }[]).map((o) => o.value)).toEqual(['', 'accuse_reception'])
+    pick.vm.$emit('update:modelValue', 'accuse_reception')
+    await flushPromises()
+    expect(q('wf-flow-open')).not.toBeNull()
+    q('wf-save')!.click()
+    await flushPromises()
+    expect(api.saveWorkflowOverride).toHaveBeenCalledWith('Leave Request', { transitions: { Soumettre: { flow: 'accuse_reception' } } })
+  })
+
+  it('sans xflow, le panneau le dit au lieu d’une liste vide', async () => {
+    await open(meta())
+    q('wf-edge-Soumettre')!.click()
+    await flushPromises()
+    expect(q('wf-flow-pick')).toBeNull()
+    expect(q('wf-flow-unavailable')).not.toBeNull()
   })
 })

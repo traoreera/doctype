@@ -4289,3 +4289,8 @@ a.p-button:hover {
 .wf-form-problem { margin: 0; font-size: 0.8rem; color: var(--desk-danger); }
 .wf-none { padding: 2rem 1rem; text-align: center; border: 1px dashed var(--p-content-border-color); border-radius: 8px; }
 .wf-panel .wf-help { font-size: 0.8rem; }
+.wf-flow-links { display: flex; flex-wrap: wrap; gap: 0.8rem; font-size: 0.8rem; }
+/* Une liste au libellé long (« accuse_reception — Accuse réception… ») ne pousse jamais le panneau : elle se coupe. */
+.wf-panel .p-select { width: 100%; min-width: 0; max-width: 100%; }
+.wf-panel .p-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wf-panel { min-width: 0; overflow-wrap: anywhere; }

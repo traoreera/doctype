@@ -14,6 +14,7 @@ import StateNode from '@/components/workflow/StateNode.vue'
 import TransitionEdge from '@/components/workflow/TransitionEdge.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
+import { readFlows, type FlowSummary } from '@/lib/automations'
 import { useServices } from '@/lib/services'
 import type { DocTypeMeta, WorkflowDef, WorkflowOverride } from '@/lib/types'
 import { around, workflowGraph } from '@/lib/workflowgraph'
@@ -51,7 +52,7 @@ import { useMeta } from '@/stores/meta'
  * `workflow_reserved`).
  */
 const props = defineProps<{ doctype: string }>()
-const { api } = useServices()
+const { api, automations } = useServices()
 const notify = useNotify()
 const metaStore = useMeta()
 
@@ -71,6 +72,23 @@ const selected = ref<{ kind: 'state' | 'transition'; id: string } | null>(null)
 const creating = ref<{ kind: 'state'; from: string | null } | { kind: 'transition'; from: string } | null>(null)
 
 const label = computed(() => meta.value?.label || props.doctype)
+
+// ── Les automatisations de l'organisation (xflow) : ce qu'une transition peut lancer après elle ──
+const flows = ref<FlowSummary[]>([])
+async function loadFlows(): Promise<void> {
+  if (!automations) return
+  try {
+    flows.value = readFlows(await automations.get('/flows'))
+  } catch {
+    flows.value = [] // pas le droit de les lire, ou xflow injoignable : la liste reste vide, le panneau le dit
+  }
+}
+/** La liste à choisir : « aucune », puis les automatisations ; une automatisation nommée mais introuvable reste montrée (on ne la perd pas). */
+function flowOptions(current: string | null): { value: string; label: string }[] {
+  const out = [{ value: '', label: t.workflowBuilder.noFlow }, ...flows.value.map((f) => ({ value: f.name, label: f.description ? `${f.name} — ${f.description}` : f.name }))]
+  if (current && !flows.value.some((f) => f.name === current)) out.push({ value: current, label: t.workflowBuilder.missingFlow(current) })
+  return out
+}
 /** Adapter le circuit : modifier TOUS les documents du type (`rights.write === 'all'`, ni restreint ni partagé seulement). */
 const allowed = computed(() => meta.value?.rights.write === 'all')
 const dirty = computed(() => JSON.stringify(draft.value) !== JSON.stringify(saved.value))
@@ -267,7 +285,10 @@ watch(() => props.doctype, () => {
   creating.value = null
   void load()
 })
-onMounted(load)
+onMounted(() => {
+  void load()
+  void loadFlows()
+})
 </script>
 
 <template>
@@ -461,6 +482,28 @@ onMounted(load)
                   @update:model-value="patch(chosenRow!.action, { condition: $event ?? '' })"
                 />
               </label>
+              <div v-if="!chosenRow.yamlFlow" class="wf-field">
+                <label for="wf-flow-pick">{{ t.workflowBuilder.flowPick }}</label>
+                <Select
+                  v-if="automations"
+                  input-id="wf-flow-pick"
+                  :model-value="chosenRow.flow ?? ''"
+                  :options="flowOptions(chosenRow.flow)"
+                  option-label="label"
+                  option-value="value"
+                  :disabled="!editable"
+                  size="small"
+                  filter
+                  data-testid="wf-flow-pick"
+                  @update:model-value="patch(chosenRow!.action, { flow: String($event ?? '') })"
+                />
+                <span v-if="automations" class="desk-muted wf-help">{{ t.workflowBuilder.flowPickHint }}</span>
+                <span v-else class="desk-muted wf-help" data-testid="wf-flow-unavailable">{{ t.workflowBuilder.flowUnavailable }}</span>
+                <span v-if="automations" class="wf-flow-links">
+                  <RouterLink v-if="chosenRow.flow" :to="{ name: 'flow', params: { name: chosenRow.flow } }" data-testid="wf-flow-open">{{ t.workflowBuilder.flowOpen }}</RouterLink>
+                  <RouterLink :to="{ name: 'flow-new' }" data-testid="wf-flow-new">{{ t.workflowBuilder.flowNew }}</RouterLink>
+                </span>
+              </div>
               <Button v-if="allowed" :label="t.workflowBuilder.removeTransition" icon="pi pi-trash" text severity="danger" size="small" :disabled="saving" data-testid="wf-remove-transition" @click="dropTransition(chosenRow.action)" />
             </template>
 
@@ -479,7 +522,7 @@ onMounted(load)
                 <dd>{{ chosenRow.locked ? t.workflowBuilder.yes : t.workflowBuilder.no }}</dd>
                 <dt>{{ t.workflowBuilder.flow }}</dt>
                 <dd data-testid="wf-flow">
-                  <template v-if="chosenRow.flow"><code>{{ chosenRow.flow }}</code> <span class="desk-muted wf-help">{{ t.workflowBuilder.flowHint }}</span></template>
+                  <template v-if="chosenRow.yamlFlow"><code>{{ chosenRow.yamlFlow }}</code> <span class="desk-muted wf-help">{{ t.workflowBuilder.flowHint }}</span></template>
                   <span v-else class="desk-muted">{{ t.workflowBuilder.none }}</span>
                 </dd>
               </dl>
@@ -520,6 +563,28 @@ onMounted(load)
                 />
                 <span class="desk-muted wf-help">{{ t.flowOverride.conditionHint }}</span>
               </label>
+              <div v-if="!chosenRow.yamlFlow" class="wf-field">
+                <label for="wf-flow-pick">{{ t.workflowBuilder.flowPick }}</label>
+                <Select
+                  v-if="automations"
+                  input-id="wf-flow-pick"
+                  :model-value="chosenRow.flow ?? ''"
+                  :options="flowOptions(chosenRow.flow)"
+                  option-label="label"
+                  option-value="value"
+                  :disabled="!editable"
+                  size="small"
+                  filter
+                  data-testid="wf-flow-pick"
+                  @update:model-value="set(chosenRow!.action, 'flow', String($event ?? ''))"
+                />
+                <span v-if="automations" class="desk-muted wf-help">{{ t.workflowBuilder.flowPickHint }}</span>
+                <span v-else class="desk-muted wf-help" data-testid="wf-flow-unavailable">{{ t.workflowBuilder.flowUnavailable }}</span>
+                <span v-if="automations" class="wf-flow-links">
+                  <RouterLink v-if="chosenRow.flow" :to="{ name: 'flow', params: { name: chosenRow.flow } }" data-testid="wf-flow-open">{{ t.workflowBuilder.flowOpen }}</RouterLink>
+                  <RouterLink :to="{ name: 'flow-new' }" data-testid="wf-flow-new">{{ t.workflowBuilder.flowNew }}</RouterLink>
+                </span>
+              </div>
             </template>
           </template>
 

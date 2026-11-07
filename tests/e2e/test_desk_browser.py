@@ -220,9 +220,12 @@ def test_the_example_plugins_desk_extension_runs_in_the_browser(host):
 
 
 @pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"platform": True, "auth_grants": {"alice": GRANTS + ["xflow:workflows:read", "xflow:workflows:write", "xflow:runs:read", "xflow:runs:write"]}}], indirect=True)
 def test_the_workflow_builder_draws_the_circuit_and_tightens_it(host):
-    """L'éditeur du circuit (Vue Flow) sous la vraie CSP : le graphe, le droit d'une transition, une transition fermée que le serveur n'offre plus."""
-    run = _scenario(host, "e2e/workflow.e2e.mjs")
+    """L'éditeur du circuit (Vue Flow) sous la vraie CSP : le graphe, le droit d'une transition, une transition fermée que le serveur n'offre
+    plus, un état et une transition AJOUTÉS par l'organisation, et une automatisation (le vrai xflow) liée à une transition qui part quand
+    un document la franchit."""
+    run = _scenario(host, "e2e/workflow.e2e.mjs", permissions=["xflow:workflows:read", "xflow:workflows:write", "xflow:runs:read", "xflow:runs:write"])
     assert run.returncode == 0, f"scénario du circuit en échec :\n{run.stdout}\n{run.stderr}"
 
 

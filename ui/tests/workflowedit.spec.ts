@@ -140,4 +140,14 @@ describe('ce que l’organisation AJOUTE au circuit', () => {
     expect(deadEnds(APP, c)).toEqual([])
     expect(deadEnds(APP, withTweak(withTweak(c, 'Approuver', 'closed', true), 'Soumettre', 'closed', true))).toEqual(['Brouillon'])
   })
+
+  it('une automatisation se pose sur une transition de l’application, et se retire en la vidant', () => {
+    const c = withTweak({}, 'Soumettre', 'flow', ' accuse_reception ')
+    expect(c).toEqual({ transitions: { Soumettre: { flow: 'accuse_reception' } } })
+    expect(flowRows(APP, c)[0]).toMatchObject({ flow: 'accuse_reception', yamlFlow: null })
+    expect(withTweak(c, 'Soumettre', 'flow', '')).toEqual({})
+    const added = addTransition(addState({}, 'Visée'), { action: 'Viser', from: 'À approuver', to: 'Visée', grant: 'g:x:y' })
+    expect(patchAdded(added, 'Viser', { flow: 'prevenir' }).added![0]!.flow).toBe('prevenir')
+    expect(patchAdded(patchAdded(added, 'Viser', { flow: 'prevenir' }), 'Viser', { flow: '' }).added![0]).not.toHaveProperty('flow')
+  })
 })

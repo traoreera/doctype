@@ -11,7 +11,7 @@
  */
 import type { AddedTransition, TransitionTweak, WorkflowDef, WorkflowOverride, WorkflowState } from './types'
 
-export type TweakKey = 'closed' | 'condition' | 'not_owner'
+export type TweakKey = 'closed' | 'condition' | 'not_owner' | 'flow'
 export type Docstatus = NonNullable<WorkflowState['docstatus']>
 
 /** Une ligne de l'éditeur : une transition (du YAML ou ajoutée), ce que l'organisation en a fait, et ce qui ne se retouche pas. */
@@ -26,8 +26,10 @@ export interface FlowRow {
   closed: boolean
   condition: string
   notOwner: boolean
-  /** Le flux xflow lancé après la transition, ou null. */
+  /** Le flux xflow lancé après la transition (celui de l'application, sinon celui de l'organisation), ou null. */
   flow: string | null
+  /** Celui que l'APPLICATION lance : il ne se remplace pas ici (le serveur le refuse). */
+  yamlFlow: string | null
   /** Ajoutée par l'organisation : elle se modifie (cible, droit, condition…) et se supprime, au lieu de se resserrer. */
   added: boolean
   /** Le droit d'une transition ajoutée (celui d'une transition du YAML vient du serveur, `grants`). */
@@ -68,7 +70,8 @@ export function flowRows(definition: WorkflowDef | null | undefined, config: Wor
       closed: mine.closed === true,
       condition: typeof mine.condition === 'string' ? mine.condition : '',
       notOwner: t.not_owner === true || mine.not_owner === true,
-      flow: t.flow ?? null,
+      flow: t.flow ?? (typeof mine.flow === 'string' && mine.flow ? mine.flow : null),
+      yamlFlow: t.flow ?? null,
       added: false,
       grant: null,
     }
@@ -84,6 +87,7 @@ export function flowRows(definition: WorkflowDef | null | undefined, config: Wor
         condition: t.condition ?? '',
         notOwner: t.not_owner === true,
         flow: t.flow ?? null,
+        yamlFlow: null,
         added: true,
         grant: t.grant ?? null,
       }))
@@ -100,7 +104,7 @@ export function withTweak(config: WorkflowOverride | null | undefined, action: s
   const mine: TransitionTweak = { ...(stored[action] ?? {}) }
   const empty = value === false || (typeof value === 'string' && !value.trim())
   if (empty) delete mine[key]
-  else if (key === 'condition') mine.condition = String(value).trim()
+  else if (key === 'condition' || key === 'flow') mine[key] = String(value).trim()
   else mine[key] = true
   const next = { ...stored }
   if (Object.keys(mine).length) next[action] = mine
@@ -154,6 +158,7 @@ export function patchAdded(config: WorkflowOverride | null | undefined, action: 
     else next.condition = next.condition.trim()
     if (!next.not_owner) delete next.not_owner
     if (!next.description?.trim()) delete next.description
+    if (!next.flow?.trim()) delete next.flow
     return next
   })
   return tidy({ ...(config ?? {}), added })
