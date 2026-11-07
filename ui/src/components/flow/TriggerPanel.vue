@@ -31,9 +31,6 @@ const emit = defineEmits<{
 }>()
 
 const kindOptions = TRIGGER_KINDS.map((k) => ({ value: k, label: t.automations.triggers[k] ?? k }))
-const hint = computed(
-  () => ({ manual: t.automations.manualHint, event: t.flowBuilder.trigger_.eventHint, schedule: t.flowBuilder.trigger_.scheduleHint, webhook: t.automations.webhookHint })[props.kind],
-)
 
 // ── Un événement : quel type de document, à quel moment ──
 const parsed = computed(() => readEvent(props.event))
@@ -52,6 +49,9 @@ const originOptions = computed(() => [
   ...(props.events ?? []).map((e) => ({ value: e.name, label: e.label })),
   ...(origin.value === 'other' ? [{ value: 'other', label: props.event }] : []),
 ])
+const hint = computed(
+  () => ({ manual: t.automations.manualHint, event: pluginEvent.value ? t.flowBuilder.trigger_.pluginEventHint : t.flowBuilder.trigger_.eventHint, schedule: t.flowBuilder.trigger_.scheduleHint, webhook: t.automations.webhookHint })[props.kind],
+)
 function setOrigin(value: string): void {
   if (value === origin.value || value === 'other') return
   emit('update', { event: value === 'doc' ? '' : value })

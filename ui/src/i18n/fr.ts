@@ -1455,6 +1455,7 @@ export const fr = {
       scheduleHint: 'À heure fixe, au nom de qui déploie le flux.',
       eventDoctype: 'Quel document',
       eventMoment: 'À quel moment',
+      pluginEventHint: 'Dès que l’application émet cet événement, pour votre organisation seulement.',
       origin: 'Ce qui arrive',
       documentEvent: 'Un document change',
       eventFields: (list: string) => `Les étapes pourront reprendre : ${list}.`,

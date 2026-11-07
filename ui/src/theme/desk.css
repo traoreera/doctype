@@ -4087,8 +4087,11 @@ a.p-button:hover {
    le panneau est étroit, et une ligne trop large y poussait les libellés hors de l'écran (constaté dans Chromium). */
 .fl-value-row { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
 .fl-value-row > * { min-width: 0; flex: 1 1 8rem; }
-.fl-value-source { flex: 1 1 7rem; max-width: 9.5rem; }
 .fl-value-row .p-select, .fl-value-row .p-inputtext { width: 100%; min-width: 0; }
+/* La source (« Du déclencheur », « Résultat d’une étape ») à la largeur de son texte : coupée, on ne savait plus d'où venait la valeur.
+   La valeur prend le reste, et passe à la ligne quand le panneau est trop étroit pour les deux. */
+.fl-value-row .fl-value-source { flex: 0 0 auto; width: auto; max-width: 100%; }
+.fl-panel-body p.wf-help { margin: 0.25rem 0; }
 /* Une ligne de valeur à écrire, avec son bouton « retirer ». */
 .fl-row { display: flex; gap: 0.3rem; align-items: flex-end; }
 .fl-row > :first-child { flex: 1 1 auto; min-width: 0; }

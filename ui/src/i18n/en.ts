@@ -1453,6 +1453,7 @@ export const en: Messages = {
       scheduleHint: 'At a fixed time, on behalf of whoever deploys the flow.',
       eventDoctype: 'Which document',
       eventMoment: 'At which moment',
+      pluginEventHint: 'As soon as the application emits this event, for your organisation only.',
       origin: 'What happens',
       documentEvent: 'A document changes',
       eventFields: (list: string) => `Steps can reuse: ${list}.`,
