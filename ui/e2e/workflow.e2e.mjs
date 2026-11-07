@@ -1,6 +1,7 @@
 /**
  * L'éditeur du circuit d'approbation dans un vrai navigateur (fixture `flux`, type `Demande`) : le graphe se dessine sous la vraie CSP,
  * choisir une transition montre son droit, la fermer puis enregistrer RESSERRE le circuit côté serveur (la transition n'est plus offerte),
+ * ajouter un état et la transition qui y mène l'ADAPTE (un document y passe pour de vrai),
  * le canevas tient sur un téléphone, et le thème sombre garde le graphe lisible. Aucune erreur de console.
  */
 import { api, assert, config, launch, reporter } from './helpers.mjs'
@@ -57,6 +58,44 @@ try {
     assert(!(await offered()).includes('Reprendre'), `« Reprendre » encore offert : ${JSON.stringify(await offered())}`)
     await page.reload()
     await page.locator('[data-testid="wf-edge-Reprendre"].wf-edge-label-closed').waitFor()
+  }, page)
+
+  await r.step('ajouter un état et la transition qui y mène, l’enregistrer : un document y passe pour de vrai', async () => {
+    // Depuis « À approuver » : le choisir, puis « Ajouter un état » ; le panneau enchaîne sur la transition qui y mène.
+    await page.getByTestId('wf-state-À approuver').click()
+    await page.getByTestId('wf-add-state').click()
+    await page.getByTestId('wf-new-state-name').fill('Visée')
+    await r.shot(page, 'workflow-05-nouvel-etat')
+    await page.getByTestId('wf-new-state-ok').click()
+    await page.getByTestId('wf-state-Visée').waitFor()
+    assert(await page.getByTestId('wf-save').isDisabled(), 'un état que rien n’atteint ne s’enregistre pas')
+    await page.getByTestId('wf-new-action').fill('Viser')
+    await page.keyboard.press('Escape')
+    await page.getByTestId('wf-new-grant').click()
+    await page.getByRole('option').filter({ hasText: 'flux:demande:workflow_approuver' }).first().click()
+    await r.shot(page, 'workflow-06-nouvelle-transition')
+    await page.getByTestId('wf-new-transition-ok').click()
+    await page.getByTestId('wf-edge-Viser').waitFor()
+    await page.getByTestId('wf-fit').click()
+    await page.waitForTimeout(300)
+    await r.shot(page, 'workflow-07-circuit-adapte')
+    await page.getByTestId('wf-save').click()
+    await page.getByText('Circuit d’approbation enregistré.').waitFor()
+    const stored = (await api(cfg, 'GET', '/override/workflow/Demande')).json
+    assert(stored.config?.added?.[0]?.action === 'Viser' && stored.config.added[0].from === 'À approuver', `ajout enregistré : ${JSON.stringify(stored.config)}`)
+    // Le serveur applique l'ajout : un document soumis est « Visé » par la transition ajoutée, et `/meta` annonce l'état.
+    const doc = (await api(cfg, 'POST', '/doc/Demande', { data: { objet: 'Formation', jours: 2, commentaire: 'ok' } })).json
+    const sent = (await api(cfg, 'POST', `/doc/Demande/${encodeURIComponent(doc.name)}/transition`, { action: 'Soumettre', version: doc.version })).json
+    const seen = await api(cfg, 'POST', `/doc/Demande/${encodeURIComponent(doc.name)}/transition`, { action: 'Viser', version: sent.version })
+    assert(seen.status < 300 && seen.json.workflow_state === 'Visée', `viser : ${seen.status} ${JSON.stringify(seen.json)}`)
+    const meta = (await api(cfg, 'GET', '/meta/Demande')).json
+    assert(meta.workflow.states.some((s) => s.name === 'Visée'), 'l’état ajouté est annoncé par /meta')
+    // La fiche montre le document dans l'état ajouté.
+    await page.goto(`${cfg.desk}#/app/Demande/${encodeURIComponent(doc.name)}`)
+    await page.locator('[data-state="Visée"]').first().waitFor()
+    await r.shot(page, 'workflow-08-document-vise')
+    await page.goto(`${cfg.desk}#/workflow/Demande`)
+    await page.getByTestId('wf-state-Visée').waitFor()
   }, page)
 
   await r.step('téléphone : le panneau passe sous le canevas, rien ne déborde', async () => {

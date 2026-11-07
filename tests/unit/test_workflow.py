@@ -493,7 +493,7 @@ class TestTheOrganisationLayer:
                 await svc.save_workflow_override(who(), "Leave Request", config)
             return e.value
 
-        # Inventer une transition ou un état : son grant n'existerait pas chez auth.
+        # Retoucher une transition qui n'existe pas ; ajouter un état que rien n'atteint (les AJOUTS valides : TestTheOrganisationAddsToTheAutomaton).
         assert "Téléporter" in (await refused({"transitions": {"Téléporter": {"closed": True}}})).message
         assert (await refused({"states": [{"name": "Visé"}]})).message
         # Desserrer : on ne retire pas ce que le YAML impose, on ne vide pas une condition.
@@ -560,3 +560,98 @@ class TestTheOrganisationLayer:
             with pytest.raises(ValidationFailed) as e:
                 await call
             assert e.value.code == "no_workflow"
+
+
+VISER = {"action": "Viser", "from": "À approuver", "to": "Visé", "grant": APPROUVER}
+VALIDER = {"action": "Valider", "from": "Visé", "to": "Approuvé", "grant": "hr:leave_request:write", "not_owner": True}
+ADDITIONS = {"states": [{"name": "Visé"}], "added": [VISER, VALIDER]}
+
+
+class TestTheOrganisationAddsToTheAutomaton:
+    """Décision du 7 nov. : une organisation AJOUTE des états et des transitions, rangés pour elle seule. Une transition ajoutée s'ouvre
+    par un grant que le type déclare déjà — un grant inventé ici, xauth ne l'aurait donné à personne."""
+
+    async def test_a_document_goes_through_an_added_state(self, svc):
+        doc = await demande(svc, who(user="alice"))
+        await svc.save_workflow_override(who(), "Leave Request", ADDITIONS)
+        moved = await svc.workflow_transition(who(SOUMETTRE, user="alice"), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        boss = await svc.available_transitions(who(APPROUVER, REFUSER, user="bob"), "Leave Request", doc["name"])
+        assert [t["action"] for t in boss["transitions"]] == ["Approuver", "Refuser", "Viser"]
+        seen = await svc.workflow_transition(who(APPROUVER, user="bob"), "Leave Request", doc["name"], "Viser", moved["version"])
+        assert seen["workflow_state"] == "Visé" and seen["docstatus"] == 0
+        # « Valider » s'ouvre par le droit d'écrire le type, et l'auteur ne la fait pas (not_owner de l'ajout).
+        with pytest.raises(DoctypeError) as e:
+            await svc.workflow_transition(who(user="alice"), "Leave Request", doc["name"], "Valider", seen["version"])
+        assert e.value.code == "not_owner"
+        done = await svc.workflow_transition(who(user="carol"), "Leave Request", doc["name"], "Valider", seen["version"])
+        assert done["workflow_state"] == "Approuvé" and done["docstatus"] == 1  # l'état d'arrivée du YAML soumet, comme toujours
+
+    async def test_meta_shows_the_added_states_and_transitions_to_this_organisation_only(self, svc):
+        await svc.save_workflow_override(who(), "Leave Request", ADDITIONS)
+        meta = await svc.fetch_meta(who(), "Leave Request")
+        assert [st["name"] for st in meta["workflow"]["states"]] == [*(st["name"] for st in STATES), "Visé"]
+        assert {t["action"] for t in meta["workflow"]["transitions"]} == {"Soumettre", "Approuver", "Refuser", "Viser", "Valider"}
+        other = await svc.fetch_meta(make_ctx("globex", "zoe", permissions=BASE), "Leave Request")
+        assert "Visé" not in [st["name"] for st in other["workflow"]["states"]]
+        editor = await svc.workflow_override(who(), "Leave Request")
+        assert editor["config"]["added"][0] == VISER and "hr:leave_request:write" in editor["grant_choices"]
+        assert editor["submittable"] is True
+
+    async def test_an_added_condition_is_enforced(self, svc):
+        doc = await demande(svc)
+        await svc.save_workflow_override(who(), "Leave Request", {**ADDITIONS, "added": [{**VISER, "condition": "objet == 'Urgent'"}, VALIDER]})
+        moved = await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        with pytest.raises(ValidationFailed) as e:
+            await svc.workflow_transition(who(APPROUVER, user="bob"), "Leave Request", doc["name"], "Viser", moved["version"])
+        assert e.value.code == "transition_condition"
+
+    async def test_what_an_addition_cannot_be(self, svc):
+        async def refused(config):
+            with pytest.raises(ValidationFailed) as e:
+                await svc.save_workflow_override(who(), "Leave Request", config)
+            return e.value
+
+        # Un droit que le type ne déclare pas, ou aucun droit : personne ne pourrait la faire.
+        assert "n'est pas un droit de ce type" in (await refused({**ADDITIONS, "added": [{**VISER, "grant": "hr:leave_request:invente"}, VALIDER]})).message
+        assert "choisissez le droit" in (await refused({**ADDITIONS, "added": [{k: v for k, v in VISER.items() if k != "grant"}, VALIDER]})).message
+        # Un état qu'aucun chemin n'atteint, une transition vers un état inconnu, un nom déjà pris par le YAML.
+        assert (await refused({"states": [{"name": "Visé"}], "added": []})).code == "invalid_workflow_addition"
+        assert (await refused({"added": [{**VISER, "to": "Nulle part"}]})).code == "invalid_workflow_addition"
+        assert (await refused({"added": [{**VISER, "action": "Approuver"}], "states": [{"name": "Visé"}]})).code == "invalid_workflow_addition"
+        # Une condition qui ne compile pas ; une clé inconnue ; une retouche visant une transition ajoutée (on modifie l'ajout lui-même).
+        assert (await refused({**ADDITIONS, "added": [{**VISER, "condition": "fantome == 1"}, VALIDER]})).code == "invalid_workflow_addition"
+        assert (await refused({**ADDITIONS, "added": [{**VISER, "couleur": "rouge"}, VALIDER]})).code == "invalid_workflow_addition"
+        assert "n'est pas une transition" in (await refused({**ADDITIONS, "transitions": {"Viser": {"closed": True}}})).message
+
+    async def test_a_submitted_state_needs_a_submittable_type(self, db, tables):
+        reg = DocTypeRegistry()
+        reg.register(doctype(submittable=False, workflow={"states": [{"name": "Brouillon"}, {"name": "Lu"}], "transitions": [
+            {"action": "Lire", "from": "Brouillon", "to": "Lu"}]}))
+        svc = DocumentService(reg, db, tables, Log())
+        with pytest.raises(ValidationFailed) as e:
+            await svc.save_workflow_override(who(), "Leave Request", {
+                "states": [{"name": "Classé", "docstatus": "submitted"}],
+                "added": [{"action": "Classer", "from": "Lu", "to": "Classé", "grant": "hr:leave_request:write"}],
+            })
+        assert "soumettable" in e.value.message
+
+    async def test_an_added_state_holding_documents_cannot_be_removed(self, svc):
+        doc = await demande(svc)
+        await svc.save_workflow_override(who(), "Leave Request", ADDITIONS)
+        moved = await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+        await svc.workflow_transition(who(APPROUVER, user="bob"), "Leave Request", doc["name"], "Viser", moved["version"])
+        for remove in (lambda: svc.save_workflow_override(who(), "Leave Request", {"transitions": {}}),
+                       lambda: svc.delete_workflow_override(who(), "Leave Request")):
+            with pytest.raises(ValidationFailed) as e:
+                await remove()
+            assert e.value.code == "workflow_state_in_use" and "Visé (1)" in e.value.message
+
+    async def test_additions_the_definition_no_longer_accepts_are_ignored_not_fatal(self, svc, db, tables):
+        """Le plugin a retiré « À approuver » : les ajouts qui en partaient ne valent plus, le YAML reprend la main (lecture tolérante)."""
+        await svc.save_workflow_override(who(), "Leave Request", ADDITIONS)
+        shrunk = DocTypeRegistry()
+        shrunk.register(doctype(workflow={"states": [STATES[0], STATES[2]], "transitions": [
+            {"action": "Approuver", "from": "Brouillon", "to": "Approuvé"}]}))
+        after = DocumentService(shrunk, db, tables, Log())
+        meta = await after.fetch_meta(who(), "Leave Request")
+        assert [st["name"] for st in meta["workflow"]["states"]] == ["Brouillon", "Approuvé"]

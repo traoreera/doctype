@@ -4278,3 +4278,14 @@ a.p-button:hover {
   .flow-nodes .fn-row, .flow-nodes .fn-row-output { grid-template-columns: 1fr 1fr; }
 }
 .fl-palette-more { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; margin-top: 0.2rem; }
+/* Éditeur de circuit : ce que l'organisation ajoute, et les formulaires du panneau. */
+.wf-state-tag-added { border-style: dashed; }
+.wf-edge-label-added { border-style: dashed; }
+.wf-added-tag { font-size: 0.7rem; padding: 0 0.35rem; border: 1px dashed var(--p-content-border-color); border-radius: 999px; margin-left: 0.3rem; }
+.wf-grant-option { display: grid; gap: 0.1rem; }
+.wf-grant-option code, .wf-grant-code { font-size: 0.72rem; color: var(--p-text-muted-color); overflow-wrap: anywhere; }
+.wf-grant-code { display: block; }
+.wf-form-actions { display: flex; justify-content: flex-end; gap: 0.4rem; margin-top: 0.4rem; }
+.wf-form-problem { margin: 0; font-size: 0.8rem; color: var(--desk-danger); }
+.wf-none { padding: 2rem 1rem; text-align: center; border: 1px dashed var(--p-content-border-color); border-radius: 8px; }
+.wf-panel .wf-help { font-size: 0.8rem; }

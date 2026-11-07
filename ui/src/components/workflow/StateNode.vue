@@ -32,12 +32,13 @@ const tone = computed(() => ({ draft: 'neutral', submitted: 'ok', cancelled: 'ba
     <span class="wf-state-top">
       <span v-if="data.initial" class="wf-state-tag" :title="t.workflowBuilder.initialHint">{{ t.workflowBuilder.initial }}</span>
       <span v-else-if="data.final" class="wf-state-tag">{{ t.workflowBuilder.final }}</span>
+      <span v-if="data.added" class="wf-state-tag wf-state-tag-added" :title="t.workflowBuilder.legendAdded">{{ t.workflowBuilder.added }}</span>
       <span v-if="data.deadEnd" class="wf-state-tag wf-state-tag-warn" :title="t.workflowBuilder.deadEndHint">
         <span class="pi pi-exclamation-triangle" aria-hidden="true" /> {{ t.workflowBuilder.deadEnd }}
       </span>
     </span>
     <span class="wf-state-name">{{ data.name }}</span>
-    <span class="wf-docstatus">{{ t.workflowBuilder.docstatus[data.docstatus] }}</span>
+    <span class="wf-docstatus">{{ t.workflowBuilder.docstatusLine(t.workflowBuilder.docstatus[data.docstatus]) }}</span>
     <Handle id="out" type="source" :position="Position.Right" :connectable="false" />
     <Handle id="loop-out" type="source" :position="Position.Bottom" :connectable="false" class="wf-handle-loop-out" />
   </button>

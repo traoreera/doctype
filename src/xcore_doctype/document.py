@@ -84,6 +84,8 @@ from .overrides import (
     apply_dashboard_override,
     apply_form_override,
     apply_workflow_override,
+    effective_workflow,
+    workflow_grant_choices,
     changed_rules,
     form_base,
     form_rules,
@@ -385,7 +387,7 @@ class DocumentService:
     def get_meta(
         self, ctx: RequestContext, doctype: str, *, override: Mapping[str, Any] | None = None, dashboard: Mapping[str, Any] | None = None,
         dashboard_layer: str | None = None, shared: str | None = None, restricted: bool = False,
-        compiled: CompiledDocType | None = None, workflow: WorkflowRules = NO_WORKFLOW_RULES,
+        compiled: CompiledDocType | None = None, workflow: WorkflowRules = NO_WORKFLOW_RULES, workflow_def: Any = None,
     ) -> dict[str, Any]:
         """Définition + droits effectifs (`all` | `restricted` | `none` par action). Les règles ne sont jamais exposées.
 
@@ -450,7 +452,7 @@ class DocumentService:
             # Les retouches d'écriture (obligatoire, lecture seule, défaut) sont montrées telles que le serveur les appliquera : `form_rules`, tolérante.
             apply_form_override(meta, override, form_rules(compiled, override))
         # L'automate tel que l'organisation l'a resserré : une transition fermée n'est pas annoncée (§3.6).
-        apply_workflow_override(meta, workflow)
+        apply_workflow_override(meta, workflow, workflow_def)
         if dashboard and apply_dashboard_override(meta, dashboard, d.name):
             meta["views"]["dashboard_layer"] = dashboard_layer  # d'où vient ce tableau de bord : `user` (le sien) ou `org`
         meta["views"]["dashboard_shareable"] = rights["write"] != "none"  # il peut l'enregistrer pour toute l'organisation
@@ -795,9 +797,11 @@ class DocumentService:
         config = (found or {}).get("config")
         # Les champs que l'organisation a ajoutés font partie du type qu'on sert : sans cela le Desk ne les afficherait pas.
         compiled = self._registry.with_custom_fields(doctype, (config or {}).get("added") or [])
+        # L'automate tel que l'organisation le vit : ses états et transitions ajoutés, ce qu'elle resserre (§3.6).
+        merged, rules = effective_workflow(compiled, (flow or {}).get("config"))
         return self.get_meta(
             ctx, doctype, override=config, dashboard=(board or {}).get("config"), dashboard_layer=layer, shared=shared, restricted=restricted,
-            compiled=compiled, workflow=workflow_rules(compiled, (flow or {}).get("config")),
+            compiled=compiled, workflow=rules, workflow_def=merged if merged is not compiled.definition.workflow else None,
         )
 
     async def form_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
@@ -856,6 +860,9 @@ class DocumentService:
             # Le grant qui ouvre chaque transition (celui du YAML, sinon la convention) : l'éditeur dit QUI peut la faire, comme Frappe dit le
             # rôle. Ce n'est pas un secret : `/meta` publie déjà les grants que le type attend, et le grant seul n'ouvre rien sans xauth.
             "grants": {t.action: compiled.definition.transition_grant(t) for t in wf.transitions},
+            # Les droits qui peuvent ouvrir une transition AJOUTÉE par l'organisation : ceux que le type déclare déjà (avec leur libellé).
+            "grant_choices": workflow_grant_choices(compiled),
+            "submittable": bool(compiled.definition.submittable),
         }
 
     async def save_workflow_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
@@ -867,8 +874,32 @@ class DocumentService:
         cleaned = validate_workflow_override(compiled, config)
         async with self._query(ctx) as q:
             self._check_flow_author(write, compiled, restricted=await q.restricted(write))
+            found = await q.get_override(KIND_WORKFLOW, doctype)
+            await self._check_states_kept(q, compiled, (found or {}).get("config"), cleaned)
             made = await q.put_override(KIND_WORKFLOW, doctype, owner=ctx.owner_id, config=cleaned)
         return {"doctype": doctype, "config": made["config"]}
+
+    async def _check_states_kept(self, q: Query, compiled: CompiledDocType, before: Any, after: Mapping[str, Any] | None) -> None:
+        """Un état AJOUTÉ par l'organisation ne se retire pas tant que des documents s'y trouvent : ils y resteraient coincés, sans
+        aucune transition pour en sortir (les documents sont comptés sans le périmètre de l'appelant : c'est l'organisation entière)."""
+        def names(config: Any) -> set[str]:
+            states = config.get("states") if isinstance(config, dict) else None
+            return {st.get("name") for st in states or [] if isinstance(st, dict)}
+
+        gone = sorted(n for n in names(before) - names(after or {}) if isinstance(n, str))
+        occupied = []
+        for state in gone:
+            _, total = await q.list(
+                compiled.definition, filters=aggregation.validate_filters(compiled, {"workflow_state": state}),
+                order_by="modified", descending=True, limit=1, offset=0, scope=Scope.everything("read"),
+            )
+            if total:
+                occupied.append(f"{state} ({total})")
+        if occupied:
+            raise ValidationFailed(
+                f"Des documents se trouvent encore dans : {', '.join(occupied)} — faites-les d'abord passer dans un autre état",
+                code="workflow_state_in_use",
+            )
 
     async def delete_workflow_override(self, ctx: RequestContext, doctype: str) -> dict[str, Any]:
         """Retire l'habillage d'automate (l'automate du YAML reprend la main, donc les transitions fermées réapparaissent) : même périmètre exigé
@@ -878,6 +909,8 @@ class DocumentService:
         write = self._scope(ctx, compiled, "write")
         async with self._query(ctx) as q:
             self._check_flow_author(write, compiled, restricted=await q.restricted(write))
+            found = await q.get_override(KIND_WORKFLOW, doctype)
+            await self._check_states_kept(q, compiled, (found or {}).get("config"), None)  # rétablir le YAML retire aussi les états ajoutés
             await q.delete_override(KIND_WORKFLOW, doctype)
         return {"doctype": doctype}
 
@@ -1507,12 +1540,12 @@ class DocumentService:
             return False
         return org.allows(action, data)
 
-    async def _workflow_rules(self, q: Query, doctype: str, compiled: CompiledDocType) -> WorkflowRules:
-        """Ce que l'organisation resserre sur l'automate de ce type (habillage `workflow`, lu à chaque porte)."""
+    async def _workflow(self, q: Query, doctype: str, compiled: CompiledDocType) -> tuple[Any, WorkflowRules]:
+        """L'automate de ce type tel que CETTE organisation le vit (ses ajouts compris) et ce qu'elle resserre : lu à chaque porte."""
         if compiled.definition.workflow is None:
-            return NO_WORKFLOW_RULES
+            return None, NO_WORKFLOW_RULES
         found = await q.get_override(KIND_WORKFLOW, doctype)
-        return workflow_rules(compiled, (found or {}).get("config"))
+        return effective_workflow(compiled, (found or {}).get("config"))
 
     def _mappings_from(self, source: str) -> list[tuple[Any, Any]]:
         """`(type cible compilé, déclaration)` pour tout type qui dit se créer depuis `source`.
@@ -1632,12 +1665,11 @@ class DocumentService:
         """
         self._enter(ctx, "doc.transitions", doctype, name)
         compiled = self._doctype(doctype)
-        wf = compiled.definition.workflow
-        if wf is None:
+        if compiled.definition.workflow is None:
             return {"state": None, "transitions": []}
         async with self._query(ctx) as q:
             doc = await q.get(doctype, name, scope=self._scope(ctx, compiled, "read"))
-            org = await self._workflow_rules(q, doctype, compiled)
+            wf, org = await self._workflow(q, doctype, compiled)
         if doc is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         state = doc.workflow_state or wf.initial
@@ -1669,21 +1701,21 @@ class DocumentService:
         """
         self._enter(ctx, "doc.transition", doctype, name)
         compiled = self._doctype(doctype)
-        wf = compiled.definition.workflow
-        if wf is None:
+        if compiled.definition.workflow is None:
             raise ValidationFailed(f"{doctype} n'a pas de workflow", code="no_workflow")
         if not isinstance(action, str) or not action.strip():
             raise ValidationFailed("`action` est obligatoire", code="missing_field")
         if not isinstance(version, int) or isinstance(version, bool) or version < 1:
             raise ValidationFailed("`version` (entier >= 1) est obligatoire", code="version_required")
-        transition = wf.transition(action.strip())
-        if transition is None:
-            raise ValidationFailed(f"{action!r} n'est pas une transition de {doctype}", code="unknown_transition")
 
         read = self._scope(ctx, compiled, "read")
         async with self._query(ctx) as q:
             current = await q.get(doctype, name, scope=read)
-            org = await self._workflow_rules(q, doctype, compiled)
+            # L'automate de l'ORGANISATION : une transition qu'elle a ajoutée n'existe que pour elle (§3.6).
+            wf, org = await self._workflow(q, doctype, compiled)
+        transition = wf.transition(action.strip())
+        if transition is None:
+            raise ValidationFailed(f"{action!r} n'est pas une transition de {doctype}", code="unknown_transition")
         if current is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         state = current.workflow_state or wf.initial

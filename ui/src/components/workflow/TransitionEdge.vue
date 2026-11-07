@@ -37,14 +37,15 @@ const conditioned = computed(() => !!props.data.condition || !!props.data.yamlCo
     <button
       type="button"
       class="wf-edge-label nodrag nopan"
-      :class="{ 'wf-edge-label-closed': data.closed, 'wf-edge-label-selected': selected }"
+      :class="{ 'wf-edge-label-closed': data.closed, 'wf-edge-label-selected': selected, 'wf-edge-label-added': data.added }"
       :style="{ transform: `translate(-50%, -50%) translate(${geometry[1]}px, ${geometry[2]}px)` }"
       :aria-pressed="selected ? 'true' : 'false'"
-      :aria-label="`${t.workflowBuilder.transition} ${data.action} : ${data.from} → ${data.to}${data.closed ? ` (${t.flowOverride.closed})` : ''}`"
+      :aria-label="`${t.workflowBuilder.transition} ${data.action} : ${data.from} → ${data.to}${data.closed ? ` (${t.flowOverride.closed})` : ''}${data.added ? ` (${t.workflowBuilder.added})` : ''}`"
       :data-testid="`wf-edge-${id}`"
       @click.stop="emit('choose', id)"
     >
       <span v-if="data.closed" class="pi pi-ban" aria-hidden="true" />
+      <span v-if="data.added" class="pi pi-plus-circle" :title="t.workflowBuilder.legendAdded" aria-hidden="true" />
       {{ data.action }}
       <span v-if="conditioned" class="pi pi-filter" :title="t.flowOverride.condition" aria-hidden="true" />
       <span v-if="data.notOwner" class="pi pi-lock" :title="t.flowOverride.notOwner" aria-hidden="true" />

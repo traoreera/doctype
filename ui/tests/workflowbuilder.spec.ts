@@ -42,7 +42,7 @@ afterEach(() => {
 async function open(m: DocTypeMeta, config: WorkflowOverride = {}) {
   const api = {
     meta: vi.fn(async () => m),
-    workflowOverride: vi.fn(async () => ({ doctype: 'Leave Request', config, definition: LEAVE, grants: GRANTS })),
+    workflowOverride: vi.fn(async () => ({ doctype: 'Leave Request', config, definition: LEAVE, grants: GRANTS, grant_choices: { 'hr:leave_request:write': 'Créer/modifier Demande de congé', ...Object.fromEntries(Object.values(GRANTS).map((g) => [g, g])) }, submittable: true })),
     saveWorkflowOverride: vi.fn(async (_d: string, c: WorkflowOverride) => ({ doctype: 'Leave Request', config: c })),
     removeWorkflowOverride: vi.fn(async () => { }),
   }
@@ -70,7 +70,7 @@ describe('l’éditeur du circuit d’approbation (le graphe)', () => {
     expect(q('wf-title')?.textContent).toContain('Demande de congé')
     for (const s of ['Brouillon', 'À approuver', 'Approuvée', 'Refusée']) expect(q(`wf-state-${s}`)).not.toBeNull()
     for (const a of ['Soumettre', 'Approuver', 'Refuser', 'Reprendre']) expect(q(`wf-edge-${a}`)).not.toBeNull()
-    expect(q('wf-state-Approuvée')?.textContent).toContain('Soumis')
+    expect(q('wf-state-Approuvée')?.textContent).toContain('document soumis')
     expect(document.body.querySelector('.vue-flow__node[tabindex], .vue-flow__edge[tabindex]')).toBeNull() // pas de second arrêt de tabulation
   })
 
@@ -131,24 +131,60 @@ describe('l’éditeur du circuit d’approbation (le graphe)', () => {
     expect((q('wf-closed')!.querySelector('input') as HTMLInputElement).disabled).toBe(true)
   })
 
-  it('crée un circuit de départ et ajoute un état personnalisé quand il n’y a pas de workflow', async () => {
-    const { api } = await open(meta(ALL, null))
-    expect(q('wf-none')).toBeNull()
-    expect(q('wf-state-Brouillon')).not.toBeNull()
-    expect(q('wf-add-state')).not.toBeNull()
-
-    const prompt = vi.fn(() => 'Validation')
-    vi.stubGlobal('prompt', prompt)
+  it('ajoute un état puis la transition qui y mène, par le panneau, et les enregistre pour l’organisation', async () => {
+    const { api } = await open(meta())
     q('wf-add-state')!.click()
     await flushPromises()
-    expect(q('wf-state-Validation')).not.toBeNull()
-    expect(api.workflowOverride).not.toHaveBeenCalled()
-    vi.unstubAllGlobals()
+    const name = q('wf-new-state-name') as HTMLInputElement
+    name.value = 'Visée'
+    name.dispatchEvent(new Event('input'))
+    await flushPromises()
+    q('wf-new-state-ok')!.click()
+    await flushPromises()
+    // L'état est là, mais rien n'y mène encore : enregistrer est impossible et la page le dit.
+    expect(q('wf-state-Visée')).not.toBeNull()
+    expect(q('wf-pending')?.textContent).toContain('Visée')
+    expect((q('wf-save') as HTMLButtonElement).disabled).toBe(true)
+    // Le panneau enchaîne sur la transition : son nom est proposé (« Vers Visée »), sa cible aussi ; il manque qui peut la faire.
+    expect((q('wf-new-action') as HTMLInputElement).value).toBe('Vers Visée')
+    expect((q('wf-new-transition-ok') as HTMLButtonElement).disabled).toBe(true)
+    const grant = wrapper!.findAllComponents({ name: 'Select' }).find((c) => c.attributes('data-testid') === 'wf-new-grant')!
+    grant.vm.$emit('update:modelValue', 'hr:leave_request:write')
+    await flushPromises()
+    q('wf-new-transition-ok')!.click()
+    await flushPromises()
+    expect(q('wf-pending')).toBeNull()
+    expect(q('wf-edge-Vers Visée')).not.toBeNull()
+    q('wf-save')!.click()
+    await flushPromises()
+    expect(api.saveWorkflowOverride).toHaveBeenCalledWith('Leave Request', {
+      states: [{ name: 'Visée', docstatus: 'draft' }],
+      added: [{ action: 'Vers Visée', from: 'Brouillon', to: 'Visée', grant: 'hr:leave_request:write' }],
+    })
   })
 
-  it('un type sans circuit le dit', async () => {
+  it('une transition ajoutée se règle et se supprime ; celles de l’application, non', async () => {
+    await open(meta(), {
+      states: [{ name: 'Visée' }],
+      added: [{ action: 'Viser', from: 'À approuver', to: 'Visée', grant: 'hr:leave_request:workflow_approuver' }],
+    })
+    q('wf-edge-Viser')!.click()
+    await flushPromises()
+    expect(q('wf-panel')?.textContent).toContain('Transition ajoutée par votre organisation')
+    expect(q('wf-remove-transition')).not.toBeNull()
+    q('wf-remove-transition')!.click()
+    await flushPromises()
+    // Sans transition pour y mener, l'état ajouté ne s'enregistrerait plus : la page le dit.
+    expect(q('wf-pending')?.textContent).toContain('Visée')
+    q('wf-edge-Refuser')!.click()
+    await flushPromises()
+    expect(q('wf-remove-transition')).toBeNull()
+  })
+
+  it('un type sans circuit le dit, sans dessiner un faux circuit qu’on ne pourrait pas enregistrer', async () => {
     const { api } = await open(meta(ALL, null))
-    expect(q('wf-none')).toBeNull()
+    expect(q('wf-none')).not.toBeNull()
+    expect(q('wf-add-state')).toBeNull()
     expect(api.workflowOverride).not.toHaveBeenCalled()
   })
 })

@@ -10,7 +10,7 @@
  * colonne, l'ordre du YAML. Une flèche qui revient en arrière (ou reste dans sa colonne) passe par-dessous, pour ne pas croiser les
  * autres. Un état que rien n'atteint se range dans une dernière colonne : le YAML l'interdit, mais le dessin ne doit pas casser.
  */
-import { deadEnds, flowRows, type FlowRow } from './workflowedit'
+import { deadEnds, flowRows, isAddedState, merged, type FlowRow } from './workflowedit'
 import type { WorkflowDef, WorkflowOverride } from './types'
 
 export const COLUMN_GAP = 280
@@ -27,6 +27,8 @@ export interface StateData {
   final: boolean
   /** Il AVAIT une sortie, et toutes sont fermées par l'habillage : un document s'y échouerait (le serveur refuse d'enregistrer ça). */
   deadEnd: boolean
+  /** Ajouté par l'organisation (il se modifie et se supprime ; ceux de l'application, non). */
+  added: boolean
 }
 
 export interface StateNode {
@@ -74,10 +76,12 @@ export function workflowGraph(
   config: WorkflowOverride | null | undefined,
   positions: Record<string, { x: number; y: number }> = {},
 ): { nodes: StateNode[]; edges: TransitionEdge[] } {
-  const states = definition?.states ?? []
-  const column = ranks(definition)
+  // Le circuit de l'ORGANISATION (ses états et transitions ajoutés compris) : c'est lui qu'on place et qu'on dessine.
+  const all = merged(definition, config)
+  const states = all?.states ?? []
+  const column = ranks(all)
   const stuck = new Set(deadEnds(definition, config))
-  const leaving = new Set((definition?.transitions ?? []).map((t) => t.from))
+  const leaving = new Set((all?.transitions ?? []).map((t) => t.from))
   const byColumn = new Map<number, string[]>()
   for (const st of states) byColumn.set(column.get(st.name)!, [...(byColumn.get(column.get(st.name)!) ?? []), st.name])
 
@@ -89,7 +93,10 @@ export function workflowGraph(
       id: st.name,
       type: 'state',
       position: positions[st.name] ?? { x: col * COLUMN_GAP, y: (row - (siblings.length - 1) / 2) * ROW_GAP },
-      data: { name: st.name, docstatus: st.docstatus ?? 'draft', initial: i === 0, final: !leaving.has(st.name), deadEnd: stuck.has(st.name) },
+      data: {
+        name: st.name, docstatus: st.docstatus ?? 'draft', initial: i === 0, final: !leaving.has(st.name), deadEnd: stuck.has(st.name),
+        added: isAddedState(config, st.name),
+      },
     }
   })
   const edges: TransitionEdge[] = flowRows(definition, config).map((row) => {

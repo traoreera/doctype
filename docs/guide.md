@@ -646,6 +646,20 @@ ailleurs.
 `xflow:runs:read` (l'écran ne l'affiche pas).
 
 
+**Adapter le circuit à son organisation (« ⋯ › Circuit d'approbation »).** Le circuit vient de l'application, et une organisation peut
+l'adapter sans toucher au YAML. Il faut pouvoir modifier tous les documents du type.
+
+1. **Ajouter un état.** Choisissez l'état d'où partir, puis cliquez « Ajouter un état ». Donnez son nom et l'état de document qu'il
+   impose (brouillon, ou soumis / annulé sur un type soumettable).
+2. **Ajouter la transition qui y mène.** Le panneau l'enchaîne aussitôt : un nom d'action (le bouton de la fiche), l'état où elle mène,
+   et **qui peut la faire**. Ce droit se choisit parmi ceux que le type déclare déjà : un droit inventé ici, personne ne l'aurait.
+3. **Enregistrer.** Le serveur vérifie le circuit complet avec les mêmes règles que le YAML. Il refuse notamment un nom pris, un état
+   que rien n'atteint ou un cul-de-sac.
+
+Ce qui est ajouté vaut pour cette organisation seulement. Les transitions de l'application, elles, se resserrent sans se supprimer : on
+peut les fermer, y mettre une condition, ou interdire à l'auteur du document de les faire. « Rétablir le circuit de l'application »
+retire tout, mais un état ajouté où se trouvent encore des documents ne se retire pas.
+
 ### 3.9 Ajouter ses propres nœuds et déclencheurs à l'éditeur d'automatisations
 
 Un plugin peut offrir à l'éditeur **ses** actions IPC (« Envoyer un e-mail ») et **ses** événements (« E-mail reçu »). Dans l'éditeur,
