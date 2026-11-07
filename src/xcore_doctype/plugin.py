@@ -46,6 +46,7 @@ from .realtime import NoRealtime, Realtime, RealtimeNotifier
 from .notifier import DEFAULT_ACTION as NOTIFY_ACTION, DEFAULT_PLUGIN as NOTIFY_PLUGIN, NoNotifier, Notifier, XauthNotifier
 from .user_permissions import make_user_permission_hooks
 from .notification_rules import RULE_HOOK, ExtensionMailer, Mailer, NoMailer, NotificationRules, make_rule_hook
+from .flow_nodes_service import FlowNodes
 from .preferences import Preferences
 from .hooks import ActionHooks, HookRegistry, HookSettings
 from .registry import DocTypeChannel, DocTypeRegistry
@@ -273,7 +274,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         # ...et y apportent leurs propres DocTypes (module == leur nom, voir registry.DocTypeChannel).
         self.ctx.services[REGISTRY_SERVICE] = DocTypeChannel(
             registry, self.logger, unique_check=self.documents.ensure_unique_clean, desk=desk_extensions,
-            translations=self.documents.translations,
+            translations=self.documents.translations, flows=self.documents.flow_catalog,
         )
         for i, d in enumerate(translation_dirs):
             self.documents.translations.load_dir(f"operator.{i}", Path(d).expanduser())
@@ -415,6 +416,26 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     @action("meta.list")
     async def meta_list(self, payload: dict) -> dict:
         return await self._run("meta.list", lambda ctx: _done(items=self.documents.list_meta(ctx)))
+
+    @action("meta.flow_catalog")
+    async def meta_flow_catalog(self, payload: dict) -> dict:
+        return await self._run("meta.flow_catalog", lambda ctx: FlowNodes(self.documents).catalog(ctx))
+
+    @action("doc.flow_nodes.list")
+    async def doc_flow_nodes_list(self, payload: dict) -> dict:
+        return await self._run("doc.flow_nodes.list", lambda ctx: FlowNodes(self.documents).list(ctx))
+
+    @action("doc.flow_nodes.save")
+    async def doc_flow_nodes_save(self, payload: dict) -> dict:
+        old = payload.get("replacing") if isinstance(payload.get("replacing"), dict) else None
+        replacing = (str(old.get("plugin", "")), str(old.get("action", ""))) if old else None
+        return await self._run("doc.flow_nodes.save", lambda ctx: FlowNodes(self.documents).save(ctx, payload.get("node"), replacing=replacing))
+
+    @action("doc.flow_nodes.delete")
+    async def doc_flow_nodes_delete(self, payload: dict) -> dict:
+        return await self._run(
+            "doc.flow_nodes.delete", lambda ctx: FlowNodes(self.documents).delete(ctx, str(payload.get("plugin", "")), str(payload.get("action", "")))
+        )
 
     @action("meta.workspaces")
     async def meta_workspaces(self, payload: dict) -> dict:

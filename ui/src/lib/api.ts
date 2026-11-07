@@ -122,6 +122,25 @@ export class ApiClient {
     return this.call('GET', `/meta/${encodeURIComponent(doctype)}`)
   }
 
+  /** Les nœuds et les événements que les plugins ouvrent à l'éditeur d'automatisations (la section `xflow:` de leur manifeste). */
+  flowCatalog(): Promise<unknown> {
+    return this.call('GET', '/flow-catalog')
+  }
+
+  /** Les nœuds que l'organisation a décrits à l'écran (`flow_nodes_service.py`), et si l'appelant peut les modifier. */
+  flowNodes(): Promise<{ nodes: unknown[]; can_edit: boolean }> {
+    return this.call('GET', '/flow-nodes')
+  }
+
+  /** Créer ou remplacer un nœud de l'organisation ; `replacing` : sa clé d'avant, quand on change son plugin ou son action. */
+  saveFlowNode(node: Record<string, unknown>, replacing?: { plugin: string; action: string }): Promise<Record<string, unknown>> {
+    return this.call('PUT', '/flow-nodes', { body: { node, ...(replacing ? { replacing } : {}) } })
+  }
+
+  async deleteFlowNode(plugin: string, action: string): Promise<void> {
+    await this.call('DELETE', `/flow-nodes/${encodeURIComponent(plugin)}/${encodeURIComponent(action)}`)
+  }
+
   // ── Documents ───────────────────────────────────────────
   list(doctype: string, q: ListQuery = {}): Promise<ListResult> {
     const params = new URLSearchParams()
@@ -539,7 +558,15 @@ export class ApiClient {
   /** L'habillage d'automate du tenant pour ce type. `definition` : l'automate du YAML — `/meta` ne montre que celui RESSERRÉ, donc une
    * transition fermée n'y figure plus : l'éditeur a besoin de l'original pour pouvoir la rouvrir (process/programme.md §3.6). */
   /** `grants` : le droit qui ouvre chaque transition (celui du YAML, sinon la convention), pour que l'éditeur dise qui peut la faire. */
-  workflowOverride(doctype: string): Promise<{ doctype: string; config: WorkflowOverride; definition: WorkflowDef; grants?: Record<string, string | null> }> {
+  workflowOverride(doctype: string): Promise<{
+    doctype: string
+    config: WorkflowOverride
+    definition: WorkflowDef
+    grants?: Record<string, string | null>
+    /** Les droits qui peuvent ouvrir une transition ajoutée (ceux que le type déclare), avec leur libellé. */
+    grant_choices?: Record<string, string>
+    submittable?: boolean
+  }> {
     return this.call('GET', `/override/workflow/${encodeURIComponent(doctype)}`)
   }
 

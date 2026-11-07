@@ -974,9 +974,12 @@ class DocTypeChannel:
 
     def __init__(
         self, registry: DocTypeRegistry, logger: Any = None, *, unique_check: Callable[[CompiledDocType], Awaitable[None]] | None = None,
-        desk: DeskExtensions | None = None, translations: Translations | None = None,
+        desk: DeskExtensions | None = None, translations: Translations | None = None, flows: "FlowCatalog | None" = None,
     ) -> None:
         self._registry, self._log, self._unique_check = registry, logger, unique_check
+        from .flownodes import FlowCatalog
+
+        self._flows = flows if flows is not None else FlowCatalog()
         self._desk = desk if desk is not None else DeskExtensions()
         self._translations = translations if translations is not None else Translations()
         self._checks: set[asyncio.Task[None]] = set()  # les contrôles `unique` rétroactifs en cours (gardés : une tâche orpheline serait ramassée)
@@ -1089,7 +1092,15 @@ class DocTypeChannel:
         ne doit charger que ce qui vise un type présent : un module absent n'est pas une faute."""
         return self._registry.has(doctype)
 
+    def declare_xflow(self, owner: str, section: Any) -> dict[str, int]:
+        """Les nœuds et les événements que ce plugin ouvre à l'éditeur d'automatisations (la section `xflow:` de son manifeste, voir
+        `flownodes.py`) : `declare_xflow(self.ctx.name, self.ctx.config.get("xflow"))` dans `on_load`. Une section fautive fait échouer
+        le chargement (`InvalidDefinition`) ; retirée par `unregister_owner`."""
+        declared = self._flows.declare(owner, section)
+        return {"nodes": len(declared.nodes), "events": len(declared.events)}
+
     def unregister_owner(self, owner: str) -> list[str]:
         self._desk.unregister(owner)
         self._translations.unload(owner)
+        self._flows.unregister(owner)
         return self._registry.unregister_owner(owner)

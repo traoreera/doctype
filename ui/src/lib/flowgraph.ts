@@ -464,6 +464,8 @@ export interface TriggerNodeData {
   kind: TriggerKind
   /** L'événement, l'expression cron ou rien : ce que la carte dit sous le nom du déclencheur. */
   detail: string
+  /** Le libellé de l'événement de PLUGIN écouté (`lib/flowcatalog`), posé par la page : « E-mail reçu » plutôt que son nom. */
+  pluginEvent?: string
 }
 
 export interface StepNodeData {
@@ -473,6 +475,8 @@ export interface StepNodeData {
   orphan: boolean
   /** Ce que le type d'étape exige et qui manque encore. */
   missing: string[]
+  /** Le nœud de PLUGIN que l'étape appelle (`lib/flowcatalog`), posé par la page : la carte montre son nom et son icône. */
+  plugin?: { label: string; icon: string; name: string }
 }
 
 export interface GraphNode {
@@ -589,7 +593,8 @@ export function edgeParts(id: string): { source: string; key: string } | null {
 /** Une valeur telle qu'on la MONTRE : un jeton connu devient son libellé (« Nouvel état »), le reste demeure ce qu'il est. */
 function shownValue(raw: unknown): string {
   const value = readValue(raw)
-  if (value.kind === 'trigger') return t.flowBuilder.values.triggerKeys[value.key]
+  if (value.kind === 'trigger') return (t.flowBuilder.values.triggerKeys as Record<string, string>)[value.key] ?? value.key
+  if (value.kind === 'output') return `${value.step} › ${value.path}`
   // Le nœud n'a pas les libellés du type visé (le panneau, lui, les a) : il nomme l'étape et le champ repris.
   if (value.kind === 'step') return value.field ? `${value.step} › ${value.field}` : value.step
   if (value.kind === 'raw') return value.text

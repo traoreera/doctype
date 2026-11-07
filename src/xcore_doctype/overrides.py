@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from typing import Any, Mapping, Sequence
 
 from pydantic import TypeAdapter, ValidationError
@@ -31,7 +32,7 @@ from .dashboards import MAX_BLOCKS, DashboardBlock, check_measured
 from .decimals import canonical
 from .errors import InvalidDefinition, ValidationFailed
 from .expr import ExprError, compile_expr, referenced_fields
-from .schema import DECIMAL_TYPES, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField, complete_layout, layout_tab_problems
+from .schema import DECIMAL_TYPES, FLOW_NAME, FILE_TYPES, NO_DEFAULT_TYPES, TODAY, FieldDef, NamingField, complete_layout, layout_tab_problems
 from .workspaces import WorkspaceDef, parse_workspace
 
 __all__ = [
@@ -57,6 +58,8 @@ __all__ = [
     "validate_workflow_override",
     "workflow_rules",
     "apply_workflow_override",
+    "effective_workflow",
+    "workflow_grant_choices",
     "check_size",
     "MAX_FORM_TWEAKS",
     "MAX_OVERRIDE_BYTES",
@@ -528,7 +531,30 @@ def changed_rules(compiled: Any, before: Any, after: Any) -> list[str]:
 
 # Un habillage d'automate reste lisible : au plus une retouche par transition du YAML, et le YAML en borne déjà le nombre.
 MAX_WORKFLOW_TWEAKS = 100
-_TRANSITION_KEYS = ("closed", "condition", "not_owner")
+_TRANSITION_KEYS = ("closed", "condition", "not_owner", "flow")
+# Ce qu'une organisation AJOUTE à l'automate du YAML (process/programme.md §3.6, décision du 7 nov.) : des états et des transitions,
+# rangés dans le même habillage. Une transition ajoutée s'ouvre par un grant que le type DÉCLARE déjà (`workflow_grant_choices`) :
+# un grant inventé ici, xauth ne le connaîtrait pas et personne ne pourrait jamais faire la transition.
+MAX_ADDED_STATES = 30
+MAX_ADDED_TRANSITIONS = 50
+_WORKFLOW_KEYS = ("transitions", "states", "added")
+_ADDED_TRANSITION_KEYS = ("action", "from", "to", "grant", "condition", "not_owner", "description", "flow")
+
+
+def workflow_grant_choices(compiled: Any) -> dict[str, str]:
+    """Les grants qui peuvent ouvrir une transition ajoutée par l'organisation : ceux que le type déclare à auth (ses actions et ses
+    transitions du YAML), avec leur libellé. Rien d'autre : un grant que le type ne déclare pas, xauth ne l'aurait donné à personne."""
+    return {name: spec.description for name, spec in compiled.definition.grant_specs().items()}
+
+
+def _merged_workflow(compiled: Any, states: Sequence[Mapping[str, Any]], added: Sequence[Mapping[str, Any]]) -> Any:
+    """L'automate du YAML augmenté de ce que l'organisation ajoute, vérifié par le MÊME schéma que le YAML (noms en double, état
+    inconnu, état qu'aucun chemin n'atteint, boucle sur soi). Lève `ValueError` / `ValidationError`."""
+    from .schema import WorkflowDef
+
+    wf = compiled.definition.workflow
+    base = wf.model_dump(mode="json", exclude_none=True, by_alias=True)
+    return WorkflowDef.model_validate({"states": [*base["states"], *states], "transitions": [*base["transitions"], *added]})
 
 
 def _condition_problem(compiled: Any, source: str) -> str | None:
@@ -558,8 +584,9 @@ def validate_workflow_override(compiled: Any, config: object) -> dict[str, Any]:
     wf = compiled.definition.workflow
     if wf is None:
         raise ValidationFailed(f"{compiled.definition.name} n'a pas de workflow", code="no_workflow")
-    if unknown := sorted(set(config) - {"transitions"}):
-        raise ValidationFailed(f"habillage d'automate : clé inconnue {', '.join(unknown)} (seul `transitions` se retouche)")
+    if unknown := sorted(set(config) - set(_WORKFLOW_KEYS)):
+        raise ValidationFailed(f"habillage d'automate : clé inconnue {', '.join(unknown)} (seuls {', '.join(_WORKFLOW_KEYS)})")
+    states, added = _validate_additions(compiled, config.get("states"), config.get("added"))
     tweaks = config.get("transitions") or {}
     if not isinstance(tweaks, dict):
         raise ValidationFailed("habillage d'automate : `transitions` doit être un objet {action: retouches}")
@@ -590,6 +617,16 @@ def validate_workflow_override(compiled: Any, config: object) -> dict[str, Any]:
                 problems.append(f"{action}.not_owner: le type l'impose déjà")
             else:
                 kept[key] = True
+        if "flow" in spec:
+            # L'automatisation qui SUIT la transition : pas un droit, une suite. Elle s'ajoute là où l'application n'en lance pas ;
+            # remplacer celle de l'application lui retirerait ce qu'elle a prévu (pour la changer, on change le plugin).
+            name = spec["flow"]
+            if not isinstance(name, str) or not re.match(FLOW_NAME, name):
+                problems.append(f"{action}.flow : nom d'automatisation invalide ({name!r})")
+            elif t.flow:
+                problems.append(f"{action}.flow : l'application lance déjà {t.flow!r} après cette transition")
+            else:
+                kept["flow"] = name
         if "condition" in spec:
             source = spec["condition"]
             if not isinstance(source, str) or not source.strip():
@@ -602,12 +639,109 @@ def validate_workflow_override(compiled: Any, config: object) -> dict[str, Any]:
             out[action] = kept
     if problems:
         raise ValidationFailed("habillage d'automate invalide : " + "; ".join(problems))
-    if dead := _dead_ends(wf, {a for a, k in out.items() if k.get("closed")}):
+    merged = _merged_workflow(compiled, states, added) if (states or added) else wf
+    if dead := _dead_ends(merged, {a for a, k in out.items() if k.get("closed")}):
         raise ValidationFailed(
             f"Fermer ces transitions n'y laisserait aucune sortie : {', '.join(dead)} — un document s'y échouerait sans recours",
             code="workflow_dead_end",
         )
-    return {"transitions": out}
+    cleaned: dict[str, Any] = {"transitions": out}
+    if states:
+        cleaned["states"] = states
+    if added:
+        cleaned["added"] = added
+    return cleaned
+
+
+def _validate_additions(compiled: Any, raw_states: Any, raw_added: Any) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Les états et transitions que l'organisation ajoute, sous forme canonique. Mêmes règles que le YAML, plus deux propres à un
+    ajout : un grant que le type déclare déjà, et un état soumis ou annulé seulement sur un type soumettable."""
+    from .schema import WorkflowState, WorkflowTransition
+
+    if raw_states in (None, []) and raw_added in (None, []):
+        return [], []
+    if not isinstance(raw_states or [], list) or not isinstance(raw_added or [], list):
+        raise ValidationFailed("habillage d'automate : `states` et `added` sont des listes")
+    raw_states, raw_added = raw_states or [], raw_added or []
+    if len(raw_states) > MAX_ADDED_STATES or len(raw_added) > MAX_ADDED_TRANSITIONS:
+        raise ValidationFailed(
+            f"habillage d'automate : {MAX_ADDED_STATES} états et {MAX_ADDED_TRANSITIONS} transitions ajoutés au plus", code="override_too_large",
+        )
+    problems: list[str] = []
+    states: list[dict[str, Any]] = []
+    for i, raw in enumerate(raw_states):
+        try:
+            st = WorkflowState.model_validate(raw)
+        except ValidationError as e:
+            problems += [f"état ajouté {i + 1} : {err['msg']}" for err in e.errors()[:3]]
+            continue
+        if st.docstatus != "draft" and not compiled.definition.submittable:
+            problems.append(f"état {st.name!r} : un état soumis ou annulé demande un type soumettable")
+        states.append(st.model_dump(mode="json"))
+    choices = workflow_grant_choices(compiled)
+    added: list[dict[str, Any]] = []
+    for i, raw in enumerate(raw_added):
+        if isinstance(raw, dict) and (extra := sorted(set(raw) - set(_ADDED_TRANSITION_KEYS))):
+            problems.append(f"transition ajoutée {i + 1} : {', '.join(extra)} inconnu")
+            continue
+        try:
+            t = WorkflowTransition.model_validate(raw)
+        except ValidationError as e:
+            problems += [f"transition ajoutée {i + 1} : {'.'.join(str(x) for x in err['loc'])} {err['msg']}" for err in e.errors()[:3]]
+            continue
+        if t.grant is None:
+            problems.append(f"{t.action} : choisissez le droit qui ouvre cette transition")
+        elif t.grant not in choices:
+            problems.append(f"{t.action} : {t.grant!r} n'est pas un droit de ce type (seuls ceux qu'il déclare ouvrent une transition)")
+        if t.condition is not None:
+            if not t.condition.strip():
+                problems.append(f"{t.action}.condition : une expression est attendue")
+            elif (bad := _condition_problem(compiled, t.condition)) is not None:
+                problems.append(f"{t.action}.condition : {bad}")
+        added.append(t.model_dump(mode="json", exclude_none=True, exclude_defaults=True, by_alias=True) | {"action": t.action, "from": t.from_, "to": t.to})
+    if problems:
+        raise ValidationFailed("habillage d'automate invalide : " + "; ".join(problems), code="invalid_workflow_addition")
+    try:
+        _merged_workflow(compiled, states, added)
+    except (ValueError, ValidationError) as e:
+        shown = "; ".join(err["msg"] for err in e.errors()[:3]) if isinstance(e, ValidationError) else str(e)
+        raise ValidationFailed(f"habillage d'automate invalide : {shown}", code="invalid_workflow_addition") from None
+    return states, added
+
+
+def effective_workflow(compiled: Any, config: Any) -> tuple[Any, WorkflowRules]:
+    """L'automate TEL QUE cette organisation le vit : celui du YAML augmenté de ses états et transitions ajoutés, et ce qu'elle
+    resserre (`WorkflowRules`). Tolérante comme toute lecture d'habillage : des ajouts que la définition ACTUELLE n'accepte plus sont
+    ignorés en bloc (le YAML reprend la main), une transition ajoutée dont la condition ne compile plus ou dont le grant n'est plus
+    déclaré est FERMÉE (jamais ouverte à tort)."""
+    wf = compiled.definition.workflow
+    rules = workflow_rules(compiled, config)
+    if wf is None or not isinstance(config, dict):
+        return wf, rules
+    states, added = config.get("states") or [], config.get("added") or []
+    if not states and not added:
+        return wf, rules
+    try:
+        merged = _merged_workflow(compiled, states, added)
+    except (ValueError, ValidationError, TypeError):
+        return wf, rules
+    choices = workflow_grant_choices(compiled)
+    names = [f.fieldname for f in compiled.definition.fields]
+    closed, conditions, not_owner = set(rules.closed), dict(rules.conditions), set(rules.not_owner)
+    yaml_actions = {t.action for t in wf.transitions}
+    for t in merged.transitions:
+        if t.action in yaml_actions:
+            continue
+        if t.grant not in choices:
+            closed.add(t.action)
+        if t.condition:
+            try:
+                conditions[t.action] = compile_expr(t.condition, names)
+            except ExprError:
+                closed.add(t.action)
+        if t.not_owner:
+            not_owner.add(t.action)
+    return merged, WorkflowRules(frozenset(closed), conditions, frozenset(not_owner), rules.flows)
 
 
 def _dead_ends(wf: Any, closed: set[str]) -> list[str]:
@@ -634,9 +768,14 @@ def workflow_rules(compiled: Any, config: Any) -> WorkflowRules:
     closed: set[str] = set()
     not_owner: set[str] = set()
     conditions = {}
+    flows: dict[str, str] = {}
+    yaml_flows = {t.action for t in wf.transitions if t.flow}
     for action, spec in tweaks.items():
         if action not in actions or not isinstance(spec, dict):
             continue
+        flow = spec.get("flow")
+        if isinstance(flow, str) and re.match(FLOW_NAME, flow) and action not in yaml_flows:
+            flows[action] = flow
         if spec.get("closed") is True:
             closed.add(action)
         if spec.get("not_owner") is True:
@@ -647,17 +786,22 @@ def workflow_rules(compiled: Any, config: Any) -> WorkflowRules:
                 conditions[action] = compile_expr(source, [f.fieldname for f in compiled.definition.fields])
             except ExprError:
                 continue  # devenue invalide (un champ a disparu) : le YAML seul juge cette transition
-    if not (closed or not_owner or conditions):
+    if not (closed or not_owner or conditions or flows):
         return NO_WORKFLOW_RULES
-    return WorkflowRules(frozenset(closed), conditions, frozenset(not_owner))
+    return WorkflowRules(frozenset(closed), conditions, frozenset(not_owner), flows)
 
 
-def apply_workflow_override(meta: dict[str, Any], rules: WorkflowRules) -> None:
-    """Montre l'automate TEL QUE l'organisation l'a resserré : une transition fermée disparaît de `/meta`, un `not_owner` imposé s'y voit.
+def apply_workflow_override(meta: dict[str, Any], rules: WorkflowRules, merged: Any = None) -> None:
+    """Montre l'automate TEL QUE l'organisation le vit : ses états et transitions AJOUTÉS (`merged`, `effective_workflow`), une transition
+    fermée disparue de `/meta`, un `not_owner` imposé visible.
 
-    Les ÉTATS restent ceux du YAML : un document peut se trouver dans chacun d'eux, et la liste doit pouvoir les filtrer tous.
+    Les ÉTATS restent tous là (ceux du YAML, plus les ajoutés) : un document peut se trouver dans chacun d'eux, et la liste doit pouvoir
+    les filtrer tous.
     """
     wf = meta.get("workflow")
+    if isinstance(wf, dict) and merged is not None:
+        dumped = merged.model_dump(mode="json", exclude_none=True)
+        wf["states"], wf["transitions"] = dumped["states"], dumped["transitions"]
     if not isinstance(wf, dict) or rules is NO_WORKFLOW_RULES:
         return
     kept = []
@@ -667,6 +811,8 @@ def apply_workflow_override(meta: dict[str, Any], rules: WorkflowRules) -> None:
             continue
         if action in rules.not_owner:
             t["not_owner"] = True
+        if action in rules.flows and not t.get("flow"):
+            t["flow"] = rules.flows[action]
         kept.append(t)
     wf["transitions"] = kept
 

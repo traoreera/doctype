@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { RouterLink } from 'vue-router'
 import { t } from '@/i18n'
+import { nodeKey, type PluginNode } from '@/lib/flowcatalog'
 import { STEP_ICONS, STEP_MIME, type StepKind } from '@/lib/flowgraph'
+import { piIcon } from '@/lib/icons'
 
 /**
  * La palette des étapes, à GLISSER sur le canevas (comme n8n) ou à cliquer pour les poser au bout du flux.
@@ -14,9 +17,12 @@ import { STEP_ICONS, STEP_MIME, type StepKind } from '@/lib/flowgraph'
  */
 const OFFERED: readonly StepKind[] = ['action', 'condition', 'switch', 'parallel', 'foreach', 'wait', 'ai']
 
-const emit = defineEmits<{ (e: 'add', kind: StepKind): void }>()
+/** Les nœuds que les PLUGINS déclarent (`lib/flowcatalog`) : une action IPC à eux, réglée par un formulaire comme les autres. */
+const props = defineProps<{ nodes?: PluginNode[] }>()
+const emit = defineEmits<{ (e: 'add', kind: StepKind): void; (e: 'add-node', node: PluginNode): void }>()
 
-function start(event: DragEvent, kind: StepKind): void {
+/** Ce que porte le glisser : un type d'étape, ou `node:<plugin>:<action>` pour un nœud de plugin (la page le relit au lâcher). */
+function start(event: DragEvent, kind: string): void {
   event.dataTransfer?.setData(STEP_MIME, kind)
   event.dataTransfer?.setData('text/plain', kind) // repli : certains navigateurs n'autorisent le glisser qu'avec un type connu
   if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy'
@@ -45,5 +51,30 @@ function start(event: DragEvent, kind: StepKind): void {
         <span class="fl-chip-hint">{{ t.flowBuilder.kinds[kind].hint }}</span>
       </span>
     </button>
+
+    <h3 class="fl-palette-title fl-palette-sub">{{ t.flowBuilder.pluginNodes }}</h3>
+    <template v-if="props.nodes?.length">
+      <button
+        v-for="node in props.nodes"
+        :key="nodeKey(node)"
+        type="button"
+        class="fl-chip fl-kind-action"
+        draggable="true"
+        :title="node.description ?? node.label"
+        :data-testid="`fl-add-node-${nodeKey(node)}`"
+        @dragstart="start($event, `node:${nodeKey(node)}`)"
+        @click="emit('add-node', node)"
+      >
+        <span class="fl-chip-icon" aria-hidden="true"><i :class="piIcon(node.icon, 'bolt')" /></span>
+        <span class="fl-chip-text">
+          <span class="fl-chip-label">{{ node.label }}</span>
+          <span class="fl-chip-hint">{{ node.description ?? node.plugin }}</span>
+        </span>
+      </button>
+    </template>
+    <!-- Une action qu'aucun plugin ne décrit : l'organisation la décrit elle-même (« Nœuds personnalisés »). -->
+    <RouterLink :to="{ name: 'flow-nodes' }" class="fl-palette-more" data-testid="fl-describe-node">
+      <i class="pi pi-plus-circle" aria-hidden="true" />{{ t.flowBuilder.describeNode }}
+    </RouterLink>
   </aside>
 </template>

@@ -113,6 +113,7 @@ const empty = computed(() => loaded.value && !failure.value && !reserved.value)
       <h1>{{ t.automations.title }}</h1>
       <span class="desk-spacer" />
       <Button :label="t.automations.refresh" icon="pi pi-refresh" text severity="secondary" size="small" data-testid="automations-refresh" @click="load" />
+      <Button :as="RouterLink" :to="{ name: 'flow-nodes' }" :label="t.automations.customNodes" icon="pi pi-box" text severity="secondary" size="small" data-testid="automations-nodes" />
       <Button
         :as="RouterLink"
         :to="{ name: 'flow-new' }"

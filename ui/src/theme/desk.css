@@ -4087,8 +4087,11 @@ a.p-button:hover {
    le panneau est étroit, et une ligne trop large y poussait les libellés hors de l'écran (constaté dans Chromium). */
 .fl-value-row { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
 .fl-value-row > * { min-width: 0; flex: 1 1 8rem; }
-.fl-value-source { flex: 1 1 7rem; max-width: 9.5rem; }
 .fl-value-row .p-select, .fl-value-row .p-inputtext { width: 100%; min-width: 0; }
+/* La source (« Du déclencheur », « Résultat d’une étape ») à la largeur de son texte : coupée, on ne savait plus d'où venait la valeur.
+   La valeur prend le reste, et passe à la ligne quand le panneau est trop étroit pour les deux. */
+.fl-value-row .fl-value-source { flex: 0 0 auto; width: auto; max-width: 100%; }
+.fl-panel-body p.wf-help { margin: 0.25rem 0; }
 /* Une ligne de valeur à écrire, avec son bouton « retirer ». */
 .fl-row { display: flex; gap: 0.3rem; align-items: flex-end; }
 .fl-row > :first-child { flex: 1 1 auto; min-width: 0; }
@@ -4251,3 +4254,43 @@ a.p-button:hover {
   font-size: 0.8rem;
   line-height: 1.45;
 }
+/* Les nœuds que les plugins déclarent (`lib/flowcatalog`) : une seconde rubrique de la palette. */
+.fl-palette-sub { margin-top: 0.6rem; font-size: 0.85rem; }
+/* « Nœuds personnalisés » (FlowNodesView) : la liste des nœuds de l'organisation | le nœud ouvert. */
+.flow-nodes .fn-body { display: grid; grid-template-columns: minmax(14rem, 18rem) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.flow-nodes .fn-list { display: grid; gap: 0.4rem; min-width: 0; }
+.flow-nodes .fn-list-title { margin: 0; font-size: 0.95rem; }
+.flow-nodes .fn-chip-open { outline: 2px solid var(--p-primary-color); outline-offset: 1px; }
+.flow-nodes .fn-shadowed { font-style: italic; }
+.flow-nodes .fn-editor { min-width: 0; display: grid; gap: 0.6rem; align-content: start; }
+.flow-nodes .fn-placeholder { padding: 2rem 1rem; text-align: center; border: 1px dashed var(--p-content-border-color); border-radius: 8px; }
+.flow-nodes .fn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.6rem; }
+.flow-nodes .fn-icon-row { display: flex; align-items: center; gap: 0.5rem; }
+.flow-nodes .fn-icon-row > .p-inputtext { flex: 1 1 auto; min-width: 0; }
+.flow-nodes .fn-row { display: grid; grid-template-columns: minmax(8rem, 1.3fr) minmax(8rem, 1fr) minmax(7rem, 1fr) auto auto; gap: 0.5rem; align-items: end; padding: 0.5rem; border: 1px solid var(--p-content-border-color); border-radius: 8px; }
+.flow-nodes .fn-row-output { grid-template-columns: minmax(8rem, 1.3fr) minmax(8rem, 1fr) auto; }
+.flow-nodes .fn-options { grid-column: 1 / -1; }
+.flow-nodes .fn-check { display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; min-height: 2rem; }
+.flow-nodes .fn-actions { display: flex; align-items: center; gap: 0.5rem; }
+.flow-nodes .fn-problem { margin: 0; }
+@media (max-width: 900px) {
+  .flow-nodes .fn-body { grid-template-columns: 1fr; }
+  .flow-nodes .fn-row, .flow-nodes .fn-row-output { grid-template-columns: 1fr 1fr; }
+}
+.fl-palette-more { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; margin-top: 0.2rem; }
+/* Éditeur de circuit : ce que l'organisation ajoute, et les formulaires du panneau. */
+.wf-state-tag-added { border-style: dashed; }
+.wf-edge-label-added { border-style: dashed; }
+.wf-added-tag { font-size: 0.7rem; padding: 0 0.35rem; border: 1px dashed var(--p-content-border-color); border-radius: 999px; margin-left: 0.3rem; }
+.wf-grant-option { display: grid; gap: 0.1rem; }
+.wf-grant-option code, .wf-grant-code { font-size: 0.72rem; color: var(--p-text-muted-color); overflow-wrap: anywhere; }
+.wf-grant-code { display: block; }
+.wf-form-actions { display: flex; justify-content: flex-end; gap: 0.4rem; margin-top: 0.4rem; }
+.wf-form-problem { margin: 0; font-size: 0.8rem; color: var(--desk-danger); }
+.wf-none { padding: 2rem 1rem; text-align: center; border: 1px dashed var(--p-content-border-color); border-radius: 8px; }
+.wf-panel .wf-help { font-size: 0.8rem; }
+.wf-flow-links { display: flex; flex-wrap: wrap; gap: 0.8rem; font-size: 0.8rem; }
+/* Une liste au libellé long (« accuse_reception — Accuse réception… ») ne pousse jamais le panneau : elle se coupe. */
+.wf-panel .p-select { width: 100%; min-width: 0; max-width: 100%; }
+.wf-panel .p-select-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wf-panel { min-width: 0; overflow-wrap: anywhere; }

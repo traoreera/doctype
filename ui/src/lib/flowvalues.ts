@@ -13,13 +13,16 @@
 
 /** Ce que la charge d'un déclencheur porte (`flows.py` : le moteur met ces clés et rien d'autre). */
 export const TRIGGER_KEYS = ['name', 'doctype', 'user', 'action', 'from', 'to', 'version'] as const
-export type TriggerKey = (typeof TRIGGER_KEYS)[number]
+/** Une clé de la charge du déclencheur : celles du moteur, ou celles qu'un événement de PLUGIN déclare (`lib/flowcatalog`). */
+export type TriggerKey = string
 
 export type FlowValue =
   /** Ce que l'utilisateur a tapé ou choisi : rendu tel quel, avec son type. */
   | { kind: 'fixed'; value: unknown }
-  /** Une information du document qui a déclenché le flux. */
+  /** Une information du document (ou de l'événement de plugin) qui a déclenché le flux. */
   | { kind: 'trigger'; key: TriggerKey }
+  /** Une valeur du RÉSULTAT d'une étape précédente, à un chemin qu'un nœud de plugin déclare (`message_id`…). */
+  | { kind: 'output'; step: string; path: string }
   /** Le document qu'une étape précédente a lu ou créé : son nom, ou la valeur de l'un de ses champs. */
   | { kind: 'step'; step: string; field?: string }
   /**
@@ -28,7 +31,8 @@ export type FlowValue =
    */
   | { kind: 'raw'; text: string }
 
-const TRIGGER_RE = /^\{\{\s*trigger\.([a-z_]+)\s*\}\}$/
+const TRIGGER_RE = /^\{\{\s*trigger\.([a-z_][a-z0-9_]*)\s*\}\}$/
+const OUTPUT_RE = /^\{\{\s*steps\.([A-Za-z0-9_-]+)\.result\.([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\s*\}\}$/
 /** Le nom du document d'une étape, ou la valeur d'un de ses champs : les deux formes qu'`xcore-doctype` rend (`{doc: {name, data}}`). */
 const STEP_RE = /^\{\{\s*steps\.([A-Za-z0-9_-]+)\.result\.doc\.(?:name|data\.([A-Za-z0-9_]+))\s*\}\}$/
 
@@ -41,6 +45,8 @@ export function writeValue(value: FlowValue): unknown {
       return `{{ trigger.${value.key} }}`
     case 'step':
       return `{{ steps.${value.step}.result.doc.${value.field ? `data.${value.field}` : 'name'} }}`
+    case 'output':
+      return `{{ steps.${value.step}.result.${value.path} }}`
     case 'raw':
       return value.text
   }
@@ -50,9 +56,11 @@ export function writeValue(value: FlowValue): unknown {
 export function readValue(raw: unknown): FlowValue {
   if (typeof raw !== 'string') return { kind: 'fixed', value: raw }
   const trigger = TRIGGER_RE.exec(raw)
-  if (trigger && (TRIGGER_KEYS as readonly string[]).includes(trigger[1]!)) return { kind: 'trigger', key: trigger[1] as TriggerKey }
+  if (trigger) return { kind: 'trigger', key: trigger[1]! }
   const step = STEP_RE.exec(raw)
   if (step) return step[2] ? { kind: 'step', step: step[1]!, field: step[2] } : { kind: 'step', step: step[1]! }
+  const output = OUTPUT_RE.exec(raw)
+  if (output) return { kind: 'output', step: output[1]!, path: output[2]! }
   if (raw.includes('{{')) return { kind: 'raw', text: raw }
   return { kind: 'fixed', value: raw }
 }

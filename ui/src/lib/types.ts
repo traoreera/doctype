@@ -444,11 +444,20 @@ export interface TransitionTweak {
   closed?: boolean
   condition?: string
   not_owner?: boolean
+  /** L'automatisation (flux xflow) lancée après la transition, quand l'application n'en lance pas. */
+  flow?: string
 }
 
-/** Habillage d'automate : des retouches par ACTION, sur les transitions que le YAML déclare déjà. */
+/** Une transition qu'une ORGANISATION ajoute au circuit : elle s'ouvre par un droit que le type déclare déjà (`grant_choices`). */
+export interface AddedTransition extends WorkflowTransition {
+  grant: string
+}
+
+/** Habillage d'automate : des retouches par ACTION sur les transitions du YAML, et les états et transitions que l'organisation AJOUTE. */
 export interface WorkflowOverride {
   transitions?: Record<string, TransitionTweak>
+  states?: WorkflowState[]
+  added?: AddedTransition[]
 }
 
 /** Habillage d'un espace de travail (genre `workspace`) : le corps d'un espace, sans `name`/`schema_version` (ils viennent de la cible). */

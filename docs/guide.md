@@ -618,6 +618,12 @@ Pas à pas (captures du scénario Chromium `ui/e2e/automations.e2e.mjs`, face au
 8. Rouvrir le flux : le graphe revient tel qu'il a été tracé, et le panneau s'ouvre sur le déclencheur.
    ![Rouvert](captures/automations/auto-08-rouvert.png)
 
+**Lier une automatisation à une transition, sans YAML.** Dans « ⋯ › Circuit d'approbation », choisissez la transition, puis
+« Automatisation à lancer ensuite » : la liste montre les automatisations de l'organisation (« Créer une automatisation » ouvre l'éditeur
+si elle n'existe pas encore). Enregistrez : l'éclair apparaît sur la flèche, et l'automatisation part après chaque transition, au nom
+de la personne qui l'a faite et avec ses droits. Cela vaut pour une transition ajoutée par l'organisation comme pour une transition de
+l'application qui n'en lance pas déjà une — celle que l'application a prévue ne se remplace pas.
+
 Le même flux se déploie aussi par l'API d'xflow :
 
 ```bash
@@ -644,6 +650,116 @@ ailleurs.
 **Ce qu'il faut côté xauth** : l'action IPC `xauth.user.permissions` (les grants d'un membre), avec `xflow` dans ses
 `allowed_callers`. **Limites connues** : l'étape `wait` d'xflow attend en mémoire (un redémarrage l'interrompt) et `wait_for_event` n'est pas implémenté ; la liste des exécutions renvoie le résultat de chaque étape à qui a
 `xflow:runs:read` (l'écran ne l'affiche pas).
+
+
+**Adapter le circuit à son organisation (« ⋯ › Circuit d'approbation »).** Le circuit vient de l'application, et une organisation peut
+l'adapter sans toucher au YAML. Il faut pouvoir modifier tous les documents du type.
+
+1. **Ajouter un état.** Choisissez l'état d'où partir, puis cliquez « Ajouter un état ». Donnez son nom et l'état de document qu'il
+   impose (brouillon, ou soumis / annulé sur un type soumettable).
+2. **Ajouter la transition qui y mène.** Le panneau l'enchaîne aussitôt : un nom d'action (le bouton de la fiche), l'état où elle mène,
+   et **qui peut la faire**. Ce droit se choisit parmi ceux que le type déclare déjà : un droit inventé ici, personne ne l'aurait.
+3. **Enregistrer.** Le serveur vérifie le circuit complet avec les mêmes règles que le YAML. Il refuse notamment un nom pris, un état
+   que rien n'atteint ou un cul-de-sac.
+
+Ce qui est ajouté vaut pour cette organisation seulement. Les transitions de l'application, elles, se resserrent sans se supprimer : on
+peut les fermer, y mettre une condition, ou interdire à l'auteur du document de les faire. « Rétablir le circuit de l'application »
+retire tout, mais un état ajouté où se trouvent encore des documents ne se retire pas.
+
+### 3.9 Ajouter ses propres nœuds et déclencheurs à l'éditeur d'automatisations
+
+Un plugin peut offrir à l'éditeur **ses** actions IPC (« Envoyer un e-mail ») et **ses** événements (« E-mail reçu »). Dans l'éditeur,
+ce sont des nœuds comme ceux de base : ils sont rangés dans la palette, sous « Des applications », et ils se règlent par un formulaire. Ils
+s'enchaînent avec les autres. Chaque plugin le déclare dans une section `xflow:` de son `plugin.yaml` :
+
+```yaml
+name: mailer
+allowed_callers: [xflow]          # OBLIGATOIRE : c'est xflow qui appellera l'action, au nom de l'utilisateur du flux
+permissions:
+  - {resource: "mail.send", actions: ["execute"], effect: allow}
+xflow:
+  nodes:
+    - action: mail.send           # une action @action("mail.send") de CE plugin
+      label: Envoyer un e-mail
+      icon: envelope              # nom PrimeIcons nu
+      fields:                     # la charge utile, champ par champ (text, longtext, email, number, boolean, select, date)
+        - {name: to, label: Destinataire, type: email, required: true}
+        - {name: subject, label: Objet, type: text, required: true}
+        - {name: body, label: Message, type: longtext}
+      outputs:                    # ce que son résultat contient, qu'une étape SUIVANTE peut reprendre
+        - {path: message_id, label: Identifiant du message}
+  events:
+    - name: mailer.received       # préfixé du nom du plugin
+      label: E-mail reçu
+      fields:                     # les clés de sa charge, que les étapes reprennent
+        - {name: sender, label: Expéditeur}
+        - {name: subject, label: Objet}
+```
+
+Le moteur ne lit pas les manifestes des autres plugins. Le plugin passe donc sa section dans son `on_load` et la retire dans son
+`on_unload` :
+
+```python
+async def on_load(self) -> None:
+    self.get_service("doctype_registry").declare_xflow(self.ctx.name, self.ctx.config.get("xflow"))
+
+async def on_unload(self) -> None:
+    self.get_service("doctype_registry").unregister_owner(self.ctx.name)   # retire aussi ses nœuds
+```
+
+Une section fautive fait échouer le chargement du plugin, comme un DocType fautif : un champ inconnu, un `select` sans options, ou
+un événement qui ne commence pas par `<plugin>.`. Le Desk la lit sur `GET /flow-catalog` (action IPC `meta.flow_catalog`).
+
+**Enchaîner, et déclencher depuis un autre plugin.** Les deux sources se combinent dans un même flux. Par exemple :
+
+1. le déclencheur est l'événement `mailer.received` du plugin *mailer* ;
+2. une étape « Créer un document » crée la fiche *Client*, avec comme nom « Du déclencheur › Objet » ;
+3. une étape « Envoyer un e-mail » répond à « Du déclencheur › Expéditeur ». Son message cite le document de l'étape 2, et une étape
+   suivante pourrait reprendre « Résultat d'une étape › Identifiant du message » de celle-ci.
+
+Rien ne se tape, tout se choisit dans des listes. L'éditeur écrit lui-même `{{ trigger.sender }}`,
+`{{ steps.creer.result.doc.name }}` ou `{{ steps.envoyer.result.message_id }}`, et xflow résout ces jetons à l'exécution.
+
+Ce qu'il faut savoir :
+
+- **L'événement doit porter `tenant_id` dans sa charge.** Le plugin l'émet après une action d'un utilisateur, avec le tenant de la
+  requête :
+
+  ```python
+  await self.ctx.events.emit("mailer.received", {"tenant_id": ctx.tenant_id, "sender": ..., "subject": ...})
+  ```
+
+  Sans `tenant_id`, xflow lance le flux de **toutes** les organisations qui écoutent cet événement.
+- **Qui agit.** Un flux déclenché par un événement agit au nom de qui l'a déployé. Un flux lancé par une transition agit au nom de
+  l'approbateur.
+- **Les droits.** La section ne fait que décrire le nœud à l'écran : elle n'accorde aucun droit. L'action garde ses propres contrôles.
+- **Un appel non déclaré.** Un nœud qu'aucun plugin chargé ne déclare reste visible et s'exécute toujours, mais il ne se règle pas dans
+  l'éditeur.
+- **Les champs obligatoires.** Un champ `required` laissé vide marque la carte « Incomplète », et le déploiement est refusé.
+
+**Sans toucher au plugin : « Nœuds personnalisés ».** Une action IPC qu'aucun plugin ne décrit peut aussi être décrite DANS LE
+DESK : Automatisations › « Nœuds personnalisés » (ou « Décrire une autre action… » sous la palette). On y donne :
+
+- le nom affiché et une icône ;
+- l'application (le plugin) et le nom de son action ;
+- les champs, dont la clé se déduit du libellé ;
+- les valeurs que l'action rend.
+
+Le nœud est rangé en base, pour **cette organisation seulement**, jamais dans un fichier (même règle que les champs personnalisés). Il
+apparaît dans la palette sous « Des applications » et se règle comme un nœud de plugin.
+
+- **Qui peut le décrire.** Il faut le droit de déployer des automatisations (`xflow:workflows:write`). Les autres membres le consultent
+  sans pouvoir le modifier.
+- **Décrire n'accorde rien.** Le plugin doit toujours nommer `xflow` dans ses `allowed_callers` et ouvrir l'action dans ses `permissions`.
+- **Si le plugin décrit aussi l'action**, sa description l'emporte dans la palette. Celle de l'organisation reste listée, marquée comme
+  doublée, pour qu'on puisse la retirer.
+
+API : `GET /flow-nodes` (la liste et `can_edit`), `PUT /flow-nodes` (`{node, replacing?}`), `DELETE /flow-nodes/{plugin}/{action}`. Les
+actions IPC jumelles sont `doc.flow_nodes.list|save|delete`, et `GET /flow-catalog` sert les deux sources, chaque nœud portant son
+`source`.
+
+Preuve sur un vrai hôte : `tests/integration/test_xflow_plugin_nodes.py`, avec le plugin de test `tests/support/plugins/mailer`. Un
+e-mail reçu crée un client, puis le plugin répond avec le numéro de ce client, au nom de qui a déployé le flux.
 
 ---
 

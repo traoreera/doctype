@@ -5,10 +5,11 @@ import InputText from 'primevue/inputtext'
 import Message from 'primevue/message'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
-import { computed, ref, watch } from 'vue'
+import { computed, provide, ref, watch } from 'vue'
 import { t } from '@/i18n'
 import { ACTIONS, actionOf, withAction, type ActionId } from '@/lib/flowactions'
 import { AI_SERVICES, OPERATORS, UNARY_OPERATORS, outletLabel, outletsOf, type FlowStep, type Operator } from '@/lib/flowgraph'
+import { EMPTY_CATALOG, FLOW_VALUE_CONTEXT, fieldtypeOf, nodeOf, type FlowCatalog } from '@/lib/flowcatalog'
 import { readValue } from '@/lib/flowvalues'
 import type { DocTypeMeta, DocTypeSummary, FieldMeta } from '@/lib/types'
 import ValueField from './ValueField.vue'
@@ -35,6 +36,12 @@ const props = defineProps<{
   doctypes: DocTypeSummary[]
   /** La définition du type visé par l'étape, quand il est connu : ses champs se proposent au lieu de se taper. */
   target: DocTypeMeta | null
+  /** Ce que les plugins déclarent (`lib/flowcatalog`) : une étape qui appelle l'un de leurs nœuds se règle par SON formulaire. */
+  catalog?: FlowCatalog
+  /** Les résultats des nœuds de plugin AVANT celle-ci, qu'une valeur peut reprendre (« l'identifiant du message envoyé »). */
+  outputs?: { step: string; path: string; label: string }[]
+  /** Les clés du déclencheur quand c'est un événement de plugin (ses champs), sinon `undefined` (celles du moteur). */
+  triggerKeys?: { value: string; label: string }[]
   disabled?: boolean
 }>()
 const emit = defineEmits<{
@@ -50,6 +57,9 @@ const emit = defineEmits<{
 }>()
 
 const raw = computed(() => props.step.raw)
+provide(FLOW_VALUE_CONTEXT, { triggerKeys: computed(() => props.triggerKeys), outputs: computed(() => props.outputs ?? []) })
+/** Le nœud de plugin que l'étape appelle, s'il est déclaré : il passe AVANT le message « action étrangère ». */
+const pluginNode = computed(() => (props.step.kind === 'action' ? nodeOf(props.catalog ?? EMPTY_CATALOG, raw.value) : undefined))
 const str = (key: string): string => (typeof raw.value[key] === 'string' ? (raw.value[key] as string) : '')
 const num = (key: string): number | null => (typeof raw.value[key] === 'number' ? (raw.value[key] as number) : null)
 const condition = computed(() => (raw.value.condition && typeof raw.value.condition === 'object' ? (raw.value.condition as Record<string, unknown>) : {}))
@@ -79,6 +89,12 @@ function setGesture(id: ActionId): void {
 }
 function setPayload(key: string, value: unknown): void {
   emit('patch', { payload: { ...payload.value, [key]: value } })
+}
+/** Un champ de nœud de plugin laissé vide n'est pas envoyé (`undefined` retire la clé) : l'action garde son défaut. */
+function setNodeField(key: string, value: unknown): void {
+  const next = { ...payload.value, [key]: value }
+  if (value === '' || value === undefined) delete next[key]
+  emit('patch', { payload: next })
 }
 
 /** Le type visé : un nom choisi dans la liste, ou celui du document déclencheur (le cas courant, et rien à saisir). */
@@ -155,7 +171,30 @@ function addCase(): void {
 
     <!-- Action : un geste du catalogue, et ce que ce geste demande. -->
     <template v-if="props.step.kind === 'action'">
-      <template v-if="gesture">
+      <!-- Un nœud déclaré par un plugin : son formulaire, champ par champ, et ce que son résultat offre à la suite. -->
+      <template v-if="pluginNode">
+        <h2 class="wf-panel-title" data-testid="fl-node-title">{{ pluginNode.label }}</h2>
+        <p v-if="pluginNode.description" class="desk-muted wf-help">{{ pluginNode.description }}</p>
+        <ValueField
+          v-for="f in pluginNode.fields"
+          :key="f.name"
+          :model-value="payload[f.name]"
+          :label="f.required ? `${f.label} *` : f.label"
+          :fieldtype="fieldtypeOf(f.type)"
+          :options="f.options"
+          :steps="sources"
+          :step-fields="stepFields"
+          :disabled="disabled"
+          :hint="f.description"
+          :testid="`fl-node-field-${f.name}`"
+          @update:model-value="setNodeField(f.name, $event)"
+        />
+        <p v-if="pluginNode.outputs.length" class="desk-muted wf-help" data-testid="fl-node-outputs">
+          {{ t.flowBuilder.nodeOutputs(pluginNode.outputs.map((o) => o.label).join(', ')) }}
+        </p>
+      </template>
+
+      <template v-else-if="gesture">
         <label class="wf-field" for="fl-gesture">
           <span>{{ t.flowBuilder.fields.gesture }}</span>
           <Select

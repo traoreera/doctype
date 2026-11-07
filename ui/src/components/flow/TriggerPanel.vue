@@ -6,6 +6,7 @@ import { computed } from 'vue'
 import { t } from '@/i18n'
 import { TRIGGER_KINDS, type TriggerKind } from '@/lib/automations'
 import { DEFAULT_SCHEDULE, MOMENTS, readCron, readEvent, writeCron, writeEvent, type Every, type Moment, type Schedule } from '@/lib/flowactions'
+import type { PluginEvent } from '@/lib/flowcatalog'
 import type { DocTypeSummary } from '@/lib/types'
 
 /**
@@ -20,6 +21,8 @@ const props = defineProps<{
   cron: string
   description: string
   doctypes: DocTypeSummary[]
+  /** Les événements que les plugins déclarent (`lib/flowcatalog`) : « un e-mail est reçu », à côté de « un document change ». */
+  events?: PluginEvent[]
   disabled?: boolean
 }>()
 const emit = defineEmits<{
@@ -28,9 +31,6 @@ const emit = defineEmits<{
 }>()
 
 const kindOptions = TRIGGER_KINDS.map((k) => ({ value: k, label: t.automations.triggers[k] ?? k }))
-const hint = computed(
-  () => ({ manual: t.automations.manualHint, event: t.flowBuilder.trigger_.eventHint, schedule: t.flowBuilder.trigger_.scheduleHint, webhook: t.automations.webhookHint })[props.kind],
-)
 
 // ── Un événement : quel type de document, à quel moment ──
 const parsed = computed(() => readEvent(props.event))
@@ -39,6 +39,22 @@ const doctypeOptions = computed(() => props.doctypes.filter((d) => !d.single).ma
 function setEvent(patch: { doctype?: string; moment?: Moment }): void {
   const now = parsed.value ?? { doctype: '', moment: 'after_submit' as Moment }
   emit('update', { event: writeEvent(patch.doctype ?? now.doctype, patch.moment ?? now.moment) })
+}
+
+// ── Ce qui arrive : un document du moteur, ou un événement qu'un plugin a déclaré ──
+const pluginEvent = computed(() => (props.events ?? []).find((e) => e.name === props.event))
+const origin = computed(() => (pluginEvent.value ? props.event : parsed.value || !props.event ? 'doc' : 'other'))
+const originOptions = computed(() => [
+  { value: 'doc', label: t.flowBuilder.trigger_.documentEvent },
+  ...(props.events ?? []).map((e) => ({ value: e.name, label: e.label })),
+  ...(origin.value === 'other' ? [{ value: 'other', label: props.event }] : []),
+])
+const hint = computed(
+  () => ({ manual: t.automations.manualHint, event: pluginEvent.value ? t.flowBuilder.trigger_.pluginEventHint : t.flowBuilder.trigger_.eventHint, schedule: t.flowBuilder.trigger_.scheduleHint, webhook: t.automations.webhookHint })[props.kind],
+)
+function setOrigin(value: string): void {
+  if (value === origin.value || value === 'other') return
+  emit('update', { event: value === 'doc' ? '' : value })
 }
 
 // ── Une planification : tous les jours / toutes les semaines / tous les mois, à une heure ──
@@ -84,6 +100,28 @@ function setTime(value: string): void {
     </label>
 
     <template v-if="kind === 'event'">
+      <label v-if="events?.length" class="wf-field" for="fl-event-origin">
+        <span>{{ t.flowBuilder.trigger_.origin }}</span>
+        <Select
+          input-id="fl-event-origin"
+          :model-value="origin"
+          :options="originOptions"
+          option-label="label"
+          option-value="value"
+          :disabled="disabled"
+          size="small"
+          data-testid="fl-event-origin"
+          @update:model-value="setOrigin(String($event))"
+        />
+      </label>
+      <!-- Un événement de plugin : ce qu'il dit, et ce que ses étapes pourront reprendre de sa charge. -->
+      <template v-if="pluginEvent">
+        <p v-if="pluginEvent.description" class="desk-muted wf-help" data-testid="fl-event-description">{{ pluginEvent.description }}</p>
+        <p v-if="pluginEvent.fields.length" class="desk-muted wf-help" data-testid="fl-event-fields">
+          {{ t.flowBuilder.trigger_.eventFields(pluginEvent.fields.map((f) => f.label).join(', ')) }}
+        </p>
+      </template>
+      <template v-else-if="origin === 'doc'">
       <label class="wf-field" for="fl-event-doctype">
         <span>{{ t.flowBuilder.trigger_.eventDoctype }}</span>
         <Select
@@ -114,8 +152,9 @@ function setTime(value: string): void {
           @update:model-value="setEvent({ moment: $event })"
         />
       </label>
+      </template>
       <!-- Un événement d'un autre plugin : gardé tel quel, montré sans être réécrit. -->
-      <Message v-if="event && !parsed" severity="secondary" :closable="false" data-testid="fl-event-other">{{ t.flowBuilder.trigger_.otherEvent(event) }}</Message>
+      <Message v-if="event && !parsed && !pluginEvent" severity="secondary" :closable="false" data-testid="fl-event-other">{{ t.flowBuilder.trigger_.otherEvent(event) }}</Message>
     </template>
 
     <template v-else-if="kind === 'schedule'">

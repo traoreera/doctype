@@ -11,6 +11,7 @@ import { SERVICES } from '@/lib/services'
 import StepPanel from '@/components/flow/StepPanel.vue'
 import AutomationsView from '@/views/AutomationsView.vue'
 import FlowBuilderView from '@/views/FlowBuilderView.vue'
+import FlowNodesView from '@/views/FlowNodesView.vue'
 
 // Ce que répond xflow (forme mesurée sur un vrai hôte, tests/integration/test_xflow_host.py).
 const FLOWS = {
@@ -79,6 +80,7 @@ beforeAll(() => {
 /** Les vraies adresses : la liste mène à l'éditeur, qui est une PAGE (`#/automations/<nom>`), pas une boîte de dialogue. */
 const ROUTES = [
   { path: '/', name: 'automations', component: AutomationsView },
+  { path: '/automations/nodes', name: 'flow-nodes', component: FlowNodesView },
   { path: '/automations/new', name: 'flow-new', component: FlowBuilderView },
   { path: '/automations/:name', name: 'flow', component: FlowBuilderView, props: true },
   { path: '/app/:doctype/:name', name: 'form', component: AutomationsView },
@@ -228,10 +230,90 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
           plugin: 'xcore-doctype',
           action: 'doc.submit',
           payload: { doctype: '{{ trigger.doctype }}', name: '{{ trigger.name }}', version: '{{ trigger.version }}' },
+          // Posée d'un clic À DROITE du déclencheur (une carte + 60 px), sa position voyage dans la définition comme celle d'une étape
+          // déposée à la souris : sans elle, elle atterrissait hors du cadre (le défaut du 7 nov.).
+          _x: 270,
+          _y: 0,
         },
       ],
     })
     expect(router.currentRoute.value.params.name).toBe('nouveau') // la création est devenue une modification
+  })
+
+  it('un nœud déclaré par un PLUGIN se pose, se règle par son formulaire et part comme une action ordinaire', async () => {
+    const catalog = {
+      nodes: [{
+        plugin: 'mailer', action: 'mail.send', label: 'Envoyer un e-mail', icon: 'envelope',
+        fields: [{ name: 'to', label: 'Destinataire', type: 'email', required: true }, { name: 'body', label: 'Message', type: 'longtext' }],
+        outputs: [{ path: 'message_id', label: 'Identifiant du message' }],
+      }],
+      events: [{ plugin: 'mailer', name: 'mailer.received', label: 'E-mail reçu', fields: [{ name: 'sender', label: 'Expéditeur' }] }],
+    }
+    const flowCatalog = vi.fn(async () => catalog)
+    Object.assign(api, { flowCatalog })
+    try {
+      const c = client()
+      const { w } = await builder(c)
+      expect(flowCatalog).toHaveBeenCalled()
+      await type('fl-name', 'courrier')
+      await w.find('[data-testid="fl-add-node-mailer:mail.send"]').trigger('click')
+      // La carte dit le nœud du plugin, pas l'appel `mailer.mail.send` ; le panneau montre SON formulaire, pas « action étrangère ».
+      expect(q('fl-node-action_1')?.textContent).toContain('Envoyer un e-mail')
+      expect(q('fl-node-title')?.textContent).toBe('Envoyer un e-mail')
+      expect(q('fl-foreign-action')).toBeNull()
+      expect(q('fl-node-outputs')?.textContent).toContain('Identifiant du message')
+      expect(q('fl-incomplete-action_1')).not.toBeNull() // le destinataire est obligatoire
+
+      // Sans destinataire, le flux ne part pas : la faute nomme l'étape et le champ.
+      ;(q('fl-deploy') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(document.body.textContent).toContain('Destinataire')
+      expect(c.post).not.toHaveBeenCalled()
+
+      await type('fl-node-field-to', 'compta@example.com')
+      expect(q('fl-incomplete-action_1')).toBeNull()
+      ;(q('fl-deploy') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(c.post).toHaveBeenCalledWith('/flows', expect.objectContaining({
+        steps: [expect.objectContaining({ id: 'action_1', type: 'action', plugin: 'mailer', action: 'mail.send', payload: { to: 'compta@example.com' } })],
+      }))
+    } finally {
+      delete (api as Record<string, unknown>).flowCatalog
+    }
+  })
+
+  it('un événement de plugin déclenche le flux, et ses clés comme le résultat d’un nœud précédent se reprennent', async () => {
+    const catalog = {
+      nodes: [{ plugin: 'mailer', action: 'mail.send', label: 'Envoyer un e-mail', icon: 'envelope', fields: [{ name: 'to', label: 'Destinataire', type: 'email' }], outputs: [{ path: 'message_id', label: 'Identifiant du message' }] }],
+      events: [{ plugin: 'mailer', name: 'mailer.received', label: 'E-mail reçu', fields: [{ name: 'sender', label: 'Expéditeur' }] }],
+    }
+    Object.assign(api, { flowCatalog: vi.fn(async () => catalog) })
+    try {
+      await builder(client({
+        name: 'repondre',
+        trigger: { type: 'event', event_name: 'mailer.received' },
+        steps: [
+          { id: 'envoyer', type: 'action', plugin: 'mailer', action: 'mail.send', payload: { to: '{{ trigger.sender }}' }, on_success: 'suivre' },
+          { id: 'suivre', type: 'action', plugin: 'mailer', action: 'mail.send', payload: { to: '{{ steps.envoyer.result.message_id }}' } },
+        ],
+      }), '/automations/repondre')
+      // Le déclencheur se reconnaît comme l'événement du plugin, et dit ce que ses étapes pourront reprendre.
+      expect(q('fl-event-origin')).not.toBeNull()
+      expect(q('fl-event-fields')?.textContent).toContain('Expéditeur')
+      expect(q('fl-event-other')).toBeNull()
+
+      ;(q('fl-node-envoyer') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(q('fl-node-field-to-source')?.textContent).toContain('Du déclencheur')
+      expect(q('fl-node-field-to')?.textContent).toContain('Expéditeur')
+
+      ;(q('fl-node-suivre') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(q('fl-node-field-to-source')?.textContent).toContain('Résultat d’une étape')
+      expect(q('fl-node-field-to')?.textContent).toContain('envoyer › Identifiant du message')
+    } finally {
+      delete (api as Record<string, unknown>).flowCatalog
+    }
   })
 
   it('dit les fautes sans appeler xflow', async () => {
@@ -331,5 +413,73 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     await builder(c, '/automations/suivi')
     expect(q('fl-reserved')).not.toBeNull()
     expect(q('fl-failure')).toBeNull()
+  })
+})
+
+describe('Nœuds personnalisés : l’organisation décrit une action qu’aucun plugin ne décrit', () => {
+  async function nodesPage(api: Record<string, unknown>) {
+    const router = createRouter({ history: createMemoryHistory(), routes: ROUTES })
+    await router.push('/automations/nodes')
+    await router.isReady()
+    const w = mount({ template: '<RouterView />' }, {
+      attachTo: document.body,
+      global: {
+        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
+        provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api, automations: {} } },
+      },
+    })
+    mounted.push(w)
+    await flushPromises()
+    return w
+  }
+  const q = (testid: string) => document.body.querySelector(`[data-testid="${testid}"]`) as HTMLElement | null
+  async function type(testid: string, value: string) {
+    const el = q(testid) as HTMLInputElement
+    el.value = value
+    el.dispatchEvent(new Event('input'))
+    await flushPromises()
+  }
+
+  it('crée un nœud : le libellé d’un champ donne sa clé, et l’appel exact part au serveur', async () => {
+    const saveFlowNode = vi.fn(async (node: Record<string, unknown>) => node)
+    const flowNodes = vi.fn(async () => ({ nodes: [], can_edit: true }))
+    await nodesPage({ flowNodes, flowCatalog: vi.fn(async () => ({ nodes: [{ plugin: 'mailer', action: 'mail.send', label: 'Envoyer', fields: [], outputs: [] }] })), saveFlowNode })
+    expect(q('fn-empty')).not.toBeNull()
+    ;(q('fn-create') as HTMLButtonElement).click()
+    await flushPromises()
+    expect((q('fn-save') as HTMLButtonElement).disabled).toBe(true) // rien de saisi : trois fautes dites
+    expect(document.body.querySelectorAll('[data-testid="fn-problem"]').length).toBe(3)
+    await type('fn-label', 'Noter dans le journal')
+    await type('fn-plugin', 'mailer')
+    await type('fn-action', 'mail.log')
+    ;(q('fn-add-field') as HTMLButtonElement).click()
+    await flushPromises()
+    await type('fn-field-label-0', 'Note du jour')
+    expect((q('fn-field-name-0') as HTMLInputElement).value).toBe('note_du_jour')
+    ;(q('fn-add-output') as HTMLButtonElement).click()
+    await flushPromises()
+    await type('fn-output-label-0', 'Numéro de la note')
+    await type('fn-output-path-0', 'entry')
+    expect(q('fn-problem')).toBeNull()
+    ;(q('fn-save') as HTMLButtonElement).click()
+    await flushPromises()
+    expect(saveFlowNode).toHaveBeenCalledWith({
+      plugin: 'mailer', action: 'mail.log', label: 'Noter dans le journal', icon: 'bolt',
+      fields: [{ name: 'note_du_jour', label: 'Note du jour', type: 'text', required: false }],
+      outputs: [{ path: 'entry', label: 'Numéro de la note' }],
+    }, undefined)
+    expect(flowNodes).toHaveBeenCalledTimes(2) // relue après l'enregistrement
+  })
+
+  it('sans le droit de déployer, on consulte sans rien pouvoir changer', async () => {
+    const node = { plugin: 'mailer', action: 'mail.log', label: 'Noter', icon: 'book', fields: [{ name: 'note', label: 'Note', type: 'text' }], outputs: [], shadowed: true }
+    await nodesPage({ flowNodes: vi.fn(async () => ({ nodes: [node], can_edit: false })), flowCatalog: vi.fn(async () => ({ nodes: [] })) })
+    expect(q('fn-reserved')).not.toBeNull()
+    expect(q('fn-create')).toBeNull()
+    expect(q('fn-node-mailer:mail.log')?.textContent).toContain('Le plugin décrit aussi cette action')
+    ;(q('fn-node-mailer:mail.log') as HTMLButtonElement).click()
+    await flushPromises()
+    expect((q('fn-label') as HTMLInputElement).disabled).toBe(true)
+    expect(q('fn-save')).toBeNull()
   })
 })

@@ -83,7 +83,10 @@ describe('les valeurs : une liste, jamais des accolades à taper', () => {
     const odd = '{{ steps.lire.result.doc.data.total | round }}'
     expect(readValue(odd)).toEqual({ kind: 'raw', text: odd })
     expect(writeValue(readValue(odd))).toBe(odd)
-    expect(readValue('{{ trigger.inconnu }}').kind).toBe('raw') // une clé que le déclencheur ne porte pas
+    // Toute clé du déclencheur se lit comme telle : un événement de PLUGIN porte les siennes (`lib/flowcatalog`), et une clé qu'aucune
+    // liste ne propose plus reste montrée par `ValueField` plutôt que perdue.
+    expect(readValue('{{ trigger.sender }}')).toEqual({ kind: 'trigger', key: 'sender' })
+    expect(readValue('{{ trigger.Sender }}').kind).toBe('raw') // une clé de charge s'écrit en minuscules
   })
 
   it('une valeur fixe garde son type : le moteur refuse « 12 » pour un nombre', () => {

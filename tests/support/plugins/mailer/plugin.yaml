@@ -1,0 +1,41 @@
+# Plugin de TEST : un « courrier » minimal qui montre comment un plugin ouvre ses actions et ses événements à l'éditeur
+# d'automatisations (section `xflow:`, voir src/xcore_doctype/flownodes.py et docs/guide.md §3.8).
+name: mailer
+version: 0.1.0
+author: traoreera
+description: "Plugin de test : envoie des e-mails (dans un fichier) et signale ceux qu'il reçoit."
+framework_version: ">=2.9"
+execution_mode: trusted
+entry_point: src/main.py
+requires: [xcore-doctype]
+
+# xflow appelle `mail.send` au nom de l'utilisateur du flux : sans lui ici, xcore répondrait `ipc_denied`.
+allowed_callers: [xflow]
+permissions:
+  - resource: "mail.send"
+    actions: ["execute"]
+    effect: allow
+  # `mail.log` n'est PAS décrite ci-dessous : c'est l'action qu'une organisation décrit elle-même dans le Desk (nœud d'organisation).
+  - resource: "mail.log"
+    actions: ["execute"]
+    effect: allow
+
+xflow:
+  nodes:
+    - action: mail.send
+      label: Envoyer un e-mail
+      description: Envoie un message à une adresse.
+      icon: envelope
+      fields:
+        - {name: to, label: Destinataire, type: email, required: true}
+        - {name: subject, label: Objet, type: text, required: true}
+        - {name: body, label: Message, type: longtext}
+      outputs:
+        - {path: message_id, label: Identifiant du message}
+  events:
+    - name: mailer.received
+      label: E-mail reçu
+      description: Un e-mail arrive dans la boîte de l'organisation.
+      fields:
+        - {name: sender, label: Expéditeur}
+        - {name: subject, label: Objet}

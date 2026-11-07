@@ -132,3 +132,40 @@ def test_only_the_flow_s_name_is_checked_at_load(name):
     with pytest.raises(InvalidDefinition):
         doctype(workflow={"states": STATES, "transitions": [dict(TRANSITIONS[0], flow=name), *TRANSITIONS[1:]]})
     assert doctype(workflow={"states": STATES, "transitions": FLOWED}).workflow.transitions[1].flow == "commande_fournisseur"
+
+
+async def test_an_organisation_launches_its_automation_after_a_transition_of_the_application(make):
+    """L'organisation pose une automatisation sur « Soumettre » (que le YAML ne lie à rien) : elle part après la transition, au nom de
+    l'acteur, comme celle du YAML. `/meta` l'annonce (l'éclair du circuit)."""
+    xflow = Xflow()
+    svc, _ = make(xflow)
+    await svc.save_workflow_override(who(), "Leave Request", {"transitions": {"Soumettre": {"flow": "accuse_reception"}}})
+    doc = await svc.create(who(), "Leave Request", {"objet": "Congés d’août"})
+    await svc.workflow_transition(who(SOUMETTRE), "Leave Request", doc["name"], "Soumettre", doc["version"])
+    await svc.flows.settled()
+    [call] = xflow.calls
+    assert call["payload"]["workflow_name"] == "accuse_reception" and call["principal"]["sub"] == "alice"
+    shown = {t["action"]: t for t in (await svc.fetch_meta(who(), "Leave Request"))["workflow"]["transitions"]}
+    assert shown["Soumettre"]["flow"] == "accuse_reception"
+
+
+async def test_an_automation_on_an_added_transition_is_launched_too(make):
+    xflow = Xflow()
+    svc, _ = make(xflow)
+    await svc.save_workflow_override(who(), "Leave Request", {
+        "states": [{"name": "Visé"}],
+        "added": [{"action": "Viser", "from": "À approuver", "to": "Visé", "grant": APPROUVER, "flow": "prevenir_rh"}],
+    })
+    doc = await submitted(svc)
+    await svc.workflow_transition(who(APPROUVER, user="bob"), "Leave Request", doc["name"], "Viser", doc["version"])
+    await svc.flows.settled()
+    assert [c["payload"]["workflow_name"] for c in xflow.calls] == ["prevenir_rh"]
+
+
+async def test_the_application_s_own_automation_is_not_replaced(make):
+    from xcore_doctype.errors import ValidationFailed
+
+    svc, _ = make()
+    for bad, words in (({"Approuver": {"flow": "autre"}}, "lance déjà"), ({"Soumettre": {"flow": "pas un nom!"}}, "invalide")):
+        with pytest.raises(ValidationFailed, match=words):
+            await svc.save_workflow_override(who(), "Leave Request", {"transitions": bad})

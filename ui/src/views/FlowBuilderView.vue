@@ -19,6 +19,7 @@ import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { type TriggerKind } from '@/lib/automations'
 import { actionOf } from '@/lib/flowactions'
+import { EMPTY_CATALOG, eventOf, missingFields, nodeOf, nodeStep, outputSources, readCatalog, type FlowCatalog, type PluginNode } from '@/lib/flowcatalog'
 import {
   addBranch,
   addCase,
@@ -42,6 +43,8 @@ import {
   writeFlow,
   type FlowModel,
   type StepKind,
+  type StepNodeData,
+  type TriggerNodeData,
 } from '@/lib/flowgraph'
 import { useServices } from '@/lib/services'
 import type { DocTypeMeta, DocTypeSummary } from '@/lib/types'
@@ -61,7 +64,7 @@ import { useMeta } from '@/stores/meta'
  * dans la page, sans rien perdre de ce qui a été tracé.
  */
 const props = defineProps<{ name?: string }>()
-const { automations } = useServices()
+const { automations, api } = useServices()
 const notify = useNotify()
 const router = useRouter()
 const metaStore = useMeta()
@@ -87,6 +90,8 @@ const selected = ref<string | null>(TRIGGER_NODE)
 const selectedEdge = ref<string | null>(null)
 const doctypes = ref<DocTypeSummary[]>([])
 const targetMeta = ref<DocTypeMeta | null>(null)
+/** Ce que les plugins ouvrent à l'éditeur : leurs nœuds (palette) et leurs événements (déclencheur). Vide si rien n'est déclaré. */
+const catalog = ref<FlowCatalog>(EMPTY_CATALOG)
 
 // ── Le graphe ────────────────────────────────────────────────────────────────────────────────────────────────────
 const graph = computed(() => graphOf(model.value))
@@ -103,10 +108,25 @@ const chosenEdge = computed(() => {
 })
 const others = computed(() => model.value.steps.filter((s) => s.id !== chosenStep.value?.id).map((s) => s.id))
 /** Les étapes dont une valeur peut reprendre le document : celles qui lisent ou créent, avant celle qu'on règle. */
-const sourceSteps = computed(() => {
+const stepsBefore = computed(() => {
   const here = model.value.steps.findIndex((s) => s.id === chosenStep.value?.id)
-  const before = here < 0 ? model.value.steps : model.value.steps.slice(0, here)
-  return before.filter((s) => s.kind === 'action' && ['read', 'create'].includes(actionOf(s.raw) ?? ''))
+  return here < 0 ? model.value.steps : model.value.steps.slice(0, here)
+})
+/** Ce que les nœuds de plugin AVANT l'étape choisie rendent : une valeur peut le reprendre (« l'identifiant du message envoyé »). */
+const pluginOutputs = computed(() => outputSources(catalog.value, stepsBefore.value))
+/** Les clés du déclencheur quand le flux écoute un événement de PLUGIN : les champs qu'il a déclarés pour sa charge. */
+const triggerKeys = computed(() => {
+  if (model.value.trigger.kind !== 'event') return undefined
+  const event = eventOf(catalog.value, model.value.trigger.event)
+  return event ? event.fields.map((f) => ({ value: f.name, label: f.label })) : undefined
+})
+/** Ce qu'un nœud de plugin exige et qui manque : la carte le signale, le déploiement le refuse (l'appel échouerait à l'exécution). */
+function pluginMissing(raw: Record<string, unknown>): string[] {
+  const node = nodeOf(catalog.value, raw)
+  return node ? missingFields(node, raw) : []
+}
+const sourceSteps = computed(() => {
+  return stepsBefore.value.filter((s) => s.kind === 'action' && ['read', 'create'].includes(actionOf(s.raw) ?? ''))
 })
 const sources = computed(() => sourceSteps.value.map((s) => s.id))
 /** Le type de document de chaque étape source, quand elle en nomme un : c'est lui qui donne les champs à proposer. */
@@ -133,7 +153,21 @@ watch(sourceTypes, (types) => {
   for (const doctype of Object.values(types)) void metaStore.get(doctype).catch(() => undefined)
 }, { immediate: true })
 
-const nodes = computed(() => graph.value.nodes.map((n) => ({ ...n, selected: selected.value === n.id })))
+const nodes = computed(() =>
+  graph.value.nodes.map((n) => {
+    if (n.type !== 'step') {
+      const event = model.value.trigger.kind === 'event' ? eventOf(catalog.value, model.value.trigger.event) : undefined
+      return { ...n, selected: selected.value === n.id, ...(event ? { data: { ...(n.data as TriggerNodeData), pluginEvent: event.label } } : {}) }
+    }
+    const data = n.data as StepNodeData
+    const node = data.step.kind === 'action' ? nodeOf(catalog.value, data.step.raw) : undefined
+    return {
+      ...n,
+      selected: selected.value === n.id,
+      data: node ? { ...data, missing: [...data.missing, ...missingFields(node, data.step.raw)], plugin: { label: node.label, icon: node.icon, name: node.plugin } } : data,
+    }
+  }),
+)
 const edges = computed(() =>
   graph.value.edges.map((e) => ({
     ...e,
@@ -144,7 +178,7 @@ const edges = computed(() =>
   })),
 )
 
-const { screenToFlowCoordinate, fitView, onNodesInitialized } = useVueFlow()
+const { screenToFlowCoordinate, fitView, onNodesInitialized, setCenter, viewport, dimensions } = useVueFlow()
 /**
  * Le cadrage du graphe. `fit-view-on-init` de Vue Flow appelle `fitView()` SANS options (mesuré dans son code) : un graphe d'un seul
  * nœud — l'éditeur s'ouvre sur son seul déclencheur — était alors cadré jusqu'au zoom maximum, et la carte remplissait l'écran
@@ -179,26 +213,49 @@ function free(at: { x: number; y: number }): { x: number; y: number } {
   return spot
 }
 
-function add(kind: StepKind, position?: { x: number; y: number }): void {
+/**
+ * Montrer un nœud qui vient d'être posé : s'il sort de la partie visible du canevas, on y déplace la vue (même zoom). Avant, un clic
+ * sur la palette posait l'étape là où la mise en page la rangeait — souvent HORS du cadre — et le recadrage partait avant que Vue Flow
+ * ait mesuré le nouveau nœud : rien ne bougeait, et l'on croyait que le clic n'avait rien ajouté (constaté dans Chromium).
+ */
+function reveal(at: { x: number; y: number }): void {
+  const v = viewport.value
+  const d = dimensions.value
+  if (!d.width || !d.height || !v.zoom) return
+  const left = -v.x / v.zoom
+  const top = -v.y / v.zoom
+  const inside = at.x >= left && at.y >= top && at.x + CARD.w <= left + d.width / v.zoom && at.y + CARD.h <= top + d.height / v.zoom
+  if (!inside) void setCenter(at.x + CARD.w / 2, at.y + CARD.h / 2, { zoom: v.zoom }).catch(() => undefined)
+}
+
+function add(kind: StepKind, position?: { x: number; y: number }, node?: PluginNode): void {
   // Posée au bout de ce qui est choisi : sans flèche, xflow ne l'exécuterait jamais (`addStep` relie la première sortie libre).
   const after = selected.value === TRIGGER_NODE ? model.value.steps[model.value.steps.length - 1]?.id ?? null : selected.value
-  const made = addStep(model.value, kind, position && free(position), after)
-  model.value = made.model
+  // Au clic (pas de position), la nouvelle carte se pose à DROITE de celle à laquelle elle se relie (le déclencheur pour la première),
+  // jamais là où la mise en page automatique l'enverrait : on la voit naître à côté de sa flèche.
+  const anchorId = after ?? (model.value.steps.length ? model.value.steps[model.value.steps.length - 1]!.id : TRIGGER_NODE)
+  const anchor = graph.value.nodes.find((n) => n.id === anchorId)?.position
+  const spot = free(position ?? (anchor ? { x: anchor.x + CARD.w + 60, y: anchor.y } : { x: 0, y: 0 }))
+  const made = addStep(model.value, kind, spot, after)
+  // Un nœud de plugin EST une étape « action » : on la pose comme les autres, puis on lui donne l'appel du plugin (charge vide).
+  model.value = node ? patchStep(made.model, made.id, nodeStep(node)) : made.model
   choose(made.id)
-  // Posée au clavier (un clic sur la palette), elle atterrit où le placement calculé la met : on recadre pour la voir.
-  if (!position) void nextTick(fit)
+  void nextTick(() => reveal(spot))
 }
 
 /** Lâcher une étape de la palette sur le canevas : elle se pose là où le curseur l'a laissée. */
 function drop(event: DragEvent): void {
-  const kind = (event.dataTransfer?.getData(STEP_MIME) || '') as StepKind
-  if (!kind) return
+  const carried = event.dataTransfer?.getData(STEP_MIME) || ''
+  if (!carried) return
+  const node = carried.startsWith('node:') ? catalog.value.nodes.find((n) => `node:${n.plugin}:${n.action}` === carried) : undefined
+  if (carried.startsWith('node:') && !node) return
+  const kind = (node ? 'action' : carried) as StepKind
   event.preventDefault()
   // Le curseur montre le COIN du nœud chez Vue Flow : on recentre la carte sous la souris. Tant que le canevas n'est pas mesuré
   // (premier affichage, fenêtre cachée), on laisse le placement calculé faire son travail.
   const at = screenToFlowCoordinate({ x: event.clientX, y: event.clientY })
   const placed = Number.isFinite(at.x) && Number.isFinite(at.y) ? { x: at.x - 100, y: at.y - 36 } : undefined
-  add(kind, placed)
+  add(kind, placed, node)
 }
 
 function onConnect(connection: Connection): void {
@@ -254,6 +311,8 @@ async function load(): Promise<void> {
   failure.value = null
   reserved.value = false
   void metaStore.loadSummaries().then((list) => (doctypes.value = list)).catch(() => undefined)
+  // Le catalogue des plugins n'est qu'un confort : sans lui, l'éditeur garde ses gestes du moteur et montre les autres appels tels quels.
+  void Promise.resolve().then(() => api.flowCatalog()).then((body) => (catalog.value = readCatalog(body))).catch(() => undefined)
   if (!props.name) {
     model.value = readFlow({ name: '', trigger: { type: 'manual' }, steps: [] })
     saved.value = current.value // un flux neuf qu'on n'a pas touché se quitte sans question
@@ -295,7 +354,8 @@ async function deploy(): Promise<void> {
   problems.value = []
   serverError.value = null
   const made = writeFlow(model.value)
-  if (!made.definition) return void (problems.value = made.problems)
+  const unfilled = model.value.steps.flatMap((s) => pluginMissing(s.raw).map((field) => t.flowBuilder.problems.missing(s.id, field)))
+  if (!made.definition || unfilled.length) return void (problems.value = [...made.problems, ...unfilled])
   if (!automations) return void (serverError.value = t.automations.loadFailed)
   saving.value = true
   try {
@@ -349,7 +409,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm(t.flowBuilder.leave))
     <Message v-if="serverError" severity="error" :closable="false" data-testid="fl-server-error">{{ serverError }}</Message>
 
     <div v-if="!loading && !reserved" class="fl-body">
-      <FlowPalette @add="add($event)" />
+      <FlowPalette :nodes="catalog.nodes" @add="add($event)" @add-node="add('action', undefined, $event)" />
 
       <div class="fl-canvas" data-testid="fl-canvas" @dragover.prevent @drop="drop">
         <VueFlow
@@ -392,6 +452,9 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm(t.flowBuilder.leave))
           :step-fields="stepFields"
           :doctypes="doctypes"
           :target="targetMeta"
+          :catalog="catalog"
+          :outputs="pluginOutputs"
+          :trigger-keys="triggerKeys"
           @patch="model = patchStep(model, chosenStep.id, $event)"
           @rename="model = renameStep(model, chosenStep.id, $event); selected = $event"
           @connect="model = connectOutlet(model, chosenStep.id, $event.key, $event.target)"
@@ -423,6 +486,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm(t.flowBuilder.leave))
             :cron="model.trigger.cron"
             :description="model.description"
             :doctypes="doctypes"
+            :events="catalog.events"
             @update="setTrigger($event)"
             @describe="model = { ...model, description: $event }"
           />

@@ -73,6 +73,8 @@ def host(tmp_path, request):
     developer = getattr(request, "param", {}).get("developer", False)
     platform = getattr(request, "param", {}).get("platform", False)
     mounted = getattr(request, "param", {}).get("mounted")
+    # Des plugins de test en plus, COPIÉS (ils peuvent écrire dans leur dossier : `mailer` y tient sa boîte d'envoi).
+    extra_plugins = getattr(request, "param", {}).get("plugins", [])
     # Les droits que l'auth de test rend à `xauth.user.permissions` (identifiant -> grants) : ce qu'xflow redemande pour agir au nom
     # d'un utilisateur. Sans eux, une étape `doc.*` d'un flux échoue (« utilisateur inconnu »), comme avec un compte parti.
     auth_grants = getattr(request, "param", {}).get("auth_grants")  # un chemin (`/erp`) : le Desk AUSSI monté hors du plugin (`mount_desk`)
@@ -118,6 +120,8 @@ def host(tmp_path, request):
     (tmp_path / "app" / "sales").symlink_to(FIXTURES / "sales")  # le plugin métier : il apporte les DocTypes et le hook du total
     (tmp_path / "app" / "biblio").symlink_to(ROOT / "examples" / "biblio")  # le plugin d'exemple de la documentation
     (tmp_path / "app" / "flux").symlink_to(FIXTURES / "flux")  # un type à circuit d'approbation (l'éditeur du circuit)
+    for name in extra_plugins:
+        shutil.copytree(FIXTURES / name, tmp_path / "app" / name, ignore=shutil.ignore_patterns("__pycache__", "outbox.jsonl"))
 
     env = {**os.environ, "XCORE_DEV_AUTH_SECRET": SECRET}
     if platform:
@@ -216,9 +220,12 @@ def test_the_example_plugins_desk_extension_runs_in_the_browser(host):
 
 
 @pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"platform": True, "auth_grants": {"alice": GRANTS + ["xflow:workflows:read", "xflow:workflows:write", "xflow:runs:read", "xflow:runs:write"]}}], indirect=True)
 def test_the_workflow_builder_draws_the_circuit_and_tightens_it(host):
-    """L'éditeur du circuit (Vue Flow) sous la vraie CSP : le graphe, le droit d'une transition, une transition fermée que le serveur n'offre plus."""
-    run = _scenario(host, "e2e/workflow.e2e.mjs")
+    """L'éditeur du circuit (Vue Flow) sous la vraie CSP : le graphe, le droit d'une transition, une transition fermée que le serveur n'offre
+    plus, un état et une transition AJOUTÉS par l'organisation, et une automatisation (le vrai xflow) liée à une transition qui part quand
+    un document la franchit."""
+    run = _scenario(host, "e2e/workflow.e2e.mjs", permissions=["xflow:workflows:read", "xflow:workflows:write", "xflow:runs:read", "xflow:runs:write"])
     assert run.returncode == 0, f"scénario du circuit en échec :\n{run.stdout}\n{run.stderr}"
 
 
@@ -283,3 +290,14 @@ def test_an_automation_is_created_run_and_followed_from_the_desk(host):
     écrit au nom d'alice ; le rouvrir (le graphe revient tel qu'il a été tracé, positions comprises), le modifier, le supprimer."""
     run = _scenario(host, "e2e/automations.e2e.mjs", permissions=XFLOW_GRANTS)
     assert run.returncode == 0, f"scénario des automatisations en échec :\n{run.stdout}\n{run.stderr}"
+
+
+@pytest.mark.skipif(os.environ.get("XCORE_DOCTYPE_SKIP_E2E") == "1", reason="XCORE_DOCTYPE_SKIP_E2E=1")
+@pytest.mark.parametrize("host", [{"platform": True, "plugins": ["mailer"], "auth_grants": {"alice": GRANTS + XFLOW_GRANTS}}], indirect=True)
+def test_a_plugin_s_own_nodes_and_events_are_used_in_the_automation_editor(host, tmp_path):
+    """La section `xflow:` d'un plugin dans Chromium, face au vrai xflow : son événement « E-mail reçu » choisi comme déclencheur, son
+    nœud « Envoyer un e-mail » posé de la palette et réglé par SON formulaire (le destinataire pris de l'événement, le message citant le
+    client qu'une étape précédente a créé), un second nœud reprenant le RÉSULTAT du premier ; déployé, puis un e-mail reçu par la route
+    du plugin fait tourner le flux : le client existe et les deux e-mails sont partis."""
+    run = _scenario(host, "e2e/plugin-nodes.e2e.mjs", permissions=XFLOW_GRANTS, MAILER_OUTBOX=str(tmp_path / "app" / "mailer" / "outbox.jsonl"))
+    assert run.returncode == 0, f"scénario des nœuds de plugin en échec :\n{run.stdout}\n{run.stderr}"

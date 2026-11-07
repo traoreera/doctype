@@ -211,8 +211,8 @@ class WorkflowRules:
 
     Même doctrine que `FormRules` : on ne fait que RESSERRER. `closed` : des transitions qui n'existent pas dans cette organisation ;
     `conditions` : une condition EN PLUS de celle du YAML (ET, jamais OU) ; `not_owner` : des transitions que l'auteur du document ne
-    fait pas, même si le YAML le lui permettait. Rien ici n'ajoute un état, une transition, ni ne desserre ce que le YAML impose — un
-    grant de transition est déclaré à auth au chargement du plugin, donc une transition inventée par un tenant serait inutilisable.
+    fait pas, même si le YAML le lui permettait. Rien ici ne desserre ce que le YAML impose. Les états et transitions qu'une organisation
+    AJOUTE vivent dans l'automate fusionné (`overrides.effective_workflow`), et leurs conditions / `not_owner` sont rangés ici.
 
     Jamais fusionné dans la définition : retirer une transition d'une `WorkflowDef` peut rendre un état injoignable, et le schéma
     refuserait alors la définition entière. Ces retouches se consultent aux deux portes (`/transitions` et l'écriture).
@@ -221,6 +221,8 @@ class WorkflowRules:
     closed: frozenset[str] = frozenset()
     conditions: Mapping[str, Node] = dataclass_field(default_factory=dict)
     not_owner: frozenset[str] = frozenset()
+    # L'automatisation (flux xflow) que l'organisation lance après une transition de l'APPLICATION qui n'en nomme pas (action -> flux).
+    flows: Mapping[str, str] = dataclass_field(default_factory=dict)
 
     def allows(self, action: str, data: Mapping[str, Any]) -> bool:
         """La transition est-elle ouverte par CETTE organisation sur ce document ? (la condition du YAML se juge à part)."""
