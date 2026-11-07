@@ -192,6 +192,26 @@ try {
     await page.getByTestId('automations-no-flows').waitFor()
     await r.shot(page, 'auto-10-supprime')
   }, page)
+
+  await r.step('chaque étape ajoutée d’un CLIC sur la palette apparaît dans le cadre, à côté de celle qu’elle suit', async () => {
+    // Le défaut signalé le 7 nov. : l'étape était bien ajoutée, mais posée hors de la partie visible du canevas — on croyait que le
+    // clic ne faisait rien. Le glisser-déposer, lui, pose sous le curseur ; le clic est la voie du clavier, elle doit marcher aussi.
+    await page.goto(`${cfg.desk}#/automations/new`)
+    await page.getByTestId('fl-canvas').waitFor()
+    await page.waitForTimeout(500)
+    const canvas = await page.getByTestId('fl-canvas').boundingBox()
+    for (const kind of ['action', 'condition', 'switch', 'parallel', 'foreach', 'wait', 'ai']) {
+      const before = await page.locator('.vue-flow__node').count()
+      await page.getByTestId(`fl-add-${kind}`).click()
+      await page.waitForTimeout(400)
+      assert((await page.locator('.vue-flow__node').count()) === before + 1, `${kind} : aucune étape ajoutée`)
+      const id = await page.locator('.vue-flow__node.selected').getAttribute('data-id')
+      const box = await page.locator(`.vue-flow__node[data-id="${id}"]`).boundingBox()
+      const inside = box && box.x >= canvas.x && box.y >= canvas.y && box.x + box.width <= canvas.x + canvas.width && box.y + box.height <= canvas.y + canvas.height
+      assert(inside, `${kind} (${id}) ajoutée hors du cadre du canevas`)
+    }
+    await r.shot(page, 'auto-11-ajout-au-clic')
+  }, page)
 } finally {
   await browser.close()
 }

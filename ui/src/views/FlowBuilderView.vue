@@ -144,7 +144,7 @@ const edges = computed(() =>
   })),
 )
 
-const { screenToFlowCoordinate, fitView, onNodesInitialized } = useVueFlow()
+const { screenToFlowCoordinate, fitView, onNodesInitialized, setCenter, viewport, dimensions } = useVueFlow()
 /**
  * Le cadrage du graphe. `fit-view-on-init` de Vue Flow appelle `fitView()` SANS options (mesuré dans son code) : un graphe d'un seul
  * nœud — l'éditeur s'ouvre sur son seul déclencheur — était alors cadré jusqu'au zoom maximum, et la carte remplissait l'écran
@@ -179,14 +179,33 @@ function free(at: { x: number; y: number }): { x: number; y: number } {
   return spot
 }
 
+/**
+ * Montrer un nœud qui vient d'être posé : s'il sort de la partie visible du canevas, on y déplace la vue (même zoom). Avant, un clic
+ * sur la palette posait l'étape là où la mise en page la rangeait — souvent HORS du cadre — et le recadrage partait avant que Vue Flow
+ * ait mesuré le nouveau nœud : rien ne bougeait, et l'on croyait que le clic n'avait rien ajouté (constaté dans Chromium).
+ */
+function reveal(at: { x: number; y: number }): void {
+  const v = viewport.value
+  const d = dimensions.value
+  if (!d.width || !d.height || !v.zoom) return
+  const left = -v.x / v.zoom
+  const top = -v.y / v.zoom
+  const inside = at.x >= left && at.y >= top && at.x + CARD.w <= left + d.width / v.zoom && at.y + CARD.h <= top + d.height / v.zoom
+  if (!inside) void setCenter(at.x + CARD.w / 2, at.y + CARD.h / 2, { zoom: v.zoom }).catch(() => undefined)
+}
+
 function add(kind: StepKind, position?: { x: number; y: number }): void {
   // Posée au bout de ce qui est choisi : sans flèche, xflow ne l'exécuterait jamais (`addStep` relie la première sortie libre).
   const after = selected.value === TRIGGER_NODE ? model.value.steps[model.value.steps.length - 1]?.id ?? null : selected.value
-  const made = addStep(model.value, kind, position && free(position), after)
+  // Au clic (pas de position), la nouvelle carte se pose à DROITE de celle à laquelle elle se relie (le déclencheur pour la première),
+  // jamais là où la mise en page automatique l'enverrait : on la voit naître à côté de sa flèche.
+  const anchorId = after ?? (model.value.steps.length ? model.value.steps[model.value.steps.length - 1]!.id : TRIGGER_NODE)
+  const anchor = graph.value.nodes.find((n) => n.id === anchorId)?.position
+  const spot = free(position ?? (anchor ? { x: anchor.x + CARD.w + 60, y: anchor.y } : { x: 0, y: 0 }))
+  const made = addStep(model.value, kind, spot, after)
   model.value = made.model
   choose(made.id)
-  // Posée au clavier (un clic sur la palette), elle atterrit où le placement calculé la met : on recadre pour la voir.
-  if (!position) void nextTick(fit)
+  void nextTick(() => reveal(spot))
 }
 
 /** Lâcher une étape de la palette sur le canevas : elle se pose là où le curseur l'a laissée. */
