@@ -238,6 +238,82 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     expect(router.currentRoute.value.params.name).toBe('nouveau') // la création est devenue une modification
   })
 
+  it('un nœud déclaré par un PLUGIN se pose, se règle par son formulaire et part comme une action ordinaire', async () => {
+    const catalog = {
+      nodes: [{
+        plugin: 'mailer', action: 'mail.send', label: 'Envoyer un e-mail', icon: 'envelope',
+        fields: [{ name: 'to', label: 'Destinataire', type: 'email', required: true }, { name: 'body', label: 'Message', type: 'longtext' }],
+        outputs: [{ path: 'message_id', label: 'Identifiant du message' }],
+      }],
+      events: [{ plugin: 'mailer', name: 'mailer.received', label: 'E-mail reçu', fields: [{ name: 'sender', label: 'Expéditeur' }] }],
+    }
+    const flowCatalog = vi.fn(async () => catalog)
+    Object.assign(api, { flowCatalog })
+    try {
+      const c = client()
+      const { w } = await builder(c)
+      expect(flowCatalog).toHaveBeenCalled()
+      await type('fl-name', 'courrier')
+      await w.find('[data-testid="fl-add-node-mailer:mail.send"]').trigger('click')
+      // La carte dit le nœud du plugin, pas l'appel `mailer.mail.send` ; le panneau montre SON formulaire, pas « action étrangère ».
+      expect(q('fl-node-action_1')?.textContent).toContain('Envoyer un e-mail')
+      expect(q('fl-node-title')?.textContent).toBe('Envoyer un e-mail')
+      expect(q('fl-foreign-action')).toBeNull()
+      expect(q('fl-node-outputs')?.textContent).toContain('Identifiant du message')
+      expect(q('fl-incomplete-action_1')).not.toBeNull() // le destinataire est obligatoire
+
+      // Sans destinataire, le flux ne part pas : la faute nomme l'étape et le champ.
+      ;(q('fl-deploy') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(document.body.textContent).toContain('Destinataire')
+      expect(c.post).not.toHaveBeenCalled()
+
+      await type('fl-node-field-to', 'compta@example.com')
+      expect(q('fl-incomplete-action_1')).toBeNull()
+      ;(q('fl-deploy') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(c.post).toHaveBeenCalledWith('/flows', expect.objectContaining({
+        steps: [expect.objectContaining({ id: 'action_1', type: 'action', plugin: 'mailer', action: 'mail.send', payload: { to: 'compta@example.com' } })],
+      }))
+    } finally {
+      delete (api as Record<string, unknown>).flowCatalog
+    }
+  })
+
+  it('un événement de plugin déclenche le flux, et ses clés comme le résultat d’un nœud précédent se reprennent', async () => {
+    const catalog = {
+      nodes: [{ plugin: 'mailer', action: 'mail.send', label: 'Envoyer un e-mail', icon: 'envelope', fields: [{ name: 'to', label: 'Destinataire', type: 'email' }], outputs: [{ path: 'message_id', label: 'Identifiant du message' }] }],
+      events: [{ plugin: 'mailer', name: 'mailer.received', label: 'E-mail reçu', fields: [{ name: 'sender', label: 'Expéditeur' }] }],
+    }
+    Object.assign(api, { flowCatalog: vi.fn(async () => catalog) })
+    try {
+      await builder(client({
+        name: 'repondre',
+        trigger: { type: 'event', event_name: 'mailer.received' },
+        steps: [
+          { id: 'envoyer', type: 'action', plugin: 'mailer', action: 'mail.send', payload: { to: '{{ trigger.sender }}' }, on_success: 'suivre' },
+          { id: 'suivre', type: 'action', plugin: 'mailer', action: 'mail.send', payload: { to: '{{ steps.envoyer.result.message_id }}' } },
+        ],
+      }), '/automations/repondre')
+      // Le déclencheur se reconnaît comme l'événement du plugin, et dit ce que ses étapes pourront reprendre.
+      expect(q('fl-event-origin')).not.toBeNull()
+      expect(q('fl-event-fields')?.textContent).toContain('Expéditeur')
+      expect(q('fl-event-other')).toBeNull()
+
+      ;(q('fl-node-envoyer') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(q('fl-node-field-to-source')?.textContent).toContain('Du déclencheur')
+      expect(q('fl-node-field-to')?.textContent).toContain('Expéditeur')
+
+      ;(q('fl-node-suivre') as HTMLButtonElement).click()
+      await flushPromises()
+      expect(q('fl-node-field-to-source')?.textContent).toContain('Résultat d’une étape')
+      expect(q('fl-node-field-to')?.textContent).toContain('envoyer › Identifiant du message')
+    } finally {
+      delete (api as Record<string, unknown>).flowCatalog
+    }
+  })
+
   it('dit les fautes sans appeler xflow', async () => {
     const c = client()
     const { w } = await builder(c)

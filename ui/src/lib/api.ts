@@ -122,6 +122,11 @@ export class ApiClient {
     return this.call('GET', `/meta/${encodeURIComponent(doctype)}`)
   }
 
+  /** Les nœuds et les événements que les plugins ouvrent à l'éditeur d'automatisations (la section `xflow:` de leur manifeste). */
+  flowCatalog(): Promise<unknown> {
+    return this.call('GET', '/flow-catalog')
+  }
+
   // ── Documents ───────────────────────────────────────────
   list(doctype: string, q: ListQuery = {}): Promise<ListResult> {
     const params = new URLSearchParams()

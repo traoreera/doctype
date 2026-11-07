@@ -175,8 +175,10 @@ class TestChannel:
         # catalogue de libellés, retiré avec le plugin comme le reste.
         # `has` répond seulement « ce type est-il chargé ? » (ni définition ni donnée) : ce dont a besoin un plugin qui SERT les
         # types d'autres plugins (xprint ne charge que les gabarits d'un type présent). Ce qu'un `load_*` raté apprendrait aussi.
+        # `declare_xflow` DÉPOSE la description des nœuds et événements d'un plugin pour l'éditeur d'automatisations (flownodes.py),
+        # retirée avec lui ; elle ne lit rien du registre.
         assert public == {"load_dir", "load_workspaces", "load_print_templates", "load_extensions", "load_desk",
-                          "load_translations", "unregister_owner", "settled", "has"}
+                          "load_translations", "declare_xflow", "unregister_owner", "settled", "has"}
 
 
 class TestLiveRegistry:

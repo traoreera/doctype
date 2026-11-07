@@ -16,7 +16,7 @@ const emit = defineEmits<{ (e: 'choose', id: string): void }>()
 
 const label = computed(() => t.automations.triggers[props.data.kind] ?? props.data.kind)
 /** Un événement d'un autre plugin : montré sur la carte, même quand on règle une étape. */
-const otherEvent = computed(() => props.data.kind === 'event' && !!props.data.detail && !readEvent(props.data.detail))
+const otherEvent = computed(() => props.data.kind === 'event' && !!props.data.detail && !props.data.pluginEvent && !readEvent(props.data.detail))
 </script>
 
 <template>
@@ -35,7 +35,7 @@ const otherEvent = computed(() => props.data.kind === 'event' && !!props.data.de
         <span class="fl-node-kind">{{ t.flowBuilder.trigger }}</span>
       </span>
     </span>
-    <span v-if="data.detail" class="fl-node-summary">{{ data.detail }}</span>
+    <span v-if="data.pluginEvent || data.detail" class="fl-node-summary">{{ data.pluginEvent ?? data.detail }}</span>
     <span v-if="otherEvent" class="fl-node-summary" data-testid="fl-event-other">{{ t.flowBuilder.trigger_.otherEvent(data.detail) }}</span>
     <span class="fl-outlets">
       <span class="fl-outlet fl-outlet-ok">

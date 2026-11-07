@@ -645,6 +645,81 @@ ailleurs.
 `allowed_callers`. **Limites connues** : l'étape `wait` d'xflow attend en mémoire (un redémarrage l'interrompt) et `wait_for_event` n'est pas implémenté ; la liste des exécutions renvoie le résultat de chaque étape à qui a
 `xflow:runs:read` (l'écran ne l'affiche pas).
 
+
+### 3.9 Ajouter ses propres nœuds et déclencheurs à l'éditeur d'automatisations
+
+Un plugin peut offrir à l'éditeur **ses** actions IPC (« Envoyer un e-mail ») et **ses** événements (« E-mail reçu »). Dans l'éditeur,
+ce sont des nœuds comme ceux de base : ils sont rangés dans la palette, sous « Des applications », et ils se règlent par un formulaire. Ils
+s'enchaînent avec les autres. Chaque plugin le déclare dans une section `xflow:` de son `plugin.yaml` :
+
+```yaml
+name: mailer
+allowed_callers: [xflow]          # OBLIGATOIRE : c'est xflow qui appellera l'action, au nom de l'utilisateur du flux
+permissions:
+  - {resource: "mail.send", actions: ["execute"], effect: allow}
+xflow:
+  nodes:
+    - action: mail.send           # une action @action("mail.send") de CE plugin
+      label: Envoyer un e-mail
+      icon: envelope              # nom PrimeIcons nu
+      fields:                     # la charge utile, champ par champ (text, longtext, email, number, boolean, select, date)
+        - {name: to, label: Destinataire, type: email, required: true}
+        - {name: subject, label: Objet, type: text, required: true}
+        - {name: body, label: Message, type: longtext}
+      outputs:                    # ce que son résultat contient, qu'une étape SUIVANTE peut reprendre
+        - {path: message_id, label: Identifiant du message}
+  events:
+    - name: mailer.received       # préfixé du nom du plugin
+      label: E-mail reçu
+      fields:                     # les clés de sa charge, que les étapes reprennent
+        - {name: sender, label: Expéditeur}
+        - {name: subject, label: Objet}
+```
+
+Le moteur ne lit pas les manifestes des autres plugins. Le plugin passe donc sa section dans son `on_load` et la retire dans son
+`on_unload` :
+
+```python
+async def on_load(self) -> None:
+    self.get_service("doctype_registry").declare_xflow(self.ctx.name, self.ctx.config.get("xflow"))
+
+async def on_unload(self) -> None:
+    self.get_service("doctype_registry").unregister_owner(self.ctx.name)   # retire aussi ses nœuds
+```
+
+Une section fautive fait échouer le chargement du plugin, comme un DocType fautif : un champ inconnu, un `select` sans options, ou
+un événement qui ne commence pas par `<plugin>.`. Le Desk la lit sur `GET /flow-catalog` (action IPC `meta.flow_catalog`).
+
+**Enchaîner, et déclencher depuis un autre plugin.** Les deux sources se combinent dans un même flux. Par exemple :
+
+1. le déclencheur est l'événement `mailer.received` du plugin *mailer* ;
+2. une étape « Créer un document » crée la fiche *Client*, avec comme nom « Du déclencheur › Objet » ;
+3. une étape « Envoyer un e-mail » répond à « Du déclencheur › Expéditeur ». Son message cite le document de l'étape 2, et une étape
+   suivante pourrait reprendre « Résultat d'une étape › Identifiant du message » de celle-ci.
+
+Rien ne se tape, tout se choisit dans des listes. L'éditeur écrit lui-même `{{ trigger.sender }}`,
+`{{ steps.creer.result.doc.name }}` ou `{{ steps.envoyer.result.message_id }}`, et xflow résout ces jetons à l'exécution.
+
+Ce qu'il faut savoir :
+
+- **L'événement doit porter `tenant_id` dans sa charge.** Le plugin l'émet après une action d'un utilisateur, avec le tenant de la
+  requête :
+
+  ```python
+  await self.ctx.events.emit("mailer.received", {"tenant_id": ctx.tenant_id, "sender": ..., "subject": ...})
+  ```
+
+  Sans `tenant_id`, xflow lance le flux de **toutes** les organisations qui écoutent cet événement.
+- **Qui agit.** Un flux déclenché par un événement agit au nom de qui l'a déployé. Un flux lancé par une transition agit au nom de
+  l'approbateur.
+- **Les droits.** La section ne fait que décrire le nœud à l'écran : elle n'accorde aucun droit. L'action garde ses propres contrôles.
+- **Un appel non déclaré.** Un nœud qu'aucun plugin chargé ne déclare reste visible et s'exécute toujours, mais il ne se règle pas dans
+  l'éditeur.
+- **Les champs obligatoires.** Un champ `required` laissé vide marque la carte « Incomplète », et le déploiement est refusé.
+
+Preuve sur un vrai hôte : `tests/integration/test_xflow_plugin_nodes.py`, avec le plugin de test `tests/support/plugins/mailer`. Un
+e-mail reçu crée un client, puis le plugin répond avec le numéro de ce client, au nom de qui a déployé le flux.
+
 ---
 
 ## Pour aller plus loin

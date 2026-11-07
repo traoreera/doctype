@@ -273,7 +273,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         # ...et y apportent leurs propres DocTypes (module == leur nom, voir registry.DocTypeChannel).
         self.ctx.services[REGISTRY_SERVICE] = DocTypeChannel(
             registry, self.logger, unique_check=self.documents.ensure_unique_clean, desk=desk_extensions,
-            translations=self.documents.translations,
+            translations=self.documents.translations, flows=self.documents.flow_catalog,
         )
         for i, d in enumerate(translation_dirs):
             self.documents.translations.load_dir(f"operator.{i}", Path(d).expanduser())
@@ -415,6 +415,13 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     @action("meta.list")
     async def meta_list(self, payload: dict) -> dict:
         return await self._run("meta.list", lambda ctx: _done(items=self.documents.list_meta(ctx)))
+
+    @action("meta.flow_catalog")
+    async def meta_flow_catalog(self, payload: dict) -> dict:
+        async def op(ctx: RequestContext) -> dict:
+            return self.documents.flow_catalog.as_dict()
+
+        return await self._run("meta.flow_catalog", op)
 
     @action("meta.workspaces")
     async def meta_workspaces(self, payload: dict) -> dict:

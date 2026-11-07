@@ -3,6 +3,7 @@ import { Handle, Position } from '@vue-flow/core'
 import { computed } from 'vue'
 import { t } from '@/i18n'
 import { outletLabel, stepSummary, STEP_ICONS, type StepNodeData } from '@/lib/flowgraph'
+import { piIcon } from '@/lib/icons'
 
 /**
  * Une étape du flux, comme un nœud de n8n : un carré d'icône à la couleur de son type, le nom de l'étape, ce qu'elle FAIT en
@@ -18,9 +19,10 @@ const props = defineProps<{ id: string; data: StepNodeData; selected?: boolean }
 const emit = defineEmits<{ (e: 'choose', id: string): void }>()
 
 const kind = computed(() => props.data.step.kind)
-const icon = computed(() => (kind.value ? STEP_ICONS[kind.value] : 'pi-question-circle'))
-const kindLabel = computed(() => (kind.value ? t.flowBuilder.kinds[kind.value].label : t.flowBuilder.unknownKind))
-const summary = computed(() => stepSummary(props.data.step))
+// Un nœud de plugin se montre sous SON nom et SON icône (« Envoyer un e-mail »), jamais sous l'appel `mailer.mail.send`.
+const icon = computed(() => (props.data.plugin ? piIcon(props.data.plugin.icon, 'bolt') : `pi ${kind.value ? STEP_ICONS[kind.value] : 'pi-question-circle'}`))
+const kindLabel = computed(() => props.data.plugin?.name ?? (kind.value ? t.flowBuilder.kinds[kind.value].label : t.flowBuilder.unknownKind))
+const summary = computed(() => props.data.plugin?.label ?? stepSummary(props.data.step))
 </script>
 
 <template>
@@ -34,7 +36,7 @@ const summary = computed(() => stepSummary(props.data.step))
   >
     <Handle id="in" type="target" :position="Position.Left" />
     <span class="fl-node-head">
-      <span class="fl-node-icon" aria-hidden="true"><i :class="['pi', icon]" /></span>
+      <span class="fl-node-icon" aria-hidden="true"><i :class="icon" /></span>
       <span class="fl-node-titles">
         <span class="fl-node-name">{{ id }}</span>
         <span class="fl-node-kind">{{ kindLabel }}</span>

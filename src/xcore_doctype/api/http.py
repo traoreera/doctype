@@ -117,6 +117,12 @@ def build_router(documents: DocumentService, settings: ContextSettings, *, devel
     async def workspaces(ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.fetch_workspaces(ctx))
 
+    @router.get("/flow-catalog")
+    async def flow_catalog(ctx: RequestContext = Depends(ctx_dep)):
+        # Ce que les plugins ouvrent à l'éditeur d'automatisations (flownodes.py) : de la description, rien d'exécutable ni de secret.
+        # Une identité est exigée comme partout ; c'est xflow qui juge ensuite qui peut déployer et lancer un flux.
+        return documents.flow_catalog.as_dict()
+
     @router.get("/meta/{doctype}")
     async def meta_get(doctype: str, ctx: RequestContext = Depends(ctx_dep)):
         return await _guard(documents.fetch_meta(ctx, doctype))

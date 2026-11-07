@@ -202,6 +202,9 @@ class DocumentService:
         self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
         self.realtime: Any = NoRealtime()  # les signaux temps réel (`realtime.Realtime` sur ext.pubsub), posés par le plugin s'il y a un bus
         self.flows: Any = NoFlows()  # les flux xflow qui suivent une transition (`flows.FlowLauncher`), posés par le plugin
+        from .flownodes import FlowCatalog
+
+        self.flow_catalog = FlowCatalog()  # les nœuds et événements xflow que les plugins ouvrent à l'éditeur (`flownodes.py`)
         self.translations = Translations()  # les catalogues des plugins (translations.py) : libellés dans la langue de la requête
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
 
