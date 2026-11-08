@@ -152,6 +152,8 @@ function remove(flow: FlowSummary): void {
 }
 
 const label = (map: Record<string, string>, key: string | null) => (key ? map[key] ?? key : '—')
+const flowCount = computed(() => flows.value.length)
+const runCount = computed(() => runs.value.length)
 // Le contenu reste affiché pendant qu'on RELIT (actualiser, après un lancement ou un déploiement) : seule la première lecture le cache.
 const loaded = ref(false)
 const empty = computed(() => loaded.value && !failure.value && !reserved.value)
@@ -159,9 +161,13 @@ const empty = computed(() => loaded.value && !failure.value && !reserved.value)
 
 <template>
   <div class="desk-page automations" data-testid="automations">
-    <div class="desk-page-head">
-      <h1>{{ t.automations.title }}</h1>
-      <span class="desk-spacer" />
+    <header class="auto-hero">
+      <div class="auto-hero-copy">
+        <span class="auto-eyebrow"><i class="pi pi-bolt" /> {{ t.automations.group }}</span>
+        <h1>{{ t.automations.title }}</h1>
+        <p>{{ t.automations.intro }}</p>
+      </div>
+      <div class="auto-toolbar">
       <Button :label="t.automations.refresh" icon="pi pi-refresh" text severity="secondary" size="small" data-testid="automations-refresh" @click="load" />
       <Button :as="RouterLink" :to="{ name: 'flow-nodes' }" :label="t.automations.customNodes" icon="pi pi-box" text severity="secondary" size="small" data-testid="automations-nodes" />
       <Button
@@ -172,15 +178,15 @@ const empty = computed(() => loaded.value && !failure.value && !reserved.value)
         size="small"
         data-testid="automations-create"
       />
-    </div>
-    <p class="desk-muted">{{ t.automations.intro }}</p>
+      </div>
+    </header>
 
     <Message v-if="reserved" severity="secondary" :closable="false" data-testid="automations-reserved">{{ t.automations.reserved }}</Message>
     <Message v-else-if="failure" severity="error" :closable="false" data-testid="automations-failure">{{ failure }}</Message>
 
     <template v-if="empty">
       <section class="desk-card auto-section">
-        <h2>{{ t.automations.flows }}</h2>
+        <div class="auto-section-head"><div><i class="pi pi-sitemap" /><h2>{{ t.automations.flows }}</h2></div><span class="auto-count">{{ flowCount }}</span></div>
         <p v-if="!flows.length" class="desk-muted" data-testid="automations-no-flows">{{ t.automations.noFlows }}</p>
         <table v-else class="auto-table" data-testid="automations-flows">
           <thead>
@@ -223,7 +229,7 @@ const empty = computed(() => loaded.value && !failure.value && !reserved.value)
       </section>
 
       <section class="desk-card auto-section">
-        <h2>{{ t.automations.runs }}</h2>
+        <div class="auto-section-head"><div><i class="pi pi-history" /><h2>{{ t.automations.runs }}</h2></div><span class="auto-count">{{ runCount }}</span></div>
         <p v-if="!runs.length" class="desk-muted" data-testid="automations-no-runs">{{ t.automations.noRuns }}</p>
         <table v-else class="auto-table" data-testid="automations-runs">
           <thead>
@@ -289,19 +295,60 @@ const empty = computed(() => loaded.value && !failure.value && !reserved.value)
 <style scoped>
 .automations {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-block: 1.5rem 3rem;
+}
+
+.auto-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  padding: 1.35rem 1.5rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 14px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--p-primary-color) 7%, var(--p-content-background)), var(--p-content-background) 62%);
+}
+
+.auto-hero-copy { min-width: 0; }
+.auto-eyebrow { display: inline-flex; align-items: center; gap: .4rem; color: var(--p-primary-color); font-size: .75rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.auto-hero h1 { margin: .4rem 0 .35rem; font-size: clamp(1.5rem, 3vw, 1.9rem); letter-spacing: -.025em; }
+.auto-hero p { max-width: 48rem; margin: 0; color: var(--p-text-muted-color); line-height: 1.55; }
+.auto-toolbar { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: .35rem; }
+
+.automations :deep(.desk-card) {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 .auto-section {
   display: grid;
-  gap: 0.6rem;
+  gap: 0;
   min-width: 0;
 }
 
-.auto-section h2 {
-  font-size: 1rem;
-  margin: 0;
+.auto-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .9rem 1rem;
+  border-bottom: 1px solid var(--p-content-border-color);
 }
+
+.auto-section-head > div { display: flex; align-items: center; gap: .65rem; }
+.auto-section-head > div > i { color: var(--p-primary-color); }
+.auto-section h2 { font-size: .98rem; margin: 0; }
+.auto-count { min-width: 1.75rem; padding: .15rem .45rem; border: 1px solid var(--p-content-border-color); border-radius: 999px; color: var(--p-text-muted-color); text-align: center; font-size: .75rem; font-variant-numeric: tabular-nums; }
+.auto-section > .desk-muted { margin: 1rem; }
+.auto-table tbody tr:hover { background: var(--p-highlight-background); }
+.auto-table tr:last-child td { border-bottom: 0; }
+.auto-table th { font-size: .74rem; letter-spacing: .035em; text-transform: uppercase; background: var(--p-highlight-background); }
+.auto-table a { text-decoration: none; }
+.auto-table a:hover { text-decoration: underline; }
+.auto-error { color: var(--desk-danger); font-size: .82rem; }
 
 .auto-table {
   width: 100%;
@@ -333,6 +380,10 @@ const empty = computed(() => loaded.value && !failure.value && !reserved.value)
 }
 
 @media (max-width: 700px) {
+  .automations { padding-block: .75rem 2rem; }
+  .auto-hero { align-items: stretch; flex-direction: column; gap: 1rem; padding: 1rem; }
+  .auto-toolbar { justify-content: flex-start; }
+
   .auto-table thead {
     display: none;
   }

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useLiveDoctype } from '@/composables/useLive'
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
 import Menu from 'primevue/menu'
 import { computed, reactive, ref, watch } from 'vue'
 import CellValue from '@/components/CellValue.vue'
@@ -23,6 +25,7 @@ import { useLinks } from '@/stores/links'
  * suite ; si le serveur refuse, la carte revient et le motif est dit. Au clavier ou au toucher, le menu « Déplacer vers » fait de même.
  */
 const props = defineProps<{ doctype: string; meta: DocTypeMeta; filters: Filters }>()
+const emit = defineEmits<{ updated: [] }>()
 
 const PAGE = 20
 const { api } = useServices()
@@ -40,6 +43,15 @@ interface Column {
 const config = computed(() => props.meta.views?.kanban)
 const field = computed(() => props.meta.fields.find((f) => f.fieldname === config.value?.field))
 const columnNames = computed<string[]>(() => (Array.isArray(field.value?.options) ? field.value!.options : []))
+function columnIcon(value: string): string {
+  const key = value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  if (/rebut|reject|refus|cancel|annul/.test(key)) return 'pi-times-circle'
+  if (/desactiv|disabled|inactive|inactif|suspend/.test(key)) return 'pi-ban'
+  if (/actif|active|enabled|valide|approved/.test(key)) return 'pi-check-circle'
+  if (/cours|progress|processing|en cours/.test(key)) return 'pi-sync'
+  if (/fait|done|complete|termine|closed|cloture/.test(key)) return 'pi-check'
+  return 'pi-circle'
+}
 const cardFields = computed<FieldMeta[]>(() =>
   (config.value?.card_fields ?? []).map((n) => props.meta.fields.find((f) => f.fieldname === n)).filter((f): f is FieldMeta => !!f),
 )
@@ -166,10 +178,57 @@ const cell = (f: FieldMeta, r: DocRecord): string => {
   return formatCell(f, v)
 }
 const errors = computed(() => Object.values(board).find((c) => c.error)?.error ?? null)
+const addStatusOpen = ref(false)
+const newStatus = ref('')
+const savingStatus = ref(false)
+const removingStatus = ref<string | null>(null)
+
+async function addStatus(): Promise<void> {
+  const fieldname = field.value?.fieldname
+  const value = newStatus.value.trim()
+  if (!fieldname || !value || columnNames.value.includes(value)) return
+  savingStatus.value = true
+  try {
+    const current = await api.formOverride(props.doctype)
+    const values = current.config.options?.[fieldname] ?? []
+    await api.saveFormOverride(props.doctype, { ...current.config, options: { ...current.config.options, [fieldname]: [...values, value] } })
+    addStatusOpen.value = false
+    newStatus.value = ''
+    emit('updated')
+    notify.success(t.kanban.statusAdded(value))
+  } catch (e) {
+    notify.error(e)
+  } finally {
+    savingStatus.value = false
+  }
+}
+
+async function removeStatus(value: string): Promise<void> {
+  const fieldname = field.value?.fieldname
+  if (!fieldname || columnNames.value.length <= 1 || !columnNames.value.includes(value)) return
+  removingStatus.value = value
+  try {
+    const current = await api.formOverride(props.doctype)
+    const values = current.config.options?.[fieldname] ?? columnNames.value
+    const next = values.filter((item) => item !== value)
+    if (next.length === values.length) return
+    await api.saveFormOverride(props.doctype, { ...current.config, options: { ...current.config.options, [fieldname]: next } })
+    emit('updated')
+    notify.success(t.kanban.statusRemoved(value))
+  } catch (e) {
+    notify.error(e)
+  } finally {
+    removingStatus.value = null
+  }
+}
 </script>
 
 <template>
   <div class="kanban" data-testid="kanban" :aria-label="t.kanban.board(field?.label ?? config?.field ?? '')">
+    <div class="kanban-toolbar">
+      <span class="desk-muted">{{ t.kanban.board(field?.label ?? config?.field ?? '') }}</span>
+      <Button v-if="canWrite && field?.fieldtype === 'Select'" :label="t.kanban.addStatus" icon="pi pi-plus" size="small" outlined @click="addStatusOpen = true" />
+    </div>
     <p v-if="errors" class="desk-muted block-error" data-testid="kanban-error">{{ errors }}</p>
     <div class="kanban-board">
       <section
@@ -183,9 +242,24 @@ const errors = computed(() => Object.values(board).find((c) => c.error)?.error ?
       >
         <header class="kanban-head">
           <span class="kanban-dot" :class="`c-${columnNames.indexOf(column) % 8}`" aria-hidden="true" />
+          <i class="kanban-column-icon" :class="['pi', columnIcon(column)]" aria-hidden="true" />
           <h3 class="kanban-title">{{ field ? optionLabel(field, column) : column }}</h3>
           <span class="count" :data-testid="`kanban-count-${column}`">{{ board[column]?.total ?? 0 }}</span>
           <span class="desk-spacer" />
+          <Button
+            v-if="canWrite && field?.fieldtype === 'Select'"
+            icon="pi pi-trash"
+            text
+            rounded
+            size="small"
+            severity="secondary"
+            :disabled="columnNames.length <= 1 || removingStatus === column"
+            :loading="removingStatus === column"
+            :aria-label="t.kanban.removeStatus(column)"
+            :title="t.kanban.removeStatus(column)"
+            :data-testid="`kanban-delete-status-${column}`"
+            @click.stop="removeStatus(column)"
+          />
           <RouterLink
             v-if="canCreate"
             :to="{ name: 'new', params: { doctype }, query: { [config?.field ?? '']: column } }"
@@ -209,7 +283,8 @@ const errors = computed(() => Object.values(board).find((c) => c.error)?.error ?
             @dragend="(dragging = null), (over = null)"
           >
             <div class="kanban-card-head">
-              <FileThumb v-if="meta.image_field" :id="r.data[meta.image_field]" :size="28" round />
+              <FileThumb v-if="meta.image_field" :id="r.data[meta.image_field]" :size="44" round :alt="title(r)" />
+              <span v-else class="kanban-card-mark" aria-hidden="true"><i class="pi pi-file" /></span>
               <RouterLink :to="{ name: 'form', params: { doctype, name: r.name } }" class="kanban-card-title" :data-testid="`kanban-open-${r.name}`">{{ title(r) }}</RouterLink>
               <Button
                 v-if="draggable(r)"
@@ -250,5 +325,15 @@ const errors = computed(() => Object.values(board).find((c) => c.error)?.error ?
       </section>
     </div>
     <Menu ref="menu" :model="menuItems" popup />
+    <Dialog v-model:visible="addStatusOpen" modal :header="t.kanban.addStatus" :style="{ width: 'min(28rem, calc(100vw - 2rem))' }">
+      <form class="kanban-status-form" @submit.prevent="addStatus">
+        <label for="kanban-new-status">{{ t.kanban.statusName }}</label>
+        <InputText id="kanban-new-status" v-model="newStatus" autofocus maxlength="80" :placeholder="t.kanban.statusPlaceholder" />
+        <div class="kanban-status-actions">
+          <Button type="button" :label="t.kanban.cancel" text severity="secondary" @click="addStatusOpen = false" />
+          <Button type="submit" :label="t.kanban.addStatus" icon="pi pi-plus" :loading="savingStatus" :disabled="!newStatus.trim() || columnNames.includes(newStatus.trim())" />
+        </div>
+      </form>
+    </Dialog>
   </div>
 </template>

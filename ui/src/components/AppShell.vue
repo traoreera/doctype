@@ -171,11 +171,50 @@ const currentSpace = computed(() => {
   const doctype = typeof route.params.doctype === 'string' ? route.params.doctype : null
   return doctype ? workspaces.owning(doctype)?.name : undefined
 })
+interface NavCrumb { label: string; to?: { name: string; params?: Record<string, string> } }
+const navTrail = computed<NavCrumb[]>(() => {
+  const trail: NavCrumb[] = [{ label: t.home, to: { name: 'home' } }]
+  const page = String(route.name ?? '')
+  const doctype = typeof route.params.doctype === 'string' ? route.params.doctype : null
+  if (page === 'workspace') {
+    const ws = workspaces.byName(String(route.params.name))
+    if (ws) trail.push({ label: ws.label })
+  } else if (doctype) {
+    const owner = workspaces.owning(doctype)
+    if (owner) trail.push({ label: owner.label, to: { name: 'workspace', params: { name: owner.name } } })
+    const summary = (meta.summaries ?? []).find((item) => item.name === doctype)
+    trail.push({ label: summary?.label ?? doctype, to: { name: 'list', params: { doctype } } })
+    const leaf: Record<string, string> = {
+      form: String(route.params.name ?? ''), new: t.form.newTitle(summary?.label ?? doctype),
+      customize: t.formBuilder.menu, workflow: t.workflowBuilder.menu,
+      trash: t.trash.menu, 'print-builder': t.printBuilder.menu,
+      'dev-doctype': t.devBuilder.menuEdit,
+    }
+    if (leaf[page]) trail.push({ label: leaf[page]! })
+  } else {
+    const leaf: Record<string, string> = {
+      tasks: t.collab.tasks.title, shared: t.share.withMe, automations: t.automations.title,
+      settings: t.settings.title, home: t.home,
+    }
+    if (leaf[page] && page !== 'home') trail.push({ label: leaf[page]! })
+  }
+  return trail
+})
 const isOpen = (w: Workspace) => nav.expanded[w.name] ?? currentSpace.value === w.name
 const sectionsOf = (w: Workspace) => workspaces.sections(w)
 /** Un sous-module est déplié tant que l'utilisateur ne l'a pas replié (choix gardé sur cet appareil, comme celui des espaces). */
 const sectionKey = (w: Workspace, title: string) => `${w.name}/${title}`
-const sectionOpen = (w: Workspace, title: string) => nav.expanded[sectionKey(w, title)] ?? true
+const sectionActive = (w: Workspace, title: string): boolean => {
+  const doctype = typeof route.params.doctype === 'string' ? route.params.doctype : null
+  if (!doctype) return false
+  const section = sectionsOf(w).find((entry) => entry.title === title)
+  return !!section && section.items.some((item) => item.doctype === doctype)
+}
+const sectionOpen = (w: Workspace, title: string) => {
+  const explicit = nav.expanded[sectionKey(w, title)]
+  if (typeof explicit === 'boolean') return explicit
+  return sectionActive(w, title) || currentSpace.value === w.name
+}
 function toggleSection(w: Workspace, title: string): void {
   nav.expanded[sectionKey(w, title)] = !sectionOpen(w, title)
   writeNav({ collapsed: nav.collapsed, expanded: { ...nav.expanded } })
@@ -285,6 +324,13 @@ const items = computed(() => [
         <i v-else class="pi pi-th-large" />
         <span class="desk-brand-name" data-testid="brand-name">{{ prefs.name }}</span>
       </RouterLink>
+      <nav class="desk-breadcrumbs" :aria-label="t.nav.breadcrumbs" data-testid="breadcrumbs">
+        <template v-for="(crumb, i) in navTrail" :key="`${crumb.label}-${i}`">
+          <i v-if="i" class="pi pi-angle-right" aria-hidden="true" />
+          <RouterLink v-if="crumb.to && i < navTrail.length - 1" :to="crumb.to" :title="crumb.label">{{ crumb.label }}</RouterLink>
+          <span v-else :aria-current="i === navTrail.length - 1 ? 'page' : undefined" :title="crumb.label">{{ crumb.label }}</span>
+        </template>
+      </nav>
       <button type="button" class="desk-search" data-testid="search" @click="paletteOpen = true">
         <i class="pi pi-search" />
         <span class="desk-search-text">{{ t.palette.placeholder }}</span>
@@ -323,8 +369,8 @@ const items = computed(() => [
       </RouterLink>
       <h6>{{ t.workspace.spaces }}</h6>
       <div v-for="w in workspaces.items ?? []" :key="w.name" class="ws-item" :data-testid="`ws-${w.name}`">
-        <div class="desk-link ws-row" :class="{ 'router-link-active': currentSpace === w.name }">
-          <RouterLink class="ws-main" :to="{ name: 'workspace', params: { name: w.name } }"><i :class="piIcon(w.icon, 'folder')" /><span>{{ w.label }}</span></RouterLink>
+        <div class="desk-link ws-row" :class="{ 'router-link-active': currentSpace === w.name, 'ws-current': currentSpace === w.name }">
+          <RouterLink class="ws-main" :to="{ name: 'workspace', params: { name: w.name } }" :aria-current="currentSpace === w.name ? 'page' : undefined"><i :class="piIcon(w.icon, 'folder')" /><span>{{ w.label }}</span></RouterLink>
           <button
             type="button"
             class="ws-toggle"
@@ -343,6 +389,8 @@ const items = computed(() => [
               v-if="sectionsOf(w).length > 1 && sec.title"
               type="button"
               class="ws-section"
+              :class="{ active: sectionActive(w, sec.title) }"
+              :data-active="sectionActive(w, sec.title) ? 'true' : 'false'"
               :aria-expanded="sectionOpen(w, sec.title)"
               :data-testid="`ws-section-${w.name}-${sec.title}`"
               @click="toggleSection(w, sec.title)"

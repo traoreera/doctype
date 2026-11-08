@@ -49,7 +49,7 @@ beforeEach(() => {
   narrowNow = false
   vi.stubGlobal(
     'matchMedia',
-    vi.fn(() => ({ matches: narrowNow, addEventListener: () => {}, removeEventListener: () => {} })),
+    vi.fn(() => ({ matches: narrowNow, addEventListener: () => { }, removeEventListener: () => { } })),
   )
 })
 
@@ -142,6 +142,15 @@ describe('barre latérale par espaces', () => {
     expect(sub(s, 'sales').exists()).toBe(false)
   })
 
+  it('la section du type courant reste visible et indiquée comme active', async () => {
+    const s = await shell('/app/Customer')
+    const section = s.w.find('[data-testid="ws-section-sales-Clients"]')
+    expect(section.exists()).toBe(true)
+    expect(section.attributes('aria-expanded')).toBe('true')
+    expect(section.attributes('data-active')).toBe('true')
+    expect(section.classes()).toContain('active')
+  })
+
   it('un clic sur la flèche déplie ou replie, et le choix est gardé', async () => {
     const s = await shell('/')
     expect(sub(s, 'stock').exists()).toBe(false)
@@ -162,7 +171,9 @@ describe('barre latérale par espaces', () => {
 
   it('l’espace de la page est en évidence', async () => {
     const s = await shell('/app/Bin')
+    const current = s.w.find('[data-testid="ws-stock"] .ws-main')
     expect(s.w.find('[data-testid="ws-stock"] .ws-row').classes()).toContain('router-link-active')
+    expect(current.attributes('aria-current')).toBe('page')
     expect(s.w.find('[data-testid="ws-sales"] .ws-row').classes()).not.toContain('router-link-active')
   })
 })
@@ -238,7 +249,7 @@ describe('en-tête', () => {
     await s.w.find('[data-testid="user-menu"]').trigger('click')
     await flushPromises()
     const files = [...document.body.querySelectorAll('.p-menu-item')].find((e) => e.textContent?.trim() === 'Fichiers')!
-    ;(files.querySelector('a, .p-menu-item-link') as HTMLElement).click()
+      ; (files.querySelector('a, .p-menu-item-link') as HTMLElement).click()
     await flushPromises()
     expect(s.router.currentRoute.value.name).toBe('files')
   })
@@ -248,7 +259,7 @@ describe('en-tête', () => {
     await s.w.find('[data-testid="user-menu"]').trigger('click')
     await flushPromises()
     const dark = [...document.body.querySelectorAll('.p-menu-item')].find((e) => e.textContent?.includes('Sombre'))!
-    ;(dark.querySelector('a, .p-menu-item-link') as HTMLElement).click()
+      ; (dark.querySelector('a, .p-menu-item-link') as HTMLElement).click()
     await flushPromises()
     expect(useTheme(s.pinia).mode).toBe('dark')
   })

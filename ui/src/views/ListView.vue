@@ -152,6 +152,9 @@ async function resetDashboard(scope: LayoutScope): Promise<void> {
   meta.value = await metaStore.refresh(props.doctype)
 }
 const quickField = computed(() => meta.value?.title_field ?? 'name')
+async function refreshKanbanMeta(): Promise<void> {
+  meta.value = await metaStore.refresh(props.doctype)
+}
 
 // ── Barre latérale : les valeurs d'un champ à choix et leur nombre (clic = filtrer) ─────────
 const SIDEBAR_KEY = 'xdt.desk.listSidebar'
@@ -603,7 +606,7 @@ function title(r: DocRecord): string {
 </script>
 
 <template>
-  <div class="desk-page">
+  <div class="desk-page list-page">
     <div class="desk-page-head">
       <h1 data-testid="list-title">{{ label }}</h1>
       <ViewSwitcher v-if="meta && views.length > 1" :views="views" :model-value="current" @update:model-value="choose" />
@@ -793,7 +796,7 @@ function title(r: DocRecord): string {
         </div>
         <BlockEditor ref="dashEditor" v-model:editing="dashEditing" :blocks="meta.views?.dashboard ?? []" :doctype="doctype" :layer="meta.views?.dashboard_layer" :shareable="meta.views?.dashboard_shareable" :save="saveDashboard" :reset="resetDashboard" />
       </div>
-      <KanbanView v-else-if="current === 'kanban'" :doctype="doctype" :meta="meta" :filters="applied" />
+      <KanbanView v-else-if="current === 'kanban'" :doctype="doctype" :meta="meta" :filters="applied" @updated="refreshKanbanMeta" />
       <CalendarView v-else-if="current === 'calendar'" :doctype="doctype" :meta="meta" :filters="applied" />
       <GanttView v-else-if="current === 'gantt'" :doctype="doctype" :meta="meta" :filters="applied" />
       <TreeView v-else-if="current === 'tree'" :doctype="doctype" :meta="meta" />

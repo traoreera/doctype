@@ -89,6 +89,7 @@ const unplaced = computed<string[]>(() => {
 function payload(): FormOverride {
   const out: FormOverride = { layout: toLayout(board.value) }
   if (config.value.fields && Object.keys(config.value.fields).length) out.fields = config.value.fields
+  if (config.value.options && Object.keys(config.value.options).length) out.options = config.value.options
   if (added.value.length) (out as { added?: AddedField[] }).added = added.value
   return out
 }

@@ -17,6 +17,7 @@ export const fr = {
   homeRecent: 'Récents',
   welcome: {
     greeting: (hour: number, name: string) => `${hour >= 5 && hour < 18 ? 'Bonjour' : 'Bonsoir'}${name ? `, ${name}` : ''}`,
+    intro: 'Retrouvez ici vos indicateurs, vos tâches et vos derniers documents.',
     tasks: (n: number, late: number) =>
       n === 0 ? 'Rien à faire : tout est à jour.' : `${n} tâche${n > 1 ? 's' : ''} à faire${late ? `, dont ${late} en retard` : ''}.`,
     todo: 'À faire',
@@ -716,6 +717,13 @@ export const fr = {
   },
   kanban: {
     empty: 'Aucun document',
+    addStatus: 'Ajouter un statut',
+    removeStatus: (value: string) => `Supprimer le statut « ${value} »`,
+    statusName: 'Nom du statut',
+    statusPlaceholder: 'Ex. : En attente',
+    statusAdded: (value: string) => `Statut « ${value} » ajouté`,
+    statusRemoved: (value: string) => `Statut « ${value} » supprimé`,
+    cancel: 'Annuler',
     more: 'Voir plus',
     moveTo: 'Déplacer vers',
     move: 'Déplacer',
@@ -861,6 +869,7 @@ export const fr = {
     tenant: 'Tenant',
     filterMenu: 'Filtrer le menu',
     menu: 'Ouvrir le menu',
+    breadcrumbs: 'Fil d’Ariane',
     skip: 'Aller au contenu',
     theme: 'Thème',
     themeLight: 'Clair',

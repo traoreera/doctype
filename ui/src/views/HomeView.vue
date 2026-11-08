@@ -85,14 +85,18 @@ const creatable = computed(() => {
 </script>
 
 <template>
-  <div class="desk-page">
-    <div class="desk-page-head"><h1>{{ t.home }}</h1></div>
-    <p class="home-greeting" data-testid="greeting">{{ t.welcome.greeting(new Date().getHours(), firstName) }}</p>
+  <div class="desk-page home-page">
+    <header class="home-hero">
+      <div class="home-hero-copy">
+        <span class="home-eyebrow"><i class="pi pi-sparkles" /> {{ t.home }}</span>
+        <h1>{{ t.welcome.greeting(new Date().getHours(), firstName) }}</h1>
+        <p>{{ t.welcome.intro }}</p>
+      </div>
+      <div v-if="creatable.length" class="home-create" data-testid="home-create" role="group" :aria-label="t.welcome.create">
+        <Button v-for="d in creatable" :key="d.name" :as="RouterLink" :to="{ name: 'new', params: { doctype: d.name } }" :label="d.label" icon="pi pi-plus" size="small" severity="secondary" :data-testid="`create-${d.name}`" />
+      </div>
+    </header>
     <p v-if="workspaces.items && !workspaces.items.length" class="desk-muted" data-testid="no-doctype">Aucun type de document n’est accessible avec ce compte.</p>
-
-    <div v-if="creatable.length" class="home-create" data-testid="home-create" role="group" :aria-label="t.welcome.create">
-      <Button v-for="d in creatable" :key="d.name" :as="RouterLink" :to="{ name: 'new', params: { doctype: d.name } }" :label="d.label" icon="pi pi-plus" size="small" severity="secondary" :data-testid="`create-${d.name}`" />
-    </div>
 
     <!-- Les chiffres d'abord : c'est ce qu'on vient lire en ouvrant l'application. Les cartes sont celles des espaces (BlockGrid), donc
          elles se cliquent vers la liste qu'elles comptent et portent les couleurs déclarées dans les YAML. -->
@@ -143,3 +147,37 @@ const creatable = computed(() => {
     </section>
   </div>
 </template>
+
+<style scoped>
+.home-page {
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-block: 1.5rem 3rem;
+}
+
+.home-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 14px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--p-primary-color) 7%, var(--p-content-background)), var(--p-content-background) 62%);
+}
+
+.home-hero-copy { min-width: 0; }
+.home-eyebrow { display: inline-flex; align-items: center; gap: .4rem; color: var(--p-primary-color); font-size: .75rem; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+.home-hero h1 { margin: .45rem 0 .35rem; font-size: clamp(1.6rem, 3vw, 2rem); letter-spacing: -.025em; }
+.home-hero-copy p { margin: 0; color: var(--p-text-muted-color); line-height: 1.5; }
+.home-hero .home-create { justify-content: flex-end; margin: 0; max-width: 52%; }
+.home-section { margin-bottom: 1.75rem; }
+.home-section > .home-title { margin-bottom: .75rem; }
+
+@media (max-width: 800px) {
+  .home-page { padding-block: .75rem 2rem; }
+  .home-hero { align-items: stretch; flex-direction: column; gap: 1rem; padding: 1rem; }
+  .home-hero .home-create { justify-content: flex-start; max-width: none; }
+}
+</style>

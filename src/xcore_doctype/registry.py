@@ -151,7 +151,7 @@ class DocTypeRegistry:
         """Toutes les définitions d'origine chargées, avec leur source (le registre d'essai du mode développeur les recharge)."""
         return list(self._origins.values())
 
-    def with_custom_fields(self, name: str, added: Sequence[Mapping[str, Any]]) -> CompiledDocType:
+    def with_custom_fields(self, name: str, added: Sequence[Mapping[str, Any]], options: Mapping[str, Sequence[str]] | None = None) -> CompiledDocType:
         """Le DocType vu par UNE organisation : sa définition, plus les champs qu'elle a ajoutés (process/programme.md §3.5).
 
         La fusion repasse par `parse_definition` puis par la compilation, comme une extension de plugin (D26) : toutes les règles
@@ -159,10 +159,14 @@ class DocTypeRegistry:
         faute de définition sort donc ici, en `InvalidDefinition`, et l'appelant la rend à celui qui a enregistré l'habillage.
         """
         compiled = self.get(name)
-        if not added:
+        if not added and not options:
             return compiled
         raw = compiled.definition.model_dump(mode="json", exclude_none=True)
         raw["fields"] = [*raw["fields"], *[dict(f) for f in added]]
+        for field in raw["fields"]:
+            additions = (options or {}).get(field["fieldname"])
+            if additions and field.get("fieldtype") == "Select":
+                field["options"] = list(dict.fromkeys([*(field.get("options") or []), *additions]))
         return self._compile(parse_definition(raw, source=f"habillage de {name}"), f"habillage de {name}")
 
     def _compile(self, defn: DocTypeDef, source: str) -> CompiledDocType:

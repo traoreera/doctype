@@ -22,7 +22,7 @@ const open = async (api: Record<string, unknown>, over: { meta?: DocTypeMeta; fi
 }
 
 const drag = async (w: ReturnType<typeof mountWith>['w'], card: string, toColumn: string) => {
-  await w.find(`[data-testid="kanban-card-${card}"]`).trigger('dragstart', { dataTransfer: { setData() {}, effectAllowed: '' } })
+  await w.find(`[data-testid="kanban-card-${card}"]`).trigger('dragstart', { dataTransfer: { setData() { }, effectAllowed: '' } })
   await w.find(`[data-testid="kanban-col-${toColumn}"]`).trigger('dragover')
   await w.find(`[data-testid="kanban-col-${toColumn}"]`).trigger('drop')
 }
@@ -97,6 +97,17 @@ describe('Kanban : les colonnes', () => {
     const readOnly = { ...TASK, rights: { ...TASK.rights, create: 'none' as const, write: 'none' as const } }
     const second = await open({ list: board({}) }, { meta: readOnly })
     expect(second.w.find('[data-testid="kanban-add-En cours"]').exists()).toBe(false)
+  })
+
+  it('un statut peut être supprimé depuis le kanban', async () => {
+    const formOverride = vi.fn(async () => ({ doctype: 'Task', config: { options: { state: columns } } }))
+    const save = vi.fn(async (_d: string, config: { options: Record<string, unknown> }) => ({ doctype: 'Task', config }))
+    const { w } = await open({ list: board({}), formOverride, saveFormOverride: save })
+    const button = w.find('[data-testid="kanban-delete-status-À faire"]')
+    expect(button.exists()).toBe(true)
+    await button.trigger('click')
+    await flushPromises()
+    expect(save).toHaveBeenCalledWith('Task', expect.objectContaining({ options: expect.objectContaining({ state: ['En cours', 'Fait'] }) }))
   })
 
   it('une erreur du serveur est dite sans casser le tableau', async () => {
@@ -215,7 +226,7 @@ describe('Kanban : déplacer une carte', () => {
     await flushPromises()
     const items = [...document.body.querySelectorAll('.p-menu-item-label')].map((x) => x.textContent)
     expect(items).toEqual(['En cours', 'Fait']) // pas la colonne où elle est déjà
-    ;(document.body.querySelector('.p-menu-item-link') as HTMLElement).click()
+      ; (document.body.querySelector('.p-menu-item-link') as HTMLElement).click()
     await flushPromises()
     expect(update).toHaveBeenCalledWith('Task', 't1', 1, expect.objectContaining({ state: 'En cours' }))
   })

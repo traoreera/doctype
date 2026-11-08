@@ -19,6 +19,7 @@ export const en: Messages = {
   homeRecent: 'Recent',
   welcome: {
     greeting: (hour: number, name: string) => `${hour >= 5 && hour < 12 ? 'Good morning' : hour >= 12 && hour < 18 ? 'Good afternoon' : 'Good evening'}${name ? `, ${name}` : ''}`,
+    intro: 'Your key figures, tasks, and recent documents in one place.',
     tasks: (n: number, late: number) =>
       n === 0 ? 'Nothing to do: everything is up to date.' : `${n} task${n > 1 ? 's' : ''} to do${late ? `, ${late} overdue` : ''}.`,
     todo: 'To do',
@@ -718,6 +719,13 @@ export const en: Messages = {
   },
   kanban: {
     empty: 'No document',
+    addStatus: 'Add a status',
+    removeStatus: (value: string) => `Remove status “${value}”`,
+    statusName: 'Status name',
+    statusPlaceholder: 'E.g. Pending',
+    statusAdded: (value: string) => `Status “${value}” added`,
+    statusRemoved: (value: string) => `Status “${value}” removed`,
+    cancel: 'Cancel',
     more: 'See more',
     moveTo: 'Move to',
     move: 'Move',
@@ -863,6 +871,7 @@ export const en: Messages = {
     tenant: 'Tenant',
     filterMenu: 'Filter the menu',
     menu: 'Open the menu',
+    breadcrumbs: 'Breadcrumb navigation',
     skip: 'Skip to content',
     theme: 'Theme',
     themeLight: 'Light',

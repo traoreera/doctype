@@ -437,6 +437,18 @@ export interface FieldBase {
 export interface FormOverride {
   layout?: LayoutSection[]
   fields?: Record<string, FieldTweak>
+  /** Valeurs ajoutées par l'organisation aux Select déclarés par le type. */
+  options?: Record<string, string[]>
+  added?: Array<{
+    fieldname: string
+    fieldtype: string
+    label?: string
+    description?: string
+    required?: boolean
+    options?: string[]
+    decimals?: number
+    in_list_view?: boolean
+  }>
 }
 
 /** Ce qu'une organisation RESSERRE sur une transition (genre `workflow`, process/programme.md §3.6) : jamais un desserrage. */

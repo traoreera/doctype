@@ -157,7 +157,7 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
     if not isinstance(config, dict):
         raise ValidationFailed("habillage de formulaire : le corps doit être un objet")
     check_size(config, "habillage de formulaire")
-    unknown = set(config) - {"layout", "fields", "added"}  # `added` : les champs que l'organisation ajoute au type (§3.5)
+    unknown = set(config) - {"layout", "fields", "added", "options"}  # `options` : valeurs ajoutées aux Select du type
     if unknown:
         raise ValidationFailed(f"habillage de formulaire : clés inconnues {sorted(unknown)}")
     definition = compiled.definition
@@ -265,6 +265,39 @@ def validate_form_override(compiled: Any, config: object) -> dict[str, Any]:
 
     if cleaned_added is not None:
         out["added"] = cleaned_added
+    options = config.get("options")
+    if options is not None:
+        if not isinstance(options, dict):
+            raise ValidationFailed("habillage de formulaire : `options` doit être un objet")
+        if len(options) > MAX_FORM_TWEAKS:
+            raise ValidationFailed("trop de Select retouchés", code="override_too_large")
+        clean_options: dict[str, list[str]] = {}
+        problems = []
+        for name, values in options.items():
+            field = fields.get(name)
+            if field is None or field.fieldtype != "Select":
+                problems.append(f"options.{name}: champ Select inconnu")
+                continue
+            if not isinstance(values, list) or len(values) > 100:
+                problems.append(f"options.{name}: au plus 100 valeurs texte")
+                continue
+            base = set(field.options or [])
+            seen: set[str] = set()
+            cleaned_values: list[str] = []
+            for i, value in enumerate(values):
+                if not isinstance(value, str) or not value.strip() or len(value.strip()) > 80:
+                    problems.append(f"options.{name}.{i}: texte de 1 à 80 caractères")
+                elif value.strip() in base or value.strip() in seen:
+                    problems.append(f"options.{name}.{i}: valeur déjà présente")
+                else:
+                    seen.add(value.strip())
+                    cleaned_values.append(value.strip())
+            if cleaned_values:
+                clean_options[name] = cleaned_values
+        if problems:
+            raise ValidationFailed("habillage de formulaire invalide : " + "; ".join(problems))
+        if clean_options:
+            out["options"] = clean_options
     return out
 
 
@@ -482,6 +515,13 @@ def apply_form_override(meta: dict[str, Any], config: Any, rules: FormRules | No
     """
     if not isinstance(config, dict):
         return
+    option_additions = config.get("options")
+    if isinstance(option_additions, dict):
+        for field in meta.get("fields", []):
+            additions = option_additions.get(field.get("fieldname"))
+            if field.get("fieldtype") == "Select" and isinstance(additions, list):
+                existing = field.get("options") if isinstance(field.get("options"), list) else []
+                field["options"] = list(dict.fromkeys([*existing, *(v for v in additions if isinstance(v, str) and v.strip())]))
     layout = config.get("layout")
     tweaks = config.get("fields")
     if isinstance(tweaks, dict):

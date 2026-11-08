@@ -796,7 +796,7 @@ class DocumentService:
         board, layer = (board_mine, "user") if board_mine else (board_org, "org") if board_org else (None, None)
         config = (found or {}).get("config")
         # Les champs que l'organisation a ajoutés font partie du type qu'on sert : sans cela le Desk ne les afficherait pas.
-        compiled = self._registry.with_custom_fields(doctype, (config or {}).get("added") or [])
+        compiled = self._registry.with_custom_fields(doctype, (config or {}).get("added") or [], (config or {}).get("options") or {})
         # L'automate tel que l'organisation le vit : ses états et transitions ajoutés, ce qu'elle resserre (§3.6).
         merged, rules = effective_workflow(compiled, (flow or {}).get("config"))
         return self.get_meta(
@@ -836,6 +836,10 @@ class DocumentService:
                 self._registry.with_custom_fields(doctype, added)
             except InvalidDefinition as e:
                 raise ValidationFailed(f"champ ajouté invalide : {e.message}", code="invalid_custom_field") from None
+        try:
+            self._registry.with_custom_fields(doctype, cleaned.get("added") or [], cleaned.get("options") or {})
+        except InvalidDefinition as e:
+            raise ValidationFailed(f"options de champ invalides : {e.message}", code="invalid_select_options") from None
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
             self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned, restricted=await q.restricted(write))
@@ -1935,7 +1939,7 @@ class DocumentService:
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, compiled.definition.name)
         config = (found or {}).get("config")
-        merged = self._registry.with_custom_fields(compiled.definition.name, (config or {}).get("added") or [])
+        merged = self._registry.with_custom_fields(compiled.definition.name, (config or {}).get("added") or [], (config or {}).get("options") or {})
         return merged, form_rules(merged, config)
 
     async def _form_rules(self, ctx: RequestContext, compiled: CompiledDocType) -> FormRules:
