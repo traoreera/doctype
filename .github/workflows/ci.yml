@@ -4,11 +4,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master] # la branche par défaut du dépôt (`main` n'existe pas : la CI ne tournait jamais sur un push)
   pull_request:
+  workflow_call: # la publication (publish.yml) la rejoue entière avant de construire le paquet
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
