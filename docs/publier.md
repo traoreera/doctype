@@ -12,9 +12,10 @@ ce dépôt, dans un environnement nommé, au moyen d'un jeton à usage unique fo
 | « Run workflow » (onglet Actions) | la CI complète → construction → contrôle → **TestPyPI** |
 
 La construction (`make build`) génère les modules embarqués depuis `vendor/`, construit le Desk (types vérifiés), puis lance
-`poetry build`. Le contrôle (`scripts/check_dist.py`, puis `twine check --strict`) refuse de publier dans quatre cas :
+`poetry build`. Le contrôle (`scripts/check_dist.py`, puis `twine check --strict`) refuse de publier dans ces cas :
 - le tag ne correspond pas à la version du `pyproject.toml` ;
-- il manque le Desk, un shim `main.py`, un plugin de plateforme ou une extension ;
+- le tag n'est pas une version stable (`v0.2.0rc1` ne déclenche pas la publication : une préversion s'essaie sur TestPyPI avec « Run workflow ») ;
+- il manque le Desk, un shim `main.py`, un plugin de plateforme ou une extension (ou, dans l'archive source, les sources du paquet) ;
 - un secret (`.env`, `*.pem`), une base `.db`, un cache ou `node_modules` est entré dans le paquet ;
 - la page PyPI n'a pas de description.
 

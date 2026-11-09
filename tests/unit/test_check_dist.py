@@ -20,7 +20,11 @@ GOOD = [
 METADATA = "Metadata-Version: 2.4\nName: xcore-doctype\nVersion: 1.2.3\nDescription-Content-Type: text/markdown\n"
 
 
-def build(tmp: Path, files: list[str], metadata: str = METADATA) -> Path:
+SDIST = ["pyproject.toml", "src/xcore_doctype/__init__.py", "src/xcore_doctype/plugin.py", "src/xcore_doctype/plugin_dir/src/main.py",
+         "src/xcore_doctype/ui/dist/index.html"]
+
+
+def build(tmp: Path, files: list[str], metadata: str = METADATA, sdist_files: list[str] = SDIST) -> Path:
     dist = tmp / "dist"
     dist.mkdir()
     with zipfile.ZipFile(dist / "xcore_doctype-1.2.3-py3-none-any.whl", "w") as wheel:
@@ -28,8 +32,9 @@ def build(tmp: Path, files: list[str], metadata: str = METADATA) -> Path:
             wheel.writestr(name, "")
         wheel.writestr("xcore_doctype-1.2.3.dist-info/METADATA", metadata)
     src = tmp / "xcore_doctype-1.2.3"
-    (src / "src/xcore_doctype/ui/dist").mkdir(parents=True)
-    (src / "src/xcore_doctype/ui/dist/index.html").write_text("")
+    for name in sdist_files:
+        (src / name).parent.mkdir(parents=True, exist_ok=True)
+        (src / name).write_text("")
     with tarfile.open(dist / "xcore_doctype-1.2.3.tar.gz", "w:gz") as sdist:
         sdist.add(src, arcname=src.name)
     return dist
@@ -51,3 +56,10 @@ def test_a_missing_desk_a_leaked_secret_and_a_wrong_version_are_all_refused(tmp_
 def test_a_package_without_readme_has_no_pypi_page(tmp_path, capsys):
     assert check_dist.main([str(build(tmp_path, GOOD, METADATA.replace("Description-Content-Type: text/markdown\n", "")))]) == 1
     assert "README" in capsys.readouterr().err
+
+
+def test_a_source_archive_without_the_package_sources_is_refused(tmp_path, capsys):
+    assert check_dist.main([str(build(tmp_path, GOOD, sdist_files=["src/xcore_doctype/ui/dist/index.html"]))]) == 1
+    err = capsys.readouterr().err
+    for said in ("pyproject.toml", "src/xcore_doctype/__init__.py", "src/xcore_doctype/plugin.py"):
+        assert f"il manque {said}" in err

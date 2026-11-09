@@ -35,6 +35,8 @@ REQUIRED = [
     *(f"{PKG}/platform/{name}/plugin.yaml" for name in ("xflow", "xlicense", "xpulse", "xprint")),
     *(re.compile(rf"^{PKG}/ext/{name}/.+\.py$") for name in ("pubsub", "xstorage", "xwebsocket", "xpay")),
 ]
+# Ce que l'archive source doit porter pour qu'un `pip install` depuis elle donne un paquet importable.
+SDIST_REQUIRED = ["pyproject.toml", f"src/{PKG}/__init__.py", f"src/{PKG}/plugin.py", f"src/{PKG}/plugin_dir/src/main.py"]
 # Ce qui ne doit JAMAIS partir : secrets et bases de développement, caches, dépendances du Desk, l'hôte de développement.
 FORBIDDEN = [
     re.compile(r"(^|/)\.env(\.|$)"),
@@ -85,6 +87,9 @@ def check_sdist(path: Path, version: str | None) -> list[str]:
     for name in names:
         if any(p.search(name) for p in FORBIDDEN):
             problems.append(f"{path.name} : ne doit pas contenir {name}")
+    for source in SDIST_REQUIRED:
+        if source not in names:
+            problems.append(f"{path.name} : il manque {source} (l'archive source ne s'installerait pas)")
     if not any(n.startswith(f"src/{PKG}/ui/dist/") for n in names):
         problems.append(f"{path.name} : le Desk construit est absent (un build depuis l'archive source n'aurait pas d'interface)")
     if version and f"-{version}.tar.gz" not in path.name:

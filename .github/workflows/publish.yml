@@ -10,7 +10,8 @@ name: Publier sur PyPI
 
 on:
   push:
-    tags: ["v*.*.*"]
+    # Une version STABLE seulement (`v1.2.3`) : un tag de préversion (`v1.2.3rc1`) ne doit jamais partir sur PyPI.
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
   workflow_dispatch:
 
 concurrency:
@@ -54,6 +55,10 @@ jobs:
         run: |
           version="$(poetry version --short)"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_EVENT_NAME}" == push && ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Le tag ${GITHUB_REF_NAME} n'est pas une version stable vX.Y.Z : rien n'est publié sur PyPI (une préversion s'essaie sur TestPyPI)."
+            exit 1
+          fi
           if [[ "${GITHUB_REF}" == refs/tags/v* && "${GITHUB_REF_NAME#v}" != "${version}" ]]; then
             echo "::error::Le tag ${GITHUB_REF_NAME} ne correspond pas à la version du pyproject (${version}). Changez l'un ou l'autre."
             exit 1
