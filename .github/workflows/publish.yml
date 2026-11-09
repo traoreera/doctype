@@ -116,7 +116,8 @@ jobs:
   # ── PyPI : sur un tag seulement ──────────────────────────────────────────────────────────────────
   pypi:
     name: Publier sur PyPI
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Un tag POUSSÉ seulement : « Run workflow » lancé sur un tag reste un essai TestPyPI, jamais une vraie version.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     needs: build
     runs-on: ubuntu-latest
     environment:
