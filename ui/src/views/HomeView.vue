@@ -89,7 +89,7 @@ const creatable = computed(() => {
     <header class="home-hero">
       <div class="home-hero-copy">
         <span class="home-eyebrow"><i class="pi pi-sparkles" /> {{ t.home }}</span>
-        <h1>{{ t.welcome.greeting(new Date().getHours(), firstName) }}</h1>
+        <h1 data-testid="greeting">{{ t.welcome.greeting(new Date().getHours(), firstName) }}</h1>
         <p>{{ t.welcome.intro }}</p>
       </div>
       <div v-if="creatable.length" class="home-create" data-testid="home-create" role="group" :aria-label="t.welcome.create">
