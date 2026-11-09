@@ -160,7 +160,13 @@ class TestRowsThatOverflow:
         column = {"Datetime": "vu", "JSON": "notes"}[kind]
         report = await import_csv(svc, ADA, "Client", f"nom,{column}\nA,{text}\nB,\n")
         assert [r["ok"] for r in report["results"]] == [False, True]
-        assert report["results"][0]["details"][0] == {"field": column, "msg": "valeur hors limites", "type": "csv_value"}
+        detail = report["results"][0]["details"][0]
+        if kind == "JSON" and detail.get("type") == "value_error":
+            # Python ≥ 3.14.10 lit ce JSON sans `RecursionError` (mesuré en CI) : la cellule est alors refusée un cran plus loin, par la
+            # limite de profondeur du champ. Le refus reste celui de SA ligne, seul le message change avec la version de Python.
+            assert detail["field"] == column and "trop profond" in detail["msg"]
+        else:
+            assert detail == {"field": column, "msg": "valeur hors limites", "type": "csv_value"}
 
 
 class TestFile:

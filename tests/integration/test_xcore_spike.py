@@ -36,6 +36,11 @@ EXPECTED_ROUTES = sorted(
         ("GET", "/meta"),
         ("GET", "/meta/{doctype}"),
         ("GET", "/workspaces"),
+        # Le catalogue de l'éditeur d'automatisations (nœuds des plugins et de l'organisation, flownodes.py / flow_nodes_service.py).
+        ("GET", "/flow-catalog"),
+        ("GET", "/flow-nodes"),
+        ("PUT", "/flow-nodes"),
+        ("DELETE", "/flow-nodes/{plugin}/{action}"),
         ("GET", "/list/{doctype}"),
         ("GET", "/aggregate/{doctype}"),
         ("GET", "/search"),

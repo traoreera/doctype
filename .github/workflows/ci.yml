@@ -29,6 +29,10 @@ jobs:
         env:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: xdt
+          # Collation C.UTF-8 : un texte se trie octet par octet, comme le fait l'interpréteur en mémoire du moteur (memory.py) et
+          # comme la suite a été validée. L'image démarre sinon en en_US.utf8, où « joint-100 » passe avant « joint-1 » et
+          # « À approuver » avant « Brouillon » : la parité SQL/mémoire tombait (écart de collation connu, voir CLAUDE.md).
+          POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
         ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U postgres -d xdt"
