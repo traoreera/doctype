@@ -5,6 +5,12 @@
  */
 import { api, assert, config, launch, reporter } from './helpers.mjs'
 
+/** Ouvrir les sous-sections repliées d'un espace de la barre latérale (elles le sont hors de l'espace courant). */
+async function openSections(p, ws) {
+  const closed = p.locator(`[data-testid^="ws-section-${ws}-"][aria-expanded="false"]`)
+  for (let n = await closed.count(); n > 0; n = await closed.count()) await closed.first().click()
+}
+
 const cfg = config()
 const { browser, page, problems } = await launch()
 const r = reporter(cfg.shots)
@@ -47,6 +53,8 @@ try {
     await page.getByTestId('ws-sales').waitFor()
     await page.getByTestId('ws-stock').waitFor()
     await page.getByTestId('ws-toggle-sales').click()
+    // Depuis 40a5773, les sous-sections d'un espace qui n'est pas l'espace courant restent repliées : on les ouvre, comme l'utilisateur.
+    await openSections(page, 'sales')
     await page.locator('.desk-sidebar').getByRole('link', { name: 'Client', exact: true }).waitFor()
     await page.locator('.desk-sidebar').getByRole('link', { name: 'Pays' }).waitFor()
     await r.shot(page, '02-home')
@@ -539,6 +547,7 @@ try {
       await p.getByTestId('nav-toggle').click()
       await p.waitForFunction(() => document.querySelector('#desk-sidebar').getBoundingClientRect().x >= 0)
       await p.getByTestId('ws-toggle-stock').click()
+      await openSections(p, 'stock')
       await p.locator('#desk-sidebar').getByRole('link', { name: 'Mouvement de stock' }).click()
       await p.waitForURL(/#\/app\/Stock%20Entry$/)
       await p.waitForFunction(() => document.querySelector('#desk-sidebar').getBoundingClientRect().x < 0) // choisir une page referme le menu

@@ -1,0 +1,150 @@
+# Publication d'xcore-doctype sur PyPI (docs/publier.md).
+#
+# - Un tag `vX.Y.Z` poussé → toute la CI, puis le wheel et l'archive source construits et vérifiés, puis PyPI, puis une release GitHub
+#   qui porte les mêmes fichiers.
+# - « Run workflow » à la main → la même chose, publiée sur TestPyPI (pour essayer un `pip install` avant la vraie version).
+#
+# Aucun jeton stocké : « trusted publishing ». PyPI fait confiance à CE workflow de CE dépôt, dans l'environnement nommé, par un
+# jeton OIDC à usage unique (`id-token: write`). À configurer une fois sur pypi.org et test.pypi.org (docs/publier.md).
+name: Publier sur PyPI
+
+on:
+  push:
+    # Une version STABLE seulement (`v1.2.3`) : un tag de préversion (`v1.2.3rc1`) ne doit jamais partir sur PyPI.
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false # une publication commencée va au bout
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.14"
+  NODE_VERSION: "24"
+  POETRY_VERSION: "2.4.1"
+
+jobs:
+  # ── La CI complète d'abord : on ne publie jamais ce qui ne passe pas ses tests ────────────────────
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  # ── Construire une seule fois, vérifier, garder les fichiers ─────────────────────────────────────
+  build:
+    name: Construire et vérifier le paquet
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: pip install "poetry==${POETRY_VERSION}" twine
+
+      - name: Version du paquet (et, sur un tag, égale au tag)
+        id: version
+        run: |
+          version="$(poetry version --short)"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_EVENT_NAME}" == push && ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Le tag ${GITHUB_REF_NAME} n'est pas une version stable vX.Y.Z : rien n'est publié sur PyPI (une préversion s'essaie sur TestPyPI)."
+            exit 1
+          fi
+          if [[ "${GITHUB_REF}" == refs/tags/v* && "${GITHUB_REF_NAME#v}" != "${version}" ]]; then
+            echo "::error::Le tag ${GITHUB_REF_NAME} ne correspond pas à la version du pyproject (${version}). Changez l'un ou l'autre."
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: ui/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: ui/pnpm-lock.yaml
+
+      - name: Dépendances du Desk
+        run: pnpm -C ui install --frozen-lockfile
+
+      # `make build` = modules embarqués (vendor/) + Desk (types vérifiés) + `poetry build`.
+      - name: Construire le wheel et l'archive source
+        run: make build
+
+      - name: Contenu du paquet (Desk, shims, plugins de plateforme ; aucun secret)
+        run: python3 scripts/check_dist.py --version "${{ steps.version.outputs.version }}"
+
+      - name: Métadonnées lisibles par PyPI
+        run: twine check --strict dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  # ── TestPyPI : à la main, pour essayer avant la vraie version ────────────────────────────────────
+  testpypi:
+    name: Publier sur TestPyPI
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/xcore-doctype/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  # ── PyPI : sur un tag seulement ──────────────────────────────────────────────────────────────────
+  pypi:
+    name: Publier sur PyPI
+    # Un tag POUSSÉ seulement : « Run workflow » lancé sur un tag reste un essai TestPyPI, jamais une vraie version.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/xcore-doctype/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  # ── Une release GitHub qui porte exactement les fichiers publiés ────────────────────────────────
+  release:
+    name: Release GitHub
+    needs: [build, pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Créer la release du tag avec le wheel et l'archive source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" dist/* --repo "${GITHUB_REPOSITORY}" --title "xcore-doctype ${GITHUB_REF_NAME}" --generate-notes

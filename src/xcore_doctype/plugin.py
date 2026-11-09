@@ -6,6 +6,8 @@ au reload, xcore ne purge de `sys.modules` que le shim `xcore_plugin_xcore-docty
 
 from __future__ import annotations
 
+import weakref
+
 import base64
 import os
 import secrets
@@ -261,7 +263,9 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         root.include_router(build_public_files_router(file_service))  # servir : la signature de l'URL fait foi (pas de jeton dans une balise <img>)
         desk_extensions = DeskExtensions(desk.extensions, self.logger)  # D28 : ce que les plugins livrent au Desk, filtré par l'opérateur
         if desk.enabled:
-            root.include_router(build_desk_router(desk, desk_extensions, realtime=self._realtime_served, automations=self._automations_served))
+            # Par référence FAIBLE : le routeur public survit à l'instance (FastAPI et xcore le gardent un temps), et une méthode liée
+            # y retenait l'ancien plugin après un rechargement (`test_c7_reload…` : l'instance n'était plus jamais libérée).
+            root.include_router(build_desk_router(desk, desk_extensions, realtime=_weakly(self._realtime_served), automations=_weakly(self._automations_served)))
         self._router = root
         # Les plugins qui dépendent de nous (`requires: [xcore-doctype]`) y enregistrent leurs hooks de confiance...
         self.ctx.services[HOOKS_SERVICE] = hook_registry
@@ -1103,6 +1107,17 @@ def _timezone(name: Any) -> ZoneInfo:
         return ZoneInfo(name)
     except (ZoneInfoNotFoundError, ValueError, TypeError, OSError):
         raise ConfigurationError(f"doctype.timezone: fuseau inconnu {name!r} (attendu : nom IANA, ex. Europe/Paris)") from None
+
+
+def _weakly(method: Callable[[], bool]) -> Callable[[], bool]:
+    """Une méthode du plugin appelable sans retenir le plugin : une fois l'instance libérée, elle répond `False`."""
+    ref = weakref.WeakMethod(method)  # type: ignore[arg-type]
+
+    def call() -> bool:
+        bound = ref()
+        return bool(bound is not None and bound())
+
+    return call
 
 
 async def _done(**kw: Any) -> dict:

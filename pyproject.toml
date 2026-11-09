@@ -9,7 +9,19 @@ authors = [
 
 
 license = "MIT"
+readme = "README.md"
 requires-python = ">=3.14,<4.0"
+keywords = ["xcore", "doctype", "erp", "low-code", "fastapi", "vue"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
 dependencies = [
     # [sqlite] apporte SQLAlchemy asyncio + aiosqlite (développement)
     "xcoreruntime[sqlite] (>=2.9.1,<3.0.0)",
@@ -29,6 +41,12 @@ dependencies = [
     # xflow (plugin de plateforme, platform/xflow) : les expressions `transform`/`switch` de ses étapes
     "jmespath (>=1.0.1,<2.0.0)",
 ]
+
+[project.urls]
+Homepage = "https://github.com/traoreera/doctype"
+Repository = "https://github.com/traoreera/doctype"
+Documentation = "https://github.com/traoreera/doctype/blob/master/docs/guide.md"
+Issues = "https://github.com/traoreera/doctype/issues"
 
 [project.scripts]
 xcore-doctype = "xcore_doctype.cli:main"

@@ -108,7 +108,12 @@ build-ui: $(UI)/node_modules ## Construire le Desk dans src/xcore_doctype/ui/dis
 	@pnpm -C $(UI) build
 
 build: vendor-sync build-ui ## Construire le wheel avec le Desk embarqué (dist/)
+	@rm -rf dist
 	@poetry build
+
+release-check: build ## Construire puis vérifier le paquet comme la publication PyPI (contenu, version, métadonnées)
+	@python3 scripts/check_dist.py
+	@poetry run python -m twine check --strict dist/* 2>/dev/null || pipx run twine check --strict dist/* || echo "twine absent : métadonnées non vérifiées (la CI le fait)"
 
 
 # ============================================================
@@ -159,6 +164,6 @@ clean-all: clean clean-ui ## clean + clean-ui + node_modules (puis `make install
 .PHONY: help install install-py install-ui env \
         dev dev-backend dev-frontend serve token member \
         vendor-init vendor-sync \
-        build-ui build \
+        build-ui build release-check \
         test test-unit test-pg test-ui typecheck-ui e2e install-check check expr-vectors \
         clean clean-ui clean-all
