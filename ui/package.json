@@ -1,7 +1,7 @@
 {
   "name": "xcore-doctype-desk",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Desk de xcore-doctype : interface Vue 3 + PrimeVue, servie par le plugin (build dans ../src/xcore_doctype/ui/dist).",
   "packageManager": "pnpm@11.26.0",

@@ -32,7 +32,8 @@ La construction (`make build`) génère les modules embarqués depuis `vendor/`,
 
 ## Publier une version
 
-1. Changez la version : `poetry version 0.2.0` (ou à la main dans `pyproject.toml`).
+1. Changez la version au même numéro dans `pyproject.toml` (`poetry version 0.2.0`), `src/xcore_doctype/plugin_dir/plugin.yaml`,
+   `src/xcore_doctype/system_plugin_dir/plugin.yaml` et `ui/package.json` (`tests/unit/test_cli.py` refuse un manifeste en retard).
 2. Vérifiez en local, exactement comme la CI : `make release-check`.
 3. Commitez, puis fusionnez dans `master`.
 4. Posez et poussez le tag sur ce commit :
