@@ -1,5 +1,5 @@
 name: xcore-doctype
-version: 0.1.0
+version: 0.2.0
 author: traoreera
 description: Moteur de DocTypes et Desk pour xcore.
 framework_version: ">=2.9"
