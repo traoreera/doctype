@@ -28,3 +28,6 @@
 [submodule "vendor/xmailler"]
 	path = vendor/xmailler
 	url = https://github.com/xcore-team/xmailler.git
+[submodule "doctypes"]
+	path = doctypes
+	url = https://github.com/traoreera01/erpDoctype.git

@@ -1,5 +1,7 @@
 # Le jeu de DocTypes d'ERP (`doctypes/`)
 
+> Depuis le 10 novembre 2026, `doctypes/` est le sous-module Git public `https://github.com/traoreera01/erpDoctype`. Sa documentation de dépôt est dans `doctypes/README.md` et `doctypes/docs/erp-doctypes.md`. Le présent fichier reste l'historique détaillé des transformations et des invariants du moteur. Sur un clone neuf, exécuter `git submodule update --init --recursive` avant les tests ERP.
+
 **État au 27 oct. 2026.** 704 DocTypes répartis en 22 modules, migrés d'ERPNext (commit `b39a542`), puis réadaptés
 pour être réellement chargeables par le moteur. Les 5 espaces de travail vivent à côté, dans `workspaces/`.
 
