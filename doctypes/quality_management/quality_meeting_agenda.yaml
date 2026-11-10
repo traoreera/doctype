@@ -1,9 +1,0 @@
-schema_version: 1
-name: Quality Meeting Agenda
-label: Quality Meeting Agenda
-istable: true
-fields:
-- fieldname: agenda
-  label: Agenda
-  fieldtype: TextEditor
-  in_list_view: true
