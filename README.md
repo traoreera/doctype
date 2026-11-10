@@ -104,6 +104,15 @@ sont des grants à part (`stock:stock_entry:submit`). Voir `process/phase-a.md` 
 
 ## Développer
 
+Le jeu de DocTypes ERP est un sous-module Git public dans `doctypes/` (`traoreera01/erpDoctype`). Sur un clone neuf,
+initialisez-le avant les tests qui vérifient les définitions ERP :
+
+```bash
+git submodule update --init --recursive
+```
+
+Sa documentation, sa provenance et sa licence sont dans `doctypes/README.md` et `doctypes/docs/`.
+
 ```bash
 make install      # Poetry + pnpm
 make dev          # backend :8000 et Desk :5173 avec rechargement ; connexion : ADMIN_EMAIL / ADMIN_PASSWORD de .env (créé par make env)
