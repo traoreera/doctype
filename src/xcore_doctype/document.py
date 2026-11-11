@@ -40,11 +40,12 @@ from contextlib import asynccontextmanager
 from decimal import Decimal
 from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, tzinfo
+from functools import cached_property
 from types import MappingProxyType
 from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, Sequence
 
 from . import aggregation, compute, fieldtypes, integrity, memory
-from .builder import NO_RULES, NO_WORKFLOW_RULES, CompiledDocType, FormRules, WorkflowRules
+from .builder import NO_RULES, NO_WORKFLOW_RULES, CompiledDocType, FormRules, WorkflowRules, same_value
 from .expr import evaluate
 from .decimals import canonical
 from .context import RequestContext
@@ -72,7 +73,7 @@ from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Q
 from .registry import DocTypeRegistry
 from .mapping import already_done, map_document, nothing_left
 from .schema import DECIMAL_TYPES, FILE_TYPES, LINK_FILTER_REF, MAX_MAPPING_SOURCES, TODAY, DocTypeDef, FieldDef, NamingField
-from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer, kept
+from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
     KIND_DASHBOARD,
@@ -1986,8 +1987,7 @@ class DocumentService:
             {"field": f.fieldname, "msg": "Champ figé : le document est soumis", "type": "locked_after_submit"}
             for f in compiled.definition.fields
             if f.fieldname not in allowed
-            and clean.get(f.fieldname) != old.get(f.fieldname)
-            and not (f.fieldname in secrets and kept(clean.get(f.fieldname), old.get(f.fieldname)))
+            and not same_value(f, clean.get(f.fieldname), old.get(f.fieldname), secret=f.fieldname in secrets)
         ]
         if errors:
             raise ValidationFailed(details=errors)
@@ -2632,6 +2632,9 @@ class DocumentService:
             doc = await q.get(dt, nm, scope=Scope.everything("read"))
             return self._present(doc) if doc else None
 
+        # Les LECTURES de la transaction, sans le droit d'écrire : un `before_save` répond à « les pièces soumises de cet employé
+        # ce mois-ci » (`event.find`) sans qu'un plugin tienne son propre registre dans un champ caché.
+        reads = _Readings(self, ctx, q, "write")
         work = dict(data)
         for event in ("validate", "before_save", *(("before_insert",) if old is None else ())):
             for ref in hooks.for_event(event):
@@ -2641,7 +2644,7 @@ class DocumentService:
                 if fn is None:  # désenregistré entre le contrôle initial et maintenant
                     raise DoctypeError("hook_unavailable", "des hooks de ce DocType sont indisponibles", status=503)
                 view = MappingProxyType(dict(work)) if event == "validate" else work  # validate: lecture seule
-                await self._call_trusted(ref, fn(HookEvent(event, ctx, doctype, name, view, old_view, get)))
+                await self._call_trusted(ref, fn(HookEvent(event, ctx, doctype, name, view, old_view, get, None, reads)))
             work = finalize(work)  # un before_save peut tout modifier : le schéma et le périmètre font foi
         return work
 
@@ -3072,26 +3075,23 @@ class _TxWrites:
         self.saved += other.saved
 
 
-class _Transaction:
-    """`HookTransaction` : les écritures d'un hook transactionnel (`on_submit`, `on_cancel`…), dans la transaction ouverte par le service.
+class _Readings:
+    """`HookReadings` : ce qu'un hook LIT dans la transaction ouverte par le service, sans le droit d'y écrire.
 
-    Le service les a toutes sous la main (validation, liens, historique) : cette classe ne fait que les enchaîner dans l'ordre de
-    `DocumentService._create` / `update`, sans permission (code de confiance). Le DocType écrit garde ses règles : ses hooks de confiance
-    `validate`, `before_save` (et `before_insert` à la création) passent dans la transaction, `after_insert` / `after_save` après le commit,
-    et `on_update_after_submit` quand on change un champ `allow_on_submit` d'un document soumis. Ses hooks `action:` (plugins sandboxés,
-    hors transaction par construction) ne le peuvent pas : un tel type se refuse (`hook_not_supported`), plutôt que de s'écrire sans eux.
+    C'est la moitié lecture de `_Transaction`, dont elle est la base : `validate`, `before_save` et `before_insert` la reçoivent
+    (`HookEvent.find` / `.sum`), les hooks transactionnels l'ont à travers leur `tx`. Une seule implémentation, donc les mêmes
+    filtres typés, la même limite et le même périmètre système partout.
     """
 
-    def __init__(self, service: DocumentService, ctx: RequestContext, q: Query, event: str, *, depth: int = 0) -> None:
-        self._svc, self._ctx, self._q, self._depth = service, ctx, q, depth
-        self.writes = _TxWrites()  # ce que le hook a écrit : les règles de notification et les hooks `after_*` le voient APRÈS le commit, jamais avant
-        # Les liens se vérifient comme le ferait le système : la cible doit exister, pas être lisible par celui qui soumet
-        # (un magasinier soumet une sortie sans avoir le droit de lire les articles).
-        self._system = RequestContext.system(ctx.tenant_id, f"hook:{event}")
+    def __init__(self, service: DocumentService, ctx: RequestContext, q: Query, event: str) -> None:
+        self._svc, self._ctx, self._q, self._event = service, ctx, q, event
 
-    @property
-    def written(self) -> list[DocEvent]:
-        return self.writes.events
+    @cached_property
+    def _system(self) -> RequestContext:
+        """Les liens se vérifient comme le ferait le système : la cible doit exister, pas être lisible par celui qui soumet (un
+        magasinier soumet une sortie sans avoir le droit de lire les articles). Construit à la première lecture : toute écriture
+        passe par `_Readings`, même sans hook qui cherche quoi que ce soit."""
+        return RequestContext.system(self._ctx.tenant_id, f"hook:{self._event}")
 
     @property
     def today(self) -> date:
@@ -3143,6 +3143,28 @@ class _Transaction:
         # pour une valeur écrite quand le champ avait plus de décimales).
         total = sum((Decimal(v) for v in values if v is not None), Decimal(0))
         return total.quantize(Decimal(1).scaleb(-int(target.decimals or 0)))
+
+
+class _Transaction(_Readings):
+    """`HookTransaction` : les écritures d'un hook transactionnel (`on_submit`, `on_cancel`…), dans la transaction ouverte par le service.
+
+    Le service les a toutes sous la main (validation, liens, historique) : cette classe ne fait que les enchaîner dans l'ordre de
+    `DocumentService._create` / `update`, sans permission (code de confiance). Le DocType écrit garde ses règles : ses hooks de confiance
+    `validate`, `before_save` (et `before_insert` à la création) passent dans la transaction, `after_insert` / `after_save` après le commit,
+    et `on_update_after_submit` quand on change un champ `allow_on_submit` d'un document soumis. Ses hooks `action:` (plugins sandboxés,
+    hors transaction par construction) ne le peuvent pas : un tel type se refuse (`hook_not_supported`), plutôt que de s'écrire sans eux.
+
+    Elle LIT par `_Readings`, dont elle hérite : `get`, `find` et `sum` sont les mêmes pour un hook qui écrit et pour un `before_save`.
+    """
+
+    def __init__(self, service: DocumentService, ctx: RequestContext, q: Query, event: str, *, depth: int = 0) -> None:
+        super().__init__(service, ctx, q, event)
+        self._depth = depth
+        self.writes = _TxWrites()  # ce que le hook a écrit : les règles de notification et les hooks `after_*` le voient APRÈS le commit, jamais avant
+
+    @property
+    def written(self) -> list[DocEvent]:
+        return self.writes.events
 
     async def create(self, doctype: str, data: Mapping[str, Any], *, name: str | None = None) -> dict[str, Any]:
         compiled = self._writable(doctype)

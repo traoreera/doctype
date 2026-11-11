@@ -148,6 +148,24 @@ class HookTransaction(Protocol):
         annulé, il refuse (409 `document_locked`). C'est ainsi qu'un paiement soumis met à jour le reste dû de sa facture."""
 
 
+class HookReadings(Protocol):
+    """Les LECTURES qu'un hook peut faire dans la transaction en cours, sans le droit d'écrire quoi que ce soit.
+
+    `HookTransaction` les porte déjà pour les hooks qui écrivent (`on_submit`…) ; `validate`, `before_save` et `before_insert`,
+    eux, n'avaient que `get` : ils ne pouvaient pas répondre à « les feuilles d'heures soumises de cet employé pour ce mois ». Un
+    plugin en était réduit à tenir son propre registre dans un champ caché, et à contrôler sa péremption à la soumission.
+    """
+
+    async def find(
+        self, doctype: str, filters: Mapping[str, Any] | None = None, *, order_by: str = "name", descending: bool = False,
+        limit: int = 500,
+    ) -> list[dict[str, Any]]:
+        """Les documents de ce type (même tenant) qui répondent aux filtres, lus DANS la transaction du hook."""
+
+    async def sum(self, doctype: str, field: str, filters: Mapping[str, Any] | None = None) -> Decimal:
+        """La somme EXACTE d'un champ Decimal ou Currency sur les documents qui répondent aux filtres."""
+
+
 @dataclass(slots=True)
 class HookEvent:
     """Ce que reçoit un hook de confiance.
@@ -165,6 +183,11 @@ class HookEvent:
     `old` vaut `None` à la création. `name` vaut `None` pendant `validate`, `before_save` et `before_insert` d'une CRÉATION dans une série de
     numérotation ou nommée par un champ (`naming: {field: …}`) : le nom est attribué en dernier, juste avant l'insertion (pour la série, afin de ne
     tenir le compteur que le temps du commit, naming.py). `after_save` et `after_insert` reçoivent toujours le nom définitif.
+
+    LIRE : `event.get(doctype, name)` un document, `event.find(doctype, filters, …)` et `event.sum(doctype, champ, filters)` plusieurs
+    — dans TOUT hook qui tourne dans la transaction (y compris `validate` / `before_save` / `before_insert`, qui n'ont pas de `tx`) ;
+    après le commit (`after_*`) il n'y a plus de transaction et la recherche est refusée, avec `doctype_writer` pour la remplacer.
+    ÉCRIRE : seulement par `tx`, et seulement dans les hooks qui en ont un.
     """
 
     event: HookName
@@ -175,10 +198,40 @@ class HookEvent:
     old: Mapping[str, Any] | None
     _get: Callable[[str, str], Awaitable[dict[str, Any] | None]]
     tx: HookTransaction | None = None  # seulement pour `on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit` et `on_trash`
+    reads: HookReadings | None = None  # `find` / `sum` : tous les hooks de la transaction ; `tx` les porte quand il est là
+
+    def __post_init__(self) -> None:
+        if self.reads is None:
+            self.reads = self.tx  # un hook transactionnel lit par sa transaction : une seule implémentation
 
     async def get(self, doctype: str, name: str) -> dict[str, Any] | None:
         """Lit un document du même tenant, SANS filtre de permission : le code d'un hook de confiance en répond."""
         return await self._get(doctype, name)
+
+    async def find(
+        self, doctype: str, filters: Mapping[str, Any] | None = None, *, order_by: str = "name", descending: bool = False,
+        limit: int = 500,
+    ) -> list[dict[str, Any]]:
+        """Les documents qui répondent aux filtres (les MÊMES filtres typés que la liste), lus dans la transaction du hook et sans
+        filtre de permission. Disponible dans tout hook qui tourne DANS la transaction : `validate`, `before_save`,
+        `before_insert`, et les transactionnels (`on_submit`…), où c'est `tx.find`."""
+        return await self._readings().find(doctype, filters, order_by=order_by, descending=descending, limit=limit)
+
+    async def sum(self, doctype: str, field: str, filters: Mapping[str, Any] | None = None) -> Decimal:
+        """La somme exacte d'un champ Decimal ou Currency sur les documents qui répondent aux filtres (0 si aucun)."""
+        return await self._readings().sum(doctype, field, filters)
+
+    def _readings(self) -> HookReadings:
+        if self.reads is None:
+            # `after_insert` / `after_save` / `after_delete` tournent APRÈS le commit : il n'y a plus de transaction à lire. Le
+            # plugin a `doctype_writer` pour cela (ses droits, ses hooks, son historique).
+            raise DoctypeError(
+                "not_in_transaction",
+                f"{self.event} tourne après le commit : il n'y a pas de transaction où chercher. Utilisez le service "
+                "`doctype_writer` (`.system(<plugin>, tenant, raison)`), qui lit et écrit avec ses propres contrôles",
+                status=500,
+            )
+        return self.reads
 
 
 # ── Réglages ────────────────────────────────────────────────────────────────────────────────────

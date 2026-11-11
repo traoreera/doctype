@@ -205,6 +205,28 @@ class FormRules:
 NO_RULES = FormRules()
 
 
+def same_value(f: FieldDef, new: Any, before: Any, *, secret: bool = False) -> bool:
+    """Les deux valeurs d'un champ sont-elles LA MÊME ? La comparaison est canonisée par TYPE, parce qu'« absent » et la valeur par
+    défaut du type ne sont pas deux valeurs différentes. C'est la seule comparaison qui décide qu'un client a CHANGÉ un champ : elle
+    sert au contrôle `read_only` / `set_only_once` (`_condition_errors`) et au gel d'un document soumis (`_check_frozen`).
+
+    - `Boolean` : une case ABSENTE n'est pas cochée — « absent », `null` et `false` sont le même état. Sans cela, un document créé
+      sans la case (un champ ajouté après coup, un import, une pièce créée par un script) devenait IMPOSSIBLE à enregistrer dès que
+      le champ était `read_only` ou figé par la soumission : le Desk renvoie `false` pour une case non cochée, le moteur y voyait un
+      changement interdit, et le refusait même en contexte système.
+    - un secret renvoyé masqué tel qu'on l'a lu est resté tel qu'il était (`sealing.kept`), jamais comparé au secret chiffré.
+
+    Les autres types n'ont rien à canoniser : un `Decimal` est stocké sous sa forme canonique (`decimals.canonical` : « 1.0 » et
+    « 1.00 » sont la même chaîne), une date sous sa forme ISO, et pour tout le reste « absent » n'est pas « vide » (un texte effacé
+    est un changement).
+    """
+    if secret and kept(new, before):
+        return True
+    if f.fieldtype == "Boolean":
+        return bool(new) == bool(before)
+    return new == before
+
+
 @dataclass(frozen=True, slots=True)
 class WorkflowRules:
     """Ce que l'habillage de workflow d'une ORGANISATION resserre sur l'automate du YAML (`overrides.workflow_rules`, process/programme.md §3.6).
@@ -356,9 +378,8 @@ class CompiledDocType:
             # position que celle tenue pour les habillages, qui refusent de poser une règle sur ces champs.
             if f.compute is not None or f.fetch_from is not None:
                 continue
-            # Sur un secret, le masque renvoyé tel qu'on l'a lu est « inchangé » (`sealing.kept`), jamais comparé au secret chiffré.
             new, before = clean.get(f.fieldname), old.get(f.fieldname)
-            changed = new != before and not (f.fieldname in secrets and kept(new, before))
+            changed = not same_value(f, new, before, secret=f.fieldname in secrets)
             # `read_only` (toujours, du YAML ou de l'habillage) ou `read_only_depends_on` (vrai sur l'état AVANT) : un client ne change pas le champ ;
             # un hook, qui n'a pas `old`, le peut.
             read_only = f.read_only or f.fieldname in rules.read_only
