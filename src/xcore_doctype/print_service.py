@@ -451,8 +451,12 @@ def _filename(doctype: str, name: str, template: PrintTemplate) -> str:
 async def _render_pdf(html: str, background: Background | None) -> bytes:
     """Le PDF, rendu HORS de la boucle d'événements : PlutoPrint calcule en C pendant des dizaines de millisecondes
     (une demi-seconde au premier appel, le temps de charger les polices), et pendant ce temps-là l'application
-    entière ne répondait plus. Un fil de travail par impression ; le moteur ne partage rien entre deux `Book`."""
-    return await asyncio.to_thread(_pdf_bytes, html, background)
+    entière ne répondait plus. Un fil de travail par impression ; le moteur ne partage rien entre deux `Book`.
+
+    Sous le MÊME plafond que les impressions d'un plugin (`pdf.render_slot`) : dix impressions lancées ensemble font la queue
+    au lieu d'ouvrir dix moteurs de rendu."""
+    async with pdf_engine.render_slot():
+        return await asyncio.to_thread(_pdf_bytes, html, background)
 
 
 def _pdf_bytes(html: str, background: Background | None) -> bytes:
