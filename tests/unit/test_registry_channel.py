@@ -177,8 +177,13 @@ class TestChannel:
         # types d'autres plugins (xprint ne charge que les gabarits d'un type présent). Ce qu'un `load_*` raté apprendrait aussi.
         # `declare_xflow` DÉPOSE la description des nœuds et événements d'un plugin pour l'éditeur d'automatisations (flownodes.py),
         # retirée avec lui ; elle ne lit rien du registre.
+        # `translate` / `doctype_label` / `languages` (traoreera/doctype#68) rendent un LIBELLÉ traduit, rien de plus : le texte que
+        # le Desk afficherait, pour qu'un plugin l'écrive aussi sur un état imprimé au lieu de relire les catalogues lui-même.
+        # `doctype_label` est la seule à toucher le registre, et elle n'en sort que le `label` d'un type — pas sa définition, pas
+        # ses champs, pas ses permissions : la règle que ce test défend (on ne LIT pas les définitions compilées par le canal) tient.
         assert public == {"load_dir", "load_workspaces", "load_print_templates", "load_extensions", "load_desk",
-                          "load_translations", "declare_xflow", "unregister_owner", "settled", "has"}
+                          "load_translations", "declare_xflow", "unregister_owner", "settled", "has",
+                          "translate", "doctype_label", "languages"}
 
 
 class TestLiveRegistry:

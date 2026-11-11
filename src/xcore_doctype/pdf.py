@@ -19,6 +19,7 @@ Mesuré le 28 oct. 2026 sur plutoprint 0.23.0 / pypdf 6.21.3, et deux de ces fai
 
 from __future__ import annotations
 
+import asyncio
 import io
 from typing import Any
 
@@ -72,6 +73,34 @@ def to_pdf(html: str) -> bytes:
     out = io.BytesIO()
     book.write_to_pdf_stream(out)
     return out.getvalue()
+
+
+MAX_PARALLEL_RENDERS = 4
+_slots: asyncio.Semaphore | None = None
+
+
+def render_slot() -> asyncio.Semaphore:
+    """Le plafond de rendus SIMULTANÉS, partagé par toute impression (celle du moteur comme celle d'un plugin).
+
+    Sans lui, une rafale d'impressions lance un thread et un moteur de rendu par requête, et sature la machine au lieu de faire
+    la queue. Créé à la première impression : un sémaphore se lie à la boucle qui l'utilise.
+    """
+    global _slots
+    if _slots is None:
+        _slots = asyncio.Semaphore(MAX_PARALLEL_RENDERS)
+    return _slots
+
+
+async def to_pdf_async(html: str) -> bytes:
+    """Le même rendu que `to_pdf`, hors de la boucle d'événements et sous le plafond de `render_slot`.
+
+    `to_pdf` calcule en C pendant des dizaines de millisecondes (une demi-seconde au premier appel, le temps de charger les
+    polices), et plusieurs SECONDES sur un document long : appelé tel quel dans une route `async`, il fait attendre toutes les
+    requêtes des autres utilisateurs. C'est par ici que passe toute impression d'une route — moteur ou plugin ; `to_pdf` reste
+    pour les outils synchrones (CLI, tests).
+    """
+    async with render_slot():
+        return await asyncio.to_thread(to_pdf, html)
 
 
 def overlay(content: bytes, background: bytes, *, every_page: bool) -> bytes:

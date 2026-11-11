@@ -1070,6 +1070,32 @@ class DocTypeChannel:
             self._log.info("translations registered by plugin", plugin=owner, languages=languages)
         return languages
 
+    def translate(self, value: Any, *, lang: str, context: str | None = None) -> Any:
+        """La traduction de `value` dans `lang` par le catalogue CHARGÉ (celui du Desk, pas une copie) : un plugin qui écrit un
+        libellé côté serveur — un état imprimé, un message, un PDF — n'a plus à relire les `translations/*.yaml` lui-même.
+
+        `context` est la clé de contexte du catalogue (le nom du DocType pour un mot à deux sens, `Vehicle Service|Service`), la
+        même que celle qu'emploie `/meta`. Un texte sans traduction est rendu TEL QUEL : un libellé manquant n'est jamais vide.
+        Autre chose qu'un texte non vide (un nombre, `None`) est rendu inchangé.
+        """
+        return self._translations.text(lang, value, context)
+
+    def doctype_label(self, doctype: str, *, lang: str) -> str:
+        """Le libellé d'un DocType dans `lang` (« Facture de vente » pour `Sales Invoice`) : son `label` traduit, sinon son nom.
+        C'est ce qu'un état imprime pour dire la NATURE d'une pièce.
+
+        Un type INCONNU rend son nom au lieu de lever : un état parcourt le grand livre, où une écriture peut citer un type dont le
+        module n'est plus chargé — une ligne d'état ne doit pas faire échouer l'impression entière."""
+        try:
+            label = self._registry.get(doctype).definition.label if doctype else None
+        except NotFound:
+            label = None
+        return str(self._translations.text(lang, label or doctype, doctype))
+
+    def languages(self) -> list[str]:
+        """Les langues dont un catalogue est chargé (l'organisation choisit la sienne parmi elles)."""
+        return self._translations.languages()
+
     def load_print_templates(self, owner: str, directory: str | Path) -> list[str]:
         """Les gabarits d'impression que ce plugin livre (process/impression.md §2) : à appeler APRÈS `load_dir`,
         `…load_print_templates(self.ctx.name, dossier / "print")`. Un gabarit vise un DocType chargé."""
