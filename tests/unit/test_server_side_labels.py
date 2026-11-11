@@ -88,21 +88,85 @@ async def test_le_rendu_pdf_quitte_la_boucle_d_evenements(monkeypatch) -> None:
     assert where and where[0] != threading.main_thread().name
 
 
-async def test_une_rafale_d_impressions_fait_la_queue(monkeypatch) -> None:
-    """Au plus `MAX_PARALLEL_RENDERS` rendus à la fois : dix impressions lancées ensemble n'ouvrent pas dix moteurs de rendu."""
-    monkeypatch.setattr(engine, "_slots", None)  # un sémaphore par boucle : celui d'un autre test ne vaut rien ici
-    live, peak, lock = 0, 0, threading.Lock()
+async def test_une_rafale_d_impressions_ne_depasse_jamais_le_plafond(monkeypatch) -> None:
+    """Dix impressions lancées ensemble n'ouvrent pas dix moteurs de rendu.
+
+    Les faux rendus RESTENT dans le moteur (ils attendent que le test les libère) au lieu de durer un temps fixe : sans cela, le
+    test ne constatait que le chevauchement que l'ordonnanceur avait bien voulu produire, et il passait même sans plafond. Ici
+    l'égalité est stricte — sans le sémaphore, l'exécuteur en laisse entrer au moins cinq.
+    """
+    entered, lock, release = 0, threading.Lock(), threading.Event()
 
     def fake(html: str) -> bytes:
-        nonlocal live, peak
+        nonlocal entered
         with lock:
-            live += 1
-            peak = max(peak, live)
-        threading.Event().wait(0.02)
-        with lock:
-            live -= 1
+            entered += 1
+        release.wait(10)
         return b"%PDF-1.7"
 
     monkeypatch.setattr(engine, "to_pdf", fake)
-    await asyncio.gather(*(engine.to_pdf_async("<p>x</p>") for _ in range(10)))
-    assert 0 < peak <= engine.MAX_PARALLEL_RENDERS
+    burst = [asyncio.create_task(engine.to_pdf_async("<p>x</p>")) for _ in range(10)]
+    try:
+        for _ in range(500):  # attendre que le plafond soit atteint
+            with lock:
+                if entered >= engine.MAX_PARALLEL_RENDERS:
+                    break
+            await asyncio.sleep(0.01)
+        await asyncio.sleep(0.05)  # laisser à un rendu de trop le temps d'entrer, s'il n'y a pas de plafond
+        with lock:
+            assert entered == engine.MAX_PARALLEL_RENDERS
+    finally:
+        release.set()
+    assert await asyncio.gather(*burst) == [b"%PDF-1.7"] * 10
+
+
+async def test_une_attente_abandonnee_ne_rend_pas_sa_place_avant_la_fin_du_rendu(monkeypatch) -> None:
+    """Annuler un `asyncio.to_thread` n'arrête pas le fil : si la place était rendue à l'abandon, le rendu continuerait HORS du
+    plafond, et une rafale de requêtes interrompues (onglets fermés, délais dépassés) saturerait le processus.
+
+    Mesuré par le COMPORTEMENT, pas en lisant le sémaphore : un rendu abandonné puis `MAX_PARALLEL_RENDERS` autres lancés, et il
+    ne doit y en avoir que `MAX_PARALLEL_RENDERS` dans le moteur, pas un de plus.
+    """
+    entered, lock, release = 0, threading.Lock(), threading.Event()
+
+    def fake(html: str) -> bytes:
+        nonlocal entered
+        with lock:
+            entered += 1
+        release.wait(10)
+        return b"%PDF-1.7"
+
+    monkeypatch.setattr(engine, "to_pdf", fake)
+    abandoned = asyncio.create_task(engine.to_pdf_async("<p>x</p>"))
+    others: list[asyncio.Task[bytes]] = []
+    try:
+        for _ in range(500):
+            with lock:
+                if entered:
+                    break
+            await asyncio.sleep(0.01)
+        abandoned.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await abandoned
+
+        others = [asyncio.create_task(engine.to_pdf_async("<p>y</p>")) for _ in range(engine.MAX_PARALLEL_RENDERS)]
+        await asyncio.sleep(0.1)
+        with lock:
+            # Le rendu abandonné tient toujours sa place : les suivants n'en ont que MAX − 1 à se partager.
+            assert entered == engine.MAX_PARALLEL_RENDERS
+    finally:
+        release.set()
+    assert await asyncio.gather(*others) == [b"%PDF-1.7"] * engine.MAX_PARALLEL_RENDERS
+
+
+async def test_un_semaphore_par_boucle_car_il_se_lie_a_celle_qui_l_attend(monkeypatch) -> None:
+    """Un seul sémaphore de processus levait `RuntimeError` dès qu'une seconde boucle s'en servait — ce que font les tests (une
+    boucle par fonction) et tout outil qui appelle `asyncio.run` deux fois."""
+    monkeypatch.setattr(engine, "to_pdf", lambda html: b"%PDF-1.7")
+
+    def run_once() -> bytes:
+        return asyncio.run(engine.to_pdf_async("<p>x</p>"))
+
+    assert await asyncio.to_thread(run_once) == b"%PDF-1.7"
+    assert await asyncio.to_thread(run_once) == b"%PDF-1.7"  # une autre boucle : son propre sémaphore
+    assert await engine.to_pdf_async("<p>x</p>") == b"%PDF-1.7"  # celle du test, intacte

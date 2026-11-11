@@ -219,6 +219,12 @@ def same_value(f: FieldDef, new: Any, before: Any, *, secret: bool = False) -> b
     Les autres types n'ont rien à canoniser : un `Decimal` est stocké sous sa forme canonique (`decimals.canonical` : « 1.0 » et
     « 1.00 » sont la même chaîne), une date sous sa forme ISO, et pour tout le reste « absent » n'est pas « vide » (un texte effacé
     est un changement).
+
+    CE QUE CETTE FONCTION NE FAIT PAS : elle décide du REFUS, pas de ce qui est stocké. Un document d'avant la case qui se
+    réenregistre garde donc le `false` que le client a envoyé, et son historique montre une fois « — → false » (`versions.diff`
+    compare deux dictionnaires, sans connaître les types). C'est du bruit, pas une fausseté, et une seule fois par document ;
+    normaliser le STOCKAGE (comme une table vide, ramenée à « absent » par `validate_data`) changerait ce que les filtres et les
+    clients lisent sur des données déjà écrites, ce qui est une autre décision que celle-ci.
     """
     if secret and kept(new, before):
         return True
