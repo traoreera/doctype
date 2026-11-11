@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/telephony/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Téléphonie (telephony) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "T\u00e9l\u00e9phonie (telephony)";
+        var mkdocs_page_input_path = "reference/telephony.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/telephony/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Téléphonie (telephony)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#call-log">Call Log</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#incoming-call-handling-schedule">Incoming Call Handling Schedule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#incoming-call-settings">Incoming Call Settings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#telephony-call-type">Telephony Call Type</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#voice-call-settings">Voice Call Settings</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Téléphonie (telephony)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/telephony.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-telephonie-telephony">Référence des champs — Téléphonie (<code>telephony</code>)<a class="headerlink" href="#reference-des-champs-telephonie-telephony" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>telephony/</code> (5 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>30 champs au total ; types les plus fréquents : <code>Text</code> (14), <code>Select</code> (5), <code>Link</code> (4), <code>Datetime</code> (2), <code>Time</code> (2).</p>
+<h2 id="call-log">Call Log<a class="headerlink" href="#call-log" title="Permanent link">#</a></h2>
+<p><em>Call Log</em> — <code>telephony/call_log.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>phone</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>ID</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>from</code></td>
+<td>From</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>to</code></td>
+<td>To</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Ringing · In Progress · Completed · Failed · Busy · No Answer · Queued · Cancelled</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>recording_url</code></td>
+<td>Recording URL</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>medium</code></td>
+<td>Medium</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>Type</td>
+<td>Select — Incoming · Outgoing</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>links</code></td>
+<td>Links</td>
+<td>JSON</td>
+<td></td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td>Summary</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>start_time</code></td>
+<td>Start Time</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>end_time</code></td>
+<td>End Time</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>employee_user_id</code></td>
+<td>Employee User Id</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>type_of_call</code></td>
+<td>Type Of Call</td>
+<td>Link → <code>Telephony Call Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>call_received_by</code></td>
+<td>Call Received By</td>
+<td>Link → <code>Employee</code></td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="incoming-call-handling-schedule">Incoming Call Handling Schedule<a class="headerlink" href="#incoming-call-handling-schedule" title="Permanent link">#</a></h2>
+<p><em>Incoming Call Handling Schedule</em> — <code>telephony/incoming_call_handling_schedule.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>day_of_week</code></td>
+<td>Day Of Week</td>
+<td>Select — Monday · Tuesday · Wednesday · Thursday · Friday · Saturday · Sunday</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_time</code></td>
+<td>From Time</td>
+<td>Time</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To Time</td>
+<td>Time</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>agent_group</code></td>
+<td>Agent Group</td>
+<td>Link → <code>Employee Group</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="incoming-call-settings">Incoming Call Settings<a class="headerlink" href="#incoming-call-settings" title="Permanent link">#</a></h2>
+<p><em>Incoming Call Settings</em> — <code>telephony/incoming_call_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Titre</strong> : <code>call_routing</code></li>
+<li><strong>Icône</strong> : <code>phone-incoming</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>call_routing</code></td>
+<td>Call Routing</td>
+<td>Select — Sequential · Simultaneous</td>
+<td>colonne de liste; défaut <code>Sequential</code></td>
+</tr>
+<tr>
+<td><code>greeting_message</code></td>
+<td>Greeting Message</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>agent_busy_message</code></td>
+<td>Agent Busy Message</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>agent_unavailable_message</code></td>
+<td>Agent Unavailable Message</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>call_handling_schedule</code></td>
+<td>Call Handling Schedule</td>
+<td>Table → <code>Incoming Call Handling Schedule</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="telephony-call-type">Telephony Call Type<a class="headerlink" href="#telephony-call-type" title="Permanent link">#</a></h2>
+<p><em>Telephony Call Type</em> — <code>telephony/telephony_call_type.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>TCT-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>call_type</code></li>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>call_type</code></td>
+<td>Call Type</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="voice-call-settings">Voice Call Settings<a class="headerlink" href="#voice-call-settings" title="Permanent link">#</a></h2>
+<p><em>Voice Call Settings</em> — <code>telephony/voice_call_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Titre</strong> : <code>user</code></li>
+<li><strong>Icône</strong> : <code>phone-call</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user</code></td>
+<td>User</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>greeting_message</code></td>
+<td>Greeting Message</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>agent_busy_message</code></td>
+<td>Agent Busy Message</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>agent_unavailable_message</code></td>
+<td>Agent Unavailable Message</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>call_receiving_device</code></td>
+<td>Call Receiving Device</td>
+<td>Select — Computer · Phone</td>
+<td>défaut <code>Computer</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../support/" class="btn btn-neutral float-left" title="Support (support)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../utilities/" class="btn btn-neutral float-right" title="Utilitaires (utilities)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../support/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../utilities/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

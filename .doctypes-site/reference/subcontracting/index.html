@@ -1,0 +1,2209 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/subcontracting/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Sous-traitance (subcontracting) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Sous-traitance (subcontracting)";
+        var mkdocs_page_input_path = "reference/subcontracting.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/subcontracting/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Sous-traitance (subcontracting)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-bom">Subcontracting BOM</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-inward-order">Subcontracting Inward Order</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-inward-order-item">Subcontracting Inward Order Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-inward-order-received-item">Subcontracting Inward Order Received Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-inward-order-secondary-item">Subcontracting Inward Order Secondary Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-inward-order-service-item">Subcontracting Inward Order Service Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-order">Subcontracting Order</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-order-item">Subcontracting Order Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-order-service-item">Subcontracting Order Service Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-order-supplied-item">Subcontracting Order Supplied Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-receipt">Subcontracting Receipt</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-receipt-item">Subcontracting Receipt Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#subcontracting-receipt-supplied-item">Subcontracting Receipt Supplied Item</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Sous-traitance (subcontracting)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/subcontracting.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-sous-traitance-subcontracting">Référence des champs — Sous-traitance (<code>subcontracting</code>)<a class="headerlink" href="#reference-des-champs-sous-traitance-subcontracting" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>subcontracting/</code> (13 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>290 champs au total ; types les plus fréquents : <code>Link</code> (100), <code>Text</code> (41), <code>Decimal</code> (38), <code>Currency</code> (28), <code>Boolean</code> (13).</p>
+<h2 id="subcontracting-bom">Subcontracting BOM<a class="headerlink" href="#subcontracting-bom" title="Permanent link">#</a></h2>
+<p><em>Subcontracting BOM</em> — <code>subcontracting/subcontracting_bom.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>finished_good</code></li>
+<li><strong>Icône</strong> : <code>list-tree</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_active</code></td>
+<td>Is Active</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>finished_good</code></td>
+<td>Finished Good</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>finished_good_qty</code></td>
+<td>Finished Good Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>finished_good_bom</code></td>
+<td>Finished Good BOM</td>
+<td>Link → <code>BOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>service_item</code></td>
+<td>Service Item</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>service_item_qty</code></td>
+<td>Service Item Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>service_item_uom</code></td>
+<td>Service Item UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; — Service Item Qty / Finished Good Qty</td>
+</tr>
+<tr>
+<td><code>finished_good_uom</code></td>
+<td>Finished Good UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-inward-order">Subcontracting Inward Order<a class="headerlink" href="#subcontracting-inward-order" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Inward Order</em> — <code>subcontracting/subcontracting_inward_order.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SIO-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>package-plus</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — SCI-ORD-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Subcontracting Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>customer_name</code></td>
+<td>Customer Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>customer.customer_name</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Subcontracting Inward Order Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>service_items</code></td>
+<td>Service Items</td>
+<td>Table → <code>Subcontracting Inward Order Service Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>received_items</code></td>
+<td>Required Items</td>
+<td>Table → <code>Subcontracting Inward Order Received Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Open · Ongoing · Produced · Delivered · Returned · Cancelled · Closed</td>
+<td><strong>requis</strong>; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>per_delivered</code></td>
+<td>% Delivered</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>per_produced</code></td>
+<td>% Produced</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>per_process_loss</code></td>
+<td>% Process Loss</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>set_delivery_warehouse</code></td>
+<td>Set Delivery Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_warehouse</code></td>
+<td>Customer Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>per_returned</code></td>
+<td>% Returned</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>per_raw_material_returned</code></td>
+<td>% Raw Material Returned</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>per_raw_material_received</code></td>
+<td>% Raw Material Received</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Customer Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>secondary_items</code></td>
+<td>Secondary Items</td>
+<td>Table → <code>Subcontracting Inward Order Secondary Item</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-inward-order-item">Subcontracting Inward Order Item<a class="headerlink" href="#subcontracting-inward-order-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Inward Order Item</em> — <code>subcontracting/subcontracting_inward_order_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bom</code></td>
+<td>BOM</td>
+<td>Link → <code>BOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>include_exploded_items</code></td>
+<td>Include Exploded Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>delivered_qty</code></td>
+<td>Delivered Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>returned_qty</code></td>
+<td>Returned Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order_item</code></td>
+<td>Sales Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>subcontracting_conversion_factor</code></td>
+<td>Subcontracting Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>produced_qty</code></td>
+<td>Produced Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>process_loss_qty</code></td>
+<td>Process Loss Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>delivery_warehouse</code></td>
+<td>Delivery Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-inward-order-received-item">Subcontracting Inward Order Received Item<a class="headerlink" href="#subcontracting-inward-order-received-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Inward Order Received Item</em> — <code>subcontracting/subcontracting_inward_order_received_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main_item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>rm_item_code</code></td>
+<td>Raw Material Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>bom_detail_no</code></td>
+<td>BOM Detail No</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>required_qty</code></td>
+<td>Required Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>received_qty</code></td>
+<td>Received Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>consumed_qty</code></td>
+<td>Consumed Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>returned_qty</code></td>
+<td>Returned Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>work_order_qty</code></td>
+<td>Work Order Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_customer_provided_item</code></td>
+<td>Is Customer Provided Item</td>
+<td>Boolean</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>billed_qty</code></td>
+<td>Billed Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_additional_item</code></td>
+<td>Is Additional Item</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-inward-order-secondary-item">Subcontracting Inward Order Secondary Item<a class="headerlink" href="#subcontracting-inward-order-secondary-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Inward Order Secondary Item</em> — <code>subcontracting/subcontracting_inward_order_secondary_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>produced_qty</code></td>
+<td>Produced Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>0.000</code></td>
+</tr>
+<tr>
+<td><code>delivered_qty</code></td>
+<td>Delivered Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>0.000</code></td>
+</tr>
+<tr>
+<td><code>fg_item_code</code></td>
+<td>Finished Good Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>secondary_item_type</code></td>
+<td>Type</td>
+<td>Select — Co-Product · By-Product · Scrap · Additional Finished Good</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-inward-order-service-item">Subcontracting Inward Order Service Item<a class="headerlink" href="#subcontracting-inward-order-service-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Inward Order Service Item</em> — <code>subcontracting/subcontracting_inward_order_service_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>colonne de liste; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>fg_item</code></td>
+<td>Finished Good Item</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>fg_item_qty</code></td>
+<td>Finished Good Item Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>sales_order_item</code></td>
+<td>Sales Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-order">Subcontracting Order<a class="headerlink" href="#subcontracting-order" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Order</em> — <code>subcontracting/subcontracting_order.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SUOR-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>shopping-bag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — SC-ORD-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>purchase_order</code></td>
+<td>Subcontracting Purchase Order</td>
+<td>Link → <code>Purchase Order</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Job Worker</td>
+<td>Link → <code>Supplier</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier_name</code></td>
+<td>Job Worker Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>supplier.supplier_name</code></td>
+</tr>
+<tr>
+<td><code>supplier_warehouse</code></td>
+<td>Job Worker Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required By</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>supplier_address</code></td>
+<td>Job Worker Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>address_display</code></td>
+<td>Job Worker Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Job Worker Contact</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_display</code></td>
+<td>Contact Name</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_mobile</code></td>
+<td>Contact Mobile No</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_email</code></td>
+<td>Contact Email</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>shipping_address</code></td>
+<td>Company Shipping Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_address_display</code></td>
+<td>Shipping Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>billing_address</code></td>
+<td>Company Billing Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_address_display</code></td>
+<td>Billing Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>set_warehouse</code></td>
+<td>Set Target Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— Sets 'Warehouse' in each row of the Items table.</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Subcontracting Order Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_qty</code></td>
+<td>Total Quantity</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total</code></td>
+<td>Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>service_items</code></td>
+<td>Service Items</td>
+<td>Table → <code>Subcontracting Order Service Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>set_reserve_warehouse</code></td>
+<td>Set Reserve Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— Sets 'Reserve Warehouse' in each row of the Supplied Items table.</td>
+</tr>
+<tr>
+<td><code>supplied_items</code></td>
+<td>Supplied Items</td>
+<td>Table → <code>Subcontracting Order Supplied Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>additional_costs</code></td>
+<td>Additional Costs</td>
+<td>Table → <code>Landed Cost Taxes and Charges</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_additional_costs</code></td>
+<td>Total Additional Costs</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Open · Partially Received · Completed · Material Transferred · Partial Material Transferred · Cancelled · Closed</td>
+<td><strong>requis</strong>; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>per_received</code></td>
+<td>% Received</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>select_print_heading</code></td>
+<td>Print Heading</td>
+<td>Link → <code>Print Heading</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>letter_head</code></td>
+<td>Letter Head</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>distribute_additional_costs_based_on</code></td>
+<td>Distribute Additional Costs Based On</td>
+<td>Select — Qty · Amount</td>
+<td>défaut <code>Qty</code></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>supplier_currency</code></td>
+<td>Job Worker Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>conversion_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>reserve_stock</code></td>
+<td>Reserve Stock</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>production_plan</code></td>
+<td>Production Plan</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-order-item">Subcontracting Order Item<a class="headerlink" href="#subcontracting-order-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Order Item</em> — <code>subcontracting/subcontracting_order_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required By</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>expected_delivery_date</code></td>
+<td>Expected Delivery Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>manufacturer</code></td>
+<td>Manufacturer</td>
+<td>Link → <code>Manufacturer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>manufacturer_part_no</code></td>
+<td>Manufacturer Part Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>bom</code></td>
+<td>BOM</td>
+<td>Link → <code>BOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>include_exploded_items</code></td>
+<td>Include Exploded Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>service_cost_per_qty</code></td>
+<td>Service Cost Per Qty</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_cost_per_qty</code></td>
+<td>Additional Cost Per Qty</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>rm_cost_per_qty</code></td>
+<td>Raw Material Cost Per Qty</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>page_break</code></td>
+<td>Page Break</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>received_qty</code></td>
+<td>Received Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>returned_qty</code></td>
+<td>Returned Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>material_request_item</code></td>
+<td>Material Request Item</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>purchase_order_item</code></td>
+<td>Purchase Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>job_card</code></td>
+<td>Job Card</td>
+<td>Link → <code>Job Card</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>subcontracting_conversion_factor</code></td>
+<td>Subcontracting Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>production_plan_sub_assembly_item</code></td>
+<td>Production Plan Sub Assembly Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-order-service-item">Subcontracting Order Service Item<a class="headerlink" href="#subcontracting-order-service-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Order Service Item</em> — <code>subcontracting/subcontracting_order_service_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>colonne de liste; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_supplier_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_supplier_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate</code></td>
+<td>Rate (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_amount</code></td>
+<td>Amount (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>fg_item</code></td>
+<td>Finished Good Item</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>fg_item_qty</code></td>
+<td>Finished Good Item Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>purchase_order_item</code></td>
+<td>Purchase Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>material_request_item</code></td>
+<td>Material Request Item</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-order-supplied-item">Subcontracting Order Supplied Item<a class="headerlink" href="#subcontracting-order-supplied-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Order Supplied Item</em> — <code>subcontracting/subcontracting_order_supplied_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main_item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>rm_item_code</code></td>
+<td>Raw Material Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>reserve_warehouse</code></td>
+<td>Reserve Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>bom_detail_no</code></td>
+<td>BOM Detail No</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>required_qty</code></td>
+<td>Required Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>supplied_qty</code></td>
+<td>Supplied Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>consumed_qty</code></td>
+<td>Consumed Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>returned_qty</code></td>
+<td>Returned Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_supplied_qty</code></td>
+<td>Total Supplied Qty</td>
+<td>Decimal</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>stock_reserved_qty</code></td>
+<td>Reserved Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-receipt">Subcontracting Receipt<a class="headerlink" href="#subcontracting-receipt" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Receipt</em> — <code>subcontracting/subcontracting_receipt.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SURE-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>package-check</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — MAT-SCR-.YYYY.- · MAT-SCR-RET-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Job Worker</td>
+<td>Link → <code>Supplier</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier_name</code></td>
+<td>Job Worker Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>supplier.supplier_name</code></td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>posting_time</code></td>
+<td>Posting Time</td>
+<td>Time</td>
+<td><strong>requis</strong>; — Time at which materials were received</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier_address</code></td>
+<td>Select Job Worker Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Contact Person</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>address_display</code></td>
+<td>Address</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_display</code></td>
+<td>Contact</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_mobile</code></td>
+<td>Mobile No</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_email</code></td>
+<td>Contact Email</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>shipping_address</code></td>
+<td>Select Shipping Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_address_display</code></td>
+<td>Shipping Address</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>set_warehouse</code></td>
+<td>Accepted Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— Sets 'Accepted Warehouse' in each row of the Items table.</td>
+</tr>
+<tr>
+<td><code>rejected_warehouse</code></td>
+<td>Rejected Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— Sets 'Rejected Warehouse' in each row of the Items table.</td>
+</tr>
+<tr>
+<td><code>supplier_warehouse</code></td>
+<td>Job Worker Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Subcontracting Receipt Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>supplied_items</code></td>
+<td>Consumed Items</td>
+<td>Table → <code>Subcontracting Receipt Supplied Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_qty</code></td>
+<td>Total Quantity</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total</code></td>
+<td>Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>in_words</code></td>
+<td>In Words</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>bill_no</code></td>
+<td>Bill No</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>bill_date</code></td>
+<td>Bill Date</td>
+<td>Date</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Completed · Return · Return Issued · Cancelled · Closed</td>
+<td><strong>requis</strong>; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>range</code></td>
+<td>Range</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>auto_repeat</code></td>
+<td>Auto Repeat</td>
+<td>Link → <code>Auto Repeat</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>letter_head</code></td>
+<td>Letter Head</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>select_print_heading</code></td>
+<td>Print Heading</td>
+<td>Link → <code>Print Heading</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Print Language</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>instructions</code></td>
+<td>Instructions</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>remarks</code></td>
+<td>Remarks</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>transporter_name</code></td>
+<td>Transporter Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>lr_no</code></td>
+<td>Vehicle Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>lr_date</code></td>
+<td>Vehicle Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_address</code></td>
+<td>Select Billing Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_address_display</code></td>
+<td>Billing Address</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>represents_company</code></td>
+<td>Represents Company</td>
+<td>Link → <code>Company</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_return</code></td>
+<td>Is Return</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>return_against</code></td>
+<td>Return Against Subcontracting Receipt</td>
+<td>Link → <code>Subcontracting Receipt</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>per_returned</code></td>
+<td>% Returned</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>distribute_additional_costs_based_on</code></td>
+<td>Distribute Additional Costs Based On</td>
+<td>Select — Qty · Amount</td>
+<td>défaut <code>Qty</code></td>
+</tr>
+<tr>
+<td><code>additional_costs</code></td>
+<td>Additional Costs</td>
+<td>Table → <code>Landed Cost Taxes and Charges</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_additional_costs</code></td>
+<td>Total Additional Costs</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>set_posting_time</code></td>
+<td>Edit Posting Date and Time</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>supplier_delivery_note</code></td>
+<td>Job Worker Delivery Note</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-receipt-item">Subcontracting Receipt Item<a class="headerlink" href="#subcontracting-receipt-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Receipt Item</em> — <code>subcontracting/subcontracting_receipt_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>received_qty</code></td>
+<td>Qty (As per BOM)</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Accepted Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>rejected_qty</code></td>
+<td>Rejected Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>rm_cost_per_qty</code></td>
+<td>Raw Material Cost Per Qty</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>service_cost_per_qty</code></td>
+<td>Service Cost Per Qty</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_cost_per_qty</code></td>
+<td>Additional Cost Per Qty</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Accepted Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>rejected_warehouse</code></td>
+<td>Rejected Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>quality_inspection</code></td>
+<td>Quality Inspection</td>
+<td>Link → <code>Quality Inspection</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>subcontracting_order</code></td>
+<td>Subcontracting Order</td>
+<td>Link → <code>Subcontracting Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required By</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>batch_no</code></td>
+<td>Batch No</td>
+<td>Link → <code>Batch</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>rejected_serial_no</code></td>
+<td>Rejected Serial No</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>subcontracting_order_item</code></td>
+<td>Subcontracting Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bom</code></td>
+<td>BOM</td>
+<td>Link → <code>BOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>brand</code></td>
+<td>Brand</td>
+<td>Link → <code>Brand</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rm_supp_cost</code></td>
+<td>Raw Materials Supplied Cost</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>manufacturer</code></td>
+<td>Manufacturer</td>
+<td>Link → <code>Manufacturer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>manufacturer_part_no</code></td>
+<td>Manufacturer Part Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>subcontracting_receipt_item</code></td>
+<td>Subcontracting Receipt Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>page_break</code></td>
+<td>Page Break</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>returned_qty</code></td>
+<td>Returned Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>serial_and_batch_bundle</code></td>
+<td>Serial and Batch Bundle</td>
+<td>Link → <code>Serial and Batch Bundle</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>rejected_serial_and_batch_bundle</code></td>
+<td>Rejected Serial and Batch Bundle</td>
+<td>Link → <code>Serial and Batch Bundle</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>purchase_order_item</code></td>
+<td>Purchase Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>purchase_order</code></td>
+<td>Purchase Order</td>
+<td>Link → <code>Purchase Order</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>include_exploded_items</code></td>
+<td>Include Exploded Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>use_serial_batch_fields</code></td>
+<td>Use Serial No / Batch Fields</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>job_card</code></td>
+<td>Job Card</td>
+<td>Link → <code>Job Card</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>landed_cost_voucher_amount</code></td>
+<td>Landed Cost Voucher Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>service_expense_account</code></td>
+<td>Service Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>secondary_item_type</code></td>
+<td>Type</td>
+<td>Select — Co-Product · By-Product · Scrap · Additional Finished Good</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>secondary_items_cost_per_qty</code></td>
+<td>Secondary Items Cost Per Qty</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>valuation_type</code></td>
+<td>Valuation Type</td>
+<td>Select — Valuation Rate · % of Component Cost · Manual</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>bom_secondary_item</code></td>
+<td>BOM Secondary Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>process_loss_qty</code></td>
+<td>Process Loss Qty</td>
+<td>Decimal</td>
+<td>défaut <code>0.000</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="subcontracting-receipt-supplied-item">Subcontracting Receipt Supplied Item<a class="headerlink" href="#subcontracting-receipt-supplied-item" title="Permanent link">#</a></h2>
+<p><em>Subcontracting Receipt Supplied Item</em> — <code>subcontracting/subcontracting_receipt_supplied_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main_item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>rm_item_code</code></td>
+<td>Raw Material Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>batch_no</code></td>
+<td>Batch No</td>
+<td>Link → <code>Batch</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>required_qty</code></td>
+<td>Required Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>consumed_qty</code></td>
+<td>Consumed Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>current_stock</code></td>
+<td>Current Stock</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bom_detail_no</code></td>
+<td>BOM Detail No</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>subcontracting_order</code></td>
+<td>Subcontracting Order</td>
+<td>Link → <code>Subcontracting Order</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>available_qty_for_consumption</code></td>
+<td>Available Qty For Consumption</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>serial_and_batch_bundle</code></td>
+<td>Serial / Batch Bundle</td>
+<td>Link → <code>Serial and Batch Bundle</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>use_serial_batch_fields</code></td>
+<td>Use Serial No / Batch Fields</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../stock/" class="btn btn-neutral float-left" title="Stock (stock)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../support/" class="btn btn-neutral float-right" title="Support (support)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../stock/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../support/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

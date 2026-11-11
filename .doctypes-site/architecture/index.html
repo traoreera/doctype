@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/architecture/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Architecture des définitions - ERP DocTypes</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Architecture des d\u00e9finitions";
+        var mkdocs_page_input_path = "architecture.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/architecture/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Architecture des définitions</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#anatomie-dune-definition">Anatomie d'une définition</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#nature-des-doctypes-du-jeu">Nature des DocTypes du jeu</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#types-de-champs">Types de champs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#attributs-de-champs">Attributs de champs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#numerotation">Numérotation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workflows">Workflows</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vues-desk">Vues Desk</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#permissions">Permissions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ce-que-le-yaml-ne-contient-pas">Ce que le YAML ne contient pas</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Architecture des définitions</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/architecture.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="architecture-des-definitions">Architecture des définitions<a class="headerlink" href="#architecture-des-definitions" title="Permanent link">#</a></h1>
+<p>Chaque fichier YAML du dépôt est <strong>une définition de DocType</strong> au sens du moteur <a href="https://github.com/traoreera/doctype">xcore-doctype</a> : une déclaration purement descriptive qui produit le stockage, l'API CRUD, les permissions, la validation et l'interface du Desk. Cette page décrit le contrat tel qu'il est utilisé dans ce jeu ; le contrat complet (et les décisions de conception D1–D22) vit dans le dépôt moteur (<code>process/doctype.md</code>).</p>
+<h2 id="anatomie-dune-definition">Anatomie d'une définition<a class="headerlink" href="#anatomie-dune-definition" title="Permanent link">#</a></h2>
+<pre><code class="language-yaml">schema_version: 1
+name: Delivery Note                       # identifiant unique du DocType
+label: Bon de livraison                   # libellé (traduit via le catalogue)
+module: stock                             # = le plugin propriétaire, espace de grants
+icon: warehouse                           # nom PrimeIcons pour le Desk
+title_field: customer                     # colonne lisible des listes
+istable: false                            # true = table enfant sans routes propres
+single: false                             # true = document unique (paramètres)
+submittable: true                         # cycle brouillon → soumis → annulé
+naming:
+  series: &quot;DN-{YYYY}-{#####}&quot;             # numérotation serveur, sans trou
+track_changes: true                       # historique des versions
+workflow:                                 # automate d'état (optionnel)
+  states: [...]
+  transitions: [...]
+views:                                    # vues supplémentaires du Desk
+  calendar: {date_field: posting_date}
+fields: [...]
+permissions:                              # facultatif : remplace la convention
+  read: [&quot;stock:delivery_note:read&quot;]
+  write: [&quot;stock:delivery_note:write&quot;]
+  create: [&quot;stock:delivery_note:write&quot;]
+  delete: [&quot;stock:delivery_note:delete&quot;]
+</code></pre>
+<p>Les clés non implémentées par le moteur sont <strong>refusées au chargement</strong> (schéma <code>extra="forbid"</code>) : une définition ne déclare que ce que le moteur garantit.</p>
+<h2 id="nature-des-doctypes-du-jeu">Nature des DocTypes du jeu<a class="headerlink" href="#nature-des-doctypes-du-jeu" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Nature</th>
+<th>Clé</th>
+<th>Nombre</th>
+<th>Rôle</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pièce</td>
+<td><code>submittable: true</code></td>
+<td>136</td>
+<td>Transaction figée à la soumission (<code>docstatus</code> 0/1/2), amendable, historisée</td>
+</tr>
+<tr>
+<td>Données de base</td>
+<td>—</td>
+<td>252</td>
+<td>Référentiels (Customer, Item, Employee…)</td>
+</tr>
+<tr>
+<td>Table enfant</td>
+<td><code>istable: true</code></td>
+<td>293</td>
+<td>Lignes d'une pièce, stockées dans le parent, sans routes ni droits propres</td>
+</tr>
+<tr>
+<td>Document unique</td>
+<td><code>single: true</code></td>
+<td>23</td>
+<td>Paramètres d'une organisation (<code>Company Settings</code>, <code>Stock Settings</code>…)</td>
+</tr>
+<tr>
+<td>Virtuel</td>
+<td><code>source:</code></td>
+<td>0</td>
+<td>Aucun dans ce jeu</td>
+</tr>
+</tbody>
+</table>
+<p>Une pièce <strong>soumise</strong> est figée : seuls ses champs <code>allow_on_submit</code> restent modifiables ; l'annulation déclenche les hooks <code>on_cancel</code> du plugin propriétaire ; un amendement copie une pièce annulée en brouillon (<code>-1</code> suffixé).</p>
+<h2 id="types-de-champs">Types de champs<a class="headerlink" href="#types-de-champs" title="Permanent link">#</a></h2>
+<p>23 types de champs sont utilisés dans le jeu :</p>
+<p><code>Link</code> (2 463) · <code>Text</code> (1 318) · <code>Boolean</code> (1 093) · <code>Currency</code> (911) · <code>Select</code> (554) · <code>Date</code> (455) · <code>Table</code> (399) · <code>Number</code> (388) · <code>LongText</code> (286) · <code>Decimal</code> (273) · <code>Int</code> (214) · <code>TextEditor</code> (183) · <code>DynamicLink</code> (85) · <code>Datetime</code> (83) · <code>Percent</code> (80) · <code>Time</code> (49) · <code>Code</code> (32) · <code>Image</code> (19) · <code>Attach</code> (17) · <code>JSON</code> (11) · <code>Rating</code> (8) · <code>Color</code> (4) · <code>Duration</code> (1)</p>
+<p>Points notables :</p>
+<ul>
+<li><strong><code>Link</code> est le type dominant</strong> (15 % des champs) : les liens entre DocTypes sont vérifiés à l'écriture (cible existante et lisible), protègent la suppression (<code>document_in_use</code>) et tissent le graphe de <a href="../dependances/">dépendances</a>.</li>
+<li><strong><code>DynamicLink</code></strong> (85) : la cible est nommée par un champ frère (<code>options</code> = nom du champ <code>Select</code> qui porte le nom du DocType) — typiquement <code>voucher_type</code>/<code>voucher_no</code> des journaux comptables et de stock.</li>
+<li><strong><code>Currency</code> et <code>Decimal</code></strong> (1 184 combinés) : stockés en chaîne canonique à échelle exacte, jamais en flottant. <code>Currency</code> est l'égal de <code>Decimal</code> avec en plus une devise d'affichage.</li>
+<li><strong><code>Table</code></strong> : pointe vers un DocType enfant (<code>istable</code>), ≤ 500 lignes par document, validées avec le modèle strict de l'enfant.</li>
+</ul>
+<h2 id="attributs-de-champs">Attributs de champs<a class="headerlink" href="#attributs-de-champs" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Attribut</th>
+<th>Usage</th>
+<th>Nombre</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>required</code></td>
+<td>Champ obligatoire</td>
+<td>omniprésent</td>
+</tr>
+<tr>
+<td><code>in_list_view</code></td>
+<td>Colonne de la liste par défaut</td>
+<td>omniprésent</td>
+</tr>
+<tr>
+<td><code>read_only</code>, <code>hidden</code></td>
+<td>Édition/masquage côté Desk</td>
+<td>courant</td>
+</tr>
+<tr>
+<td><code>fetch_from</code></td>
+<td>Recopie <code>lien.champ</code> depuis la cible à chaque écriture, écrase la valeur cliente</td>
+<td>123</td>
+</tr>
+<tr>
+<td><code>compute</code></td>
+<td>Calcul déclaratif à vocabulaire fermé (<code>a * b</code>, <code>a + b - c</code>, <code>sum(table.champ)</code>)</td>
+<td>44</td>
+</tr>
+<tr>
+<td><code>currency_from</code></td>
+<td>Devise d'affichage lue d'un champ, d'un saut de lien (<code>company.default_currency</code>) ou du parent (<code>parent_</code>)</td>
+<td>860</td>
+</tr>
+<tr>
+<td><code>depends_on</code></td>
+<td>Condition de visibilité (langage <code>expr</code>, évalué serveur et navigateur)</td>
+<td>100</td>
+</tr>
+<tr>
+<td><code>mandatory_depends_on</code></td>
+<td>Obligatoire si condition</td>
+<td>25</td>
+</tr>
+<tr>
+<td><code>default</code> (<code>today</code>, <code>now</code>, littéral)</td>
+<td>Pré-remplissage à la création</td>
+<td>courant</td>
+</tr>
+<tr>
+<td><code>unique</code></td>
+<td>Unicité par organisation (clé primaire dédiée <code>xdt_unique</code>)</td>
+<td>rare dans ce jeu</td>
+</tr>
+<tr>
+<td><code>set_only_once</code></td>
+<td>Posable seulement à la création</td>
+<td>rare</td>
+</tr>
+<tr>
+<td><code>allow_on_submit</code></td>
+<td>Modifiable après soumission</td>
+<td>pièces comptables notamment</td>
+</tr>
+<tr>
+<td><code>target_status</code></td>
+<td>Contraint le <code>docstatus</code> de la cible d'un lien</td>
+<td>liens vers pièces</td>
+</tr>
+</tbody>
+</table>
+<h2 id="numerotation">Numérotation<a class="headerlink" href="#numerotation" title="Permanent link">#</a></h2>
+<p>Deux mécanismes, servis par le moteur sans trou ni doublon :</p>
+<ul>
+<li><strong>Série</strong> (<code>naming.series</code>, 137 DocTypes) : <code>SI-{YYYY}-{#####}</code> → <code>SI-2026-00001</code>. Le compteur est incrémenté dans la transaction du document ; les numéros ne sont jamais réutilisés. 137 préfixes distincts : <code>SI-</code> (factures de vente), <code>PI-</code> (factures d'achat), <code>DN-</code> (bons de livraison), <code>PUOR-</code> (ordres d'achat), <code>MAT-</code> (demandes), <code>MS-</code>/<code>MV-</code> (mouvements de stock), <code>JV-</code> (écritures de journal), <code>PR-</code> (reçus de paiement), <code>ACC-</code> (demandes de congés)…</li>
+<li><strong>Champ</strong> (<code>naming.field</code>, 8 DocTypes) : le nom du document est la valeur d'un champ — <code>Pays.code</code>, <code>Devise.devise_code</code>, <code>UOM.uom_name</code>… Le Desk les propose en « création rapide » et un <code>Link</code> vers eux affiche ce titre.</li>
+</ul>
+<p>Les tables enfants n'ont pas de nom propre : elles vivent dans le JSON du parent.</p>
+<h2 id="workflows">Workflows<a class="headerlink" href="#workflows" title="Permanent link">#</a></h2>
+<p>Quatre DocTypes déclarent un automate <code>workflow:</code> (états + transitions, chaque état imposant un <code>docstatus</code>) :</p>
+<p>Les quatre automates partagent le même circuit d'approbation :</p>
+<table>
+<thead>
+<tr>
+<th>DocType</th>
+<th>Module</th>
+<th>Circuit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Purchase Order</code></td>
+<td>buying</td>
+<td>Brouillon → Soumettre → À approuver → Approuver/Refuser/Reprendre → Approuvée/Refusée → Annuler</td>
+</tr>
+<tr>
+<td><code>Material Request</code></td>
+<td>stock</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>Expense Claim</code></td>
+<td>hr</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>Leave Application</code></td>
+<td>hr</td>
+<td>idem</td>
+</tr>
+</tbody>
+</table>
+<p>(<code>stock/delivery_note.yaml</code> et <code>selling/sales_order.yaml</code> portent une clé <code>workflow:</code> vide, sans effet.)</p>
+<p>Une transition est ouverte par un <strong>grant</strong> dédié (<code>&lt;module&gt;:&lt;doctype&gt;:workflow_&lt;action&gt;</code>), peut être réservée aux non-auteurs (<code>not_owner</code>) et conditionnée par une expression. Un état qui soumet ou annule la pièce déclenche les hooks <code>on_submit</code>/<code>on_cancel</code> du plugin.</p>
+<h2 id="vues-desk">Vues Desk<a class="headerlink" href="#vues-desk" title="Permanent link">#</a></h2>
+<p>Outre la liste et la fiche, un DocType peut déclarer des vues supplémentaires :</p>
+<table>
+<thead>
+<tr>
+<th>Vue</th>
+<th>Nombre</th>
+<th>Exemples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>calendar</code></td>
+<td>117</td>
+<td>pièces datées (<code>date_field</code>) : factures, congés, entretiens</td>
+</tr>
+<tr>
+<td><code>gantt</code></td>
+<td>47</td>
+<td><code>start</code>/<code>end</code> : projets, ordres de fabrication</td>
+</tr>
+<tr>
+<td><code>kanban</code></td>
+<td>24</td>
+<td>pilotées par un champ <code>Select</code> (<code>field</code>)</td>
+</tr>
+<tr>
+<td><code>tree</code></td>
+<td>15</td>
+<td>hiérarchies (<code>parent</code>) : comptes, centres de coût, territoires</td>
+</tr>
+</tbody>
+</table>
+<p>Un tableau de bord récapitulatif est généré pour chaque DocType ; les espaces de travail assemblent cartes, graphiques et raccourcis (voir les pages <a href="../modules/accounts/">modules</a>).</p>
+<h2 id="permissions">Permissions<a class="headerlink" href="#permissions" title="Permanent link">#</a></h2>
+<p>Par défaut, <strong>aucun bloc <code>permissions</code></strong> n'est déclaré : les grants suivent la convention du moteur, dérivée de <code>module</code> + nom du DocType :</p>
+<ul>
+<li>lecture → <code>&lt;module&gt;:&lt;doctype&gt;:read</code> ;</li>
+<li>écriture <strong>et</strong> création → <code>&lt;module&gt;:&lt;doctype&gt;:write</code> ;</li>
+<li>suppression → <code>&lt;module&gt;:&lt;doctype&gt;:delete</code> ;</li>
+<li>soumission/annulation → <code>&lt;module&gt;:&lt;doctype&gt;:submit</code> / <code>cancel</code> (pièces seulement).</li>
+</ul>
+<p>25 DocTypes du jeu (journaux comptables, registres de stock, principalement) déclarent un bloc explicite — le plus souvent pour <strong>fermer l'écriture humaine</strong> (<code>write: []</code>, <code>create: []</code>, <code>delete: []</code>) : ces tables sont écrites par les hooks des plugins, jamais à la main. C'est le mécanisme utilisé pour <code>GL Entry</code>, <code>Stock Ledger Entry</code>, <code>Payment Ledger Entry</code>… voir les pages <a href="../modules/accounts/">Comptabilité</a> et <a href="../modules/stock/">Stock</a>.</p>
+<h2 id="ce-que-le-yaml-ne-contient-pas">Ce que le YAML ne contient pas<a class="headerlink" href="#ce-que-le-yaml-ne-contient-pas" title="Permanent link">#</a></h2>
+<p>Les définitions sont <strong>purement descriptives</strong> ; en particulier :</p>
+<ul>
+<li><strong>aucun hook</strong> (<code>validate</code>, <code>on_submit</code>…) n'est déclaré dans ce jeu — 0 sur 704 : la logique métier (double écriture comptable, coût moyen pondéré, soldes de stock…) vit dans les plugins, un par module ;</li>
+<li>pas de requêtes SQL, de rapports imprimables ou de scripts client ;</li>
+<li>pas de matrice de rôles : les grants sont conventionnels ou déclarés dans le <code>plugin.yaml</code> du propriétaire.</li>
+</ul>
+<p>La marche à suivre pour écrire le plugin qui porte un module est décrite dans <a href="../integration/">Implémenter un module</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../erp-doctypes/" class="btn btn-neutral float-left" title="Le jeu de définitions"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../dependances/" class="btn btn-neutral float-right" title="Dépendances entre modules">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../erp-doctypes/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../dependances/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

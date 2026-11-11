@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/dependances/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Dépendances entre modules - ERP DocTypes</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "D\u00e9pendances entre modules";
+        var mkdocs_page_input_path = "dependances.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/dependances/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Dépendances entre modules</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#lecture-du-graphe">Lecture du graphe</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#synthese">Synthèse</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#matrice-depend-de-nombre-de-liens-link-sortants">Matrice « dépend de » (nombre de liens Link sortants)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#comptabilite-accounts">Comptabilité (accounts)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#immobilisations-assets">Immobilisations (assets)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#traitement-en-masse-bulk_transaction">Traitement en masse (bulk_transaction)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#achats-buying">Achats (buying)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#communication-communication">Communication (communication)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#crm-crm">CRM (crm)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#edi-edi">EDI (edi)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#integrations-erpnext-erpnext_integrations">Intégrations ERPNext (erpnext_integrations)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ressources-humaines-hr">Ressources humaines (hr)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maintenance-maintenance">Maintenance (maintenance)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#fabrication-manufacturing">Fabrication (manufacturing)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#paie-payroll">Paie (payroll)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#projets-projects">Projets (projects)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#qualite-quality_management">Qualité (quality_management)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#regionalisation-regional">Régionalisation (regional)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ventes-selling">Ventes (selling)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configuration-setup">Configuration (setup)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#stock-stock">Stock (stock)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sous-traitance-subcontracting">Sous-traitance (subcontracting)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#support-support">Support (support)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#telephonie-telephony">Téléphonie (telephony)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#utilitaires-utilities">Utilitaires (utilities)</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Dépendances entre modules</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/dependances.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="dependances-entre-modules">Dépendances entre modules<a class="headerlink" href="#dependances-entre-modules" title="Permanent link">#</a></h1>
+<p>Les dépendances naissent des <strong>champs <code>Link</code></strong> : un DocType du module A qui pointe vers un DocType du module B fait dépendre A de B. Le moteur vérifie à l'écriture que la cible existe et est lisible, et <strong>refuse la suppression</strong> d'un document encore cité (<code>document_in_use</code>) — la protection vaut donc pour tout le jeu, à travers les frontières de modules.</p>
+<h2 id="lecture-du-graphe">Lecture du graphe<a class="headerlink" href="#lecture-du-graphe" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>« dépend de »</strong> : liens sortants du module (ce qu'il cite).</li>
+<li><strong>« requis par »</strong> : liens entrants (qui le cite). C'est la lecture symétrique : un module requis par beaucoup doit être chargé en premier.</li>
+<li>Le <strong>nombre de liens</strong> compte chaque champ <code>Link</code>/<code>DynamicLink</code> (y compris dans les tables enfants), pas le nombre de DocTypes.</li>
+</ul>
+<h2 id="synthese">Synthèse<a class="headerlink" href="#synthese" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>Observation</th>
+<th>Détail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Modules <strong>feuilles</strong> (aucun lien sortant)</td>
+<td><code>bulk_transaction</code>, <code>edi</code>, <code>erpnext_integrations</code>, <code>utilities</code></td>
+</tr>
+<tr>
+<td>Module le plus cité</td>
+<td><code>setup</code> (882 liens entrants), puis <code>stock</code> (258), <code>accounts</code> (248), <code>selling</code> (72)</td>
+</tr>
+<tr>
+<td>Module le plus dépendant</td>
+<td><code>accounts</code> (355 liens sortants), puis <code>stock</code> (264), <code>hr</code> (220), <code>selling</code> (157)</td>
+</tr>
+<tr>
+<td>Cycles majeurs</td>
+<td><code>setup</code> ↔ <code>accounts</code>, <code>setup</code> ↔ <code>stock</code>, <code>accounts</code> ↔ <code>selling</code>, <code>hr</code> ↔ <code>payroll</code>, <code>buying</code> ↔ <code>manufacturing</code> ↔ <code>stock</code></td>
+</tr>
+</tbody>
+</table>
+<p>Les cycles ne sont pas des défauts : une pièce d'achat cite l'article (<code>buying</code> → <code>stock</code>) et l'article cite des comptes (<code>stock</code> → <code>accounts</code>) dont le plan (<code>setup</code> → …) cite des pièces. Le moteur tranche par le <strong>chargement en modules pairs</strong> (<code>load_dir(..., peers=True)</code>) : n'importe quel ordre de chargement des plugins fonctionne, un module en attente d'une cible devient simplement <em>incomplet</em> jusqu'à son arrivée — voir <a href="../integration/#le-chargement-en-mode-pairs">Implémenter un module</a>.</p>
+<h2 id="matrice-depend-de-nombre-de-liens-link-sortants">Matrice « dépend de » (nombre de liens <code>Link</code> sortants)<a class="headerlink" href="#matrice-depend-de-nombre-de-liens-link-sortants" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>↓ dépend de →</th>
+<th>accounts</th>
+<th>assets</th>
+<th>bulk_transaction</th>
+<th>buying</th>
+<th>communication</th>
+<th>crm</th>
+<th>edi</th>
+<th>erpnext_integrations</th>
+<th>hr</th>
+<th>maintenance</th>
+<th>manufacturing</th>
+<th>payroll</th>
+<th>projects</th>
+<th>quality_management</th>
+<th>regional</th>
+<th>selling</th>
+<th>setup</th>
+<th>stock</th>
+<th>subcontracting</th>
+<th>support</th>
+<th>telephony</th>
+<th>utilities</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>accounts</strong></td>
+<td>·</td>
+<td>5</td>
+<td>·</td>
+<td>10</td>
+<td>2</td>
+<td>19</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>27</td>
+<td>·</td>
+<td>1</td>
+<td>22</td>
+<td>215</td>
+<td>54</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>assets</strong></td>
+<td>28</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>3</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>18</td>
+<td>12</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>bulk_transaction</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>buying</strong></td>
+<td>29</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>7</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>5</td>
+<td>·</td>
+<td>5</td>
+<td>·</td>
+<td>·</td>
+<td>5</td>
+<td>60</td>
+<td>25</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>communication</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>crm</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>4</td>
+<td>21</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>edi</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>erpnext_integrations</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>hr</strong></td>
+<td>19</td>
+<td>1</td>
+<td>·</td>
+<td>3</td>
+<td>5</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>9</td>
+<td>7</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>175</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>maintenance</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>3</td>
+<td>11</td>
+<td>5</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>manufacturing</strong></td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>5</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>5</td>
+<td>·</td>
+<td>·</td>
+<td>9</td>
+<td>49</td>
+<td>77</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>payroll</strong></td>
+<td>17</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>3</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>5</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>73</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>projects</strong></td>
+<td>3</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>3</td>
+<td>11</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>quality_management</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>regional</strong></td>
+<td>5</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>5</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>selling</strong></td>
+<td>30</td>
+<td>·</td>
+<td>·</td>
+<td>5</td>
+<td>1</td>
+<td>19</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>3</td>
+<td>·</td>
+<td>3</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>73</td>
+<td>22</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+</tr>
+<tr>
+<td><strong>setup</strong></td>
+<td>50</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>·</td>
+<td>13</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>stock</strong></td>
+<td>57</td>
+<td>8</td>
+<td>·</td>
+<td>14</td>
+<td>1</td>
+<td>10</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>12</td>
+<td>·</td>
+<td>10</td>
+<td>·</td>
+<td>·</td>
+<td>18</td>
+<td>131</td>
+<td>·</td>
+<td>3</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>subcontracting</strong></td>
+<td>9</td>
+<td>·</td>
+<td>·</td>
+<td>4</td>
+<td>·</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>6</td>
+<td>·</td>
+<td>4</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>28</td>
+<td>44</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>support</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>3</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>·</td>
+<td>·</td>
+<td>2</td>
+<td>6</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>telephony</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>1</td>
+<td>2</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+<tr>
+<td><strong>utilities</strong></td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+<td>·</td>
+</tr>
+</tbody>
+</table>
+<h2 id="comptabilite-accounts">Comptabilité (<code>accounts</code>)<a class="headerlink" href="#comptabilite-accounts" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (215 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code> (+15 autres)
+- <code>stock</code> (54 liens) — <code>Batch</code>, <code>Delivery Note</code>, <code>Item</code>, <code>Manufacturer</code>, <code>Material Request</code>, <code>Packed Item</code> (+7 autres)
+- <code>projects</code> (27 liens) — <code>Activity Type</code>, <code>Project</code>, <code>Timesheet</code>
+- <code>selling</code> (22 liens) — <code>Customer</code>, <code>Product Bundle</code>, <code>Sales Order</code>, <code>Sales Team</code>
+- <code>crm</code> (19 liens) — <code>Contact</code>, <code>UTM Campaign</code>, <code>UTM Medium</code>, <code>UTM Source</code>
+- <code>buying</code> (10 liens) — <code>Purchase Order</code>, <code>Purchase Receipt Item Supplied</code>, <code>Supplier</code>
+- <code>assets</code> (5 liens) — <code>Asset</code>, <code>Asset Category</code>, <code>Location</code>
+- <code>communication</code> (2 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>regional</code> (1 liens) — <code>Lower Deduction Certificate</code></p>
+<p><strong>Requis par</strong> :
+- <code>stock</code> (57 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Item Tax Template</code>, <code>Item Wise Tax Detail</code>, <code>Journal Entry</code>, <code>Pricing Rule Detail</code> (+9 autres)
+- <code>setup</code> (50 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Finance Book</code>, <code>Fiscal Year</code>, <code>Monthly Distribution</code>, <code>Party Account</code> (+2 autres)
+- <code>selling</code> (30 liens) — <code>Allowed To Transact With</code>, <code>Bank Account</code>, <code>Cost Center</code>, <code>Coupon Code</code>, <code>Item Tax Template</code>, <code>Item Wise Tax Detail</code> (+11 autres)
+- <code>buying</code> (29 liens) — <code>Account</code>, <code>Allowed To Transact With</code>, <code>Bank Account</code>, <code>Cost Center</code>, <code>Item Tax Template</code>, <code>Item Wise Tax Detail</code> (+10 autres)
+- <code>assets</code> (28 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Finance Book</code>, <code>Journal Entry</code>, <code>Purchase Invoice</code>
+- <code>hr</code> (19 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Mode of Payment</code>
+- <code>payroll</code> (17 liens) — <code>Account</code>, <code>Bank Account</code>, <code>Cost Center</code>, <code>Journal Entry</code>, <code>Mode of Payment</code>
+- <code>subcontracting</code> (9 liens) — <code>Account</code>, <code>Cost Center</code>
+- <code>regional</code> (5 liens) — <code>Account</code>, <code>Fiscal Year</code>, <code>South Africa VAT Account</code>, <code>Tax Withholding Category</code>
+- <code>projects</code> (3 liens) — <code>Cost Center</code>, <code>Sales Invoice</code>
+- <code>manufacturing</code> (1 liens) — <code>Account</code></p>
+<h2 id="immobilisations-assets">Immobilisations (<code>assets</code>)<a class="headerlink" href="#immobilisations-assets" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>accounts</code> (28 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Finance Book</code>, <code>Journal Entry</code>, <code>Purchase Invoice</code>
+- <code>setup</code> (18 liens) — <code>Company</code>, <code>Department</code>, <code>Employee</code>, <code>UOM</code>
+- <code>stock</code> (12 liens) — <code>Batch</code>, <code>Item</code>, <code>Purchase Receipt</code>, <code>Serial and Batch Bundle</code>, <code>Warehouse</code>
+- <code>projects</code> (3 liens) — <code>Project</code>
+- <code>buying</code> (1 liens) — <code>Supplier</code>
+- <code>selling</code> (1 liens) — <code>Customer</code></p>
+<p><strong>Requis par</strong> :
+- <code>stock</code> (8 liens) — <code>Asset</code>, <code>Asset Category</code>, <code>Asset Repair</code>, <code>Location</code>
+- <code>accounts</code> (5 liens) — <code>Asset</code>, <code>Asset Category</code>, <code>Location</code>
+- <code>buying</code> (1 liens) — <code>Asset</code>
+- <code>hr</code> (1 liens) — <code>Asset Movement</code></p>
+<h2 id="traitement-en-masse-bulk_transaction">Traitement en masse (<code>bulk_transaction</code>)<a class="headerlink" href="#traitement-en-masse-bulk_transaction" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> : personne — module feuille.</p>
+<p><strong>Requis par</strong> : personne pour l'instant.</p>
+<h2 id="achats-buying">Achats (<code>buying</code>)<a class="headerlink" href="#achats-buying" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (60 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code> (+10 autres)
+- <code>accounts</code> (29 liens) — <code>Account</code>, <code>Allowed To Transact With</code>, <code>Bank Account</code>, <code>Cost Center</code>, <code>Item Tax Template</code>, <code>Item Wise Tax Detail</code> (+10 autres)
+- <code>stock</code> (25 liens) — <code>Batch</code>, <code>Company Restriction</code>, <code>Item</code>, <code>Manufacturer</code>, <code>Material Request</code>, <code>Price List</code> (+1 autres)
+- <code>crm</code> (7 liens) — <code>Contact</code>, <code>Opportunity</code>
+- <code>manufacturing</code> (5 liens) — <code>BOM</code>, <code>Blanket Order</code>, <code>Job Card</code>, <code>Master Production Schedule</code>, <code>Production Plan</code>
+- <code>projects</code> (5 liens) — <code>Project</code>
+- <code>selling</code> (5 liens) — <code>Customer</code>, <code>Product Bundle</code>, <code>Sales Order</code>
+- <code>communication</code> (2 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>assets</code> (1 liens) — <code>Asset</code>
+- <code>utilities</code> (1 liens) — <code>Portal User</code></p>
+<p><strong>Requis par</strong> :
+- <code>stock</code> (14 liens) — <code>Purchase Order</code>, <code>Purchase Receipt Item Supplied</code>, <code>Supplier</code>
+- <code>accounts</code> (10 liens) — <code>Purchase Order</code>, <code>Purchase Receipt Item Supplied</code>, <code>Supplier</code>
+- <code>manufacturing</code> (5 liens) — <code>Purchase Order</code>, <code>Supplier</code>
+- <code>selling</code> (5 liens) — <code>Purchase Order</code>, <code>Supplier</code>, <code>Supplier Quotation</code>
+- <code>subcontracting</code> (4 liens) — <code>Purchase Order</code>, <code>Supplier</code>
+- <code>hr</code> (3 liens) — <code>Supplier</code>
+- <code>assets</code> (1 liens) — <code>Supplier</code>
+- <code>communication</code> (1 liens) — <code>Supplier</code>
+- <code>regional</code> (1 liens) — <code>Supplier</code>
+- <code>setup</code> (1 liens) — <code>Supplier</code></p>
+<h2 id="communication-communication">Communication (<code>communication</code>)<a class="headerlink" href="#communication-communication" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (2 liens) — <code>Employee Group</code>
+- <code>buying</code> (1 liens) — <code>Supplier</code></p>
+<p><strong>Requis par</strong> :
+- <code>hr</code> (5 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>payroll</code> (3 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>accounts</code> (2 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>buying</code> (2 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>crm</code> (1 liens) — <code>Email Template</code>
+- <code>selling</code> (1 liens) — <code>Email Template</code>
+- <code>stock</code> (1 liens) — <code>Email Template</code>
+- <code>support</code> (1 liens) — <code>Email Account</code></p>
+<h2 id="crm-crm">CRM (<code>crm</code>)<a class="headerlink" href="#crm-crm" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (21 liens) — <code>Address</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code>, <code>Customer Group</code> (+7 autres)
+- <code>selling</code> (4 liens) — <code>Customer</code>, <code>Industry Type</code>
+- <code>communication</code> (1 liens) — <code>Email Template</code>
+- <code>stock</code> (1 liens) — <code>Item</code></p>
+<p><strong>Requis par</strong> :
+- <code>accounts</code> (19 liens) — <code>Contact</code>, <code>UTM Campaign</code>, <code>UTM Medium</code>, <code>UTM Source</code>
+- <code>selling</code> (19 liens) — <code>Competitor Detail</code>, <code>Contact</code>, <code>Lead</code>, <code>Market Segment</code>, <code>Opportunity</code>, <code>Prospect</code> (+3 autres)
+- <code>stock</code> (10 liens) — <code>Contact</code>, <code>UTM Campaign</code>, <code>UTM Medium</code>, <code>UTM Source</code>
+- <code>buying</code> (7 liens) — <code>Contact</code>, <code>Opportunity</code>
+- <code>support</code> (3 liens) — <code>Contact</code>, <code>Lead</code>
+- <code>maintenance</code> (2 liens) — <code>Contact</code>
+- <code>subcontracting</code> (2 liens) — <code>Contact</code>
+- <code>setup</code> (1 liens) — <code>Contact</code></p>
+<h2 id="edi-edi">EDI (<code>edi</code>)<a class="headerlink" href="#edi-edi" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> : personne — module feuille.</p>
+<p><strong>Requis par</strong> : personne pour l'instant.</p>
+<h2 id="integrations-erpnext-erpnext_integrations">Intégrations ERPNext (<code>erpnext_integrations</code>)<a class="headerlink" href="#integrations-erpnext-erpnext_integrations" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> : personne — module feuille.</p>
+<p><strong>Requis par</strong> : personne pour l'instant.</p>
+<h2 id="ressources-humaines-hr">Ressources humaines (<code>hr</code>)<a class="headerlink" href="#ressources-humaines-hr" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (175 liens) — <code>Branch</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code>, <code>Department</code>, <code>Designation</code> (+7 autres)
+- <code>accounts</code> (19 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Mode of Payment</code>
+- <code>payroll</code> (9 liens) — <code>Additional Salary</code>, <code>Payroll Entry</code>, <code>Salary Component</code>, <code>Salary Slip</code>, <code>Salary Structure</code>
+- <code>projects</code> (7 liens) — <code>Project</code>, <code>Task</code>
+- <code>communication</code> (5 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>buying</code> (3 liens) — <code>Supplier</code>
+- <code>assets</code> (1 liens) — <code>Asset Movement</code>
+- <code>stock</code> (1 liens) — <code>Delivery Trip</code></p>
+<p><strong>Requis par</strong> :
+- <code>payroll</code> (5 liens) — <code>Employee Grade</code>, <code>Employment Type</code>, <code>Leave Type</code></p>
+<h2 id="maintenance-maintenance">Maintenance (<code>maintenance</code>)<a class="headerlink" href="#maintenance-maintenance" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (11 liens) — <code>Address</code>, <code>Company</code>, <code>Customer Group</code>, <code>Sales Person</code>, <code>Territory</code>
+- <code>stock</code> (5 liens) — <code>Item</code>, <code>Serial No</code>, <code>Serial and Batch Bundle</code>
+- <code>selling</code> (3 liens) — <code>Customer</code>, <code>Sales Order</code>
+- <code>crm</code> (2 liens) — <code>Contact</code></p>
+<p><strong>Requis par</strong> : personne pour l'instant.</p>
+<h2 id="fabrication-manufacturing">Fabrication (<code>manufacturing</code>)<a class="headerlink" href="#fabrication-manufacturing" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>stock</code> (77 liens) — <code>Batch</code>, <code>Item</code>, <code>Material Request</code>, <code>Price List</code>, <code>Quality Inspection</code>, <code>Quality Inspection Template</code> (+2 autres)
+- <code>setup</code> (49 liens) — <code>Company</code>, <code>Currency</code>, <code>Employee</code>, <code>Error Log</code>, <code>Holiday List</code>, <code>Item Group</code> (+2 autres)
+- <code>selling</code> (9 liens) — <code>Customer</code>, <code>Sales Order</code>
+- <code>buying</code> (5 liens) — <code>Purchase Order</code>, <code>Supplier</code>
+- <code>projects</code> (5 liens) — <code>Project</code>
+- <code>accounts</code> (1 liens) — <code>Account</code>
+- <code>subcontracting</code> (1 liens) — <code>Subcontracting Inward Order</code></p>
+<p><strong>Requis par</strong> :
+- <code>stock</code> (12 liens) — <code>BOM</code>, <code>Job Card</code>, <code>Production Plan</code>, <code>Work Order</code>
+- <code>subcontracting</code> (6 liens) — <code>BOM</code>, <code>Job Card</code>
+- <code>buying</code> (5 liens) — <code>BOM</code>, <code>Blanket Order</code>, <code>Job Card</code>, <code>Master Production Schedule</code>, <code>Production Plan</code>
+- <code>selling</code> (3 liens) — <code>BOM</code>, <code>Blanket Order</code></p>
+<h2 id="paie-payroll">Paie (<code>payroll</code>)<a class="headerlink" href="#paie-payroll" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (73 liens) — <code>Branch</code>, <code>Company</code>, <code>Currency</code>, <code>Department</code>, <code>Designation</code>, <code>Employee</code> (+1 autres)
+- <code>accounts</code> (17 liens) — <code>Account</code>, <code>Bank Account</code>, <code>Cost Center</code>, <code>Journal Entry</code>, <code>Mode of Payment</code>
+- <code>hr</code> (5 liens) — <code>Employee Grade</code>, <code>Employment Type</code>, <code>Leave Type</code>
+- <code>communication</code> (3 liens) — <code>Email Account</code>, <code>Email Template</code>
+- <code>projects</code> (2 liens) — <code>Project</code>, <code>Timesheet</code></p>
+<p><strong>Requis par</strong> :
+- <code>hr</code> (9 liens) — <code>Additional Salary</code>, <code>Payroll Entry</code>, <code>Salary Component</code>, <code>Salary Slip</code>, <code>Salary Structure</code></p>
+<h2 id="projets-projects">Projets (<code>projects</code>)<a class="headerlink" href="#projets-projects" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (11 liens) — <code>Company</code>, <code>Currency</code>, <code>Department</code>, <code>Employee</code>, <code>Holiday List</code>
+- <code>accounts</code> (3 liens) — <code>Cost Center</code>, <code>Sales Invoice</code>
+- <code>selling</code> (3 liens) — <code>Customer</code>, <code>Sales Order</code>
+- <code>support</code> (1 liens) — <code>Issue</code></p>
+<p><strong>Requis par</strong> :
+- <code>accounts</code> (27 liens) — <code>Activity Type</code>, <code>Project</code>, <code>Timesheet</code>
+- <code>stock</code> (10 liens) — <code>Project</code>
+- <code>hr</code> (7 liens) — <code>Project</code>, <code>Task</code>
+- <code>buying</code> (5 liens) — <code>Project</code>
+- <code>manufacturing</code> (5 liens) — <code>Project</code>
+- <code>subcontracting</code> (4 liens) — <code>Project</code>
+- <code>assets</code> (3 liens) — <code>Project</code>
+- <code>selling</code> (3 liens) — <code>Project</code>
+- <code>payroll</code> (2 liens) — <code>Project</code>, <code>Timesheet</code>
+- <code>support</code> (1 liens) — <code>Project</code></p>
+<h2 id="qualite-quality_management">Qualité (<code>quality_management</code>)<a class="headerlink" href="#qualite-quality_management" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (2 liens) — <code>UOM</code></p>
+<p><strong>Requis par</strong> : personne pour l'instant.</p>
+<h2 id="regionalisation-regional">Régionalisation (<code>regional</code>)<a class="headerlink" href="#regionalisation-regional" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>accounts</code> (5 liens) — <code>Account</code>, <code>Fiscal Year</code>, <code>South Africa VAT Account</code>, <code>Tax Withholding Category</code>
+- <code>setup</code> (5 liens) — <code>Company</code>, <code>Supplier Group</code>
+- <code>stock</code> (2 liens) — <code>Item</code>, <code>Price List</code>
+- <code>buying</code> (1 liens) — <code>Supplier</code></p>
+<p><strong>Requis par</strong> :
+- <code>accounts</code> (1 liens) — <code>Lower Deduction Certificate</code></p>
+<h2 id="ventes-selling">Ventes (<code>selling</code>)<a class="headerlink" href="#ventes-selling" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (73 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Branch</code>, <code>Brand</code>, <code>Company</code>, <code>Currency</code> (+15 autres)
+- <code>accounts</code> (30 liens) — <code>Allowed To Transact With</code>, <code>Bank Account</code>, <code>Cost Center</code>, <code>Coupon Code</code>, <code>Item Tax Template</code>, <code>Item Wise Tax Detail</code> (+11 autres)
+- <code>stock</code> (22 liens) — <code>Company Restriction</code>, <code>Item</code>, <code>Material Request</code>, <code>Packed Item</code>, <code>Price List</code>, <code>Serial and Batch Bundle</code> (+1 autres)
+- <code>crm</code> (19 liens) — <code>Competitor Detail</code>, <code>Contact</code>, <code>Lead</code>, <code>Market Segment</code>, <code>Opportunity</code>, <code>Prospect</code> (+3 autres)
+- <code>buying</code> (5 liens) — <code>Purchase Order</code>, <code>Supplier</code>, <code>Supplier Quotation</code>
+- <code>manufacturing</code> (3 liens) — <code>BOM</code>, <code>Blanket Order</code>
+- <code>projects</code> (3 liens) — <code>Project</code>
+- <code>communication</code> (1 liens) — <code>Email Template</code>
+- <code>utilities</code> (1 liens) — <code>Portal User</code></p>
+<p><strong>Requis par</strong> :
+- <code>accounts</code> (22 liens) — <code>Customer</code>, <code>Product Bundle</code>, <code>Sales Order</code>, <code>Sales Team</code>
+- <code>stock</code> (18 liens) — <code>Customer</code>, <code>Product Bundle</code>, <code>Sales Order</code>, <code>Sales Team</code>
+- <code>manufacturing</code> (9 liens) — <code>Customer</code>, <code>Sales Order</code>
+- <code>buying</code> (5 liens) — <code>Customer</code>, <code>Product Bundle</code>, <code>Sales Order</code>
+- <code>crm</code> (4 liens) — <code>Customer</code>, <code>Industry Type</code>
+- <code>maintenance</code> (3 liens) — <code>Customer</code>, <code>Sales Order</code>
+- <code>projects</code> (3 liens) — <code>Customer</code>, <code>Sales Order</code>
+- <code>setup</code> (2 liens) — <code>Customer Credit Limit</code>, <code>Sales Partner Type</code>
+- <code>subcontracting</code> (2 liens) — <code>Customer</code>, <code>Sales Order</code>
+- <code>support</code> (2 liens) — <code>Customer</code>
+- <code>assets</code> (1 liens) — <code>Customer</code>
+- <code>telephony</code> (1 liens) — <code>Customer</code></p>
+<h2 id="configuration-setup">Configuration (<code>setup</code>)<a class="headerlink" href="#configuration-setup" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>accounts</code> (50 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Finance Book</code>, <code>Fiscal Year</code>, <code>Monthly Distribution</code>, <code>Party Account</code> (+2 autres)
+- <code>stock</code> (13 liens) — <code>Item Default</code>, <code>Item Tax</code>, <code>Price List</code>, <code>UOM Category</code>, <code>Warehouse</code>
+- <code>selling</code> (2 liens) — <code>Customer Credit Limit</code>, <code>Sales Partner Type</code>
+- <code>buying</code> (1 liens) — <code>Supplier</code>
+- <code>crm</code> (1 liens) — <code>Contact</code></p>
+<p><strong>Requis par</strong> :
+- <code>accounts</code> (215 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code> (+15 autres)
+- <code>hr</code> (175 liens) — <code>Branch</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code>, <code>Department</code>, <code>Designation</code> (+7 autres)
+- <code>stock</code> (131 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code> (+14 autres)
+- <code>payroll</code> (73 liens) — <code>Branch</code>, <code>Company</code>, <code>Currency</code>, <code>Department</code>, <code>Designation</code>, <code>Employee</code> (+1 autres)
+- <code>selling</code> (73 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Branch</code>, <code>Brand</code>, <code>Company</code>, <code>Currency</code> (+15 autres)
+- <code>buying</code> (60 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code> (+10 autres)
+- <code>manufacturing</code> (49 liens) — <code>Company</code>, <code>Currency</code>, <code>Employee</code>, <code>Error Log</code>, <code>Holiday List</code>, <code>Item Group</code> (+2 autres)
+- <code>subcontracting</code> (28 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Currency</code>, <code>Letter Head</code> (+2 autres)
+- <code>crm</code> (21 liens) — <code>Address</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code>, <code>Customer Group</code> (+7 autres)
+- <code>assets</code> (18 liens) — <code>Company</code>, <code>Department</code>, <code>Employee</code>, <code>UOM</code>
+- <code>maintenance</code> (11 liens) — <code>Address</code>, <code>Company</code>, <code>Customer Group</code>, <code>Sales Person</code>, <code>Territory</code>
+- <code>projects</code> (11 liens) — <code>Company</code>, <code>Currency</code>, <code>Department</code>, <code>Employee</code>, <code>Holiday List</code>
+- <code>support</code> (6 liens) — <code>Address</code>, <code>Company</code>, <code>Customer Group</code>, <code>Holiday List</code>, <code>Territory</code>
+- <code>regional</code> (5 liens) — <code>Company</code>, <code>Supplier Group</code>
+- <code>communication</code> (2 liens) — <code>Employee Group</code>
+- <code>quality_management</code> (2 liens) — <code>UOM</code>
+- <code>telephony</code> (2 liens) — <code>Employee</code>, <code>Employee Group</code></p>
+<h2 id="stock-stock">Stock (<code>stock</code>)<a class="headerlink" href="#stock-stock" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (131 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Country</code>, <code>Currency</code> (+14 autres)
+- <code>accounts</code> (57 liens) — <code>Account</code>, <code>Cost Center</code>, <code>Item Tax Template</code>, <code>Item Wise Tax Detail</code>, <code>Journal Entry</code>, <code>Pricing Rule Detail</code> (+9 autres)
+- <code>selling</code> (18 liens) — <code>Customer</code>, <code>Product Bundle</code>, <code>Sales Order</code>, <code>Sales Team</code>
+- <code>buying</code> (14 liens) — <code>Purchase Order</code>, <code>Purchase Receipt Item Supplied</code>, <code>Supplier</code>
+- <code>manufacturing</code> (12 liens) — <code>BOM</code>, <code>Job Card</code>, <code>Production Plan</code>, <code>Work Order</code>
+- <code>crm</code> (10 liens) — <code>Contact</code>, <code>UTM Campaign</code>, <code>UTM Medium</code>, <code>UTM Source</code>
+- <code>projects</code> (10 liens) — <code>Project</code>
+- <code>assets</code> (8 liens) — <code>Asset</code>, <code>Asset Category</code>, <code>Asset Repair</code>, <code>Location</code>
+- <code>subcontracting</code> (3 liens) — <code>Subcontracting Inward Order</code>, <code>Subcontracting Order</code>, <code>Subcontracting Receipt</code>
+- <code>communication</code> (1 liens) — <code>Email Template</code></p>
+<p><strong>Requis par</strong> :
+- <code>manufacturing</code> (77 liens) — <code>Batch</code>, <code>Item</code>, <code>Material Request</code>, <code>Price List</code>, <code>Quality Inspection</code>, <code>Quality Inspection Template</code> (+2 autres)
+- <code>accounts</code> (54 liens) — <code>Batch</code>, <code>Delivery Note</code>, <code>Item</code>, <code>Manufacturer</code>, <code>Material Request</code>, <code>Packed Item</code> (+7 autres)
+- <code>subcontracting</code> (44 liens) — <code>Batch</code>, <code>Item</code>, <code>Landed Cost Taxes and Charges</code>, <code>Manufacturer</code>, <code>Material Request</code>, <code>Quality Inspection</code> (+2 autres)
+- <code>buying</code> (25 liens) — <code>Batch</code>, <code>Company Restriction</code>, <code>Item</code>, <code>Manufacturer</code>, <code>Material Request</code>, <code>Price List</code> (+1 autres)
+- <code>selling</code> (22 liens) — <code>Company Restriction</code>, <code>Item</code>, <code>Material Request</code>, <code>Packed Item</code>, <code>Price List</code>, <code>Serial and Batch Bundle</code> (+1 autres)
+- <code>setup</code> (13 liens) — <code>Item Default</code>, <code>Item Tax</code>, <code>Price List</code>, <code>UOM Category</code>, <code>Warehouse</code>
+- <code>assets</code> (12 liens) — <code>Batch</code>, <code>Item</code>, <code>Purchase Receipt</code>, <code>Serial and Batch Bundle</code>, <code>Warehouse</code>
+- <code>maintenance</code> (5 liens) — <code>Item</code>, <code>Serial No</code>, <code>Serial and Batch Bundle</code>
+- <code>regional</code> (2 liens) — <code>Item</code>, <code>Price List</code>
+- <code>support</code> (2 liens) — <code>Item</code>, <code>Serial No</code>
+- <code>crm</code> (1 liens) — <code>Item</code>
+- <code>hr</code> (1 liens) — <code>Delivery Trip</code></p>
+<h2 id="sous-traitance-subcontracting">Sous-traitance (<code>subcontracting</code>)<a class="headerlink" href="#sous-traitance-subcontracting" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>stock</code> (44 liens) — <code>Batch</code>, <code>Item</code>, <code>Landed Cost Taxes and Charges</code>, <code>Manufacturer</code>, <code>Material Request</code>, <code>Quality Inspection</code> (+2 autres)
+- <code>setup</code> (28 liens) — <code>Address</code>, <code>Auto Repeat</code>, <code>Brand</code>, <code>Company</code>, <code>Currency</code>, <code>Letter Head</code> (+2 autres)
+- <code>accounts</code> (9 liens) — <code>Account</code>, <code>Cost Center</code>
+- <code>manufacturing</code> (6 liens) — <code>BOM</code>, <code>Job Card</code>
+- <code>buying</code> (4 liens) — <code>Purchase Order</code>, <code>Supplier</code>
+- <code>projects</code> (4 liens) — <code>Project</code>
+- <code>crm</code> (2 liens) — <code>Contact</code>
+- <code>selling</code> (2 liens) — <code>Customer</code>, <code>Sales Order</code></p>
+<p><strong>Requis par</strong> :
+- <code>stock</code> (3 liens) — <code>Subcontracting Inward Order</code>, <code>Subcontracting Order</code>, <code>Subcontracting Receipt</code>
+- <code>manufacturing</code> (1 liens) — <code>Subcontracting Inward Order</code></p>
+<h2 id="support-support">Support (<code>support</code>)<a class="headerlink" href="#support-support" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (6 liens) — <code>Address</code>, <code>Company</code>, <code>Customer Group</code>, <code>Holiday List</code>, <code>Territory</code>
+- <code>crm</code> (3 liens) — <code>Contact</code>, <code>Lead</code>
+- <code>selling</code> (2 liens) — <code>Customer</code>
+- <code>stock</code> (2 liens) — <code>Item</code>, <code>Serial No</code>
+- <code>communication</code> (1 liens) — <code>Email Account</code>
+- <code>projects</code> (1 liens) — <code>Project</code></p>
+<p><strong>Requis par</strong> :
+- <code>projects</code> (1 liens) — <code>Issue</code></p>
+<h2 id="telephonie-telephony">Téléphonie (<code>telephony</code>)<a class="headerlink" href="#telephonie-telephony" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> :
+- <code>setup</code> (2 liens) — <code>Employee</code>, <code>Employee Group</code>
+- <code>selling</code> (1 liens) — <code>Customer</code></p>
+<p><strong>Requis par</strong> : personne pour l'instant.</p>
+<h2 id="utilitaires-utilities">Utilitaires (<code>utilities</code>)<a class="headerlink" href="#utilitaires-utilities" title="Permanent link">#</a></h2>
+<p><strong>Dépend de</strong> : personne — module feuille.</p>
+<p><strong>Requis par</strong> :
+- <code>buying</code> (1 liens) — <code>Portal User</code>
+- <code>selling</code> (1 liens) — <code>Portal User</code></p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../architecture/" class="btn btn-neutral float-left" title="Architecture des définitions"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../integration/" class="btn btn-neutral float-right" title="Implémenter un module">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../architecture/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../integration/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

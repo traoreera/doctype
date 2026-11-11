@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/modules/assets/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Immobilisations (assets) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Immobilisations (assets)";
+        var mkdocs_page_input_path = "modules/assets.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/modules/assets/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Immobilisations (assets)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#chiffres">Chiffres</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#espace-de-travail">Espace de travail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#doctypes-du-module">DocTypes du module</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#points-cles">Points clés</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependances">Dépendances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#implementation-en-plugin-xcore">Implémentation en plugin xcore</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#reference-complete">Référence complète</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Modules</li>
+      <li class="breadcrumb-item active">Immobilisations (assets)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/modules/assets.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="immobilisations-assets">Immobilisations (<code>assets</code>)<a class="headerlink" href="#immobilisations-assets" title="Permanent link">#</a></h1>
+<p>Gestion du parc d'immobilisations : fiches d'actif, catégories avec barèmes d'amortissement, mouvements (acquisition, cession, réévaluation, split) et tableaux d'amortissement qui écrivent en comptabilité.</p>
+<h2 id="chiffres">Chiffres<a class="headerlink" href="#chiffres" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocTypes</th>
+<th>dont pièces</th>
+<th>dont enfants</th>
+<th>dont uniques</th>
+<th>workflows</th>
+<th>séries</th>
+<th>champs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>25</td>
+<td>8</td>
+<td>11</td>
+<td>0</td>
+<td>0</td>
+<td>8</td>
+<td>277</td>
+</tr>
+</tbody>
+</table>
+<h2 id="espace-de-travail">Espace de travail<a class="headerlink" href="#espace-de-travail" title="Permanent link">#</a></h2>
+<p><strong>Espace « Immobilisations »</strong> (icône <code>building</code>, position 80)</p>
+<ul>
+<li><strong>Opérations</strong> : <a href="../../reference/assets/#asset"><code>Asset</code></a> — création, <a href="../../reference/assets/#asset-movement"><code>Asset Movement</code></a> — création, <a href="../../reference/assets/#asset-repair"><code>Asset Repair</code></a> — création, <a href="../../reference/assets/#asset-value-adjustment"><code>Asset Value Adjustment</code></a> — création</li>
+<li><strong>Maintenance</strong> : <a href="../../reference/assets/#asset-maintenance"><code>Asset Maintenance</code></a> — création, <a href="../../reference/assets/#asset-maintenance-log"><code>Asset Maintenance Log</code></a> — création</li>
+<li><strong>Référentiel</strong> : <a href="../../reference/assets/#asset-category"><code>Asset Category</code></a> — création, <a href="../../reference/assets/#location"><code>Location</code></a> — création</li>
+</ul>
+<h2 id="doctypes-du-module">DocTypes du module<a class="headerlink" href="#doctypes-du-module" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocType</th>
+<th>Libellé</th>
+<th>Nature</th>
+<th>Soumis</th>
+<th>Numérotation</th>
+<th>Workflow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../reference/assets/#asset-activity"><code>Asset Activity</code></a></td>
+<td>Asset Activity</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-category"><code>Asset Category</code></a></td>
+<td>Asset Category</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-maintenance"><code>Asset Maintenance</code></a></td>
+<td>Asset Maintenance</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-maintenance-team"><code>Asset Maintenance Team</code></a></td>
+<td>Asset Maintenance Team</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-shift-factor"><code>Asset Shift Factor</code></a></td>
+<td>Asset Shift Factor</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#location"><code>Location</code></a></td>
+<td>Location</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-capitalization-asset-item"><code>Asset Capitalization Asset Item</code></a></td>
+<td>Asset Capitalization Asset Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-capitalization-service-item"><code>Asset Capitalization Service Item</code></a></td>
+<td>Asset Capitalization Service Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-capitalization-stock-item"><code>Asset Capitalization Stock Item</code></a></td>
+<td>Asset Capitalization Stock Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-category-account"><code>Asset Category Account</code></a></td>
+<td>Asset Category Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-finance-book"><code>Asset Finance Book</code></a></td>
+<td>Asset Finance Book</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-maintenance-task"><code>Asset Maintenance Task</code></a></td>
+<td>Asset Maintenance Task</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-movement-item"><code>Asset Movement Item</code></a></td>
+<td>Asset Movement Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-repair-consumed-item"><code>Asset Repair Consumed Item</code></a></td>
+<td>Asset Repair Consumed Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-repair-purchase-invoice"><code>Asset Repair Purchase Invoice</code></a></td>
+<td>Asset Repair Purchase Invoice</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#depreciation-schedule"><code>Depreciation Schedule</code></a></td>
+<td>Depreciation Schedule</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#maintenance-team-member"><code>Maintenance Team Member</code></a></td>
+<td>Maintenance Team Member</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset"><code>Asset</code></a></td>
+<td>Asset</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ASSE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-capitalization"><code>Asset Capitalization</code></a></td>
+<td>Asset Capitalization</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>AC-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-depreciation-schedule"><code>Asset Depreciation Schedule</code></a></td>
+<td>Asset Depreciation Schedule</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ADS-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-maintenance-log"><code>Asset Maintenance Log</code></a></td>
+<td>Asset Maintenance Log</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>AML-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-movement"><code>Asset Movement</code></a></td>
+<td>Asset Movement</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>AM-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-repair"><code>Asset Repair</code></a></td>
+<td>Asset Repair</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>AR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-shift-allocation"><code>Asset Shift Allocation</code></a></td>
+<td>Asset Shift Allocation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ASA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/assets/#asset-value-adjustment"><code>Asset Value Adjustment</code></a></td>
+<td>Asset Value Adjustment</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>AVA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="points-cles">Points clés<a class="headerlink" href="#points-cles" title="Permanent link">#</a></h2>
+<ul>
+<li><strong><code>Asset</code></strong> (ASSE-) : la fiche centrale — catégorie, coût d'acquisition, statut, emplacement ; chaque modification passe par une pièce <code>Asset Modification Log</code>.</li>
+<li><strong>Les mouvements sont des pièces</strong> : <code>Asset Acquisition</code>/<code>Asset Sale</code>/<code>Asset Value Adjustment</code>/<code>Asset Repair</code>/<code>Asset Capitalization</code>… toutes soumises et toutes numérotées (AS-, AC-, ADS-, …).</li>
+<li><strong>L'amortissement</strong> : la catégorie porte le barème (<code>Asset Category</code>, procédure et comptes), la pièce <code>Asset Depreciation Schedule</code> déroule les lignes planifiées ; chaque poste validé écrit sa dotation en comptabilité (<code>Journal Entry</code>).</li>
+<li><strong>Liens comptables forts</strong> : 28 des liens sortants pointent vers <code>accounts</code> (comptes, journaux, centre de coût) — ce module ne se conçoit qu'après la comptabilité.</li>
+</ul>
+<h2 id="dependances">Dépendances<a class="headerlink" href="#dependances" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Dépend de</strong> : <code>accounts</code> (28 liens), <code>setup</code> (18), <code>stock</code> (12), <code>projects</code> (3), <code>buying</code> (1), <code>selling</code> (1).</li>
+<li><strong>Requis par</strong> : <code>accounts</code> (5 — <code>Asset</code>, <code>Asset Category</code>, <code>Location</code>…), <code>stock</code> (8), <code>hr</code> (1), <code>buying</code> (1).</li>
+</ul>
+<p>Détail complet : <a href="../../dependances/#immobilisations-assets">matrice</a>.</p>
+<h2 id="implementation-en-plugin-xcore">Implémentation en plugin xcore<a class="headerlink" href="#implementation-en-plugin-xcore" title="Permanent link">#</a></h2>
+<ul>
+<li>Plugin <code>assets</code> ; l'ordre de déploiement est P5 (après <code>setup</code>, <code>accounts</code>, <code>stock</code>).</li>
+<li><strong>Hooks à écrire</strong> : génération du plan d'amortissement à la création d'un actif, dotation comptable à chaque échéance validée, écritures d'acquisition/cession à la soumission des pièces correspondantes.</li>
+<li>Le coût d'acquisition peut provenir d'une facture d'achat (<code>Purchase Invoice</code> via <code>accounts</code>/<code>buying</code>) : le hook doit le recopier.</li>
+</ul>
+<h2 id="reference-complete">Référence complète<a class="headerlink" href="#reference-complete" title="Permanent link">#</a></h2>
+<p><a href="../../reference/assets/">Référence — Immobilisations</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../accounts/" class="btn btn-neutral float-left" title="Comptabilité (accounts)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../bulk_transaction/" class="btn btn-neutral float-right" title="Traitement en masse (bulk_transaction)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../accounts/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../bulk_transaction/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

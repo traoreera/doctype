@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/erp-doctypes/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Le jeu de définitions - ERP DocTypes</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Le jeu de d\u00e9finitions";
+        var mkdocs_page_input_path = "erp-doctypes.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/erp-doctypes/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Accueil</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Le jeu de définitions</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#etat-de-lextraction">État de l'extraction</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#organisation">Organisation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#chargement">Chargement</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#principales-adaptations-de-schema">Principales adaptations de schéma</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validation">Validation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#perimetre-et-limites">Périmètre et limites</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Le jeu de définitions</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/erp-doctypes.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="documentation-du-jeu-erp-doctypes">Documentation du jeu ERP DocTypes<a class="headerlink" href="#documentation-du-jeu-erp-doctypes" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Ce document accompagne les définitions YAML de ce dépôt. Les mécanismes de validation, stockage, droits, hooks et interface sont fournis par xcore-doctype et les plugins consommateurs, pas par ce jeu de fichiers.</p>
+</blockquote>
+<h2 id="etat-de-lextraction">État de l'extraction<a class="headerlink" href="#etat-de-lextraction" title="Permanent link">#</a></h2>
+<p>Le jeu a été extrait du dépôt xcore-doctype le 10 novembre 2026. L'extraction initiale contient 704 fichiers YAML dans 22 répertoires de modules. Les définitions ont été migrées depuis ERPNext (référence d'origine documentée dans l'historique du projet moteur), puis transformées pour respecter le schéma et les capacités de xcore-doctype.</p>
+<p>La référence technique complète et l'historique des transformations ont été conservés depuis le dépôt source. La présente copie devra être mise à jour lorsque les définitions évoluent ; le dépôt source du moteur utilise un sous-module pointant sur un commit précis.</p>
+<h2 id="organisation">Organisation<a class="headerlink" href="#organisation" title="Permanent link">#</a></h2>
+<p>Chaque dossier de premier niveau correspond à un domaine ou module :</p>
+<ul>
+<li><code>accounts/</code>, <code>buying/</code>, <code>selling/</code>, <code>stock/</code>, <code>assets/</code>, <code>payroll/</code>, <code>hr/</code> ;</li>
+<li><code>crm/</code>, <code>communication/</code>, <code>support/</code>, <code>projects/</code>, <code>maintenance/</code>, <code>manufacturing/</code>, <code>quality_management/</code> ;</li>
+<li><code>setup/</code>, <code>regional/</code>, <code>utilities/</code>, <code>telephony/</code>, <code>edi/</code>, <code>bulk_transaction/</code>, <code>erpnext_integrations/</code>, <code>subcontracting/</code>.</li>
+</ul>
+<p>Les fichiers sont des définitions DocType YAML. Les espaces de travail, traductions, données de plan comptable et plugins ne sont pas inclus dans ce dépôt, sauf s'ils sont explicitement ajoutés dans le futur.</p>
+<h2 id="chargement">Chargement<a class="headerlink" href="#chargement" title="Permanent link">#</a></h2>
+<p>Le moteur peut charger récursivement un répertoire de définitions opérateur puis valider les liens après l'enregistrement de l'ensemble. Pour un déploiement modulaire, chaque plugin propriétaire charge son dossier de module, déclare les grants de son namespace et les dépendances nécessaires. Les modules qui se référencent en cycle doivent utiliser le mécanisme de modules pairs de xcore-doctype (<code>load_dir(..., peers=True)</code>).</p>
+<p>Ne pas charger simultanément les mêmes définitions depuis la racine du dépôt moteur et depuis ce sous-module : cela créerait des définitions en double.</p>
+<h2 id="principales-adaptations-de-schema">Principales adaptations de schéma<a class="headerlink" href="#principales-adaptations-de-schema" title="Permanent link">#</a></h2>
+<p>Les transformations documentées dans l'historique et dans le guide du moteur comprennent notamment :</p>
+<ul>
+<li>harmonisation des référentiels et des noms de champs liés ;</li>
+<li>retrait des liens vers des types externes absents ou non adressables ;</li>
+<li>adoption de <code>Decimal</code> pour les quantités et valeurs exactes, avec échelles déclarées ;</li>
+<li>numérotation des pièces, champs <code>compute</code>, <code>fetch_from</code>, conditions et devise d'affichage lorsque le schéma le permet ;</li>
+<li>correction des vues arborescentes erronées et des champs système dupliqués ;</li>
+<li>traduction française des libellés dans un catalogue séparé, non embarqué ici.</li>
+</ul>
+<p>Le document détaillé de migration, ses contrôles et les décisions sont conservés dans le dépôt moteur : <a href="https://github.com/traoreera/doctype/blob/master/process/erp-doctypes.md"><code>process/erp-doctypes.md</code></a>.</p>
+<h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">#</a></h2>
+<p>Valider les définitions contre la version du moteur utilisée par le plugin consommateur. Les vérifications doivent couvrir au minimum : parsing strict, types enfants, cibles Link/DynamicLink, conditions/calculs, filtres, numérotation, champs monétaires et cohérence de la déclaration des grants. Un passage des contrôles structurels ne valide pas les règles métier ou la conformité comptable.</p>
+<p>Le plan comptable SYSCOHADA, quand il est consommé par l'ERP, doit être validé par un expert-comptable compétent avant tout usage en production ; il n'est pas inclus dans ce dépôt.</p>
+<h2 id="perimetre-et-limites">Périmètre et limites<a class="headerlink" href="#perimetre-et-limites" title="Permanent link">#</a></h2>
+<p>Ces fichiers ne constituent pas à eux seuls un ERP opérationnel. Les hooks de comptabilisation, valorisation, stock, clôture, paie, workflows de déploiement et tests métier appartiennent aux plugins ERP séparés. Une définition marquée <code>submittable</code> n'implémente pas automatiquement la comptabilisation attendue.</p>
+<p>Pour le contrat courant du moteur, les instructions d'installation et les exemples, consulter le <a href="https://github.com/traoreera/doctype/blob/master/docs/guide.md">guide xcore-doctype</a> et le <a href="https://github.com/traoreera/doctype/blob/master/process/plan-erp.md">plan d'intégration ERP</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Accueil"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../architecture/" class="btn btn-neutral float-right" title="Architecture des définitions">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../architecture/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

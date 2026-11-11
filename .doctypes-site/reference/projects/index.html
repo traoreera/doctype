@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/projects/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Projets (projects) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Projets (projects)";
+        var mkdocs_page_input_path = "reference/projects.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/projects/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Projets (projects)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#activity-cost">Activity Cost</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#activity-type">Activity Type</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#project">Project</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#project-template">Project Template</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#project-template-task">Project Template Task</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#project-type">Project Type</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#project-update">Project Update</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#project-user">Project User</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#projects-settings">Projects Settings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#task">Task</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#task-depends-on">Task Depends On</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#task-type">Task Type</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#timesheet">Timesheet</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#timesheet-detail">Timesheet Detail</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Projets (projects)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/projects.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-projets-projects">Référence des champs — Projets (<code>projects</code>)<a class="headerlink" href="#reference-des-champs-projets-projects" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>projects/</code> (14 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>167 champs au total ; types les plus fréquents : <code>Link</code> (32), <code>Currency</code> (28), <code>Text</code> (21), <code>Boolean</code> (15), <code>Date</code> (12).</p>
+<h2 id="activity-cost">Activity Cost<a class="headerlink" href="#activity-cost" title="Permanent link">#</a></h2>
+<p><em>Activity Cost</em> — <code>projects/activity_cost.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>activity_type</code></li>
+<li><strong>Icône</strong> : <code>coins</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>activity_type</code></td>
+<td>Activity Type</td>
+<td>Link → <code>Activity Type</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>billing_rate</code></td>
+<td>Billing Rate</td>
+<td>Currency</td>
+<td>— per hour</td>
+</tr>
+<tr>
+<td><code>costing_rate</code></td>
+<td>Costing Rate</td>
+<td>Currency</td>
+<td>— per hour</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>title</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="activity-type">Activity Type<a class="headerlink" href="#activity-type" title="Permanent link">#</a></h2>
+<p><em>Activity Type</em> — <code>projects/activity_type.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>activity_type</code></li>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>activity_type</code></td>
+<td>Activity Type</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>costing_rate</code></td>
+<td>Default Costing Rate</td>
+<td>Currency</td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_rate</code></td>
+<td>Default Billing Rate</td>
+<td>Currency</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="project">Project<a class="headerlink" href="#project" title="Permanent link">#</a></h2>
+<p><em>Project</em> — <code>projects/project.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : kanban, gantt</li>
+<li><strong>Titre</strong> : <code>subject</code></li>
+<li><strong>Icône</strong> : <code>folder-kanban</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project_name</code></td>
+<td>Project Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Open · On hold · Completed · Cancelled</td>
+<td>défaut <code>Open</code></td>
+</tr>
+<tr>
+<td><code>project_type</code></td>
+<td>Project Type</td>
+<td>Link → <code>Project Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>Is Active</td>
+<td>Select — Yes · No</td>
+<td></td>
+</tr>
+<tr>
+<td><code>percent_complete_method</code></td>
+<td>% Complete Method</td>
+<td>Select — Manual · Task Completion · Task Progress · Task Weight</td>
+<td>défaut <code>Task Completion</code></td>
+</tr>
+<tr>
+<td><code>percent_complete</code></td>
+<td>% Completed</td>
+<td>Percent</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>project_template</code></td>
+<td>From Template</td>
+<td>Link → <code>Project Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expected_start_date</code></td>
+<td>Expected Start date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>expected_end_date</code></td>
+<td>Expected End date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>priority</code></td>
+<td>Priority</td>
+<td>Select — Low · Medium · High</td>
+<td>défaut <code>Medium</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>users</code></td>
+<td>Users</td>
+<td>Table → <code>Project User</code></td>
+<td>— Project will be accessible on the website to these users</td>
+</tr>
+<tr>
+<td><code>copied_from</code></td>
+<td>Copied From</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>Notes</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>actual_start_date</code></td>
+<td>Actual Start date (via Timesheet)</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>actual_time</code></td>
+<td>Actual Time in hours (via Timesheet)</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>actual_end_date</code></td>
+<td>Actual End date (via Timesheet)</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>estimated_costing</code></td>
+<td>Estimated Cost</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_costing_amount</code></td>
+<td>Total Costing Amount (via Timesheet)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_purchase_cost</code></td>
+<td>Total Purchase Cost (via Purchase Invoice)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>total_sales_amount</code></td>
+<td>Total Sales amount (via Sales Order)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_billable_amount</code></td>
+<td>Total Billable amount (via Timesheet)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_billed_amount</code></td>
+<td>Total Billed amount (via Sales Invoice)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_consumed_material_cost</code></td>
+<td>Total Consumed Material Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Default Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>gross_margin</code></td>
+<td>Gross Margin</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>per_gross_margin</code></td>
+<td>Gross Margin %</td>
+<td>Percent</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>collect_progress</code></td>
+<td>Email users for progress updates</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Emails the users in Portal users on the schedule below, asking for a status update. Needs email accounts set u</td>
+</tr>
+<tr>
+<td><code>holiday_list</code></td>
+<td>Holiday List</td>
+<td>Link → <code>Holiday List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>frequency</code></td>
+<td>Frequency to collect progress</td>
+<td>Select — Hourly · Twice Daily · Daily · Weekly</td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_time</code></td>
+<td>From time</td>
+<td>Time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To time</td>
+<td>Time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>first_email</code></td>
+<td>First email</td>
+<td>Time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>second_email</code></td>
+<td>Second email</td>
+<td>Time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>daily_time_to_send</code></td>
+<td>Daily time to send</td>
+<td>Time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>day_to_send</code></td>
+<td>Day to Send</td>
+<td>Select — Monday · Tuesday · Wednesday · Thursday · Friday · Saturday · Sunday</td>
+<td></td>
+</tr>
+<tr>
+<td><code>weekly_time_to_send</code></td>
+<td>Weekly time to send</td>
+<td>Time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td>Message</td>
+<td>LongText</td>
+<td>— Message will be sent to the users to get their status on the Project</td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — PROJ-.####</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-template">Project Template<a class="headerlink" href="#project-template" title="Permanent link">#</a></h2>
+<p><em>Project Template</em> — <code>projects/project_template.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>project_type</code></li>
+<li><strong>Icône</strong> : <code>folder</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project_type</code></td>
+<td>Project Type</td>
+<td>Link → <code>Project Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>tasks</code></td>
+<td>Tasks</td>
+<td>Table → <code>Project Template Task</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-template-task">Project Template Task<a class="headerlink" href="#project-template-task" title="Permanent link">#</a></h2>
+<p><em>Project Template Task</em> — <code>projects/project_template_task.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>task</code></td>
+<td>Task</td>
+<td>Link → <code>Task</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-type">Project Type<a class="headerlink" href="#project-type" title="Permanent link">#</a></h2>
+<p><em>Project Type</em> — <code>projects/project_type.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>project_type</code></li>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project_type</code></td>
+<td>Project Type</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-update">Project Update<a class="headerlink" href="#project-update" title="Permanent link">#</a></h2>
+<p><em>Project Update</em> — <code>projects/project_update.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>PU-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>project</code></li>
+<li><strong>Icône</strong> : <code>message-square</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>sent</code></td>
+<td>Sent</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>time</code></td>
+<td>Time</td>
+<td>Time</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>users</code></td>
+<td>Users</td>
+<td>Table → <code>Project User</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-user">Project User<a class="headerlink" href="#project-user" title="Permanent link">#</a></h2>
+<p><em>Project User</em> — <code>projects/project_user.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user</code></td>
+<td>User</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Email</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>full_name</code></td>
+<td>Full Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>welcome_email_sent</code></td>
+<td>Welcome email sent</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>view_attachments</code></td>
+<td>View attachments</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>hide_timesheets</code></td>
+<td>Hide timesheets</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>project_status</code></td>
+<td>Project Status</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="projects-settings">Projects Settings<a class="headerlink" href="#projects-settings" title="Permanent link">#</a></h2>
+<p><em>Projects Settings</em> — <code>projects/projects_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Icône</strong> : <code>settings</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ignore_user_time_overlap</code></td>
+<td>Ignore User Time Overlap</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>ignore_employee_time_overlap</code></td>
+<td>Ignore Employee Time Overlap</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>fetch_timesheet_in_sales_invoice</code></td>
+<td>Fetch Timesheet in Sales Invoice</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Enabling the check box will fetch timesheet on select of a Project in Sales Invoice</td>
+</tr>
+</tbody>
+</table>
+<h2 id="task">Task<a class="headerlink" href="#task" title="Permanent link">#</a></h2>
+<p><em>Task</em> — <code>projects/task.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_task</code>)</li>
+<li><strong>Titre</strong> : <code>subject</code></li>
+<li><strong>Icône</strong> : <code>list-checks</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>issue</code></td>
+<td>Issue</td>
+<td>Link → <code>Issue</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>Type</td>
+<td>Link → <code>Task Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Open · Working · Pending Review · Overdue · Template · Completed · Cancelled</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>priority</code></td>
+<td>Priority</td>
+<td>Select — Low · Medium · High · Urgent</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>Color</td>
+<td>Color</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_task</code></td>
+<td>Parent Task</td>
+<td>Link → <code>Task</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>exp_start_date</code></td>
+<td>Expected Start Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expected_time</code></td>
+<td>Expected Time (in hours)</td>
+<td>Number</td>
+<td>défaut <code>0.0</code></td>
+</tr>
+<tr>
+<td><code>task_weight</code></td>
+<td>Weight</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>exp_end_date</code></td>
+<td>Expected End Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>progress</code></td>
+<td>% Progress</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_milestone</code></td>
+<td>Is Milestone</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Task Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>depends_on</code></td>
+<td>Dependent Tasks</td>
+<td>Table → <code>Task Depends On</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>depends_on_tasks</code></td>
+<td>Depends on Tasks</td>
+<td>Code</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>act_start_date</code></td>
+<td>Actual Start Date (via Timesheet)</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>actual_time</code></td>
+<td>Actual Time in Hours (via Timesheet)</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>act_end_date</code></td>
+<td>Actual End Date (via Timesheet)</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_costing_amount</code></td>
+<td>Total Costing Amount (via Timesheet)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_billing_amount</code></td>
+<td>Total Billable Amount (via Timesheet)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>review_date</code></td>
+<td>Review Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>closing_date</code></td>
+<td>Closing Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>Old Parent</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>completed_by</code></td>
+<td>Completed By</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_template</code></td>
+<td>Is Template</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>start</code></td>
+<td>Begin On (Days)</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>duration</code></td>
+<td>Duration (Days)</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>completed_on</code></td>
+<td>Completed On</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>template_task</code></td>
+<td>Template Task</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="task-depends-on">Task Depends On<a class="headerlink" href="#task-depends-on" title="Permanent link">#</a></h2>
+<p><em>Task Depends On</em> — <code>projects/task_depends_on.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>task</code></td>
+<td>Task</td>
+<td>Link → <code>Task</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>LongText</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="task-type">Task Type<a class="headerlink" href="#task-type" title="Permanent link">#</a></h2>
+<p><em>Task Type</em> — <code>projects/task_type.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>weight</code></td>
+<td>Weight</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="timesheet">Timesheet<a class="headerlink" href="#timesheet" title="Permanent link">#</a></h2>
+<p><em>Timesheet</em> — <code>projects/timesheet.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>TIME-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>clock</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — TS-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sales_invoice</code></td>
+<td>Sales Invoice</td>
+<td>Link → <code>Sales Invoice</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Partially Billed · Billed · Payslip · Completed · Cancelled</td>
+<td>lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>User</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>time_logs</code></td>
+<td>Time Sheets</td>
+<td>Table → <code>Timesheet Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_hours</code></td>
+<td>Total Working Hours</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_billable_hours</code></td>
+<td>Total Billable Hours</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_billed_hours</code></td>
+<td>Total Billed Hours</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_costing_amount</code></td>
+<td>Total Costing Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_billable_amount</code></td>
+<td>Total Billable Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_billed_amount</code></td>
+<td>Total Billed Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>per_billed</code></td>
+<td>% Amount Billed</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>note</code></td>
+<td>Note</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>base_total_costing_amount</code></td>
+<td>Base Total Costing Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_total_billable_amount</code></td>
+<td>Base Total Billable Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_total_billed_amount</code></td>
+<td>Base Total Billed Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>exchange_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td>défaut <code>1.0</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="timesheet-detail">Timesheet Detail<a class="headerlink" href="#timesheet-detail" title="Permanent link">#</a></h2>
+<p><em>Timesheet Detail</em> — <code>projects/timesheet_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>activity_type</code></td>
+<td>Activity Type</td>
+<td>Link → <code>Activity Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_time</code></td>
+<td>From Time</td>
+<td>Datetime</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>expected_hours</code></td>
+<td>Expected Hrs</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>hours</code></td>
+<td>Hrs</td>
+<td>Number</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To Time</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>completed</code></td>
+<td>Completed</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>task</code></td>
+<td>Task</td>
+<td>Link → <code>Task</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_hours</code></td>
+<td>Billing Hours</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_rate</code></td>
+<td>Billing Rate</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>billing_amount</code></td>
+<td>Billing Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>costing_rate</code></td>
+<td>Costing Rate</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>costing_amount</code></td>
+<td>Costing Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>sales_invoice</code></td>
+<td>Sales Invoice</td>
+<td>Link → <code>Sales Invoice</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_billable</code></td>
+<td>Is Billable</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>project_name</code></td>
+<td>Project Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>project.project_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>base_billing_rate</code></td>
+<td>Billing Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_billing_amount</code></td>
+<td>Billing Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_costing_rate</code></td>
+<td>Costing Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_costing_amount</code></td>
+<td>Costing Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../payroll/" class="btn btn-neutral float-left" title="Paie (payroll)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../quality_management/" class="btn btn-neutral float-right" title="Qualité (quality_management)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../payroll/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../quality_management/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,5383 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/manufacturing/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Fabrication (manufacturing) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Fabrication (manufacturing)";
+        var mkdocs_page_input_path = "reference/manufacturing.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/manufacturing/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Fabrication (manufacturing)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#blanket-order">Blanket Order</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#blanket-order-item">Blanket Order Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom">BOM</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-creator">BOM Creator</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-creator-item">BOM Creator Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-creator-material">BOM Creator Material</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-creator-operation">BOM Creator Operation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-explosion-item">BOM Explosion Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-item">BOM Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-operation">BOM Operation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-secondary-item">BOM Secondary Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-update-batch">BOM Update Batch</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-update-log">BOM Update Log</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bom-update-tool">BOM Update Tool</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#downtime-entry">Downtime Entry</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#job-card">Job Card</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#job-card-item">Job Card Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#job-card-operation">Job Card Operation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#job-card-scheduled-time">Job Card Scheduled Time</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#job-card-secondary-item">Job Card Secondary Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#job-card-time-log">Job Card Time Log</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#manufacturing-settings">Manufacturing Settings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#master-production-schedule">Master Production Schedule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#master-production-schedule-item">Master Production Schedule Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#material-request-plan-item">Material Request Plan Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#operation">Operation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#plant-floor">Plant Floor</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan">Production Plan</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan-item">Production Plan Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan-item-reference">Production Plan Item Reference</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan-material-request">Production Plan Material Request</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan-material-request-warehouse">Production Plan Material Request Warehouse</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan-sales-order">Production Plan Sales Order</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan-schedule">Production Plan Schedule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#production-plan-sub-assembly-item">Production Plan Sub Assembly Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#routing">Routing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sales-forecast">Sales Forecast</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sales-forecast-item">Sales Forecast Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sub-operation">Sub Operation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#work-order">Work Order</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#work-order-additional-item">Work Order Additional Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#work-order-item">Work Order Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#work-order-operation">Work Order Operation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workstation">Workstation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workstation-cost">Workstation Cost</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workstation-operating-component">Workstation Operating Component</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workstation-operating-component-account">Workstation Operating Component Account</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workstation-type">Workstation Type</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#workstation-working-hour">Workstation Working Hour</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Fabrication (manufacturing)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/manufacturing.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-fabrication-manufacturing">Référence des champs — Fabrication (<code>manufacturing</code>)<a class="headerlink" href="#reference-des-champs-fabrication-manufacturing" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>manufacturing/</code> (49 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>712 champs au total ; types les plus fréquents : <code>Link</code> (199), <code>Boolean</code> (98), <code>Decimal</code> (79), <code>Text</code> (56), <code>Currency</code> (47).</p>
+<h2 id="blanket-order">Blanket Order<a class="headerlink" href="#blanket-order" title="Permanent link">#</a></h2>
+<p><em>Blanket Order</em> — <code>manufacturing/blanket_order.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>BO-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>customer</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — MFG-BLR-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>blanket_order_type</code></td>
+<td>Order Type</td>
+<td>Select — Selling · Purchasing</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_name</code></td>
+<td>Customer Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>customer.customer_name</code></td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>supplier_name</code></td>
+<td>Supplier Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>supplier.supplier_name</code></td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Closed · Cancelled</td>
+<td>lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>conversion_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td><strong>requis</strong>; — Rate at which document currency is converted to company currency</td>
+</tr>
+<tr>
+<td><code>selling_price_list</code></td>
+<td>Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>buying_price_list</code></td>
+<td>Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_list_currency</code></td>
+<td>Price List Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>plc_conversion_rate</code></td>
+<td>Price List Exchange Rate</td>
+<td>Number</td>
+<td>— Rate at which Price List Currency is converted to Company Currency</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Item</td>
+<td>Table → <code>Blanket Order Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>tc_name</code></td>
+<td>Terms</td>
+<td>Link → <code>Terms and Conditions</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>terms</code></td>
+<td>Terms and Conditions Details</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>order_no</code></td>
+<td>Order No</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>order_date</code></td>
+<td>Order Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="blanket-order-item">Blanket Order Item<a class="headerlink" href="#blanket-order-item" title="Permanent link">#</a></h2>
+<p><em>Blanket Order Item</em> — <code>manufacturing/blanket_order_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>price_list_rate</code></td>
+<td>Price List Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_price_list_rate</code></td>
+<td>Price List Rate (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate</code></td>
+<td>Rate (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>ordered_qty</code></td>
+<td>Ordered Quantity</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>closed</code></td>
+<td>Closed</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>terms_and_conditions</code></td>
+<td>Terms and Conditions</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>party_item_code</code></td>
+<td>Party Item Code</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom">BOM<a class="headerlink" href="#bom" title="Permanent link">#</a></h2>
+<p><em>BOM</em> — <code>manufacturing/bom.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>BOM-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>item_name</code></li>
+<li><strong>Icône</strong> : <code>list-tree</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item</code></td>
+<td>Item to manufacture</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; — The final item that will be produced using this BOM.</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item.item_name</code></td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>Unit of Measure</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>set_qty_based_on_percentage</code></td>
+<td>Set component quantities based on percentage</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Component quantities are derived from their percentage of the Output Qty. One component row can be marked as B</td>
+</tr>
+<tr>
+<td><code>quantity</code></td>
+<td>Quantity (Output Qty)</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; défaut <code>1.000</code>; — How many units of the final product this BOM makes.</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>Is active</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>is_default</code></td>
+<td>Set as default</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code>; — This BOM will be selected by default in Work Orders etc. when the Item is selected.</td>
+</tr>
+<tr>
+<td><code>with_operations</code></td>
+<td>With Operations</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Manage cost of operations</td>
+</tr>
+<tr>
+<td><code>inspection_required</code></td>
+<td>Quality Inspection required</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>allow_alternative_item</code></td>
+<td>Allow alternative raw material</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Enable this to select an alternative material when the required item is unavailable.</td>
+</tr>
+<tr>
+<td><code>quality_inspection_template</code></td>
+<td>Quality Inspection Template</td>
+<td>Link → <code>Quality Inspection Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>transfer_material_against</code></td>
+<td>Transfer material against</td>
+<td>Select — Work Order · Job Card</td>
+<td>défaut <code>Work Order</code></td>
+</tr>
+<tr>
+<td><code>conversion_rate</code></td>
+<td>Conversion rate</td>
+<td>Number</td>
+<td><strong>requis</strong>; défaut <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>rm_cost_as_per</code></td>
+<td>Rate of Materials based on</td>
+<td>Select — Valuation Rate · Last Purchase Rate · Price List</td>
+<td>défaut <code>Valuation Rate</code></td>
+</tr>
+<tr>
+<td><code>buying_price_list</code></td>
+<td>Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>routing</code></td>
+<td>Routing</td>
+<td>Link → <code>Routing</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>operations</code></td>
+<td>Operations</td>
+<td>Table → <code>BOM Operation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>BOM Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>operating_cost</code></td>
+<td>Operating Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>raw_material_cost</code></td>
+<td>Raw Material Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>base_operating_cost</code></td>
+<td>Operating Cost (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_raw_material_cost</code></td>
+<td>Raw Material Cost (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_cost</code></td>
+<td>Total Cost</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>base_total_cost</code></td>
+<td>Total Cost (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Item Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>exploded_items</code></td>
+<td>Exploded Items</td>
+<td>Table → <code>BOM Explosion Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>show_in_website</code></td>
+<td>Show in Website</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>route</code></td>
+<td>Route</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>website_image</code></td>
+<td>Website Image</td>
+<td>Image</td>
+<td>— Item Image (if not slideshow)</td>
+</tr>
+<tr>
+<td><code>thumbnail</code></td>
+<td>Thumbnail</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>web_long_description</code></td>
+<td>Website Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>show_items</code></td>
+<td>Show Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>show_operations</code></td>
+<td>Show Operations</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>plc_conversion_rate</code></td>
+<td>Price List Exchange Rate</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_list_currency</code></td>
+<td>Price List Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>has_variants</code></td>
+<td>Has variants</td>
+<td>Boolean</td>
+<td>colonne de liste; lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>process_loss_percentage</code></td>
+<td>% Process loss</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>process_loss_qty</code></td>
+<td>Process loss qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>fg_based_operating_cost</code></td>
+<td>Finished goods based operating cost</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>operating_cost_per_bom_quantity</code></td>
+<td>Operating cost per BOM quantity</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>bom_creator</code></td>
+<td>BOM Creator</td>
+<td>Link → <code>BOM Creator</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>bom_creator_item</code></td>
+<td>BOM Creator Item</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>track_semi_finished_goods</code></td>
+<td>Produce Item per Operation</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Each operation produces its own output item and puts it in stock, for example Cut Sheet, then Painted Sheet, t</td>
+</tr>
+<tr>
+<td><code>default_source_warehouse</code></td>
+<td>Default Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_target_warehouse</code></td>
+<td>Default Target Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_phantom_bom</code></td>
+<td>Set as Phantom BOM</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Enable this to define the BOM as a logical grouping of raw materials without producing an item. The Production</td>
+</tr>
+<tr>
+<td><code>secondary_items</code></td>
+<td>Secondary Items</td>
+<td>Table → <code>BOM Secondary Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>secondary_items_cost</code></td>
+<td>Secondary Items Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>base_secondary_items_cost</code></td>
+<td>Secondary Items Cost (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>cost_allocation</code></td>
+<td>Cost allocation for Finished Good</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>cost_allocation_per</code></td>
+<td>% Cost allocation for Finished Good</td>
+<td>Percent</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>backflush_based_on</code></td>
+<td>Based on</td>
+<td>Select — BOM · Material Transferred for Manufacture</td>
+<td>— Controls how raw materials are consumed during the ‘Manufacture’ stock entry.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-creator">BOM Creator<a class="headerlink" href="#bom-creator" title="Permanent link">#</a></h2>
+<p><em>BOM Creator</em> — <code>manufacturing/bom_creator.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>BC-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>item_code</code></li>
+<li><strong>Icône</strong> : <code>list-plus</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>design_name</code></td>
+<td>Design Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Finished Good</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>design_file</code></td>
+<td>Design File</td>
+<td>Attach</td>
+<td>— STEP file (.step or .stp) or CSV file. A CSV file needs a Level or Item Number column, a Part Number or Part N</td>
+</tr>
+<tr>
+<td><code>track_semi_finished_goods</code></td>
+<td>Produce Item per Operation</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Each operation makes an item that a later operation can use. The last operation makes the finished good.</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Finished Good Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; défaut <code>1.000</code>; — The BOM of the finished good is made for this quantity. Part quantities are for one finished good.</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>BOM Creator Item</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>operations</code></td>
+<td>Operations</td>
+<td>Table → <code>BOM Creator Operation</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>materials</code></td>
+<td>Materials</td>
+<td>Table → <code>BOM Creator Material</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>rm_cost_as_per</code></td>
+<td>Rate Of Materials Based On</td>
+<td>Select — Valuation Rate · Last Purchase Rate · Price List</td>
+<td><strong>requis</strong>; défaut <code>Valuation Rate</code></td>
+</tr>
+<tr>
+<td><code>buying_price_list</code></td>
+<td>Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_list_currency</code></td>
+<td>Price List Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>plc_conversion_rate</code></td>
+<td>Price List Exchange Rate</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>set_rate_based_on_warehouse</code></td>
+<td>Set Valuation Rate Based on Source Warehouse</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>default_warehouse</code></td>
+<td>Default Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>conversion_rate</code></td>
+<td>Conversion Rate</td>
+<td>Number</td>
+<td>défaut <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>raw_material_cost</code></td>
+<td>Total Cost</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — BOM-CRE-.YYYY.-</td>
+<td><strong>requis</strong>; masqué; défaut <code>BOM-CRE-.YYYY.-</code></td>
+</tr>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group for New Items</td>
+<td>Link → <code>Item Group</code></td>
+<td>— Item group of the items created from design parts.</td>
+</tr>
+<tr>
+<td><code>part_number</code></td>
+<td>Part Number</td>
+<td>Text</td>
+<td>— Part number of the top assembly in the design file.</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_phantom</code></td>
+<td>Is Phantom BOM</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>routing</code></td>
+<td>Routing</td>
+<td>Link → <code>Routing</code></td>
+<td>— The BOM of the finished good gets its operations from this routing.</td>
+</tr>
+<tr>
+<td><code>revision</code></td>
+<td>Revision</td>
+<td>Int</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>previous_revision</code></td>
+<td>Previous Revision</td>
+<td>Link → <code>BOM Creator</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; masqué; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · In Progress · Completed · Failed · Superseded · Cancelled</td>
+<td>colonne de liste; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>remarks</code></td>
+<td>Remarks</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>error_log</code></td>
+<td>Error Log</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-creator-item">BOM Creator Item<a class="headerlink" href="#bom-creator-item" title="Permanent link">#</a></h2>
+<p><em>BOM Creator Item</em> — <code>manufacturing/bom_creator_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>part_number</code></td>
+<td>Part Number</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>part_name</code></td>
+<td>Part Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td>colonne de liste; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>design_quantity</code></td>
+<td>Design Quantity</td>
+<td>Decimal</td>
+<td>lecture seule; — Quantity from the design file.</td>
+</tr>
+<tr>
+<td><code>node_id</code></td>
+<td>Node</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_expandable</code></td>
+<td>Is Assembly</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Source</td>
+<td>Select — CAD File · Manual</td>
+<td>lecture seule; défaut <code>Manual</code></td>
+</tr>
+<tr>
+<td><code>change_type</code></td>
+<td>Change</td>
+<td>Select — Added · Quantity Changed</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>exclude_from_bom</code></td>
+<td>Exclude from BOM</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_phantom_item</code></td>
+<td>Is Phantom Item</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>sourced_by_supplier</code></td>
+<td>Sourced by Supplier</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>bom_created</code></td>
+<td>BOM Created</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Stock Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate</code></td>
+<td>Base Rate</td>
+<td>Currency</td>
+<td>masqué; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_amount</code></td>
+<td>Base Amount</td>
+<td>Currency</td>
+<td>masqué; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>do_not_explode</code></td>
+<td>Do Not Explode</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — Use the item as a raw material without its own BOM.</td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>BOM No</td>
+<td>Link → <code>BOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td>— Operation of the routing that uses this material.</td>
+</tr>
+<tr>
+<td><code>instruction</code></td>
+<td>Instruction</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>placements</code></td>
+<td>Placements in Model</td>
+<td>JSON</td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-creator-material">BOM Creator Material<a class="headerlink" href="#bom-creator-material" title="Permanent link">#</a></h2>
+<p><em>BOM Creator Material</em> — <code>manufacturing/bom_creator_material.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bom_node_id</code></td>
+<td>BOM Node</td>
+<td>Int</td>
+<td>défaut <code>0</code>; — Node of the design part. 0 means the finished good.</td>
+</tr>
+<tr>
+<td><code>operation_id</code></td>
+<td>Operation ID</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_operation_id</code></td>
+<td>Output of Operation ID</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>part_node_id</code></td>
+<td>Part Node</td>
+<td>Int</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-creator-operation">BOM Creator Operation<a class="headerlink" href="#bom-creator-operation" title="Permanent link">#</a></h2>
+<p><em>BOM Creator Operation</em> — <code>manufacturing/bom_creator_operation.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation_id</code></td>
+<td>Operation ID</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>bom_node_id</code></td>
+<td>BOM Node</td>
+<td>Int</td>
+<td>défaut <code>0</code>; — Node of the design part. 0 means the finished good.</td>
+</tr>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>workstation_type</code></td>
+<td>Workstation Type</td>
+<td>Link → <code>Workstation Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>time_in_mins</code></td>
+<td>Operation Time (Minutes)</td>
+<td>Number</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>output_node_id</code></td>
+<td>Output Node</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>output_item</code></td>
+<td>Output Item</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>output_quantity</code></td>
+<td>Output Quantity</td>
+<td>Decimal</td>
+<td>défaut <code>1.000</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-explosion-item">BOM Explosion Item<a class="headerlink" href="#bom-explosion-item" title="Permanent link">#</a></h2>
+<p><em>BOM Explosion Item</em> — <code>manufacturing/bom_explosion_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Stock Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>qty_consumed_per_unit</code></td>
+<td>Qty Consumed Per Unit</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>include_item_in_manufacturing</code></td>
+<td>Include Item In Manufacturing</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sourced_by_supplier</code></td>
+<td>Sourced by Supplier</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_sub_assembly_item</code></td>
+<td>Is Sub Assembly Item</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-item">BOM Item<a class="headerlink" href="#bom-item" title="Permanent link">#</a></h2>
+<p><em>BOM Item</em> — <code>manufacturing/bom_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>operation</code></td>
+<td>Item operation</td>
+<td>Link → <code>Operation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>BOM No</td>
+<td>Link → <code>BOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>set_rate_of_sub_assembly_item_based_on_bom</code></td>
+<td>Set rate based on sub-assembly BOM</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — Cost this sub-assembly by rolling up its BOM cost instead of the item's own valuation or price-list rate. Appl</td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Item Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>percentage</code></td>
+<td>Percentage (%)</td>
+<td>Percent</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Stock Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate</code></td>
+<td>Basic Rate (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_amount</code></td>
+<td>Amount (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>qty_consumed_per_unit</code></td>
+<td>Qty Consumed Per Unit</td>
+<td>Decimal</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>allow_alternative_item</code></td>
+<td>Allow Alternative Item</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Allow this component to be swapped for a defined alternative during production. Copied from the item's setting</td>
+</tr>
+<tr>
+<td><code>include_item_in_manufacturing</code></td>
+<td>Include Item in manufacturing</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>original_item</code></td>
+<td>Original Item</td>
+<td>Link → <code>Item</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>has_variants</code></td>
+<td>Has variants</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>sourced_by_supplier</code></td>
+<td>Sourced by Supplier</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>do_not_explode</code></td>
+<td>Do not explode</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — A sub-assembly is a component with its own BOM. By default it's broken down into its own raw materials; enable</td>
+</tr>
+<tr>
+<td><code>is_stock_item</code></td>
+<td>Is stock Item</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>operation_row_id</code></td>
+<td>Operation ID</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_sub_assembly_item</code></td>
+<td>Is sub assembly Item</td>
+<td>Boolean</td>
+<td>lecture seule; masqué; — Set automatically when this component is a semi-finished good produced by an operation in this BOM. It's made</td>
+</tr>
+<tr>
+<td><code>is_phantom_item</code></td>
+<td>Is Phantom Item</td>
+<td>Boolean</td>
+<td>lecture seule; masqué; — When this is enabled it defines the BOM as a logical grouping of raw materials without producing an item. The</td>
+</tr>
+<tr>
+<td><code>is_balance_item</code></td>
+<td>Is Balance Item</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — This component absorbs the percentage remaining after all other percentage rows</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-operation">BOM Operation<a class="headerlink" href="#bom-operation" title="Permanent link">#</a></h2>
+<p><em>BOM Operation</em> — <code>manufacturing/bom_operation.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>workstation</code></td>
+<td>Workstation</td>
+<td>Link → <code>Workstation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>hour_rate</code></td>
+<td>Hour rate</td>
+<td>Currency</td>
+<td></td>
+</tr>
+<tr>
+<td><code>time_in_mins</code></td>
+<td>Operation time</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste; — In minutes</td>
+</tr>
+<tr>
+<td><code>fixed_time</code></td>
+<td>Fixed time</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Operation time does not depend on quantity to produce</td>
+</tr>
+<tr>
+<td><code>operating_cost</code></td>
+<td>Operating cost</td>
+<td>Currency</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_hour_rate</code></td>
+<td>Base hour rate(Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_operating_cost</code></td>
+<td>Operating cost(Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>batch_size</code></td>
+<td>Batch size</td>
+<td>Number</td>
+<td>défaut <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>sequence_id</code></td>
+<td>Sequence ID</td>
+<td>Int</td>
+<td>colonne de liste; — If you want to run operations in parallel, keep the same sequence ID for them.</td>
+</tr>
+<tr>
+<td><code>cost_per_unit</code></td>
+<td>Cost per Unit</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_cost_per_unit</code></td>
+<td>Base Cost per Unit</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>set_cost_based_on_bom_qty</code></td>
+<td>Set operating cost based on BOM Quantity</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>workstation_type</code></td>
+<td>Workstation Type</td>
+<td>Link → <code>Workstation Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>finished_good</code></td>
+<td>Output Item</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>Output Item BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>colonne de liste; — Pick a BOM to copy its raw materials into this step. Leave it empty to add the raw materials yourself with Add</td>
+</tr>
+<tr>
+<td><code>finished_good_qty</code></td>
+<td>Output Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>is_final_finished_good</code></td>
+<td>Last Step</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Tick this on the step that makes this BOM's own item. The other steps make in-between items.</td>
+</tr>
+<tr>
+<td><code>wip_warehouse</code></td>
+<td>WIP Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>fg_warehouse</code></td>
+<td>Finished Goods Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_subcontracted</code></td>
+<td>Is Subcontracted</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>skip_material_transfer</code></td>
+<td>Skip Material Transfer</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>backflush_from_wip_warehouse</code></td>
+<td>Backflush materials from WIP Warehouse</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>quality_inspection_required</code></td>
+<td>Quality Inspection required</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>batch_split</code></td>
+<td>Batch split</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — On completion of the Job Card, split the consumed batch into one child batch per finished piece</td>
+</tr>
+<tr>
+<td><code>weight_per_piece</code></td>
+<td>Weight per piece</td>
+<td>Number</td>
+<td>— Produced quantity is split into one batch per this many units of the finished good</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-secondary-item">BOM Secondary Item<a class="headerlink" href="#bom-secondary-item" title="Permanent link">#</a></h2>
+<p><em>BOM Secondary Item</em> — <code>manufacturing/bom_secondary_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>secondary_item_type</code></td>
+<td>Type</td>
+<td>Select — Co-Product · By-Product · Scrap · Additional Finished Good</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>cost</code></td>
+<td>Cost</td>
+<td>Currency</td>
+<td><strong>requis</strong>; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td><strong>requis</strong>; défaut <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Stock Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>cost_allocation_per</code></td>
+<td>Cost Allocation %</td>
+<td>Percent</td>
+<td><strong>requis</strong>; défaut <code>0.0</code></td>
+</tr>
+<tr>
+<td><code>process_loss_per</code></td>
+<td>Process Loss %</td>
+<td>Percent</td>
+<td><strong>requis</strong>; défaut <code>0.0</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>base_cost</code></td>
+<td>Base Cost (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; masqué; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>valuation_type</code></td>
+<td>Valuation Type</td>
+<td>Select — Valuation Rate · % of Component Cost · Manual</td>
+<td><strong>requis</strong>; défaut <code>Valuation Rate</code>; — Valuation Rate and Manual value this item on its own and deduct that cost from the raw material cost, like the</td>
+</tr>
+<tr>
+<td><code>process_loss_qty</code></td>
+<td>Process Loss Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-update-batch">BOM Update Batch<a class="headerlink" href="#bom-update-batch" title="Permanent link">#</a></h2>
+<p><em>BOM Update Batch</em> — <code>manufacturing/bom_update_batch.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>level</code></td>
+<td>Level</td>
+<td>Int</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>batch_no</code></td>
+<td>Batch No.</td>
+<td>Int</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>boms_updated</code></td>
+<td>BOMs Updated</td>
+<td>LongText</td>
+<td>colonne de liste; masqué</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Pending · Completed</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-update-log">BOM Update Log<a class="headerlink" href="#bom-update-log" title="Permanent link">#</a></h2>
+<p><em>BOM Update Log</em> — <code>manufacturing/bom_update_log.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>BUL-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>file-clock</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>current_bom</code></td>
+<td>Current BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>new_bom</code></td>
+<td>New BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>update_type</code></td>
+<td>Update Type</td>
+<td>Select — Replace BOM · Update Cost</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Queued · In Progress · Completed · Failed · Cancelled</td>
+<td></td>
+</tr>
+<tr>
+<td><code>error_log</code></td>
+<td>Error Log</td>
+<td>Link → <code>Error Log</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>processed_boms</code></td>
+<td>Processed BOMs</td>
+<td>LongText</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>bom_batches</code></td>
+<td>Bom Batches</td>
+<td>Table → <code>BOM Update Batch</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>current_level</code></td>
+<td>Current Level</td>
+<td>Int</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="bom-update-tool">BOM Update Tool<a class="headerlink" href="#bom-update-tool" title="Permanent link">#</a></h2>
+<p><em>BOM Update Tool</em> — <code>manufacturing/bom_update_tool.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>current_bom</code></li>
+<li><strong>Icône</strong> : <code>refresh-cw</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>current_bom</code></td>
+<td>Current BOM</td>
+<td>Link → <code>BOM</code></td>
+<td><strong>requis</strong>; colonne de liste; — The BOM which will be replaced</td>
+</tr>
+<tr>
+<td><code>new_bom</code></td>
+<td>New BOM</td>
+<td>Link → <code>BOM</code></td>
+<td><strong>requis</strong>; colonne de liste; — The new BOM after replacement</td>
+</tr>
+</tbody>
+</table>
+<h2 id="downtime-entry">Downtime Entry<a class="headerlink" href="#downtime-entry" title="Permanent link">#</a></h2>
+<p><em>Downtime Entry</em> — <code>manufacturing/downtime_entry.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>operator</code></li>
+<li><strong>Icône</strong> : <code>clock-alert</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workstation</code></td>
+<td>Workstation / Machine</td>
+<td>Link → <code>Workstation</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>from_time</code></td>
+<td>From Time</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To Time</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>operator</code></td>
+<td>Operator</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>downtime</code></td>
+<td>Downtime</td>
+<td>Number</td>
+<td>lecture seule; — In Mins</td>
+</tr>
+<tr>
+<td><code>stop_reason</code></td>
+<td>Stop Reason</td>
+<td>Select — Excessive machine set up time · Unplanned machine maintenance · On-machine press checks · Machine operator errors · Machine malfunction · Electricity down · Other</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>remarks</code></td>
+<td>Remarks</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — DT-</td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="job-card">Job Card<a class="headerlink" href="#job-card" title="Permanent link">#</a></h2>
+<p><em>Job Card</em> — <code>manufacturing/job_card.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>JC-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>item_name</code></li>
+<li><strong>Icône</strong> : <code>clipboard-list</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>work_order</code></td>
+<td>Work Order</td>
+<td>Link → <code>Work Order</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>Final BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>workstation</code></td>
+<td>Workstation</td>
+<td>Link → <code>Workstation</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td>défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>for_quantity</code></td>
+<td>Qty to Manufacture</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>wip_warehouse</code></td>
+<td>WIP Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>time_logs</code></td>
+<td>Time Logs</td>
+<td>Table → <code>Job Card Time Log</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_completed_qty</code></td>
+<td>Total Completed qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_time_in_mins</code></td>
+<td>Total Time in Mins</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Job Card Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>operation_id</code></td>
+<td>Operation ID</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>transferred_qty</code></td>
+<td>Transferred Raw Materials</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>requested_qty</code></td>
+<td>Requested Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>remarks</code></td>
+<td>Remarks</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Open · Work In Progress · Partially Transferred · Material Transferred · On Hold · Submitted · To Manufacture · Cancelled · Completed</td>
+<td>lecture seule; défaut <code>Open</code></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — PO-JOB.#####</td>
+<td><strong>requis</strong>; défaut <code>PO-JOB.#####</code></td>
+</tr>
+<tr>
+<td><code>production_item</code></td>
+<td>Final Product</td>
+<td>Link → <code>Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sequence_id</code></td>
+<td>Sequence Id</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>quality_inspection</code></td>
+<td>Quality Inspection</td>
+<td>Link → <code>Quality Inspection</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sub_operations</code></td>
+<td>Sub Operations</td>
+<td>Table → <code>Job Card Operation</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>hour_rate</code></td>
+<td>Hour Rate</td>
+<td>Currency</td>
+<td>devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>is_corrective_job_card</code></td>
+<td>Is Corrective Job Card</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>for_job_card</code></td>
+<td>For Job Card</td>
+<td>Link → <code>Job Card</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>for_operation</code></td>
+<td>For Operation</td>
+<td>Link → <code>Operation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Table → <code>Job Card Time Log</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>batch_no</code></td>
+<td>Batch No</td>
+<td>Link → <code>Batch</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>quality_inspection_template</code></td>
+<td>Quality Inspection Template</td>
+<td>Link → <code>Quality Inspection Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>workstation_type</code></td>
+<td>Workstation Type</td>
+<td>Link → <code>Workstation Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expected_start_date</code></td>
+<td>Expected Start Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expected_end_date</code></td>
+<td>Expected End Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>serial_and_batch_bundle</code></td>
+<td>Serial and Batch Bundle</td>
+<td>Link → <code>Serial and Batch Bundle</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>process_loss_qty</code></td>
+<td>Process Loss qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>time_required</code></td>
+<td>Expected Time Required (In Mins)</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scheduled_time_logs</code></td>
+<td>Scheduled Time Logs</td>
+<td>Table → <code>Job Card Scheduled Time</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>actual_start_date</code></td>
+<td>Actual Start Date</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>actual_end_date</code></td>
+<td>Actual End Date</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>finished_good</code></td>
+<td>Item to Manufacture</td>
+<td>Link → <code>Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>target_warehouse</code></td>
+<td>Target Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>operation_row_id</code></td>
+<td>Operation Row ID</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>semi_fg_bom</code></td>
+<td>Manufacturing BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>batch_split</code></td>
+<td>Batch Split</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>weight_per_piece</code></td>
+<td>Weight Per Piece</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_subcontracted</code></td>
+<td>Is Subcontracted</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>manufactured_qty</code></td>
+<td>Manufactured Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>skip_material_transfer</code></td>
+<td>Skip Material Transfer to WIP</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>backflush_from_wip_warehouse</code></td>
+<td>Backflush Materials from WIP Warehouse</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>is_paused</code></td>
+<td>Is Paused</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>track_semi_finished_goods</code></td>
+<td>Produce Item per Operation</td>
+<td>Boolean</td>
+<td>lecture seule; masqué; — Each operation produces its own output item and puts it in stock, for example Cut Sheet, then Painted Sheet, t</td>
+</tr>
+<tr>
+<td><code>secondary_items</code></td>
+<td>Secondary Items</td>
+<td>Table → <code>Job Card Secondary Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pending_qty</code></td>
+<td>Pending qty</td>
+<td>Decimal</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="job-card-item">Job Card Item<a class="headerlink" href="#job-card-item" title="Permanent link">#</a></h2>
+<p><em>Job Card Item</em> — <code>manufacturing/job_card_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>required_qty</code></td>
+<td>Required Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>allow_alternative_item</code></td>
+<td>Allow Alternative Item</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>transferred_qty</code></td>
+<td>Transferred Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>consumed_qty</code></td>
+<td>Consumed Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="job-card-operation">Job Card Operation<a class="headerlink" href="#job-card-operation" title="Permanent link">#</a></h2>
+<p><em>Job Card Operation</em> — <code>manufacturing/job_card_operation.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Complete · Pause · Pending · Work In Progress</td>
+<td>colonne de liste; lecture seule; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>completed_time</code></td>
+<td>Completed Time</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; — In mins</td>
+</tr>
+<tr>
+<td><code>sub_operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>completed_qty</code></td>
+<td>Completed Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="job-card-scheduled-time">Job Card Scheduled Time<a class="headerlink" href="#job-card-scheduled-time" title="Permanent link">#</a></h2>
+<p><em>Job Card Scheduled Time</em> — <code>manufacturing/job_card_scheduled_time.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_time</code></td>
+<td>From Time</td>
+<td>Datetime</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To Time</td>
+<td>Datetime</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>time_in_mins</code></td>
+<td>Time (In Mins)</td>
+<td>Number</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="job-card-secondary-item">Job Card Secondary Item<a class="headerlink" href="#job-card-secondary-item" title="Permanent link">#</a></h2>
+<p><em>Job Card Secondary Item</em> — <code>manufacturing/job_card_secondary_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Secondary Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Secondary Item Name</td>
+<td>Text</td>
+<td>colonne de liste; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>secondary_item_type</code></td>
+<td>Type</td>
+<td>Select — Co-Product · By-Product · Scrap · Additional Finished Good</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>bom_secondary_item</code></td>
+<td>BOM Secondary Item Reference</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="job-card-time-log">Job Card Time Log<a class="headerlink" href="#job-card-time-log" title="Permanent link">#</a></h2>
+<p><em>Job Card Time Log</em> — <code>manufacturing/job_card_time_log.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_time</code></td>
+<td>From Time</td>
+<td>Datetime</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To Time</td>
+<td>Datetime</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>time_in_mins</code></td>
+<td>Time In Mins</td>
+<td>Number</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>completed_qty</code></td>
+<td>Completed Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; défaut <code>0.000</code></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>operation</code></td>
+<td>Sub Operation</td>
+<td>Link → <code>Operation</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="manufacturing-settings">Manufacturing Settings<a class="headerlink" href="#manufacturing-settings" title="Permanent link">#</a></h2>
+<p><em>Manufacturing Settings</em> — <code>manufacturing/manufacturing_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Icône</strong> : <code>settings</code></li>
+<li><strong>Permissions explicites</strong> — <code>create</code> : 0, <code>delete</code> : 0</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>allow_overtime</code></td>
+<td>Allow Overtime</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Plan time logs outside Workstation working hours</td>
+</tr>
+<tr>
+<td><code>allow_production_on_holidays</code></td>
+<td>Allow Production on Holidays</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>capacity_planning_for_days</code></td>
+<td>Capacity Planning For (Days)</td>
+<td>Int</td>
+<td>défaut <code>30</code>; — Plan operations X days in advance</td>
+</tr>
+<tr>
+<td><code>mins_between_operations</code></td>
+<td>Time Between Operations (Mins)</td>
+<td>Int</td>
+<td>défaut <code>10</code>; — Default: 10 mins</td>
+</tr>
+<tr>
+<td><code>overproduction_percentage_for_sales_order</code></td>
+<td>Overproduction Percentage For Sales Order</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>overproduction_percentage_for_work_order</code></td>
+<td>Overproduction Percentage For Work Order</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>backflush_raw_materials_based_on</code></td>
+<td>Backflush Raw Materials Based On</td>
+<td>Select — BOM · Material Transferred for Manufacture</td>
+<td>défaut <code>BOM</code></td>
+</tr>
+<tr>
+<td><code>material_consumption</code></td>
+<td>Allow Continuous Material Consumption</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Allow material consumptions without immediately manufacturing finished goods against a Work Order</td>
+</tr>
+<tr>
+<td><code>update_bom_costs_automatically</code></td>
+<td>Update BOM Cost Automatically</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Update BOM cost automatically via scheduler, based on the latest Valuation Rate/Price List Rate/Last Purchase</td>
+</tr>
+<tr>
+<td><code>disable_capacity_planning</code></td>
+<td>Disable Capacity Planning</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>make_serial_no_batch_from_work_order</code></td>
+<td>Make Serial No / Batch from Work Order</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — System will automatically create the serial numbers / batch for the Finished Good on submission of work order</td>
+</tr>
+<tr>
+<td><code>add_corrective_operation_cost_in_finished_good_valuation</code></td>
+<td>Add Corrective Operation Cost in Finished Good Valuation</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>job_card_excess_transfer</code></td>
+<td>Allow Excess Material Transfer</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Allow transferring raw materials even after the Required Quantity is fulfilled</td>
+</tr>
+<tr>
+<td><code>get_rm_cost_from_consumption_entry</code></td>
+<td>Get Raw Materials Cost from Consumption Entry</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>validate_components_quantities_per_bom</code></td>
+<td>Validate Components and Quantities Per BOM</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>enforce_time_logs</code></td>
+<td>Enforce Time Logs</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Enabling this checkbox will force each Job Card Time Log to have From Time and To Time</td>
+</tr>
+<tr>
+<td><code>transfer_extra_materials_percentage</code></td>
+<td>Transfer Extra Raw Materials to WIP (%)</td>
+<td>Percent</td>
+<td>— The user will be able to transfer additional materials from the store to the Work in Progress (WIP) warehouse.</td>
+</tr>
+<tr>
+<td><code>allow_editing_of_items_and_quantities_in_work_order</code></td>
+<td>Allow Editing of Items and Quantities in Work Order</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the system will allow users to edit the raw materials and their quantities in the Work Order. The</td>
+</tr>
+<tr>
+<td><code>allow_alternative_finished_goods</code></td>
+<td>Allow Alternative Finished Goods</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the produced item of a Work Order can be converted into one of its alternative items (defined via</td>
+</tr>
+<tr>
+<td><code>set_op_cost_and_secondary_items_from_sub_assemblies</code></td>
+<td>Set Operating Cost / Secondary Items From Sub-assemblies</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — To include sub-assembly costs and secondary items in Finished Goods on a work order without using a job card,</td>
+</tr>
+</tbody>
+</table>
+<h2 id="master-production-schedule">Master Production Schedule<a class="headerlink" href="#master-production-schedule" title="Permanent link">#</a></h2>
+<p><em>Master Production Schedule</em> — <code>manufacturing/master_production_schedule.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>company</code></li>
+<li><strong>Icône</strong> : <code>calendar-range</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Master Production Schedule Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — MPS.YY.-.######</td>
+<td><strong>requis</strong>; défaut <code>MPS.YY.-.######</code></td>
+</tr>
+<tr>
+<td><code>parent_warehouse</code></td>
+<td>Parent Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— For projected and forecast quantities, the system will consider all child warehouses under the selected parent</td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sales_orders</code></td>
+<td>Sales Orders</td>
+<td>Table → <code>Production Plan Sales Order</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>material_requests</code></td>
+<td>Material Requests</td>
+<td>Table → <code>Production Plan Material Request</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sales_forecast</code></td>
+<td>Sales Forecast</td>
+<td>Link → <code>Sales Forecast</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>select_items</code></td>
+<td>Select Items</td>
+<td>Table → <code>Master Production Schedule Item</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="master-production-schedule-item">Master Production Schedule Item<a class="headerlink" href="#master-production-schedule-item" title="Permanent link">#</a></h2>
+<p><em>Master Production Schedule Item</em> — <code>manufacturing/master_production_schedule_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>delivery_date</code></td>
+<td>Delivery Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>planned_qty</code></td>
+<td>Planned Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>order_release_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>BOM No</td>
+<td>Link → <code>BOM</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cumulative_lead_time</code></td>
+<td>Lead Time</td>
+<td>Int</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="material-request-plan-item">Material Request Plan Item<a class="headerlink" href="#material-request-plan-item" title="Permanent link">#</a></h2>
+<p><em>Material Request Plan Item</em> — <code>manufacturing/material_request_plan_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>For Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>material_request_type</code></td>
+<td>Type</td>
+<td>Select — Purchase · Material Transfer · Material Issue · Manufacture · Subcontracting · Customer Provided</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>quantity</code></td>
+<td>Required Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>projected_qty</code></td>
+<td>Projected Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>actual_qty</code></td>
+<td>Qty In Stock</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>min_order_qty</code></td>
+<td>Minimum Order Quantity</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>requested_qty</code></td>
+<td>Requested Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>from_warehouse</code></td>
+<td>From Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>safety_stock</code></td>
+<td>Safety Stock</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>ordered_qty</code></td>
+<td>Ordered Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>reserved_qty_for_production</code></td>
+<td>Reserved Qty for Production</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>required_bom_qty</code></td>
+<td>Reqd Qty (BOM)</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required By</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_reserved_qty</code></td>
+<td>Stock Reserved Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>from_bom</code></td>
+<td>From BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sub_assembly_item_reference</code></td>
+<td>Sub Assembly Item Reference</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>main_item_code</code></td>
+<td>Main Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="operation">Operation<a class="headerlink" href="#operation" title="Permanent link">#</a></h2>
+<p><em>Operation</em> — <code>manufacturing/operation.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>workstation</code></li>
+<li><strong>Icône</strong> : <code>cog</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workstation</code></td>
+<td>Default Workstation</td>
+<td>Link → <code>Workstation</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>work_instruction</code></td>
+<td>Work Instructions</td>
+<td>TextEditor</td>
+<td>— Shown to operators on the Shop Floor. Supports rich text and embedded images for step-by-step guidance.</td>
+</tr>
+<tr>
+<td><code>sub_operations</code></td>
+<td>Sub Operations</td>
+<td>Table → <code>Sub Operation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_operation_time</code></td>
+<td>Total Operation Time</td>
+<td>Number</td>
+<td>lecture seule; — Time in mins.</td>
+</tr>
+<tr>
+<td><code>batch_size</code></td>
+<td>Batch Size</td>
+<td>Int</td>
+<td>défaut <code>1</code></td>
+</tr>
+<tr>
+<td><code>create_job_card_based_on_batch_size</code></td>
+<td>Create Job Card based on Batch Size</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>is_corrective_operation</code></td>
+<td>Is Corrective Operation</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>quality_inspection_template</code></td>
+<td>Quality Inspection Template</td>
+<td>Link → <code>Quality Inspection Template</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="plant-floor">Plant Floor<a class="headerlink" href="#plant-floor" title="Permanent link">#</a></h2>
+<p><em>Plant Floor</em> — <code>manufacturing/plant_floor.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>company</code></li>
+<li><strong>Icône</strong> : <code>layout-grid</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>floor_name</code></td>
+<td>Floor Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan">Production Plan<a class="headerlink" href="#production-plan" title="Permanent link">#</a></h2>
+<p><em>Production Plan</em> — <code>manufacturing/production_plan.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>PP-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>item_code</code></li>
+<li><strong>Icône</strong> : <code>calendar-check</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — MFG-PP-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>get_items_from</code></td>
+<td>Get Items From</td>
+<td>Select — Sales Order · Material Request</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sales_orders</code></td>
+<td>Sales Orders</td>
+<td>Table → <code>Production Plan Sales Order</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>material_requests</code></td>
+<td>Material Requests</td>
+<td>Table → <code>Production Plan Material Request</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>po_items</code></td>
+<td>Assembly Items</td>
+<td>Table → <code>Production Plan Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>include_non_stock_items</code></td>
+<td>Include Non Stock Items</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>include_subcontracted_items</code></td>
+<td>Include Subcontracted Items</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>ignore_existing_ordered_qty</code></td>
+<td>Consider Projected Qty in Calculation (RM)</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — If enabled, formula for <b>Required Qty</b>: <br> Required Qty (BOM) - &lt;a href="https://docs.frappe.io/erpnext</td>
+</tr>
+<tr>
+<td><code>mr_items</code></td>
+<td>Raw Materials</td>
+<td>Table → <code>Material Request Plan Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_planned_qty</code></td>
+<td>Total Planned Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_produced_qty</code></td>
+<td>Total Produced Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Not Started · In Process · Completed · Closed · Cancelled · Material Requested</td>
+<td>lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>for_warehouse</code></td>
+<td>For Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>raw_material_group_warehouse</code></td>
+<td>Raw Material Group Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— Optional group warehouse. Raw material availability is checked across its child warehouses; material is still</td>
+</tr>
+<tr>
+<td><code>warehouses</code></td>
+<td>Warehouses</td>
+<td>Table → <code>Production Plan Material Request Warehouse</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>sales_order_status</code></td>
+<td>Sales Order Status</td>
+<td>Select — To Deliver and Bill · To Bill · To Deliver</td>
+<td></td>
+</tr>
+<tr>
+<td><code>include_safety_stock</code></td>
+<td>Include Safety Stock in Required Qty Calculation</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>combine_items</code></td>
+<td>Consolidate Sales Order Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>prod_plan_references</code></td>
+<td>Sales Order Reference</td>
+<td>Table → <code>Production Plan Item Reference</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>sub_assembly_items</code></td>
+<td>Sub Assembly Items</td>
+<td>Table → <code>Production Plan Sub Assembly Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_delivery_date</code></td>
+<td>From Delivery Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_delivery_date</code></td>
+<td>To Delivery Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>combine_sub_items</code></td>
+<td>Consolidate Sub Assembly Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>skip_available_sub_assembly_item</code></td>
+<td>Consider Projected Qty in Calculation</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — If enabled, formula for <b>Qty to Order</b>: <br> Required Qty (BOM) - &lt;a href="https://docs.frappe.io/erpnext</td>
+</tr>
+<tr>
+<td><code>sub_assembly_warehouse</code></td>
+<td>Sub Assembly Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— When a parent warehouse is chosen, the system conducts Project Qty checks against the associated child warehou</td>
+</tr>
+<tr>
+<td><code>consider_minimum_order_qty</code></td>
+<td>Consider Minimum Order Qty</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>reserve_stock</code></td>
+<td>Reserve Stock</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>no_of_shifts</code></td>
+<td>No of Shifts</td>
+<td>Int</td>
+<td>— Used by scheduling when an item has no BOM operations: scales the Item Lead Time daily capacity to this many s</td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan-item">Production Plan Item<a class="headerlink" href="#production-plan-item" title="Permanent link">#</a></h2>
+<p><em>Production Plan Item</em> — <code>manufacturing/production_plan_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>include_exploded_items</code></td>
+<td>Include Exploded Items</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>BOM No</td>
+<td>Link → <code>BOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>planned_qty</code></td>
+<td>Planned Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Finished Goods Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>planned_start_date</code></td>
+<td>Planned Start Date</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>pending_qty</code></td>
+<td>Pending Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>ordered_qty</code></td>
+<td>Ordered Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>produced_qty</code></td>
+<td>Produced Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order_item</code></td>
+<td>Sales Order Item</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>material_request_item</code></td>
+<td>material_request_item</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>product_bundle_item</code></td>
+<td>Product Bundle Item</td>
+<td>Link → <code>Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_reference</code></td>
+<td>Item Reference</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>temporary_name</code></td>
+<td>temporary name</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>planned_end_date</code></td>
+<td>Planned End Date</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan-item-reference">Production Plan Item Reference<a class="headerlink" href="#production-plan-item-reference" title="Permanent link">#</a></h2>
+<p><em>Production Plan Item Reference</em> — <code>manufacturing/production_plan_item_reference.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order Reference</td>
+<td>Link → <code>Sales Order</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>sales_order_item</code></td>
+<td>Sales Order Item</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_reference</code></td>
+<td>Item Reference</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan-material-request">Production Plan Material Request<a class="headerlink" href="#production-plan-material-request" title="Permanent link">#</a></h2>
+<p><em>Production Plan Material Request</em> — <code>manufacturing/production_plan_material_request.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>material_request_date</code></td>
+<td>Material Request Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan-material-request-warehouse">Production Plan Material Request Warehouse<a class="headerlink" href="#production-plan-material-request-warehouse" title="Permanent link">#</a></h2>
+<p><em>Production Plan Material Request Warehouse</em> — <code>manufacturing/production_plan_material_request_warehouse.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan-sales-order">Production Plan Sales Order<a class="headerlink" href="#production-plan-sales-order" title="Permanent link">#</a></h2>
+<p><em>Production Plan Sales Order</em> — <code>manufacturing/production_plan_sales_order.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>sales_order_date</code></td>
+<td>Sales Order Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>grand_total</code></td>
+<td>Grand Total</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan-schedule">Production Plan Schedule<a class="headerlink" href="#production-plan-schedule" title="Permanent link">#</a></h2>
+<p><em>Production Plan Schedule</em> — <code>manufacturing/production_plan_schedule.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>item_code</code></li>
+<li><strong>Icône</strong> : <code>calendar</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>production_plan</code></td>
+<td>Production Plan</td>
+<td>Link → <code>Production Plan</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>row_type</code></td>
+<td>Row Type</td>
+<td>Select — Finished Good · Sub Assembly · Raw Material</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>plan_row</code></td>
+<td>Plan Row</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>task_key</code></td>
+<td>Task Key</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>workstation</code></td>
+<td>Workstation</td>
+<td>Link → <code>Workstation</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>from_time</code></td>
+<td>From Time</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To Time</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>duration_mins</code></td>
+<td>Duration (Mins)</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="production-plan-sub-assembly-item">Production Plan Sub Assembly Item<a class="headerlink" href="#production-plan-sub-assembly-item" title="Permanent link">#</a></h2>
+<p><em>Production Plan Sub Assembly Item</em> — <code>manufacturing/production_plan_sub_assembly_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty to Order</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>purchase_order</code></td>
+<td>Purchase Order</td>
+<td>Link → <code>Purchase Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>received_qty</code></td>
+<td>Received Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>BOM No</td>
+<td>Link → <code>BOM</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>production_plan_item</code></td>
+<td>Production Plan Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bom_level</code></td>
+<td>Level (BOM)</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>production_item</code></td>
+<td>Sub Assembly Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>indent</code></td>
+<td>Indent</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fg_warehouse</code></td>
+<td>Target Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>type_of_manufacturing</code></td>
+<td>Manufacturing Type</td>
+<td>Select — In House · Subcontract · Material Request</td>
+<td>colonne de liste; défaut <code>In House</code></td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Schedule Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>actual_qty</code></td>
+<td>Actual Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>projected_qty</code></td>
+<td>Projected Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>wo_produced_qty</code></td>
+<td>Produced Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>required_qty</code></td>
+<td>Required Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_reserved_qty</code></td>
+<td>Stock Reserved Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>ordered_qty</code></td>
+<td>Ordered Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order_item</code></td>
+<td>Sales Order Item</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>schedule_end_date</code></td>
+<td>Schedule End Date</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="routing">Routing<a class="headerlink" href="#routing" title="Permanent link">#</a></h2>
+<p><em>Routing</em> — <code>manufacturing/routing.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>route</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>routing_name</code></td>
+<td>Routing Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>operations</code></td>
+<td>BOM Operation</td>
+<td>Table → <code>BOM Operation</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sales-forecast">Sales Forecast<a class="headerlink" href="#sales-forecast" title="Permanent link">#</a></h2>
+<p><em>Sales Forecast</em> — <code>manufacturing/sales_forecast.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SF-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>company</code></li>
+<li><strong>Icône</strong> : <code>trending-up</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — SF.YY.-.######</td>
+<td><strong>requis</strong>; défaut <code>SF.YY.-.######</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td>colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>selected_items</code></td>
+<td>Select Items</td>
+<td>Table → <code>Sales Forecast Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_warehouse</code></td>
+<td>Parent Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong>; — For projected and forecast quantities, the system will consider all child warehouses under the selected parent</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Sales Forecast Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>demand_number</code></td>
+<td>Number of Weeks / Months</td>
+<td>Int</td>
+<td><strong>requis</strong>; défaut <code>6</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Planned · MPS Generated · Cancelled</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>frequency</code></td>
+<td>Frequency</td>
+<td>Select — Weekly · Monthly</td>
+<td><strong>requis</strong>; défaut <code>Monthly</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sales-forecast-item">Sales Forecast Item<a class="headerlink" href="#sales-forecast-item" title="Permanent link">#</a></h2>
+<p><em>Sales Forecast Item</em> — <code>manufacturing/sales_forecast_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>delivery_date</code></td>
+<td>Delivery Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>demand_qty</code></td>
+<td>Demand Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sub-operation">Sub Operation<a class="headerlink" href="#sub-operation" title="Permanent link">#</a></h2>
+<p><em>Sub Operation</em> — <code>manufacturing/sub_operation.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>time_in_mins</code></td>
+<td>Operation Time</td>
+<td>Number</td>
+<td>colonne de liste; défaut <code>0.0</code>; — Time in mins</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="work-order">Work Order<a class="headerlink" href="#work-order" title="Permanent link">#</a></h2>
+<p><em>Work Order</em> — <code>manufacturing/work_order.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>WO-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>item_name</code></li>
+<li><strong>Icône</strong> : <code>factory</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — MFG-WO-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Not Started · In Process · Stock Reserved · Stock Partially Reserved · Completed · Stopped · Closed · Cancelled</td>
+<td><strong>requis</strong>; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>production_item</code></td>
+<td>Item To Manufacture</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>BOM No</td>
+<td>Link → <code>BOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>allow_alternative_item</code></td>
+<td>Allow Alternative Item</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>use_multi_level_bom</code></td>
+<td>Use Multi-Level BOM</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — Plan material for sub-assemblies</td>
+</tr>
+<tr>
+<td><code>skip_transfer</code></td>
+<td>Skip Material Transfer to WIP Warehouse</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Check if material transfer entry is not required</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty To Manufacture</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>material_transferred_for_manufacturing</code></td>
+<td>Material Transferred for Manufacturing</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>produced_qty</code></td>
+<td>Manufactured Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_wip_warehouse</code></td>
+<td>Backflush Raw Materials From Work-in-Progress Warehouse</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>wip_warehouse</code></td>
+<td>Work-in-Progress Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— This is a location where operations are executed.</td>
+</tr>
+<tr>
+<td><code>fg_warehouse</code></td>
+<td>Target Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— This is a location where final product stored.</td>
+</tr>
+<tr>
+<td><code>scrap_warehouse</code></td>
+<td>Scrap Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— This is a location where scraped materials are stored.</td>
+</tr>
+<tr>
+<td><code>required_items</code></td>
+<td>Required Items</td>
+<td>Table → <code>Work Order Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>planned_start_date</code></td>
+<td>Planned Start Date</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; défaut <code>now</code></td>
+</tr>
+<tr>
+<td><code>actual_start_date</code></td>
+<td>Actual Start Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>planned_end_date</code></td>
+<td>Planned End Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>actual_end_date</code></td>
+<td>Actual End Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expected_delivery_date</code></td>
+<td>Expected Delivery Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>transfer_material_against</code></td>
+<td>Transfer Material Against</td>
+<td>Select — Work Order · Job Card</td>
+<td></td>
+</tr>
+<tr>
+<td><code>operations</code></td>
+<td>Operations</td>
+<td>Table → <code>Work Order Operation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>planned_operating_cost</code></td>
+<td>Planned Operating Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>actual_operating_cost</code></td>
+<td>Actual Operating Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_operating_cost</code></td>
+<td>Additional Operating Cost</td>
+<td>Currency</td>
+<td>devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_operating_cost</code></td>
+<td>Total Operating Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Item Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td>lecture seule; — Manufacture against Material Request</td>
+</tr>
+<tr>
+<td><code>material_request_item</code></td>
+<td>Material Request Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>sales_order_item</code></td>
+<td>Sales Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>production_plan</code></td>
+<td>Production Plan</td>
+<td>Link → <code>Production Plan</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>production_plan_item</code></td>
+<td>Production Plan Item</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>product_bundle_item</code></td>
+<td>Product Bundle Item</td>
+<td>Link → <code>Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Default source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>— This is a location where raw materials are available.</td>
+</tr>
+<tr>
+<td><code>lead_time</code></td>
+<td>Lead Time</td>
+<td>Number</td>
+<td>lecture seule; — In Mins</td>
+</tr>
+<tr>
+<td><code>has_serial_no</code></td>
+<td>Has Serial No</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>has_batch_no</code></td>
+<td>Has Batch No</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>batch_size</code></td>
+<td>Batch Size</td>
+<td>Number</td>
+<td>défaut <code>0.0</code></td>
+</tr>
+<tr>
+<td><code>corrective_operation_cost</code></td>
+<td>Corrective Operation Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code>; — From Corrective Job Card</td>
+</tr>
+<tr>
+<td><code>production_plan_sub_assembly_item</code></td>
+<td>Production Plan Sub Assembly Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>process_loss_qty</code></td>
+<td>Process Loss Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>track_semi_finished_goods</code></td>
+<td>Produce Item per Operation</td>
+<td>Boolean</td>
+<td>lecture seule; masqué; — Each operation produces its own output item and puts it in stock, for example Cut Sheet, then Painted Sheet, t</td>
+</tr>
+<tr>
+<td><code>reserve_stock</code></td>
+<td>Reserve Stock</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>disassembled_qty</code></td>
+<td>Disassembled Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>mps</code></td>
+<td>MPS</td>
+<td>Link → <code>Master Production Schedule</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>additional_transferred_qty</code></td>
+<td>Additional Transferred Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>subcontracting_inward_order</code></td>
+<td>Subcontracting Inward Order</td>
+<td>Link → <code>Subcontracting Inward Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>subcontracting_inward_order_item</code></td>
+<td>Subcontracting Inward Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>max_producible_qty</code></td>
+<td>Max Producible Qty</td>
+<td>Decimal</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>non_stock_items</code></td>
+<td>Additional Costs (as per BOM)</td>
+<td>Table → <code>Work Order Additional Item</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>secondary_items</code></td>
+<td>Secondary Items (as per BOM)</td>
+<td>Table → <code>Work Order Additional Item</code></td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="work-order-additional-item">Work Order Additional Item<a class="headerlink" href="#work-order-additional-item" title="Permanent link">#</a></h2>
+<p><em>Work Order Additional Item</em> — <code>manufacturing/work_order_additional_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>secondary_item_type</code></td>
+<td>Type</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_company.default_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="work-order-item">Work Order Item<a class="headerlink" href="#work-order-item" title="Permanent link">#</a></h2>
+<p><em>Work Order Item</em> — <code>manufacturing/work_order_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>required_qty</code></td>
+<td>Required Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>transferred_qty</code></td>
+<td>Transferred Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>requested_qty</code></td>
+<td>Requested Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>picked_qty</code></td>
+<td>Picked Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>allow_alternative_item</code></td>
+<td>Allow Alternative Item</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>include_item_in_manufacturing</code></td>
+<td>Include Item In Manufacturing</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>consumed_qty</code></td>
+<td>Consumed Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>available_qty_at_source_warehouse</code></td>
+<td>Available Qty at Source Warehouse</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>available_qty_at_wip_warehouse</code></td>
+<td>Available Qty at WIP Warehouse</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>returned_qty</code></td>
+<td>Returned Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>subcontracted_qty</code></td>
+<td>Subcontracted Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>operation_row_id</code></td>
+<td>Operation Row Id</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_reserved_qty</code></td>
+<td>Stock Reserved Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_additional_item</code></td>
+<td>Is Additional Item</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>voucher_detail_reference</code></td>
+<td>Voucher Detail Reference</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_customer_provided_item</code></td>
+<td>Is Customer Provided Item</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="work-order-operation">Work Order Operation<a class="headerlink" href="#work-order-operation" title="Permanent link">#</a></h2>
+<p><em>Work Order Operation</em> — <code>manufacturing/work_order_operation.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operation</code></td>
+<td>Operation</td>
+<td>Link → <code>Operation</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>bom</code></td>
+<td>BOM</td>
+<td>Link → <code>BOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>bom_operation</code></td>
+<td>BOM Operation</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Operation Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>completed_qty</code></td>
+<td>Completed Qty</td>
+<td>Decimal</td>
+<td>— Operation completed for how many finished goods?</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Pending · Work in Progress · Completed</td>
+<td>défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>workstation</code></td>
+<td>Workstation</td>
+<td>Link → <code>Workstation</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>planned_start_time</code></td>
+<td>Planned Start Time</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>planned_end_time</code></td>
+<td>Planned End Time</td>
+<td>Datetime</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>time_in_mins</code></td>
+<td>Time</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste; — In Minutes</td>
+</tr>
+<tr>
+<td><code>hour_rate</code></td>
+<td>Hour Rate</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>planned_operating_cost</code></td>
+<td>Planned Operating Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>actual_start_time</code></td>
+<td>Actual Start Time</td>
+<td>Datetime</td>
+<td>lecture seule; — Updated via 'Time Log' (In Minutes)</td>
+</tr>
+<tr>
+<td><code>actual_end_time</code></td>
+<td>Actual End Time</td>
+<td>Datetime</td>
+<td>lecture seule; — Updated via 'Time Log' (In Minutes)</td>
+</tr>
+<tr>
+<td><code>actual_operation_time</code></td>
+<td>Actual Operation Time</td>
+<td>Number</td>
+<td>lecture seule; — Updated via 'Time Log' (In Minutes)</td>
+</tr>
+<tr>
+<td><code>actual_operating_cost</code></td>
+<td>Actual Operating Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code>; — (Hour Rate / 60) * Actual Operation Time</td>
+</tr>
+<tr>
+<td><code>batch_size</code></td>
+<td>Batch Size</td>
+<td>Number</td>
+<td>défaut <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>sequence_id</code></td>
+<td>Sequence ID</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>workstation_type</code></td>
+<td>Workstation Type</td>
+<td>Link → <code>Workstation Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>process_loss_qty</code></td>
+<td>Process Loss Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>bom_no</code></td>
+<td>Output Item BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>finished_good</code></td>
+<td>Output Item</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>output_qty</code></td>
+<td>Output Qty</td>
+<td>Decimal</td>
+<td>lecture seule; — Quantity of the output item this operation makes for the whole Work Order</td>
+</tr>
+<tr>
+<td><code>wip_warehouse</code></td>
+<td>WIP WH</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>fg_warehouse</code></td>
+<td>Finished Goods Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>source_warehouse</code></td>
+<td>Source Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_subcontracted</code></td>
+<td>Is Subcontracted</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>skip_material_transfer</code></td>
+<td>Skip Material Transfer</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>backflush_from_wip_warehouse</code></td>
+<td>Backflush Materials From WIP Warehouse</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>batch_split</code></td>
+<td>Batch Split</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>weight_per_piece</code></td>
+<td>Weight Per Piece</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>quality_inspection_required</code></td>
+<td>Quality Inspection Required</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>pending_qty</code></td>
+<td>Pending Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="workstation">Workstation<a class="headerlink" href="#workstation" title="Permanent link">#</a></h2>
+<p><em>Workstation</em> — <code>manufacturing/workstation.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>robot-arm</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workstation_name</code></td>
+<td>Workstation Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>hour_rate</code></td>
+<td>Net Hour Rate</td>
+<td>Currency</td>
+<td>lecture seule; — per hour</td>
+</tr>
+<tr>
+<td><code>working_hours</code></td>
+<td>Working Hours</td>
+<td>Table → <code>Workstation Working Hour</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>holiday_list</code></td>
+<td>Holiday List</td>
+<td>Link → <code>Holiday List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>production_capacity</code></td>
+<td>Job Capacity</td>
+<td>Int</td>
+<td><strong>requis</strong>; défaut <code>1</code>; — Run parallel job cards in a workstation</td>
+</tr>
+<tr>
+<td><code>workstation_type</code></td>
+<td>Workstation Type</td>
+<td>Link → <code>Workstation Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>plant_floor</code></td>
+<td>Plant Floor</td>
+<td>Link → <code>Plant Floor</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Production · Off · Idle · Problem · Maintenance · Setup</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>on_status_image</code></td>
+<td>Active Status</td>
+<td>Image</td>
+<td></td>
+</tr>
+<tr>
+<td><code>off_status_image</code></td>
+<td>Inactive Status</td>
+<td>Image</td>
+<td></td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_working_hours</code></td>
+<td>Total Working Hours</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>workstation_costs</code></td>
+<td>Operating Components Cost</td>
+<td>Table → <code>Workstation Cost</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="workstation-cost">Workstation Cost<a class="headerlink" href="#workstation-cost" title="Permanent link">#</a></h2>
+<p><em>Workstation Cost</em> — <code>manufacturing/workstation_cost.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>operating_cost</code></td>
+<td>Operating Cost</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>operating_component</code></td>
+<td>Operating Component</td>
+<td>Link → <code>Workstation Operating Component</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="workstation-operating-component">Workstation Operating Component<a class="headerlink" href="#workstation-operating-component" title="Permanent link">#</a></h2>
+<p><em>Workstation Operating Component</em> — <code>manufacturing/workstation_operating_component.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>component_name</code></li>
+<li><strong>Icône</strong> : <code>cog</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>component_name</code></td>
+<td>Component Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td>Component Expense Account</td>
+<td>Table → <code>Workstation Operating Component Account</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="workstation-operating-component-account">Workstation Operating Component Account<a class="headerlink" href="#workstation-operating-component-account" title="Permanent link">#</a></h2>
+<p><em>Workstation Operating Component Account</em> — <code>manufacturing/workstation_operating_component_account.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="workstation-type">Workstation Type<a class="headerlink" href="#workstation-type" title="Permanent link">#</a></h2>
+<p><em>Workstation Type</em> — <code>manufacturing/workstation_type.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>workstation_type</code></li>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workstation_type</code></td>
+<td>Workstation Type</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>hour_rate</code></td>
+<td>Net Hour Rate</td>
+<td>Currency</td>
+<td>lecture seule; — per hour</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>workstation_costs</code></td>
+<td>Operating Components Cost</td>
+<td>Table → <code>Workstation Cost</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="workstation-working-hour">Workstation Working Hour<a class="headerlink" href="#workstation-working-hour" title="Permanent link">#</a></h2>
+<p><em>Workstation Working Hour</em> — <code>manufacturing/workstation_working_hour.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>start_time</code></td>
+<td>Start Time</td>
+<td>Time</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>end_time</code></td>
+<td>End Time</td>
+<td>Time</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>hours</code></td>
+<td>Hours</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../maintenance/" class="btn btn-neutral float-left" title="Maintenance (maintenance)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../payroll/" class="btn btn-neutral float-right" title="Paie (payroll)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../maintenance/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../payroll/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
