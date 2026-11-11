@@ -4,8 +4,8 @@ C'est la garantie de maintenance de la base déclarative : elle est faite pour �
 (un champ ajouté, une série changée, un module de plus), et ce test dit tout de suite si une retouche la casse —
 au lieu de le découvrir au démarrage d'une instance.
 
-Il ne teste pas le moteur mais les DÉFINITIONS, exactement comme `plugin.py` les charge quand l'opérateur les
-liste dans `doctype.doctypes_dirs` : un `load_dir` récursif, puis UN `validate_links()` quand tout est là.
+Il ne teste pas le moteur mais les DÉFINITIONS, comme `plugin.py` les charge quand l'opérateur les liste dans
+`doctype.doctypes_dirs` : un `load_dir` par dossier listé, puis UN `validate_links()` quand tout est là.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
+from tests.support.erp_set import load_erp_set
 from xcore_doctype.grants import GrantCatalog
 from xcore_doctype.registry import DocTypeRegistry
 from xcore_doctype.schema import RESERVED_GRANT_NAMESPACES
@@ -32,10 +33,9 @@ pytestmark = pytest.mark.skipif(not ERP_DIR.is_dir(), reason="doctypes/ absent")
 
 @pytest.fixture(scope="module")
 def registry() -> DocTypeRegistry:
-    """Le jeu complet, chargé comme le fait `plugin.py` pour les DocTypes de l'opérateur (`module` libre)."""
+    """Le jeu complet, comme `plugin.py` le charge (`module` libre) : voir `tests/support/erp_set.py`."""
     reg = DocTypeRegistry()
-    reg.load_dir(ERP_DIR)
-    reg.validate_links()
+    load_erp_set(reg, ERP_DIR)
     return reg
 
 

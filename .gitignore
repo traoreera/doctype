@@ -29,3 +29,6 @@ alembic.ini
 
 # Arbres git des agents (worktrees) : jamais versionnés
 .claude/worktrees/
+
+# Build MkDocs de la doc du sous-module doctypes/ (mkdocs.cnf l'y envoie hors de l'arbre)
+/.doctypes-site/
