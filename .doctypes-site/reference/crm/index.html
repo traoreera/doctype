@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/crm/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>CRM (crm) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CRM (crm)";
+        var mkdocs_page_input_path = "reference/crm.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/crm/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CRM (crm)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#appointment">Appointment</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#appointment-booking-settings">Appointment Booking Settings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#appointment-booking-slots">Appointment Booking Slots</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#assignment-rule-user">Assignment Rule User</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#campaign">Campaign</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#campaign-email-schedule">Campaign Email Schedule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#competitor">Competitor</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#competitor-detail">Competitor Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contact">Contact</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contract">Contract</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contract-fulfilment-checklist">Contract Fulfilment Checklist</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contract-template">Contract Template</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#contract-template-fulfilment-terms">Contract Template Fulfilment Terms</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#crm-note">CRM Note</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#crm-settings">CRM Settings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#email-campaign">Email Campaign</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#event">Event</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#frappe-crm-allowed-user">Frappe CRM Allowed User</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#lead">Lead</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#market-segment">Market Segment</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#opportunity">Opportunity</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#opportunity-item">Opportunity Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#opportunity-lost-reason">Opportunity Lost Reason</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#opportunity-lost-reason-detail">Opportunity Lost Reason Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#opportunity-type">Opportunity Type</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#prospect">Prospect</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#prospect-lead">Prospect Lead</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#prospect-opportunity">Prospect Opportunity</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sales-stage">Sales Stage</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#utm-campaign">UTM Campaign</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#utm-medium">UTM Medium</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#utm-source">UTM Source</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">CRM (crm)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/crm.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-crm-crm">Référence des champs — CRM (<code>crm</code>)<a class="headerlink" href="#reference-des-champs-crm-crm" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>crm/</code> (32 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>248 champs au total ; types les plus fréquents : <code>Text</code> (83), <code>Link</code> (47), <code>Select</code> (23), <code>Boolean</code> (23), <code>Table</code> (14).</p>
+<h2 id="appointment">Appointment<a class="headerlink" href="#appointment" title="Permanent link">#</a></h2>
+<p><em>Appointment</em> — <code>crm/appointment.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>customer_name</code></li>
+<li><strong>Icône</strong> : <code>clipboard-clock</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>customer_name</code></td>
+<td>Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>customer_phone_number</code></td>
+<td>Phone Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_skype</code></td>
+<td>Skype ID</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_details</code></td>
+<td>Details</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>scheduled_time</code></td>
+<td>Scheduled Time</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Open · Unverified · Closed</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>calendar_event</code></td>
+<td>Calendar Event</td>
+<td>Link → <code>Event</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_email</code></td>
+<td>Email</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>appointment_with</code></td>
+<td>Appointment With</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>party</code></td>
+<td>Party</td>
+<td>DynamicLink → <code>appointment_with</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>created_through_portal</code></td>
+<td>Created through Portal</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>email_verified</code></td>
+<td>Email Verified</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>verification_token</code></td>
+<td>Verification Token</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="appointment-booking-settings">Appointment Booking Settings<a class="headerlink" href="#appointment-booking-settings" title="Permanent link">#</a></h2>
+<p><em>Appointment Booking Settings</em> — <code>crm/appointment_booking_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Titre</strong> : <code>holiday_list</code></li>
+<li><strong>Icône</strong> : <code>settings</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>availability_of_slots</code></td>
+<td>Availability Of Slots</td>
+<td>Table → <code>Appointment Booking Slots</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>number_of_agents</code></td>
+<td>Number of Concurrent Appointments</td>
+<td>Int</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>holiday_list</code></td>
+<td>Holiday List</td>
+<td>Link → <code>Holiday List</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>appointment_duration</code></td>
+<td>Appointment Duration (In Minutes)</td>
+<td>Int</td>
+<td><strong>requis</strong>; défaut <code>60</code></td>
+</tr>
+<tr>
+<td><code>email_reminders</code></td>
+<td>Notify Via Email</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Notify customer and agent via email on the day of the appointment.</td>
+</tr>
+<tr>
+<td><code>advance_booking_days</code></td>
+<td>Number of days appointments can be booked in advance</td>
+<td>Int</td>
+<td>défaut <code>7</code></td>
+</tr>
+<tr>
+<td><code>agent_list</code></td>
+<td>Agents</td>
+<td>Table → <code>Assignment Rule User</code></td>
+<td>— Un agent par ligne (adresse e-mail du membre).</td>
+</tr>
+<tr>
+<td><code>enable_scheduling</code></td>
+<td>Enable Appointment Scheduling</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>success_redirect_url</code></td>
+<td>Success Redirect URL</td>
+<td>Text</td>
+<td>— Leave blank for home. This is relative to site URL, for example "about" will redirect to "https://yoursitename</td>
+</tr>
+<tr>
+<td><code>verification_link_expiry_duration</code></td>
+<td>Verification Link Expiry Duration</td>
+<td>Int</td>
+<td>défaut <code>30</code>; — In Minutes (min: 15 mins, max: 60 mins)</td>
+</tr>
+<tr>
+<td><code>enable_appointment_portal</code></td>
+<td>Enable Appointment Booking Through Portal</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>action_for_expired_unverified_appointments</code></td>
+<td>Action for Expired Unverified Appointments</td>
+<td>Select — Mark as Closed · Delete Permanently</td>
+<td>défaut <code>Mark as Closed</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="appointment-booking-slots">Appointment Booking Slots<a class="headerlink" href="#appointment-booking-slots" title="Permanent link">#</a></h2>
+<p><em>Appointment Booking Slots</em> — <code>crm/appointment_booking_slots.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>day_of_week</code></td>
+<td>Day Of Week</td>
+<td>Select — Sunday · Monday · Tuesday · Wednesday · Thursday · Friday · Saturday</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_time</code></td>
+<td>From Time</td>
+<td>Time</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_time</code></td>
+<td>To Time</td>
+<td>Time</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="assignment-rule-user">Assignment Rule User<a class="headerlink" href="#assignment-rule-user" title="Permanent link">#</a></h2>
+<p><em>Agent affecté</em> — <code>crm/assignment_rule_user.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user</code></td>
+<td>Membre</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="campaign">Campaign<a class="headerlink" href="#campaign" title="Permanent link">#</a></h2>
+<p><em>Campaign</em> — <code>crm/campaign.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>campaign_name</code></li>
+<li><strong>Icône</strong> : <code>megaphone</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>campaign_name</code></td>
+<td>Campaign Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — SAL-CAM-.YYYY.-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>campaign_schedules</code></td>
+<td>Campaign Schedules</td>
+<td>Table → <code>Campaign Email Schedule</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="campaign-email-schedule">Campaign Email Schedule<a class="headerlink" href="#campaign-email-schedule" title="Permanent link">#</a></h2>
+<p><em>Campaign Email Schedule</em> — <code>crm/campaign_email_schedule.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>send_after_days</code></td>
+<td>Send After (days)</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>email_template</code></td>
+<td>Email Template</td>
+<td>Link → <code>Email Template</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="competitor">Competitor<a class="headerlink" href="#competitor" title="Permanent link">#</a></h2>
+<p><em>Competitor</em> — <code>crm/competitor.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>competitor_name</code></li>
+<li><strong>Icône</strong> : <code>swords</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>competitor_name</code></td>
+<td>Competitor Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>Website</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="competitor-detail">Competitor Detail<a class="headerlink" href="#competitor-detail" title="Permanent link">#</a></h2>
+<p><em>Competitor Detail</em> — <code>crm/competitor_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>competitor</code></td>
+<td>Competitor</td>
+<td>Link → <code>Competitor</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="contact">Contact<a class="headerlink" href="#contact" title="Permanent link">#</a></h2>
+<p><em>Contact</em> — <code>crm/contact.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>email_id</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>first_name</code></td>
+<td>First Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>middle_name</code></td>
+<td>Middle Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_name</code></td>
+<td>Last Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>email_id</code></td>
+<td>Email</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>phone</code></td>
+<td>Phone</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>mobile_no</code></td>
+<td>Mobile</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_primary_contact</code></td>
+<td>Primary Contact</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="contract">Contract<a class="headerlink" href="#contract" title="Permanent link">#</a></h2>
+<p><em>Contract</em> — <code>crm/contract.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>CONT-{YYYY}-{#####}</code></li>
+<li><strong>Icône</strong> : <code>signature</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>party_type</code></td>
+<td>Party Type</td>
+<td>Select — Customer · Supplier · Employee</td>
+<td><strong>requis</strong>; défaut <code>Customer</code></td>
+</tr>
+<tr>
+<td><code>is_signed</code></td>
+<td>Signed</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>party_name</code></td>
+<td>Party Name</td>
+<td>DynamicLink → <code>party_type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>party_user</code></td>
+<td>Party User</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Unsigned · Active · Inactive · Cancelled</td>
+<td>colonne de liste; masqué</td>
+</tr>
+<tr>
+<td><code>fulfilment_status</code></td>
+<td>Fulfilment Status</td>
+<td>Select — N/A · Unfulfilled · Partially Fulfilled · Fulfilled · Lapsed</td>
+<td>colonne de liste; masqué</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>signee</code></td>
+<td>Signee</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>signed_on</code></td>
+<td>Signed On</td>
+<td>Datetime</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>ip_address</code></td>
+<td>IP Address</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contract_template</code></td>
+<td>Contract Template</td>
+<td>Link → <code>Contract Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contract_terms</code></td>
+<td>Contract Terms</td>
+<td>TextEditor</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>requires_fulfilment</code></td>
+<td>Requires Fulfilment</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>fulfilment_deadline</code></td>
+<td>Fulfilment Deadline</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fulfilment_terms</code></td>
+<td>Fulfilment Terms</td>
+<td>Table → <code>Contract Fulfilment Checklist</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>document_type</code></td>
+<td>Document Type</td>
+<td>Select — Quotation · Project · Sales Order · Purchase Order · Sales Invoice · Purchase Invoice</td>
+<td></td>
+</tr>
+<tr>
+<td><code>document_name</code></td>
+<td>Document Name</td>
+<td>DynamicLink → <code>document_type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>signed_by_company</code></td>
+<td>Signed By (Company)</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>party_full_name</code></td>
+<td>Party Full Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="contract-fulfilment-checklist">Contract Fulfilment Checklist<a class="headerlink" href="#contract-fulfilment-checklist" title="Permanent link">#</a></h2>
+<p><em>Contract Fulfilment Checklist</em> — <code>crm/contract_fulfilment_checklist.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fulfilled</code></td>
+<td>Fulfilled</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>requirement</code></td>
+<td>Requirement</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>Notes</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="contract-template">Contract Template<a class="headerlink" href="#contract-template" title="Permanent link">#</a></h2>
+<p><em>Contract Template</em> — <code>crm/contract_template.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>signature</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>contract_terms</code></td>
+<td>Contract Terms and Conditions</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>requires_fulfilment</code></td>
+<td>Requires Fulfilment</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>fulfilment_terms</code></td>
+<td>Fulfilment Terms and Conditions</td>
+<td>Table → <code>Contract Template Fulfilment Terms</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="contract-template-fulfilment-terms">Contract Template Fulfilment Terms<a class="headerlink" href="#contract-template-fulfilment-terms" title="Permanent link">#</a></h2>
+<p><em>Contract Template Fulfilment Terms</em> — <code>crm/contract_template_fulfilment_terms.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>requirement</code></td>
+<td>Requirement</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="crm-note">CRM Note<a class="headerlink" href="#crm-note" title="Permanent link">#</a></h2>
+<p><em>CRM Note</em> — <code>crm/crm_note.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>note</code></td>
+<td>Note</td>
+<td>TextEditor</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>added_by</code></td>
+<td>Added By</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>added_on</code></td>
+<td>Added On</td>
+<td>Datetime</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="crm-settings">CRM Settings<a class="headerlink" href="#crm-settings" title="Permanent link">#</a></h2>
+<p><em>CRM Settings</em> — <code>crm/crm_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Titre</strong> : <code>campaign_naming_by</code></li>
+<li><strong>Icône</strong> : <code>settings</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>campaign_naming_by</code></td>
+<td>Campaign Naming By</td>
+<td>Select — Campaign Name · Naming Series</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>default_valid_till</code></td>
+<td>Default Quotation Validity Days</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>allow_lead_duplication_based_on_emails</code></td>
+<td>Allow Lead Duplication based on Emails</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>auto_creation_of_contact</code></td>
+<td>Auto Creation of Contact</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>close_opportunity_after_days</code></td>
+<td>Close Replied Opportunity After Days</td>
+<td>Int</td>
+<td>défaut <code>15</code>; — Auto close Opportunity Replied after the no. of days mentioned above</td>
+</tr>
+<tr>
+<td><code>carry_forward_communication_and_comments</code></td>
+<td>Carry Forward Communication and Comments</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — All the Comments and Emails will be copied from one document to another newly created document(Lead -&gt; Opportu</td>
+</tr>
+<tr>
+<td><code>update_timestamp_on_new_communication</code></td>
+<td>Update timestamp on new communication</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Update the modified timestamp on new communications received in Lead &amp; Opportunity.</td>
+</tr>
+<tr>
+<td><code>enable_opportunity_creation_from_contact_us</code></td>
+<td>Enable Opportunity Creation from Contact Us</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>allowed_users</code></td>
+<td>Allowed Users</td>
+<td>Table → <code>Frappe CRM Allowed User</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>enable_frappe_crm_data_synchronization</code></td>
+<td>Enable Frappe CRM Data Synchronization</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="email-campaign">Email Campaign<a class="headerlink" href="#email-campaign" title="Permanent link">#</a></h2>
+<p><em>Email Campaign</em> — <code>crm/email_campaign.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>campaign_name</code></li>
+<li><strong>Icône</strong> : <code>mails</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>campaign_name</code></td>
+<td>Campaign</td>
+<td>Link → <code>Campaign</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Scheduled · In Progress · Completed · Unsubscribed</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>email_campaign_for</code></td>
+<td>Email Campaign For</td>
+<td>Select — Lead · Contact</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>Lead</code></td>
+</tr>
+<tr>
+<td><code>recipient</code></td>
+<td>Recipient</td>
+<td>DynamicLink → <code>email_campaign_for</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sender</code></td>
+<td>Sender</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="event">Event<a class="headerlink" href="#event" title="Permanent link">#</a></h2>
+<p><em>Event</em> — <code>crm/event.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>subject</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>starts_on</code></td>
+<td>Starts On</td>
+<td>Datetime</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>ends_on</code></td>
+<td>Ends On</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>event_type</code></td>
+<td>Event Type</td>
+<td>Select — Private · Public</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Open · Completed · Cancelled</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="frappe-crm-allowed-user">Frappe CRM Allowed User<a class="headerlink" href="#frappe-crm-allowed-user" title="Permanent link">#</a></h2>
+<p><em>Frappe CRM Allowed User</em> — <code>crm/frappe_crm_allowed_user.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>user</code></td>
+<td>User</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="lead">Lead<a class="headerlink" href="#lead" title="Permanent link">#</a></h2>
+<p><em>Lead</em> — <code>crm/lead.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>lead_name</code></li>
+<li><strong>Icône</strong> : <code>user-plus</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — CRM-LEAD-.YYYY.-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>lead_name</code></td>
+<td>Full Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company_name</code></td>
+<td>Organization Name</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>email_id</code></td>
+<td>Email</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>lead_owner</code></td>
+<td>Lead Owner</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Lead · Open · Replied · Opportunity · Quotation · Lost Quotation · Interested · Converted · Do Not Contact</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>Lead</code></td>
+</tr>
+<tr>
+<td><code>salutation</code></td>
+<td>Salutation</td>
+<td>Link → <code>Salutation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>gender</code></td>
+<td>Gender</td>
+<td>Link → <code>Gender</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>From Customer</td>
+<td>Link → <code>Customer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>phone</code></td>
+<td>Phone</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>mobile_no</code></td>
+<td>Mobile No</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fax</code></td>
+<td>Fax</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>Lead Type</td>
+<td>Select — Client · Channel Partner · Consultant</td>
+<td></td>
+</tr>
+<tr>
+<td><code>market_segment</code></td>
+<td>Market Segment</td>
+<td>Link → <code>Market Segment</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>industry</code></td>
+<td>Industry</td>
+<td>Link → <code>Industry Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>request_type</code></td>
+<td>Request Type</td>
+<td>Select — Product Enquiry · Request for Information · Suggestions · Other</td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>Website</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>territory</code></td>
+<td>Territory</td>
+<td>Link → <code>Territory</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>unsubscribed</code></td>
+<td>Unsubscribed</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>blog_subscriber</code></td>
+<td>Blog Subscriber</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Print Language</td>
+<td>Link → <code>Language</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>first_name</code></td>
+<td>First Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>middle_name</code></td>
+<td>Middle Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_name</code></td>
+<td>Last Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>no_of_employees</code></td>
+<td>No of Employees</td>
+<td>Select — 1-10 · 11-50 · 51-200 · 201-500 · 501-1000 · 1000+</td>
+<td></td>
+</tr>
+<tr>
+<td><code>whatsapp_no</code></td>
+<td>WhatsApp</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>phone_ext</code></td>
+<td>Phone Ext.</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qualified_by</code></td>
+<td>Qualified By</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qualified_on</code></td>
+<td>Qualified on</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qualification_status</code></td>
+<td>Qualification Status</td>
+<td>Select — Unqualified · In Process · Qualified</td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_title</code></td>
+<td>Job Title</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>annual_revenue</code></td>
+<td>Annual Revenue</td>
+<td>Currency</td>
+<td>devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>Notes</td>
+<td>Table → <code>CRM Note</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>city</code></td>
+<td>City</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>state</code></td>
+<td>State/Province</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>country</code></td>
+<td>Country</td>
+<td>Link → <code>Country</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_content</code></td>
+<td>Content</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_source</code></td>
+<td>Source</td>
+<td>Link → <code>UTM Source</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_medium</code></td>
+<td>Medium</td>
+<td>Link → <code>UTM Medium</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_campaign</code></td>
+<td>Campaign</td>
+<td>Link → <code>UTM Campaign</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="market-segment">Market Segment<a class="headerlink" href="#market-segment" title="Permanent link">#</a></h2>
+<p><em>Market Segment</em> — <code>crm/market_segment.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>chart-pie</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>market_segment</code></td>
+<td>Market Segment</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="opportunity">Opportunity<a class="headerlink" href="#opportunity" title="Permanent link">#</a></h2>
+<p><em>Opportunity</em> — <code>crm/opportunity.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>user-star</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — CRM-OPP-.YYYY.-</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>opportunity_from</code></td>
+<td>Opportunity From</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>party_name</code></td>
+<td>Party</td>
+<td>DynamicLink → <code>opportunity_from</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_name</code></td>
+<td>Customer Name</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>opportunity_type</code></td>
+<td>Opportunity Type</td>
+<td>Link → <code>Opportunity Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Open · Quotation · Converted · Lost · Replied · Closed</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>Open</code></td>
+</tr>
+<tr>
+<td><code>order_lost_reason</code></td>
+<td>Detailed Reason</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>lost_on</code></td>
+<td>Lost On</td>
+<td>Date</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>expected_closing</code></td>
+<td>Expected Closing Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>opportunity_amount</code></td>
+<td>Opportunity Amount</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>sales_stage</code></td>
+<td>Sales Stage</td>
+<td>Link → <code>Sales Stage</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>probability</code></td>
+<td>Probability (%)</td>
+<td>Percent</td>
+<td>défaut <code>100.0</code></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Opportunity Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_address</code></td>
+<td>Customer / Lead Address</td>
+<td>Link → <code>Address</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>address_display</code></td>
+<td>Address</td>
+<td>TextEditor</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>territory</code></td>
+<td>Territory</td>
+<td>Link → <code>Territory</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_group</code></td>
+<td>Customer Group</td>
+<td>Link → <code>Customer Group</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Contact Person</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_display</code></td>
+<td>Contact</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_email</code></td>
+<td>Contact Email</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_mobile</code></td>
+<td>Contact Mobile</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Opportunity Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>lost_reasons</code></td>
+<td>Lost Reasons</td>
+<td>Table → <code>Opportunity Lost Reason Detail</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Print Language</td>
+<td>Link → <code>Language</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>base_opportunity_amount</code></td>
+<td>Opportunity Amount (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_total</code></td>
+<td>Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total</code></td>
+<td>Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>conversion_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>competitors</code></td>
+<td>Competitors</td>
+<td>Table → <code>Competitor Detail</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>no_of_employees</code></td>
+<td>No of Employees</td>
+<td>Select — 1-10 · 11-50 · 51-200 · 201-500 · 501-1000 · 1000+</td>
+<td></td>
+</tr>
+<tr>
+<td><code>annual_revenue</code></td>
+<td>Annual Revenue</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>industry</code></td>
+<td>Industry</td>
+<td>Link → <code>Industry Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>market_segment</code></td>
+<td>Market Segment</td>
+<td>Link → <code>Market Segment</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>opportunity_owner</code></td>
+<td>Opportunity Owner</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>Website</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>whatsapp</code></td>
+<td>WhatsApp</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>phone</code></td>
+<td>Phone</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>phone_ext</code></td>
+<td>Phone Ext.</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_title</code></td>
+<td>Job Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>Notes</td>
+<td>Table → <code>CRM Note</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>city</code></td>
+<td>City</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>state</code></td>
+<td>State/Province</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>country</code></td>
+<td>Country</td>
+<td>Link → <code>Country</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_source</code></td>
+<td>Source</td>
+<td>Link → <code>UTM Source</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_campaign</code></td>
+<td>Campaign</td>
+<td>Link → <code>UTM Campaign</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_medium</code></td>
+<td>Medium</td>
+<td>Link → <code>UTM Medium</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>utm_content</code></td>
+<td>Content</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="opportunity-item">Opportunity Item<a class="headerlink" href="#opportunity-item" title="Permanent link">#</a></h2>
+<p><em>Opportunity Item</em> — <code>crm/opportunity_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>brand</code></td>
+<td>Brand</td>
+<td>Link → <code>Brand</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_amount</code></td>
+<td>Amount (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate</code></td>
+<td>Rate (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="opportunity-lost-reason">Opportunity Lost Reason<a class="headerlink" href="#opportunity-lost-reason" title="Permanent link">#</a></h2>
+<p><em>Opportunity Lost Reason</em> — <code>crm/opportunity_lost_reason.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>circle-x</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lost_reason</code></td>
+<td>Lost Reason</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="opportunity-lost-reason-detail">Opportunity Lost Reason Detail<a class="headerlink" href="#opportunity-lost-reason-detail" title="Permanent link">#</a></h2>
+<p><em>Opportunity Lost Reason Detail</em> — <code>crm/opportunity_lost_reason_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lost_reason</code></td>
+<td>Opportunity Lost Reason</td>
+<td>Link → <code>Opportunity Lost Reason</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="opportunity-type">Opportunity Type<a class="headerlink" href="#opportunity-type" title="Permanent link">#</a></h2>
+<p><em>Opportunity Type</em> — <code>crm/opportunity_type.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="prospect">Prospect<a class="headerlink" href="#prospect" title="Permanent link">#</a></h2>
+<p><em>Prospect</em> — <code>crm/prospect.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>industry</code></li>
+<li><strong>Icône</strong> : <code>user-round-search</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company_name</code></td>
+<td>Company Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>industry</code></td>
+<td>Industry</td>
+<td>Link → <code>Industry Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>market_segment</code></td>
+<td>Market Segment</td>
+<td>Link → <code>Market Segment</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_group</code></td>
+<td>Customer Group</td>
+<td>Link → <code>Customer Group</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>territory</code></td>
+<td>Territory</td>
+<td>Link → <code>Territory</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>no_of_employees</code></td>
+<td>No. of Employees</td>
+<td>Select — 1-10 · 11-50 · 51-200 · 201-500 · 501-1000 · 1000+</td>
+<td></td>
+</tr>
+<tr>
+<td><code>annual_revenue</code></td>
+<td>Annual Revenue</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>fax</code></td>
+<td>Fax</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>Website</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>prospect_owner</code></td>
+<td>Prospect Owner</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>opportunities</code></td>
+<td>Opportunities</td>
+<td>Table → <code>Prospect Opportunity</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>leads</code></td>
+<td>leads</td>
+<td>Table → <code>Prospect Lead</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>Notes</td>
+<td>Table → <code>CRM Note</code></td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="prospect-lead">Prospect Lead<a class="headerlink" href="#prospect-lead" title="Permanent link">#</a></h2>
+<p><em>Prospect Lead</em> — <code>crm/prospect_lead.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lead</code></td>
+<td>Lead</td>
+<td>Link → <code>Lead</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>lead_name</code></td>
+<td>Lead Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>lead.lead_name</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Email</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>mobile_no</code></td>
+<td>Mobile No</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>lead_owner</code></td>
+<td>Lead Owner</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="prospect-opportunity">Prospect Opportunity<a class="headerlink" href="#prospect-opportunity" title="Permanent link">#</a></h2>
+<p><em>Prospect Opportunity</em> — <code>crm/prospect_opportunity.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>opportunity</code></td>
+<td>Opportunity</td>
+<td>Link → <code>Opportunity</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>stage</code></td>
+<td>Stage</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>probability</code></td>
+<td>Probability</td>
+<td>Percent</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>expected_closing</code></td>
+<td>Closing</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>deal_owner</code></td>
+<td>Deal Owner</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Contact Person</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sales-stage">Sales Stage<a class="headerlink" href="#sales-stage" title="Permanent link">#</a></h2>
+<p><em>Sales Stage</em> — <code>crm/sales_stage.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>milestone</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stage_name</code></td>
+<td>Stage Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="utm-campaign">UTM Campaign<a class="headerlink" href="#utm-campaign" title="Permanent link">#</a></h2>
+<p><em>UTM Campaign</em> — <code>crm/utm_campaign.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>campaign_name</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>campaign_name</code></td>
+<td>Campaign Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>campaign_code</code></td>
+<td>Campaign Code</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="utm-medium">UTM Medium<a class="headerlink" href="#utm-medium" title="Permanent link">#</a></h2>
+<p><em>UTM Medium</em> — <code>crm/utm_medium.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>medium_name</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>medium_name</code></td>
+<td>Medium Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="utm-source">UTM Source<a class="headerlink" href="#utm-source" title="Permanent link">#</a></h2>
+<p><em>UTM Source</em> — <code>crm/utm_source.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>source_name</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>source_name</code></td>
+<td>Source Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../communication/" class="btn btn-neutral float-left" title="Communication (communication)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../edi/" class="btn btn-neutral float-right" title="EDI (edi)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../communication/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../edi/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

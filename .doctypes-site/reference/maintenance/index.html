@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/maintenance/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Maintenance (maintenance) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Maintenance (maintenance)";
+        var mkdocs_page_input_path = "reference/maintenance.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/maintenance/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Maintenance (maintenance)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#maintenance-schedule">Maintenance Schedule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maintenance-schedule-detail">Maintenance Schedule Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maintenance-schedule-item">Maintenance Schedule Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maintenance-visit">Maintenance Visit</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maintenance-visit-purpose">Maintenance Visit Purpose</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Maintenance (maintenance)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/maintenance.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-maintenance-maintenance">Référence des champs — Maintenance (<code>maintenance</code>)<a class="headerlink" href="#reference-des-champs-maintenance-maintenance" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>maintenance/</code> (5 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>65 champs au total ; types les plus fréquents : <code>Link</code> (22), <code>Text</code> (13), <code>Select</code> (8), <code>Date</code> (6), <code>LongText</code> (6).</p>
+<h2 id="maintenance-schedule">Maintenance Schedule<a class="headerlink" href="#maintenance-schedule" title="Permanent link">#</a></h2>
+<p><em>Maintenance Schedule</em> — <code>maintenance/maintenance_schedule.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>MS-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>customer_name</code></li>
+<li><strong>Icône</strong> : <code>calendar-check</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — MAT-MSH-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Cancelled</td>
+<td><strong>requis</strong>; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Transaction Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Maintenance Schedule Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>schedules</code></td>
+<td>Schedules</td>
+<td>Table → <code>Maintenance Schedule Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_name</code></td>
+<td>Customer Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>customer.customer_name</code></td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Contact Person</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_mobile</code></td>
+<td>Mobile No</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>contact_email</code></td>
+<td>Contact Email</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>contact_display</code></td>
+<td>Contact</td>
+<td>LongText</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>customer_address</code></td>
+<td>Customer Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>address_display</code></td>
+<td>Address</td>
+<td>TextEditor</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>territory</code></td>
+<td>Territory</td>
+<td>Link → <code>Territory</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_group</code></td>
+<td>Customer Group</td>
+<td>Link → <code>Customer Group</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="maintenance-schedule-detail">Maintenance Schedule Detail<a class="headerlink" href="#maintenance-schedule-detail" title="Permanent link">#</a></h2>
+<p><em>Maintenance Schedule Detail</em> — <code>maintenance/maintenance_schedule_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>scheduled_date</code></td>
+<td>Scheduled Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>actual_date</code></td>
+<td>Actual Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_person</code></td>
+<td>Sales Person</td>
+<td>Link → <code>Sales Person</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>completion_status</code></td>
+<td>Completion Status</td>
+<td>Select — Pending · Partially Completed · Fully Completed</td>
+<td>colonne de liste; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>item_reference</code></td>
+<td>Item Reference</td>
+<td>Text</td>
+<td>lecture seule; masqué; — Référence de la ligne d'origine (Maintenance Schedule Item).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="maintenance-schedule-item">Maintenance Schedule Item<a class="headerlink" href="#maintenance-schedule-item" title="Permanent link">#</a></h2>
+<p><em>Maintenance Schedule Item</em> — <code>maintenance/maintenance_schedule_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>periodicity</code></td>
+<td>Periodicity</td>
+<td>Select — Weekly · Monthly · Quarterly · Half Yearly · Yearly · Random</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>no_of_visits</code></td>
+<td>No of Visits</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>sales_person</code></td>
+<td>Sales Person</td>
+<td>Link → <code>Sales Person</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>serial_and_batch_bundle</code></td>
+<td>Serial and Batch Bundle</td>
+<td>Link → <code>Serial and Batch Bundle</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="maintenance-visit">Maintenance Visit<a class="headerlink" href="#maintenance-visit" title="Permanent link">#</a></h2>
+<p><em>Maintenance Visit</em> — <code>maintenance/maintenance_visit.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>MV-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>wrench</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — MAT-MVS-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>customer_name</code></td>
+<td>Customer Name</td>
+<td>Text</td>
+<td>lecture seule; masqué; recopié de <code>customer.customer_name</code></td>
+</tr>
+<tr>
+<td><code>address_display</code></td>
+<td>Address</td>
+<td>TextEditor</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>contact_display</code></td>
+<td>Contact</td>
+<td>LongText</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>contact_mobile</code></td>
+<td>Mobile No</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>contact_email</code></td>
+<td>Contact Email</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>mntc_date</code></td>
+<td>Maintenance Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>mntc_time</code></td>
+<td>Maintenance Time</td>
+<td>Time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>completion_status</code></td>
+<td>Completion Status</td>
+<td>Select — Partially Completed · Fully Completed</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>maintenance_type</code></td>
+<td>Maintenance Type</td>
+<td>Select — Scheduled · Unscheduled · Breakdown</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>Unscheduled</code></td>
+</tr>
+<tr>
+<td><code>purposes</code></td>
+<td>Purposes</td>
+<td>Table → <code>Maintenance Visit Purpose</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_feedback</code></td>
+<td>Customer Feedback</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Cancelled · Submitted</td>
+<td><strong>requis</strong>; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>customer_address</code></td>
+<td>Customer Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Contact Person</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>territory</code></td>
+<td>Territory</td>
+<td>Link → <code>Territory</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_group</code></td>
+<td>Customer Group</td>
+<td>Link → <code>Customer Group</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>maintenance_schedule</code></td>
+<td>Maintenance Schedule</td>
+<td>Link → <code>Maintenance Schedule</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>maintenance_schedule_detail</code></td>
+<td>Maintenance Schedule Detail</td>
+<td>Text</td>
+<td>masqué; — Référence de la ligne d'origine (Maintenance Schedule Detail).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="maintenance-visit-purpose">Maintenance Visit Purpose<a class="headerlink" href="#maintenance-visit-purpose" title="Permanent link">#</a></h2>
+<p><em>Maintenance Visit Purpose</em> — <code>maintenance/maintenance_visit_purpose.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>Link → <code>Serial No</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>service_person</code></td>
+<td>Sales Person</td>
+<td>Link → <code>Sales Person</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>work_done</code></td>
+<td>Work Done</td>
+<td>LongText</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>prevdoc_doctype</code></td>
+<td>Document Type</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>prevdoc_docname</code></td>
+<td>Against Document No</td>
+<td>DynamicLink → <code>prevdoc_doctype</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>maintenance_schedule_detail</code></td>
+<td>Maintenance Schedule Detail</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../hr/" class="btn btn-neutral float-left" title="Ressources humaines (hr)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../manufacturing/" class="btn btn-neutral float-right" title="Fabrication (manufacturing)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../hr/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../manufacturing/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

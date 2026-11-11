@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/integration/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Implémenter un module - ERP DocTypes</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Impl\u00e9menter un module";
+        var mkdocs_page_input_path = "integration.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/integration/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Implémenter un module</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#le-principe-un-plugin-par-module">Le principe : un plugin par module</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gabarit-minimal-module-yaml-seul">Gabarit minimal (module « YAML seul »)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#le-chargement-en-mode-pairs">Le chargement en mode pairs</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#la-logique-metier-les-hooks">La logique métier : les hooks</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#les-pieces-qui-citent-leur-source-cancel_ignores">Les pièces qui cite­nt leur source : cancel_ignores</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#traductions">Traductions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validation">Validation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#ordre-de-deploiement-p0p5">Ordre de déploiement (P0–P5)</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Implémenter un module</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/integration.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="implementer-un-module-en-plugin-xcore-doctype">Implémenter un module en plugin xcore-doctype<a class="headerlink" href="#implementer-un-module-en-plugin-xcore-doctype" title="Permanent link">#</a></h1>
+<p>Un dossier de ce dépôt (<code>stock/</code>, <code>accounts/</code>…) ne fait rien seul : il décrit la structure. Pour obtenir une application qui tourne, chaque module devient <strong>un plugin xcore</strong> qui charge ses définitions, déclare ses grants à l'authentification, son espace de travail — et porte en code la logique métier que le YAML ne contient pas. Ce guide décrit la marche à suivre ; la stratégie d'ensemble (un plugin par module, ordre P0–P5) est dans <code>process/plan-erp.md</code> du dépôt moteur.</p>
+<h2 id="le-principe-un-plugin-par-module">Le principe : un plugin par module<a class="headerlink" href="#le-principe-un-plugin-par-module" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>le <code>module:</code> de chaque DocType doit valoir le nom du plugin</strong> (ex. plugin <code>stock</code> → <code>module: stock</code>) : c'est l'espace de nom des grants, un plugin ne peut pas écrire dans celui d'un autre ;</li>
+<li>le plugin <strong>charge ses YAML</strong> par <code>doctype_registry.load_dir</code> et son espace par <code>load_workspaces</code> ;</li>
+<li>le plugin <strong>déclare les grants</strong> exigés par ses DocTypes à l'authentification (<code>rbac.declare</code>, une seule fois, via le service <code>doctype_grants</code>) ;</li>
+<li>la <strong>logique métier</strong> (écritures comptables, mouvements de stock, invariants) vit dans des <strong>hooks</strong> enregistrés par le plugin ;</li>
+<li>les modules se référencent en <strong>cycle</strong> → chargement en mode <em>pairs</em> (voir plus bas).</li>
+</ul>
+<h2 id="gabarit-minimal-module-yaml-seul">Gabarit minimal (module « YAML seul »)<a class="headerlink" href="#gabarit-minimal-module-yaml-seul" title="Permanent link">#</a></h2>
+<p>La plupart des modules commencent comme le plugin <code>hr</code> des tests du moteur : quelques lignes de Python, tout le reste en YAML.</p>
+<pre><code>mon-module/
+├── plugin.yaml
+├── doctypes/            ← un copie du dossier de ce dépôt (ex. stock/)
+├── workspaces/stock.yaml
+└── src/
+    └── main.py
+</code></pre>
+<p><code>``yaml title="plugin.yaml"
+name: stock                      # = le</code>module:` des DocTypes chargés
+version: 0.1.0
+author: auteur@example.com
+description: "Plugin du module Stock : articles, entrepôts, mouvements, registre."
+framework_version: "&gt;=2.9"
+execution_mode: trusted          # requis : les hooks transactionnels sont du code de confiance
+entry_point: src/main.py
+requires: [xcore-doctype, auth]   # + les modules cités (voir Dépendances)</p>
+<pre><code>
+```python title=&quot;src/main.py&quot;
+&quot;&quot;&quot;Plugin propriétaire du module `stock`.&quot;&quot;&quot;
+from pathlib import Path
+
+from xcore.sdk import AutoDispatchMixin, TrustedBase
+
+DOCTYPES = Path(__file__).resolve().parent.parent / &quot;doctypes&quot;
+AUTH = &quot;auth&quot;  # le `name:` du plugin d'authentification
+
+
+class Plugin(AutoDispatchMixin, TrustedBase):
+    async def on_load(self) -&gt; None:
+        me = self.ctx.name
+        registry = self.get_service(&quot;doctype_registry&quot;)
+        registry.load_dir(me, DOCTYPES)                                # les définitions
+        registry.load_workspaces(me, DOCTYPES.parent / &quot;workspaces&quot;)   # APRÈS les DocTypes
+        grants = self.get_service(&quot;doctype_grants&quot;).for_plugin(me)    # les grants du YAML
+        await self.ctx.events.emit(&quot;rbac.declare&quot;, {&quot;plugin&quot;: me, &quot;grants&quot;: grants}, source=me)
+
+    async def on_unload(self) -&gt; None:
+        self.get_service(&quot;doctype_registry&quot;).unregister_owner(self.ctx.name)
+</code></pre>
+<p>Points de vigilance :</p>
+<ul>
+<li><code>load_workspaces</code> se fait <strong>après</strong> <code>load_dir</code> (les raccourcis visent des DocTypes chargés) ;</li>
+<li>la déclaration <code>rbac.declare</code> part <strong>une seule fois</strong> par plugin, avec <strong>tous</strong> les grants du module — l'authentification désactive les grants manquants de la liste qu'elle reçoit ;</li>
+<li>sans bloc <code>permissions</code> dans le YAML, les grants suivent la <strong>convention</strong> <code>stock:&lt;doctype&gt;:read|write|delete</code> (+ <code>submit</code>/<code>cancel</code> sur les pièces) : rien à écrire ;</li>
+<li>les 25 DocTypes du jeu qui <strong>ferment</strong> leurs écritures (<code>GL Entry</code>, <code>Stock Ledger Entry</code>…) sont écrits par les hooks du plugin, jamais par un utilisateur.</li>
+</ul>
+<h2 id="le-chargement-en-mode-pairs">Le chargement en mode pairs<a class="headerlink" href="#le-chargement-en-mode-pairs" title="Permanent link">#</a></h2>
+<p>Les modules se citent en cycle (<code>setup</code> ↔ <code>accounts</code> ↔ <code>stock</code>…). Le paramètre <code>peers=True</code> l'absorbe :</p>
+<pre><code class="language-python">registry.load_dir(me, DOCTYPES, peers=True)
+</code></pre>
+<ul>
+<li>un lien vers un module <strong>pas encore chargé</strong> ne fait pas échouer le chargement : le DocType devient <em>incomplet</em> (lecture seule, écritures refusées 503 en nommant le pair manquant) ;</li>
+<li>quand le pair arrive, le DocType se complète automatiquement — <strong>n'importe quel ordre de démarrage des plugins fonctionne</strong> ;</li>
+<li>les cibles de liens restent tout de même <strong>validées</strong> : une cible inconnue de tous les modules chargés est une erreur de chargement, pas une attente.</li>
+</ul>
+<p>Le <code>requires:</code> du <code>plugin.yaml</code> liste les modules dont les DocTypes sont les cibles des liens (matrice complète en <a href="../dependances/">Dépendances</a>) :</p>
+<pre><code class="language-yaml">requires: [xcore-doctype, auth, setup, accounts]   # stock cite setup, accounts, selling…
+</code></pre>
+<h2 id="la-logique-metier-les-hooks">La logique métier : les hooks<a class="headerlink" href="#la-logique-metier-les-hooks" title="Permanent link">#</a></h2>
+<p>Le jeu de définitions ne porte <strong>aucune règle d'écriture</strong> — c'est la règle du projet. Le plugin enregistre des hooks par <strong>nom</strong>, jamais par chemin d'import (décision D16 du moteur) :</p>
+<pre><code class="language-python">async def stock_entry_on_submit(event):        # POST/PUT du registre à la soumission
+    tx = event.tx                              # écritures DANS la transaction
+    for line in event.doc[&quot;items&quot;]:
+        await tx.create(&quot;Stock Ledger Entry&quot;, {
+            &quot;voucher_type&quot;: event.doctype, &quot;voucher_no&quot;: event.name,
+            &quot;item_code&quot;: line[&quot;item_code&quot;], &quot;warehouse&quot;: line[&quot;warehouse&quot;],
+            &quot;qty&quot;: line[&quot;qty&quot;], ...})
+    # ... maintien du solde, refus du stock négatif : raise DocumentValidationError
+</code></pre>
+<pre><code class="language-python"># dans on_load, AVANT load_dir (un hook manquant refuse les sauvegardes, 503)
+self.get_service(&quot;doctype_hooks&quot;).register(&quot;stock.entry_submit&quot;, stock_entry_on_submit, owner=me)
+</code></pre>
+<p>Les onze événements disponibles : <code>before_insert</code>, <code>after_insert</code>, <code>validate</code>, <code>before_save</code>, <code>after_save</code>, <code>on_trash</code>, <code>after_delete</code>, <code>on_submit</code>, <code>before_cancel</code>, <code>on_cancel</code>, <code>on_update_after_submit</code> (les hooks <code>action:</code> sont sandboxés et hors transaction ; les hooks transactionnels exigent <code>execution_mode: trusted</code>).</p>
+<p>À l'intérieur d'un hook, <code>event.tx</code> est la <strong>seule</strong> porte d'écriture : <code>get</code>, <code>create</code>, <code>ensure</code>, <code>update</code>, <code>find</code>, <code>sum</code> — validés et historisés comme toute écriture, dans la même transaction que la pièce.</p>
+<h3 id="les-pieces-qui-citent-leur-source-cancel_ignores">Les pièces qui cite­nt leur source : <code>cancel_ignores</code><a class="headerlink" href="#les-pieces-qui-citent-leur-source-cancel_ignores" title="Permanent link">#</a></h3>
+<p><code>GL Entry</code>, <code>Stock Ledger Entry</code>… sont des pièces <strong>soumises</strong> qui citent leur pièce d'origine (<code>voucher_type</code>/<code>voucher_no</code> en <code>DynamicLink</code>). Or le moteur refuse d'annuler une pièce encore citée par une pièce soumise — c'est le garde-fou M2. Chaque registre déclare donc dans son YAML :</p>
+<pre><code class="language-yaml">cancel_ignores: [Stock Ledger Entry]   # mes propres écritures, que mon on_cancel inverse
+</code></pre>
+<p>…ce que ce jeu ne déclare pas encore (il vit dans le plugin) : <strong>à l'implémentation, reprendre les listes de <code>process/plan-erp.md</code></strong> (ledger stock → <code>Stock Ledger Entry</code> ; comptabilité → <code>GL Entry</code>, <code>Payment Ledger Entry</code>, …).</p>
+<h2 id="traductions">Traductions<a class="headerlink" href="#traductions" title="Permanent link">#</a></h2>
+<p>Les libellés sont en anglais dans les YAML ; le catalogue français vit dans <code>translations/fr.yaml</code> du plugin (clé = texte source, traductions par contexte) :</p>
+<pre><code class="language-python">registry.load_translations(me, DOCTYPES.parent / &quot;translations&quot;)
+</code></pre>
+<p>Un catalogue <code>fr.yaml</code> couvrant les cinq premiers modules (T17 du plan ERP) existe dans le dépôt moteur ; l'adapter par module. Ne jamais traduire les <strong>valeurs</strong> (options de <code>Select</code>, états de workflow) : ce sont des données.</p>
+<h2 id="validation">Validation<a class="headerlink" href="#validation" title="Permanent link">#</a></h2>
+<p>Chaque module se vérifie en ligne de commande, depuis le dépôt moteur :</p>
+<pre><code class="language-bash"># les DocTypes du plugin, avec les dossiers de ses pairs en --with
+xcore-doctype check doctypes/stock --owner stock \
+    --with doctypes/setup --with doctypes/accounts   # … tous les modules cités
+</code></pre>
+<p><code>--owner</code> valide en plus <code>workspaces/</code> (raccourcis vers des DocTypes chargés) et les blocs de contribution. En test, le dépôt moteur charge le jeu complet en mode pairs et le compare à un chargement unique (<code>test_peer_modules.py</code>) : <strong>ne pas charger ce sous-module et une copie dans le même hôte</strong> (doublons de définitions).</p>
+<h2 id="ordre-de-deploiement-p0p5">Ordre de déploiement (P0–P5)<a class="headerlink" href="#ordre-de-deploiement-p0p5" title="Permanent link">#</a></h2>
+<p>Le plan ERP du dépôt moteur recommande d'implémenter les modules dans cet ordre — chaque étape s'appuie sur la précédente :</p>
+<table>
+<thead>
+<tr>
+<th>Étape</th>
+<th>Modules</th>
+<th>Apporte</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P0</td>
+<td><code>setup</code></td>
+<td>la base commune : sociétés, référentiels partagés</td>
+</tr>
+<tr>
+<td>P1</td>
+<td><code>accounts</code></td>
+<td>comptabilité (SYSCOHADA), journaux, rapprochement</td>
+</tr>
+<tr>
+<td>P2</td>
+<td><code>stock</code></td>
+<td>articles, entrepôts, registre, valorisation au coût moyen pondéré</td>
+</tr>
+<tr>
+<td>P3</td>
+<td><code>selling</code> + <code>buying</code></td>
+<td>le cycle commercial (devis, commandes, factures, fournisseurs)</td>
+</tr>
+<tr>
+<td>P4</td>
+<td><code>hr</code> + <code>payroll</code></td>
+<td>personnel, congés, notes de frais, paie</td>
+</tr>
+<tr>
+<td>P5</td>
+<td><code>manufacturing</code>, <code>projects</code>, <code>assets</code>, …</td>
+<td>le reste du graphe, par besoin</td>
+</tr>
+</tbody>
+</table>
+<p>Les quatre changements moteur qui conditionnent ce plan (lecture transactionnelle <code>tx.find</code>/<code>tx.sum</code>, garde M2 avec <code>cancel_ignores</code>, <code>currency_from</code>, service <code>doctype_writer</code>) sont implémentés dans le dépôt moteur — ce sous-module n'a rien à faire pour eux.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../dependances/" class="btn btn-neutral float-left" title="Dépendances entre modules"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../modules/accounts/" class="btn btn-neutral float-right" title="Comptabilité (accounts)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../dependances/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../modules/accounts/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

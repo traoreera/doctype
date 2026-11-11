@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/modules/setup/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Configuration (setup) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Configuration (setup)";
+        var mkdocs_page_input_path = "modules/setup.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/modules/setup/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Configuration (setup)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#chiffres">Chiffres</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#espace-de-travail">Espace de travail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#doctypes-du-module">DocTypes du module</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#points-cles">Points clés</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependances">Dépendances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#implementation-en-plugin-xcore">Implémentation en plugin xcore</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#reference-complete">Référence complète</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Modules</li>
+      <li class="breadcrumb-item active">Configuration (setup)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/modules/setup.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="configuration-setup">Configuration (<code>setup</code>)<a class="headerlink" href="#configuration-setup" title="Permanent link">#</a></h1>
+<p>La base commune à tous les modules : société et référentiels partagés (pays, devises, groupes, unités), adressage, autorisations, modèles d'impression et utilitaires système. C'est le module le plus cité du jeu (882 liens entrants) et le premier à charger (P0).</p>
+<h2 id="chiffres">Chiffres<a class="headerlink" href="#chiffres" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocTypes</th>
+<th>dont pièces</th>
+<th>dont enfants</th>
+<th>dont uniques</th>
+<th>workflows</th>
+<th>séries</th>
+<th>champs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>53</td>
+<td>1</td>
+<td>11</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>492</td>
+</tr>
+</tbody>
+</table>
+<h2 id="espace-de-travail">Espace de travail<a class="headerlink" href="#espace-de-travail" title="Permanent link">#</a></h2>
+<p><strong>Espace « Configuration »</strong> (icône <code>cog</code>, position 200)</p>
+<ul>
+<li><strong>Organisation</strong> : <a href="../../reference/setup/#company"><code>Company</code></a> — création, <a href="../../reference/setup/#address"><code>Address</code></a> — création, <a href="../../reference/setup/#branch"><code>Branch</code></a> — création, <a href="../../reference/setup/#department"><code>Department</code></a> — création</li>
+<li><strong>Référentiel</strong> : <a href="../../reference/setup/#item-group"><code>Item Group</code></a> — création, <a href="../../reference/setup/#currency"><code>Currency</code></a> — création, <a href="../../reference/setup/#country"><code>Country</code></a> — création, <a href="../../reference/setup/#uom"><code>UOM</code></a> — création</li>
+</ul>
+<h2 id="doctypes-du-module">DocTypes du module<a class="headerlink" href="#doctypes-du-module" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocType</th>
+<th>Libellé</th>
+<th>Nature</th>
+<th>Soumis</th>
+<th>Numérotation</th>
+<th>Workflow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../reference/setup/#address"><code>Address</code></a></td>
+<td>Address</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#authorization-control"><code>Authorization Control</code></a></td>
+<td>Authorization Control</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#authorization-rule"><code>Authorization Rule</code></a></td>
+<td>Authorization Rule</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#auto-repeat"><code>Auto Repeat</code></a></td>
+<td>Auto Repeat</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#branch"><code>Branch</code></a></td>
+<td>Branch</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#brand"><code>Brand</code></a></td>
+<td>Brand</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#company"><code>Company</code></a></td>
+<td>Company</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#country"><code>Country</code></a></td>
+<td>Pays</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>country_code</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#currency"><code>Currency</code></a></td>
+<td>Devise</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>currency_code</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#currency-exchange"><code>Currency Exchange</code></a></td>
+<td>Currency Exchange</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#customer-group"><code>Customer Group</code></a></td>
+<td>Customer Group</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#department"><code>Department</code></a></td>
+<td>Department</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#designation"><code>Designation</code></a></td>
+<td>Designation</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#driver"><code>Driver</code></a></td>
+<td>Driver</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#email-digest"><code>Email Digest</code></a></td>
+<td>Email Digest</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#employee"><code>Employee</code></a></td>
+<td>Employee</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#employee-group"><code>Employee Group</code></a></td>
+<td>Employee Group</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#error-log"><code>Error Log</code></a></td>
+<td>Error Log</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#gender"><code>Gender</code></a></td>
+<td>Gender</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>gender</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#global-defaults"><code>Global Defaults</code></a></td>
+<td>Global Defaults</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#holiday-list"><code>Holiday List</code></a></td>
+<td>Holiday List</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#incoterm"><code>Incoterm</code></a></td>
+<td>Incoterm</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#item-group"><code>Item Group</code></a></td>
+<td>Item Group</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#language"><code>Language</code></a></td>
+<td>Language</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>language_code</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#letter-head"><code>Letter Head</code></a></td>
+<td>Letter Head</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#module-def"><code>Module Def</code></a></td>
+<td>Module Def</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>module_name</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#party-type"><code>Party Type</code></a></td>
+<td>Party Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#print-format"><code>Print Format</code></a></td>
+<td>Print Format</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#print-heading"><code>Print Heading</code></a></td>
+<td>Print Heading</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#quotation-lost-reason"><code>Quotation Lost Reason</code></a></td>
+<td>Quotation Lost Reason</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#rq-job"><code>RQ Job</code></a></td>
+<td>RQ Job</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>job_id</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#sales-partner"><code>Sales Partner</code></a></td>
+<td>Sales Partner</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#sales-person"><code>Sales Person</code></a></td>
+<td>Sales Person</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#salutation"><code>Salutation</code></a></td>
+<td>Salutation</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>salutation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#supplier-group"><code>Supplier Group</code></a></td>
+<td>Supplier Group</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#terms-and-conditions"><code>Terms and Conditions</code></a></td>
+<td>Terms and Conditions</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#territory"><code>Territory</code></a></td>
+<td>Territory</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#uom"><code>UOM</code></a></td>
+<td>UOM</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#uom-conversion-factor"><code>UOM Conversion Factor</code></a></td>
+<td>UOM Conversion Factor</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#vehicle"><code>Vehicle</code></a></td>
+<td>Vehicle</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#web-form"><code>Web Form</code></a></td>
+<td>Web Form</td>
+<td>données de base</td>
+<td></td>
+<td>champ <code>route</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#driving-license-category"><code>Driving License Category</code></a></td>
+<td>Driving License Category</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#email-digest-recipient"><code>Email Digest Recipient</code></a></td>
+<td>Email Digest Recipient</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#employee-education"><code>Employee Education</code></a></td>
+<td>Employee Education</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#employee-external-work-history"><code>Employee External Work History</code></a></td>
+<td>Employee External Work History</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#employee-group-table"><code>Employee Group Table</code></a></td>
+<td>Employee Group Table</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#employee-internal-work-history"><code>Employee Internal Work History</code></a></td>
+<td>Employee Internal Work History</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#holiday"><code>Holiday</code></a></td>
+<td>Holiday</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#quotation-lost-reason-detail"><code>Quotation Lost Reason Detail</code></a></td>
+<td>Quotation Lost Reason Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#target-detail"><code>Target Detail</code></a></td>
+<td>Target Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#transaction-deletion-record-item"><code>Transaction Deletion Record Item</code></a></td>
+<td>Transaction Deletion Record Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#transaction-deletion-record-to-delete"><code>Transaction Deletion Record To Delete</code></a></td>
+<td>Transaction Deletion Record To Delete</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/setup/#transaction-deletion-record"><code>Transaction Deletion Record</code></a></td>
+<td>Transaction Deletion Record</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>TDR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="points-cles">Points clés<a class="headerlink" href="#points-cles" title="Permanent link">#</a></h2>
+<ul>
+<li><strong><code>Company</code></strong> (arborescente) : la société — devise par défaut, exercice fiscal, comptes par défaut ; tout le jeu en dépend. <code>Global Defaults</code> porte la société courante.</li>
+<li><strong>Référentiels nommés par champ</strong> (<code>naming.field</code>) : <code>Country</code> (<code>country_code</code>), <code>Currency</code> (<code>currency_code</code>), <code>Language</code>, <code>Gender</code>, <code>Salutation</code>, <code>UOM</code>, <code>Module Def</code>… les cibles de liens les plus citées.</li>
+<li><strong>Hiérarchies arborescentes</strong> (<code>views.tree</code>) : <code>Customer Group</code>, <code>Supplier Group</code>, <code>Item Group</code>, <code>Department</code>, <code>Territory</code>, <code>Sales Person</code>.</li>
+<li><strong><code>Address</code></strong> : l'adresse partagée, liée à tout tiers (client, fournisseur, contact, employé).</li>
+<li><strong>Personnel de base</strong> : <code>Employee</code>, <code>Department</code>, <code>Designation</code>, <code>Branch</code> (les DocTypes RH propres sont dans <code>hr</code> — <code>setup</code> héberge la version générique des tables d'employés pour les besoins transverses).</li>
+<li><strong>Système</strong> : <code>Auto Repeat</code> (récurrence), <code>Error Log</code>, <code>Transaction Deletion Record</code> (TDR-, la seule pièce), <code>Print Format</code>/<code>Print Heading</code>/<code>Letter Head</code> (impression — le moteur fournit ses propres modèles), <code>Authorization Control</code>/<code>Authorization Rule</code>.</li>
+<li><strong>Conventions commerciales</strong> : <code>Incoterm</code>, <code>Terms and Conditions</code>, <code>UOM Conversion Factor</code>, <code>Currency Exchange</code> (taux).</li>
+</ul>
+<h2 id="dependances">Dépendances<a class="headerlink" href="#dependances" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Dépend de</strong> : <code>accounts</code> (50 liens — comptes par société), <code>stock</code> (13), <code>selling</code> (2), <code>crm</code> (1), <code>buying</code> (1) — les cycles setup ↔ accounts et setup ↔ stock sont les plus chargés du jeu.</li>
+<li><strong>Requis par</strong> : <strong>tous les autres modules</strong> sauf <code>edi</code>, <code>erpnext_integrations</code>, <code>bulk_transaction</code> (882 liens entrants au total).</li>
+</ul>
+<p>Détail complet : <a href="../../dependances/#configuration-setup">matrice</a>.</p>
+<h2 id="implementation-en-plugin-xcore">Implémentation en plugin xcore<a class="headerlink" href="#implementation-en-plugin-xcore" title="Permanent link">#</a></h2>
+<ul>
+<li>Plugin <code>setup</code>, <strong>P0, chargé en premier</strong> ; ses 4 contributions viennent s'ajouter à son espace (<code>bulk_transaction</code>, <code>communication</code>, <code>edi</code>, <code>utilities</code>).</li>
+<li>Le cycle avec <code>accounts</code>/<code>stock</code> impose le <strong>mode pairs</strong> dès le premier plugin : une société cite des comptes, les comptes citent des sociétés.</li>
+<li><strong>Hooks à écrire</strong> : taux de change à la date (cherché dans <code>Currency Exchange</code>, sinon service externe), récurrences <code>Auto Repeat</code>, création des comptes par défaut d'une nouvelle société (à partir du plan SYSCOHADA).</li>
+<li>Le catalogue SYSCOHADA et les traductions <code>fr.yaml</code> de ce module vivent dans le dépôt moteur.</li>
+</ul>
+<h2 id="reference-complete">Référence complète<a class="headerlink" href="#reference-complete" title="Permanent link">#</a></h2>
+<p><a href="../../reference/setup/">Référence — Configuration</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../selling/" class="btn btn-neutral float-left" title="Ventes (selling)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../stock/" class="btn btn-neutral float-right" title="Stock (stock)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../selling/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../stock/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

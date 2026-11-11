@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/modules/buying/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Achats (buying) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Achats (buying)";
+        var mkdocs_page_input_path = "modules/buying.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/modules/buying/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Achats (buying)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#chiffres">Chiffres</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#espace-de-travail">Espace de travail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#doctypes-du-module">DocTypes du module</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#points-cles">Points clés</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependances">Dépendances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#implementation-en-plugin-xcore">Implémentation en plugin xcore</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#reference-complete">Référence complète</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Modules</li>
+      <li class="breadcrumb-item active">Achats (buying)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/modules/buying.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="achats-buying">Achats (<code>buying</code>)<a class="headerlink" href="#achats-buying" title="Permanent link">#</a></h1>
+<p>Le cycle fournisseur : devis, demandes de prix, commandes d'achat, factures et suivi des fournisseurs, avec réceptions portées par le module <code>stock</code>.</p>
+<h2 id="chiffres">Chiffres<a class="headerlink" href="#chiffres" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocTypes</th>
+<th>dont pièces</th>
+<th>dont enfants</th>
+<th>dont uniques</th>
+<th>workflows</th>
+<th>séries</th>
+<th>champs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>19</td>
+<td>4</td>
+<td>9</td>
+<td>1</td>
+<td>1</td>
+<td>4</td>
+<td>508</td>
+</tr>
+</tbody>
+</table>
+<h2 id="espace-de-travail">Espace de travail<a class="headerlink" href="#espace-de-travail" title="Permanent link">#</a></h2>
+<p><strong>Espace « Achats »</strong> (icône <code>shopping-bag</code>, position 15)</p>
+<ul>
+<li><strong>Opérations</strong> : <a href="../../reference/stock/#material-request"><code>Material Request</code></a> — création, <a href="../../reference/buying/#request-for-quotation"><code>Request for Quotation</code></a> — création, <a href="../../reference/buying/#supplier-quotation"><code>Supplier Quotation</code></a> — création, <a href="../../reference/buying/#purchase-order"><code>Purchase Order</code></a> — création</li>
+<li><strong>Référentiel</strong> : <a href="../../reference/buying/#supplier"><code>Supplier</code></a> — création, <a href="../../reference/setup/#supplier-group"><code>Supplier Group</code></a> — création, <a href="../../reference/buying/#supplier-scorecard"><code>Supplier Scorecard</code></a> — création</li>
+</ul>
+<h2 id="doctypes-du-module">DocTypes du module<a class="headerlink" href="#doctypes-du-module" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocType</th>
+<th>Libellé</th>
+<th>Nature</th>
+<th>Soumis</th>
+<th>Numérotation</th>
+<th>Workflow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../reference/buying/#supplier"><code>Supplier</code></a></td>
+<td>Supplier</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard"><code>Supplier Scorecard</code></a></td>
+<td>Supplier Scorecard</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard-criteria"><code>Supplier Scorecard Criteria</code></a></td>
+<td>Supplier Scorecard Criteria</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard-standing"><code>Supplier Scorecard Standing</code></a></td>
+<td>Supplier Scorecard Standing</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard-variable"><code>Supplier Scorecard Variable</code></a></td>
+<td>Supplier Scorecard Variable</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#customer-number-at-supplier"><code>Customer Number At Supplier</code></a></td>
+<td>Customer Number At Supplier</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#purchase-order-item"><code>Purchase Order Item</code></a></td>
+<td>Purchase Order Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#purchase-receipt-item-supplied"><code>Purchase Receipt Item Supplied</code></a></td>
+<td>Purchase Receipt Item Supplied</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#request-for-quotation-item"><code>Request for Quotation Item</code></a></td>
+<td>Request for Quotation Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#request-for-quotation-supplier"><code>Request for Quotation Supplier</code></a></td>
+<td>Request for Quotation Supplier</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-quotation-item"><code>Supplier Quotation Item</code></a></td>
+<td>Supplier Quotation Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard-scoring-criteria"><code>Supplier Scorecard Scoring Criteria</code></a></td>
+<td>Supplier Scorecard Scoring Criteria</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard-scoring-standing"><code>Supplier Scorecard Scoring Standing</code></a></td>
+<td>Supplier Scorecard Scoring Standing</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard-scoring-variable"><code>Supplier Scorecard Scoring Variable</code></a></td>
+<td>Supplier Scorecard Scoring Variable</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#purchase-order"><code>Purchase Order</code></a></td>
+<td>Purchase Order</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PUOR-{YYYY}-{#####}</code></td>
+<td>workflow</td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#request-for-quotation"><code>Request for Quotation</code></a></td>
+<td>Request for Quotation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>RQ-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-quotation"><code>Supplier Quotation</code></a></td>
+<td>Supplier Quotation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SQ-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#supplier-scorecard-period"><code>Supplier Scorecard Period</code></a></td>
+<td>Supplier Scorecard Period</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SSP-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/buying/#buying-settings"><code>Buying Settings</code></a></td>
+<td>Buying Settings</td>
+<td>unique</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="points-cles">Points clés<a class="headerlink" href="#points-cles" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Les pièces</strong> : <code>Request for Quotation</code> (RFQ-), <code>Supplier Quotation</code> (SQ-), <code>Purchase Order</code> (PUOR-, workflow d'approbation complet), <code>Purchase Invoice</code> (PI-, portée par <code>accounts</code>).</li>
+<li><strong><code>Supplier</code></strong> est le référentiel central : groupes, pièces jointes, comptes par société, conditions de paiement, évaluations (<code>Supplier Evaluation</code> + critères enfants).</li>
+<li><strong>Le workflow de <code>Purchase Order</code></strong> : Brouillon → À approuver → Approuvée/Refusée (reprise possible), annulation depuis l'état approuvé — la séparation de droits <code>not_owner</code> et les grants <code>workflow_*</code> sont gérés par le moteur.</li>
+<li><strong>Les modèles réutilisables</strong> : <code>Purchase Taxes and Charges Template</code>, <code>Supplier Items</code>, prix fournisseurs (<code>Item Price</code> hébergé dans <code>stock</code>).</li>
+</ul>
+<h2 id="dependances">Dépendances<a class="headerlink" href="#dependances" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Dépend de</strong> : <code>setup</code> (60 liens), <code>stock</code> (25), <code>accounts</code> (29), <code>crm</code> (7), <code>manufacturing</code> (5), <code>selling</code> (5), <code>projects</code> (5), <code>communication</code> (2), <code>assets</code> (1), <code>utilities</code> (1).</li>
+<li><strong>Requis par</strong> : <code>accounts</code> (10), <code>stock</code> (14), <code>manufacturing</code> (5), <code>selling</code> (5), <code>hr</code> (3), <code>subcontracting</code> (4), <code>regional</code> (1), <code>setup</code> (1), <code>communication</code> (1), <code>assets</code> (1).</li>
+</ul>
+<p>Détail complet : <a href="../../dependances/#achats-buying">matrice</a>.</p>
+<h2 id="implementation-en-plugin-xcore">Implémentation en plugin xcore<a class="headerlink" href="#implementation-en-plugin-xcore" title="Permanent link">#</a></h2>
+<ul>
+<li>Plugin <code>buying</code>, ordre P3 avec <code>selling</code> (après <code>setup</code>, <code>accounts</code>, <code>stock</code>).</li>
+<li><strong>Hooks à écrire</strong> : comptabilisation de <code>Purchase Invoice</code> (via <code>accounts</code>), contrôle du budget dépensé sur commande, génération d'une demande de matériau depuis une commande (<code>Material Request</code> dans <code>stock</code>), notifications fournisseurs.</li>
+<li>La réception de marchandises vit dans <code>stock</code> (<code>Purchase Receipt</code>) : ce module ne l'héberge pas.</li>
+<li>Traduction <code>fr.yaml</code> disponible (T17 couvre les cinq premiers modules dont celui-ci).</li>
+</ul>
+<h2 id="reference-complete">Référence complète<a class="headerlink" href="#reference-complete" title="Permanent link">#</a></h2>
+<p><a href="../../reference/buying/">Référence — Achats</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../bulk_transaction/" class="btn btn-neutral float-left" title="Traitement en masse (bulk_transaction)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../communication/" class="btn btn-neutral float-right" title="Communication (communication)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../bulk_transaction/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../communication/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

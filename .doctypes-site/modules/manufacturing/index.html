@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/modules/manufacturing/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Fabrication (manufacturing) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Fabrication (manufacturing)";
+        var mkdocs_page_input_path = "modules/manufacturing.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/modules/manufacturing/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Fabrication (manufacturing)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#chiffres">Chiffres</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#espace-de-travail">Espace de travail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#doctypes-du-module">DocTypes du module</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#points-cles">Points clés</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependances">Dépendances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#implementation-en-plugin-xcore">Implémentation en plugin xcore</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#reference-complete">Référence complète</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Modules</li>
+      <li class="breadcrumb-item active">Fabrication (manufacturing)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/modules/manufacturing.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="fabrication-manufacturing">Fabrication (<code>manufacturing</code>)<a class="headerlink" href="#fabrication-manufacturing" title="Permanent link">#</a></h1>
+<p>La production : nomenclatures (BOM), ordres de fabrication, gammes, postes de travail, cartes d'opération et planification de la production.</p>
+<h2 id="chiffres">Chiffres<a class="headerlink" href="#chiffres" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocTypes</th>
+<th>dont pièces</th>
+<th>dont enfants</th>
+<th>dont uniques</th>
+<th>workflows</th>
+<th>séries</th>
+<th>champs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>49</td>
+<td>8</td>
+<td>30</td>
+<td>1</td>
+<td>0</td>
+<td>8</td>
+<td>712</td>
+</tr>
+</tbody>
+</table>
+<h2 id="espace-de-travail">Espace de travail<a class="headerlink" href="#espace-de-travail" title="Permanent link">#</a></h2>
+<p><strong>Espace « Fabrication »</strong> (icône <code>cog</code>, position 30) — Nomenclatures, ordres de fabrication et suivi des opérations.</p>
+<ul>
+<li><strong>Planification et production</strong> : <a href="../../reference/manufacturing/#production-plan"><code>Production Plan</code></a> — création, <a href="../../reference/manufacturing/#work-order"><code>Work Order</code></a> — création, <a href="../../reference/manufacturing/#job-card"><code>Job Card</code></a> — création, <a href="../../reference/manufacturing/#downtime-entry"><code>Downtime Entry</code></a> — création</li>
+<li><strong>Référentiel</strong> : <a href="../../reference/manufacturing/#bom"><code>BOM</code></a> — création, <a href="../../reference/manufacturing/#operation"><code>Operation</code></a> — création, <a href="../../reference/manufacturing/#workstation"><code>Workstation</code></a> — création</li>
+</ul>
+<h2 id="doctypes-du-module">DocTypes du module<a class="headerlink" href="#doctypes-du-module" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocType</th>
+<th>Libellé</th>
+<th>Nature</th>
+<th>Soumis</th>
+<th>Numérotation</th>
+<th>Workflow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-update-tool"><code>BOM Update Tool</code></a></td>
+<td>BOM Update Tool</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#downtime-entry"><code>Downtime Entry</code></a></td>
+<td>Downtime Entry</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#master-production-schedule"><code>Master Production Schedule</code></a></td>
+<td>Master Production Schedule</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#operation"><code>Operation</code></a></td>
+<td>Operation</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#plant-floor"><code>Plant Floor</code></a></td>
+<td>Plant Floor</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan-schedule"><code>Production Plan Schedule</code></a></td>
+<td>Production Plan Schedule</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#routing"><code>Routing</code></a></td>
+<td>Routing</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#workstation"><code>Workstation</code></a></td>
+<td>Workstation</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#workstation-operating-component"><code>Workstation Operating Component</code></a></td>
+<td>Workstation Operating Component</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#workstation-type"><code>Workstation Type</code></a></td>
+<td>Workstation Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#blanket-order-item"><code>Blanket Order Item</code></a></td>
+<td>Blanket Order Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-creator-item"><code>BOM Creator Item</code></a></td>
+<td>BOM Creator Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-creator-material"><code>BOM Creator Material</code></a></td>
+<td>BOM Creator Material</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-creator-operation"><code>BOM Creator Operation</code></a></td>
+<td>BOM Creator Operation</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-explosion-item"><code>BOM Explosion Item</code></a></td>
+<td>BOM Explosion Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-item"><code>BOM Item</code></a></td>
+<td>BOM Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-operation"><code>BOM Operation</code></a></td>
+<td>BOM Operation</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-secondary-item"><code>BOM Secondary Item</code></a></td>
+<td>BOM Secondary Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-update-batch"><code>BOM Update Batch</code></a></td>
+<td>BOM Update Batch</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#job-card-item"><code>Job Card Item</code></a></td>
+<td>Job Card Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#job-card-operation"><code>Job Card Operation</code></a></td>
+<td>Job Card Operation</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#job-card-scheduled-time"><code>Job Card Scheduled Time</code></a></td>
+<td>Job Card Scheduled Time</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#job-card-secondary-item"><code>Job Card Secondary Item</code></a></td>
+<td>Job Card Secondary Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#job-card-time-log"><code>Job Card Time Log</code></a></td>
+<td>Job Card Time Log</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#master-production-schedule-item"><code>Master Production Schedule Item</code></a></td>
+<td>Master Production Schedule Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#material-request-plan-item"><code>Material Request Plan Item</code></a></td>
+<td>Material Request Plan Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan-item"><code>Production Plan Item</code></a></td>
+<td>Production Plan Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan-item-reference"><code>Production Plan Item Reference</code></a></td>
+<td>Production Plan Item Reference</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan-material-request"><code>Production Plan Material Request</code></a></td>
+<td>Production Plan Material Request</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan-material-request-warehouse"><code>Production Plan Material Request Warehouse</code></a></td>
+<td>Production Plan Material Request Warehouse</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan-sales-order"><code>Production Plan Sales Order</code></a></td>
+<td>Production Plan Sales Order</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan-sub-assembly-item"><code>Production Plan Sub Assembly Item</code></a></td>
+<td>Production Plan Sub Assembly Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#sales-forecast-item"><code>Sales Forecast Item</code></a></td>
+<td>Sales Forecast Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#sub-operation"><code>Sub Operation</code></a></td>
+<td>Sub Operation</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#work-order-additional-item"><code>Work Order Additional Item</code></a></td>
+<td>Work Order Additional Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#work-order-item"><code>Work Order Item</code></a></td>
+<td>Work Order Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#work-order-operation"><code>Work Order Operation</code></a></td>
+<td>Work Order Operation</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#workstation-cost"><code>Workstation Cost</code></a></td>
+<td>Workstation Cost</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#workstation-operating-component-account"><code>Workstation Operating Component Account</code></a></td>
+<td>Workstation Operating Component Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#workstation-working-hour"><code>Workstation Working Hour</code></a></td>
+<td>Workstation Working Hour</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#blanket-order"><code>Blanket Order</code></a></td>
+<td>Blanket Order</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>BO-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom"><code>BOM</code></a></td>
+<td>BOM</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>BOM-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-creator"><code>BOM Creator</code></a></td>
+<td>BOM Creator</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>BC-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#bom-update-log"><code>BOM Update Log</code></a></td>
+<td>BOM Update Log</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>BUL-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#job-card"><code>Job Card</code></a></td>
+<td>Job Card</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>JC-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#production-plan"><code>Production Plan</code></a></td>
+<td>Production Plan</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PP-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#sales-forecast"><code>Sales Forecast</code></a></td>
+<td>Sales Forecast</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SF-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#work-order"><code>Work Order</code></a></td>
+<td>Work Order</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>WO-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/manufacturing/#manufacturing-settings"><code>Manufacturing Settings</code></a></td>
+<td>Manufacturing Settings</td>
+<td>unique</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="points-cles">Points clés<a class="headerlink" href="#points-cles" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>La chaîne</strong> : <code>Production Plan</code> (PP-, alimenté par les commandes de vente ou une prévision <code>Sales Forecast</code>) → <code>Work Order</code> (WO-, l'ordre de fabrication) → <code>Job Card</code> (JC-, le suivi temps réel par opération) → réception de production dans <code>stock</code> (<code>Stock Entry</code>).</li>
+<li><strong><code>BOM</code></strong> (BOM-) : la nomenclature — composants (<code>BOM Item</code>), opérations (<code>BOM Operation</code>), avec explosée <code>BOM Explosion Item</code> ; le coût de fabrication y est calculé (champs <code>compute</code>).</li>
+<li><strong>Les ressources</strong> : <code>Workstation</code>/<code>Workstation Type</code> (coûts horaires et comptes), <code>Operation</code>, <code>Routing</code> (gammes), <code>Plant Floor</code> (atelier).</li>
+<li><strong><code>Blanket Order</code></strong> (BO-) : la commande cadre multi-livrables, achats ou ventes.</li>
+<li><strong>30 tables enfants</strong> : le module est massivement structuré en lignes — chaque pièce porte ses items, opérations et temps.</li>
+</ul>
+<h2 id="dependances">Dépendances<a class="headerlink" href="#dependances" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Dépend de</strong> : <code>stock</code> (77 liens — articles, entrepôts, mouvements), <code>setup</code> (49), <code>selling</code> (9), <code>buying</code> (5), <code>projects</code> (5), <code>accounts</code> (1), <code>subcontracting</code> (1).</li>
+<li><strong>Requis par</strong> : <code>stock</code> (12), <code>subcontracting</code> (6), <code>buying</code> (5), <code>selling</code> (3).</li>
+</ul>
+<p>Détail complet : <a href="../../dependances/#fabrication-manufacturing">matrice</a>.</p>
+<h2 id="implementation-en-plugin-xcore">Implémentation en plugin xcore<a class="headerlink" href="#implementation-en-plugin-xcore" title="Permanent link">#</a></h2>
+<ul>
+<li>Plugin <code>manufacturing</code>, ordre P5 (après <code>stock</code> et le cycle commercial).</li>
+<li><strong>Hooks à écrire</strong> : explosion du BOM à la soumission de l'ordre (consommation des composants par <code>Stock Entry</code> dans <code>stock</code>), réception du produit fini, calcul des coûts (main d'œuvre par <code>Job Card Time Log</code>, frais de poste), réservation de capacité des postes de travail.</li>
+<li>La planification (MPS, <code>Production Plan</code>) écrit des <code>Material Request</code> via <code>tx</code> — le moteur fournit la lecture transactionnelle.</li>
+</ul>
+<h2 id="reference-complete">Référence complète<a class="headerlink" href="#reference-complete" title="Permanent link">#</a></h2>
+<p><a href="../../reference/manufacturing/">Référence — Fabrication</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../maintenance/" class="btn btn-neutral float-left" title="Maintenance (maintenance)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../payroll/" class="btn btn-neutral float-right" title="Paie (payroll)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../maintenance/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../payroll/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

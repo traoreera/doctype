@@ -1,0 +1,3639 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/buying/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Achats (buying) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Achats (buying)";
+        var mkdocs_page_input_path = "reference/buying.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/buying/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Achats (buying)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#buying-settings">Buying Settings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#customer-number-at-supplier">Customer Number At Supplier</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#purchase-order">Purchase Order</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#purchase-order-item">Purchase Order Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#purchase-receipt-item-supplied">Purchase Receipt Item Supplied</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#request-for-quotation">Request for Quotation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#request-for-quotation-item">Request for Quotation Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#request-for-quotation-supplier">Request for Quotation Supplier</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier">Supplier</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-quotation">Supplier Quotation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-quotation-item">Supplier Quotation Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard">Supplier Scorecard</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard-criteria">Supplier Scorecard Criteria</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard-period">Supplier Scorecard Period</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard-scoring-criteria">Supplier Scorecard Scoring Criteria</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard-scoring-standing">Supplier Scorecard Scoring Standing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard-scoring-variable">Supplier Scorecard Scoring Variable</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard-standing">Supplier Scorecard Standing</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-scorecard-variable">Supplier Scorecard Variable</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Achats (buying)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/buying.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-achats-buying">Référence des champs — Achats (<code>buying</code>)<a class="headerlink" href="#reference-des-champs-achats-buying" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>buying/</code> (19 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>508 champs au total ; types les plus fréquents : <code>Link</code> (143), <code>Boolean</code> (72), <code>Currency</code> (72), <code>Text</code> (61), <code>Number</code> (26).</p>
+<h2 id="buying-settings">Buying Settings<a class="headerlink" href="#buying-settings" title="Permanent link">#</a></h2>
+<p><em>Buying Settings</em> — <code>buying/buying_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Icône</strong> : <code>settings</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>supp_master_name</code></td>
+<td>Supplier Naming By</td>
+<td>Select — Supplier Name · Naming Series · Auto Name</td>
+<td>défaut <code>Supplier Name</code></td>
+</tr>
+<tr>
+<td><code>supplier_group</code></td>
+<td>Default Supplier Group</td>
+<td>Link → <code>Supplier Group</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>buying_price_list</code></td>
+<td>Default Buying Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>po_required</code></td>
+<td>Is Purchase Order required for Purchase Invoice &amp; Receipt creation?</td>
+<td>Select — No · Yes</td>
+<td></td>
+</tr>
+<tr>
+<td><code>pr_required</code></td>
+<td>Is Purchase Receipt required for Purchase Invoice creation?</td>
+<td>Select — No · Yes</td>
+<td></td>
+</tr>
+<tr>
+<td><code>maintain_same_rate</code></td>
+<td>Maintain same rate throughout the purchase  cycle</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Warn or stop if Item rate is changed in Purchase Invoice or Purchase Receipt generated from a Purchase Order.</td>
+</tr>
+<tr>
+<td><code>allow_multiple_items</code></td>
+<td>Allow Item to be added multiple times in a transaction</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>backflush_raw_materials_of_subcontract_based_on</code></td>
+<td>Backflush raw materials of subcontract based on</td>
+<td>Select — BOM · Material Transferred for Subcontract</td>
+<td>défaut <code>BOM</code></td>
+</tr>
+<tr>
+<td><code>over_transfer_allowance</code></td>
+<td>Over Transfer Allowance (%)</td>
+<td>Number</td>
+<td>— Percentage you are allowed to transfer more against the quantity ordered. For example: If you have ordered 100</td>
+</tr>
+<tr>
+<td><code>maintain_same_rate_action</code></td>
+<td>Action if same rate is not maintained</td>
+<td>Select — Stop · Warn</td>
+<td>défaut <code>Stop</code>; — Configure the action to stop the transaction or just warn if the same rate is not maintained.</td>
+</tr>
+<tr>
+<td><code>bill_for_rejected_quantity_in_purchase_invoice</code></td>
+<td>Bill for rejected quantity in Purchase Invoice</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — If checked, the rejected quantity is billed anywhere in the purchase cycle.</td>
+</tr>
+<tr>
+<td><code>disable_last_purchase_rate</code></td>
+<td>Disable last purchase rate</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Prevents the system from automatically using the rate from the last purchase transaction when creating new pur</td>
+</tr>
+<tr>
+<td><code>show_pay_button</code></td>
+<td>Show pay button in Purchase Order portal</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>set_landed_cost_based_on_purchase_invoice_rate</code></td>
+<td>Set Landed Cost Based on Purchase Invoice Rate</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Users can enable the checkbox If they want to adjust the incoming rate (set using purchase receipt) based on t</td>
+</tr>
+<tr>
+<td><code>use_transaction_date_exchange_rate</code></td>
+<td>Use Transaction Date Exchange Rate</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — While making a Purchase Receipt or Purchase Invoice from a Purchase Order, use the exchange rate on its postin</td>
+</tr>
+<tr>
+<td><code>blanket_order_allowance</code></td>
+<td>Blanket Order Allowance (%)</td>
+<td>Number</td>
+<td>défaut <code>0.0</code>; — Percentage you are allowed to order beyond the Blanket Order quantity.</td>
+</tr>
+<tr>
+<td><code>auto_create_subcontracting_order</code></td>
+<td>Auto create Subcontracting Order</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Subcontracting Order (Draft) will be auto-created on submission of Purchase Order.</td>
+</tr>
+<tr>
+<td><code>auto_create_purchase_receipt</code></td>
+<td>Auto create Purchase Receipt</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Purchase Receipt (Draft) will be auto-created on submission of Subcontracting Receipt.</td>
+</tr>
+<tr>
+<td><code>project_update_frequency</code></td>
+<td>How often should project be updated of Total Purchase Cost ?</td>
+<td>Select — Each Transaction · Manual</td>
+<td>défaut <code>Each Transaction</code></td>
+</tr>
+<tr>
+<td><code>allow_zero_qty_in_purchase_order</code></td>
+<td>Allow Purchase Order with Zero Quantity</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Allows users to submit Purchase Orders with zero quantity. Useful when rates are fixed but the quantities are</td>
+</tr>
+<tr>
+<td><code>allow_zero_qty_in_request_for_quotation</code></td>
+<td>Allow Request for Quotation with Zero Quantity</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Allows users to submit Request for Quotations with zero quantity. Useful when rates are fixed but the quantiti</td>
+</tr>
+<tr>
+<td><code>allow_zero_qty_in_supplier_quotation</code></td>
+<td>Allow Supplier Quotation with Zero Quantity</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Allows users to submit Supplier Quotations with zero quantity. Useful when rates are fixed but the quantities</td>
+</tr>
+<tr>
+<td><code>set_valuation_rate_for_rejected_materials</code></td>
+<td>Set valuation rate for rejected Materials</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the system will generate an accounting entry for material rejected anywhere in the purchase cycle.</td>
+</tr>
+<tr>
+<td><code>fixed_email</code></td>
+<td>Fixed Outgoing Email Account</td>
+<td>Link → <code>Email Account</code></td>
+<td>— If set, the system does not use the user's Email or the standard outgoing Email account for sending request fo</td>
+</tr>
+<tr>
+<td><code>validate_consumed_qty</code></td>
+<td>Validate consumed quantity (as per BOM)</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Raw materials consumed qty will be validated based on FG BOM required qty</td>
+</tr>
+<tr>
+<td><code>allow_negative_rates_for_items</code></td>
+<td>Allow negative rates for Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>naming_series_details</code></td>
+<td>Naming Series options</td>
+<td>LongText</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>over_order_allowance</code></td>
+<td>Over Order Allowance (%)</td>
+<td>Number</td>
+<td>— The percentage by which you are allowed to order more on a Purchase Order than the quantity requested on the o</td>
+</tr>
+</tbody>
+</table>
+<h2 id="customer-number-at-supplier">Customer Number At Supplier<a class="headerlink" href="#customer-number-at-supplier" title="Permanent link">#</a></h2>
+<p><em>Customer Number At Supplier</em> — <code>buying/customer_number_at_supplier.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>customer_number</code></td>
+<td>Customer Number</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="purchase-order">Purchase Order<a class="headerlink" href="#purchase-order" title="Permanent link">#</a></h2>
+<p><em>Purchase Order</em> — <code>buying/purchase_order.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>PUOR-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>shopping-cart</code></li>
+<li><strong>Workflow</strong> : États : Brouillon → À approuver → Approuvée → Refusée → Annulée</li>
+<li><strong>Workflow</strong> : Actions : <code>Annuler</code>, <code>Approuver</code>, <code>Refuser</code>, <code>Reprendre</code>, <code>Soumettre</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — PUR-ORD-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier_name</code></td>
+<td>Supplier Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>supplier.supplier_name</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required By</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>order_confirmation_no</code></td>
+<td>Order Confirmation No</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>order_confirmation_date</code></td>
+<td>Order Confirmation Date</td>
+<td>Date</td>
+<td>visible si <code>order_confirmation_no</code></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>customer_name</code></td>
+<td>Customer Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>customer.customer_name</code></td>
+</tr>
+<tr>
+<td><code>customer_contact_person</code></td>
+<td>Customer Contact</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_contact_display</code></td>
+<td>Customer Contact</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_contact_mobile</code></td>
+<td>Customer Mobile No</td>
+<td>LongText</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>customer_contact_email</code></td>
+<td>Customer Contact Email</td>
+<td>Code</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>supplier_address</code></td>
+<td>Supplier Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Supplier Contact</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>address_display</code></td>
+<td>Supplier Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_display</code></td>
+<td>Contact Name</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_mobile</code></td>
+<td>Contact Mobile No</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_email</code></td>
+<td>Contact Email</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>shipping_address</code></td>
+<td>Shipping Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_address_display</code></td>
+<td>Shipping Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>conversion_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>buying_price_list</code></td>
+<td>Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_list_currency</code></td>
+<td>Price List Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>plc_conversion_rate</code></td>
+<td>Price List Exchange Rate</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ignore_pricing_rule</code></td>
+<td>Ignore Pricing Rule</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>set_warehouse</code></td>
+<td>Set Target Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_subcontracted</code></td>
+<td>Is Subcontracted</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>supplier_warehouse</code></td>
+<td>Supplier Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>visible si <code>is_subcontracted</code>; obligatoire si <code>is_subcontracted</code></td>
+</tr>
+<tr>
+<td><code>scan_barcode</code></td>
+<td>Scan Barcode</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Purchase Order Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pricing_rules</code></td>
+<td>Purchase Order Pricing Rule</td>
+<td>Table → <code>Pricing Rule Detail</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_qty</code></td>
+<td>Total Quantity</td>
+<td>Decimal</td>
+<td>lecture seule; calculé : <code>sum(items.qty)</code></td>
+</tr>
+<tr>
+<td><code>base_total</code></td>
+<td>Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_net_total</code></td>
+<td>Net Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total</code></td>
+<td>Total</td>
+<td>Currency</td>
+<td>lecture seule; calculé : <code>sum(items.amount)</code>; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>net_total</code></td>
+<td>Net Total</td>
+<td>Currency</td>
+<td>lecture seule; calculé : <code>sum(items.net_amount)</code>; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_net_weight</code></td>
+<td>Total Net Weight</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>taxes_and_charges</code></td>
+<td>Purchase Taxes and Charges Template</td>
+<td>Link → <code>Purchase Taxes and Charges Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_rule</code></td>
+<td>Shipping Rule</td>
+<td>Link → <code>Shipping Rule</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>taxes</code></td>
+<td>Purchase Taxes and Charges</td>
+<td>Table → <code>Purchase Taxes and Charges</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>other_charges_calculation</code></td>
+<td>Taxes and Charges Calculation</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_taxes_and_charges_added</code></td>
+<td>Taxes and Charges Added (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_taxes_and_charges_deducted</code></td>
+<td>Taxes and Charges Deducted (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_total_taxes_and_charges</code></td>
+<td>Total Taxes and Charges (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>taxes_and_charges_added</code></td>
+<td>Taxes and Charges Added</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>taxes_and_charges_deducted</code></td>
+<td>Taxes and Charges Deducted</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_taxes_and_charges</code></td>
+<td>Total Taxes and Charges</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>apply_discount_on</code></td>
+<td>Apply Additional Discount On</td>
+<td>Select — Grand Total · Net Total</td>
+<td>défaut <code>Grand Total</code></td>
+</tr>
+<tr>
+<td><code>base_discount_amount</code></td>
+<td>Additional Discount Amount (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_discount_percentage</code></td>
+<td>Additional Discount Percentage</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>discount_amount</code></td>
+<td>Additional Discount Amount</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>base_grand_total</code></td>
+<td>Grand Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rounding_adjustment</code></td>
+<td>Rounding Adjustment</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_in_words</code></td>
+<td>In Words</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_rounded_total</code></td>
+<td>Rounded Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>grand_total</code></td>
+<td>Grand Total</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; calculé : <code>total + total_taxes_and_charges</code>; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>rounding_adjustment</code></td>
+<td>Rounding Adjustment</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>rounded_total</code></td>
+<td>Rounded Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>disable_rounded_total</code></td>
+<td>Disable Rounded Total</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>in_words</code></td>
+<td>In Words</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>advance_paid</code></td>
+<td>Advance Paid (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>party_account_currency</code></td>
+</tr>
+<tr>
+<td><code>payment_terms_template</code></td>
+<td>Payment Terms Template</td>
+<td>Link → <code>Payment Terms Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payment_schedule</code></td>
+<td>Payment Schedule</td>
+<td>Table → <code>Payment Schedule</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>tc_name</code></td>
+<td>Terms</td>
+<td>Link → <code>Terms and Conditions</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>terms</code></td>
+<td>Terms and Conditions</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · On Hold · To Pay · To Receive and Bill · To Bill · To Receive · Completed · Cancelled · Closed · Delivered</td>
+<td><strong>requis</strong>; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>ref_sq</code></td>
+<td>Supplier Quotation</td>
+<td>Link → <code>Supplier Quotation</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>party_account_currency</code></td>
+<td>Party Account Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>inter_company_order_reference</code></td>
+<td>Inter Company Order Reference</td>
+<td>Link → <code>Sales Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>remarks</code></td>
+<td>Remarks</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>per_received</code></td>
+<td>% Received</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>per_billed</code></td>
+<td>% Billed</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>letter_head</code></td>
+<td>Letter Head</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>select_print_heading</code></td>
+<td>Print Heading</td>
+<td>Link → <code>Print Heading</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>group_same_items</code></td>
+<td>Group same items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Print Language</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>auto_repeat</code></td>
+<td>Auto Repeat</td>
+<td>Link → <code>Auto Repeat</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>tax_category</code></td>
+<td>Tax Category</td>
+<td>Link → <code>Tax Category</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>set_reserve_warehouse</code></td>
+<td>Set Reserve Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_address</code></td>
+<td>Company Billing Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_address_display</code></td>
+<td>Billing Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_internal_supplier</code></td>
+<td>Is Internal Supplier</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>represents_company</code></td>
+<td>Represents Company</td>
+<td>Link → <code>Company</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>set_from_warehouse</code></td>
+<td>Set From Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>incoterm</code></td>
+<td>Incoterm</td>
+<td>Link → <code>Incoterm</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>named_place</code></td>
+<td>Named Place</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>advance_payment_status</code></td>
+<td>Advance Payment Status</td>
+<td>Select — Not Initiated · Initiated · Partially Paid · Fully Paid</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>has_unit_price_items</code></td>
+<td>Has Unit Price Items</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>dispatch_address</code></td>
+<td>Dispatch Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>dispatch_address_display</code></td>
+<td>Dispatch Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>supplier_group</code></td>
+<td>Supplier Group</td>
+<td>Link → <code>Supplier Group</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>last_scanned_warehouse</code></td>
+<td>Last Scanned Warehouse</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>mps</code></td>
+<td>MPS</td>
+<td>Link → <code>Master Production Schedule</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_wise_tax_details</code></td>
+<td>Item Wise Tax Details</td>
+<td>Table → <code>Item Wise Tax Detail</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>transaction_time</code></td>
+<td>Time</td>
+<td>Time</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="purchase-order-item">Purchase Order Item<a class="headerlink" href="#purchase-order-item" title="Permanent link">#</a></h2>
+<p><em>Purchase Order Item</em> — <code>buying/purchase_order_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>supplier_part_no</code></td>
+<td>Supplier Part Number</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required By</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>expected_delivery_date</code></td>
+<td>Expected Delivery Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>UOM Conversion Factor</td>
+<td>Number</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>price_list_rate</code></td>
+<td>Price List Rate</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>discount_percentage</code></td>
+<td>Discount on Price List Rate (%)</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>discount_amount</code></td>
+<td>Discount Amount</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>last_purchase_rate</code></td>
+<td>Last Purchase Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_price_list_rate</code></td>
+<td>Price List Rate (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; calculé : <code>qty * rate</code>; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate</code></td>
+<td>Rate (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_amount</code></td>
+<td>Amount (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>pricing_rules</code></td>
+<td>Pricing Rules</td>
+<td>LongText</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>is_free_item</code></td>
+<td>Is Free Item</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>net_rate</code></td>
+<td>Net Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>net_amount</code></td>
+<td>Net Amount</td>
+<td>Currency</td>
+<td>lecture seule; calculé : <code>amount - discount_amount</code>; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_net_rate</code></td>
+<td>Net Rate (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_net_amount</code></td>
+<td>Net Amount (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>weight_per_unit</code></td>
+<td>Weight Per Unit</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_weight</code></td>
+<td>Total Weight</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>weight_uom</code></td>
+<td>Weight UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Target Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td>lecture seule; cible submitted</td>
+</tr>
+<tr>
+<td><code>material_request_item</code></td>
+<td>Material Request Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sales_order_item</code></td>
+<td>Sales Order Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>supplier_quotation</code></td>
+<td>Supplier Quotation</td>
+<td>Link → <code>Supplier Quotation</code></td>
+<td>lecture seule; cible submitted</td>
+</tr>
+<tr>
+<td><code>supplier_quotation_item</code></td>
+<td>Supplier Quotation Item</td>
+<td>Text</td>
+<td>lecture seule; masqué; — Référence de la ligne d'origine (Supplier Quotation Item).</td>
+</tr>
+<tr>
+<td><code>delivered_by_supplier</code></td>
+<td>To be Delivered to Customer</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>blanket_order</code></td>
+<td>Blanket Order</td>
+<td>Link → <code>Blanket Order</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>blanket_order_rate</code></td>
+<td>Blanket Order Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>brand</code></td>
+<td>Brand</td>
+<td>Link → <code>Brand</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bom</code></td>
+<td>BOM</td>
+<td>Link → <code>BOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Qty in Stock UOM</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>received_qty</code></td>
+<td>Received Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>returned_qty</code></td>
+<td>Returned Qty</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>billed_amt</code></td>
+<td>Billed Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>closed</code></td>
+<td>Closed</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_tax_rate</code></td>
+<td>Item Tax Rate</td>
+<td>Code</td>
+<td>lecture seule; masqué; — Tax detail table fetched from item master as a string and stored in this field. Used for Taxes and Charges</td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>page_break</code></td>
+<td>Page Break</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>item_tax_template</code></td>
+<td>Item Tax Template</td>
+<td>Link → <code>Item Tax Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>manufacturer</code></td>
+<td>Manufacturer</td>
+<td>Link → <code>Manufacturer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>manufacturer_part_no</code></td>
+<td>Manufacturer Part Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>against_blanket_order</code></td>
+<td>Against Blanket Order</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>is_fixed_asset</code></td>
+<td>Is Fixed Asset</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_uom_rate</code></td>
+<td>Rate of Stock UOM</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>actual_qty</code></td>
+<td>Available Qty at Target Warehouse</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company_total_stock</code></td>
+<td>Available Qty at Company</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>margin_type</code></td>
+<td>Margin Type</td>
+<td>Select — Percentage · Amount</td>
+<td></td>
+</tr>
+<tr>
+<td><code>margin_rate_or_amount</code></td>
+<td>Margin Rate or Amount</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>rate_with_margin</code></td>
+<td>Rate With Margin</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate_with_margin</code></td>
+<td>Rate With Margin (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>production_plan</code></td>
+<td>Production Plan</td>
+<td>Link → <code>Production Plan</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>production_plan_item</code></td>
+<td>Production Plan Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>production_plan_sub_assembly_item</code></td>
+<td>Production Plan Sub Assembly Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>product_bundle</code></td>
+<td>Product Bundle</td>
+<td>Link → <code>Product Bundle</code></td>
+<td>lecture seule; masqué; — Product Bundle version this row was packed from</td>
+</tr>
+<tr>
+<td><code>sales_order_packed_item</code></td>
+<td>Sales Order Packed Item</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fg_item</code></td>
+<td>Finished Good</td>
+<td>Link → <code>Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>fg_item_qty</code></td>
+<td>Finished Good Qty</td>
+<td>Decimal</td>
+<td>défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>from_warehouse</code></td>
+<td>From Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>wip_composite_asset</code></td>
+<td>WIP Composite Asset</td>
+<td>Link → <code>Asset</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>job_card</code></td>
+<td>Job Card</td>
+<td>Link → <code>Job Card</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>distributed_discount_amount</code></td>
+<td>Distributed Discount Amount</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>mapped_additional_discount_amount</code></td>
+<td>Additional Discount per Stock Unit</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code>; — Tax-exclusive additional discount carried from a source document, per stock unit.</td>
+</tr>
+<tr>
+<td><code>subcontracted_qty</code></td>
+<td>Subcontracted Quantity</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="purchase-receipt-item-supplied">Purchase Receipt Item Supplied<a class="headerlink" href="#purchase-receipt-item-supplied" title="Permanent link">#</a></h2>
+<p><em>Purchase Receipt Item Supplied</em> — <code>buying/purchase_receipt_item_supplied.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main_item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>rm_item_code</code></td>
+<td>Raw Material Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>batch_no</code></td>
+<td>Batch No</td>
+<td>Link → <code>Batch</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>required_qty</code></td>
+<td>Available Qty For Consumption</td>
+<td>Decimal</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>consumed_qty</code></td>
+<td>Qty to Be Consumed</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock Uom</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>Conversion Factor</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>current_stock</code></td>
+<td>Current Stock</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bom_detail_no</code></td>
+<td>BOM Detail No</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>purchase_order</code></td>
+<td>Purchase Order</td>
+<td>Link → <code>Purchase Order</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="request-for-quotation">Request for Quotation<a class="headerlink" href="#request-for-quotation" title="Permanent link">#</a></h2>
+<p><em>Request for Quotation</em> — <code>buying/request_for_quotation.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>RQ-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>file-question-mark</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — PUR-RFQ-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>vendor</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td>colonne de liste; lecture seule; masqué; — For individual supplier</td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>suppliers</code></td>
+<td>Suppliers</td>
+<td>Table → <code>Request for Quotation Supplier</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Request for Quotation Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>email_template</code></td>
+<td>Email Template</td>
+<td>Link → <code>Email Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>message_for_supplier</code></td>
+<td>Message for Supplier</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>tc_name</code></td>
+<td>Terms</td>
+<td>Link → <code>Terms and Conditions</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>terms</code></td>
+<td>Terms and Conditions</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>select_print_heading</code></td>
+<td>Print Heading</td>
+<td>Link → <code>Print Heading</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>letter_head</code></td>
+<td>Letter Head</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>opportunity</code></td>
+<td>Opportunity</td>
+<td>Link → <code>Opportunity</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Cancelled</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>incoterm</code></td>
+<td>Incoterm</td>
+<td>Link → <code>Incoterm</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>named_place</code></td>
+<td>Named Place</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>send_attached_files</code></td>
+<td>Send Attached Files</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — If enabled, all files attached to this document will be attached to each email</td>
+</tr>
+<tr>
+<td><code>send_document_print</code></td>
+<td>Send Document Print</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, a print of this document will be attached to each email</td>
+</tr>
+<tr>
+<td><code>billing_address</code></td>
+<td>Company Billing Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_address_display</code></td>
+<td>Billing Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>has_unit_price_items</code></td>
+<td>Has Unit Price Items</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>Text</td>
+<td><strong>requis</strong>; défaut <code>Request for Quotation</code></td>
+</tr>
+<tr>
+<td><code>mfs_html</code></td>
+<td>Message for Supplier</td>
+<td>Code</td>
+<td></td>
+</tr>
+<tr>
+<td><code>use_html</code></td>
+<td>Use HTML</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>shipping_address</code></td>
+<td>Company Shipping Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_address_display</code></td>
+<td>Shipping Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="request-for-quotation-item">Request for Quotation Item<a class="headerlink" href="#request-for-quotation-item" title="Permanent link">#</a></h2>
+<p><em>Request for Quotation Item</em> — <code>buying/request_for_quotation_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>supplier_part_no</code></td>
+<td>Supplier Part No</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Required Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>project_name</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>material_request_item</code></td>
+<td>Material Request Item</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>brand</code></td>
+<td>Brand</td>
+<td>Link → <code>Brand</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>page_break</code></td>
+<td>Page Break</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>UOM Conversion Factor</td>
+<td>Number</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Qty as per Stock UOM</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="request-for-quotation-supplier">Request for Quotation Supplier<a class="headerlink" href="#request-for-quotation-supplier" title="Permanent link">#</a></h2>
+<p><em>Request for Quotation Supplier</em> — <code>buying/request_for_quotation_supplier.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>send_email</code></td>
+<td>Send Email</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>email_sent</code></td>
+<td>Email Sent</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>contact</code></td>
+<td>Contact</td>
+<td>Link → <code>Contact</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>quote_status</code></td>
+<td>Quote Status</td>
+<td>Select — Pending · Received</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>supplier_name</code></td>
+<td>Supplier Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>supplier.supplier_name</code></td>
+</tr>
+<tr>
+<td><code>email_id</code></td>
+<td>Email ID</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier">Supplier<a class="headerlink" href="#supplier" title="Permanent link">#</a></h2>
+<p><em>Supplier</em> — <code>buying/supplier.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>supplier_name</code></li>
+<li><strong>Icône</strong> : <code>truck</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — SUP-.YYYY.-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>supplier_name</code></td>
+<td>Supplier Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>country</code></td>
+<td>Country</td>
+<td>Link → <code>Country</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_bank_account</code></td>
+<td>Company Bank Account</td>
+<td>Link → <code>Bank Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>tax_id</code></td>
+<td>Tax ID</td>
+<td>Text</td>
+<td>— Supplier's tax identification number (e.g. PAN, VAT, GST)</td>
+</tr>
+<tr>
+<td><code>tax_category</code></td>
+<td>Tax Category</td>
+<td>Link → <code>Tax Category</code></td>
+<td>— Determines which tax rules apply to this supplier</td>
+</tr>
+<tr>
+<td><code>tax_withholding_category</code></td>
+<td>Tax Withholding Category</td>
+<td>Link → <code>Tax Withholding Category</code></td>
+<td>— TDS / withholding tax category applied when paying this supplier</td>
+</tr>
+<tr>
+<td><code>is_transporter</code></td>
+<td>Is Transporter</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Enable to make this supplier selectable as a transporter on Delivery Notes and Stock Entries</td>
+</tr>
+<tr>
+<td><code>is_internal_supplier</code></td>
+<td>Is Internal Supplier</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Used for inter-company transactions</td>
+</tr>
+<tr>
+<td><code>represents_company</code></td>
+<td>Represents Company</td>
+<td>Link → <code>Company</code></td>
+<td>visible si <code>is_internal_supplier</code>; obligatoire si <code>is_internal_supplier</code>; — Select the related company that this Supplier represents for inter-company transactions.</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>supplier_group</code></td>
+<td>Supplier Group</td>
+<td>Link → <code>Supplier Group</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>supplier_type</code></td>
+<td>Supplier Type</td>
+<td>Select — Company · Individual · Partnership</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>Company</code></td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Print Language</td>
+<td>Link → <code>Language</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Disabled suppliers are hidden from selection in new transactions but remain in historical records</td>
+</tr>
+<tr>
+<td><code>warn_rfqs</code></td>
+<td>Warn RFQs</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>warn_pos</code></td>
+<td>Warn POs</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>prevent_rfqs</code></td>
+<td>Prevent RFQs</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>prevent_pos</code></td>
+<td>Prevent POs</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>companies</code></td>
+<td>Allowed to transact with</td>
+<td>Table → <code>Allowed To Transact With</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_currency</code></td>
+<td>Billing Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>default_price_list</code></td>
+<td>Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payment_terms</code></td>
+<td>Payment Terms Template</td>
+<td>Link → <code>Payment Terms Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>on_hold</code></td>
+<td>Block Supplier</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — When enabled, transactions with this supplier will be blocked based on the Hold Type below</td>
+</tr>
+<tr>
+<td><code>hold_type</code></td>
+<td>Hold Type</td>
+<td>Select — All · Invoices · Payments</td>
+<td>défaut <code>All</code>; visible si <code>on_hold</code>; obligatoire si <code>on_hold</code></td>
+</tr>
+<tr>
+<td><code>release_date</code></td>
+<td>Release Date</td>
+<td>Date</td>
+<td>visible si <code>on_hold</code>; — Leave blank if the Supplier is blocked indefinitely</td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td>Per-Company Accounts</td>
+<td>Table → <code>Party Account</code></td>
+<td>— Override the default payable / advance accounts on a per-company basis. Leave blank to use each company's defa</td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>Website</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>supplier_details</code></td>
+<td>Supplier Details</td>
+<td>LongText</td>
+<td>— General information about your Supplier</td>
+</tr>
+<tr>
+<td><code>is_frozen</code></td>
+<td>Is Frozen</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Frozen suppliers block new transactions and ledger entries until unfrozen. Only users with the role set in Com</td>
+</tr>
+<tr>
+<td><code>allow_purchase_invoice_creation_without_purchase_order</code></td>
+<td>Allow purchase invoice creation without purchase order</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>allow_purchase_invoice_creation_without_purchase_receipt</code></td>
+<td>Allow purchase invoice creation without purchase receipt</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>supplier_primary_contact</code></td>
+<td>Primary Contact</td>
+<td>Link → <code>Contact</code></td>
+<td>masqué; — Reselect, if the chosen contact is edited after save</td>
+</tr>
+<tr>
+<td><code>mobile_no</code></td>
+<td>Mobile No</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>email_id</code></td>
+<td>Email ID</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>primary_address</code></td>
+<td>Primary Address Preview</td>
+<td>TextEditor</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>supplier_primary_address</code></td>
+<td>Primary Address</td>
+<td>Link → <code>Address</code></td>
+<td>masqué; — Reselect, if the chosen address is edited after save</td>
+</tr>
+<tr>
+<td><code>restrict_to_companies</code></td>
+<td>Restrict to Companies</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If checked, this Supplier is only available for transactions in the companies listed below.</td>
+</tr>
+<tr>
+<td><code>allowed_companies</code></td>
+<td>Allowed Companies</td>
+<td>Table → <code>Company Restriction</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>portal_users</code></td>
+<td>Supplier Portal Users</td>
+<td>Table → <code>Portal User</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer_numbers</code></td>
+<td>Customer Numbers</td>
+<td>Table → <code>Customer Number At Supplier</code></td>
+<td>— Account / customer numbers assigned to your companies by this supplier (for reconciliation on their statements</td>
+</tr>
+<tr>
+<td><code>tax_withholding_group</code></td>
+<td>Tax Withholding Group</td>
+<td>Link → <code>Tax Withholding Group</code></td>
+<td>— Used to pick the correct rate row inside the Tax Withholding Category for this supplier (e.g. Company vs Indiv</td>
+</tr>
+<tr>
+<td><code>gender</code></td>
+<td>Gender</td>
+<td>Link → <code>Gender</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>alias</code></td>
+<td>Alias</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-quotation">Supplier Quotation<a class="headerlink" href="#supplier-quotation" title="Permanent link">#</a></h2>
+<p><em>Supplier Quotation</em> — <code>buying/supplier_quotation.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SQ-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — PUR-SQTN-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier_name</code></td>
+<td>Supplier Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>supplier.supplier_name</code></td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>supplier_address</code></td>
+<td>Supplier Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>contact_person</code></td>
+<td>Contact Person</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>address_display</code></td>
+<td>Address</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_display</code></td>
+<td>Contact</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_mobile</code></td>
+<td>Mobile No</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>contact_email</code></td>
+<td>Contact Email</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>conversion_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>buying_price_list</code></td>
+<td>Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>price_list_currency</code></td>
+<td>Price List Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>plc_conversion_rate</code></td>
+<td>Price List Exchange Rate</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ignore_pricing_rule</code></td>
+<td>Ignore Pricing Rule</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>Items</td>
+<td>Table → <code>Supplier Quotation Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pricing_rules</code></td>
+<td>Pricing Rule Detail</td>
+<td>Table → <code>Pricing Rule Detail</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_qty</code></td>
+<td>Total Quantity</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_total</code></td>
+<td>Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_net_total</code></td>
+<td>Net Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total</code></td>
+<td>Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>net_total</code></td>
+<td>Net Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_net_weight</code></td>
+<td>Total Net Weight</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>tax_category</code></td>
+<td>Tax Category</td>
+<td>Link → <code>Tax Category</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_rule</code></td>
+<td>Shipping Rule</td>
+<td>Link → <code>Shipping Rule</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>taxes_and_charges</code></td>
+<td>Purchase Taxes and Charges Template</td>
+<td>Link → <code>Purchase Taxes and Charges Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>taxes</code></td>
+<td>Purchase Taxes and Charges</td>
+<td>Table → <code>Purchase Taxes and Charges</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>other_charges_calculation</code></td>
+<td>Taxes and Charges Calculation</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_taxes_and_charges_added</code></td>
+<td>Taxes and Charges Added (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_taxes_and_charges_deducted</code></td>
+<td>Taxes and Charges Deducted (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_total_taxes_and_charges</code></td>
+<td>Total Taxes and Charges (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>taxes_and_charges_added</code></td>
+<td>Taxes and Charges Added</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>taxes_and_charges_deducted</code></td>
+<td>Taxes and Charges Deducted</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_taxes_and_charges</code></td>
+<td>Total Taxes and Charges</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>apply_discount_on</code></td>
+<td>Apply Additional Discount On</td>
+<td>Select — Grand Total · Net Total</td>
+<td>défaut <code>Grand Total</code></td>
+</tr>
+<tr>
+<td><code>base_discount_amount</code></td>
+<td>Additional Discount Amount (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_discount_percentage</code></td>
+<td>Additional Discount Percentage</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>discount_amount</code></td>
+<td>Additional Discount Amount</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>base_grand_total</code></td>
+<td>Grand Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rounding_adjustment</code></td>
+<td>Rounding Adjustment (Company Currency</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_in_words</code></td>
+<td>In Words (Company Currency)</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_rounded_total</code></td>
+<td>Rounded Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>grand_total</code></td>
+<td>Grand Total</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>rounding_adjustment</code></td>
+<td>Rounding Adjustment</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>rounded_total</code></td>
+<td>Rounded Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>in_words</code></td>
+<td>In Words</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>disable_rounded_total</code></td>
+<td>Disable Rounded Total</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>tc_name</code></td>
+<td>Terms Template</td>
+<td>Link → <code>Terms and Conditions</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>terms</code></td>
+<td>Terms and Conditions</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>select_print_heading</code></td>
+<td>Print Heading</td>
+<td>Link → <code>Print Heading</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>group_same_items</code></td>
+<td>Group same items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>letter_head</code></td>
+<td>Letter Head</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>language</code></td>
+<td>Print Language</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>auto_repeat</code></td>
+<td>Auto Repeat</td>
+<td>Link → <code>Auto Repeat</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Partially Ordered · Ordered · Stopped · Cancelled · Expired</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>is_subcontracted</code></td>
+<td>Is Subcontracted</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>opportunity</code></td>
+<td>Opportunity</td>
+<td>Link → <code>Opportunity</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>valid_till</code></td>
+<td>Valid Till</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>quotation_number</code></td>
+<td>Quotation Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>incoterm</code></td>
+<td>Incoterm</td>
+<td>Link → <code>Incoterm</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>named_place</code></td>
+<td>Named Place</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_address</code></td>
+<td>Shipping Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>shipping_address_display</code></td>
+<td>Shipping Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>billing_address</code></td>
+<td>Company Billing Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>billing_address_display</code></td>
+<td>Billing Address Details</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>has_unit_price_items</code></td>
+<td>Has Unit Price Items</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>item_wise_tax_details</code></td>
+<td>Item Wise Tax Details</td>
+<td>Table → <code>Item Wise Tax Detail</code></td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-quotation-item">Supplier Quotation Item<a class="headerlink" href="#supplier-quotation-item" title="Permanent link">#</a></h2>
+<p><em>Supplier Quotation Item</em> — <code>buying/supplier_quotation_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>supplier_part_no</code></td>
+<td>Supplier Part Number</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>lead_time_days</code></td>
+<td>Supplier Lead Time (days)</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>price_list_rate</code></td>
+<td>Price List Rate</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>discount_percentage</code></td>
+<td>Discount on Price List Rate (%)</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>discount_amount</code></td>
+<td>Discount Amount</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>conversion_factor</code></td>
+<td>UOM Conversion Factor</td>
+<td>Number</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Qty as per Stock UOM</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>ordered_qty</code></td>
+<td>Ordered Qty</td>
+<td>Decimal</td>
+<td><strong>requis</strong>; lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>base_price_list_rate</code></td>
+<td>Price List Rate (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rate</code></td>
+<td>Rate (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_amount</code></td>
+<td>Amount (Company Currency)</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>pricing_rules</code></td>
+<td>Pricing Rules</td>
+<td>LongText</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>net_rate</code></td>
+<td>Net Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>net_amount</code></td>
+<td>Net Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>base_net_rate</code></td>
+<td>Net Rate (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_net_amount</code></td>
+<td>Net Amount (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>weight_per_unit</code></td>
+<td>Weight Per Unit</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>total_weight</code></td>
+<td>Total Weight</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>weight_uom</code></td>
+<td>Weight UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>prevdoc_doctype</code></td>
+<td>Reference Document Type</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>material_request</code></td>
+<td>Material Request</td>
+<td>Link → <code>Material Request</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>Sales Order</td>
+<td>Link → <code>Sales Order</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>request_for_quotation</code></td>
+<td>Request for Quotation</td>
+<td>Link → <code>Request for Quotation</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_tax_template</code></td>
+<td>Item Tax Template</td>
+<td>Link → <code>Item Tax Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>material_request_item</code></td>
+<td>Material Request Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>request_for_quotation_item</code></td>
+<td>Request for Quotation Item</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>brand</code></td>
+<td>Brand</td>
+<td>Link → <code>Brand</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_tax_rate</code></td>
+<td>Item Tax Rate</td>
+<td>Code</td>
+<td>lecture seule; masqué; — Tax detail table fetched from item master as a string and stored in this field. Used for Taxes and Charges</td>
+</tr>
+<tr>
+<td><code>page_break</code></td>
+<td>Page Break</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>manufacturer</code></td>
+<td>Manufacturer</td>
+<td>Link → <code>Manufacturer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>manufacturer_part_no</code></td>
+<td>Manufacturer Part Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_free_item</code></td>
+<td>Is Free Item</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>expected_delivery_date</code></td>
+<td>Expected Delivery Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>distributed_discount_amount</code></td>
+<td>Distributed Discount Amount</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>mapped_additional_discount_amount</code></td>
+<td>Additional Discount per Stock Unit</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code>; — Tax-exclusive additional discount carried from a source document, per stock unit.</td>
+</tr>
+<tr>
+<td><code>margin_type</code></td>
+<td>Margin Type</td>
+<td>Select — Percentage · Amount</td>
+<td></td>
+</tr>
+<tr>
+<td><code>margin_rate_or_amount</code></td>
+<td>Margin Rate or Amount</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>rate_with_margin</code></td>
+<td>Rate With Margin</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard">Supplier Scorecard<a class="headerlink" href="#supplier-scorecard" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard</em> — <code>buying/supplier_scorecard.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>period</code></li>
+<li><strong>Icône</strong> : <code>award</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>supplier_score</code></td>
+<td>Supplier Score</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>indicator_color</code></td>
+<td>Indicator Color</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>period</code></td>
+<td>Evaluation Period</td>
+<td>Select — Per Week · Per Month · Per Year</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>Per Month</code></td>
+</tr>
+<tr>
+<td><code>weighting_function</code></td>
+<td>Weighting Function</td>
+<td>LongText</td>
+<td><strong>requis</strong>; défaut <code>{total_score} * max( 0, min ( 1 , (12 - {period_number}) / 12) )</code>; — Scorecard variables can be used, as well as: {total_score} (the total score from that period), {period_number}</td>
+</tr>
+<tr>
+<td><code>standings</code></td>
+<td>Scoring Standings</td>
+<td>Table → <code>Supplier Scorecard Scoring Standing</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>criteria</code></td>
+<td>Scoring Criteria</td>
+<td>Table → <code>Supplier Scorecard Scoring Criteria</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>warn_rfqs</code></td>
+<td>Warn for new Request for Quotations</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>warn_pos</code></td>
+<td>Warn for new Purchase Orders</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>prevent_rfqs</code></td>
+<td>Prevent RFQs</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>prevent_pos</code></td>
+<td>Prevent POs</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>notify_supplier</code></td>
+<td>Notify Supplier</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>notify_employee</code></td>
+<td>Notify Employee</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard-criteria">Supplier Scorecard Criteria<a class="headerlink" href="#supplier-scorecard-criteria" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard Criteria</em> — <code>buying/supplier_scorecard_criteria.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>criteria_name</code></li>
+<li><strong>Icône</strong> : <code>list-checks</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>criteria_name</code></td>
+<td>Criteria Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>max_score</code></td>
+<td>Max Score</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>100.0</code></td>
+</tr>
+<tr>
+<td><code>formula</code></td>
+<td>Criteria Formula</td>
+<td>LongText</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>weight</code></td>
+<td>Criteria Weight</td>
+<td>Percent</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard-period">Supplier Scorecard Period<a class="headerlink" href="#supplier-scorecard-period" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard Period</em> — <code>buying/supplier_scorecard_period.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SSP-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>supplier</code></li>
+<li><strong>Icône</strong> : <code>calendar-range</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — PU-SSP-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>total_score</code></td>
+<td>Period Score</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>criteria</code></td>
+<td>Criteria</td>
+<td>Table → <code>Supplier Scorecard Scoring Criteria</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>variables</code></td>
+<td>Variables</td>
+<td>Table → <code>Supplier Scorecard Scoring Variable</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>scorecard</code></td>
+<td>Supplier Scorecard Setup</td>
+<td>Link → <code>Supplier Scorecard</code></td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard-scoring-criteria">Supplier Scorecard Scoring Criteria<a class="headerlink" href="#supplier-scorecard-scoring-criteria" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard Scoring Criteria</em> — <code>buying/supplier_scorecard_scoring_criteria.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>criteria_name</code></td>
+<td>Criteria Name</td>
+<td>Link → <code>Supplier Scorecard Criteria</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>score</code></td>
+<td>Score</td>
+<td>Percent</td>
+<td>colonne de liste; lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>weight</code></td>
+<td>Criteria Weight</td>
+<td>Percent</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>max_score</code></td>
+<td>Max Score</td>
+<td>Number</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>formula</code></td>
+<td>Criteria Formula</td>
+<td>LongText</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard-scoring-standing">Supplier Scorecard Scoring Standing<a class="headerlink" href="#supplier-scorecard-scoring-standing" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard Scoring Standing</em> — <code>buying/supplier_scorecard_scoring_standing.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>standing_name</code></td>
+<td>Standing Name</td>
+<td>Link → <code>Supplier Scorecard Standing</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>standing_color</code></td>
+<td>Color</td>
+<td>Select — Blue · Purple · Green · Yellow · Orange · Red</td>
+<td></td>
+</tr>
+<tr>
+<td><code>min_grade</code></td>
+<td>Min Grade</td>
+<td>Percent</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>max_grade</code></td>
+<td>Max Grade</td>
+<td>Percent</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>warn_rfqs</code></td>
+<td>Warn RFQs</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>warn_pos</code></td>
+<td>Warn Purchase Orders</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>prevent_rfqs</code></td>
+<td>Prevent RFQs</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>prevent_pos</code></td>
+<td>Prevent Purchase Orders</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>notify_supplier</code></td>
+<td>Notify Supplier</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>notify_employee</code></td>
+<td>Notify Employee</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>employee_link</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard-scoring-variable">Supplier Scorecard Scoring Variable<a class="headerlink" href="#supplier-scorecard-scoring-variable" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard Scoring Variable</em> — <code>buying/supplier_scorecard_scoring_variable.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>variable_label</code></td>
+<td>Variable Name</td>
+<td>Link → <code>Supplier Scorecard Variable</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>Value</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>param_name</code></td>
+<td>Parameter Name</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>Path</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard-standing">Supplier Scorecard Standing<a class="headerlink" href="#supplier-scorecard-standing" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard Standing</em> — <code>buying/supplier_scorecard_standing.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>podium</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>standing_name</code></td>
+<td>Standing Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>standing_color</code></td>
+<td>Color</td>
+<td>Select — Blue · Purple · Green · Yellow · Orange · Red</td>
+<td></td>
+</tr>
+<tr>
+<td><code>min_grade</code></td>
+<td>Min Grade</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_grade</code></td>
+<td>Max Grade</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>warn_rfqs</code></td>
+<td>Warn RFQs</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>warn_pos</code></td>
+<td>Warn Purchase Orders</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>prevent_rfqs</code></td>
+<td>Prevent RFQs</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>prevent_pos</code></td>
+<td>Prevent Purchase Orders</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>notify_supplier</code></td>
+<td>Notify Supplier</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>notify_employee</code></td>
+<td>Notify Other</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>employee_link</code></td>
+<td>Other</td>
+<td>Link → <code>Employee</code></td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-scorecard-variable">Supplier Scorecard Variable<a class="headerlink" href="#supplier-scorecard-variable" title="Permanent link">#</a></h2>
+<p><em>Supplier Scorecard Variable</em> — <code>buying/supplier_scorecard_variable.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>param_name</code></li>
+<li><strong>Icône</strong> : <code>variable</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>variable_label</code></td>
+<td>Variable Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>is_custom</code></td>
+<td>Custom?</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>param_name</code></td>
+<td>Parameter Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>Path</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../bulk_transaction/" class="btn btn-neutral float-left" title="Traitement en masse (bulk_transaction)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../communication/" class="btn btn-neutral float-right" title="Communication (communication)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../bulk_transaction/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../communication/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

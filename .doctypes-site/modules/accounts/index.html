@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/modules/accounts/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Comptabilité (accounts) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Comptabilit\u00e9 (accounts)";
+        var mkdocs_page_input_path = "modules/accounts.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/modules/accounts/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Comptabilité (accounts)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#chiffres">Chiffres</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#espace-de-travail">Espace de travail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#doctypes-du-module">DocTypes du module</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#points-cles">Points clés</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependances">Dépendances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#implementation-en-plugin-xcore">Implémentation en plugin xcore</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#reference-complete">Référence complète</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Modules</li>
+      <li class="breadcrumb-item active">Comptabilité (accounts)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/modules/accounts.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="comptabilite-accounts">Comptabilité (<code>accounts</code>)<a class="headerlink" href="#comptabilite-accounts" title="Permanent link">#</a></h1>
+<p>Le cœur financier de l'ERP : pièces comptables (factures d'achat et de vente, écritures de journal, paiements), plan comptable SYSCOHADA, journaux immuables (<code>GL Entry</code>, <code>Payment Ledger Entry</code>) et référentiels fiscaux. Avec 192 DocTypes, c'est le plus grand module du jeu et le premier à implémenter (P1 de <code>process/plan-erp.md</code>).</p>
+<h2 id="chiffres">Chiffres<a class="headerlink" href="#chiffres" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocTypes</th>
+<th>dont pièces</th>
+<th>dont enfants</th>
+<th>dont uniques</th>
+<th>workflows</th>
+<th>séries</th>
+<th>champs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>192</td>
+<td>31</td>
+<td>96</td>
+<td>4</td>
+<td>0</td>
+<td>31</td>
+<td>2 438</td>
+</tr>
+</tbody>
+</table>
+<h2 id="espace-de-travail">Espace de travail<a class="headerlink" href="#espace-de-travail" title="Permanent link">#</a></h2>
+<p><strong>Espace « Comptabilité »</strong> (icône <code>calculator</code>, position 40) — Comptes, écritures, factures et paiements.</p>
+<ul>
+<li><strong>Opérations</strong> : <a href="../../reference/accounts/#journal-entry"><code>Journal Entry</code></a> — création, <a href="../../reference/accounts/#sales-invoice"><code>Sales Invoice</code></a> — création, <a href="../../reference/accounts/#purchase-invoice"><code>Purchase Invoice</code></a> — création, <a href="../../reference/accounts/#payment-entry"><code>Payment Entry</code></a> — création</li>
+<li><strong>Référentiel et banque</strong> : <a href="../../reference/accounts/#account"><code>Account</code></a> — création, <a href="../../reference/accounts/#cost-center"><code>Cost Center</code></a> — création, <a href="../../reference/accounts/#bank-transaction"><code>Bank Transaction</code></a></li>
+</ul>
+<h2 id="doctypes-du-module">DocTypes du module<a class="headerlink" href="#doctypes-du-module" title="Permanent link">#</a></h2>
+<p>Pièces comptables, journaux et référentiels — le détail de chaque champ est dans la <a href="../../reference/accounts/">référence complète</a>.</p>
+<table>
+<thead>
+<tr>
+<th>DocType</th>
+<th>Libellé</th>
+<th>Nature</th>
+<th>Soumis</th>
+<th>Numérotation</th>
+<th>Workflow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../reference/accounts/#account"><code>Account</code></a></td>
+<td>Account</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#account-category"><code>Account Category</code></a></td>
+<td>Account Category</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#accounting-dimension"><code>Accounting Dimension</code></a></td>
+<td>Accounting Dimension</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#accounting-dimension-filter"><code>Accounting Dimension Filter</code></a></td>
+<td>Accounting Dimension Filter</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#accounting-period"><code>Accounting Period</code></a></td>
+<td>Accounting Period</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank"><code>Bank</code></a></td>
+<td>Bank</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-account"><code>Bank Account</code></a></td>
+<td>Bank Account</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-account-balance"><code>Bank Account Balance</code></a></td>
+<td>Bank Account Balance</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-account-subtype"><code>Bank Account Subtype</code></a></td>
+<td>Bank Account Subtype</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-account-type"><code>Bank Account Type</code></a></td>
+<td>Bank Account Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-clearance"><code>Bank Clearance</code></a></td>
+<td>Bank Clearance</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-reconciliation-tool"><code>Bank Reconciliation Tool</code></a></td>
+<td>Bank Reconciliation Tool</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-statement-import"><code>Bank Statement Import</code></a></td>
+<td>Bank Statement Import</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-statement-import-log"><code>Bank Statement Import Log</code></a></td>
+<td>Bank Statement Import Log</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-transaction-rule"><code>Bank Transaction Rule</code></a></td>
+<td>Bank Transaction Rule</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bisect-accounting-statements"><code>Bisect Accounting Statements</code></a></td>
+<td>Bisect Accounting Statements</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bisect-nodes"><code>Bisect Nodes</code></a></td>
+<td>Bisect Nodes</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#chart-of-accounts-importer"><code>Chart of Accounts Importer</code></a></td>
+<td>Chart of Accounts Importer</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#cheque-print-template"><code>Cheque Print Template</code></a></td>
+<td>Cheque Print Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#cost-center"><code>Cost Center</code></a></td>
+<td>Cost Center</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#coupon-code"><code>Coupon Code</code></a></td>
+<td>Coupon Code</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#dunning-type"><code>Dunning Type</code></a></td>
+<td>Dunning Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#finance-book"><code>Finance Book</code></a></td>
+<td>Finance Book</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#financial-report-template"><code>Financial Report Template</code></a></td>
+<td>Financial Report Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#fiscal-year"><code>Fiscal Year</code></a></td>
+<td>Fiscal Year</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#item-tax-template"><code>Item Tax Template</code></a></td>
+<td>Item Tax Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#journal-entry-template"><code>Journal Entry Template</code></a></td>
+<td>Journal Entry Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#ledger-health"><code>Ledger Health</code></a></td>
+<td>Ledger Health</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#ledger-health-monitor"><code>Ledger Health Monitor</code></a></td>
+<td>Ledger Health Monitor</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#ledger-merge"><code>Ledger Merge</code></a></td>
+<td>Ledger Merge</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#loan"><code>Loan</code></a></td>
+<td>Loan</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#loan-product"><code>Loan Product</code></a></td>
+<td>Loan Product</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#loan-repayment"><code>Loan Repayment</code></a></td>
+<td>Loan Repayment</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#loyalty-point-entry"><code>Loyalty Point Entry</code></a></td>
+<td>Loyalty Point Entry</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#loyalty-program"><code>Loyalty Program</code></a></td>
+<td>Loyalty Program</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#mode-of-payment"><code>Mode of Payment</code></a></td>
+<td>Mode of Payment</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#monthly-distribution"><code>Monthly Distribution</code></a></td>
+<td>Monthly Distribution</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#opening-invoice-creation-tool"><code>Opening Invoice Creation Tool</code></a></td>
+<td>Opening Invoice Creation Tool</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#party-link"><code>Party Link</code></a></td>
+<td>Party Link</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-gateway"><code>Payment Gateway</code></a></td>
+<td>Payment Gateway</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-gateway-account"><code>Payment Gateway Account</code></a></td>
+<td>Payment Gateway Account</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-reconciliation"><code>Payment Reconciliation</code></a></td>
+<td>Payment Reconciliation</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-term"><code>Payment Term</code></a></td>
+<td>Payment Term</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-terms-template"><code>Payment Terms Template</code></a></td>
+<td>Payment Terms Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pegged-currencies"><code>Pegged Currencies</code></a></td>
+<td>Pegged Currencies</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-profile"><code>POS Profile</code></a></td>
+<td>POS Profile</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pricing-rule"><code>Pricing Rule</code></a></td>
+<td>Pricing Rule</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-payment-reconciliation-log"><code>Process Payment Reconciliation Log</code></a></td>
+<td>Process Payment Reconciliation Log</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-statement-of-accounts"><code>Process Statement Of Accounts</code></a></td>
+<td>Process Statement Of Accounts</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#promotional-scheme"><code>Promotional Scheme</code></a></td>
+<td>Promotional Scheme</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#purchase-taxes-and-charges-template"><code>Purchase Taxes and Charges Template</code></a></td>
+<td>Purchase Taxes and Charges Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-taxes-and-charges-template"><code>Sales Taxes and Charges Template</code></a></td>
+<td>Sales Taxes and Charges Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#share-type"><code>Share Type</code></a></td>
+<td>Share Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#shareholder"><code>Shareholder</code></a></td>
+<td>Shareholder</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#shipping-rule"><code>Shipping Rule</code></a></td>
+<td>Shipping Rule</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#subscription"><code>Subscription</code></a></td>
+<td>Subscription</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#subscription-plan"><code>Subscription Plan</code></a></td>
+<td>Subscription Plan</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#tax-category"><code>Tax Category</code></a></td>
+<td>Tax Category</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#tax-rule"><code>Tax Rule</code></a></td>
+<td>Tax Rule</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#tax-withholding-category"><code>Tax Withholding Category</code></a></td>
+<td>Tax Withholding Category</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#tax-withholding-group"><code>Tax Withholding Group</code></a></td>
+<td>Tax Withholding Group</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#accounting-dimension-detail"><code>Accounting Dimension Detail</code></a></td>
+<td>Accounting Dimension Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#advance-taxes-and-charges"><code>Advance Taxes and Charges</code></a></td>
+<td>Advance Taxes and Charges</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#allowed-dimension"><code>Allowed Dimension</code></a></td>
+<td>Allowed Dimension</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#allowed-to-transact-with"><code>Allowed To Transact With</code></a></td>
+<td>Allowed To Transact With</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#applicable-on-account"><code>Applicable On Account</code></a></td>
+<td>Applicable On Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-clearance-detail"><code>Bank Clearance Detail</code></a></td>
+<td>Bank Clearance Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-statement-import-log-column-map"><code>Bank Statement Import Log Column Map</code></a></td>
+<td>Bank Statement Import Log Column Map</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-transaction-mapping"><code>Bank Transaction Mapping</code></a></td>
+<td>Bank Transaction Mapping</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-transaction-payments"><code>Bank Transaction Payments</code></a></td>
+<td>Bank Transaction Payments</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-transaction-rule-accounts"><code>Bank Transaction Rule Accounts</code></a></td>
+<td>Bank Transaction Rule Accounts</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-transaction-rule-description-conditions"><code>Bank Transaction Rule Description Conditions</code></a></td>
+<td>Bank Transaction Rule Description Conditions</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#budget-distribution"><code>Budget Distribution</code></a></td>
+<td>Budget Distribution</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#campaign-item"><code>Campaign Item</code></a></td>
+<td>Campaign Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#cashier-closing-payments"><code>Cashier Closing Payments</code></a></td>
+<td>Cashier Closing Payments</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#closed-document"><code>Closed Document</code></a></td>
+<td>Closed Document</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#cost-center-allocation-percentage"><code>Cost Center Allocation Percentage</code></a></td>
+<td>Cost Center Allocation Percentage</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#currency-exchange-settings-details"><code>Currency Exchange Settings Details</code></a></td>
+<td>Currency Exchange Settings Details</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#currency-exchange-settings-result"><code>Currency Exchange Settings Result</code></a></td>
+<td>Currency Exchange Settings Result</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#customer-group-item"><code>Customer Group Item</code></a></td>
+<td>Customer Group Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#customer-item"><code>Customer Item</code></a></td>
+<td>Customer Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#discounted-invoice"><code>Discounted Invoice</code></a></td>
+<td>Discounted Invoice</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#dunning-letter-text"><code>Dunning Letter Text</code></a></td>
+<td>Dunning Letter Text</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#exchange-rate-revaluation-account"><code>Exchange Rate Revaluation Account</code></a></td>
+<td>Exchange Rate Revaluation Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#financial-report-row"><code>Financial Report Row</code></a></td>
+<td>Financial Report Row</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#fiscal-year-company"><code>Fiscal Year Company</code></a></td>
+<td>Fiscal Year Company</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#item-tax-template-detail"><code>Item Tax Template Detail</code></a></td>
+<td>Item Tax Template Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#item-wise-tax-detail"><code>Item Wise Tax Detail</code></a></td>
+<td>Item Wise Tax Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#journal-entry-account"><code>Journal Entry Account</code></a></td>
+<td>Journal Entry Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#journal-entry-template-account"><code>Journal Entry Template Account</code></a></td>
+<td>Journal Entry Template Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#ledger-health-monitor-company"><code>Ledger Health Monitor Company</code></a></td>
+<td>Ledger Health Monitor Company</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#ledger-merge-accounts"><code>Ledger Merge Accounts</code></a></td>
+<td>Ledger Merge Accounts</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#loyalty-program-collection"><code>Loyalty Program Collection</code></a></td>
+<td>Loyalty Program Collection</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#mode-of-payment-account"><code>Mode of Payment Account</code></a></td>
+<td>Mode of Payment Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#monthly-distribution-percentage"><code>Monthly Distribution Percentage</code></a></td>
+<td>Monthly Distribution Percentage</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#opening-invoice-creation-tool-item"><code>Opening Invoice Creation Tool Item</code></a></td>
+<td>Opening Invoice Creation Tool Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#overdue-payment"><code>Overdue Payment</code></a></td>
+<td>Overdue Payment</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#party-account"><code>Party Account</code></a></td>
+<td>Party Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-entry-deduction"><code>Payment Entry Deduction</code></a></td>
+<td>Payment Entry Deduction</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-entry-reference"><code>Payment Entry Reference</code></a></td>
+<td>Payment Entry Reference</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-order-reference"><code>Payment Order Reference</code></a></td>
+<td>Payment Order Reference</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-reconciliation-allocation"><code>Payment Reconciliation Allocation</code></a></td>
+<td>Payment Reconciliation Allocation</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-reconciliation-invoice"><code>Payment Reconciliation Invoice</code></a></td>
+<td>Payment Reconciliation Invoice</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-reconciliation-payment"><code>Payment Reconciliation Payment</code></a></td>
+<td>Payment Reconciliation Payment</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-reference"><code>Payment Reference</code></a></td>
+<td>Payment Reference</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-schedule"><code>Payment Schedule</code></a></td>
+<td>Payment Schedule</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-terms-template-detail"><code>Payment Terms Template Detail</code></a></td>
+<td>Payment Terms Template Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pegged-currency-details"><code>Pegged Currency Details</code></a></td>
+<td>Pegged Currency Details</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-closing-entry-detail"><code>POS Closing Entry Detail</code></a></td>
+<td>POS Closing Entry Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-closing-entry-taxes"><code>POS Closing Entry Taxes</code></a></td>
+<td>POS Closing Entry Taxes</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-customer-group"><code>POS Customer Group</code></a></td>
+<td>POS Customer Group</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-field"><code>POS Field</code></a></td>
+<td>POS Field</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-invoice-item"><code>POS Invoice Item</code></a></td>
+<td>POS Invoice Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-invoice-reference"><code>POS Invoice Reference</code></a></td>
+<td>POS Invoice Reference</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-item-group"><code>POS Item Group</code></a></td>
+<td>POS Item Group</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-opening-entry-detail"><code>POS Opening Entry Detail</code></a></td>
+<td>POS Opening Entry Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-payment-method"><code>POS Payment Method</code></a></td>
+<td>POS Payment Method</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-profile-user"><code>POS Profile User</code></a></td>
+<td>POS Profile User</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-search-fields"><code>POS Search Fields</code></a></td>
+<td>POS Search Fields</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pricing-rule-brand"><code>Pricing Rule Brand</code></a></td>
+<td>Pricing Rule Brand</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pricing-rule-detail"><code>Pricing Rule Detail</code></a></td>
+<td>Pricing Rule Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pricing-rule-item-code"><code>Pricing Rule Item Code</code></a></td>
+<td>Pricing Rule Item Code</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pricing-rule-item-group"><code>Pricing Rule Item Group</code></a></td>
+<td>Pricing Rule Item Group</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-payment-reconciliation-log-allocations"><code>Process Payment Reconciliation Log Allocations</code></a></td>
+<td>Process Payment Reconciliation Log Allocations</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-period-closing-voucher-detail"><code>Process Period Closing Voucher Detail</code></a></td>
+<td>Process Period Closing Voucher Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-statement-of-accounts-cc"><code>Process Statement Of Accounts CC</code></a></td>
+<td>Process Statement Of Accounts CC</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-statement-of-accounts-customer"><code>Process Statement Of Accounts Customer</code></a></td>
+<td>Process Statement Of Accounts Customer</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#promotional-scheme-price-discount"><code>Promotional Scheme Price Discount</code></a></td>
+<td>Promotional Scheme Price Discount</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#promotional-scheme-product-discount"><code>Promotional Scheme Product Discount</code></a></td>
+<td>Promotional Scheme Product Discount</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#psoa-cost-center"><code>PSOA Cost Center</code></a></td>
+<td>PSOA Cost Center</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#psoa-project"><code>PSOA Project</code></a></td>
+<td>PSOA Project</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#purchase-invoice-advance"><code>Purchase Invoice Advance</code></a></td>
+<td>Purchase Invoice Advance</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#purchase-invoice-item"><code>Purchase Invoice Item</code></a></td>
+<td>Purchase Invoice Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#purchase-taxes-and-charges"><code>Purchase Taxes and Charges</code></a></td>
+<td>Purchase Taxes and Charges</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#repost-accounting-ledger-items"><code>Repost Accounting Ledger Items</code></a></td>
+<td>Repost Accounting Ledger Items</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#repost-allowed-types"><code>Repost Allowed Types</code></a></td>
+<td>Repost Allowed Types</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#repost-payment-ledger-items"><code>Repost Payment Ledger Items</code></a></td>
+<td>Repost Payment Ledger Items</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-invoice-advance"><code>Sales Invoice Advance</code></a></td>
+<td>Sales Invoice Advance</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-invoice-item"><code>Sales Invoice Item</code></a></td>
+<td>Sales Invoice Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-invoice-payment"><code>Sales Invoice Payment</code></a></td>
+<td>Sales Invoice Payment</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-invoice-reference"><code>Sales Invoice Reference</code></a></td>
+<td>Sales Invoice Reference</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-invoice-timesheet"><code>Sales Invoice Timesheet</code></a></td>
+<td>Sales Invoice Timesheet</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-partner-item"><code>Sales Partner Item</code></a></td>
+<td>Sales Partner Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-taxes-and-charges"><code>Sales Taxes and Charges</code></a></td>
+<td>Sales Taxes and Charges</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#share-balance"><code>Share Balance</code></a></td>
+<td>Share Balance</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#shipping-rule-condition"><code>Shipping Rule Condition</code></a></td>
+<td>Shipping Rule Condition</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#shipping-rule-country"><code>Shipping Rule Country</code></a></td>
+<td>Shipping Rule Country</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#south-africa-vat-account"><code>South Africa VAT Account</code></a></td>
+<td>South Africa VAT Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#subscription-plan-detail"><code>Subscription Plan Detail</code></a></td>
+<td>Subscription Plan Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#supplier-group-item"><code>Supplier Group Item</code></a></td>
+<td>Supplier Group Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#supplier-item"><code>Supplier Item</code></a></td>
+<td>Supplier Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#tax-withholding-account"><code>Tax Withholding Account</code></a></td>
+<td>Tax Withholding Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#tax-withholding-entry"><code>Tax Withholding Entry</code></a></td>
+<td>Tax Withholding Entry</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#tax-withholding-rate"><code>Tax Withholding Rate</code></a></td>
+<td>Tax Withholding Rate</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#territory-item"><code>Territory Item</code></a></td>
+<td>Territory Item</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#transaction-deletion-record-details"><code>Transaction Deletion Record Details</code></a></td>
+<td>Transaction Deletion Record Details</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#unreconcile-payment-entries"><code>Unreconcile Payment Entries</code></a></td>
+<td>Unreconcile Payment Entries</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#account-closing-balance"><code>Account Closing Balance</code></a></td>
+<td>Account Closing Balance</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ACB-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#advance-payment-ledger-entry"><code>Advance Payment Ledger Entry</code></a></td>
+<td>Advance Payment Ledger Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>APLE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-guarantee"><code>Bank Guarantee</code></a></td>
+<td>Bank Guarantee</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>BG-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#bank-transaction"><code>Bank Transaction</code></a></td>
+<td>Bank Transaction</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>BT-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#budget"><code>Budget</code></a></td>
+<td>Budget</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>BUDG-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#cashier-closing"><code>Cashier Closing</code></a></td>
+<td>Cashier Closing</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>CC-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#cost-center-allocation"><code>Cost Center Allocation</code></a></td>
+<td>Cost Center Allocation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>CCA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#dunning"><code>Dunning</code></a></td>
+<td>Dunning</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>DUNN-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#exchange-rate-revaluation"><code>Exchange Rate Revaluation</code></a></td>
+<td>Exchange Rate Revaluation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ERR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#gl-entry"><code>GL Entry</code></a></td>
+<td>GL Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>GE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#invoice-discounting"><code>Invoice Discounting</code></a></td>
+<td>Invoice Discounting</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ID-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#journal-entry"><code>Journal Entry</code></a></td>
+<td>Journal Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>JE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-entry"><code>Payment Entry</code></a></td>
+<td>Payment Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-ledger-entry"><code>Payment Ledger Entry</code></a></td>
+<td>Payment Ledger Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PLE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-order"><code>Payment Order</code></a></td>
+<td>Payment Order</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PO-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#payment-request"><code>Payment Request</code></a></td>
+<td>Payment Request</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#period-closing-voucher"><code>Period Closing Voucher</code></a></td>
+<td>Period Closing Voucher</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PCV-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-closing-entry"><code>POS Closing Entry</code></a></td>
+<td>POS Closing Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PCE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-invoice"><code>POS Invoice</code></a></td>
+<td>POS Invoice</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PI-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-invoice-merge-log"><code>POS Invoice Merge Log</code></a></td>
+<td>POS Invoice Merge Log</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PIML-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-opening-entry"><code>POS Opening Entry</code></a></td>
+<td>POS Opening Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>POE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-deferred-accounting"><code>Process Deferred Accounting</code></a></td>
+<td>Process Deferred Accounting</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PDA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-payment-reconciliation"><code>Process Payment Reconciliation</code></a></td>
+<td>Process Payment Reconciliation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PPR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-period-closing-voucher"><code>Process Period Closing Voucher</code></a></td>
+<td>Process Period Closing Voucher</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PPCV-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#process-subscription"><code>Process Subscription</code></a></td>
+<td>Process Subscription</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PRSU-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#purchase-invoice"><code>Purchase Invoice</code></a></td>
+<td>Purchase Invoice</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>PUIN-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#repost-accounting-ledger"><code>Repost Accounting Ledger</code></a></td>
+<td>Repost Accounting Ledger</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>RAL-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#repost-payment-ledger"><code>Repost Payment Ledger</code></a></td>
+<td>Repost Payment Ledger</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>RPL-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#sales-invoice"><code>Sales Invoice</code></a></td>
+<td>Sales Invoice</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SI-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#share-transfer"><code>Share Transfer</code></a></td>
+<td>Share Transfer</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ST-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#unreconcile-payment"><code>Unreconcile Payment</code></a></td>
+<td>Unreconcile Payment</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>UP-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#accounts-settings"><code>Accounts Settings</code></a></td>
+<td>Accounts Settings</td>
+<td>unique</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#currency-exchange-settings"><code>Currency Exchange Settings</code></a></td>
+<td>Currency Exchange Settings</td>
+<td>unique</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#pos-settings"><code>POS Settings</code></a></td>
+<td>POS Settings</td>
+<td>unique</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/accounts/#subscription-settings"><code>Subscription Settings</code></a></td>
+<td>Subscription Settings</td>
+<td>unique</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="points-cles">Points clés<a class="headerlink" href="#points-cles" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Les pièces maîtresses</strong> : <code>Sales Invoice</code> (SI-) et <code>Purchase Invoice</code> (PI-) pour la facturation, <code>Journal Entry</code> (JV-, 131 champs) pour les écritures manuelles, <code>Payment Entry</code> (PR-) pour les encaissements/décaissements, <code>Purchase Receipt</code>/<code>Delivery Note</code> étant portés par <code>stock</code>.</li>
+<li><strong>Les journaux sont immuables</strong> : <code>GL Entry</code>, <code>Payment Ledger Entry</code>, <code>Payment Reconciliation</code> et les tables de sous-comptes (<code>Accounts Ledger</code>,…) ferment leurs écritures humaines (<code>permissions</code> explicites) — seuls les hooks <code>on_submit</code>/<code>on_cancel</code> du plugin comptable y écrivent. Une écriture de journal cite sa pièce par <code>voucher_type</code>/<code>voucher_no</code> (<code>DynamicLink</code>).</li>
+<li><strong>Le plan SYSCOHADA</strong> est embarqué comme données (voir le dépôt moteur, <code>charts/syscohada.yaml</code>) et se charge dans les comptes par société (<code>Company.default_currency</code>, arbres de comptes par <code>Account</code> avec vue <code>tree</code>).</li>
+<li><strong>Multi-devises</strong> : 1 champ <code>currency_from</code> sur 4 en moyenne — facturation, rapprochement bancaire et réévaluation suivent tous la devise de la société ou du tiers.</li>
+<li><strong>Clôture et périodes</strong> : <code>Fiscal Year</code> (hébergé dans <code>setup</code> mais piloté ici), <code>Period Closing Voucher</code>, <code>Bank Reconciliation</code> (rapprochement), <code>Process Deferred Accounting</code> (répartitions).</li>
+</ul>
+<h2 id="dependances">Dépendances<a class="headerlink" href="#dependances" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Dépend de</strong> : <code>setup</code> (215 liens — société, devise, pays…), <code>stock</code> (54), <code>projects</code> (27), <code>selling</code> (22), <code>crm</code> (19), <code>buying</code> (10), <code>assets</code> (5), <code>communication</code> (2), <code>regional</code> (1).</li>
+<li><strong>Requis par</strong> : <code>stock</code> (57), <code>setup</code> (50), <code>selling</code> (30), <code>buying</code> (29), <code>assets</code> (28), <code>hr</code> (19), <code>payroll</code> (17), <code>subcontracting</code> (9), <code>regional</code> (5), <code>projects</code> (3), <code>manufacturing</code> (1).</li>
+</ul>
+<p>Détail complet : <a href="../../dependances/#comptabilite-accounts">matrice</a>.</p>
+<h2 id="implementation-en-plugin-xcore">Implémentation en plugin xcore<a class="headerlink" href="#implementation-en-plugin-xcore" title="Permanent link">#</a></h2>
+<ul>
+<li>Plugin <code>accounts</code> (<code>execution_mode: trusted</code>) : <code>load_dir</code> des 192 YAML, <code>load_workspaces</code>, déclaration <code>rbac.declare</code> des grants conventionnels + les grants fermés des journaux.</li>
+<li><strong>Hooks à écrire</strong> (absents du YAML) : double écriture comptable à la soumission de chaque pièce (<code>Sales Invoice</code>, <code>Purchase Invoice</code>, <code>Payment Entry</code>, <code>Journal Entry</code>), écritures de régularisation à l'annulation, contrôle d'équilibre des lignes de journal (débit = crédit), rapprochement bancaire.</li>
+<li><strong><code>cancel_ignores</code></strong> : <code>GL Entry</code>, <code>Payment Ledger Entry</code>… doivent figurer dans la liste de la pièce d'origine pour que son <code>on_cancel</code> puisse inverser ses propres écritures (garde M2 du moteur).</li>
+<li>La numérotation <code>JV-{YYYY}-{#####}</code> etc. est déjà déclarée dans le YAML — rien à coder.</li>
+<li>Traduction : le catalogue <code>fr.yaml</code> du dépôt moteur couvre ce module (T17).</li>
+</ul>
+<h2 id="reference-complete">Référence complète<a class="headerlink" href="#reference-complete" title="Permanent link">#</a></h2>
+<p>Chaque champ de chaque DocType : <a href="../../reference/accounts/">Référence — Comptabilité</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../integration/" class="btn btn-neutral float-left" title="Implémenter un module"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../assets/" class="btn btn-neutral float-right" title="Immobilisations (assets)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../../integration/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../assets/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

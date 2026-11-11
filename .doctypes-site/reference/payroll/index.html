@@ -1,0 +1,3701 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/payroll/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Paie (payroll) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Paie (payroll)";
+        var mkdocs_page_input_path = "reference/payroll.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/payroll/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Paie (payroll)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#additional-salary">Additional Salary</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#arrear">Arrear</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#bulk-salary-structure-assignment">Bulk Salary Structure Assignment</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-benefit-application">Employee Benefit Application</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-benefit-application-detail">Employee Benefit Application Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-benefit-claim">Employee Benefit Claim</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-benefit-detail">Employee Benefit Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-benefit-ledger">Employee Benefit Ledger</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-cost-center">Employee Cost Center</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-incentive">Employee Incentive</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-other-income">Employee Other Income</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-tax-exemption-category">Employee Tax Exemption Category</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-tax-exemption-declaration">Employee Tax Exemption Declaration</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-tax-exemption-declaration-category">Employee Tax Exemption Declaration Category</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-tax-exemption-proof-submission">Employee Tax Exemption Proof Submission</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-tax-exemption-proof-submission-detail">Employee Tax Exemption Proof Submission Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-tax-exemption-sub-category">Employee Tax Exemption Sub Category</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gratuity">Gratuity</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gratuity-applicable-component">Gratuity Applicable Component</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gratuity-rule">Gratuity Rule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gratuity-rule-slab">Gratuity Rule Slab</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#income-tax-slab">Income Tax Slab</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#income-tax-slab-other-charges">Income Tax Slab Other Charges</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#payroll-correction">Payroll Correction</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#payroll-correction-child">Payroll Correction Child</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#payroll-employee-detail">Payroll Employee Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#payroll-entry">Payroll Entry</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#payroll-period">Payroll Period</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#payroll-period-date">Payroll Period Date</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#payroll-settings">Payroll Settings</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#retention-bonus">Retention Bonus</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-component">Salary Component</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-component-account">Salary Component Account</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-detail">Salary Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-slip">Salary Slip</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-slip-leave">Salary Slip Leave</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-slip-timesheet">Salary Slip Timesheet</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-structure">Salary Structure</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-structure-assignment">Salary Structure Assignment</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-withholding">Salary Withholding</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salary-withholding-cycle">Salary Withholding Cycle</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#taxable-salary-slab">Taxable Salary Slab</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Paie (payroll)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/payroll.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-paie-payroll">Référence des champs — Paie (<code>payroll</code>)<a class="headerlink" href="#reference-des-champs-paie-payroll" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>payroll/</code> (42 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>444 champs au total ; types les plus fréquents : <code>Link</code> (136), <code>Currency</code> (83), <code>Boolean</code> (59), <code>Text</code> (38), <code>Date</code> (34).</p>
+<h2 id="additional-salary">Additional Salary<a class="headerlink" href="#additional-salary" title="Permanent link">#</a></h2>
+<p><em>Additional Salary</em> — <code>payroll/additional_salary.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>AS-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>circle-plus</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — HR-ADS-.YY.-.MM.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>overwrite_salary_structure_amount</code></td>
+<td>Overwrite Salary Structure Amount</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>deduct_full_tax_on_selected_payroll_date</code></td>
+<td>Deduct Full Tax on Selected Payroll Date</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>payroll_date</code></td>
+<td>Payroll Date</td>
+<td>Date</td>
+<td>colonne de liste; — The date on which Salary Component with Amount will contribute for Earnings/Deduction in Salary Slip.</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>Salary Component Type</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>is_recurring</code></td>
+<td>Is Recurring</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ref_doctype</code></td>
+<td>Reference Document Type</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>ref_docname</code></td>
+<td>Reference Document</td>
+<td>DynamicLink → <code>ref_doctype</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="arrear">Arrear<a class="headerlink" href="#arrear" title="Permanent link">#</a></h2>
+<p><em>Arrear</em> — <code>payroll/arrear.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>ARRE-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>rotate-ccw-clock</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>payroll_period</code></td>
+<td>Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>payroll_date</code></td>
+<td>Payroll Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>arrear_start_date</code></td>
+<td>Arrear Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; — Salary slips starting on or after this date will be considered for arrear calculations</td>
+</tr>
+<tr>
+<td><code>salary_structure</code></td>
+<td>Salary Structure</td>
+<td>Link → <code>Salary Structure</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>earning_arrears</code></td>
+<td>Earning Arrears</td>
+<td>Table → <code>Payroll Correction Child</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>deduction_arrears</code></td>
+<td>Deduction Arrears</td>
+<td>Table → <code>Payroll Correction Child</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>accrual_arrears</code></td>
+<td>Accrual Arrears</td>
+<td>Table → <code>Payroll Correction Child</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="bulk-salary-structure-assignment">Bulk Salary Structure Assignment<a class="headerlink" href="#bulk-salary-structure-assignment" title="Permanent link">#</a></h2>
+<p><em>Bulk Salary Structure Assignment</em> — <code>payroll/bulk_salary_structure_assignment.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>salary_structure</code></li>
+<li><strong>Icône</strong> : <code>users</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>salary_structure</code></td>
+<td>Salary Structure</td>
+<td>Link → <code>Salary Structure</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>income_tax_slab</code></td>
+<td>Income Tax Slab</td>
+<td>Link → <code>Income Tax Slab</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payroll_payable_account</code></td>
+<td>Payroll Payable Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>branch</code></td>
+<td>Branch</td>
+<td>Link → <code>Branch</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Link → <code>Designation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>employment_type</code></td>
+<td>Employment Type</td>
+<td>Link → <code>Employment Type</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>grade</code></td>
+<td>Employee Grade</td>
+<td>Link → <code>Employee Grade</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-benefit-application">Employee Benefit Application<a class="headerlink" href="#employee-benefit-application" title="Permanent link">#</a></h2>
+<p><em>Employee Benefit Application</em> — <code>payroll/employee_benefit_application.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>EBA-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>gift</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>max_benefits</code></td>
+<td>Max Benefits (Yearly)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>remaining_benefit</code></td>
+<td>Remaining Benefits (Yearly)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>payroll_period</code></td>
+<td>Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>employee_benefits</code></td>
+<td>Flexible Benefits</td>
+<td>Table → <code>Employee Benefit Application Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_amount</code></td>
+<td>Total Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-benefit-application-detail">Employee Benefit Application Detail<a class="headerlink" href="#employee-benefit-application-detail" title="Permanent link">#</a></h2>
+<p><em>Employee Benefit Application Detail</em> — <code>payroll/employee_benefit_application_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_benefit_amount</code></td>
+<td>Max Benefit Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>salary_component</code></td>
+<td>Earning Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-benefit-claim">Employee Benefit Claim<a class="headerlink" href="#employee-benefit-claim" title="Permanent link">#</a></h2>
+<p><em>Employee Benefit Claim</em> — <code>payroll/employee_benefit_claim.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>EBC-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>receipt</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>earning_component</code></td>
+<td>Claim Benefit For</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>max_amount_eligible</code></td>
+<td>Max Amount Eligible For Claim</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>claimed_amount</code></td>
+<td>Claimed Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td>Attachments</td>
+<td>Attach</td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>payroll_date</code></td>
+<td>Payroll Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>yearly_benefit</code></td>
+<td>Yearly Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-benefit-detail">Employee Benefit Detail<a class="headerlink" href="#employee-benefit-detail" title="Permanent link">#</a></h2>
+<p><em>Employee Benefit Detail</em> — <code>payroll/employee_benefit_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>salary_component</code></td>
+<td>Earning Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Benefit Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-benefit-ledger">Employee Benefit Ledger<a class="headerlink" href="#employee-benefit-ledger" title="Permanent link">#</a></h2>
+<p><em>Employee Benefit Ledger</em> — <code>payroll/employee_benefit_ledger.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>book-open</code></li>
+<li><strong>Permissions explicites</strong> — <code>write</code> : 0, <code>create</code> : 0, <code>delete</code> : 0</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>transaction_type</code></td>
+<td>Transaction Type</td>
+<td>Select — Accrual · Payout</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td>défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>yearly_benefit</code></td>
+<td>Yearly Benefit</td>
+<td>Currency</td>
+<td></td>
+</tr>
+<tr>
+<td><code>payroll_period</code></td>
+<td>Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>remarks</code></td>
+<td>Remarks</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>salary_slip</code></td>
+<td>Salary Slip</td>
+<td>Link → <code>Salary Slip</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>flexible_benefit</code></td>
+<td>Flexible Benefit</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Enabled only for Employee Benefit components from Salary Structure Assignment</td>
+</tr>
+<tr>
+<td><code>reference_doctype</code></td>
+<td>Reference Doctype</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reference_document</code></td>
+<td>Reference Document</td>
+<td>DynamicLink → <code>reference_doctype</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-cost-center">Employee Cost Center<a class="headerlink" href="#employee-cost-center" title="Permanent link">#</a></h2>
+<p><em>Employee Cost Center</em> — <code>payroll/employee_cost_center.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>percentage</code></td>
+<td>Percentage (%)</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-incentive">Employee Incentive<a class="headerlink" href="#employee-incentive" title="Permanent link">#</a></h2>
+<p><em>Employee Incentive</em> — <code>payroll/employee_incentive.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>EI-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>badge-dollar-sign</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>incentive_amount</code></td>
+<td>Incentive Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>payroll_date</code></td>
+<td>Payroll Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-other-income">Employee Other Income<a class="headerlink" href="#employee-other-income" title="Permanent link">#</a></h2>
+<p><em>Employee Other Income</em> — <code>payroll/employee_other_income.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>EOI-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>coins</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>payroll_period</code></td>
+<td>Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td>Source</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-tax-exemption-category">Employee Tax Exemption Category<a class="headerlink" href="#employee-tax-exemption-category" title="Permanent link">#</a></h2>
+<p><em>Employee Tax Exemption Category</em> — <code>payroll/employee_tax_exemption_category.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_amount</code></td>
+<td>Max Exemption Amount</td>
+<td>Currency</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>Is Active</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-tax-exemption-declaration">Employee Tax Exemption Declaration<a class="headerlink" href="#employee-tax-exemption-declaration" title="Permanent link">#</a></h2>
+<p><em>Employee Tax Exemption Declaration</em> — <code>payroll/employee_tax_exemption_declaration.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>ETED-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>file-pen-line</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>payroll_period</code></td>
+<td>Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>declarations</code></td>
+<td>Declarations</td>
+<td>Table → <code>Employee Tax Exemption Declaration Category</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_declared_amount</code></td>
+<td>Total Declared Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_exemption_amount</code></td>
+<td>Total Exemption Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-tax-exemption-declaration-category">Employee Tax Exemption Declaration Category<a class="headerlink" href="#employee-tax-exemption-declaration-category" title="Permanent link">#</a></h2>
+<p><em>Employee Tax Exemption Declaration Category</em> — <code>payroll/employee_tax_exemption_declaration_category.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exemption_sub_category</code></td>
+<td>Exemption Sub Category</td>
+<td>Link → <code>Employee Tax Exemption Sub Category</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>exemption_category</code></td>
+<td>Exemption Category</td>
+<td>Link → <code>Employee Tax Exemption Category</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>max_amount</code></td>
+<td>Maximum Exempted Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Declared Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-tax-exemption-proof-submission">Employee Tax Exemption Proof Submission<a class="headerlink" href="#employee-tax-exemption-proof-submission" title="Permanent link">#</a></h2>
+<p><em>Employee Tax Exemption Proof Submission</em> — <code>payroll/employee_tax_exemption_proof_submission.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>ETEPS-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>file-check</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>submission_date</code></td>
+<td>Submission Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>payroll_period</code></td>
+<td>Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>tax_exemption_proofs</code></td>
+<td>Tax Exemption Proofs</td>
+<td>Table → <code>Employee Tax Exemption Proof Submission Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_actual_amount</code></td>
+<td>Total Actual Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>exemption_amount</code></td>
+<td>Total Exemption Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>attachments</code></td>
+<td>Attachments</td>
+<td>Attach</td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-tax-exemption-proof-submission-detail">Employee Tax Exemption Proof Submission Detail<a class="headerlink" href="#employee-tax-exemption-proof-submission-detail" title="Permanent link">#</a></h2>
+<p><em>Employee Tax Exemption Proof Submission Detail</em> — <code>payroll/employee_tax_exemption_proof_submission_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exemption_sub_category</code></td>
+<td>Exemption Sub Category</td>
+<td>Link → <code>Employee Tax Exemption Sub Category</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>exemption_category</code></td>
+<td>Exemption Category</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>max_amount</code></td>
+<td>Maximum Exemption Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>type_of_proof</code></td>
+<td>Type of Proof</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Actual Amount</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-tax-exemption-sub-category">Employee Tax Exemption Sub Category<a class="headerlink" href="#employee-tax-exemption-sub-category" title="Permanent link">#</a></h2>
+<p><em>Employee Tax Exemption Sub Category</em> — <code>payroll/employee_tax_exemption_sub_category.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>exemption_category</code></li>
+<li><strong>Icône</strong> : <code>tags</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exemption_category</code></td>
+<td>Tax Exemption Category</td>
+<td>Link → <code>Employee Tax Exemption Category</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>max_amount</code></td>
+<td>Max Exemption Amount</td>
+<td>Currency</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>Is Active</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="gratuity">Gratuity<a class="headerlink" href="#gratuity" title="Permanent link">#</a></h2>
+<p><em>Gratuity</em> — <code>payroll/gratuity.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>GRAT-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>piggy-bank</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>current_work_experience</code></td>
+<td>Current Work Experience</td>
+<td>Number</td>
+<td>défaut <code>0.0</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Total Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Unpaid · Paid · Submitted · Cancelled</td>
+<td>colonne de liste; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>mode_of_payment</code></td>
+<td>Mode of Payment</td>
+<td>Link → <code>Mode of Payment</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>gratuity_rule</code></td>
+<td>Gratuity Rule</td>
+<td>Link → <code>Gratuity Rule</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>paid_amount</code></td>
+<td>Paid Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>payable_account</code></td>
+<td>Payable Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>pay_via_salary_slip</code></td>
+<td>Pay via Salary Slip</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>payroll_date</code></td>
+<td>Payroll Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="gratuity-applicable-component">Gratuity Applicable Component<a class="headerlink" href="#gratuity-applicable-component" title="Permanent link">#</a></h2>
+<p><em>Gratuity Applicable Component</em> — <code>payroll/gratuity_applicable_component.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="gratuity-rule">Gratuity Rule<a class="headerlink" href="#gratuity-rule" title="Permanent link">#</a></h2>
+<p><em>Gratuity Rule</em> — <code>payroll/gratuity_rule.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>calculate_gratuity_amount_based_on</code></li>
+<li><strong>Icône</strong> : <code>scale</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>disable</code></td>
+<td>Disable</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>calculate_gratuity_amount_based_on</code></td>
+<td>Calculate Gratuity Amount Based On</td>
+<td>Select — Current Slab · Sum of all previous slabs</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>applicable_earnings_component</code></td>
+<td>Applicable Earnings Component</td>
+<td>Table → <code>Gratuity Applicable Component</code></td>
+<td>— Salary components should be part of the Salary Structure.</td>
+</tr>
+<tr>
+<td><code>gratuity_rule_slabs</code></td>
+<td>Current Work Experience</td>
+<td>Table → <code>Gratuity Rule Slab</code></td>
+<td>— Set "From(Year)" and "To(Year)" to 0 for no upper and lower limit.</td>
+</tr>
+<tr>
+<td><code>work_experience_calculation_function</code></td>
+<td>Work Experience Calculation Method</td>
+<td>Select — Round off Work Experience · Take Exact Completed Years · Manual</td>
+<td>défaut <code>Round off Work Experience</code></td>
+</tr>
+<tr>
+<td><code>total_working_days_per_year</code></td>
+<td>Total working Days Per Year</td>
+<td>Number</td>
+<td>défaut <code>365.0</code></td>
+</tr>
+<tr>
+<td><code>minimum_year_for_gratuity</code></td>
+<td>Minimum Year for Gratuity</td>
+<td>Int</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="gratuity-rule-slab">Gratuity Rule Slab<a class="headerlink" href="#gratuity-rule-slab" title="Permanent link">#</a></h2>
+<p><em>Gratuity Rule Slab</em> — <code>payroll/gratuity_rule_slab.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fraction_of_applicable_earnings</code></td>
+<td>Fraction of Applicable Earnings</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_year</code></td>
+<td>From(Year)</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>to_year</code></td>
+<td>To(Year)</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>0</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="income-tax-slab">Income Tax Slab<a class="headerlink" href="#income-tax-slab" title="Permanent link">#</a></h2>
+<p><em>Income Tax Slab</em> — <code>payroll/income_tax_slab.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>ITS-{YYYY}-{#####}</code></li>
+<li><strong>Icône</strong> : <code>badge-percent</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>effective_from</code></td>
+<td>Effective from</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>allow_tax_exemption</code></td>
+<td>Allow Tax Exemption</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, Tax Exemption Declaration will be considered for income tax calculation.</td>
+</tr>
+<tr>
+<td><code>slabs</code></td>
+<td>Taxable Salary Slabs</td>
+<td>Table → <code>Taxable Salary Slab</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>standard_tax_exemption_amount</code></td>
+<td>Standard Tax Exemption Amount</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>other_taxes_and_charges</code></td>
+<td>Other Taxes and Charges</td>
+<td>Table → <code>Income Tax Slab Other Charges</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>tax_relief_limit</code></td>
+<td>Taxable Income Relief Threshold Limit</td>
+<td>Currency</td>
+<td>devise de <code>currency</code>; — Maximum annual taxable income eligible for full tax relief. No tax is applied if income does not exceed this l</td>
+</tr>
+</tbody>
+</table>
+<h2 id="income-tax-slab-other-charges">Income Tax Slab Other Charges<a class="headerlink" href="#income-tax-slab-other-charges" title="Permanent link">#</a></h2>
+<p><em>Income Tax Slab Other Charges</em> — <code>payroll/income_tax_slab_other_charges.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>percent</code></td>
+<td>Percent</td>
+<td>Percent</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>min_taxable_income</code></td>
+<td>Min Taxable Income</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>max_taxable_income</code></td>
+<td>Max Taxable Income</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="payroll-correction">Payroll Correction<a class="headerlink" href="#payroll-correction" title="Permanent link">#</a></h2>
+<p><em>Payroll Correction</em> — <code>payroll/payroll_correction.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>PC-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>file-diff</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payroll_period</code></td>
+<td>Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>salary_slip_reference</code></td>
+<td>Salary Slip Reference</td>
+<td>Link → <code>Salary Slip</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>working_days</code></td>
+<td>Working Days</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>lwp_days</code></td>
+<td>Total Days Without Pay</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>days_to_reverse</code></td>
+<td>Days to Reverse</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste; — Enter the number of Leave Without Pay (LWP) days you want to reverse. This value cannot exceed the total LWP d</td>
+</tr>
+<tr>
+<td><code>earning_arrears</code></td>
+<td>Earning Arrears</td>
+<td>Table → <code>Payroll Correction Child</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>deduction_arrears</code></td>
+<td>Deduction Arrears</td>
+<td>Table → <code>Payroll Correction Child</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>payroll_date</code></td>
+<td>Payroll Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; — Choose the date on which you want to create these components as arrears.</td>
+</tr>
+<tr>
+<td><code>accrual_arrears</code></td>
+<td>Accrual Arrears</td>
+<td>Table → <code>Payroll Correction Child</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>payment_days</code></td>
+<td>Payment Days</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="payroll-correction-child">Payroll Correction Child<a class="headerlink" href="#payroll-correction-child" title="Permanent link">#</a></h2>
+<p><em>Payroll Correction Child</em> — <code>payroll/payroll_correction_child.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="payroll-employee-detail">Payroll Employee Detail<a class="headerlink" href="#payroll-employee-detail" title="Permanent link">#</a></h2>
+<p><em>Payroll Employee Detail</em> — <code>payroll/payroll_employee_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>is_salary_withheld</code></td>
+<td>Is Salary Withheld</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="payroll-entry">Payroll Entry<a class="headerlink" href="#payroll-entry" title="Permanent link">#</a></h2>
+<p><em>Payroll Entry</em> — <code>payroll/payroll_entry.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>PAEN-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>wallet</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>payroll_frequency</code></td>
+<td>Payroll Frequency</td>
+<td>Select — Monthly · Fortnightly · Bimonthly · Weekly · Daily</td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>branch</code></td>
+<td>Branch</td>
+<td>Link → <code>Branch</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Link → <code>Designation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>number_of_employees</code></td>
+<td>Number Of Employees</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>employees</code></td>
+<td>Employees</td>
+<td>Table → <code>Payroll Employee Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>validate_attendance</code></td>
+<td>Validate Attendance</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>salary_slip_based_on_timesheet</code></td>
+<td>Salary Slip Based on Timesheet</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>deduct_tax_for_unsubmitted_tax_exemption_proof</code></td>
+<td>Deduct Tax For Unsubmitted Tax Exemption Proof</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payment_account</code></td>
+<td>Payment Account</td>
+<td>Link → <code>Account</code></td>
+<td>— Select Payment Account to make Bank Entry</td>
+</tr>
+<tr>
+<td><code>salary_slips_created</code></td>
+<td>Salary Slips Created</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>salary_slips_submitted</code></td>
+<td>Salary Slips Submitted</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>bank_account</code></td>
+<td>Bank Account</td>
+<td>Link → <code>Bank Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>exchange_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>payroll_payable_account</code></td>
+<td>Payroll Payable Account</td>
+<td>Link → <code>Account</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>error_message</code></td>
+<td>Error Message</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Cancelled · Queued · Failed</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>grade</code></td>
+<td>Grade</td>
+<td>Link → <code>Employee Grade</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>overtime_step</code></td>
+<td>Overtime Slip Step</td>
+<td>Select — Create · Submit</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="payroll-period">Payroll Period<a class="headerlink" href="#payroll-period" title="Permanent link">#</a></h2>
+<p><em>Payroll Period</em> — <code>payroll/payroll_period.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>company</code></li>
+<li><strong>Icône</strong> : <code>calendar-range</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>periods</code></td>
+<td>Payroll Periods</td>
+<td>Table → <code>Payroll Period Date</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="payroll-period-date">Payroll Period Date<a class="headerlink" href="#payroll-period-date" title="Permanent link">#</a></h2>
+<p><em>Payroll Period Date</em> — <code>payroll/payroll_period_date.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="payroll-settings">Payroll Settings<a class="headerlink" href="#payroll-settings" title="Permanent link">#</a></h2>
+<p><em>Payroll Settings</em> — <code>payroll/payroll_settings.yaml</code> · document unique</p>
+<ul>
+<li><strong>Titre</strong> : <code>password_policy</code></li>
+<li><strong>Icône</strong> : <code>settings</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>payroll_based_on</code></td>
+<td>Calculate Payroll Working Days Based On</td>
+<td>Select — Leave · Attendance</td>
+<td>défaut <code>Leave</code></td>
+</tr>
+<tr>
+<td><code>max_working_hours_against_timesheet</code></td>
+<td>Max working hours against Timesheet</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>include_holidays_in_total_working_days</code></td>
+<td>Include holidays in Total no. of Working Days</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, total no. of working days will include holidays, and this will reduce the value of Salary Per Day</td>
+</tr>
+<tr>
+<td><code>disable_rounded_total</code></td>
+<td>Disable Rounded Total</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If checked, hides and disables Rounded Total field in Salary Slips</td>
+</tr>
+<tr>
+<td><code>daily_wages_fraction_for_half_day</code></td>
+<td>Fraction of Daily Salary for Half Day</td>
+<td>Number</td>
+<td>défaut <code>0.5</code>; — The fraction of daily wages to be paid for half-day attendance</td>
+</tr>
+<tr>
+<td><code>email_salary_slip_to_employee</code></td>
+<td>Email Salary Slip to Employee</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — Emails salary slip to employee based on preferred email selected in Employee</td>
+</tr>
+<tr>
+<td><code>encrypt_salary_slips_in_emails</code></td>
+<td>Encrypt Salary Slips in Emails</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — The salary slip emailed to the employee will be password protected, the password will be generated based on th</td>
+</tr>
+<tr>
+<td><code>password_policy</code></td>
+<td>Password Policy</td>
+<td>Text</td>
+<td>colonne de liste; — <b>Example:</b> SAL-{first_name}-{date_of_birth.year} <br>This will generate a password like SAL-Jane-1972</td>
+</tr>
+<tr>
+<td><code>consider_unmarked_attendance_as</code></td>
+<td>Consider Unmarked Attendance As</td>
+<td>Select — Present · Absent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>show_leave_balances_in_salary_slip</code></td>
+<td>Show Leave Balances in Salary Slip</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>process_payroll_accounting_entry_based_on_employee</code></td>
+<td>Process Payroll Accounting Entry based on Employee</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If checked, Payroll Payable will be booked against each employee</td>
+</tr>
+<tr>
+<td><code>consider_marked_attendance_on_holidays</code></td>
+<td>Consider Marked Attendance on Holidays</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, deducts payment days for absent attendance on holidays. By default, holidays are considered as pai</td>
+</tr>
+<tr>
+<td><code>sender</code></td>
+<td>Sender</td>
+<td>Link → <code>Email Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sender_email</code></td>
+<td>Sender Email</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>email_template</code></td>
+<td>Email Template</td>
+<td>Link → <code>Email Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>create_overtime_slip</code></td>
+<td>Create Overtime Slip For Eligible Employee(s)</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If checked, overtime slip creation can be handled as part of payroll processing</td>
+</tr>
+<tr>
+<td><code>sender_copy</code></td>
+<td>Sender Copy</td>
+<td>Link → <code>Email Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>mandatory_benefit_application</code></td>
+<td>Mandatory Benefit Application</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If checked, flexible benefits are considered only if benefit application exists</td>
+</tr>
+</tbody>
+</table>
+<h2 id="retention-bonus">Retention Bonus<a class="headerlink" href="#retention-bonus" title="Permanent link">#</a></h2>
+<p><em>Retention Bonus</em> — <code>payroll/retention_bonus.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>RB-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>gem</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>bonus_payment_date</code></td>
+<td>Bonus Payment Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>bonus_amount</code></td>
+<td>Bonus Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>date_of_joining</code></td>
+<td>Date of Joining</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-component">Salary Component<a class="headerlink" href="#salary-component" title="Permanent link">#</a></h2>
+<p><em>Salary Component</em> — <code>payroll/salary_component.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>salary_component</code></li>
+<li><strong>Icône</strong> : <code>puzzle</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>salary_component</code></td>
+<td>Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>salary_component_abbr</code></td>
+<td>Abbr</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>Type</td>
+<td>Select — Earning · Deduction · Employer Contribution</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>is_tax_applicable</code></td>
+<td>Is Tax Applicable</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>depends_on_payment_days</code></td>
+<td>Depends on Payment Days</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>do_not_include_in_total</code></td>
+<td>Do Not Include in Total</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>deduct_full_tax_on_selected_payroll_date</code></td>
+<td>Deduct Full Tax on Selected Payroll Date</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>statistical_component</code></td>
+<td>Statistical Component</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the value specified or calculated in this component will not contribute to the earnings or deducti</td>
+</tr>
+<tr>
+<td><code>is_flexible_benefit</code></td>
+<td>Is Flexible Benefit</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>max_benefit_amount</code></td>
+<td>Max Benefit Amount (Yearly)</td>
+<td>Currency</td>
+<td>— If greater than zero, this sets the maximum benefit amount assignable to any employee</td>
+</tr>
+<tr>
+<td><code>variable_based_on_taxable_salary</code></td>
+<td>Variable Based On Taxable Salary</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the component will be considered as a tax component and the amount will be auto-calculated as per</td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td>Accounts</td>
+<td>Table → <code>Salary Component Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>condition</code></td>
+<td>Condition</td>
+<td>Code</td>
+<td></td>
+</tr>
+<tr>
+<td><code>amount_based_on_formula</code></td>
+<td>Amount based on formula</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>formula</code></td>
+<td>Formula</td>
+<td>Code</td>
+<td></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td></td>
+</tr>
+<tr>
+<td><code>round_to_the_nearest_integer</code></td>
+<td>Round to the Nearest Integer</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>exempted_from_income_tax</code></td>
+<td>Exempted from Income Tax</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If checked, the full amount will be deducted from taxable income before calculating income tax without any dec</td>
+</tr>
+<tr>
+<td><code>is_income_tax_component</code></td>
+<td>Is Income Tax Component</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the component will be considered in the Income Tax Deductions report</td>
+</tr>
+<tr>
+<td><code>remove_if_zero_valued</code></td>
+<td>Remove if Zero Valued</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — If enabled, the component will not be displayed in the salary slip if the amount is zero</td>
+</tr>
+<tr>
+<td><code>do_not_include_in_accounts</code></td>
+<td>Do Not Include in Accounting Entries</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the amount will be excluded from accounting entries during Journal Entry creation.</td>
+</tr>
+<tr>
+<td><code>arrear_component</code></td>
+<td>Arrear Component</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, this component will be included in arrear calculations</td>
+</tr>
+<tr>
+<td><code>accrual_component</code></td>
+<td>Accrual Component</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, this component allows to accrue amounts without adding them to earnings. The accrued balance is tr</td>
+</tr>
+<tr>
+<td><code>payout_method</code></td>
+<td>Payout Method</td>
+<td>Select — Accrue and payout at end of payroll period · Accrue per cycle, pay only on claim · Allow claim for full benefit amount</td>
+<td></td>
+</tr>
+<tr>
+<td><code>final_cycle_accrual_payout</code></td>
+<td>Payout Unclaimed Amount in Final Payroll Cycle</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-component-account">Salary Component Account<a class="headerlink" href="#salary-component-account" title="Permanent link">#</a></h2>
+<p><em>Salary Component Account</em> — <code>payroll/salary_component_account.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>account</code></td>
+<td>Account</td>
+<td>Link → <code>Account</code></td>
+<td>colonne de liste; — Default Bank / Cash account will be automatically updated in Salary Journal Entry when this mode is selected.</td>
+</tr>
+<tr>
+<td><code>liability_account</code></td>
+<td>Liability Account</td>
+<td>Link → <code>Account</code></td>
+<td>colonne de liste; — Liability account credited for employer contributions. Applicable only for Employer Contribution components, w</td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-detail">Salary Detail<a class="headerlink" href="#salary-detail" title="Permanent link">#</a></h2>
+<p><em>Salary Detail</em> — <code>payroll/salary_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>salary_component</code></td>
+<td>Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>abbr</code></td>
+<td>Abbr</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>statistical_component</code></td>
+<td>Statistical Component</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If selected, the value specified or calculated in this component will not contribute to the earnings or deduct</td>
+</tr>
+<tr>
+<td><code>is_tax_applicable</code></td>
+<td>Is Tax Applicable</td>
+<td>Boolean</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>is_flexible_benefit</code></td>
+<td>Is Flexible Benefit</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>variable_based_on_taxable_salary</code></td>
+<td>Variable Based On Taxable Salary</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>depends_on_payment_days</code></td>
+<td>Depends on Payment Days</td>
+<td>Boolean</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>deduct_full_tax_on_selected_payroll_date</code></td>
+<td>Deduct Full Tax on Selected Payroll Date</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>condition</code></td>
+<td>Condition</td>
+<td>Code</td>
+<td></td>
+</tr>
+<tr>
+<td><code>amount_based_on_formula</code></td>
+<td>Amount based on formula</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>formula</code></td>
+<td>Formula</td>
+<td>Code</td>
+<td></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>do_not_include_in_total</code></td>
+<td>Do not include in total</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>default_amount</code></td>
+<td>Default Amount</td>
+<td>Currency</td>
+<td>devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_amount</code></td>
+<td>Additional Amount</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>tax_on_flexible_benefit</code></td>
+<td>Tax on flexible benefit</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>tax_on_additional_salary</code></td>
+<td>Tax on additional salary</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_salary</code></td>
+<td>Additional Salary</td>
+<td>Link → <code>Additional Salary</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>exempted_from_income_tax</code></td>
+<td>Exempted from Income Tax</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>year_to_date</code></td>
+<td>Year To Date</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>parent_currency</code>; — Total salary booked against this component for this employee from the beginning of the year (payroll period or</td>
+</tr>
+<tr>
+<td><code>is_recurring_additional_salary</code></td>
+<td>Is Recurring Additional Salary</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>do_not_include_in_accounts</code></td>
+<td>Do Not Include in Accounting Entries</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the amount will be excluded from accounting entries during Journal Entry creation.</td>
+</tr>
+<tr>
+<td><code>accrual_component</code></td>
+<td>Accrual Component</td>
+<td>Boolean</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-slip">Salary Slip<a class="headerlink" href="#salary-slip" title="Permanent link">#</a></h2>
+<p><em>Salary Slip</em> — <code>payroll/salary_slip.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SS-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>receipt-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Link → <code>Designation</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>branch</code></td>
+<td>Branch</td>
+<td>Link → <code>Branch</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Cancelled · Withheld</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>journal_entry</code></td>
+<td>Journal Entry</td>
+<td>Link → <code>Journal Entry</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payroll_entry</code></td>
+<td>Payroll Entry</td>
+<td>Link → <code>Payroll Entry</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>letter_head</code></td>
+<td>Letter Head</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>salary_slip_based_on_timesheet</code></td>
+<td>Salary Slip Based on Timesheet</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>salary_structure</code></td>
+<td>Salary Structure</td>
+<td>Link → <code>Salary Structure</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>payroll_frequency</code></td>
+<td>Payroll Frequency</td>
+<td>Select — Monthly · Fortnightly · Bimonthly · Weekly · Daily</td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_working_days</code></td>
+<td>Working Days</td>
+<td>Number</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>leave_without_pay</code></td>
+<td>Leave Without Pay</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>payment_days</code></td>
+<td>Payment Days</td>
+<td>Number</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>timesheets</code></td>
+<td>Salary Slip Timesheet</td>
+<td>Table → <code>Salary Slip Timesheet</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_working_hours</code></td>
+<td>Total Working Hours</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>hour_rate</code></td>
+<td>Hour Rate</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>bank_name</code></td>
+<td>Bank Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>bank_account_no</code></td>
+<td>Bank Account No</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>deduct_tax_for_unsubmitted_tax_exemption_proof</code></td>
+<td>Deduct Tax For Unsubmitted Tax Exemption Proof</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>earnings</code></td>
+<td>Earnings</td>
+<td>Table → <code>Salary Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>deductions</code></td>
+<td>Deductions</td>
+<td>Table → <code>Salary Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>gross_pay</code></td>
+<td>Gross Pay</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>net_pay</code></td>
+<td>Net Pay</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>rounded_total</code></td>
+<td>Rounded Total</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>absent_days</code></td>
+<td>Absent Days</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>unmarked_days</code></td>
+<td>Unmarked days</td>
+<td>Number</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>total_deduction</code></td>
+<td>Total Deduction</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_in_words</code></td>
+<td>Total in words</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>base_hour_rate</code></td>
+<td>Hour Rate (Company Currency)</td>
+<td>Currency</td>
+<td>devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_gross_pay</code></td>
+<td>Gross Pay (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>exchange_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td><strong>requis</strong>; masqué; défaut <code>1.0</code></td>
+</tr>
+<tr>
+<td><code>base_total_deduction</code></td>
+<td>Total Deduction (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_net_pay</code></td>
+<td>Net Pay (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_rounded_total</code></td>
+<td>Rounded Total (Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_total_in_words</code></td>
+<td>Total in words (Company Currency)</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>year_to_date</code></td>
+<td>Year To Date</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code>; — Total salary booked for this employee from the beginning of the year (payroll period or fiscal year) up to the</td>
+</tr>
+<tr>
+<td><code>month_to_date</code></td>
+<td>Month To Date</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code>; — Total salary booked for this employee from the beginning of the month up to the current salary slip's end date</td>
+</tr>
+<tr>
+<td><code>base_year_to_date</code></td>
+<td>Year To Date(Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>base_month_to_date</code></td>
+<td>Month To Date(Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>leave_details</code></td>
+<td>Leave Details</td>
+<td>Table → <code>Salary Slip Leave</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>gross_year_to_date</code></td>
+<td>Gross Year To Date</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>base_gross_year_to_date</code></td>
+<td>Gross Year To Date(Company Currency)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>ctc</code></td>
+<td>CTC</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>income_from_other_sources</code></td>
+<td>Income from Other Sources</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_earnings</code></td>
+<td>Total Earnings</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>non_taxable_earnings</code></td>
+<td>Non Taxable Earnings</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>deductions_before_tax_calculation</code></td>
+<td>Deductions before tax calculation</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>tax_exemption_declaration</code></td>
+<td>Tax Exemption Declaration</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>standard_tax_exemption_amount</code></td>
+<td>Standard Tax Exemption Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>annual_taxable_amount</code></td>
+<td>Annual Taxable Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>income_tax_deducted_till_date</code></td>
+<td>Income Tax Deducted Till Date</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>future_income_tax_deductions</code></td>
+<td>Future Income Tax</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>current_month_income_tax</code></td>
+<td>Current Month Income Tax</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_income_tax</code></td>
+<td>Total Income Tax</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>salary_withholding</code></td>
+<td>Salary Withholding</td>
+<td>Link → <code>Salary Withholding</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>salary_withholding_cycle</code></td>
+<td>Salary Withholding Cycle</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>current_payroll_period</code></td>
+<td>Current Payroll Period</td>
+<td>Link → <code>Payroll Period</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>accrued_benefits</code></td>
+<td>Accrued Benefits</td>
+<td>Table → <code>Employee Benefit Detail</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>employer_contributions</code></td>
+<td>Employer Contributions</td>
+<td>Table → <code>Salary Detail</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-slip-leave">Salary Slip Leave<a class="headerlink" href="#salary-slip-leave" title="Permanent link">#</a></h2>
+<p><em>Salary Slip Leave</em> — <code>payroll/salary_slip_leave.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>leave_type</code></td>
+<td>Leave Type</td>
+<td>Link → <code>Leave Type</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>total_allocated_leaves</code></td>
+<td>Total Allocated Leave(s)</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>expired_leaves</code></td>
+<td>Expired Leave(s)</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>used_leaves</code></td>
+<td>Used Leave(s)</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>pending_leaves</code></td>
+<td>Leave(s) Pending Approval</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>available_leaves</code></td>
+<td>Available Leave(s)</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-slip-timesheet">Salary Slip Timesheet<a class="headerlink" href="#salary-slip-timesheet" title="Permanent link">#</a></h2>
+<p><em>Salary Slip Timesheet</em> — <code>payroll/salary_slip_timesheet.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>time_sheet</code></td>
+<td>Time Sheet</td>
+<td>Link → <code>Timesheet</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>working_hours</code></td>
+<td>Working Hours</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-structure">Salary Structure<a class="headerlink" href="#salary-structure" title="Permanent link">#</a></h2>
+<p><em>Salary Structure</em> — <code>payroll/salary_structure.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SAST-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>is_active</code></li>
+<li><strong>Icône</strong> : <code>layout-list</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>letter_head</code></td>
+<td>Letter Head</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>Is Active</td>
+<td>Select — Yes · No</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>Yes</code></td>
+</tr>
+<tr>
+<td><code>payroll_frequency</code></td>
+<td>Payroll Frequency</td>
+<td>Select — Monthly · Fortnightly · Bimonthly · Weekly · Daily</td>
+<td>défaut <code>Monthly</code></td>
+</tr>
+<tr>
+<td><code>is_default</code></td>
+<td>Is Default</td>
+<td>Select — Yes · No</td>
+<td>lecture seule; masqué; défaut <code>No</code></td>
+</tr>
+<tr>
+<td><code>salary_slip_based_on_timesheet</code></td>
+<td>Salary Slip Based on Timesheet</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>salary_component</code></td>
+<td>Salary Component</td>
+<td>Link → <code>Salary Component</code></td>
+<td>— Salary Component for timesheet based payroll.</td>
+</tr>
+<tr>
+<td><code>hour_rate</code></td>
+<td>Hour Rate</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>leave_encashment_amount_per_day</code></td>
+<td>Leave Encashment Amount Per Day</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>max_benefits</code></td>
+<td>Max Benefits (Amount)</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>earnings</code></td>
+<td>Earnings</td>
+<td>Table → <code>Salary Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>deductions</code></td>
+<td>Deductions</td>
+<td>Table → <code>Salary Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>employer_contributions</code></td>
+<td>Employer Contributions</td>
+<td>Table → <code>Salary Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_earning</code></td>
+<td>Total Earning</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>total_deduction</code></td>
+<td>Total Deduction</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>net_pay</code></td>
+<td>Net Pay</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>mode_of_payment</code></td>
+<td>Mode of Payment</td>
+<td>Link → <code>Mode of Payment</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payment_account</code></td>
+<td>Payment Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>employee_benefits</code></td>
+<td>Flexible Benefits</td>
+<td>Table → <code>Employee Benefit Detail</code></td>
+<td>— Enter yearly benefit amounts</td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-structure-assignment">Salary Structure Assignment<a class="headerlink" href="#salary-structure-assignment" title="Permanent link">#</a></h2>
+<p><em>Salary Structure Assignment</em> — <code>payroll/salary_structure_assignment.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SSA-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>user-check</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Link → <code>Designation</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>salary_structure</code></td>
+<td>Salary Structure</td>
+<td>Link → <code>Salary Structure</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>base</code></td>
+<td>Base</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>annual_gross_earning</code></td>
+<td>Annual Gross Earning</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>ctc</code></td>
+<td>Total Cost To Company (CTC)</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>variable</code></td>
+<td>Variable</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>income_tax_slab</code></td>
+<td>Income Tax Slab</td>
+<td>Link → <code>Income Tax Slab</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>currency</code></td>
+<td>Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>payroll_payable_account</code></td>
+<td>Payroll Payable Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payroll_cost_centers</code></td>
+<td>Cost Centers</td>
+<td>Table → <code>Employee Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>grade</code></td>
+<td>Grade</td>
+<td>Link → <code>Employee Grade</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>tax_deducted_till_date</code></td>
+<td>Tax Deducted Till Date</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>taxable_earnings_till_date</code></td>
+<td>Taxable Earnings Till Date</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>employee_benefits</code></td>
+<td>Flexible Benefits</td>
+<td>Table → <code>Employee Benefit Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_benefits</code></td>
+<td>Maximum Benefit Amount</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+<tr>
+<td><code>leave_encashment_amount_per_day</code></td>
+<td>Leave Encashment Amount Per Day</td>
+<td>Currency</td>
+<td>devise de <code>currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-withholding">Salary Withholding<a class="headerlink" href="#salary-withholding" title="Permanent link">#</a></h2>
+<p><em>Salary Withholding</em> — <code>payroll/salary_withholding.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>SW-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>employee_name</code></li>
+<li><strong>Icône</strong> : <code>hand</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule; recopié de <code>employee.employee_name</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>payroll_frequency</code></td>
+<td>Payroll Frequency</td>
+<td>Select — Monthly · Fortnightly · Bimonthly · Weekly · Daily</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>number_of_withholding_cycles</code></td>
+<td>Number of Withholding Cycles</td>
+<td>Int</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; lecture seule</td>
+</tr>
+<tr>
+<td><code>date_of_joining</code></td>
+<td>Date of Joining</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>relieving_date</code></td>
+<td>Relieving Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>reason_for_withholding_salary</code></td>
+<td>Reason for Withholding Salary</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>cycles</code></td>
+<td>Cycles</td>
+<td>Table → <code>Salary Withholding Cycle</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Withheld · Released · Cancelled</td>
+<td>colonne de liste; lecture seule; défaut <code>Draft</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="salary-withholding-cycle">Salary Withholding Cycle<a class="headerlink" href="#salary-withholding-cycle" title="Permanent link">#</a></h2>
+<p><em>Salary Withholding Cycle</em> — <code>payroll/salary_withholding_cycle.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_salary_released</code></td>
+<td>Is Salary Released</td>
+<td>Boolean</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>journal_entry</code></td>
+<td>Journal Entry</td>
+<td>Link → <code>Journal Entry</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="taxable-salary-slab">Taxable Salary Slab<a class="headerlink" href="#taxable-salary-slab" title="Permanent link">#</a></h2>
+<p><em>Taxable Salary Slab</em> — <code>payroll/taxable_salary_slab.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>from_amount</code></td>
+<td>From Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>to_amount</code></td>
+<td>To Amount</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_currency</code></td>
+</tr>
+<tr>
+<td><code>percent_deduction</code></td>
+<td>Percent Deduction</td>
+<td>Percent</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>0.0</code></td>
+</tr>
+<tr>
+<td><code>condition</code></td>
+<td>Condition</td>
+<td>Code</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../manufacturing/" class="btn btn-neutral float-left" title="Fabrication (manufacturing)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../projects/" class="btn btn-neutral float-right" title="Projets (projects)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../manufacturing/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../projects/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

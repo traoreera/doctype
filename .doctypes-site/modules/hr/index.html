@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/modules/hr/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Ressources humaines (hr) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Ressources humaines (hr)";
+        var mkdocs_page_input_path = "modules/hr.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/modules/hr/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Ressources humaines (hr)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#chiffres">Chiffres</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#espace-de-travail">Espace de travail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#doctypes-du-module">DocTypes du module</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#points-cles">Points clés</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#dependances">Dépendances</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#implementation-en-plugin-xcore">Implémentation en plugin xcore</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#reference-complete">Référence complète</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../reference/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Modules</li>
+      <li class="breadcrumb-item active">Ressources humaines (hr)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/modules/hr.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="ressources-humaines-hr">Ressources humaines (<code>hr</code>)<a class="headerlink" href="#ressources-humaines-hr" title="Permanent link">#</a></h1>
+<p>Le dossier du personnel : employés et structure de l'organisation, recrutement, présences et shifts, congés, évaluations, formation, notes de frais et déplacements, jusqu'à la sortie de l'employé. Deuxième module du jeu par la taille (114 DocTypes).</p>
+<h2 id="chiffres">Chiffres<a class="headerlink" href="#chiffres" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocTypes</th>
+<th>dont pièces</th>
+<th>dont enfants</th>
+<th>dont uniques</th>
+<th>workflows</th>
+<th>séries</th>
+<th>champs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>114</td>
+<td>36</td>
+<td>35</td>
+<td>1</td>
+<td>2</td>
+<td>36</td>
+<td>1 049</td>
+</tr>
+</tbody>
+</table>
+<h2 id="espace-de-travail">Espace de travail<a class="headerlink" href="#espace-de-travail" title="Permanent link">#</a></h2>
+<p><strong>Espace « Ressources humaines »</strong> (icône <code>users</code>, position 50) — Dossiers du personnel, absences, présence et organisation des équipes.</p>
+<ul>
+<li><strong>Personnel et organisation</strong> : <a href="../../reference/setup/#employee"><code>Employee</code></a> — création, <a href="../../reference/setup/#department"><code>Department</code></a> — création, <a href="../../reference/hr/#employee-checkin"><code>Employee Checkin</code></a> — création, <a href="../../reference/hr/#attendance"><code>Attendance</code></a> — création, <a href="../../reference/hr/#shift-assignment"><code>Shift Assignment</code></a> — création</li>
+<li><strong>Congés et paramètres</strong> : <a href="../../reference/hr/#leave-application"><code>Leave Application</code></a> — création, <a href="../../reference/hr/#leave-type"><code>Leave Type</code></a> — création, <a href="../../reference/setup/#holiday-list"><code>Holiday List</code></a> — création, <a href="../../reference/hr/#hr-settings"><code>HR Settings</code></a></li>
+</ul>
+<h2 id="doctypes-du-module">DocTypes du module<a class="headerlink" href="#doctypes-du-module" title="Permanent link">#</a></h2>
+<table>
+<thead>
+<tr>
+<th>DocType</th>
+<th>Libellé</th>
+<th>Nature</th>
+<th>Soumis</th>
+<th>Numérotation</th>
+<th>Workflow</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../../reference/hr/#appointment-letter"><code>Appointment Letter</code></a></td>
+<td>Appointment Letter</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appointment-letter-template"><code>Appointment Letter Template</code></a></td>
+<td>Appointment Letter Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appraisal-cycle"><code>Appraisal Cycle</code></a></td>
+<td>Appraisal Cycle</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appraisal-template"><code>Appraisal Template</code></a></td>
+<td>Appraisal Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-attendance-tool"><code>Employee Attendance Tool</code></a></td>
+<td>Employee Attendance Tool</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-checkin"><code>Employee Checkin</code></a></td>
+<td>Employee Checkin</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-feedback-criteria"><code>Employee Feedback Criteria</code></a></td>
+<td>Employee Feedback Criteria</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-grade"><code>Employee Grade</code></a></td>
+<td>Employee Grade</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-health-insurance"><code>Employee Health Insurance</code></a></td>
+<td>Employee Health Insurance</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-onboarding-template"><code>Employee Onboarding Template</code></a></td>
+<td>Employee Onboarding Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-separation-template"><code>Employee Separation Template</code></a></td>
+<td>Employee Separation Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-skill-map"><code>Employee Skill Map</code></a></td>
+<td>Employee Skill Map</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employment-type"><code>Employment Type</code></a></td>
+<td>Employment Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#expense-claim-type"><code>Expense Claim Type</code></a></td>
+<td>Expense Claim Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#goal"><code>Goal</code></a></td>
+<td>Goal</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#grievance-type"><code>Grievance Type</code></a></td>
+<td>Grievance Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#hr-telemetry-milestone"><code>HR Telemetry Milestone</code></a></td>
+<td>HR Telemetry Milestone</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#identification-document-type"><code>Identification Document Type</code></a></td>
+<td>Identification Document Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#interest"><code>Interest</code></a></td>
+<td>Interest</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#interview-type"><code>Interview Type</code></a></td>
+<td>Interview Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-applicant"><code>Job Applicant</code></a></td>
+<td>Job Applicant</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-applicant-source"><code>Job Applicant Source</code></a></td>
+<td>Job Applicant Source</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-offer-term-template"><code>Job Offer Term Template</code></a></td>
+<td>Job Offer Term Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-opening"><code>Job Opening</code></a></td>
+<td>Job Opening</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-opening-template"><code>Job Opening Template</code></a></td>
+<td>Job Opening Template</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-requisition"><code>Job Requisition</code></a></td>
+<td>Job Requisition</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#kra"><code>KRA</code></a></td>
+<td>KRA</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-block-list"><code>Leave Block List</code></a></td>
+<td>Leave Block List</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-control-panel"><code>Leave Control Panel</code></a></td>
+<td>Leave Control Panel</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-period"><code>Leave Period</code></a></td>
+<td>Leave Period</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-type"><code>Leave Type</code></a></td>
+<td>Leave Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#offer-term"><code>Offer Term</code></a></td>
+<td>Offer Term</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#overtime-type"><code>Overtime Type</code></a></td>
+<td>Overtime Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#purpose-of-travel"><code>Purpose of Travel</code></a></td>
+<td>Purpose of Travel</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#pwa-notification"><code>PWA Notification</code></a></td>
+<td>PWA Notification</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#shift-assignment-tool"><code>Shift Assignment Tool</code></a></td>
+<td>Shift Assignment Tool</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#shift-location"><code>Shift Location</code></a></td>
+<td>Shift Location</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#shift-schedule-assignment"><code>Shift Schedule Assignment</code></a></td>
+<td>Shift Schedule Assignment</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#shift-type"><code>Shift Type</code></a></td>
+<td>Shift Type</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#skill"><code>Skill</code></a></td>
+<td>Skill</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#training-program"><code>Training Program</code></a></td>
+<td>Training Program</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#vehicle-service-item"><code>Vehicle Service Item</code></a></td>
+<td>Vehicle Service Item</td>
+<td>données de base</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appointment-letter-content"><code>Appointment Letter content</code></a></td>
+<td>Appointment Letter content</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appraisal-goal"><code>Appraisal Goal</code></a></td>
+<td>Appraisal Goal</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appraisal-kra"><code>Appraisal KRA</code></a></td>
+<td>Appraisal KRA</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appraisal-template-goal"><code>Appraisal Template Goal</code></a></td>
+<td>Appraisal Template Goal</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appraisee"><code>Appraisee</code></a></td>
+<td>Appraisee</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#assignment-rule-day"><code>Assignment Rule Day</code></a></td>
+<td>Jour de répartition</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#earned-leave-schedule"><code>Earned Leave Schedule</code></a></td>
+<td>Earned Leave Schedule</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-boarding-activity"><code>Employee Boarding Activity</code></a></td>
+<td>Employee Boarding Activity</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-feedback-rating"><code>Employee Feedback Rating</code></a></td>
+<td>Employee Feedback Rating</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-property-history"><code>Employee Property History</code></a></td>
+<td>Employee Property History</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-skill"><code>Employee Skill</code></a></td>
+<td>Employee Skill</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-training"><code>Employee Training</code></a></td>
+<td>Employee Training</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#expected-skill-set"><code>Expected Skill Set</code></a></td>
+<td>Expected Skill Set</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#expense-claim-account"><code>Expense Claim Account</code></a></td>
+<td>Expense Claim Account</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#expense-claim-advance"><code>Expense Claim Advance</code></a></td>
+<td>Expense Claim Advance</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#expense-claim-detail"><code>Expense Claim Detail</code></a></td>
+<td>Expense Claim Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#expense-taxes-and-charges"><code>Expense Taxes and Charges</code></a></td>
+<td>Expense Taxes and Charges</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#full-and-final-asset"><code>Full and Final Asset</code></a></td>
+<td>Full and Final Asset</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#full-and-final-outstanding-statement"><code>Full and Final Outstanding Statement</code></a></td>
+<td>Full and Final Outstanding Statement</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#interview-detail"><code>Interview Detail</code></a></td>
+<td>Interview Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#interviewer"><code>Interviewer</code></a></td>
+<td>Interviewer</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-offer-component"><code>Job Offer Component</code></a></td>
+<td>Job Offer Component</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-offer-term"><code>Job Offer Term</code></a></td>
+<td>Job Offer Term</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-block-list-allow"><code>Leave Block List Allow</code></a></td>
+<td>Leave Block List Allow</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-block-list-date"><code>Leave Block List Date</code></a></td>
+<td>Leave Block List Date</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-policy-detail"><code>Leave Policy Detail</code></a></td>
+<td>Leave Policy Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#overtime-details"><code>Overtime Details</code></a></td>
+<td>Overtime Details</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#overtime-salary-component"><code>Overtime Salary Component</code></a></td>
+<td>Overtime Salary Component</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#skill-assessment"><code>Skill Assessment</code></a></td>
+<td>Skill Assessment</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#staffing-plan-detail"><code>Staffing Plan Detail</code></a></td>
+<td>Staffing Plan Detail</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#training-event-employee"><code>Training Event Employee</code></a></td>
+<td>Training Event Employee</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#training-result-employee"><code>Training Result Employee</code></a></td>
+<td>Training Result Employee</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#travel-itinerary"><code>Travel Itinerary</code></a></td>
+<td>Travel Itinerary</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#travel-request-costing"><code>Travel Request Costing</code></a></td>
+<td>Travel Request Costing</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#vehicle-service"><code>Vehicle Service</code></a></td>
+<td>Vehicle Service</td>
+<td>enfant</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#appraisal"><code>Appraisal</code></a></td>
+<td>Appraisal</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>APPR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#attendance"><code>Attendance</code></a></td>
+<td>Attendance</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ATTE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#attendance-request"><code>Attendance Request</code></a></td>
+<td>Attendance Request</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ATRE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#compensatory-leave-request"><code>Compensatory Leave Request</code></a></td>
+<td>Compensatory Leave Request</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>CLR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-advance"><code>Employee Advance</code></a></td>
+<td>Employee Advance</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>EA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-grievance"><code>Employee Grievance</code></a></td>
+<td>Employee Grievance</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>EG-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-onboarding"><code>Employee Onboarding</code></a></td>
+<td>Employee Onboarding</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>EO-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-performance-feedback"><code>Employee Performance Feedback</code></a></td>
+<td>Employee Performance Feedback</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>EPF-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-promotion"><code>Employee Promotion</code></a></td>
+<td>Employee Promotion</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>EP-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-referral"><code>Employee Referral</code></a></td>
+<td>Employee Referral</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ER-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-separation"><code>Employee Separation</code></a></td>
+<td>Employee Separation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ES-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#employee-transfer"><code>Employee Transfer</code></a></td>
+<td>Employee Transfer</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>ET-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#exit-interview"><code>Exit Interview</code></a></td>
+<td>Exit Interview</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>EXIN-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#expense-claim"><code>Expense Claim</code></a></td>
+<td>Expense Claim</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>EC-{YYYY}-{#####}</code></td>
+<td>workflow</td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#full-and-final-statement"><code>Full and Final Statement</code></a></td>
+<td>Full and Final Statement</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>FFS-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#holiday-list-assignment"><code>Holiday List Assignment</code></a></td>
+<td>Holiday List Assignment</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>HLA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#interview"><code>Interview</code></a></td>
+<td>Interview</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>INTE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#interview-feedback"><code>Interview Feedback</code></a></td>
+<td>Interview Feedback</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>IF-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#job-offer"><code>Job Offer</code></a></td>
+<td>Job Offer</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>JO-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-adjustment"><code>Leave Adjustment</code></a></td>
+<td>Leave Adjustment</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>LA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-allocation"><code>Leave Allocation</code></a></td>
+<td>Leave Allocation</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>LEAL-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-application"><code>Leave Application</code></a></td>
+<td>Leave Application</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>LEAP-{YYYY}-{#####}</code></td>
+<td>workflow</td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-encashment"><code>Leave Encashment</code></a></td>
+<td>Leave Encashment</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>LE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-ledger-entry"><code>Leave Ledger Entry</code></a></td>
+<td>Leave Ledger Entry</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>LLE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-policy"><code>Leave Policy</code></a></td>
+<td>Leave Policy</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>LP-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#leave-policy-assignment"><code>Leave Policy Assignment</code></a></td>
+<td>Leave Policy Assignment</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>LPA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#overtime-slip"><code>Overtime Slip</code></a></td>
+<td>Overtime Slip</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>OS-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#shift-assignment"><code>Shift Assignment</code></a></td>
+<td>Shift Assignment</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SA-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#shift-request"><code>Shift Request</code></a></td>
+<td>Shift Request</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#shift-schedule"><code>Shift Schedule</code></a></td>
+<td>Shift Schedule</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SHSC-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#staffing-plan"><code>Staffing Plan</code></a></td>
+<td>Staffing Plan</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>SP-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#training-event"><code>Training Event</code></a></td>
+<td>Training Event</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>TE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#training-feedback"><code>Training Feedback</code></a></td>
+<td>Training Feedback</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>TF-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#training-result"><code>Training Result</code></a></td>
+<td>Training Result</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>TR-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#travel-request"><code>Travel Request</code></a></td>
+<td>Travel Request</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>TRRE-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#vehicle-log"><code>Vehicle Log</code></a></td>
+<td>Vehicle Log</td>
+<td>pièce</td>
+<td>oui</td>
+<td><code>VL-{YYYY}-{#####}</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="../../reference/hr/#hr-settings"><code>HR Settings</code></a></td>
+<td>HR Settings</td>
+<td>unique</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="points-cles">Points clés<a class="headerlink" href="#points-cles" title="Permanent link">#</a></h2>
+<ul>
+<li><strong><code>Employee</code></strong> (hébergé dans <code>setup</code> — la fiche générique) : identité, contrat, salaire, <code>employment_type</code>, service en <code>Department</code> (arborescent, <code>setup</code>) ; le plugin doit la relier à un compte utilisateur (<code>Member</code> du module <code>iam</code>) — voir le plugin <code>hr</code> d'exemple du dépôt moteur. Les DocTypes RH propres (congés, présences, évaluations…) sont ici.</li>
+<li><strong>Congés</strong> : <code>Leave Type</code>, <code>Leave Allocation</code> (LEAL-), <code>Leave Application</code> (LEAP-, <strong>workflow d'approbation</strong>), <code>Leave Policy</code>, <code>Compensatory Leave Request</code>, <code>Leave Ledger Entry</code> (LLE-, le registre immuable des mouvements de solde — écrit par les hooks, fermé à l'écriture humaine).</li>
+<li><strong>Présence</strong> : <code>Attendance</code> (ATTE-), <code>Employee Checkin</code>, <code>Shift Type</code>/<code>Shift Assignment</code> (SA-)/<code>Shift Request</code> (SR-), <code>Overtime Slip</code> (OS-).</li>
+<li><strong>Notes de frais</strong> : <code>Expense Claim</code> (EC-, <strong>workflow</strong>) avec lignes <code>Expense Claim Detail</code> et taxes, avances <code>Employee Advance</code> (EA-).</li>
+<li><strong>Cycle de vie complet</strong> : <code>Job Requisition</code> → <code>Job Opening</code> → <code>Job Applicant</code> → <code>Interview</code> → <code>Job Offer</code> → onboarding (<code>Employee Onboarding</code>) → évolutions (<code>Employee Promotion</code>, <code>Employee Transfer</code>) → sortie (<code>Employee Separation</code>, <code>Exit Interview</code>, <code>Full and Final Statement</code>).</li>
+<li><strong>Évaluations</strong> : <code>Appraisal Cycle</code>, <code>Appraisal</code> (APPR-) avec KRA et objectifs (<code>Goal</code>, <code>KRA</code>), feedback à 360°.</li>
+<li><strong><code>Employee Referral</code></strong> : permet de verser la prime à un employé ; <code>Payroll</code> la traite.</li>
+</ul>
+<h2 id="dependances">Dépendances<a class="headerlink" href="#dependances" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Dépend de</strong> : <code>setup</code> (175 liens — pays, sociétés, comptes…), <code>accounts</code> (19), <code>payroll</code> (9), <code>projects</code> (7), <code>communication</code> (5), <code>buying</code> (3), <code>assets</code> (1), <code>stock</code> (1).</li>
+<li><strong>Requis par</strong> : <code>payroll</code> (5 — <code>Employee</code>, <code>Employee Grade</code>, <code>Department</code>, <code>Branch</code>, <code>Salary Structure Assignment</code> utilise <code>Employee</code>).</li>
+</ul>
+<p>Détail complet : <a href="../../dependances/#ressources-humaines-hr">matrice</a>.</p>
+<h2 id="implementation-en-plugin-xcore">Implémentation en plugin xcore<a class="headerlink" href="#implementation-en-plugin-xcore" title="Permanent link">#</a></h2>
+<ul>
+<li>Plugin <code>hr</code>, ordre P4 avec <code>payroll</code> ; le plugin <code>hr</code> de test du dépôt moteur (<code>tests/support/plugins/hr</code>) est le gabarit direct : YAML + un hook.</li>
+<li><strong>Hooks à écrire</strong> : décompte des soldes de congés dans <code>Leave Ledger Entry</code> à la soumission/annulation d'une demande, dotation ou reprise (<code>Leave Allocation</code>), contrôle de chevauchement des congés, blocage de la paie sur un employé parti, écriture comptable de <code>Expense Claim</code>.</li>
+<li><code>Employee</code> doit être relié au compte d'authentification : le modèle du moteur (hook sur le statut « Parti » qui désactive le compte) est à reprendre.</li>
+<li>Les deux workflows (<code>Expense Claim</code>, <code>Leave Application</code>) exigent les grants <code>hr:expense_claim:workflow_*</code> et <code>hr:leave_application:workflow_*</code> — déclarés par le service <code>doctype_grants</code> sans code supplémentaire.</li>
+</ul>
+<h2 id="reference-complete">Référence complète<a class="headerlink" href="#reference-complete" title="Permanent link">#</a></h2>
+<p><a href="../../reference/hr/">Référence — Ressources humaines</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../erpnext_integrations/" class="btn btn-neutral float-left" title="Intégrations ERPNext (erpnext_integrations)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../maintenance/" class="btn btn-neutral float-right" title="Maintenance (maintenance)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../erpnext_integrations/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../maintenance/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

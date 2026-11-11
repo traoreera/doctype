@@ -1,0 +1,2368 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/assets/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Immobilisations (assets) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Immobilisations (assets)";
+        var mkdocs_page_input_path = "reference/assets.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/assets/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Immobilisations (assets)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#asset">Asset</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-activity">Asset Activity</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-capitalization">Asset Capitalization</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-capitalization-asset-item">Asset Capitalization Asset Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-capitalization-service-item">Asset Capitalization Service Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-capitalization-stock-item">Asset Capitalization Stock Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-category">Asset Category</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-category-account">Asset Category Account</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-depreciation-schedule">Asset Depreciation Schedule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-finance-book">Asset Finance Book</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-maintenance">Asset Maintenance</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-maintenance-log">Asset Maintenance Log</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-maintenance-task">Asset Maintenance Task</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-maintenance-team">Asset Maintenance Team</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-movement">Asset Movement</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-movement-item">Asset Movement Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-repair">Asset Repair</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-repair-consumed-item">Asset Repair Consumed Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-repair-purchase-invoice">Asset Repair Purchase Invoice</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-shift-allocation">Asset Shift Allocation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-shift-factor">Asset Shift Factor</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#asset-value-adjustment">Asset Value Adjustment</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#depreciation-schedule">Depreciation Schedule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#location">Location</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#maintenance-team-member">Maintenance Team Member</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Immobilisations (assets)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/assets.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-immobilisations-assets">Référence des champs — Immobilisations (<code>assets</code>)<a class="headerlink" href="#reference-des-champs-immobilisations-assets" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>assets/</code> (25 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>277 champs au total ; types les plus fréquents : <code>Link</code> (83), <code>Text</code> (48), <code>Currency</code> (36), <code>Select</code> (20), <code>Boolean</code> (20).</p>
+<h2 id="asset">Asset<a class="headerlink" href="#asset" title="Permanent link">#</a></h2>
+<p><em>Asset</em> — <code>assets/asset.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>ASSE-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>item_code</code></li>
+<li><strong>Icône</strong> : <code>building</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — ACC-ASS-.YYYY.-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>asset_name</code></td>
+<td>Asset Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>asset_category</code></td>
+<td>Asset Category</td>
+<td>Link → <code>Asset Category</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>asset_owner</code></td>
+<td>Asset Owner</td>
+<td>Select — Company · Supplier · Customer</td>
+<td>défaut <code>Company</code></td>
+</tr>
+<tr>
+<td><code>asset_owner_company</code></td>
+<td>Asset Owner Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>supplier</code></td>
+<td>Supplier</td>
+<td>Link → <code>Supplier</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>customer</code></td>
+<td>Customer</td>
+<td>Link → <code>Customer</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>location</code></td>
+<td>Location</td>
+<td>Link → <code>Location</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>custodian</code></td>
+<td>Custodian</td>
+<td>Link → <code>Employee</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>purchase_date</code></td>
+<td>Purchase Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>disposal_date</code></td>
+<td>Disposal Date</td>
+<td>Date</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>journal_entry_for_scrap</code></td>
+<td>Journal Entry for Scrap</td>
+<td>Link → <code>Journal Entry</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>available_for_use_date</code></td>
+<td>Available for Use Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>calculate_depreciation</code></td>
+<td>Calculate Depreciation</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>opening_accumulated_depreciation</code></td>
+<td>Opening Accumulated Depreciation</td>
+<td>Currency</td>
+<td>devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>finance_books</code></td>
+<td>Finance Books</td>
+<td>Table → <code>Asset Finance Book</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>depreciation_method</code></td>
+<td>Depreciation Method</td>
+<td>Select — Straight Line · Double Declining Balance · Written Down Value · Manual</td>
+<td></td>
+</tr>
+<tr>
+<td><code>value_after_depreciation</code></td>
+<td>Value After Depreciation</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_number_of_depreciations</code></td>
+<td>Total Number of Depreciations</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>frequency_of_depreciation</code></td>
+<td>Frequency of Depreciation (Months)</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>next_depreciation_date</code></td>
+<td>Next Depreciation Date</td>
+<td>Date</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>policy_number</code></td>
+<td>Policy number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>insurer</code></td>
+<td>Insurer</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>insured_value</code></td>
+<td>Insured value</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>insurance_start_date</code></td>
+<td>Insurance Start Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>insurance_end_date</code></td>
+<td>Insurance End Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>comprehensive_insurance</code></td>
+<td>Comprehensive Insurance</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>maintenance_required</code></td>
+<td>Maintenance Required</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Submitted · Cancelled · Partially Depreciated · Fully Depreciated · Sold · Scrapped · In Maintenance · Out of Order · Issue · Receipt · Capitalized · Work In Progress</td>
+<td>colonne de liste; lecture seule; défaut <code>Draft</code></td>
+</tr>
+<tr>
+<td><code>booked_fixed_asset</code></td>
+<td>Booked Fixed Asset</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>purchase_receipt</code></td>
+<td>Purchase Receipt</td>
+<td>Link → <code>Purchase Receipt</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>purchase_invoice</code></td>
+<td>Purchase Invoice</td>
+<td>Link → <code>Purchase Invoice</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_finance_book</code></td>
+<td>Default Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>split_from</code></td>
+<td>Split From</td>
+<td>Link → <code>Asset</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>asset_quantity</code></td>
+<td>Asset Quantity</td>
+<td>Int</td>
+<td>défaut <code>1</code></td>
+</tr>
+<tr>
+<td><code>depr_entry_posting_status</code></td>
+<td>Depreciation Entry Posting Status</td>
+<td>Select — Successful · Failed</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>is_fully_depreciated</code></td>
+<td>Is Fully Depreciated</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>total_asset_cost</code></td>
+<td>Total Asset Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>additional_asset_cost</code></td>
+<td>Additional Asset Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>value_adjustment_amount</code></td>
+<td>Value Adjustment Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code>; — Net change from Asset Value Adjustments</td>
+</tr>
+<tr>
+<td><code>purchase_amount</code></td>
+<td>Purchase Amount</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>opening_number_of_booked_depreciations</code></td>
+<td>Opening Number of Booked Depreciations</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>purchase_receipt_item</code></td>
+<td>Purchase Receipt Item</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>purchase_invoice_item</code></td>
+<td>Purchase Invoice Item</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>net_purchase_amount</code></td>
+<td>Net Purchase Amount</td>
+<td>Currency</td>
+<td>devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>asset_type</code></td>
+<td>Asset Type</td>
+<td>Select — Existing Asset · Composite Asset · Composite Component</td>
+<td></td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; masqué; recopié de <code>item_code.item_name</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-activity">Asset Activity<a class="headerlink" href="#asset-activity" title="Permanent link">#</a></h2>
+<p><em>Asset Activity</em> — <code>assets/asset_activity.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>asset</code></li>
+<li><strong>Icône</strong> : <code>activity</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset</code></td>
+<td>Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>subject</code></td>
+<td>Subject</td>
+<td>TextEditor</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>Date</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>User</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-capitalization">Asset Capitalization<a class="headerlink" href="#asset-capitalization" title="Permanent link">#</a></h2>
+<p><em>Asset Capitalization</em> — <code>assets/asset_capitalization.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>AC-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>target_asset</code></li>
+<li><strong>Icône</strong> : <code>trending-up</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>target_item_code</code></td>
+<td>Target Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>target_asset</code></td>
+<td>Target Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>target_asset_name</code></td>
+<td>Asset Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>posting_date</code></td>
+<td>Posting Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>today</code></td>
+</tr>
+<tr>
+<td><code>posting_time</code></td>
+<td>Posting Time</td>
+<td>Time</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>set_posting_time</code></td>
+<td>Edit Posting Date and Time</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — ACC-ASC-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>stock_items</code></td>
+<td>Stock Items</td>
+<td>Table → <code>Asset Capitalization Stock Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>asset_items</code></td>
+<td>Assets</td>
+<td>Table → <code>Asset Capitalization Asset Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>stock_items_total</code></td>
+<td>Consumed Stock Total Value</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>asset_items_total</code></td>
+<td>Consumed Asset Total Value</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>finance_book</code></td>
+<td>Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>service_items</code></td>
+<td>Services</td>
+<td>Table → <code>Asset Capitalization Service Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>service_items_total</code></td>
+<td>Service Expense Total Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_value</code></td>
+<td>Total Value</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>target_incoming_rate</code></td>
+<td>Target Incoming Rate</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>target_fixed_asset_account</code></td>
+<td>Target Fixed Asset Account</td>
+<td>Link → <code>Account</code></td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-capitalization-asset-item">Asset Capitalization Asset Item<a class="headerlink" href="#asset-capitalization-asset-item" title="Permanent link">#</a></h2>
+<p><em>Asset Capitalization Asset Item</em> — <code>assets/asset_capitalization_asset_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset</code></td>
+<td>Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>asset_name</code></td>
+<td>Asset Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>asset_value</code></td>
+<td>Asset Value</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>fixed_asset_account</code></td>
+<td>Fixed Asset Account</td>
+<td>Link → <code>Account</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>finance_book</code></td>
+<td>Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>current_asset_value</code></td>
+<td>Current Asset Value</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-capitalization-service-item">Asset Capitalization Service Item<a class="headerlink" href="#asset-capitalization-service-item" title="Permanent link">#</a></h2>
+<p><em>Asset Capitalization Service Item</em> — <code>assets/asset_capitalization_service_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>qty</code></td>
+<td>Qty</td>
+<td>Decimal</td>
+<td>colonne de liste; défaut <code>1.000</code></td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>UOM</td>
+<td>Link → <code>UOM</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>rate</code></td>
+<td>Rate</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-capitalization-stock-item">Asset Capitalization Stock Item<a class="headerlink" href="#asset-capitalization-stock-item" title="Permanent link">#</a></h2>
+<p><em>Asset Capitalization Stock Item</em> — <code>assets/asset_capitalization_stock_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>batch_no</code></td>
+<td>Batch No</td>
+<td>Link → <code>Batch</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>stock_qty</code></td>
+<td>Quantity</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>stock_uom</code></td>
+<td>Stock UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>valuation_rate</code></td>
+<td>Valuation Rate</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>amount</code></td>
+<td>Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule; recopié de <code>item_code.item_name</code></td>
+</tr>
+<tr>
+<td><code>actual_qty</code></td>
+<td>Actual Qty in Warehouse</td>
+<td>Decimal</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>serial_and_batch_bundle</code></td>
+<td>Serial and Batch Bundle</td>
+<td>Link → <code>Serial and Batch Bundle</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>use_serial_batch_fields</code></td>
+<td>Use Serial No / Batch Fields</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>purchase_receipt_item</code></td>
+<td>Purchase Receipt Item</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-category">Asset Category<a class="headerlink" href="#asset-category" title="Permanent link">#</a></h2>
+<p><em>Asset Category</em> — <code>assets/asset_category.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>asset_category_name</code></li>
+<li><strong>Icône</strong> : <code>folder</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_category_name</code></td>
+<td>Asset Category Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>finance_books</code></td>
+<td>Finance Books</td>
+<td>Table → <code>Asset Finance Book</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td>Accounts</td>
+<td>Table → <code>Asset Category Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>enable_cwip_accounting</code></td>
+<td>Enable Capital Work in Progress Accounting</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>non_depreciable_category</code></td>
+<td>Non Depreciable Category</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-category-account">Asset Category Account<a class="headerlink" href="#asset-category-account" title="Permanent link">#</a></h2>
+<p><em>Asset Category Account</em> — <code>assets/asset_category_account.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company_name</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>fixed_asset_account</code></td>
+<td>Fixed Asset Account</td>
+<td>Link → <code>Account</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>accumulated_depreciation_account</code></td>
+<td>Accumulated Depreciation Account</td>
+<td>Link → <code>Account</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>depreciation_expense_account</code></td>
+<td>Depreciation Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>capital_work_in_progress_account</code></td>
+<td>Capital Work In Progress Account</td>
+<td>Link → <code>Account</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-depreciation-schedule">Asset Depreciation Schedule<a class="headerlink" href="#asset-depreciation-schedule" title="Permanent link">#</a></h2>
+<p><em>Asset Depreciation Schedule</em> — <code>assets/asset_depreciation_schedule.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>ADS-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>asset</code></li>
+<li><strong>Icône</strong> : <code>trending-down</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset</code></td>
+<td>Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — ACC-ADS-.YYYY.-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>finance_book</code></td>
+<td>Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>depreciation_method</code></td>
+<td>Depreciation Method</td>
+<td>Select — Straight Line · Double Declining Balance · Written Down Value · Manual</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>rate_of_depreciation</code></td>
+<td>Rate of Depreciation</td>
+<td>Percent</td>
+<td>lecture seule; — In Percentage</td>
+</tr>
+<tr>
+<td><code>total_number_of_depreciations</code></td>
+<td>Total Number of Depreciations</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>depreciation_schedule</code></td>
+<td>Depreciation Schedule</td>
+<td>Table → <code>Depreciation Schedule</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td>Notes</td>
+<td>TextEditor</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Draft · Active · Cancelled</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>frequency_of_depreciation</code></td>
+<td>Frequency of Depreciation (Months)</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>expected_value_after_useful_life</code></td>
+<td>Expected Value After Useful Life</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>finance_book_id</code></td>
+<td>Finance Book Id</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>opening_accumulated_depreciation</code></td>
+<td>Opening Accumulated Depreciation</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>opening_number_of_booked_depreciations</code></td>
+<td>Opening Number of Booked Depreciations</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>daily_prorata_based</code></td>
+<td>Depreciate based on daily pro-rata</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>shift_based</code></td>
+<td>Depreciate based on shifts</td>
+<td>Boolean</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>value_after_depreciation</code></td>
+<td>Value After Depreciation</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>net_purchase_amount</code></td>
+<td>Net Purchase Amount</td>
+<td>Currency</td>
+<td>lecture seule; masqué; devise de <code>company.default_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-finance-book">Asset Finance Book<a class="headerlink" href="#asset-finance-book" title="Permanent link">#</a></h2>
+<p><em>Asset Finance Book</em> — <code>assets/asset_finance_book.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>finance_book</code></td>
+<td>Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>depreciation_method</code></td>
+<td>Depreciation Method</td>
+<td>Select — Straight Line · Double Declining Balance · Written Down Value · Manual</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>total_number_of_depreciations</code></td>
+<td>Total Number of Depreciations</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>frequency_of_depreciation</code></td>
+<td>Frequency of Depreciation (Months)</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>depreciation_start_date</code></td>
+<td>Depreciation Posting Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>expected_value_after_useful_life</code></td>
+<td>Salvage Value</td>
+<td>Currency</td>
+<td>— Expected Value After Useful Life</td>
+</tr>
+<tr>
+<td><code>value_after_depreciation</code></td>
+<td>Value After Depreciation</td>
+<td>Currency</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>value_adjustment_amount</code></td>
+<td>Value Adjustment Amount</td>
+<td>Currency</td>
+<td>lecture seule; — Net change from Asset Value Adjustments</td>
+</tr>
+<tr>
+<td><code>rate_of_depreciation</code></td>
+<td>Rate of Depreciation (%)</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_rate_of_depreciation_entered</code></td>
+<td>Is Rate of Depreciation Entered</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>salvage_value_percentage</code></td>
+<td>Salvage Value Percentage</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>daily_prorata_based</code></td>
+<td>Depreciate based on daily pro-rata</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>shift_based</code></td>
+<td>Depreciate based on shifts</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>total_number_of_booked_depreciations</code></td>
+<td>Total Number of Booked Depreciations</td>
+<td>Int</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>increase_in_asset_life</code></td>
+<td>Increase In Asset Life (Months)</td>
+<td>Int</td>
+<td>lecture seule; — via Asset Repair</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-maintenance">Asset Maintenance<a class="headerlink" href="#asset-maintenance" title="Permanent link">#</a></h2>
+<p><em>Asset Maintenance</em> — <code>assets/asset_maintenance.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>item_code</code></li>
+<li><strong>Icône</strong> : <code>wrench</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_name</code></td>
+<td>Asset Name</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>asset_category</code></td>
+<td>Asset Category</td>
+<td>Link → <code>Asset Category</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>maintenance_team</code></td>
+<td>Maintenance Team</td>
+<td>Link → <code>Asset Maintenance Team</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>maintenance_manager</code></td>
+<td>Maintenance Manager</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>maintenance_manager_name</code></td>
+<td>Maintenance Manager Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>asset_maintenance_tasks</code></td>
+<td>Maintenance Tasks</td>
+<td>Table → <code>Asset Maintenance Task</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-maintenance-log">Asset Maintenance Log<a class="headerlink" href="#asset-maintenance-log" title="Permanent link">#</a></h2>
+<p><em>Asset Maintenance Log</em> — <code>assets/asset_maintenance_log.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>AML-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>item_code</code></li>
+<li><strong>Icône</strong> : <code>file-clock</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_maintenance</code></td>
+<td>Asset Maintenance</td>
+<td>Link → <code>Asset Maintenance</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — ACC-AML-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>asset_name</code></td>
+<td>Asset Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item Code</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>item_name</code></td>
+<td>Item Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>task</code></td>
+<td>Task</td>
+<td>Text</td>
+<td>— Référence de la ligne d'origine (Asset Maintenance Task).</td>
+</tr>
+<tr>
+<td><code>maintenance_type</code></td>
+<td>Maintenance Type</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>periodicity</code></td>
+<td>Periodicity</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>assign_to_name</code></td>
+<td>Assign To</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>due_date</code></td>
+<td>Due Date</td>
+<td>Date</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>completion_date</code></td>
+<td>Completion Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>maintenance_status</code></td>
+<td>Maintenance Status</td>
+<td>Select — Planned · Completed · Cancelled · Overdue</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>has_certificate</code></td>
+<td>Has Certificate</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>certificate_attachement</code></td>
+<td>Certificate</td>
+<td>Attach</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>actions_performed</code></td>
+<td>Actions performed</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>task_name</code></td>
+<td>Task Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>task_assignee_email</code></td>
+<td>Task Assignee Email</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-maintenance-task">Asset Maintenance Task<a class="headerlink" href="#asset-maintenance-task" title="Permanent link">#</a></h2>
+<p><em>Asset Maintenance Task</em> — <code>assets/asset_maintenance_task.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>maintenance_task</code></td>
+<td>Maintenance Task</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>maintenance_type</code></td>
+<td>Maintenance Type</td>
+<td>Select — Preventive Maintenance · Calibration</td>
+<td></td>
+</tr>
+<tr>
+<td><code>maintenance_status</code></td>
+<td>Maintenance Status</td>
+<td>Select — Planned · Overdue · Cancelled</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>periodicity</code></td>
+<td>Periodicity</td>
+<td>Select — Daily · Weekly · Monthly · Quarterly · Half-yearly · Yearly · 2 Yearly · 3 Yearly</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>certificate_required</code></td>
+<td>Certificate Required</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>assign_to</code></td>
+<td>Assign To</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>assign_to_name</code></td>
+<td>Assign to Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>next_due_date</code></td>
+<td>Next Due Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>last_completion_date</code></td>
+<td>Last Completion Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-maintenance-team">Asset Maintenance Team<a class="headerlink" href="#asset-maintenance-team" title="Permanent link">#</a></h2>
+<p><em>Asset Maintenance Team</em> — <code>assets/asset_maintenance_team.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>maintenance_team_name</code></li>
+<li><strong>Icône</strong> : <code>user-group</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>maintenance_team_name</code></td>
+<td>Maintenance Team Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>maintenance_manager</code></td>
+<td>Maintenance Manager</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>maintenance_manager_name</code></td>
+<td>Maintenance Manager Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>maintenance_team_members</code></td>
+<td>Maintenance Team Members</td>
+<td>Table → <code>Maintenance Team Member</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-movement">Asset Movement<a class="headerlink" href="#asset-movement" title="Permanent link">#</a></h2>
+<p><em>Asset Movement</em> — <code>assets/asset_movement.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>AM-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>company</code></li>
+<li><strong>Icône</strong> : <code>move</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>purpose</code></td>
+<td>Purpose</td>
+<td>Select — Issue · Receipt · Transfer · Transfer and Issue</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>transaction_date</code></td>
+<td>Transaction Date</td>
+<td>Datetime</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>reference_doctype</code></td>
+<td>Reference Document Type</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Document Name</td>
+<td>DynamicLink → <code>reference_doctype</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>assets</code></td>
+<td>Assets</td>
+<td>Table → <code>Asset Movement Item</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-movement-item">Asset Movement Item<a class="headerlink" href="#asset-movement-item" title="Permanent link">#</a></h2>
+<p><em>Asset Movement Item</em> — <code>assets/asset_movement_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset</code></td>
+<td>Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>asset_name</code></td>
+<td>Asset Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>source_location</code></td>
+<td>Source Location</td>
+<td>Link → <code>Location</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>target_location</code></td>
+<td>Target Location</td>
+<td>Link → <code>Location</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_employee</code></td>
+<td>From Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_employee</code></td>
+<td>To Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-repair">Asset Repair<a class="headerlink" href="#asset-repair" title="Permanent link">#</a></h2>
+<p><em>Asset Repair</em> — <code>assets/asset_repair.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>AR-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>asset_name</code></li>
+<li><strong>Icône</strong> : <code>wrench</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — ACC-ASR-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>failure_date</code></td>
+<td>Failure Date</td>
+<td>Datetime</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>completion_date</code></td>
+<td>Completion Date</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>repair_status</code></td>
+<td>Repair Status</td>
+<td>Select — Pending · Completed · Cancelled</td>
+<td>défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Error Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>actions_performed</code></td>
+<td>Actions performed</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>downtime</code></td>
+<td>Downtime</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>repair_cost</code></td>
+<td>Repair Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>asset</code></td>
+<td>Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>asset_name</code></td>
+<td>Asset Name</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>capitalize_repair_cost</code></td>
+<td>Capitalize Repair Cost</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>stock_items</code></td>
+<td>Stock Items</td>
+<td>Table → <code>Asset Repair Consumed Item</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Project</td>
+<td>Link → <code>Project</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>total_repair_cost</code></td>
+<td>Total Repair Cost</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>increase_in_asset_life</code></td>
+<td>Increase In Asset Life(Months)</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>asset_value_updated</code></td>
+<td>Asset Value Updated</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>invoices</code></td>
+<td>Repair Purchase Invoices</td>
+<td>Table → <code>Asset Repair Purchase Invoice</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>consumed_items_cost</code></td>
+<td>Consumed Items Cost</td>
+<td>Currency</td>
+<td>devise de <code>company.default_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-repair-consumed-item">Asset Repair Consumed Item<a class="headerlink" href="#asset-repair-consumed-item" title="Permanent link">#</a></h2>
+<p><em>Asset Repair Consumed Item</em> — <code>assets/asset_repair_consumed_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>valuation_rate</code></td>
+<td>Valuation Rate</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>consumed_quantity</code></td>
+<td>Consumed Quantity</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>total_value</code></td>
+<td>Total Value</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule; devise de <code>parent_company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>serial_no</code></td>
+<td>Serial No</td>
+<td>LongText</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>item_code</code></td>
+<td>Item</td>
+<td>Link → <code>Item</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>serial_and_batch_bundle</code></td>
+<td>Serial and Batch Bundle</td>
+<td>Link → <code>Serial and Batch Bundle</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>warehouse</code></td>
+<td>Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-repair-purchase-invoice">Asset Repair Purchase Invoice<a class="headerlink" href="#asset-repair-purchase-invoice" title="Permanent link">#</a></h2>
+<p><em>Asset Repair Purchase Invoice</em> — <code>assets/asset_repair_purchase_invoice.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>purchase_invoice</code></td>
+<td>Purchase Invoice</td>
+<td>Link → <code>Purchase Invoice</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>expense_account</code></td>
+<td>Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>repair_cost</code></td>
+<td>Repair Cost</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>parent_company.default_currency</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-shift-allocation">Asset Shift Allocation<a class="headerlink" href="#asset-shift-allocation" title="Permanent link">#</a></h2>
+<p><em>Asset Shift Allocation</em> — <code>assets/asset_shift_allocation.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>ASA-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>asset</code></li>
+<li><strong>Icône</strong> : <code>clipboard-clock</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset</code></td>
+<td>Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>finance_book</code></td>
+<td>Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>previous_depreciation_schedule</code></td>
+<td>Previous Depreciation Schedule</td>
+<td>Link → <code>Asset Depreciation Schedule</code></td>
+<td>lecture seule; — The depreciation schedule this allocation replaced, restored when the allocation is cancelled</td>
+</tr>
+<tr>
+<td><code>depreciation_schedule</code></td>
+<td>Depreciation Schedule</td>
+<td>Table → <code>Depreciation Schedule</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Naming Series</td>
+<td>Select — ACC-ASA-.YYYY.-</td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-shift-factor">Asset Shift Factor<a class="headerlink" href="#asset-shift-factor" title="Permanent link">#</a></h2>
+<p><em>Asset Shift Factor</em> — <code>assets/asset_shift_factor.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>shift_name</code></li>
+<li><strong>Icône</strong> : <code>gauge</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shift_name</code></td>
+<td>Shift Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>shift_factor</code></td>
+<td>Shift Factor</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>default</code></td>
+<td>Default</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="asset-value-adjustment">Asset Value Adjustment<a class="headerlink" href="#asset-value-adjustment" title="Permanent link">#</a></h2>
+<p><em>Asset Value Adjustment</em> — <code>assets/asset_value_adjustment.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>AVA-{YYYY}-{#####}</code></li>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>finance_book</code></li>
+<li><strong>Icône</strong> : <code>sliders-horizontal</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>asset</code></td>
+<td>Asset</td>
+<td>Link → <code>Asset</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>asset_category</code></td>
+<td>Asset Category</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>finance_book</code></td>
+<td>Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>journal_entry</code></td>
+<td>Journal Entry</td>
+<td>Link → <code>Journal Entry</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>current_asset_value</code></td>
+<td>Current Asset Value</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>new_asset_value</code></td>
+<td>New Asset Value</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>difference_amount</code></td>
+<td>Difference Amount</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>difference_account</code></td>
+<td>Difference Account</td>
+<td>Link → <code>Account</code></td>
+<td><strong>requis</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="depreciation-schedule">Depreciation Schedule<a class="headerlink" href="#depreciation-schedule" title="Permanent link">#</a></h2>
+<p><em>Depreciation Schedule</em> — <code>assets/depreciation_schedule.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schedule_date</code></td>
+<td>Schedule Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>depreciation_amount</code></td>
+<td>Depreciation Amount</td>
+<td>Currency</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>accumulated_depreciation_amount</code></td>
+<td>Accumulated Depreciation Amount</td>
+<td>Currency</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>journal_entry</code></td>
+<td>Journal Entry</td>
+<td>Link → <code>Journal Entry</code></td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>shift</code></td>
+<td>Shift</td>
+<td>Link → <code>Asset Shift Factor</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="location">Location<a class="headerlink" href="#location" title="Permanent link">#</a></h2>
+<p><em>Location</em> — <code>assets/location.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_location</code>)</li>
+<li><strong>Titre</strong> : <code>location_name</code></li>
+<li><strong>Icône</strong> : <code>map-pin</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>location_name</code></td>
+<td>Location Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>parent_location</code></td>
+<td>Parent Location</td>
+<td>Link → <code>Location</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_container</code></td>
+<td>Is Container</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Check if it is a hydroponic unit</td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>latitude</code></td>
+<td>Latitude</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>longitude</code></td>
+<td>Longitude</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>area</code></td>
+<td>Area</td>
+<td>Number</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>area_uom</code></td>
+<td>Area UOM</td>
+<td>Link → <code>UOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>Old Parent</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="maintenance-team-member">Maintenance Team Member<a class="headerlink" href="#maintenance-team-member" title="Permanent link">#</a></h2>
+<p><em>Maintenance Team Member</em> — <code>assets/maintenance_team_member.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>team_member</code></td>
+<td>Team Member</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>full_name</code></td>
+<td>Full Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../accounts/" class="btn btn-neutral float-left" title="Comptabilité (accounts)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../bulk_transaction/" class="btn btn-neutral float-right" title="Traitement en masse (bulk_transaction)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../accounts/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../bulk_transaction/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

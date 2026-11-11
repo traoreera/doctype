@@ -1,0 +1,4230 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="fr" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://github.com/traoreera01/erpDoctype/reference/setup/" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Configuration (setup) - ERP DocTypes</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Configuration (setup)";
+        var mkdocs_page_input_path = "reference/setup.md";
+        var mkdocs_page_url = "/traoreera01/erpDoctype/reference/setup/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> ERP DocTypes
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Accueil</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../erp-doctypes/">Le jeu de définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../architecture/">Architecture des définitions</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../dependances/">Dépendances entre modules</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../integration/">Implémenter un module</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Modules</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/setup/">Configuration (setup)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Référence des champs</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../accounts/">Comptabilité (accounts)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../assets/">Immobilisations (assets)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../bulk_transaction/">Traitement en masse (bulk_transaction)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../buying/">Achats (buying)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../communication/">Communication (communication)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../crm/">CRM (crm)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../edi/">EDI (edi)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../erpnext_integrations/">Intégrations ERPNext (erpnext_integrations)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../hr/">Ressources humaines (hr)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../maintenance/">Maintenance (maintenance)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../manufacturing/">Fabrication (manufacturing)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../payroll/">Paie (payroll)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../projects/">Projets (projects)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../quality_management/">Qualité (quality_management)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../regional/">Régionalisation (regional)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../selling/">Ventes (selling)</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Configuration (setup)</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#address">Address</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#authorization-control">Authorization Control</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#authorization-rule">Authorization Rule</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#auto-repeat">Auto Repeat</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#branch">Branch</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#brand">Brand</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#company">Company</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#country">Country</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#currency">Currency</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#currency-exchange">Currency Exchange</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#customer-group">Customer Group</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#department">Department</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#designation">Designation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#driver">Driver</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#driving-license-category">Driving License Category</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#email-digest">Email Digest</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#email-digest-recipient">Email Digest Recipient</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee">Employee</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-education">Employee Education</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-external-work-history">Employee External Work History</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-group">Employee Group</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-group-table">Employee Group Table</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#employee-internal-work-history">Employee Internal Work History</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#error-log">Error Log</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#gender">Gender</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#global-defaults">Global Defaults</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#holiday">Holiday</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#holiday-list">Holiday List</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#incoterm">Incoterm</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#item-group">Item Group</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#language">Language</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#letter-head">Letter Head</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#module-def">Module Def</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#party-type">Party Type</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#print-format">Print Format</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#print-heading">Print Heading</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#quotation-lost-reason">Quotation Lost Reason</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#quotation-lost-reason-detail">Quotation Lost Reason Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#rq-job">RQ Job</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sales-partner">Sales Partner</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#sales-person">Sales Person</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#salutation">Salutation</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#supplier-group">Supplier Group</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#target-detail">Target Detail</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#terms-and-conditions">Terms and Conditions</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#territory">Territory</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#transaction-deletion-record">Transaction Deletion Record</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#transaction-deletion-record-item">Transaction Deletion Record Item</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#transaction-deletion-record-to-delete">Transaction Deletion Record To Delete</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uom">UOM</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uom-conversion-factor">UOM Conversion Factor</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#vehicle">Vehicle</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#web-form">Web Form</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../stock/">Stock (stock)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../subcontracting/">Sous-traitance (subcontracting)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../support/">Support (support)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../telephony/">Téléphonie (telephony)</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../utilities/">Utilitaires (utilities)</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">ERP DocTypes</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Référence des champs</li>
+      <li class="breadcrumb-item active">Configuration (setup)</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/traoreera01/erpDoctype/edit/master/docs/reference/setup.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="reference-des-champs-configuration-setup">Référence des champs — Configuration (<code>setup</code>)<a class="headerlink" href="#reference-des-champs-configuration-setup" title="Permanent link">#</a></h1>
+<blockquote>
+<p>Page <strong>générée</strong> par <code>docs/scripts/gen_reference.py</code> depuis les YAML de <code>setup/</code> (53 DocTypes). Ne pas éditer à la main : relancer le script.</p>
+</blockquote>
+<p>492 champs au total ; types les plus fréquents : <code>Text</code> (125), <code>Link</code> (121), <code>Boolean</code> (85), <code>Select</code> (33), <code>Date</code> (33).</p>
+<h2 id="address">Address<a class="headerlink" href="#address" title="Permanent link">#</a></h2>
+<p><em>Address</em> — <code>setup/address.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>address_title</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>address_title</code></td>
+<td>Address Title</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>address_type</code></td>
+<td>Address Type</td>
+<td>Select — Billing · Shipping · Office · Personal · Other</td>
+<td></td>
+</tr>
+<tr>
+<td><code>address_line1</code></td>
+<td>Address Line 1</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>address_line2</code></td>
+<td>Address Line 2</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>city</code></td>
+<td>City</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>state</code></td>
+<td>State / Province</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>postal_code</code></td>
+<td>Postal Code</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>country</code></td>
+<td>Country</td>
+<td>Link → <code>Country</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>email_id</code></td>
+<td>Email</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>phone</code></td>
+<td>Phone</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_primary_address</code></td>
+<td>Primary Address</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_shipping_address</code></td>
+<td>Shipping Address</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="authorization-control">Authorization Control<a class="headerlink" href="#authorization-control" title="Permanent link">#</a></h2>
+<p><em>Authorization Control</em> — <code>setup/authorization_control.yaml</code></p>
+<ul>
+<li><strong>Icône</strong> : <code>shield</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="authorization-rule">Authorization Rule<a class="headerlink" href="#authorization-rule" title="Permanent link">#</a></h2>
+<p><em>Authorization Rule</em> — <code>setup/authorization_rule.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>transaction</code></li>
+<li><strong>Icône</strong> : <code>shield-check</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>transaction</code></td>
+<td>Transaction</td>
+<td>Select — Sales Order · Purchase Order · Quotation · Delivery Note · Sales Invoice · Purchase Invoice · Purchase Receipt</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>based_on</code></td>
+<td>Based On</td>
+<td>Select — Grand Total · Average Discount · Customerwise Discount · Itemwise Discount · Item Group wise Discount · Not Applicable</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>customer_or_item</code></td>
+<td>Customer or Item</td>
+<td>Select — Customer · Item · Item Group</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>master_name</code></td>
+<td>Customer / Item / Item Group</td>
+<td>DynamicLink → <code>customer_or_item</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>Authorized Value</td>
+<td>Number</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_emp</code></td>
+<td>Applicable To (Employee)</td>
+<td>Link → <code>Employee</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>system_user</code></td>
+<td>Applicable To (User)</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>to_designation</code></td>
+<td>Applicable To (Designation)</td>
+<td>Link → <code>Designation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>approving_user</code></td>
+<td>Approving User  (above authorized value)</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="auto-repeat">Auto Repeat<a class="headerlink" href="#auto-repeat" title="Permanent link">#</a></h2>
+<p><em>Auto Repeat</em> — <code>setup/auto_repeat.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>reference_doctype</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference_doctype</code></td>
+<td>Reference DocType</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>frequency</code></td>
+<td>Frequency</td>
+<td>Select — Daily · Weekly · Monthly · Quarterly · Half-yearly · Yearly</td>
+<td></td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>next_date</code></td>
+<td>Next Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="branch">Branch<a class="headerlink" href="#branch" title="Permanent link">#</a></h2>
+<p><em>Branch</em> — <code>setup/branch.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>branch</code></li>
+<li><strong>Icône</strong> : <code>store</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>branch</code></td>
+<td>Branch</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="brand">Brand<a class="headerlink" href="#brand" title="Permanent link">#</a></h2>
+<p><em>Brand</em> — <code>setup/brand.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>brand</code></li>
+<li><strong>Icône</strong> : <code>award</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>brand</code></td>
+<td>Brand Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>brand_defaults</code></td>
+<td>Brand Defaults</td>
+<td>Table → <code>Item Default</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="company">Company<a class="headerlink" href="#company" title="Permanent link">#</a></h2>
+<p><em>Company</em> — <code>setup/company.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_company</code>)</li>
+<li><strong>Titre</strong> : <code>company_name</code></li>
+<li><strong>Icône</strong> : <code>building-complex</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company_name</code></td>
+<td>Company</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>abbr</code></td>
+<td>Abbr</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>default_finance_book</code></td>
+<td>Default Finance Book</td>
+<td>Link → <code>Finance Book</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>domain</code></td>
+<td>Domain</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>parent_company</code></td>
+<td>Parent Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>company_logo</code></td>
+<td>Company Logo</td>
+<td>Image</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>company_description</code></td>
+<td>Company Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>sales_monthly_history</code></td>
+<td>Sales Monthly History</td>
+<td>LongText</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>transactions_annual_history</code></td>
+<td>Transactions Annual History</td>
+<td>Code</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>monthly_sales_target</code></td>
+<td>Monthly Sales Target</td>
+<td>Currency</td>
+<td>devise de <code>default_currency</code></td>
+</tr>
+<tr>
+<td><code>total_monthly_sales</code></td>
+<td>Total Monthly Sales</td>
+<td>Currency</td>
+<td>lecture seule; devise de <code>default_currency</code></td>
+</tr>
+<tr>
+<td><code>default_currency</code></td>
+<td>Default Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>default_letter_head</code></td>
+<td>Default Letter Head (DocType)</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_holiday_list</code></td>
+<td>Default Holiday List</td>
+<td>Link → <code>Holiday List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_warehouse_for_sales_return</code></td>
+<td>Default Warehouse for Sales Return</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>country</code></td>
+<td>Country</td>
+<td>Link → <code>Country</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>create_chart_of_accounts_based_on</code></td>
+<td>Create Chart Of Accounts Based On</td>
+<td>Select — SYSCOHADA révisé · Standard Template · Existing Company</td>
+<td>défaut <code>SYSCOHADA révisé</code></td>
+</tr>
+<tr>
+<td><code>existing_company</code></td>
+<td>Existing Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>tax_id</code></td>
+<td>Tax ID</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>date_of_establishment</code></td>
+<td>Date of Establishment</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_bank_account</code></td>
+<td>Default Bank Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_cash_account</code></td>
+<td>Default Cash Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_receivable_account</code></td>
+<td>Default Receivable Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>round_off_account</code></td>
+<td>Round Off Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>round_off_cost_center</code></td>
+<td>Round Off Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>write_off_account</code></td>
+<td>Write Off Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>bank_charges_account</code></td>
+<td>Bank Charges Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>exchange_gain_loss_account</code></td>
+<td>Exchange Gain / Loss Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>exchange_gain_account</code></td>
+<td>Exchange Gain Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>exchange_loss_account</code></td>
+<td>Exchange Loss Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>unrealized_exchange_gain_loss_account</code></td>
+<td>Unrealized Exchange Gain/Loss Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>allow_account_creation_against_child_company</code></td>
+<td>Allow Account Creation Against Child Company</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>default_payable_account</code></td>
+<td>Default Payable Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_expense_account</code></td>
+<td>Default Cost of Goods Sold Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_income_account</code></td>
+<td>Default Income Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_deferred_revenue_account</code></td>
+<td>Default Deferred Revenue Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_deferred_expense_account</code></td>
+<td>Default Deferred Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>cost_center</code></td>
+<td>Default Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>credit_limit</code></td>
+<td>Credit Limit</td>
+<td>Currency</td>
+<td>devise de <code>default_currency</code></td>
+</tr>
+<tr>
+<td><code>payment_terms</code></td>
+<td>Default Payment Terms Template</td>
+<td>Link → <code>Payment Terms Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>enable_perpetual_inventory</code></td>
+<td>Enable Perpetual Inventory</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>default_inventory_account</code></td>
+<td>Default Inventory Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>stock_adjustment_account</code></td>
+<td>Stock Adjustment Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_purchase_price_variance_account</code></td>
+<td>Default Purchase Price Variance Account</td>
+<td>Link → <code>Account</code></td>
+<td>— Used for items valued at Standard Cost: the difference between the purchase price and the standard rate is boo</td>
+</tr>
+<tr>
+<td><code>default_manufacturing_variance_account</code></td>
+<td>Default Manufacturing Variance Account</td>
+<td>Link → <code>Account</code></td>
+<td>— For Standard Cost items: the Manufacture/Repack consumed cost vs standard rate difference is booked here.</td>
+</tr>
+<tr>
+<td><code>stock_received_but_not_billed</code></td>
+<td>Stock Received But Not Billed</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>accumulated_depreciation_account</code></td>
+<td>Accumulated Depreciation Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>depreciation_expense_account</code></td>
+<td>Depreciation Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>series_for_depreciation_entry</code></td>
+<td>Series for Asset Depreciation Entry (Journal Entry)</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disposal_account</code></td>
+<td>Gain/Loss Account on Asset Disposal</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>depreciation_cost_center</code></td>
+<td>Asset Depreciation Cost Center</td>
+<td>Link → <code>Cost Center</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>capital_work_in_progress_account</code></td>
+<td>Capital Work In Progress Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>asset_received_but_not_billed</code></td>
+<td>Asset Received But Not Billed</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>date_of_incorporation</code></td>
+<td>Date of Incorporation</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>date_of_commencement</code></td>
+<td>Date of Commencement</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>phone_no</code></td>
+<td>Phone No</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fax</code></td>
+<td>Fax</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>Email</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>website</code></td>
+<td>Website</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>registration_details</code></td>
+<td>Registration Details</td>
+<td>Code</td>
+<td>— Company registration numbers for your reference. Tax numbers etc.</td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>Lft</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>Rgt</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>old_parent</td>
+<td>Text</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>default_selling_terms</code></td>
+<td>Default Selling Terms</td>
+<td>Link → <code>Terms and Conditions</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_buying_terms</code></td>
+<td>Default Buying Terms</td>
+<td>Link → <code>Terms and Conditions</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_in_transit_warehouse</code></td>
+<td>Default In-Transit Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_warehouse</code></td>
+<td>Default Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>sample_retention_warehouse</code></td>
+<td>Sample Retention Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>unrealized_profit_loss_account</code></td>
+<td>Unrealized Profit / Loss Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_discount_account</code></td>
+<td>Default Payment Discount Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>enable_provisional_accounting_for_non_stock_items</code></td>
+<td>Enable Provisional Accounting For Non Stock Items</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>default_provisional_account</code></td>
+<td>Default Provisional Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_advance_received_account</code></td>
+<td>Default Advance Received Account</td>
+<td>Link → <code>Account</code></td>
+<td>— Only 'Payment Entries' made against this advance account are supported.</td>
+</tr>
+<tr>
+<td><code>default_advance_paid_account</code></td>
+<td>Default Advance Paid Account</td>
+<td>Link → <code>Account</code></td>
+<td>— Only 'Payment Entries' made against this advance account are supported.</td>
+</tr>
+<tr>
+<td><code>book_advance_payments_in_separate_party_account</code></td>
+<td>Book Advance Payments in Separate Party Account</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Enabling this option will allow you to record - <br><br> 1. Advances Received in a <b>Liability Account</b> in</td>
+</tr>
+<tr>
+<td><code>auto_exchange_rate_revaluation</code></td>
+<td>Auto Create Exchange Rate Revaluation</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>auto_err_frequency</code></td>
+<td>Frequency</td>
+<td>Select — Daily · Weekly · Monthly</td>
+<td></td>
+</tr>
+<tr>
+<td><code>submit_err_jv</code></td>
+<td>Submit ERR Journals?</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Upon enabling this, the JV will be submitted for a different exchange rate.</td>
+</tr>
+<tr>
+<td><code>reconcile_on_advance_payment_date</code></td>
+<td>Reconcile on Advance Payment Date</td>
+<td>Boolean</td>
+<td>masqué; défaut <code>non</code>; — If <b>Enabled</b> - Reconciliation happens on the <b>Advance Payment posting date</b><br> If <b>Disabled</b> -</td>
+</tr>
+<tr>
+<td><code>default_operating_cost_account</code></td>
+<td>Default Operating Cost Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>round_off_for_opening</code></td>
+<td>Round Off for Opening</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>reconciliation_takes_effect_on</code></td>
+<td>Reconciliation Takes Effect On</td>
+<td>Select — Advance Payment Date · Oldest Of Invoice Or Advance · Reconciliation Date</td>
+<td>défaut <code>Oldest Of Invoice Or Advance</code></td>
+</tr>
+<tr>
+<td><code>reporting_currency</code></td>
+<td>Reporting Currency</td>
+<td>Link → <code>Currency</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>purchase_expense_account</code></td>
+<td>Purchase Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>purchase_expense_contra_account</code></td>
+<td>Purchase Expense Contra Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>service_expense_account</code></td>
+<td>Service Expense Account</td>
+<td>Link → <code>Account</code></td>
+<td>— For service item</td>
+</tr>
+<tr>
+<td><code>expenses_added_to_stock_account</code></td>
+<td>Expenses Added To Stock Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>expenses_added_to_stock_contra_account</code></td>
+<td>Expenses Added To Stock Contra Account</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>enable_item_wise_inventory_account</code></td>
+<td>Enable Item-wise Inventory Account</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the system will use the inventory account set in the Item Master or Item Group or Brand. Otherwise</td>
+</tr>
+<tr>
+<td><code>valuation_method</code></td>
+<td>Default Stock Valuation Method</td>
+<td>Select — FIFO · Moving Average · LIFO</td>
+<td><strong>requis</strong>; défaut <code>FIFO</code></td>
+</tr>
+<tr>
+<td><code>default_wip_warehouse</code></td>
+<td>Default Work In Progress Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_fg_warehouse</code></td>
+<td>Default Finished Goods Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_scrap_warehouse</code></td>
+<td>Default Scrap Warehouse</td>
+<td>Link → <code>Warehouse</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_sales_contact</code></td>
+<td>Default Sales Contact</td>
+<td>Link → <code>Contact</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>accounts_frozen_till_date</code></td>
+<td>Accounts Frozen Till Date</td>
+<td>Date</td>
+<td>— Accounting entries are frozen up to this date. Only users with the specified role can create or modify entries</td>
+</tr>
+<tr>
+<td><code>default_letter_head_report</code></td>
+<td>Default Letter Head (Report)</td>
+<td>Link → <code>Letter Head</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>disable_sdbnb_in_sr</code></td>
+<td>Disable Stock Delivered But Not Billed in Sales Return</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>stock_delivered_but_not_billed</code></td>
+<td>Stock Delivered But Not Billed</td>
+<td>Link → <code>Account</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>enable_stock_delivered_but_not_billed</code></td>
+<td>Enable Stock Delivered But Not Billed</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — If enabled, the value of goods delivered before invoicing will be recorded in the Stock Delivered But Not Bill</td>
+</tr>
+</tbody>
+</table>
+<h2 id="country">Country<a class="headerlink" href="#country" title="Permanent link">#</a></h2>
+<p><em>Pays</em> — <code>setup/country.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>country_code</code></li>
+<li><strong>Titre</strong> : <code>country_name</code></li>
+<li><strong>Icône</strong> : <code>globe</code></li>
+<li><strong>Permissions explicites</strong> — <code>read</code> : 1</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>country_code</code></td>
+<td>Code ISO 3166-1</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; — Deux lettres majuscules : CI, FR, SN. C'est le nom du document.</td>
+</tr>
+<tr>
+<td><code>country_name</code></td>
+<td>Nom</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>default_currency</code></td>
+<td>Devise par défaut</td>
+<td>Link → <code>Currency</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>phone_prefix</code></td>
+<td>Indicatif téléphonique</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Actif</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="currency">Currency<a class="headerlink" href="#currency" title="Permanent link">#</a></h2>
+<p><em>Devise</em> — <code>setup/currency.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>currency_code</code></li>
+<li><strong>Titre</strong> : <code>currency_name</code></li>
+<li><strong>Icône</strong> : <code>dollar</code></li>
+<li><strong>Permissions explicites</strong> — <code>read</code> : 1</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>currency_code</code></td>
+<td>Code ISO 4217</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; — Trois lettres majuscules : EUR, XOF, USD. C'est le nom du document.</td>
+</tr>
+<tr>
+<td><code>currency_name</code></td>
+<td>Nom</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>symbol</code></td>
+<td>Symbole</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>fraction</code></td>
+<td>Fraction</td>
+<td>Text</td>
+<td>— Centime, cent, pesewa…</td>
+</tr>
+<tr>
+<td><code>fraction_units</code></td>
+<td>Unités par fraction</td>
+<td>Int</td>
+<td>défaut <code>100</code></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Active</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="currency-exchange">Currency Exchange<a class="headerlink" href="#currency-exchange" title="Permanent link">#</a></h2>
+<p><em>Currency Exchange</em> — <code>setup/currency_exchange.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : calendar</li>
+<li><strong>Titre</strong> : <code>from_currency</code></li>
+<li><strong>Icône</strong> : <code>arrow-right-left</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_currency</code></td>
+<td>From Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_currency</code></td>
+<td>To Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>exchange_rate</code></td>
+<td>Exchange Rate</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>for_buying</code></td>
+<td>For Buying</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>for_selling</code></td>
+<td>For Selling</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="customer-group">Customer Group<a class="headerlink" href="#customer-group" title="Permanent link">#</a></h2>
+<p><em>Customer Group</em> — <code>setup/customer_group.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_customer_group</code>)</li>
+<li><strong>Titre</strong> : <code>customer_group_name</code></li>
+<li><strong>Icône</strong> : <code>users</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>customer_group_name</code></td>
+<td>Customer Group Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>parent_customer_group</code></td>
+<td>Parent Customer Group</td>
+<td>Link → <code>Customer Group</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code>; — Only leaf nodes are allowed in transaction</td>
+</tr>
+<tr>
+<td><code>default_price_list</code></td>
+<td>Default Price List</td>
+<td>Link → <code>Price List</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>payment_terms</code></td>
+<td>Default Payment Terms Template</td>
+<td>Link → <code>Payment Terms Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>old_parent</td>
+<td>Link → <code>Customer Group</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td>Accounts</td>
+<td>Table → <code>Party Account</code></td>
+<td>— Mention if non-standard receivable account applicable</td>
+</tr>
+<tr>
+<td><code>credit_limits</code></td>
+<td>Credit &amp; Overdue Limits</td>
+<td>Table → <code>Customer Credit Limit</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="department">Department<a class="headerlink" href="#department" title="Permanent link">#</a></h2>
+<p><em>Department</em> — <code>setup/department.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_department</code>)</li>
+<li><strong>Titre</strong> : <code>department_name</code></li>
+<li><strong>Icône</strong> : <code>building</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>department_name</code></td>
+<td>Department</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>parent_department</code></td>
+<td>Parent Department</td>
+<td>Link → <code>Department</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>Old Parent</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="designation">Designation<a class="headerlink" href="#designation" title="Permanent link">#</a></h2>
+<p><em>Designation</em> — <code>setup/designation.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>designation_name</code></li>
+<li><strong>Icône</strong> : <code>id-card</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>designation_name</code></td>
+<td>Designation</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="driver">Driver<a class="headerlink" href="#driver" title="Permanent link">#</a></h2>
+<p><em>Driver</em> — <code>setup/driver.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : kanban</li>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>car</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — HR-DRI-.YYYY.-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>full_name</code></td>
+<td>Full Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Active · Suspended · Left</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>transporter</code></td>
+<td>Transporter</td>
+<td>Link → <code>Supplier</code></td>
+<td>— Applicable for external driver</td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>cell_number</code></td>
+<td>Cellphone Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>license_number</code></td>
+<td>License Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>issuing_date</code></td>
+<td>Issuing Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>expiry_date</code></td>
+<td>Expiry Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>driving_license_category</code></td>
+<td>Driving License Category</td>
+<td>Table → <code>Driving License Category</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>address</code></td>
+<td>Address</td>
+<td>Link → <code>Address</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td>User</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="driving-license-category">Driving License Category<a class="headerlink" href="#driving-license-category" title="Permanent link">#</a></h2>
+<p><em>Driving License Category</em> — <code>setup/driving_license_category.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>class</code></td>
+<td>Driver licence class</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>issuing_date</code></td>
+<td>Issuing Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>expiry_date</code></td>
+<td>Expiry Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="email-digest">Email Digest<a class="headerlink" href="#email-digest" title="Permanent link">#</a></h2>
+<p><em>Email Digest</em> — <code>setup/email_digest.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>company</code></li>
+<li><strong>Icône</strong> : <code>mail</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>For Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>frequency</code></td>
+<td>How frequently?</td>
+<td>Select — Daily · Weekly · Monthly</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>next_send</code></td>
+<td>Next email will be sent on:</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>income</code></td>
+<td>New Income</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>expenses_booked</code></td>
+<td>New Expenses</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>income_year_to_date</code></td>
+<td>Annual Income</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>expense_year_to_date</code></td>
+<td>Annual Expenses</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>bank_balance</code></td>
+<td>Bank Balance</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>credit_balance</code></td>
+<td>Bank Credit Balance</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>invoiced_amount</code></td>
+<td>Receivables</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>payables</code></td>
+<td>Payables</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>sales_orders_to_bill</code></td>
+<td>Sales Orders to Bill</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>purchase_orders_to_bill</code></td>
+<td>Purchase Orders to Bill</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>sales_order</code></td>
+<td>New Sales Orders</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>purchase_order</code></td>
+<td>New Purchase Orders</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>sales_orders_to_deliver</code></td>
+<td>Sales Orders to Deliver</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>purchase_orders_to_receive</code></td>
+<td>Purchase Orders to Receive</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>sales_invoice</code></td>
+<td>New Sales Invoice</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>purchase_invoice</code></td>
+<td>New Purchase Invoice</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>new_quotations</code></td>
+<td>New Quotations</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>pending_quotations</code></td>
+<td>Open Quotations</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>issue</code></td>
+<td>Open Issues</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>Open Projects</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>purchase_orders_items_overdue</code></td>
+<td>Purchase Orders Items Overdue</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>calendar_events</code></td>
+<td>Upcoming Calendar Events</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>todo_list</code></td>
+<td>Open To Do</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>Open Notifications</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>add_quote</code></td>
+<td>Add Quote</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>recipients</code></td>
+<td>Recipients</td>
+<td>Table → <code>Email Digest Recipient</code></td>
+<td>— Note: Email will not be sent to disabled users</td>
+</tr>
+</tbody>
+</table>
+<h2 id="email-digest-recipient">Email Digest Recipient<a class="headerlink" href="#email-digest-recipient" title="Permanent link">#</a></h2>
+<p><em>Email Digest Recipient</em> — <code>setup/email_digest_recipient.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>recipient</code></td>
+<td>Recipient</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee">Employee<a class="headerlink" href="#employee" title="Permanent link">#</a></h2>
+<p><em>Employee</em> — <code>setup/employee.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : kanban, tree (parent <code>reports_to</code>)</li>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>user</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>naming_series</code></td>
+<td>Series</td>
+<td>Select — HR-EMP-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>salutation</code></td>
+<td>Salutation</td>
+<td>Link → <code>Salutation</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>first_name</code></td>
+<td>First Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>middle_name</code></td>
+<td>Middle Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>last_name</code></td>
+<td>Last Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Full Name</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Active · Inactive · Suspended · Left</td>
+<td><strong>requis</strong>; défaut <code>Active</code></td>
+</tr>
+<tr>
+<td><code>employee_number</code></td>
+<td>Employee Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>gender</code></td>
+<td>Gender</td>
+<td>Link → <code>Gender</code></td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>date_of_birth</code></td>
+<td>Date of Birth</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>date_of_joining</code></td>
+<td>Date of Joining</td>
+<td>Date</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>emergency_phone_number</code></td>
+<td>Emergency Phone</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>person_to_be_contacted</code></td>
+<td>Emergency Contact Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>relation</code></td>
+<td>Relation</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td>User ID</td>
+<td>Text</td>
+<td>— System User (login) ID. If set, it will become default for all HR forms.</td>
+</tr>
+<tr>
+<td><code>create_user_permission</code></td>
+<td>Create User Permission</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — This will restrict user access to other employee records</td>
+</tr>
+<tr>
+<td><code>create_user_automatically</code></td>
+<td>Create User Automatically</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Creates a User account for this employee using the Preferred, Company, or Personal email.</td>
+</tr>
+<tr>
+<td><code>scheduled_confirmation_date</code></td>
+<td>Offer Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>final_confirmation_date</code></td>
+<td>Confirmation Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>contract_end_date</code></td>
+<td>Contract End Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>notice_number_of_days</code></td>
+<td>Notice (days)</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>date_of_retirement</code></td>
+<td>Date Of Retirement</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Link → <code>Designation</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>reports_to</code></td>
+<td>Reports to</td>
+<td>Link → <code>Employee</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>branch</code></td>
+<td>Branch</td>
+<td>Link → <code>Branch</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>holiday_list</code></td>
+<td>Holiday List</td>
+<td>Link → <code>Holiday List</code></td>
+<td>— Applicable Holiday List</td>
+</tr>
+<tr>
+<td><code>salary_mode</code></td>
+<td>Salary Mode</td>
+<td>Select — Bank · Cash · Cheque</td>
+<td></td>
+</tr>
+<tr>
+<td><code>bank_name</code></td>
+<td>Bank Name</td>
+<td>Text</td>
+<td>visible si <code>salary_mode == 'Bank'</code></td>
+</tr>
+<tr>
+<td><code>bank_ac_no</code></td>
+<td>Bank A/C No.</td>
+<td>Text</td>
+<td>visible si <code>salary_mode == 'Bank'</code></td>
+</tr>
+<tr>
+<td><code>cell_number</code></td>
+<td>Mobile</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>prefered_contact_email</code></td>
+<td>Preferred Contact Email</td>
+<td>Select — Company Email · Personal Email · User ID</td>
+<td></td>
+</tr>
+<tr>
+<td><code>prefered_email</code></td>
+<td>Preferred Email</td>
+<td>Text</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>company_email</code></td>
+<td>Company Email</td>
+<td>Text</td>
+<td>— Provide Email Address registered in company</td>
+</tr>
+<tr>
+<td><code>personal_email</code></td>
+<td>Personal Email</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>unsubscribed</code></td>
+<td>Unsubscribed</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>permanent_accommodation_type</code></td>
+<td>Permanent Address Is</td>
+<td>Select — Rented · Owned</td>
+<td></td>
+</tr>
+<tr>
+<td><code>permanent_address</code></td>
+<td>Permanent Address</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>current_accommodation_type</code></td>
+<td>Current Address Is</td>
+<td>Select — Rented · Owned</td>
+<td></td>
+</tr>
+<tr>
+<td><code>current_address</code></td>
+<td>Current Address</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>bio</code></td>
+<td>Bio / Cover Letter</td>
+<td>TextEditor</td>
+<td>— Short biography for website and other publications.</td>
+</tr>
+<tr>
+<td><code>passport_number</code></td>
+<td>Passport Number</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>date_of_issue</code></td>
+<td>Date of Issue</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>valid_upto</code></td>
+<td>Valid Up To</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>place_of_issue</code></td>
+<td>Place of Issue</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>marital_status</code></td>
+<td>Marital Status</td>
+<td>Select — Single · Married · Divorced · Widowed</td>
+<td></td>
+</tr>
+<tr>
+<td><code>blood_group</code></td>
+<td>Blood Group</td>
+<td>Select — A+ · A- · B+ · B- · AB+ · AB- · O+ · O-</td>
+<td></td>
+</tr>
+<tr>
+<td><code>family_background</code></td>
+<td>Family Background</td>
+<td>LongText</td>
+<td>— Here you can maintain family details like name and occupation of parent, spouse and children</td>
+</tr>
+<tr>
+<td><code>health_details</code></td>
+<td>Health Details</td>
+<td>LongText</td>
+<td>— Here you can maintain height, weight, allergies, medical concerns etc</td>
+</tr>
+<tr>
+<td><code>education</code></td>
+<td>Education</td>
+<td>Table → <code>Employee Education</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>external_work_history</code></td>
+<td>External Work History</td>
+<td>Table → <code>Employee External Work History</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>internal_work_history</code></td>
+<td>Internal Work History</td>
+<td>Table → <code>Employee Internal Work History</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>resignation_letter_date</code></td>
+<td>Resignation Letter Date</td>
+<td>Date</td>
+<td>visible si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>relieving_date</code></td>
+<td>Relieving Date</td>
+<td>Date</td>
+<td>visible si <code>status == 'Left'</code>; obligatoire si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>reason_for_leaving</code></td>
+<td>Reason for Leaving</td>
+<td>LongText</td>
+<td>visible si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>leave_encashed</code></td>
+<td>Leave Encashed?</td>
+<td>Select — Yes · No</td>
+<td>visible si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>encashment_date</code></td>
+<td>Encashment Date</td>
+<td>Date</td>
+<td>visible si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>held_on</code></td>
+<td>Exit Interview Held On</td>
+<td>Date</td>
+<td>visible si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>new_workplace</code></td>
+<td>New Workplace</td>
+<td>Text</td>
+<td>visible si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>feedback</code></td>
+<td>Feedback</td>
+<td>LongText</td>
+<td>visible si <code>status == 'Left'</code></td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>Old Parent</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>attendance_device_id</code></td>
+<td>Attendance Device ID (Biometric/RF tag ID)</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>salary_currency</code></td>
+<td>Salary Currency</td>
+<td>Link → <code>Currency</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ctc</code></td>
+<td>Cost to Company (CTC)</td>
+<td>Currency</td>
+<td>devise de <code>salary_currency</code></td>
+</tr>
+<tr>
+<td><code>iban</code></td>
+<td>IBAN</td>
+<td>Text</td>
+<td>visible si <code>salary_mode == 'Bank'</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-education">Employee Education<a class="headerlink" href="#employee-education" title="Permanent link">#</a></h2>
+<p><em>Employee Education</em> — <code>setup/employee_education.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>school_univ</code></td>
+<td>School/University</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>qualification</code></td>
+<td>Qualification</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>level</code></td>
+<td>Level</td>
+<td>Select — Graduate · Post Graduate · Under Graduate</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>year_of_passing</code></td>
+<td>Year of Passing</td>
+<td>Int</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>class_per</code></td>
+<td>Class / Percentage</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>maj_opt_subj</code></td>
+<td>Major/Optional Subjects</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-external-work-history">Employee External Work History<a class="headerlink" href="#employee-external-work-history" title="Permanent link">#</a></h2>
+<p><em>Employee External Work History</em> — <code>setup/employee_external_work_history.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company_name</code></td>
+<td>Company</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>salary</code></td>
+<td>Salary</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>parent_salary_currency</code></td>
+</tr>
+<tr>
+<td><code>address</code></td>
+<td>Address</td>
+<td>LongText</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>contact</code></td>
+<td>Contact</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>total_experience</code></td>
+<td>Total Experience</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-group">Employee Group<a class="headerlink" href="#employee-group" title="Permanent link">#</a></h2>
+<p><em>Employee Group</em> — <code>setup/employee_group.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>employee_group_name</code></li>
+<li><strong>Icône</strong> : <code>users</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee_group_name</code></td>
+<td>Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_list</code></td>
+<td>Employee</td>
+<td>Table → <code>Employee Group Table</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-group-table">Employee Group Table<a class="headerlink" href="#employee-group-table" title="Permanent link">#</a></h2>
+<p><em>Employee Group Table</em> — <code>setup/employee_group_table.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>employee_name</code></td>
+<td>Employee Name</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>user_id</code></td>
+<td>ERPNext User ID</td>
+<td>Text</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="employee-internal-work-history">Employee Internal Work History<a class="headerlink" href="#employee-internal-work-history" title="Permanent link">#</a></h2>
+<p><em>Employee Internal Work History</em> — <code>setup/employee_internal_work_history.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>branch</code></td>
+<td>Branch</td>
+<td>Link → <code>Branch</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>designation</code></td>
+<td>Designation</td>
+<td>Link → <code>Designation</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="error-log">Error Log<a class="headerlink" href="#error-log" title="Permanent link">#</a></h2>
+<p><em>Error Log</em> — <code>setup/error_log.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>method</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>method</code></td>
+<td>Method</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>Error</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>seen</code></td>
+<td>Seen</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reference_doctype</code></td>
+<td>Reference DocType</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>reference_name</code></td>
+<td>Reference Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="gender">Gender<a class="headerlink" href="#gender" title="Permanent link">#</a></h2>
+<p><em>Gender</em> — <code>setup/gender.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>gender</code></li>
+<li><strong>Titre</strong> : <code>gender</code></li>
+<li><strong>Icône</strong> : <code>users</code></li>
+<li><strong>Permissions explicites</strong> — <code>read</code> : 1</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gender</code></td>
+<td>Gender</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; unique</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="global-defaults">Global Defaults<a class="headerlink" href="#global-defaults" title="Permanent link">#</a></h2>
+<p><em>Global Defaults</em> — <code>setup/global_defaults.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>default_currency</code></li>
+<li><strong>Icône</strong> : <code>settings</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>default_company</code></td>
+<td>Default Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>country</code></td>
+<td>Default Country</td>
+<td>Link → <code>Country</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_distance_unit</code></td>
+<td>Default Distance Unit</td>
+<td>Link → <code>UOM</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>default_currency</code></td>
+<td>Default Currency</td>
+<td>Link → <code>Currency</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>hide_currency_symbol</code></td>
+<td>Hide Currency Symbol</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code>; — Do not show any symbol like $ etc next to currencies.</td>
+</tr>
+<tr>
+<td><code>disable_rounded_total</code></td>
+<td>Disable Rounded Total</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code>; — If disable, 'Rounded Total' field will not be visible in any transaction</td>
+</tr>
+<tr>
+<td><code>disable_in_words</code></td>
+<td>Disable In Words</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code>; — If disable, 'In Words' field will not be visible in any transaction</td>
+</tr>
+<tr>
+<td><code>demo_company</code></td>
+<td>Demo Company</td>
+<td>Link → <code>Company</code></td>
+<td>lecture seule; masqué</td>
+</tr>
+<tr>
+<td><code>use_posting_datetime_for_naming_documents</code></td>
+<td>Use Posting Date for Naming Documents</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code>; — When checked, the system will use the posting date of the document for naming instead of the creation date.</td>
+</tr>
+<tr>
+<td><code>enable_item_search_index</code></td>
+<td>Enable Item Search Index</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Speeds up Item search on large catalogues. Requires a single app server: the index is a file on that server's</td>
+</tr>
+</tbody>
+</table>
+<h2 id="holiday">Holiday<a class="headerlink" href="#holiday" title="Permanent link">#</a></h2>
+<p><em>Holiday</em> — <code>setup/holiday.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>holiday_date</code></td>
+<td>Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>weekly_off</code></td>
+<td>Weekly Off</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>is_half_day</code></td>
+<td>Is Half Day</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="holiday-list">Holiday List<a class="headerlink" href="#holiday-list" title="Permanent link">#</a></h2>
+<p><em>Holiday List</em> — <code>setup/holiday_list.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>holiday_list_name</code></li>
+<li><strong>Icône</strong> : <code>calendar-off</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>holiday_list_name</code></td>
+<td>Holiday List Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>from_date</code></td>
+<td>From Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_date</code></td>
+<td>To Date</td>
+<td>Date</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>total_holidays</code></td>
+<td>Total Holidays</td>
+<td>Number</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>weekly_off</code></td>
+<td>Weekly Off</td>
+<td>Select — Sunday · Monday · Tuesday · Wednesday · Thursday · Friday · Saturday</td>
+<td></td>
+</tr>
+<tr>
+<td><code>holidays</code></td>
+<td>Holidays</td>
+<td>Table → <code>Holiday</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>Color</td>
+<td>Color</td>
+<td></td>
+</tr>
+<tr>
+<td><code>country</code></td>
+<td>Country</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>subdivision</code></td>
+<td>Subdivision</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_half_day</code></td>
+<td>Is Half Day</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="incoterm">Incoterm<a class="headerlink" href="#incoterm" title="Permanent link">#</a></h2>
+<p><em>Incoterm</em> — <code>setup/incoterm.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>ship</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code</code></td>
+<td>Code</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="item-group">Item Group<a class="headerlink" href="#item-group" title="Permanent link">#</a></h2>
+<p><em>Item Group</em> — <code>setup/item_group.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_item_group</code>)</li>
+<li><strong>Titre</strong> : <code>item_group_name</code></li>
+<li><strong>Icône</strong> : <code>boxes</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_group_name</code></td>
+<td>Item Group Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>parent_item_group</code></td>
+<td>Parent Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code>; — Only leaf nodes are allowed in transaction</td>
+</tr>
+<tr>
+<td><code>image</code></td>
+<td>Image</td>
+<td>Image</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>item_group_defaults</code></td>
+<td>Item Group Defaults</td>
+<td>Table → <code>Item Default</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>taxes</code></td>
+<td>Taxes</td>
+<td>Table → <code>Item Tax</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>old_parent</td>
+<td>Link → <code>Item Group</code></td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="language">Language<a class="headerlink" href="#language" title="Permanent link">#</a></h2>
+<p><em>Language</em> — <code>setup/language.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>language_code</code></li>
+<li><strong>Titre</strong> : <code>language_name</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>language_name</code></td>
+<td>Language Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>language_code</code></td>
+<td>Language Code</td>
+<td>Text</td>
+<td><strong>requis</strong>; unique</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="letter-head">Letter Head<a class="headerlink" href="#letter-head" title="Permanent link">#</a></h2>
+<p><em>Letter Head</em> — <code>setup/letter_head.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>letter_head_name</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>letter_head_name</code></td>
+<td>Letter Head Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_default</code></td>
+<td>Default</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>content</code></td>
+<td>Content</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>footer</code></td>
+<td>Footer</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="module-def">Module Def<a class="headerlink" href="#module-def" title="Permanent link">#</a></h2>
+<p><em>Module Def</em> — <code>setup/module_def.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>module_name</code></li>
+<li><strong>Titre</strong> : <code>module_name</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>module_name</code></td>
+<td>Module Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; unique</td>
+</tr>
+<tr>
+<td><code>app_name</code></td>
+<td>App Name</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>custom</code></td>
+<td>Custom</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="party-type">Party Type<a class="headerlink" href="#party-type" title="Permanent link">#</a></h2>
+<p><em>Party Type</em> — <code>setup/party_type.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>party_type</code></li>
+<li><strong>Icône</strong> : <code>tag</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>party_type</code></td>
+<td>Party Type</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>account_type</code></td>
+<td>Account Type</td>
+<td>Select — Payable · Receivable</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="print-format">Print Format<a class="headerlink" href="#print-format" title="Permanent link">#</a></h2>
+<p><em>Print Format</em> — <code>setup/print_format.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>format_name</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format_name</code></td>
+<td>Format Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>doc_type</code></td>
+<td>DocType</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>Standard</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>format_data</code></td>
+<td>Format Data</td>
+<td>JSON</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="print-heading">Print Heading<a class="headerlink" href="#print-heading" title="Permanent link">#</a></h2>
+<p><em>Print Heading</em> — <code>setup/print_heading.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>print_heading</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>print_heading</code></td>
+<td>Print Heading</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="quotation-lost-reason">Quotation Lost Reason<a class="headerlink" href="#quotation-lost-reason" title="Permanent link">#</a></h2>
+<p><em>Quotation Lost Reason</em> — <code>setup/quotation_lost_reason.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>order_lost_reason</code></li>
+<li><strong>Icône</strong> : <code>circle-x</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>order_lost_reason</code></td>
+<td>Quotation Lost Reason</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="quotation-lost-reason-detail">Quotation Lost Reason Detail<a class="headerlink" href="#quotation-lost-reason-detail" title="Permanent link">#</a></h2>
+<p><em>Quotation Lost Reason Detail</em> — <code>setup/quotation_lost_reason_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lost_reason</code></td>
+<td>Quotation Lost Reason</td>
+<td>Link → <code>Quotation Lost Reason</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rq-job">RQ Job<a class="headerlink" href="#rq-job" title="Permanent link">#</a></h2>
+<p><em>RQ Job</em> — <code>setup/rq_job.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>job_id</code></li>
+<li><strong>Titre</strong> : <code>job_id</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>job_id</code></td>
+<td>Job ID</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; unique</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Queued · Started · Finished · Failed</td>
+<td></td>
+</tr>
+<tr>
+<td><code>queue</code></td>
+<td>Queue</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td>Method</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>creation_time</code></td>
+<td>Creation Time</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>ended_at</code></td>
+<td>Ended At</td>
+<td>Datetime</td>
+<td></td>
+</tr>
+<tr>
+<td><code>exc_info</code></td>
+<td>Error Details</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sales-partner">Sales Partner<a class="headerlink" href="#sales-partner" title="Permanent link">#</a></h2>
+<p><em>Sales Partner</em> — <code>setup/sales_partner.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>partner_type</code></li>
+<li><strong>Icône</strong> : <code>handshake</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>partner_name</code></td>
+<td>Sales Partner Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>partner_type</code></td>
+<td>Partner Type</td>
+<td>Link → <code>Sales Partner Type</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>territory</code></td>
+<td>Territory</td>
+<td>Link → <code>Territory</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>commission_rate</code></td>
+<td>Commission Rate</td>
+<td>Number</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>targets</code></td>
+<td>Targets</td>
+<td>Table → <code>Target Detail</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>show_in_website</code></td>
+<td>Show In Website</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>referral_code</code></td>
+<td>Referral Code</td>
+<td>Text</td>
+<td>— To Track inbound purchase</td>
+</tr>
+<tr>
+<td><code>route</code></td>
+<td>Route</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>logo</code></td>
+<td>Logo</td>
+<td>Attach</td>
+<td></td>
+</tr>
+<tr>
+<td><code>partner_website</code></td>
+<td>Partner website</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>introduction</code></td>
+<td>Introduction</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sales-person">Sales Person<a class="headerlink" href="#sales-person" title="Permanent link">#</a></h2>
+<p><em>Sales Person</em> — <code>setup/sales_person.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_sales_person</code>)</li>
+<li><strong>Titre</strong> : <code>sales_person_name</code></li>
+<li><strong>Icône</strong> : <code>user-round</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sales_person_name</code></td>
+<td>Sales Person Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>parent_sales_person</code></td>
+<td>Parent Sales Person</td>
+<td>Link → <code>Sales Person</code></td>
+<td>colonne de liste; — Select company name first.</td>
+</tr>
+<tr>
+<td><code>commission_rate</code></td>
+<td>Commission Rate</td>
+<td>Percent</td>
+<td></td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td><strong>requis</strong>; colonne de liste; défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>department</code></td>
+<td>Department</td>
+<td>Link → <code>Department</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>old_parent</td>
+<td>Text</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>targets</code></td>
+<td>Targets</td>
+<td>Table → <code>Target Detail</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="salutation">Salutation<a class="headerlink" href="#salutation" title="Permanent link">#</a></h2>
+<p><em>Salutation</em> — <code>setup/salutation.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>salutation</code></li>
+<li><strong>Titre</strong> : <code>salutation</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>salutation</code></td>
+<td>Salutation</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste; unique</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="supplier-group">Supplier Group<a class="headerlink" href="#supplier-group" title="Permanent link">#</a></h2>
+<p><em>Supplier Group</em> — <code>setup/supplier_group.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_supplier_group</code>)</li>
+<li><strong>Titre</strong> : <code>parent_supplier_group</code></li>
+<li><strong>Icône</strong> : <code>users</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>supplier_group_name</code></td>
+<td>Supplier Group Name</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>parent_supplier_group</code></td>
+<td>Parent Supplier Group</td>
+<td>Link → <code>Supplier Group</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code>; — Only leaf nodes are allowed in transaction</td>
+</tr>
+<tr>
+<td><code>payment_terms</code></td>
+<td>Default Payment Terms Template</td>
+<td>Link → <code>Payment Terms Template</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>accounts</code></td>
+<td>Accounts</td>
+<td>Table → <code>Party Account</code></td>
+<td>— Mention if non-standard receivable account applicable</td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>Old Parent</td>
+<td>Link → <code>Supplier Group</code></td>
+<td>masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="target-detail">Target Detail<a class="headerlink" href="#target-detail" title="Permanent link">#</a></h2>
+<p><em>Target Detail</em> — <code>setup/target_detail.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_group</code></td>
+<td>Item Group</td>
+<td>Link → <code>Item Group</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>fiscal_year</code></td>
+<td>Fiscal Year</td>
+<td>Link → <code>Fiscal Year</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>target_qty</code></td>
+<td>Target Qty</td>
+<td>Decimal</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>target_amount</code></td>
+<td>Target  Amount</td>
+<td>Number</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>distribution_id</code></td>
+<td>Target Distribution</td>
+<td>Link → <code>Monthly Distribution</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="terms-and-conditions">Terms and Conditions<a class="headerlink" href="#terms-and-conditions" title="Permanent link">#</a></h2>
+<p><em>Terms and Conditions</em> — <code>setup/terms_and_conditions.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>disabled</code></td>
+<td>Disabled</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+<tr>
+<td><code>terms</code></td>
+<td>Terms and Conditions</td>
+<td>TextEditor</td>
+<td></td>
+</tr>
+<tr>
+<td><code>selling</code></td>
+<td>Selling</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>buying</code></td>
+<td>Buying</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>copy_attachments_to_transaction</code></td>
+<td>Copy Attachments to Transaction</td>
+<td>Boolean</td>
+<td>défaut <code>non</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="territory">Territory<a class="headerlink" href="#territory" title="Permanent link">#</a></h2>
+<p><em>Territory</em> — <code>setup/territory.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : tree (parent <code>parent_territory</code>)</li>
+<li><strong>Titre</strong> : <code>territory_name</code></li>
+<li><strong>Icône</strong> : <code>map</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>territory_name</code></td>
+<td>Territory Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>parent_territory</code></td>
+<td>Parent Territory</td>
+<td>Link → <code>Territory</code></td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>is_group</code></td>
+<td>Is Group</td>
+<td>Boolean</td>
+<td>colonne de liste; défaut <code>non</code>; — Only leaf nodes are allowed in transaction</td>
+</tr>
+<tr>
+<td><code>territory_manager</code></td>
+<td>Territory Manager</td>
+<td>Link → <code>Sales Person</code></td>
+<td>colonne de liste; — For reference</td>
+</tr>
+<tr>
+<td><code>lft</code></td>
+<td>lft</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>rgt</code></td>
+<td>rgt</td>
+<td>Int</td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>old_parent</code></td>
+<td>old_parent</td>
+<td>Link → <code>Territory</code></td>
+<td>masqué</td>
+</tr>
+<tr>
+<td><code>targets</code></td>
+<td>Targets</td>
+<td>Table → <code>Target Detail</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="transaction-deletion-record">Transaction Deletion Record<a class="headerlink" href="#transaction-deletion-record" title="Permanent link">#</a></h2>
+<p><em>Transaction Deletion Record</em> — <code>setup/transaction_deletion_record.yaml</code> · soumis</p>
+<ul>
+<li><strong>Numérotation</strong> : série <code>TDR-{YYYY}-{#####}</code></li>
+<li><strong>Titre</strong> : <code>status</code></li>
+<li><strong>Icône</strong> : <code>trash</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>doctypes</code></td>
+<td>Summary</td>
+<td>Table → <code>Transaction Deletion Record Details</code></td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>doctypes_to_delete</code></td>
+<td>DocTypes To Delete</td>
+<td>Table → <code>Transaction Deletion Record To Delete</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>doctypes_to_be_ignored</code></td>
+<td>Excluded DocTypes</td>
+<td>Table → <code>Transaction Deletion Record Item</code></td>
+<td>— DocTypes that will NOT be deleted.</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Status</td>
+<td>Select — Queued · Running · Failed · Completed · Cancelled</td>
+<td>lecture seule</td>
+</tr>
+<tr>
+<td><code>delete_bin_data_status</code></td>
+<td>Delete Bins</td>
+<td>Select — Pending · Completed · Skipped</td>
+<td>lecture seule; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>delete_leads_and_addresses_status</code></td>
+<td>Delete Leads and Addresses</td>
+<td>Select — Pending · Completed · Skipped</td>
+<td>lecture seule; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>reset_company_default_values_status</code></td>
+<td>Reset Company Default Values</td>
+<td>Select — Pending · Completed · Skipped</td>
+<td>lecture seule; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>clear_notifications_status</code></td>
+<td>Clear Notifications</td>
+<td>Select — Pending · Completed · Skipped</td>
+<td>lecture seule; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>initialize_doctypes_table_status</code></td>
+<td>Initialize Summary Table</td>
+<td>Select — Pending · Completed · Skipped</td>
+<td>lecture seule; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>delete_transactions_status</code></td>
+<td>Delete Transactions</td>
+<td>Select — Pending · Completed · Skipped</td>
+<td>lecture seule; défaut <code>Pending</code></td>
+</tr>
+<tr>
+<td><code>error_log</code></td>
+<td>Error Log</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>process_in_single_transaction</code></td>
+<td>Process in Single Transaction</td>
+<td>Boolean</td>
+<td>lecture seule; masqué</td>
+</tr>
+</tbody>
+</table>
+<h2 id="transaction-deletion-record-item">Transaction Deletion Record Item<a class="headerlink" href="#transaction-deletion-record-item" title="Permanent link">#</a></h2>
+<p><em>Transaction Deletion Record Item</em> — <code>setup/transaction_deletion_record_item.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>doctype_name</code></td>
+<td>DocType</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="transaction-deletion-record-to-delete">Transaction Deletion Record To Delete<a class="headerlink" href="#transaction-deletion-record-to-delete" title="Permanent link">#</a></h2>
+<p><em>Transaction Deletion Record To Delete</em> — <code>setup/transaction_deletion_record_to_delete.yaml</code> · table enfant</p>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>doctype_name</code></td>
+<td>DocType</td>
+<td>Text</td>
+<td>colonne de liste</td>
+</tr>
+<tr>
+<td><code>company_field</code></td>
+<td>Company Field</td>
+<td>Text</td>
+<td>colonne de liste; — Company link field name used for filtering (optional - leave empty to delete all records)</td>
+</tr>
+<tr>
+<td><code>document_count</code></td>
+<td>Document Count</td>
+<td>Int</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+<tr>
+<td><code>child_doctypes</code></td>
+<td>Child DocTypes</td>
+<td>LongText</td>
+<td>colonne de liste; lecture seule; — Child tables that will also be deleted</td>
+</tr>
+<tr>
+<td><code>deleted</code></td>
+<td>Deleted</td>
+<td>Boolean</td>
+<td>colonne de liste; lecture seule</td>
+</tr>
+</tbody>
+</table>
+<h2 id="uom">UOM<a class="headerlink" href="#uom" title="Permanent link">#</a></h2>
+<p><em>UOM</em> — <code>setup/uom.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>uom_name</code></li>
+<li><strong>Icône</strong> : <code>ruler</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uom_name</code></td>
+<td>UOM Name</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>must_be_whole_number</code></td>
+<td>Must be Whole Number</td>
+<td>Boolean</td>
+<td>défaut <code>non</code>; — Check this to disallow fractions. (for Nos)</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Enabled</td>
+<td>Boolean</td>
+<td>défaut <code>oui</code></td>
+</tr>
+<tr>
+<td><code>symbol</code></td>
+<td>Symbol</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>common_code</code></td>
+<td>Common Code</td>
+<td>Text</td>
+<td>— According to CEFACT/ICG/2010/IC013 or CEFACT/ICG/2010/IC010</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Description</td>
+<td>LongText</td>
+<td></td>
+</tr>
+<tr>
+<td><code>category</code></td>
+<td>Category</td>
+<td>Link → <code>UOM Category</code></td>
+<td>colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="uom-conversion-factor">UOM Conversion Factor<a class="headerlink" href="#uom-conversion-factor" title="Permanent link">#</a></h2>
+<p><em>UOM Conversion Factor</em> — <code>setup/uom_conversion_factor.yaml</code></p>
+<ul>
+<li><strong>Titre</strong> : <code>category</code></li>
+<li><strong>Icône</strong> : <code>ruler</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>category</code></td>
+<td>Category</td>
+<td>Link → <code>UOM Category</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>from_uom</code></td>
+<td>From</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>to_uom</code></td>
+<td>To</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>Value</td>
+<td>Number</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+</tbody>
+</table>
+<h2 id="vehicle">Vehicle<a class="headerlink" href="#vehicle" title="Permanent link">#</a></h2>
+<p><em>Vehicle</em> — <code>setup/vehicle.yaml</code></p>
+<ul>
+<li><strong>Vues</strong> : calendar, gantt</li>
+<li><strong>Titre</strong> : <code>model</code></li>
+<li><strong>Icône</strong> : <code>car</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>license_plate</code></td>
+<td>License Plate</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>make</code></td>
+<td>Make</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>Model</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>last_odometer</code></td>
+<td>Odometer Value (Last)</td>
+<td>Int</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>acquisition_date</code></td>
+<td>Acquisition Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>location</code></td>
+<td>Location</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>chassis_no</code></td>
+<td>Chassis No</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>vehicle_value</code></td>
+<td>Vehicle Value</td>
+<td>Currency</td>
+<td>colonne de liste; devise de <code>company.default_currency</code></td>
+</tr>
+<tr>
+<td><code>employee</code></td>
+<td>Employee</td>
+<td>Link → <code>Employee</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>insurance_company</code></td>
+<td>Insurance Company</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>policy_no</code></td>
+<td>Policy No</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>start_date</code></td>
+<td>Start Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>End Date</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>fuel_type</code></td>
+<td>Fuel Type</td>
+<td>Select — Petrol · Diesel · Natural Gas · Electric</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>uom</code></td>
+<td>Fuel UOM</td>
+<td>Link → <code>UOM</code></td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>carbon_check_date</code></td>
+<td>Last Carbon Check</td>
+<td>Date</td>
+<td></td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>Color</td>
+<td>Text</td>
+<td></td>
+</tr>
+<tr>
+<td><code>wheels</code></td>
+<td>Wheels</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>doors</code></td>
+<td>Doors</td>
+<td>Int</td>
+<td></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td>Company</td>
+<td>Link → <code>Company</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="web-form">Web Form<a class="headerlink" href="#web-form" title="Permanent link">#</a></h2>
+<p><em>Web Form</em> — <code>setup/web_form.yaml</code></p>
+<ul>
+<li><strong>Numérotation</strong> : nommé par le champ <code>route</code></li>
+<li><strong>Titre</strong> : <code>title</code></li>
+<li><strong>Icône</strong> : <code>file-text</code></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Champ</th>
+<th>Libellé</th>
+<th>Type</th>
+<th>Attributs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>title</code></td>
+<td>Title</td>
+<td>Text</td>
+<td><strong>requis</strong>; colonne de liste</td>
+</tr>
+<tr>
+<td><code>route</code></td>
+<td>Route</td>
+<td>Text</td>
+<td><strong>requis</strong>; unique</td>
+</tr>
+<tr>
+<td><code>doc_type</code></td>
+<td>DocType</td>
+<td>Text</td>
+<td><strong>requis</strong></td>
+</tr>
+<tr>
+<td><code>published</code></td>
+<td>Published</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>login_required</code></td>
+<td>Login Required</td>
+<td>Boolean</td>
+<td></td>
+</tr>
+<tr>
+<td><code>success_message</code></td>
+<td>Success Message</td>
+<td>LongText</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../selling/" class="btn btn-neutral float-left" title="Ventes (selling)"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../stock/" class="btn btn-neutral float-right" title="Stock (stock)">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/traoreera01/erpDoctype" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../selling/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../stock/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
