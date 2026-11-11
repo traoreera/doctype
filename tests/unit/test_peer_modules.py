@@ -20,6 +20,7 @@ import pytest
 import yaml
 
 from tests.conftest import make_ctx
+from tests.support.erp_set import erp_modules, load_erp_set
 from xcore_doctype.document import DocumentService
 from xcore_doctype.errors import DoctypeError, InvalidDefinition, NotFound
 from xcore_doctype.grants import GrantCatalog
@@ -31,6 +32,11 @@ ERP = Path(__file__).resolve().parents[2] / "doctypes"
 # voyait échouer sur « dossier de DocTypes introuvable » — or `make check` doit passer sur un clone neuf. Les RÈGLES qu'ils
 # défendent restent couvertes par les cas construits plus bas, qui ne dépendent d'aucun fichier extérieur.
 needs_erp = pytest.mark.skipif(not ERP.is_dir(), reason="doctypes/ absent : le jeu ERP vit dans traoreera/erp")
+
+
+def erp_module_names() -> list[str]:
+    """Les noms des modules du jeu (voir `tests/support/erp_set.py` pour ce qu'est un dossier de module)."""
+    return [p.name for p in erp_modules(ERP)]
 
 
 class Log:
@@ -64,16 +70,21 @@ def _signature(reg: DocTypeRegistry) -> dict[str, list[tuple[str, str, str]]]:
 
 @pytest.fixture(scope="module")
 def single_load():
+    """Un registre unique, l'arbre complet : la base de comparaison des chargements plugin par plugin.
+
+    Les modules sont chargés dans l'ordre alphabétique (un `load_dir` par dossier, `peers=True`, un `settle`
+    à la fin) : la racine du sous-module contient aussi `workspaces/`, qu'un `load_dir` racine refuserait
+    (voir `tests/support/erp_set.py`).
+    """
     reg = DocTypeRegistry()
-    reg.load_dir(ERP)
-    reg.validate_links()
+    load_erp_set(reg, ERP)
     return reg
 
 
 @needs_erp
 @pytest.mark.parametrize("order", ["alphabetical", "reversed", "shuffled"])
 def test_the_erp_loads_as_one_plugin_per_module_in_any_order(single_load, order):
-    modules = sorted(p.name for p in ERP.iterdir() if p.is_dir())
+    modules = erp_module_names()
     if order == "reversed":
         modules.reverse()
     elif order == "shuffled":
@@ -97,7 +108,7 @@ def test_without_peers_the_cycle_cannot_load_module_by_module():
     """La preuve que le problème est réel : plugin par plugin, sans `peers`, le premier module qui cite un frère échoue."""
     channel = DocTypeChannel(DocTypeRegistry(), Log())
     with pytest.raises(InvalidDefinition):
-        for module in sorted(p.name for p in ERP.iterdir() if p.is_dir()):
+        for module in erp_module_names():
             channel.load_dir(module, ERP / module)
 
 

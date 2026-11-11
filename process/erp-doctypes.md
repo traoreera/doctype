@@ -1,9 +1,9 @@
 # Le jeu de DocTypes d'ERP (`doctypes/`)
 
-> Depuis le 10 novembre 2026, `doctypes/` est le sous-module Git public `https://github.com/traoreera01/erpDoctype`. Sa documentation de dépôt est dans `doctypes/README.md` et `doctypes/docs/erp-doctypes.md`. Le présent fichier reste l'historique détaillé des transformations et des invariants du moteur. Sur un clone neuf, exécuter `git submodule update --init --recursive` avant les tests ERP.
+> Depuis le 10 novembre 2026, `doctypes/` est le sous-module Git public `https://github.com/traoreera01/erpDoctype`. Il contient les définitions ERP et, depuis le 11 novembre, les 21 workspaces dans `doctypes/workspaces/`. Sa documentation est dans `doctypes/README.md` et `doctypes/docs/erp-doctypes.md`. Le présent fichier reste l'historique détaillé des transformations et des invariants du moteur. Sur un clone neuf, exécuter `git submodule update --init --recursive` avant les tests ERP.
 
 **État au 27 oct. 2026.** 704 DocTypes répartis en 22 modules, migrés d'ERPNext (commit `b39a542`), puis réadaptés
-pour être réellement chargeables par le moteur. Les 5 espaces de travail vivent à côté, dans `workspaces/`.
+pour être réellement chargeables par le moteur. Les espaces de travail sont désormais versionnés dans le sous-module, à `doctypes/workspaces/`.
 
 Ce fichier dit **comment ce jeu se charge**, **ce qui a été changé et pourquoi**, et **ce qui reste à faire**.
 Il ne remplace pas `process/doctype.md` (le contrat de conception) : il décrit un jeu de définitions, pas le moteur.
@@ -25,25 +25,28 @@ Le piège le plus coûteux d'un ERP — l'argent en virgule flottante — avait 
 
 ## 2. Comment il se charge
 
-**Un seul appel récursif.** `load_dir` descend dans les sous-dossiers, et son tri « enfants d'abord » porte sur
-tout l'arbre. Ce tri suffit toujours : le schéma refuse les tables imbriquées, un enfant est donc une feuille du
-graphe parent→enfant, qui ne peut pas avoir de cycle.
+**Un `load_dir` par dossier de module, jamais la racine.** `load_dir` descend dans les sous-dossiers et lit
+TOUT fichier `.yaml|.yml|.json` de l'arbre comme une définition — or, depuis le 11 novembre, l'arbre contient
+aussi `doctypes/workspaces/` (les espaces de travail se chargent par `load_workspaces`, jamais `load_dir`) :
+un `load_dir` de la racine du sous-module échoue sur eux. L'opérateur liste donc les dossiers de modules :
 
 ```yaml
-# dans le plugin.yaml de l'opérateur
+# dans le plugin.yaml de l'opérateur (les 22 dossiers de modules du sous-module)
 doctype:
-  doctypes_dirs: ["./doctypes"]
+  doctypes_dirs: ["./doctypes/accounts", "./doctypes/assets", "./doctypes/buying", …]
 ```
 
-C'est ce que fait `plugin.py` : `load_dir` par dossier listé, puis **un** `validate_links()` quand tout est là.
-Deux conséquences qui décident de toute la forme :
+C'est ce que fait `plugin.py` : `load_dir` par dossier listé, puis **un** `validate_links()` quand tout est
+là. Deux conséquences qui décident de toute la forme :
 
 - **`module` est libre** (`owner=None` : la règle « `module` == nom du plugin » ne s'applique qu'à un plugin
   propriétaire). Les 22 namespaces de grants cohabitent donc dans un seul chargement.
 - **Les Link peuvent être mutuels.** `validate_links()` n'est appelé qu'une fois, tout est enregistré. C'est
   indispensable ici : les modules forment un **cycle de 15** (`accounts ↔ setup ↔ stock ↔ selling ↔ buying…`),
-  et les relations Table en forment un de 5. Aucun ordre de chargement n'existe — `requires` ordonne, il ne
-  dénoue pas un cycle.
+  et les relations Table en forment un de 5 (`POS Invoice` attend la table `Packed Item` d'un autre dossier —
+  d'où le tri « enfants d'abord » par dossier, qui suffit toujours : le schéma refuse les tables imbriquées,
+  un enfant est donc une feuille du graphe parent→enfant). Aucun ordre de chargement n'existe — `requires`
+  ordonne, il ne dénoue pas un cycle.
 
 **Mise à jour du 27 octobre : « un plugin par module » est possible** (`DocTypeChannel.load_dir(…, peers=True)`,
 `tests/unit/test_peer_modules.py`). Chaque module devient un vrai plugin, propriétaire de ses DocTypes (`module` ==

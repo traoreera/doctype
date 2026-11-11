@@ -15,6 +15,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from tests.support.erp_set import load_erp_set
 from xcore_doctype import platform_plugins_dir, printing
 from xcore_doctype.errors import InvalidDefinition
 from xcore_doctype.registry import DocTypeChannel, DocTypeRegistry
@@ -34,8 +35,7 @@ def erp() -> DocTypeRegistry:
     if not ERP_DIR.is_dir():
         pytest.skip("doctypes/ absent")
     reg = DocTypeRegistry()
-    reg.load_dir(ERP_DIR)
-    reg.validate_links()
+    load_erp_set(reg, ERP_DIR)
     for folder in FOLDERS:
         reg.load_print_templates(folder, owner="xprint")
     return reg
@@ -110,8 +110,7 @@ async def test_only_the_doctypes_present_get_their_template(tmp_path):
     if not ERP_DIR.is_dir():
         pytest.skip("doctypes/ absent")
     reg = DocTypeRegistry()
-    reg.load_dir(ERP_DIR)
-    reg.validate_links()
+    load_erp_set(reg, ERP_DIR)
     present = {"Sales Invoice", "Quotation"}
     channel = DocTypeChannel(reg)
     channel.has = lambda doctype: doctype in present  # type: ignore[method-assign]
