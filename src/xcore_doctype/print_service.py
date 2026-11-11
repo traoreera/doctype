@@ -453,10 +453,9 @@ async def _render_pdf(html: str, background: Background | None) -> bytes:
     (une demi-seconde au premier appel, le temps de charger les polices), et pendant ce temps-là l'application
     entière ne répondait plus. Un fil de travail par impression ; le moteur ne partage rien entre deux `Book`.
 
-    Sous le MÊME plafond que les impressions d'un plugin (`pdf.render_slot`) : dix impressions lancées ensemble font la queue
-    au lieu d'ouvrir dix moteurs de rendu."""
-    async with pdf_engine.render_slot():
-        return await asyncio.to_thread(_pdf_bytes, html, background)
+    Sous le MÊME plafond que les impressions d'un plugin (`pdf.off_loop` / `pdf.render_slot`) : dix impressions lancées ensemble
+    font la queue au lieu d'ouvrir dix moteurs de rendu, et une attente abandonnée ne rend sa place qu'au bout du rendu."""
+    return await pdf_engine.off_loop(_pdf_bytes, html, background)
 
 
 def _pdf_bytes(html: str, background: Background | None) -> bytes:

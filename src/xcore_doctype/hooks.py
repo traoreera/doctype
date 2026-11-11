@@ -214,11 +214,22 @@ class HookEvent:
     ) -> list[dict[str, Any]]:
         """Les documents qui répondent aux filtres (les MÊMES filtres typés que la liste), lus dans la transaction du hook et sans
         filtre de permission. Disponible dans tout hook qui tourne DANS la transaction : `validate`, `before_save`,
-        `before_insert`, et les transactionnels (`on_submit`…), où c'est `tx.find`."""
+        `before_insert`, et les transactionnels (`on_submit`…), où c'est `tx.find`.
+
+        CE QUE CETTE LECTURE NE GARANTIT PAS : rien n'est verrouillé, et une phase de lecture seule ne PEUT rien verrouiller
+        (le document n'est pas encore écrit). Deux écritures simultanées lisent donc le même état d'avant et passent toutes
+        les deux : un contrôle du genre « pas plus d'un bulletin par employé et par mois » ou « la somme des lignes ne dépasse
+        pas le plafond » est vérifié ici SANS être garanti. Pour une règle qui doit tenir sous concurrence, il faut quelque
+        chose qui tranche en base : un champ `unique: true` (la clé de `xdt_unique`), ou le contrôle refait dans un hook
+        transactionnel avec `tx.find(..., lock=True)` / `tx.get(..., lock=True)` avant d'écrire. Vu de l'utilisateur,
+        l'un refuse au premier geste, l'autre à la soumission ; les deux refusent, et c'est ce qui compte.
+        """
         return await self._readings().find(doctype, filters, order_by=order_by, descending=descending, limit=limit)
 
     async def sum(self, doctype: str, field: str, filters: Mapping[str, Any] | None = None) -> Decimal:
-        """La somme exacte d'un champ Decimal ou Currency sur les documents qui répondent aux filtres (0 si aucun)."""
+        """La somme EXACTE d'un champ Decimal ou Currency sur les documents qui répondent aux filtres (0 si aucun), à l'échelle du
+        champ. Même réserve que `find` sur la concurrence : la somme est juste au moment où elle est lue, et rien n'empêche une
+        écriture parallèle de la périmer avant le commit."""
         return await self._readings().sum(doctype, field, filters)
 
     def _readings(self) -> HookReadings:

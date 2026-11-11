@@ -37,7 +37,7 @@ import re
 import secrets
 from collections import Counter
 from contextlib import asynccontextmanager
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, tzinfo
 from functools import cached_property
@@ -47,7 +47,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, S
 from . import aggregation, compute, fieldtypes, integrity, memory
 from .builder import NO_RULES, NO_WORKFLOW_RULES, CompiledDocType, FormRules, WorkflowRules, same_value
 from .expr import evaluate
-from .decimals import canonical
+from .decimals import MAX_DIGITS, canonical
 from .context import RequestContext
 from .db.rls import bind_tenant
 from .db.tables import SystemTables
@@ -3141,8 +3141,13 @@ class _Readings:
         # En `Decimal`, valeur par valeur : le SUM du SQL passe par un double sous SQLite. Chaque valeur stockée se lit exactement
         # (chaîne canonique) ; le total sort à l'échelle que le champ déclare AUJOURD'HUI (`quantize`, pas `canonical`, qui lèverait
         # pour une valeur écrite quand le champ avait plus de décimales).
-        total = sum((Decimal(v) for v in values if v is not None), Decimal(0))
-        return total.quantize(Decimal(1).scaleb(-int(target.decimals or 0)))
+        # Dans un contexte LARGE : le contexte par défaut arrondit à 28 chiffres significatifs, et une valeur fait déjà 18 chiffres
+        # (`decimals.MAX_DIGITS`) — additionner beaucoup de grands montants y perdrait des unités en silence, alors que cette
+        # méthode promet un total EXACT. `MAX_DIGITS` de valeur + 20 chiffres de marge couvrent 10^20 lignes.
+        with localcontext() as ctx:
+            ctx.prec = MAX_DIGITS + 20
+            total = sum((Decimal(v) for v in values if v is not None), Decimal(0))
+            return total.quantize(Decimal(1).scaleb(-int(target.decimals or 0)))
 
 
 class _Transaction(_Readings):

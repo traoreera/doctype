@@ -21,7 +21,8 @@ from __future__ import annotations
 
 import asyncio
 import io
-from typing import Any
+import weakref
+from typing import Any, Callable
 
 from .errors import DoctypeError
 
@@ -76,19 +77,24 @@ def to_pdf(html: str) -> bytes:
 
 
 MAX_PARALLEL_RENDERS = 4
-_slots: asyncio.Semaphore | None = None
+# Un sémaphore PAR BOUCLE : `asyncio.Semaphore` se lie à la boucle qui l'attend, et un seul objet de processus levait
+# `RuntimeError` dès qu'une seconde boucle s'en servait (un test par fonction, un worker qui redémarre sa boucle, un outil qui
+# appelle `asyncio.run` deux fois). Une boucle qui s'arrête libère son sémaphore avec elle (clés faibles).
+_slots: "weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore]" = weakref.WeakKeyDictionary()
 
 
 def render_slot() -> asyncio.Semaphore:
-    """Le plafond de rendus SIMULTANÉS, partagé par toute impression (celle du moteur comme celle d'un plugin).
+    """Le plafond de rendus SIMULTANÉS, partagé par toute impression de CETTE boucle (celle du moteur comme celle d'un plugin).
 
     Sans lui, une rafale d'impressions lance un thread et un moteur de rendu par requête, et sature la machine au lieu de faire
-    la queue. Créé à la première impression : un sémaphore se lie à la boucle qui l'utilise.
+    la queue. Le plafond est par boucle, donc par processus en service (uvicorn n'en tient qu'une) ; plusieurs boucles dans un même
+    processus sont le fait des tests et des outils, où le cumul n'a pas d'importance.
     """
-    global _slots
-    if _slots is None:
-        _slots = asyncio.Semaphore(MAX_PARALLEL_RENDERS)
-    return _slots
+    loop = asyncio.get_running_loop()
+    slot = _slots.get(loop)
+    if slot is None:
+        slot = _slots[loop] = asyncio.Semaphore(MAX_PARALLEL_RENDERS)
+    return slot
 
 
 async def to_pdf_async(html: str) -> bytes:
@@ -98,9 +104,26 @@ async def to_pdf_async(html: str) -> bytes:
     polices), et plusieurs SECONDES sur un document long : appelé tel quel dans une route `async`, il fait attendre toutes les
     requêtes des autres utilisateurs. C'est par ici que passe toute impression d'une route — moteur ou plugin ; `to_pdf` reste
     pour les outils synchrones (CLI, tests).
+
+    La place est rendue quand le FIL a fini, pas quand l'attente est abandonnée (`off_loop`).
     """
-    async with render_slot():
-        return await asyncio.to_thread(to_pdf, html)
+    return await off_loop(to_pdf, html)
+
+
+async def off_loop(render: Callable[..., bytes], *args: Any, **kwargs: Any) -> bytes:
+    """`render` exécuté dans un fil, sous le plafond de `render_slot` : c'est par ici que passe TOUT rendu, celui du moteur comme
+    celui d'un plugin, pour que le plafond soit le même.
+
+    La place est rendue quand le FIL a fini, pas quand l'attente est abandonnée : annuler un `asyncio.to_thread` n'arrête pas le
+    fil, et rendre la place tout de suite laisserait le rendu continuer HORS du plafond — une requête interrompue (un onglet fermé,
+    un délai d'attente dépassé) suffisait alors à le dépasser, et une rafale d'abandons à saturer le processus. L'appelant qui
+    abandonne reçoit bien son `CancelledError` ; c'est seulement la PLACE qui reste prise jusqu'au bout du rendu.
+    """
+    slot = render_slot()
+    await slot.acquire()
+    rendering = asyncio.ensure_future(asyncio.to_thread(render, *args, **kwargs))
+    rendering.add_done_callback(lambda _: slot.release())
+    return await asyncio.shield(rendering)
 
 
 def overlay(content: bytes, background: bytes, *, every_page: bool) -> bytes:

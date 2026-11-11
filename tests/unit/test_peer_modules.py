@@ -26,6 +26,11 @@ from xcore_doctype.grants import GrantCatalog
 from xcore_doctype.registry import DocTypeChannel, DocTypeRegistry
 
 ERP = Path(__file__).resolve().parents[2] / "doctypes"
+# Le jeu des 704 définitions est SORTI du dépôt (il vit dans `traoreera/erp`) : les deux tests qui le chargent en entier
+# s'ignorent avec une raison quand il n'est pas là, comme ceux qui demandent `app/auth`. Sans cette garde, un clone neuf les
+# voyait échouer sur « dossier de DocTypes introuvable » — or `make check` doit passer sur un clone neuf. Les RÈGLES qu'ils
+# défendent restent couvertes par les cas construits plus bas, qui ne dépendent d'aucun fichier extérieur.
+needs_erp = pytest.mark.skipif(not ERP.is_dir(), reason="doctypes/ absent : le jeu ERP vit dans traoreera/erp")
 
 
 class Log:
@@ -65,6 +70,7 @@ def single_load():
     return reg
 
 
+@needs_erp
 @pytest.mark.parametrize("order", ["alphabetical", "reversed", "shuffled"])
 def test_the_erp_loads_as_one_plugin_per_module_in_any_order(single_load, order):
     modules = sorted(p.name for p in ERP.iterdir() if p.is_dir())
@@ -86,6 +92,7 @@ def test_the_erp_loads_as_one_plugin_per_module_in_any_order(single_load, order)
         assert {g["name"] for g in grants.for_plugin(module)} == {g["name"] for g in GrantCatalog(single_load).for_plugin(module)}
 
 
+@needs_erp
 def test_without_peers_the_cycle_cannot_load_module_by_module():
     """La preuve que le problème est réel : plugin par plugin, sans `peers`, le premier module qui cite un frère échoue."""
     channel = DocTypeChannel(DocTypeRegistry(), Log())
