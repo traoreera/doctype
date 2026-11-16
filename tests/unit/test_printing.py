@@ -13,6 +13,7 @@ from xcore_doctype.registry import DocTypeRegistry
 
 from xcore_doctype.errors import InvalidDefinition
 from xcore_doctype.printing import (
+    Formats,
     generated_template,
     PRINT_SPECIALS,
     parse_template,
@@ -372,3 +373,143 @@ class TestTheReservedMargins:
         out = render_html(template(), INVOICE, DATA, name="FA-1", children=CHILDREN,
                           css_extra="@page{margin-top:65mm}")
         assert out.index("@page{size:") < out.index("@page{margin-top:65mm}")
+
+
+# ── Nombres et dates selon la langue (traoreera/doctype#62) ───────────────────────────────────────────────────────────────────────────
+
+NBSP = " "
+FR = Formats("fr", "JJ/MM/AAAA")
+BIG = {**DATA, "total": "1234567.50", "tva": "-200.00", "total_ttc": "1234367.50",
+       "lignes": [{"article": "A", "entrepot": "C", "qte": "1500.000", "montant": "1000.00"},
+                  {"article": "B", "entrepot": "C", "qte": "0.250", "montant": "2500.10"}]}
+
+
+def shown(tpl=None, data=None, formats=FR):
+    return render_html(tpl or template(), INVOICE, data if data is not None else BIG, name="FA-1", children=CHILDREN, formats=formats)
+
+
+class TestNumbersAndDatesReadInTheOrganisationsLanguage:
+    def test_a_number_is_only_rewritten_never_recomputed(self):
+        assert FR.number("1234567.50") == f"1{NBSP}234{NBSP}567,50"
+        assert FR.number("-999.5") == "-999,5" and FR.number("1000") == f"1{NBSP}000" and FR.number("0.001") == "0,001"
+        assert Formats("en").number("1234567.50") == "1,234,567.50"
+        assert FR.number("123456789012345678.123456789") == f"123{NBSP}456{NBSP}789{NBSP}012{NBSP}345{NBSP}678,123456789"  # aucun flottant
+        assert FR.number("ABC-12") == "ABC-12" and FR.number("1e5") == "1e5"  # ce qui n'est pas un nombre du moteur reste tel quel
+
+    def test_a_date_follows_the_organisations_date_format(self):
+        assert FR.date("2026-11-10") == "10/11/2026"
+        assert Formats("en", "MM/JJ/AAAA").date("2026-11-10") == "11/10/2026"
+        assert Formats("fr", "AAAA-MM-JJ").date("2026-11-10") == "2026-11-10"
+        assert Formats("en").date("2026-11-10") == "10/11/2026"  # sans réglage : le jour d'abord, dans les deux langues du Desk
+        assert FR.date("hier") == "hier"
+
+    def test_an_instant_is_read_in_the_organisations_timezone(self):
+        from zoneinfo import ZoneInfo
+
+        assert Formats("fr", None, ZoneInfo("Africa/Abidjan")).instant("2026-10-18T23:30:00Z") == "18/10/2026 23:30"
+        assert Formats("fr", None, ZoneInfo("Pacific/Auckland")).instant("2026-10-18T23:30:00Z") == "19/10/2026 12:30"
+        assert FR.instant("2026-10-18T23:30:00Z") == "18/10/2026 23:30"  # sans fuseau : UTC
+        assert FR.instant("pas une heure") == "pas une heure"
+
+    def test_fields_totals_and_lines_are_written_for_a_reader(self):
+        out = shown()
+        assert "27/10/2026" in out and "2026-10-27" not in out
+        assert f">1{NBSP}234{NBSP}567,50<" in out and ">-200,00<" in out
+        assert f">1{NBSP}500,000<" in out and f">2{NBSP}500,10<" in out and ">0,250<" in out
+
+    def test_a_subtotal_is_summed_exactly_then_written_the_same_way(self):
+        tpl = template(blocks=[{"type": "table", "field": "lignes", "group_by": "entrepot", "subtotal": ["qte", "montant"],
+                                "columns": [{"field": "article"}, {"field": "qte"}, {"field": "montant"}]}])
+        out = shown(tpl)
+        assert f">1{NBSP}500,250<" in out and f">3{NBSP}500,10<" in out
+
+    def test_the_type_decides_never_the_look_of_the_value(self):
+        """Un Text « 2026-10-27 » ou « 75001 » n'est ni une date ni un nombre : seul le TYPE du champ fait formater."""
+        out = shown(data={**BIG, "client": "2026-10-27", "note": "75001"})
+        assert "<br>2026-10-27</td>" in out  # le client, un Text : tel quel
+        assert "<br>27/10/2026</td>" in out  # la date de pièce, une Date : écrite pour un lecteur
+
+    def test_a_text_block_quotes_the_same_readable_values(self):
+        tpl = template(blocks=[{"type": "text", "text": "Le {{ doc.date_piece }}, total {{ doc.total }}"}])
+        assert f"Le 27/10/2026, total 1{NBSP}234{NBSP}567,50" in shown(tpl)
+
+    def test_a_template_or_a_column_can_ask_for_the_stored_form(self):
+        raw_all = shown(template(raw_values=True))
+        assert ">1234567.50<" in raw_all and "2026-10-27" in raw_all
+        tpl = template(blocks=[{"type": "table", "field": "lignes", "group_by": "entrepot", "subtotal": ["qte", "montant"],
+                                "columns": [{"field": "article"}, {"field": "qte", "raw": True}, {"field": "montant"}]}])
+        out = shown(tpl)
+        assert ">1500.000<" in out and ">1500.250<" in out  # la colonne brute, sous-total compris
+        assert f">2{NBSP}500,10<" in out  # sa voisine suit la langue
+
+    def test_without_formats_nothing_changes(self):
+        assert ">1234567.50<" in shown(formats=None)
+
+    def test_an_amount_keeps_its_currency_code_after_the_readable_number(self):
+        from xcore_doctype.printing import _cell
+
+        assert _cell("1200.00", INVOICE.field_map["total"], None, "EUR", FR) == f"1{NBSP}200,00 EUR"
+
+    def test_a_free_document_formats_its_inserted_values_too(self):
+        tpl = parse_template({"schema_version": 1, "doctype": "Facture",
+                              "content": '<p>Le <span data-value="doc.date_piece"></span> : <span data-value="doc.total"></span></p>'})
+        assert f"<p>Le 27/10/2026 : 1{NBSP}234{NBSP}567,50</p>" in shown(tpl)
+
+
+# ── Gabarits : ligne de total en évidence, hauteur de cellule, bloc insécable (traoreera/doctype#64) ─────────────────────────────────
+
+BALANCE_LINE = parse_definition({
+    "schema_version": 1, "name": "Balance Ligne", "istable": True,
+    "fields": [f("libelle"), f("montant", "Currency", decimals=2), f("est_total", "Boolean")],
+})
+BALANCE = parse_definition({
+    "schema_version": 1, "name": "Balance", "module": "compta",
+    "fields": [f("societe"), f("lignes", "Table", options="Balance Ligne")],
+})
+
+
+def balance(**block):
+    return parse_template({"schema_version": 1, "doctype": "Balance", "blocks": [
+        {"type": "table", "field": "lignes", "columns": [{"field": "libelle"}, {"field": "montant"}], **block}]})
+
+
+class TestATotalLineStandsOut:
+    ROWS = {"lignes": [{"libelle": "Capital", "montant": "100.00"}, {"libelle": "Total classe 1", "montant": "100.00", "est_total": True},
+                       {"libelle": "Stocks", "montant": "5.00", "est_total": False}]}
+
+    def test_only_the_rows_whose_flag_is_true_are_emphasised(self):
+        out = render_html(balance(emphasis="est_total"), BALANCE, self.ROWS, name="B1", children={"lignes": BALANCE_LINE})
+        assert out.count('<tr class="em">') == 1
+        assert '<tr class="em"><td class=left>Total classe 1</td>' in out
+        assert "table.lines tr.em td{font-weight:bold" in out
+
+    def test_without_the_option_no_row_is_emphasised(self):
+        assert '<tr class="em">' not in render_html(balance(), BALANCE, self.ROWS, name="B1", children={"lignes": BALANCE_LINE})
+
+    @pytest.mark.parametrize("field, why", [("absent", "n'est pas un champ"), ("libelle", "il faut un Boolean")])
+    def test_a_wrong_flag_is_a_load_error(self, field, why):
+        problems = template_fields_problems(balance(emphasis=field), BALANCE, {"lignes": BALANCE_LINE}.get)
+        assert len(problems) == 1 and "emphasis" in problems[0] and why in problems[0]
+
+
+class TestAFreeDocumentReservesRoomAndKeepsBlocksWhole:
+    def doc(self, content):
+        return parse_template({"schema_version": 1, "doctype": "Balance", "content": content})
+
+    def test_a_cell_height_and_an_unbreakable_block_are_kept_as_written(self):
+        tpl = self.doc('<table style="page-break-inside: avoid"><tr><td style="height: 25mm">Le comptable</td></tr></table>'
+                       '<p style="page-break-inside: avoid">Bon pour accord</p><div data-page-break></div><p>Passif</p>')
+        out = render_html(tpl, BALANCE, {}, name="B1")
+        assert '<table style="page-break-inside:avoid" class="lay bordered">' in out
+        assert '<td style="height:25mm">Le comptable</td>' in out
+        assert '<p style="page-break-inside:avoid">Bon pour accord</p><div class="pb"></div><p>Passif</p>' in out
+
+    @pytest.mark.parametrize("content", [
+        '<table><tr><td style="height: 900mm">x</td></tr></table>',  # une hauteur est BORNÉE
+        '<p style="page-break-inside: auto">x</p>',  # un seul mot permis
+        '<h1 style="page-break-inside: avoid">x</h1>',  # seulement sur un paragraphe ou un tableau
+        '<p style="height: 20mm">x</p>',  # la hauteur ne se réserve que dans une cellule (ou sur une image)
+    ])
+    def test_anything_else_is_still_refused(self, content):
+        with pytest.raises(InvalidDefinition):
+            self.doc(content)

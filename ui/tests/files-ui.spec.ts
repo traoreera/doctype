@@ -12,7 +12,7 @@ import { flushPromises, mountWith } from './views-fixtures'
 const ID = 'a'.repeat(32)
 const ID2 = 'b'.repeat(32)
 const link = (over: Partial<FileLink> = {}): FileLink => ({ path: `files/acme/${ID}?exp=9999999999&sig=${'0'.repeat(64)}`, filename: 'moi.png', content_type: 'image/png', size: 2048, expires: Math.floor(Date.now() / 1000) + 300, ...over })
-const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: true, in_list_view: false, ...o })
+const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: false, in_list_view: false, ...o })
 const photo = f({ fieldname: 'photo', label: 'Photo', fieldtype: 'Image', max_mb: 1 })
 const contract = f({ fieldname: 'contract', fieldtype: 'Attach' })
 

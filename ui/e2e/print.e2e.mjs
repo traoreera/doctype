@@ -187,7 +187,7 @@ try {
     // Le MONTANT de chaque ligne, calculé par le serveur (`compute: qty * rate`), et sans bruit binaire :
     // 3 × 19,9 vaut 59.699999999999996 en machine et n'a pas sa place sur une facture.
     assert(standard.json.html.includes('>500<'), `le montant 500 manque : ${standard.json.html.slice(0, 600)}`)
-    assert(standard.json.html.includes('>59.7<'), 'le montant 59,7 manque, ou porte le bruit du flottant')
+    assert(standard.json.html.includes('>59,7<'), 'le montant 59,7 manque, ou porte le bruit du flottant')
     assert(!standard.json.html.includes('59.699'), 'du bruit de flottant est imprimé')
   }, page)
 

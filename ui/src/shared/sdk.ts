@@ -4,6 +4,7 @@
  */
 import { inject } from 'vue'
 import { EXTENSION_CONTEXT } from '@/extensions/keys'
+import { useQuery, type QueryHandle } from '@/extensions/query'
 import type { ExtensionContext, ExtensionDefinition } from '@/extensions/types'
 
 export { EXTENSION_API_VERSION } from '@/extensions/types'
@@ -32,15 +33,25 @@ export function defineExtension(definition: ExtensionDefinition): ExtensionDefin
   return definition
 }
 
-/** Dans un composant d'extension (page, panneau, bloc) : les outils de SON extension (`api`, `plugin`, `notify`, `router`). */
-export function useDesk(): ExtensionContext {
+/**
+ * Dans un composant d'extension (page, panneau, bloc) : les outils de SON extension (`api`, `plugin`, `notify`, `router`, `realtime`),
+ * et la query de l'adresse — `query` réactive, `setQuery(obj, { replace })` — pour garder l'état d'une page dans son lien.
+ */
+export function useDesk(): ExtensionContext & QueryHandle {
   const ctx = inject(EXTENSION_CONTEXT, null)
   if (!ctx) throw new Error('useDesk() : à appeler dans un composant affiché par le Desk (page, panneau ou bloc d’extension)')
-  return ctx
+  return Object.freeze({ ...ctx, ...useQuery() })
 }
+
+/** Dans une page d'extension : la query de l'adresse, réactive, et de quoi l'écrire sans remonter la page (`const { query, setQuery } = useQuery()`). */
+export { useQuery }
+export type { QueryHandle }
 
 // Les composants du Desk qu'une extension peut réutiliser : rendu d'une valeur, saisie d'un champ, choix d'un document lié.
 export { default as CellValue } from '@/components/CellValue.vue'
+// Les champs de date des formulaires, seuls : valeur ISO (`AAAA-MM-JJ`, ou l'instant UTC), format et langue du Desk, `min` / `max`.
+export { default as DateInput } from '@/components/DateInput.vue'
+export { default as DatetimeInput } from '@/components/DatetimeInput.vue'
 export { default as FieldControl } from '@/components/FieldControl.vue'
 export { default as LinkField } from '@/components/LinkField.vue'
 export { describeError } from '@/composables/useNotify'

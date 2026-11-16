@@ -9,7 +9,7 @@ import { createMemoryHistory, createRouter, type Router } from 'vue-router'
 import { SERVICES } from '@/lib/services'
 import type { DocRecord, DocTypeMeta, FieldMeta, ListResult } from '@/lib/types'
 
-const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: true, in_list_view: false, ...o })
+const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: false, in_list_view: false, ...o })
 
 /** Un type de documents avec toutes les vues : Kanban sur `state`, Calendrier et Gantt sur `start` → `stop`, teinte par `prio`. */
 export const TASK: DocTypeMeta = {

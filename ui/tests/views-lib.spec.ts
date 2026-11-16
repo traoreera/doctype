@@ -5,7 +5,7 @@ import { pickView, readColumns, readView, writeColumns, writeView } from '@/lib/
 import type { DocTypeMeta, FieldMeta, ViewsMeta } from '@/lib/types'
 import { CUSTOMER } from './fixtures'
 
-const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: true, in_list_view: false, ...o })
+const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: false, in_list_view: false, ...o })
 
 describe('les filtres portés par l’adresse', () => {
   it('un objet JSON, sinon rien', () => {

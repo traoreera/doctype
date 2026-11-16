@@ -150,9 +150,9 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     name: 'Customer', label: 'Client', list_columns: [], layout: [],
     rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
     fields: [
-      { fieldname: 'customer_name', label: 'Nom', fieldtype: 'Text', required: true, hidden: true, in_list_view: true },
-      { fieldname: 'type', label: 'Catégorie', fieldtype: 'Select', options: ['Particulier', 'Société'], required: false, hidden: true, in_list_view: false },
-      { fieldname: 'total', label: 'Total', fieldtype: 'Currency', required: false, hidden: true, in_list_view: false, read_only: true },
+      { fieldname: 'customer_name', label: 'Nom', fieldtype: 'Text', required: true, hidden: false, in_list_view: true },
+      { fieldname: 'type', label: 'Catégorie', fieldtype: 'Select', options: ['Particulier', 'Société'], required: false, hidden: false, in_list_view: false },
+      { fieldname: 'total', label: 'Total', fieldtype: 'Currency', required: false, hidden: false, in_list_view: false, read_only: true },
     ],
   }
   const api = {

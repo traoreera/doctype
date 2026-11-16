@@ -11,7 +11,7 @@ import { MAX_SIDEBAR_GROUPS, sidebarFields } from '@/lib/sidebar'
 import type { DocRecord, DocTypeMeta, FieldMeta } from '@/lib/types'
 import { CUSTOMER } from './fixtures'
 
-const f = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({ fieldname, fieldtype, required: false, hidden: true, in_list_view: false, ...extra })
+const f = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({ fieldname, fieldtype, required: false, hidden: false, in_list_view: false, ...extra })
 const metaOf = (fields: FieldMeta[], list_columns: string[] = []): DocTypeMeta => ({ ...CUSTOMER, fields, list_columns, layout: [] })
 
 describe('piIcon : une icône qui existe, sinon celle de repli', () => {

@@ -151,19 +151,20 @@ async def printed(svc, ctx, doc) -> str:
 
 
 async def test_print_shows_each_amount_in_its_currency(svc):
+    # Les montants sont écrits pour un lecteur (traoreera/doctype#62) : virgule décimale, milliers séparés par une espace insécable.
     doc = await invoice(svc)
     html = await printed(svc, ALICE, doc)
-    assert "12.50 USD" in html  # la devise de la pièce
-    assert "7500.00 XOF" in html  # celle de la société, à travers le lien
-    assert "1.00 EUR" in html  # une devise fixe
-    assert html.count("12.50 USD") == 3  # le total, la ligne (depuis le parent) et le sous-total
-    assert html.count("7500.00 XOF") == 2  # le total de base et la ligne (parent_company.default_currency)
+    assert "12,50 USD" in html  # la devise de la pièce
+    assert "7\u00a0500,00 XOF" in html  # celle de la société, à travers le lien
+    assert "1,00 EUR" in html  # une devise fixe
+    assert html.count("12,50 USD") == 3  # le total, la ligne (depuis le parent) et le sous-total
+    assert html.count("7\u00a0500,00 XOF") == 2  # le total de base et la ligne (parent_company.default_currency)
 
 
 async def test_a_currency_the_caller_cannot_read_is_left_out(svc):
     doc = await invoice(svc)
     html = await printed(svc, NO_COMPANY, doc)
-    assert "12.50 USD" in html and "7500.00 XOF" not in html and "7500.00" in html
+    assert "12,50 USD" in html and "7\u00a0500,00 XOF" not in html and "7\u00a0500,00" in html
 
 
 def test_the_links_to_read_are_only_the_hops():

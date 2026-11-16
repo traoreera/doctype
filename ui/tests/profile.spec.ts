@@ -186,7 +186,7 @@ describe('« Mon profil » (ProfileView)', () => {
 })
 
 describe('champ en lecture seule (read_only)', () => {
-  const field = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: true, in_list_view: false, ...o })
+  const field = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: false, in_list_view: false, ...o })
   const META = { name: 'Member', fields: [field({ fieldname: 'email', fieldtype: 'Text', read_only: true }), field({ fieldname: 'note', fieldtype: 'Text' })], layout: [], list_columns: [], rights: {} } as unknown as DocTypeMeta
 
   it('est verrouillé pour un document existant comme pour un nouveau, jamais un autre champ', () => {

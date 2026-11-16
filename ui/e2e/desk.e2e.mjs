@@ -25,8 +25,16 @@ const typeNumber = (name, text) => typeInto(field(name).locator('input'), text)
 const cell = (row, col) => page.locator(`[data-row="${row}"] [data-col="${col}"]`)
 /** Choisit un document dans l'autocomplétion d'un champ Link (on tape, on clique sur la proposition). */
 const pickLink = async (input, typed, label) => {
+  const option = page.getByRole('option', { name: label }).first()
   await input.fill(typed)
-  await page.getByRole('option', { name: label }).first().click()
+  // Une cellule de table peut être re-rendue juste après la frappe (une colonne qui disparaît quand la nature change) : la saisie est
+  // alors perdue et aucune proposition ne vient. On retape UNE fois ; un second silence est un vrai échec, rendu par le `click`.
+  const shown = await option.waitFor({ timeout: 5000 }).then(() => true, () => false)
+  if (!shown) {
+    await input.fill('')
+    await input.fill(typed)
+  }
+  await option.click()
 }
 const toast = (text) => page.locator('.p-toast-message', { hasText: text }).first().waitFor({ timeout: 5000 })
 

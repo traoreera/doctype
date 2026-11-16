@@ -121,6 +121,18 @@ def python_type(field: FieldDef) -> Any:
     raise AssertionError(f"fieldtype non géré : {field.fieldtype}")  # pragma: no cover
 
 
+def required_defaults(defn: DocTypeDef) -> dict[str, Any]:
+    """Les défauts du YAML des champs OBLIGATOIRES, sous leur forme stockée : ce qu'une création reçoit pour ceux que le payload ne
+    renseigne pas (un champ obligatoire qui a un défaut n'a pas besoin d'être envoyé). `today` / `now` n'y sont pas : ils dépendent du
+    jour, le service les résout (`DocumentService._with_today`)."""
+    out: dict[str, Any] = {}
+    for f in defn.fields:
+        if not f.required or f.depends_on is not None or f.default is None or f.default in (TODAY, fieldtypes.NOW):
+            continue
+        out[f.fieldname] = canonical(f.default, f.decimals) if f.fieldtype in DECIMAL_TYPES else f.default
+    return out
+
+
 def build_model(defn: DocTypeDef, row_models: Mapping[str, type[BaseModel]] | None = None) -> type[BaseModel]:
     spec: dict[str, Any] = {}
     for f in defn.fields:
@@ -133,7 +145,13 @@ def build_model(defn: DocTypeDef, row_models: Mapping[str, type[BaseModel]] | No
         default = canonical(f.default, f.decimals) if f.fieldtype in DECIMAL_TYPES and f.default is not None else f.default
         if default in (TODAY, fieldtypes.NOW):
             default = None  # « aujourd'hui » / « maintenant » ne se figent pas dans le modèle : le service les résout à chaque création (document.py)
-        spec[f.fieldname] = (tp, ...) if f.required and f.depends_on is None else (tp | None, default)
+        if f.required and f.depends_on is None:
+            # Obligatoire : jamais `null`. À la CRÉATION, le service pose son défaut quand le payload ne dit rien (`required_defaults`,
+            # traoreera/doctype#69) ; une mise à jour, qui REMPLACE les données, doit le renvoyer — sinon l'oublier le remettrait à son
+            # défaut sans rien dire. Une LIGNE n'a pas d'identité (ni création ni mise à jour) : sa cellule absente prend le défaut.
+            spec[f.fieldname] = (tp, default) if defn.istable and default is not None else (tp, ...)
+        else:
+            spec[f.fieldname] = (tp | None, default)
     safe_name = "DocType_" + re.sub(r"\W", "_", defn.name)
     return create_model(safe_name, __config__=ConfigDict(extra="forbid"), **spec)
 

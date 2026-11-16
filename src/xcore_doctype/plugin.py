@@ -204,8 +204,16 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             raise ConfigurationError("doctype.doctypes_dirs doit être une liste de chemins")
 
         registry = DocTypeRegistry()
+        # Les dossiers de l'opérateur sont des PAIRS : un parent peut prendre sa table enfant dans un dossier listé plus loin (le jeu ERP,
+        # un dossier par module : `POS Invoice` attend `Packed Item`). Chacun se charge donc sans exiger l'autre, puis l'ENSEMBLE est jugé :
+        # rien ne doit attendre encore, rien ne doit s'être brisé, et une cible de Link inconnue reste une erreur de chargement.
         for d in dirs:
-            registry.load_dir(Path(d).expanduser())
+            registry.load_dir(Path(d).expanduser(), peers=len(dirs) > 1)
+        _, broken = registry.settle()
+        stuck = [f"{name} : {'; '.join(why)}" for name, why in sorted(broken.items())]
+        stuck += [f"{name} : table(s) enfant introuvable(s) {', '.join(missing)}" for name, missing in registry.waiting().items()]
+        if stuck:
+            raise ConfigurationError("doctype.doctypes_dirs : " + " | ".join(stuck[:10]))
         registry.validate_links()  # toutes les définitions sont là : une cible de Link inconnue échoue au chargement
         # Les catalogues de traduction des DocTypes de l'opérateur (translations.py) : un dossier `fr.yaml`, `en.yaml`… par entrée.
         translation_dirs = block.get("translations_dirs", [])

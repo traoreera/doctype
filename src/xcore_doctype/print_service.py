@@ -183,8 +183,28 @@ class PrintService:
             titles=titles,
             images=await self._images(ctx, compiled, found),
             linked=await self._currencies(ctx, compiled, record["data"]),
+            formats=await self._formats(ctx),
         )
         return html, background
+
+    async def _formats(self, ctx: RequestContext) -> printing.Formats:
+        """Comment écrire nombres et dates : la langue et le format de date de l'ORGANISATION (`System Settings`, lus en contexte
+        système sur ces deux champs seulement, comme le fond PDF), dans son fuseau. Une pièce sort de l'entreprise : elle ne dépend pas
+        de la langue du navigateur de celui qui l'imprime. Sans le plugin `system` ou sans réglage : la langue de la requête, puis `fr`."""
+        language, date_format = ctx.language, None
+        if SETTINGS_DOCTYPE in self._docs._registry.names():
+            try:
+                record = await self._docs.get(RequestContext.system(ctx.tenant_id, "print formats"), SETTINGS_DOCTYPE, SETTINGS_DOCTYPE)
+            except DoctypeError:
+                record = None
+            if record is not None:
+                language = record["data"].get("language") or language
+                date_format = record["data"].get("date_format")
+        return printing.Formats(
+            language if isinstance(language, str) and language else "fr",
+            date_format if isinstance(date_format, str) else None,
+            self._docs._timezone,
+        )
 
     async def _titles(self, ctx: RequestContext, template: PrintTemplate, compiled: Any, data: Mapping[str, Any]) -> dict[tuple[str, str], str]:
         """Les TITRES des documents que les liens du gabarit désignent : « Société Durand », pas « c99464b32801 ».

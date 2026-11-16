@@ -10,7 +10,7 @@ import { propRows, withProp } from '@/lib/overrideprops'
 import type { DocTypeMeta, FieldBase, FieldMeta, FormOverride } from '@/lib/types'
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
-  fieldname, label: fieldname.toUpperCase(), fieldtype, required: false, hidden: true, in_list_view: false, ...extra,
+  fieldname, label: fieldname.toUpperCase(), fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
 })
 
 // Ce que `/meta` envoie : l'habillage enregistré (`SAVED`) y est déjà appliqué (`prio` obligatoire par lui, `title` par le YAML).

@@ -116,19 +116,22 @@ STYLES: dict[str, re.Pattern[str]] = {
     "height": re.compile(rf"^({_LEN})$"),
     "left": re.compile(r"^-?\d{1,3}(\.\d{1,2})?mm$"),
     "top": re.compile(r"^-?\d{1,3}(\.\d{1,2})?mm$"),
+    # Une zone de signature, un tableau court : ne pas le couper entre deux pages. Le seul mot permis est `avoid`.
+    "page-break-inside": re.compile(r"^avoid$"),
 }
 # Où chaque propriété a un sens : une position n'existe que sur une image « devant le texte ».
 _STYLE_ON: dict[str, frozenset[str]] = {
-    "p": frozenset({"text-align", "line-height", "color", "background-color", "font-size"}),
+    "p": frozenset({"text-align", "line-height", "color", "background-color", "font-size", "page-break-inside"}),
     "h1": frozenset({"text-align", "line-height", "color", "background-color", "font-size"}),
     "h2": frozenset({"text-align", "line-height", "color", "background-color", "font-size"}),
     "h3": frozenset({"text-align", "line-height", "color", "background-color", "font-size"}),
     "li": frozenset({"text-align", "line-height"}),
     "span": frozenset({"color", "background-color", "font-size", "line-height"}),
-    "table": frozenset({"width", "min-width"}),
+    "table": frozenset({"width", "min-width", "page-break-inside"}),
     "col": frozenset({"width", "min-width"}),
-    "td": frozenset({"width", "background-color", "vertical-align", "text-align"}),
-    "th": frozenset({"width", "background-color", "vertical-align", "text-align"}),
+    # `height` : la place d'une signature ou d'un cachet, réservée par une mesure et non par une suite de <br>.
+    "td": frozenset({"width", "height", "background-color", "vertical-align", "text-align"}),
+    "th": frozenset({"width", "height", "background-color", "vertical-align", "text-align"}),
     "img": frozenset({"width", "height", "left", "top"}),
 }
 _FONT_PX = (6.0, 96.0)  # en points comme en pixels : un caractère illisible ou une page entière sont des fautes
@@ -233,7 +236,7 @@ def _parse_style(tag: str, raw: str, fault: Callable[[str], None]) -> list[tuple
 
 def _bounded(prop: str, value: str) -> bool:
     """Une valeur NUMÉRIQUE dans ses bornes ; un mot-clé (`center`) ou une couleur l'est déjà par son motif."""
-    if prop in ("text-align", "vertical-align", "color", "background-color"):
+    if prop in ("text-align", "vertical-align", "color", "background-color", "page-break-inside"):
         return True
     number = float(re.match(r"-?[\d.]+", value).group(0))  # type: ignore[union-attr]  # le motif l'a garanti
     if prop == "font-size":

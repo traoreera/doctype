@@ -121,8 +121,15 @@ async def test_xprint_ships_the_erp_print_templates_on_a_real_host(tmp_path):
     `AutoDispatchMixin` (xcore refuse d'instancier un TrustedBase sans `handle`)."""
     from pathlib import Path
 
+    from tests.support.erp_set import erp_modules
+
     erp = Path(__file__).resolve().parents[2] / "doctypes"
-    async with boot_host(tmp_path, doctype_config={"doctypes_dirs": [str(erp)]}, link_plugins={"xprint": platform_plugins_dir() / "xprint"}) as h:
+    if not erp.is_dir() or not erp_modules(erp):
+        pytest.skip("doctypes/ absent : le jeu ERP est un sous-module (git submodule update --init)")
+    # Un dossier de MODULE par entrée, jamais la racine du sous-module : elle contient aussi `workspaces/` et `docs/`, que
+    # `load_dir` lirait comme des définitions de DocTypes (process/erp-doctypes.md §2).
+    dirs = [str(p) for p in erp_modules(erp)]
+    async with boot_host(tmp_path, doctype_config={"doctypes_dirs": dirs}, link_plugins={"xprint": platform_plugins_dir() / "xprint"}) as h:
         assert await _state(h, "xprint") == "ready"
         t = h.token(permissions=["accounts:sales_invoice:read", "selling:quotation:read"])
         for doctype, label in (("Sales Invoice", "Facture"), ("Quotation", "Devis")):

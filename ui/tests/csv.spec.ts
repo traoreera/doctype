@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildCsv, csvCell, csvFilename, exportValue, isSystemColumn } from '@/lib/csv'
 import type { DocRecord, FieldMeta } from '@/lib/types'
 
-const field = (fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({ fieldname: 'f', fieldtype, required: false, hidden: true, in_list_view: false, ...extra })
+const field = (fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({ fieldname: 'f', fieldtype, required: false, hidden: false, in_list_view: false, ...extra })
 const rec = (data: Record<string, unknown>, extra: Partial<DocRecord> = {}): DocRecord =>
   ({ doctype: 'X', name: 'N1', owner: 'alice', creation: '2026-10-01T08:00:00+00:00', modified: '2026-10-02T09:30:00+00:00', version: 1, docstatus: 0, amended_from: null, data, ...extra })
 

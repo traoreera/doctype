@@ -2,7 +2,7 @@ import type { DocTypeMeta, FieldMeta } from '@/lib/types'
 
 const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({
   required: false,
-  hidden: true,
+  hidden: false,
   in_list_view: false,
   ...o,
 })

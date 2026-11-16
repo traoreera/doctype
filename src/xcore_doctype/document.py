@@ -45,7 +45,7 @@ from types import MappingProxyType
 from typing import Any, AsyncIterator, Awaitable, Callable, Mapping, Protocol, Sequence
 
 from . import aggregation, compute, fieldtypes, integrity, memory
-from .builder import NO_RULES, NO_WORKFLOW_RULES, CompiledDocType, FormRules, WorkflowRules, same_value
+from .builder import NO_RULES, NO_WORKFLOW_RULES, CompiledDocType, FormRules, WorkflowRules, required_defaults, same_value
 from .expr import evaluate
 from .decimals import MAX_DIGITS, canonical
 from .context import RequestContext
@@ -1951,22 +1951,27 @@ class DocumentService:
         Côté serveur (et non dans le modèle) : la date dépend du jour de la création et du fuseau de l'organisation, pas de la définition.
         Un payload qui n'est pas un objet est laissé tel quel : la validation le refusera avec son message.
         """
+        if not isinstance(data, dict):
+            return data
+        # Un champ OBLIGATOIRE qui a un défaut le reçoit ici, à la création, quand le payload ne dit rien (traoreera/doctype#69) : le
+        # modèle ne le pose pas lui-même, pour qu'une mise à jour qui l'oublie soit refusée au lieu de le remettre à son défaut.
+        fixed = {k: v for k, v in required_defaults(compiled.definition).items() if k not in data}
         dates = [f.fieldname for f in compiled.definition.fields if f.fieldtype == "Date" and f.default == TODAY]
         instants = [f.fieldname for f in compiled.definition.fields if f.fieldtype == "Datetime" and f.default == fieldtypes.NOW]
-        if not (dates or instants) or not isinstance(data, dict):
-            return data
+        if not (dates or instants):
+            return {**fixed, **data} if fixed else data
         today = self._clock().astimezone(self._timezone).date().isoformat()
         now = fieldtypes.format_instant(self._clock())  # un Datetime est TOUJOURS en UTC
-        return {**{k: today for k in dates if k not in data}, **{k: now for k in instants if k not in data}, **data}
+        return {**fixed, **{k: today for k in dates if k not in data}, **{k: now for k in instants if k not in data}, **data}
 
     def _with_defaults(self, compiled: CompiledDocType, data: Any, rules: FormRules, *, prefill: bool = False) -> Any:
         """Pose les défauts de l'habillage de l'organisation (`rules.defaults`) dans les champs que le payload ne renseigne pas : à la CRÉATION
         seulement, AVANT ceux du YAML (que le modèle ou `_with_today` posent ensuite, sur ce qui reste absent). `today` / `now` se résolvent ici,
         dans le fuseau de l'organisation pour une date, comme ceux du YAML.
 
-        Jamais sur un champ obligatoire du YAML : son propre défaut n'est pas un défaut serveur (`builder.build_model`, un client d'API DOIT
-        l'envoyer), celui de l'organisation non plus, sinon il le rendrait facultatif. Il n'y est qu'un PRÉ-REMPLISSAGE du Desk (`/meta`), et du
-        document unique pas encore enregistré (`prefill`), que le Desk renvoie tel quel."""
+        Jamais sur un champ obligatoire du YAML : celui de l'organisation le rendrait facultatif pour elle, ce qu'un habillage ne peut pas
+        faire (il ne fait que resserrer). Il n'y est qu'un PRÉ-REMPLISSAGE du Desk (`/meta`), et du document unique pas encore enregistré
+        (`prefill`), que le Desk renvoie tel quel. Le défaut du YAML, lui, est posé par le serveur à la création (`_with_today`)."""
         if not rules.defaults or not isinstance(data, dict):
             return data
         fields = compiled.definition.field_map
@@ -2584,7 +2589,8 @@ class DocumentService:
     async def _check_not_cited(self, q: Query, compiled: CompiledDocType, name: str, data: Mapping[str, Any]) -> None:
         """Refuse d'ANNULER un document qu'un document SOUMIS du tenant cite encore : une facture payée ne s'annule pas tant que son
         paiement tient (on annule d'abord le paiement). Les brouillons et les annulés ne comptent pas ; les types de `cancel_ignores`
-        non plus — les propres écritures du document (grand livre, stock), qui le citent et que ses hooks `on_cancel` extournent.
+        non plus — les propres écritures du document (grand livre, stock), qui le citent et que ses hooks `on_cancel` extournent ; ni
+        les liens `blocks_cancel: false`, de simples références (« remplacé par ») qui restent valides vers une cible annulée.
 
         Appelé APRÈS l'écriture de l'état et AVANT les hooks. La pièce a été verrouillée comme pour une suppression (`FOR UPDATE`) AVANT
         cette écriture (voir `_transition`) : sous PostgreSQL l'UPDATE de l'état ne gêne pas le `FOR KEY SHARE` qu'une soumission concurrente
@@ -2594,7 +2600,7 @@ class DocumentService:
         les documents.
         """
         d = compiled.definition
-        used = await self._citations(q, d.name, name, docstatus=SUBMITTED, ignore=frozenset(d.cancel_ignores))
+        used = await self._citations(q, d.name, name, docstatus=SUBMITTED, ignore=frozenset(d.cancel_ignores), cancelling=True)
         if not used:
             return
         raise DocumentCited(
@@ -2604,10 +2610,12 @@ class DocumentService:
         )
 
     async def _citations(
-        self, q: Query, doctype: str, name: str, *, docstatus: int | None = None, ignore: frozenset[str] = frozenset(),
+        self, q: Query, doctype: str, name: str, *, docstatus: int | None = None, ignore: frozenset[str] = frozenset(), cancelling: bool = False,
     ) -> list[tuple[str, str, str | None]]:
-        """Les références `(DocType, champ, table)` qui pointent encore vers ce document, après l'avoir verrouillé (`FOR UPDATE`)."""
-        referrers = [r for r in self._registry.referrers(doctype) if r.doctype not in ignore]
+        """Les références `(DocType, champ, table)` qui pointent encore vers ce document, après l'avoir verrouillé (`FOR UPDATE`).
+
+        `cancelling` : seules comptent les références qui bloquent une annulation (pas les liens `blocks_cancel: false`)."""
+        referrers = [r for r in self._registry.referrers(doctype) if r.doctype not in ignore and (r.blocks_cancel or not cancelling)]
         if not referrers:
             return []
         await q.lock_for_delete(doctype, name)
@@ -2922,7 +2930,7 @@ class DocumentService:
         Aucune connexion n'est tenue pendant l'appel de la source (elle peut appeler un autre plugin, voire écrire dans la même base)."""
         finalize = self._finalizer(compiled, scope, ctx.owner_id)
         rules = await self._form_rules(ctx, compiled)
-        clean = finalize(self._with_defaults(compiled, data, rules), rules=rules)
+        clean = finalize(self._with_today(compiled, self._with_defaults(compiled, data, rules)), rules=rules)
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, None)
             await self._check_link_filters(ctx, q, compiled, clean, None)

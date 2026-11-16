@@ -15,7 +15,7 @@ import FormView from '@/views/FormView.vue'
 import { menuItem, openMore } from './menu'
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
-  fieldname, fieldtype, required: false, hidden: true, in_list_view: false, ...extra,
+  fieldname, fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
 })
 
 function metaOf(name: string, fields: FieldMeta[], extra: Partial<DocTypeMeta> = {}): DocTypeMeta {
