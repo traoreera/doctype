@@ -9,7 +9,8 @@ import { describe, expect, it } from 'vitest'
 import { defineComponent, h, onMounted } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import ExtensionPage from '@/extensions/ExtensionPage.vue'
-import { DateInput, DatetimeInput, useQuery } from '@/shared/sdk'
+import { EXTENSIONS } from '@/extensions/keys'
+import { DateInput, DatetimeInput, useDesk, useQuery } from '@/shared/sdk'
 
 const last = (w: { emitted(name: string): unknown[][] | undefined }) => (w.emitted('update:modelValue') ?? []).at(-1)?.[0]
 
@@ -119,5 +120,27 @@ describe('une page d’extension et sa query', () => {
     expect(p.text()).toBe('b|bilan|')
     expect(p.mounts()).toBe(2)
     p.w.unmount()
+  })
+
+  it('`useDesk()` sert la même query et le même `setQuery`, à côté des outils de l’extension', async () => {
+    let desk!: ReturnType<typeof useDesk>
+    const Screen = defineComponent({
+      setup() {
+        desk = useDesk()
+        return () => h('p', { 'data-testid': 'screen' }, desk.query.value.etat ?? '')
+      },
+    })
+    const Page = defineComponent({ setup: () => () => h(ExtensionPage, { extension: 'accounts', title: null, component: Screen }) })
+    const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/x/accounts/etats', component: Page }] })
+    await router.push('/x/accounts/etats?etat=bilan')
+    const context = { name: 'accounts', api: {}, plugin: {}, notify: {}, router, realtime: {} }
+    const w = mount({ render: () => h(Page) }, { global: { plugins: [router], provide: { [EXTENSIONS as symbol]: { context: () => context } } } })
+    await flushPromises()
+    expect(desk.name).toBe('accounts')
+    expect(w.get('[data-testid="screen"]').text()).toBe('bilan')
+    await desk.setQuery({ etat: 'balance' })
+    await flushPromises()
+    expect(w.get('[data-testid="screen"]').text()).toBe('balance')
+    w.unmount()
   })
 })
