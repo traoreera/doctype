@@ -112,7 +112,7 @@ async def test_the_preview_renders_the_document(tmp_path):
         body = r.json()
         assert body["template"] == "standard" and body["background"] is False
         html = body["html"]
-        assert f"Facture {name}" in html and "Durand" in html and "Chaise" in html and "40.00" in html
+        assert f"Facture {name}" in html and "Durand" in html and "Chaise" in html and "40,00" in html  # écrit pour un lecteur (traoreera/doctype#62)
 
         chosen = await h.http("GET", f"/print/Bill/{name}?template=duplicata", token=ada)
         assert f"DUPLICATA {name}" in chosen.json()["html"]
