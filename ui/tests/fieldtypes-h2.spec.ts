@@ -16,7 +16,7 @@ import { SERVICES } from '@/lib/services'
 import { FILTER_OPS, type ChildMeta, type DocTypeMeta, type FieldMeta } from '@/lib/types'
 import { flushPromises, mountWith } from './views-fixtures'
 
-const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: false, in_list_view: false, ...o })
+const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: true, in_list_view: false, ...o })
 
 describe('durées : des secondes qui se lisent « 1 h 30 min »', () => {
   it.each([

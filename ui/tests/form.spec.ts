@@ -215,7 +215,7 @@ describe('refus d’un hook sur une ligne', () => {
 
 describe('filtres d’un champ Link (D29)', () => {
   const link = (link_filters?: Record<string, unknown>) =>
-    ({ fieldname: 'entrepot', fieldtype: 'Link', options: 'Entrepot', required: false, hidden: false, in_list_view: false, ...(link_filters ? { link_filters } : {}) }) as never
+    ({ fieldname: 'entrepot', fieldtype: 'Link', options: 'Entrepot', required: false, hidden: true, in_list_view: false, ...(link_filters ? { link_filters } : {}) }) as never
 
   it('une valeur littérale passe telle quelle, `$champ` prend la valeur du conteneur', () => {
     expect(resolveLinkFilters(link({ actif: true, pays: '$pays' }), { pays: 'CI' })).toEqual({ actif: true, pays: 'CI' })
@@ -237,18 +237,18 @@ describe('un champ calculé (`compute:`) est écrit par le serveur', () => {
   const LINE: DocTypeMeta = {
     name: 'Ligne', label: 'Ligne', module: 'sales', timezone: 'UTC',
     fields: [
-      { fieldname: 'qty', fieldtype: 'Decimal', decimals: 3, required: false, hidden: false, in_list_view: true },
-      { fieldname: 'rate', fieldtype: 'Currency', decimals: 2, required: false, hidden: false, in_list_view: true },
-      { fieldname: 'amount', fieldtype: 'Currency', decimals: 2, compute: 'qty * rate', read_only: true, required: false, hidden: false, in_list_view: true },
+      { fieldname: 'qty', fieldtype: 'Decimal', decimals: 3, required: false, hidden: true, in_list_view: true },
+      { fieldname: 'rate', fieldtype: 'Currency', decimals: 2, required: false, hidden: true, in_list_view: true },
+      { fieldname: 'amount', fieldtype: 'Currency', decimals: 2, compute: 'qty * rate', read_only: true, required: false, hidden: true, in_list_view: true },
     ],
     layout: [], list_columns: [], rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
   }
   const INVOICE: DocTypeMeta = {
     name: 'Facture', label: 'Facture', module: 'sales', timezone: 'UTC',
     fields: [
-      { fieldname: 'client', fieldtype: 'Text', required: true, hidden: false, in_list_view: true },
-      { fieldname: 'items', fieldtype: 'Table', options: 'Ligne', required: false, hidden: false, in_list_view: false },
-      { fieldname: 'total', fieldtype: 'Currency', decimals: 2, compute: 'sum(items.amount)', read_only: true, required: false, hidden: false, in_list_view: true },
+      { fieldname: 'client', fieldtype: 'Text', required: true, hidden: true, in_list_view: true },
+      { fieldname: 'items', fieldtype: 'Table', options: 'Ligne', required: false, hidden: true, in_list_view: false },
+      { fieldname: 'total', fieldtype: 'Currency', decimals: 2, compute: 'sum(items.amount)', read_only: true, required: false, hidden: true, in_list_view: true },
     ],
     children: { Ligne: LINE },
     layout: [], list_columns: [], rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },

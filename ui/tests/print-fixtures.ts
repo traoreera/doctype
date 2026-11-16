@@ -1,7 +1,7 @@
 /** Les jeux de données des tests de l'impression (`printedit.spec.ts`, `printdoc.spec.ts`). */
 import type { DocTypeMeta, FieldMeta } from '@/lib/types'
 
-export const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: false, in_list_view: false, ...o })
+export const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: true, in_list_view: false, ...o })
 
 export const LINE: DocTypeMeta = {
   name: 'Ligne', label: 'Ligne', module: 'sales', timezone: 'UTC',

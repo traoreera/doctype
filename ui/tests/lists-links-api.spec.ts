@@ -26,7 +26,7 @@ vi.mock('primevue/useconfirm', async (original) => ({
 }))
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
-  fieldname, fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
+  fieldname, fieldtype, required: false, hidden: true, in_list_view: false, ...extra,
 })
 const RIGHTS = { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' } as DocTypeMeta['rights']
 
@@ -141,10 +141,10 @@ describe('actions en lot (BulkActions)', () => {
     vm.openEdit()
     await flushPromises()
     expect(document.body.querySelector('[data-testid="bulk-edit-dialog"]')).not.toBeNull()
-    ;(w.vm as unknown as { chosen: string }).chosen = 'status'
-    ;(w.vm as unknown as { value: unknown }).value = 'Fermée'
+      ; (w.vm as unknown as { chosen: string }).chosen = 'status'
+      ; (w.vm as unknown as { value: unknown }).value = 'Fermée'
     await flushPromises()
-    ;(document.body.querySelector('[data-testid="bulk-edit-apply"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="bulk-edit-apply"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(bulk).toHaveBeenCalledWith('Task', 'update', ['a', 'b'], { status: 'Fermée' })
   })
@@ -156,7 +156,7 @@ describe('actions en lot (BulkActions)', () => {
     vm.openEdit()
     vm.chosen = 'notes'
     await flushPromises()
-    ;(document.body.querySelector('[data-testid="bulk-edit-apply"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="bulk-edit-apply"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(bulk).toHaveBeenCalledWith('Task', 'update', ['a', 'b'], { notes: null })
   })
@@ -274,7 +274,7 @@ describe('champ Link : créer sans quitter le formulaire, aperçu', () => {
     const dialog = document.body.querySelector('[data-testid="quick-entry"]')
     expect(dialog).not.toBeNull()
     expect((dialog!.querySelector('[data-field="title"] input') as HTMLInputElement).value).toBe('Refo') // ce qui était tapé devient le titre
-    ;(document.body.querySelector('[data-testid="quick-save"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="quick-save"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(create).toHaveBeenCalledWith('Project', { title: 'Refo' })
     expect(w.emitted('update:modelValue')?.at(-1)).toEqual(['new-1'])
@@ -286,7 +286,7 @@ describe('champ Link : créer sans quitter le formulaire, aperçu', () => {
     await flushPromises()
     await w.find('[data-testid="link-create"]').trigger('click')
     await flushPromises()
-    ;(document.body.querySelector('[data-testid="quick-save"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="quick-save"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(create).not.toHaveBeenCalled()
     expect(document.body.querySelector('[data-testid="quick-entry"] .error')?.textContent).toBe('Champ obligatoire')
@@ -302,7 +302,7 @@ describe('champ Link : créer sans quitter le formulaire, aperçu', () => {
     await w.find('input').setValue('x')
     await w.find('[data-testid="link-create"]').trigger('click')
     await flushPromises()
-    ;(document.body.querySelector('[data-testid="quick-save"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="quick-save"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(create).toHaveBeenCalled()
     expect(document.body.querySelector('[data-testid="quick-entry"]')).not.toBeNull()

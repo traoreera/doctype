@@ -10,7 +10,7 @@ import type { DocTypeMeta, FieldMeta } from '@/lib/types'
 import { captureToasts } from './views-fixtures'
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
-  fieldname, fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
+  fieldname, fieldtype, required: false, hidden: true, in_list_view: false, ...extra,
 })
 const RIGHTS = { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' } as DocTypeMeta['rights']
 const CLIENT: DocTypeMeta = {

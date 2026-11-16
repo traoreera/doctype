@@ -1783,6 +1783,10 @@ class DocumentService:
         )
         self._rules(ctx, compiled, doc, recorded, None)
         await self._settle(ctx, written)
+        # Une transition qui SOUMET ou ANNULE porte les mêmes hooks d'après-commit qu'un `/submit` direct : un circuit
+        # d'approbation ne doit pas faire disparaître l'envoi du courriel (`recorded` vaut déjà « submit » ou « cancel »).
+        if recorded in ("submit", "cancel"):
+            await self._after_transition(ctx, compiled, doc, recorded)
         # L'automatisation qui suit : celle de la transition (YAML, ou ajoutée par l'organisation), sinon celle que l'organisation a
         # posée sur une transition de l'application (§3.6).
         flow = transition.flow or org.flows.get(transition.action)
@@ -1850,7 +1854,57 @@ class DocumentService:
         )
         self._rules(ctx, compiled, doc, action, None)
         await self._settle(ctx, written)
+        await self._after_transition(ctx, compiled, doc, action)
         return self._present(doc)
+
+    async def _after_transition(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, action: str) -> None:
+        """`after_submit` / `after_cancel`, APRÈS le commit de la transition. Les erreurs sont journalisées, jamais levées (D2).
+
+        C'est le seul endroit où un effet EXTÉRIEUR a sa place : envoyer un courriel, appeler une API, publier un webhook. Dans
+        `on_submit`, le même effet ne pourrait plus être défait si une écriture suivante échouait — le courriel serait parti et le
+        document resterait brouillon (traoreera/doctype#59). Ici, l'état est déjà durable : un échec n'enlève rien, il se voit au
+        journal, et le hook est responsable de sa propre reprise.
+
+        Pas de `tx` : la transaction est fermée. Pas de refus non plus — lever ici ne défairait rien et mentirait à l'appelant,
+        dont le document EST soumis.
+        """
+        event = f"after_{action}"
+        refs = compiled.definition.hooks.for_event(event)
+        if not refs:
+            return
+        doctype = compiled.definition.name
+
+        async def get(dt: str, nm: str) -> dict[str, Any] | None:
+            async with self._query(ctx) as q:
+                found = await q.get(dt, nm, scope=Scope.everything("read"))
+            return self._present(found) if found else None
+
+        async def record(**changes: Any) -> dict[str, Any]:
+            """Ce que le hook a FAIT, posé sur son propre document : l'état d'un envoi, sa date, sa raison d'échec.
+
+            Un effet extérieur doit pouvoir dire s'il a réussi, sinon rien ne distingue « envoyé » de « jamais tenté ». Après le
+            commit il n'y a plus de transaction, et `doctype_writer` écrit avec les droits d'un CLIENT : un champ `read_only`
+            comme `status` lui est refusé. Cette porte-là écrit comme un hook, dans sa propre petite transaction, et reste
+            bornée aux champs `allow_on_submit` du document — tout le reste est figé par la soumission, ici comme ailleurs.
+            """
+            async with self._query(ctx) as q:
+                tx = _Transaction(self, ctx, q, event)
+                fresh = await tx.get(doctype, doc.name, lock=True)
+                if fresh is None:  # supprimé entre le commit et ici
+                    raise NotFound("document_not_found", f"{doctype} {doc.name!r} introuvable")
+                return await tx.update(doctype, doc.name, {**fresh["data"], **changes}, fresh["version"])
+
+        view = MappingProxyType(self._mask_data(compiled, doc.data) or {})
+        for ref in refs:
+            fn = self._hooks.get(ref)
+            if fn is None:
+                self._log.error(f"{event} hook unavailable", hook=ref, doctype=doctype)
+                continue
+            try:
+                hook_event = HookEvent(event, ctx, doctype, doc.name, view, None, get, None, None, record)
+                await asyncio.wait_for(fn(hook_event), timeout=self._hook_settings.timeout_seconds)
+            except Exception as e:  # noqa: BLE001 - y compris TimeoutError
+                self._log.error(f"{event} hook failed", hook=ref, doctype=doctype, name=doc.name, error=repr(e))
 
     async def _tx_hooks(
         self, ctx: RequestContext, compiled: CompiledDocType, q: Query, doc: StoredDoc, event: str, *,

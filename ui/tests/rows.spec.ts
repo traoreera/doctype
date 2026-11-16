@@ -123,7 +123,7 @@ describe('unités', () => {
 })
 
 describe('devises (currency_from, M3)', () => {
-  const base = { required: false, hidden: false, in_list_view: false }
+  const base = { required: false, hidden: true, in_list_view: false }
   const amount = (from: string): FieldMeta => ({ ...base, fieldname: 'rate', fieldtype: 'Currency', decimals: 2, currency_from: from })
   const parentFields: FieldMeta[] = [
     { ...base, fieldname: 'currency', fieldtype: 'Link', options: 'Currency' },
