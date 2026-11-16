@@ -219,7 +219,7 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
       payload: { doctype: '{{ trigger.doctype }}', name: '{{ trigger.name }}', version: '{{ trigger.version }}' },
     })
     await flushPromises()
-    ;(q('fl-deploy') as HTMLButtonElement).click()
+      ; (q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     expect(c.post).toHaveBeenCalledWith('/flows', {
       name: 'nouveau',
@@ -265,15 +265,15 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
       expect(q('fl-node-outputs')?.textContent).toContain('Identifiant du message')
       expect(q('fl-incomplete-action_1')).not.toBeNull() // le destinataire est obligatoire
 
-      // Sans destinataire, le flux ne part pas : la faute nomme l'étape et le champ.
-      ;(q('fl-deploy') as HTMLButtonElement).click()
+        // Sans destinataire, le flux ne part pas : la faute nomme l'étape et le champ.
+        ; (q('fl-deploy') as HTMLButtonElement).click()
       await flushPromises()
       expect(document.body.textContent).toContain('Destinataire')
       expect(c.post).not.toHaveBeenCalled()
 
       await type('fl-node-field-to', 'compta@example.com')
       expect(q('fl-incomplete-action_1')).toBeNull()
-      ;(q('fl-deploy') as HTMLButtonElement).click()
+        ; (q('fl-deploy') as HTMLButtonElement).click()
       await flushPromises()
       expect(c.post).toHaveBeenCalledWith('/flows', expect.objectContaining({
         steps: [expect.objectContaining({ id: 'action_1', type: 'action', plugin: 'mailer', action: 'mail.send', payload: { to: 'compta@example.com' } })],
@@ -303,12 +303,12 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
       expect(q('fl-event-fields')?.textContent).toContain('Expéditeur')
       expect(q('fl-event-other')).toBeNull()
 
-      ;(q('fl-node-envoyer') as HTMLButtonElement).click()
+        ; (q('fl-node-envoyer') as HTMLButtonElement).click()
       await flushPromises()
       expect(q('fl-node-field-to-source')?.textContent).toContain('Du déclencheur')
       expect(q('fl-node-field-to')?.textContent).toContain('Expéditeur')
 
-      ;(q('fl-node-suivre') as HTMLButtonElement).click()
+        ; (q('fl-node-suivre') as HTMLButtonElement).click()
       await flushPromises()
       expect(q('fl-node-field-to-source')?.textContent).toContain('Résultat d’une étape')
       expect(q('fl-node-field-to')?.textContent).toContain('envoyer › Identifiant du message')
@@ -320,14 +320,14 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
   it('dit les fautes sans appeler xflow', async () => {
     const c = client()
     const { w } = await builder(c)
-    ;(q('fl-deploy') as HTMLButtonElement).click()
+      ; (q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     expect(document.body.textContent).toContain('Nom')
     expect(c.post).not.toHaveBeenCalled()
 
     await type('fl-name', 'bon_nom')
     await w.find('[data-testid="fl-add-action"]').trigger('click')
-    ;(q('fl-deploy') as HTMLButtonElement).click()
+      ; (q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     // L'étape est posée sans type de document : le flux ne part pas, et la faute nomme l'étape.
     expect(q('fl-problem')?.textContent).toContain('action_1')
@@ -342,7 +342,7 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     })
     c.post.mockResolvedValueOnce({ status: 'error', code: 'register_error', msg: 'Type de step inconnu' } as never)
     await builder(c, '/automations/refus')
-    ;(q('fl-deploy') as HTMLButtonElement).click()
+      ; (q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     expect(q('fl-server-error')?.textContent).toContain('Type de step inconnu')
     expect(q('fl-node-action_1')).not.toBeNull()
@@ -371,7 +371,7 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     expect(q('fl-step-panel')?.textContent).toContain('Nouvel état')
     expect(document.body.textContent).not.toContain('{{ trigger.to }}')
     expect(w.findAll('.fl-outlet-yes').length).toBeGreaterThan(0)
-    ;(q('fl-deploy') as HTMLButtonElement).click()
+      ; (q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     const sent = c.post.mock.calls[0]![1] as Record<string, unknown>
     expect((sent.steps as Record<string, unknown>[])[1]).toMatchObject({ retry: { max_attempts: 4 } })
@@ -395,7 +395,7 @@ describe('l’éditeur d’automatisation : la page, le graphe et le panneau', (
     expect(q('fl-unknown-kind')).not.toBeNull() // l'étape d'un type que l'écran ne règle pas
     await w.find('[data-testid="fl-node-maison"]').trigger('click')
     expect(q('fl-foreign-action')?.textContent).toContain('compta.cloturer')
-    ;(q('fl-deploy') as HTMLButtonElement).click()
+      ; (q('fl-deploy') as HTMLButtonElement).click()
     await flushPromises()
     const sent = c.post.mock.calls[0]?.[1] as Record<string, unknown>
     expect(sent.trigger).toMatchObject({ type: 'event', event_name: 'xauth.login' })
@@ -446,23 +446,23 @@ describe('Nœuds personnalisés : l’organisation décrit une action qu’aucun
     const flowNodes = vi.fn(async () => ({ nodes: [], can_edit: true }))
     await nodesPage({ flowNodes, flowCatalog: vi.fn(async () => ({ nodes: [{ plugin: 'mailer', action: 'mail.send', label: 'Envoyer', fields: [], outputs: [] }] })), saveFlowNode })
     expect(q('fn-empty')).not.toBeNull()
-    ;(q('fn-create') as HTMLButtonElement).click()
+      ; (q('fn-create') as HTMLButtonElement).click()
     await flushPromises()
     expect((q('fn-save') as HTMLButtonElement).disabled).toBe(true) // rien de saisi : trois fautes dites
     expect(document.body.querySelectorAll('[data-testid="fn-problem"]').length).toBe(3)
     await type('fn-label', 'Noter dans le journal')
     await type('fn-plugin', 'mailer')
     await type('fn-action', 'mail.log')
-    ;(q('fn-add-field') as HTMLButtonElement).click()
+      ; (q('fn-add-field') as HTMLButtonElement).click()
     await flushPromises()
     await type('fn-field-label-0', 'Note du jour')
     expect((q('fn-field-name-0') as HTMLInputElement).value).toBe('note_du_jour')
-    ;(q('fn-add-output') as HTMLButtonElement).click()
+      ; (q('fn-add-output') as HTMLButtonElement).click()
     await flushPromises()
     await type('fn-output-label-0', 'Numéro de la note')
     await type('fn-output-path-0', 'entry')
     expect(q('fn-problem')).toBeNull()
-    ;(q('fn-save') as HTMLButtonElement).click()
+      ; (q('fn-save') as HTMLButtonElement).click()
     await flushPromises()
     expect(saveFlowNode).toHaveBeenCalledWith({
       plugin: 'mailer', action: 'mail.log', label: 'Noter dans le journal', icon: 'bolt',
@@ -478,7 +478,7 @@ describe('Nœuds personnalisés : l’organisation décrit une action qu’aucun
     expect(q('fn-reserved')).not.toBeNull()
     expect(q('fn-create')).toBeNull()
     expect(q('fn-node-mailer:mail.log')?.textContent).toContain('Le plugin décrit aussi cette action')
-    ;(q('fn-node-mailer:mail.log') as HTMLButtonElement).click()
+      ; (q('fn-node-mailer:mail.log') as HTMLButtonElement).click()
     await flushPromises()
     expect((q('fn-label') as HTMLInputElement).disabled).toBe(true)
     expect(q('fn-save')).toBeNull()
@@ -529,7 +529,7 @@ describe('lancer à la main : le document, et une erreur qu’on peut lire', () 
     expect(link.props('target')).toBe('Customer') // le type que le flux nomme, proposé d'office
     link.vm.$emit('update:modelValue', 'CUST-1')
     await flushPromises()
-    ;(document.body.querySelector('[data-testid="run-on-go"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="run-on-go"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(automations.post).toHaveBeenCalledWith('/run/test', { doctype: 'Customer', name: 'CUST-1', version: 3, docstatus: 0 })
   })

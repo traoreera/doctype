@@ -97,10 +97,16 @@ _PrincipalAttr = Annotated[str, StringConstraints(pattern=r"^[A-Za-z_][A-Za-z0-9
 HOOK_EVENTS = (
     "validate", "before_save", "after_save", "on_submit", "on_cancel",
     "before_insert", "after_insert", "on_trash", "after_delete", "before_cancel", "on_update_after_submit",
+    "after_submit", "after_cancel",
 )
 # Hooks d'un changement d'ÉTAT (soumission, annulation, modification d'un document soumis) : dans la transaction du document, avec le droit d'écrire
 # d'autres documents (hooks.HookTransaction). Ils exigent un DocType `submittable` et ne peuvent pas être des `action:` sandboxées.
 TRANSITION_HOOKS = ("on_submit", "on_cancel", "before_cancel", "on_update_after_submit")
+# Hooks d'un changement d'état qui ont lieu APRÈS le commit (`after_save` du changement d'état) : le document est déjà durable, donc
+# ils n'ont ni `tx` ni droit de refuser — leur erreur est journalisée. C'est là, et NULLE PART ailleurs, qu'un effet EXTÉRIEUR
+# (envoyer un courriel, appeler une API, publier un webhook) se fait : dans la transaction, il ne pourrait plus être défait si une
+# écriture suivante échouait. Ils exigent eux aussi un DocType `submittable`.
+AFTER_TRANSITION_HOOKS = ("after_submit", "after_cancel")
 # Seuls `validate` et `before_save` acceptent un hook `action:` (sandboxé, appelé AVANT la transaction) : tout autre événement a lieu DANS la transaction ou APRÈS le commit.
 ACTION_HOOK_EVENTS = ("validate", "before_save")
 # Les types dont une valeur peut être UNIQUE (`unique: true`) : des valeurs qui se comparent exactement, jamais un flottant ni un texte libre long.
@@ -703,6 +709,10 @@ class HooksDef(BaseModel):
     after_delete: list[str] = PydanticField(default_factory=list)  # après le commit de la suppression
     before_cancel: list[str] = PydanticField(default_factory=list)  # `submittable` : dans la transaction de l'annulation, avant `on_cancel`
     on_update_after_submit: list[str] = PydanticField(default_factory=list)  # `submittable` : un document soumis dont un champ `allow_on_submit` a changé
+    # `submittable` : APRÈS le commit de la transition. Le seul endroit d'un effet EXTÉRIEUR (courriel, API, webhook) :
+    # dans `on_submit` il ne pourrait plus être défait si une écriture suivante échouait (traoreera/doctype#59).
+    after_submit: list[str] = PydanticField(default_factory=list)
+    after_cancel: list[str] = PydanticField(default_factory=list)
 
     @model_validator(mode="after")
     def _check(self) -> "HooksDef":
@@ -1081,7 +1091,7 @@ class DocTypeDef(BaseModel):
                 raise ValueError("submittable: exige `track_changes: true` (l'historique garde qui a soumis et annulé)")
             return self
         stray = [a for a in SUBMIT_ACTIONS if getattr(self.permissions, a) is not None]
-        stray += [e for e in TRANSITION_HOOKS if self.hooks.for_event(e)]
+        stray += [e for e in TRANSITION_HOOKS + AFTER_TRANSITION_HOOKS if self.hooks.for_event(e)]
         stray += ["cancel_ignores"] if self.cancel_ignores else []
         if stray:
             raise ValueError(f"{', '.join(stray)} n'a de sens que pour un DocType `submittable: true`")

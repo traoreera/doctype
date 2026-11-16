@@ -19,7 +19,7 @@ beforeEach(() => {
   localStorage.clear()
   sessionStorage.clear()
   sessionStorage.setItem('xdt.desk.token', `${b64({ sub: 'u-alice', email: 'alice.martin@example.com', tenant_id: 'acme', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`)
-  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: () => {}, removeEventListener: () => {} })))
+  vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false, addEventListener: () => { }, removeEventListener: () => { } })))
 })
 afterEach(() => {
   document.body.innerHTML = ''

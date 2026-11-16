@@ -53,7 +53,7 @@ async function open(opts: { rights?: DocTypeMeta['rights']; config?: FormOverrid
     doctypes: vi.fn(async () => []),
     formOverride: vi.fn(async () => ({ doctype: 'Ticket', config: opts.config ?? SAVED, definition: DEFINITION, labels: LABELS })),
     saveFormOverride: vi.fn(opts.save ?? (async (_d: string, c: FormOverride) => ({ doctype: 'Ticket', config: c }))),
-    removeFormOverride: vi.fn(async () => {}),
+    removeFormOverride: vi.fn(async () => { }),
   }
   const router = createRouter({
     history: createMemoryHistory(),

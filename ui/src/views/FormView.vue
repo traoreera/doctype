@@ -666,7 +666,11 @@ const createItems = computed<MoreItem[]>(() =>
     label: m.label,
     icon: 'pi pi-arrow-right',
     testid: `map-${m.doctype}`,
-    command: () => void router.push({ name: 'form', params: { doctype: m.doctype, name: 'new' }, query: { from: `${props.doctype}/${record.value?.name ?? ""}` } }),
+    // La route NOMMÉE « new » (`/app/:doctype/new`, `name: null`), pas « form » avec un nom qui vaudrait « new » : un push par
+    // NOM ne repasse pas par le chemin, donc `props.name` valait la chaîne « new », le formulaire chargeait un document ainsi
+    // nommé, et « Créer depuis » finissait sur « Document introuvable » — pour TOUS les types. C'est la route que « Dupliquer »
+    // emprunte déjà plus bas.
+    command: () => void router.push({ name: 'new', params: { doctype: m.doctype }, query: { from: `${props.doctype}/${record.value?.name ?? ""}` } }),
   })),
 )
 

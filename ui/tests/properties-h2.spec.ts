@@ -221,7 +221,7 @@ describe('FormView : renommer et dupliquer', () => {
     expect(input.value).toBe('p1')
     input.value = 'Paris 8e'
     input.dispatchEvent(new Event('input'))
-    ;(document.body.querySelector('[data-testid="rename-confirm"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="rename-confirm"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(api.rename).toHaveBeenCalledWith('Place', 'p1', 'Paris 8e')
     expect(router.currentRoute.value.params.name).toBe('Paris 8e')
@@ -245,7 +245,7 @@ describe('FormView : renommer et dupliquer', () => {
     const input = document.body.querySelector('[data-testid="rename-input"]') as HTMLInputElement
     input.value = 'autre'
     input.dispatchEvent(new Event('input'))
-    ;(document.body.querySelector('[data-testid="rename-confirm"]') as HTMLButtonElement).click()
+      ; (document.body.querySelector('[data-testid="rename-confirm"]') as HTMLButtonElement).click()
     await flushPromises()
     expect(document.body.querySelector('[data-testid="rename-error"]')?.textContent).toContain('existe déjà')
   })
