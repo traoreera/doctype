@@ -27,7 +27,8 @@ Sans cette ligne, les composants n'ont pas leurs styles.
 Un bloc d'espace (`desk.blocks.add('resume', MonBloc)`) reçoit DEUX props : `config` (l'objet `props` du bloc YAML) et `label`.
 
 Ce que le SDK `@xcore-doctype/desk` exporte : `defineExtension`, `useDesk` (dans un composant : `api`, `plugin`, `notify`, `router`),
-`CellValue`, `FieldControl`, `LinkField`, `describeError`, `t`, `piIcon`, et une sélection de PrimeVue (`Button`, `Card`, `Column`,
+`useQuery` (l'état d'une page gardé dans la query de l'adresse : `query` réactive, `setQuery`, la page n'est pas remontée),
+`CellValue`, `FieldControl`, `LinkField`, `DateInput`, `DatetimeInput` (valeur ISO, format et langue du Desk), `describeError`, `t`, `piIcon`, et une sélection de PrimeVue (`Button`, `Card`, `Column`,
 `DataTable`, `Dialog`, `InputNumber`, `InputText`, `Message`, `ProgressSpinner`, `Select`, `Tag`, `Textarea`).
 
 Vérifier le plugin (CI) : `xcore-doctype check <plugin>/doctypes --owner __PLUGIN__` valide aussi `desk/`.

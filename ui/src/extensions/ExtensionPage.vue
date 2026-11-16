@@ -11,7 +11,10 @@ const route = useRoute()
 <template>
   <div class="desk-page" :data-extension="extension">
     <div v-if="title" class="desk-page-head"><h1>{{ title }}</h1></div>
-    <!-- Une clé par adresse : une page à paramètre (`deal/:id`) repart de zéro pour un autre document, panne comprise. -->
-    <ExtensionSlot :key="route.fullPath" :extension="extension" :component="component" :props="{ ...route.params }" />
+    <!--
+      Une clé par CHEMIN : une page à paramètre (`deal/:id`) repart de zéro pour un autre document, panne comprise. La query n'en fait
+      pas partie : une page qui garde ses filtres dans l'adresse (`useQuery`) n'est pas détruite et relue à chaque filtre.
+    -->
+    <ExtensionSlot :key="route.path" :extension="extension" :component="component" :props="{ ...route.params }" />
   </div>
 </template>

@@ -183,8 +183,8 @@ export default {
 ```
 
 Puis `registry.load_desk(self.ctx.name, Path(__file__).parent.parent / "desk")` dans `on_load`, et l'opérateur l'autorise. Les types
-du contrat sont dans `ui/src/extensions/types.ts` ; le SDK exporte `defineExtension`, `useDesk`, `CellValue`, `FieldControl`,
-`LinkField`, `describeError`, `t`, `piIcon` et une sélection de PrimeVue (`ui/src/shared/sdk.ts`). En développement (`make dev`),
+du contrat sont dans `ui/src/extensions/types.ts` ; le SDK exporte `defineExtension`, `useDesk`, `useQuery`, `CellValue`, `FieldControl`,
+`LinkField`, `DateInput`, `DatetimeInput`, `describeError`, `t`, `piIcon` et une sélection de PrimeVue (`ui/src/shared/sdk.ts`). En développement (`make dev`),
 Vite relaie les extensions que le backend sert.
 
 **Preuves.** `tests/unit/test_desk.py::TestExtensions` (liste blanche, traversée, lien symbolique, types de média, empreinte de

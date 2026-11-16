@@ -40,6 +40,8 @@ class Referrer:
     table: str | None = None
     # Un champ DynamicLink : le champ (du document ou de la ligne) qui dit DANS quel DocType chercher. `None` pour un Link ordinaire.
     type_field: str | None = None
+    # Faux pour un lien `blocks_cancel: false` : une simple référence, qui n'empêche pas d'ANNULER sa cible (elle empêche toujours de la supprimer).
+    blocks_cancel: bool = True
 
     def key(self) -> tuple[Any, ...]:
         """La forme que `Query.references_to` / `referrers_of` attendent : 3 éléments, 4 avec un champ de type."""
@@ -922,16 +924,16 @@ class DocTypeRegistry:
                 continue  # les lignes sont atteintes par le champ Table du parent, jamais seules
             for f in compiled.definition.fields:
                 if f.fieldtype == "Link" and f.options == target:
-                    out.append(Referrer(name, f.fieldname))
+                    out.append(Referrer(name, f.fieldname, blocks_cancel=f.blocks_cancel))
                 elif f.fieldtype == "DynamicLink":
-                    out.append(Referrer(name, f.fieldname, None, str(f.options)))
+                    out.append(Referrer(name, f.fieldname, None, str(f.options), blocks_cancel=f.blocks_cancel))
                 elif f.fieldtype == "Table":
                     child = compiled.children[str(f.options)]
                     for cf in child.fields:
                         if cf.fieldtype == "Link" and cf.options == target:
-                            out.append(Referrer(name, cf.fieldname, f.fieldname))
+                            out.append(Referrer(name, cf.fieldname, f.fieldname, blocks_cancel=cf.blocks_cancel))
                         elif cf.fieldtype == "DynamicLink":
-                            out.append(Referrer(name, cf.fieldname, f.fieldname, str(cf.options)))
+                            out.append(Referrer(name, cf.fieldname, f.fieldname, str(cf.options), blocks_cancel=cf.blocks_cancel))
         return out
 
     def get(self, name: str) -> CompiledDocType:

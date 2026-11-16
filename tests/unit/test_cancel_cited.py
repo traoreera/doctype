@@ -184,3 +184,79 @@ async def test_cancel_and_a_concurrent_payment_do_not_both_pass(svc, db):
         cancelled = not isinstance(results[0], Exception)
         paid = not isinstance(results[1], Exception)
         assert cancelled != paid, results
+
+
+# ── Liens « faibles » (traoreera/doctype#70) : une référence qui n'empêche pas l'annulation ──────────────────────────────────────────
+
+SLAB = {  # un barème cite son successeur : une RÉFÉRENCE (`blocks_cancel: false`), pas une dépendance
+    "schema_version": 1, "name": "Slab", "module": "erp", "submittable": True,
+    "fields": [
+        {"fieldname": "label", "fieldtype": "Text"},
+        {"fieldname": "superseded_by", "fieldtype": "Link", "options": "Slab", "blocks_cancel": False, "allow_on_submit": True},
+        {"fieldname": "based_on", "fieldtype": "Link", "options": "Slab"},  # un lien ordinaire, pour comparer
+    ],
+}
+SEE_ROW = {
+    "schema_version": 1, "name": "See Row", "istable": True,
+    "fields": [
+        {"fieldname": "slab", "fieldtype": "Link", "options": "Slab", "blocks_cancel": False},
+        {"fieldname": "kind", "fieldtype": "Text"},
+        {"fieldname": "other", "fieldtype": "DynamicLink", "options": "kind", "blocks_cancel": False},
+    ],
+}
+MEMO = {
+    "schema_version": 1, "name": "Memo", "module": "erp", "submittable": True,
+    "fields": [{"fieldname": "see", "fieldtype": "Table", "options": "See Row"}],
+}
+
+
+ALICE = make_ctx("acme", "alice", permissions=GRANTS + [f"erp:{t}:{a}" for t in ("slab", "memo") for a in ("read", "write", "delete", "submit", "cancel")])
+
+
+@pytest.fixture
+def weak(db, tables):
+    return DocumentService(registry(SLAB, SEE_ROW, MEMO), db, tables, Log(), hooks=HookRegistry())
+
+
+async def test_a_weak_link_does_not_block_the_cancellation_of_its_target(weak):
+    successor = await submitted(weak, "Slab", {"label": "2027"})
+    await submitted(weak, "Slab", {"label": "2026", "superseded_by": successor["name"]})
+    assert (await cancel(weak, "Slab", successor["name"]))["docstatus"] == 2
+
+
+async def test_an_ordinary_link_beside_a_weak_one_still_blocks(weak):
+    base = await submitted(weak, "Slab", {"label": "2026"})
+    await submitted(weak, "Slab", {"label": "2027", "based_on": base["name"]})
+    with pytest.raises(DoctypeError) as e:
+        await cancel(weak, "Slab", base["name"])
+    assert e.value.code == "document_cited"
+    assert e.value.details == [{"doctype": "Slab", "field": "based_on"}]
+
+
+async def test_weak_links_in_rows_and_dynamic_ones_do_not_block_either(weak):
+    slab = await submitted(weak, "Slab", {"label": "2026"})
+    await submitted(weak, "Memo", {"see": [{"slab": slab["name"]}, {"kind": "Slab", "other": slab["name"]}]})
+    assert (await cancel(weak, "Slab", slab["name"]))["docstatus"] == 2
+
+
+async def test_a_weak_link_is_still_checked_on_write(weak):
+    with pytest.raises(DoctypeError) as e:
+        await weak.create(ALICE, "Slab", {"label": "2026", "superseded_by": "nulle-part"})
+    assert e.value.details[0]["type"] == "link_not_found"
+
+
+async def test_a_weak_link_still_protects_its_target_from_deletion(weak):
+    # Annuler laisse la cible en place (le lien reste valide) ; la supprimer laisserait un lien dans le vide.
+    target = await weak.create(ALICE, "Slab", {"label": "brouillon"})
+    await weak.create(ALICE, "Slab", {"label": "2026", "superseded_by": target["name"]})
+    with pytest.raises(DoctypeError) as e:
+        await weak.delete(ALICE, "Slab", target["name"])
+    assert e.value.code == "document_in_use"
+
+
+def test_blocks_cancel_only_makes_sense_on_a_link():
+    with pytest.raises(InvalidDefinition, match="blocks_cancel"):
+        parse_definition({
+            "schema_version": 1, "name": "X", "module": "erp",
+            "fields": [{"fieldname": "a", "fieldtype": "Text", "blocks_cancel": False}],
+        })

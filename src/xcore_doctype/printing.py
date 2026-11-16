@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone, tzinfo
 from decimal import Decimal, InvalidOperation
 from html import escape
 from typing import Annotated, Any, Literal, Mapping, Sequence
@@ -135,6 +136,55 @@ def currency_links(definition: DocTypeDef, data: Mapping[str, Any], children: Ma
     return wanted
 
 
+_PLAIN_NUMBER = re.compile(r"^(-?)(\d+)(?:\.(\d+))?$")
+_ISO_DATE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+# Séparateur de milliers, virgule décimale. L'espace est INSÉCABLE (U+00A0) : un montant ne se coupe pas en fin de ligne. Pas l'espace
+# fine (U+202F) de la typographie soignée : toutes les polices ne l'ont pas, et un carré vide dans un montant serait pire qu'une espace large.
+_SEPARATORS = {"fr": ("\u00a0", ","), "en": (",", ".")}
+_DATE_ORDERS = {"JJ/MM/AAAA": "{d}/{m}/{y}", "MM/JJ/AAAA": "{m}/{d}/{y}", "AAAA-MM-JJ": "{y}-{m}-{d}"}
+
+
+@dataclass(frozen=True, slots=True)
+class Formats:
+    """Comment un nombre et une date se LISENT sur le papier (traoreera/doctype#62) : « 1 234,56 » et « 10/11/2026 », pas la forme
+    stockée « 1234.56 » / « 2026-11-10 ». Rien n'est calculé ici : la valeur canonique reste celle des sommes, on ne fait que l'écrire
+    autrement — chiffre pour chiffre, sans arrondi (un Decimal ne passe jamais par un flottant).
+
+    `language` : `fr` ou `en` (toute autre langue se lit comme `fr`, la langue d'origine du moteur). `date_format` : le réglage
+    « Format de date » de l'organisation, qui gagne sur la langue. `timezone` : celui de l'organisation, pour l'heure d'un Datetime
+    (stocké en UTC) ; sans lui l'heure reste en UTC.
+    """
+
+    language: str = "fr"
+    date_format: str | None = None
+    timezone: tzinfo | None = None
+
+    def number(self, text: str) -> str:
+        m = _PLAIN_NUMBER.match(text)
+        if not m:
+            return text  # pas un nombre écrit comme le moteur les écrit : on n'invente rien
+        sign, whole, frac = m.groups()
+        thousands, comma = _SEPARATORS.get(self.language, _SEPARATORS["fr"])
+        head = len(whole) % 3 or 3
+        grouped = thousands.join([whole[:head], *(whole[i : i + 3] for i in range(head, len(whole), 3))])
+        return sign + grouped + (comma + frac if frac else "")
+
+    def date(self, iso: str) -> str:
+        m = _ISO_DATE.match(iso)
+        if not m:
+            return iso
+        order = _DATE_ORDERS.get(self.date_format or "", _DATE_ORDERS["JJ/MM/AAAA"])
+        return order.format(y=m.group(1), m=m.group(2), d=m.group(3))
+
+    def instant(self, iso: str) -> str:
+        try:
+            at = datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        except ValueError:
+            return iso
+        local = at.astimezone(self.timezone) if self.timezone is not None else at
+        return f"{self.date(local.strftime('%Y-%m-%d'))} {local.strftime('%H:%M')}"
+
+
 class _Model(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -169,6 +219,8 @@ class TableColumn(_Model):
     align: Literal["left", "right", "center"] | None = None
     # Largeur en POURCENT de la table : leur somme ne dépasse pas 100 (vérifié au chargement).
     width: Annotated[int, PydanticField(ge=1, le=100)] | None = None
+    # La forme STOCKÉE (« 1234.56 », « 2026-11-10 ») au lieu de celle de la langue : un code, une référence, une colonne qu'on ressaisit.
+    raw: bool = False
 
 
 class TableBlock(_Model):
@@ -181,6 +233,9 @@ class TableBlock(_Model):
     repeat_header: bool = True
     group_by: _Fieldname | None = None
     subtotal: list[_Fieldname] = PydanticField(default_factory=list)
+    # Un champ Boolean des lignes : celles où il est vrai s'impriment en évidence (gras, filet au-dessus). Pour une ligne de TOTAL qui
+    # vient des données (le bilan, une balance par classe) et qu'il fallait jusque-là écrire en MAJUSCULES pour la distinguer.
+    emphasis: _Fieldname | None = None
     label: str | None = None
 
     @model_validator(mode="after")
@@ -262,6 +317,9 @@ class PrintTemplate(_Model):
                       PydanticField(min_length=1, max_length=MAX_PRINT_BLOCKS)] | None = None
     # …ou un DOCUMENT LIBRE écrit comme dans un traitement de texte (`print_document`, §12). L'un OU l'autre.
     content: Annotated[str, StringConstraints(min_length=1, max_length=print_document.MAX_CONTENT)] | None = None
+    # Vrai : nombres et dates sous leur forme STOCKÉE (« 1234.56 », « 2026-11-10 ») — un export, un document relu par une machine.
+    # Par défaut ils suivent la langue et le format de date de l'organisation (`Formats`).
+    raw_values: bool = False
     _document: print_document.Parsed | None = PrivateAttr(default=None)
 
     @model_validator(mode="after")
@@ -371,6 +429,12 @@ def _table_problems(at: str, block: TableBlock, definition: DocTypeDef, child_of
         f = rows.get(name)
         if f is not None and f.fieldtype not in NUMERIC:
             problems.append(f"{at}: subtotal: {name!r} est un {f.fieldtype}, pas un nombre")
+    if block.emphasis is not None:
+        e = rows.get(block.emphasis)
+        if e is None:
+            problems.append(f"{at}: emphasis: {block.emphasis!r} n'est pas un champ de {child.name}")
+        elif e.fieldtype != "Boolean":
+            problems.append(f"{at}: emphasis: {block.emphasis!r} est un {e.fieldtype}, il faut un Boolean (la ligne est en évidence quand il est vrai)")
     return problems
 
 
@@ -396,7 +460,7 @@ def _number(value: float) -> str:
     return text or "0"
 
 
-def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None = None, code: str | None = None) -> str:
+def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None = None, code: str | None = None, fmt: Formats | None = None) -> str:
     """La valeur d'un champ, en texte ÉCHAPPÉ. Un Decimal garde sa chaîne canonique : il ne passe pas par un float.
 
     Un LIEN montre le TITRE de ce qu'il désigne, jamais son identifiant : sur une facture, « Société Durand »
@@ -404,15 +468,28 @@ def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None =
     refus de suppression) et sans elle un document imprimé est illisible — c'est ce que le premier PDF de bout
     en bout a montré. L'appelant résout les titres (lui seul a les droits et la base) ; ici on ne fait que les
     employer, et un titre absent laisse l'identifiant, qui vaut mieux qu'un vide.
+
+    `fmt` : nombres et dates écrits pour un LECTEUR (`Formats`), d'après le TYPE du champ — jamais d'après l'allure de la valeur : un
+    Text « 2026 » ou un code postal reste ce qu'il est. Sans `fmt`, la forme stockée.
     """
     if value is None or isinstance(value, (list, dict)):
         return ""
+    kind = getattr(field, "fieldtype", None)
     if code and isinstance(value, str) and value:
-        return f"{escape(value)} {escape(code)}"  # un montant et sa devise : « 1200.00 EUR »
+        return f"{escape(fmt.number(value) if fmt else value)} {escape(code)}"  # un montant et sa devise : « 1 200,00 EUR »
     if isinstance(value, bool):
         return "Oui" if value else "Non"
     if isinstance(value, float):
-        return escape(_number(value))
+        return escape(fmt.number(_number(value)) if fmt else _number(value))
+    if fmt is not None:
+        if isinstance(value, int) and kind in NUMERIC:
+            return escape(fmt.number(str(value)))
+        if isinstance(value, str) and kind in DECIMAL_TYPES:
+            return escape(fmt.number(value))
+        if isinstance(value, str) and kind == "Date":
+            return escape(fmt.date(value))
+        if isinstance(value, str) and kind == "Datetime":
+            return escape(fmt.instant(value))
     if titles and field is not None and isinstance(value, str) and field.fieldtype in ("Link", "DynamicLink"):
         found = titles.get((str(field.options), value))
         if found:
@@ -420,8 +497,9 @@ def _cell(value: Any, field: Any, titles: Mapping[tuple[str, str], str] | None =
     return escape(str(value))
 
 
-def _sum(rows: Sequence[Mapping[str, Any]], name: str, field: Any) -> str:
-    """La somme d'une colonne, EXACTE (`Decimal`), rendue à l'échelle du champ."""
+def _sum(rows: Sequence[Mapping[str, Any]], name: str, field: Any, fmt: Formats | None = None) -> str:
+    """La somme d'une colonne, EXACTE (`Decimal`), rendue à l'échelle du champ — puis écrite comme les cellules (`fmt`)."""
+    shown = fmt.number if fmt else (lambda text: text)
     total = Decimal(0)
     for row in rows:
         raw = row.get(name)
@@ -432,10 +510,10 @@ def _sum(rows: Sequence[Mapping[str, Any]], name: str, field: Any) -> str:
         except (ArithmeticError, InvalidOperation, ValueError, TypeError):
             continue  # une valeur illisible dans une ligne déjà écrite ne casse pas l'impression
     if field is not None and field.fieldtype in DECIMAL_TYPES:
-        return escape(canonical(total, int(field.decimals or 0)))
+        return escape(shown(canonical(total, int(field.decimals or 0))))
     if field is not None and field.fieldtype == "Int":
-        return escape(str(int(total)))
-    return escape(_number(float(total)))  # le même rendu qu'une cellule : un seul formatage de flottant
+        return escape(shown(str(int(total))))
+    return escape(shown(_number(float(total))))  # le même rendu qu'une cellule : un seul formatage de flottant
 
 
 def render_html(
@@ -449,8 +527,12 @@ def render_html(
     titles: Titles = None,
     images: Mapping[str, str] | None = None,
     linked: Linked | None = None,
+    formats: Formats | None = None,
 ) -> str:
     """Le document, en HTML prêt pour le moteur PDF. Pur : rien n'est lu ni écrit.
+
+    `formats` : comment écrire nombres et dates (langue, format de date et fuseau de l'organisation, que l'appelant connaît) ; sans
+    lui, ou si le gabarit dit `raw_values`, la forme stockée.
 
     `images` : pour un document libre, l'URL `data:` de chaque image citée, résolue par l'appelant (une image
     absente de la table ne s'imprime pas).
@@ -462,6 +544,7 @@ def render_html(
     fields = definition.field_map
     values = {"doctype": definition.label or definition.name, "name": name}
     money = Money(definition, data, children or {}, linked or {})
+    fmt = None if template.raw_values else formats
     body: list[str] = []
     if template.document is not None:
         # Le document libre est ENVELOPPÉ : une image « devant le texte » se place depuis le coin de la zone
@@ -470,18 +553,18 @@ def render_html(
             if token in ("name", "doctype"):
                 return escape(values[token])
             field_name = token[4:]
-            return _cell(data.get(field_name), fields.get(field_name), titles, money.code(fields.get(field_name)))
+            return _cell(data.get(field_name), fields.get(field_name), titles, money.code(fields.get(field_name)), fmt)
 
         inner = print_document.render(
             template.document.root,
             value=value,
-            block=lambda b: _render_block(b, definition, data, fields, children or {}, values, titles, money),
+            block=lambda b: _render_block(b, definition, data, fields, children or {}, values, titles, money, fmt),
             image=lambda fid: (images or {}).get(fid),
         )
         body.append(f'<div class="doc">{inner}</div>')
     else:
         for block in template.blocks or []:
-            body.append(_render_block(block, definition, data, fields, children or {}, values, titles, money))
+            body.append(_render_block(block, definition, data, fields, children or {}, values, titles, money, fmt))
     return (
         "<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>"
         + escape(f"{definition.label or definition.name} {name}")
@@ -556,28 +639,46 @@ def reserved_margins_css(page: PageSetup, *, top: int = 0, bottom: int = 0) -> s
 
 def _render_block(block: PrintBlock, definition: DocTypeDef, data: Mapping[str, Any],
                   fields: Mapping[str, Any], children: Mapping[str, Any], values: Mapping[str, str],
-                  titles: Titles = None, money: Money | None = None) -> str:
+                  titles: Titles = None, money: Money | None = None, fmt: Formats | None = None) -> str:
     money = money or Money(definition, data, children, {})
     if isinstance(block, TitleBlock):
-        return f"<h1>{escape(render_text(block.text, values, data))}</h1>"
+        return f"<h1>{escape(render_text(block.text, values, _readable(data, fields, fmt)))}</h1>"
     if isinstance(block, TextBlock):
-        return f"<p class=t>{escape(render_text(block.text, values, data))}</p>"
+        return f"<p class=t>{escape(render_text(block.text, values, _readable(data, fields, fmt)))}</p>"
     if isinstance(block, SpacerBlock):
         return f'<div style="height:{block.size}mm"></div>'
     if isinstance(block, PageBreakBlock):
         return '<div class="pb"></div>'
     if isinstance(block, FieldsBlock):
-        return _render_fields(block, data, fields, titles, money)
+        return _render_fields(block, data, fields, titles, money, fmt)
     if isinstance(block, TotalsBlock):
-        return _render_totals(block, data, fields, titles, money)
+        return _render_totals(block, data, fields, titles, money, fmt)
     if isinstance(block, TableBlock):
-        return _render_table(block, data, children.get(block.field), titles, money)
+        return _render_table(block, data, children.get(block.field), titles, money, fmt)
     return ""
 
 
-def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles, money: Money) -> str:
+def _readable(data: Mapping[str, Any], fields: Mapping[str, Any], fmt: Formats | None) -> Mapping[str, Any]:
+    """Les données telles qu'un TEXTE les cite (`{{ doc.date }}` dans un titre) : nombres et dates écrits comme dans les cellules."""
+    if fmt is None:
+        return data
+    out = dict(data)
+    for name, value in data.items():
+        kind = getattr(fields.get(name), "fieldtype", None)
+        if isinstance(value, bool) or not isinstance(value, (str, int, float)):
+            continue
+        if kind in NUMERIC:
+            out[name] = fmt.number(_number(value) if isinstance(value, float) else str(value))
+        elif kind == "Date" and isinstance(value, str):
+            out[name] = fmt.date(value)
+        elif kind == "Datetime" and isinstance(value, str):
+            out[name] = fmt.instant(value)
+    return out
+
+
+def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles, money: Money, fmt: Formats | None = None) -> str:
     cells = [
-        f"<td><span class=k>{_label(fields.get(n), n)}</span><br>{_cell(data.get(n), fields.get(n), titles, money.code(fields.get(n)))}</td>"
+        f"<td><span class=k>{_label(fields.get(n), n)}</span><br>{_cell(data.get(n), fields.get(n), titles, money.code(fields.get(n)), fmt)}</td>"
         for n in block.fields
     ]
     rows = [cells[i : i + block.columns] for i in range(0, len(cells), block.columns)]
@@ -586,16 +687,16 @@ def _render_fields(block: FieldsBlock, data: Mapping[str, Any], fields: Mapping[
     return head + '<table class="fields">' + "".join(f"<tr>{''.join(pad(r))}</tr>" for r in rows) + "</table>"
 
 
-def _render_totals(block: TotalsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles, money: Money) -> str:
+def _render_totals(block: TotalsBlock, data: Mapping[str, Any], fields: Mapping[str, Any], titles: Titles, money: Money, fmt: Formats | None = None) -> str:
     last = len(block.fields) - 1
     rows = []
     for i, n in enumerate(block.fields):
         strong = ' class="grand"' if i == last else ""
-        rows.append(f"<tr{strong}><td>{_label(fields.get(n), n)}</td><td class=r>{_cell(data.get(n), fields.get(n), titles, money.code(fields.get(n)))}</td></tr>")
+        rows.append(f"<tr{strong}><td>{_label(fields.get(n), n)}</td><td class=r>{_cell(data.get(n), fields.get(n), titles, money.code(fields.get(n)), fmt)}</td></tr>")
     return '<table class="totaux">' + "".join(rows) + "</table>"
 
 
-def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles: Titles, money: Money) -> str:
+def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles: Titles, money: Money, fmt: Formats | None = None) -> str:
     rows = data.get(block.field)
     rows = [r for r in rows if isinstance(r, Mapping)] if isinstance(rows, list) else []
     child_fields = child.field_map if child is not None else {}
@@ -617,17 +718,19 @@ def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles
     out: list[str] = []
     for key, members in groups:
         if block.group_by is not None:
-            out.append(f'<tr class="grp"><td colspan={len(block.columns)}>{_cell(key, child_fields.get(block.group_by), titles)}</td></tr>')
+            out.append(f'<tr class="grp"><td colspan={len(block.columns)}>{_cell(key, child_fields.get(block.group_by), titles, None, fmt)}</td></tr>')
         for row in members:
-            out.append("<tr>" + "".join(
-                f"<td class={c.align or 'left'}>{_cell(row.get(c.field), child_fields.get(c.field), titles, money.code(child_fields.get(c.field), row, block.field))}</td>"
+            strong = ' class="em"' if block.emphasis is not None and row.get(block.emphasis) is True else ""
+            out.append(f"<tr{strong}>" + "".join(
+                f"<td class={c.align or 'left'}>"
+                f"{_cell(row.get(c.field), child_fields.get(c.field), titles, money.code(child_fields.get(c.field), row, block.field), None if c.raw else fmt)}</td>"
                 for c in block.columns) + "</tr>")
         if block.subtotal:
             cells = []
             for c in block.columns:
                 if c.field in block.subtotal:
                     code = money.code(child_fields.get(c.field), members[0], block.field) if members else None
-                    total = _sum(members, c.field, child_fields.get(c.field)) + (f" {escape(code)}" if code else "")
+                    total = _sum(members, c.field, child_fields.get(c.field), None if c.raw else fmt) + (f" {escape(code)}" if code else "")
                     cells.append(f"<td class={c.align or 'right'}>{total}</td>")
                 else:
                     cells.append(f"<td class={c.align or 'left'}></td>")
@@ -658,6 +761,7 @@ def _stylesheet(page: PageSetup) -> str:
         "table.lines.compact th,table.lines.compact td{padding:0.6mm 1.5mm;font-size:9pt}"
         "tr.grp td{font-weight:bold;background:#f4f4f4}"
         "tr.sub td{font-weight:bold;border-top:0.3mm solid #888}"
+        "table.lines tr.em td{font-weight:bold;border-top:0.3mm solid #888}"
         "table.totaux{margin:5mm 0 0 auto;width:70mm;border-collapse:collapse}"
         "table.totaux td{padding:1mm 0}table.totaux tr.grand td{font-weight:bold;border-top:0.3mm solid #000}"
         ".left{text-align:left}.right{text-align:right}.center{text-align:center}td.r,th.r{text-align:right}"

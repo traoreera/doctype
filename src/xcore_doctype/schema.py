@@ -183,6 +183,11 @@ class FieldDef(BaseModel):
     # Link et DynamicLink seulement : l'état exigé du document visé. `not_cancelled` = « pas annulé » (brouillon ou soumis).
     # Sans cela, un lien ne regarde que l'existence : la cible soumise par erreur reste citée (D23).
     target_status: Literal["draft", "submitted", "cancelled", "not_cancelled"] | list[Literal["draft", "submitted", "cancelled"]] | None = None
+    # Link et DynamicLink seulement : `false` fait du lien une simple RÉFÉRENCE (« remplacé par », « voir aussi »), pas une dépendance.
+    # Il reste vérifié à l'écriture, cliquable, cherchable, réécrit par un renommage, et il protège toujours sa cible d'une SUPPRESSION
+    # (un lien ne pointe jamais dans le vide) ; mais un document soumis qui cite sa cible par lui n'en empêche plus l'ANNULATION
+    # (traoreera/doctype#70 : un barème qui cite son successeur ne doit pas rendre ce successeur inannulable).
+    blocks_cancel: bool = True
     # Link seulement (D29) : restreint les documents qu'on peut choisir, par des filtres sur la CIBLE — `{actif: true}` (une valeur
     # littérale) ou `{pays: "$pays"}` (la valeur d'un autre champ du même document, ou de la même ligne). Le Desk s'en sert pour
     # l'autocomplétion ET le serveur le vérifie à l'écriture (`link_filtered`) : c'est une contrainte, pas une aide d'interface.
@@ -278,6 +283,8 @@ class FieldDef(BaseModel):
             raise ValueError(f"{name}: un champ {ftype} n'a pas de valeur par défaut")
         if self.stars is not None and ftype != "Rating":
             raise ValueError(f"{name}: `stars` n'a de sens que pour un Rating")
+        if not self.blocks_cancel and ftype not in ("Link", "DynamicLink"):
+            raise ValueError(f"{name}: `blocks_cancel` n'a de sens que pour un Link ou un DynamicLink")
         if self.target_status is not None:
             if ftype not in ("Link", "DynamicLink"):
                 raise ValueError(f"{name}: `target_status` n'a de sens que pour un Link ou un DynamicLink")

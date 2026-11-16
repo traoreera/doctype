@@ -25,6 +25,15 @@
     {"tag": "img", "style": "left: 900mm", "ok": false, "kept": ""},
     {"tag": "img", "style": "width: 3000px", "ok": false, "kept": ""},
     {"tag": "span", "style": "color", "ok": false, "kept": ""},
-    {"tag": "span", "style": ";;", "ok": true, "kept": ""}
+    {"tag": "span", "style": ";;", "ok": true, "kept": ""},
+    {"tag": "td", "style": "height: 25mm", "ok": true, "kept": "height:25mm"},
+    {"tag": "th", "style": "height: 12mm; vertical-align: bottom", "ok": true, "kept": "height:12mm;vertical-align:bottom"},
+    {"tag": "td", "style": "height: 900mm", "ok": false, "kept": ""},
+    {"tag": "p", "style": "height: 25mm", "ok": false, "kept": ""},
+    {"tag": "table", "style": "page-break-inside: avoid", "ok": true, "kept": "page-break-inside:avoid"},
+    {"tag": "p", "style": "page-break-inside: AVOID", "ok": true, "kept": "page-break-inside:avoid"},
+    {"tag": "p", "style": "page-break-inside: auto", "ok": false, "kept": ""},
+    {"tag": "h1", "style": "page-break-inside: avoid", "ok": false, "kept": ""},
+    {"tag": "td", "style": "page-break-inside: avoid", "ok": false, "kept": ""}
   ]
 }

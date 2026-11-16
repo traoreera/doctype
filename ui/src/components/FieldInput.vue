@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import Checkbox from 'primevue/checkbox'
-import DatePicker from 'primevue/datepicker'
 import InputNumber from 'primevue/inputnumber'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
 import { computed, defineAsyncComponent, ref, watch } from 'vue'
+import DateInput from '@/components/DateInput.vue'
+import DatetimeInput from '@/components/DatetimeInput.vue'
 import FileField from '@/components/FileField.vue'
 import SecretField from '@/components/SecretField.vue'
 import LinkField from '@/components/LinkField.vue'
-import { dateFromUtc, utcFromDate } from '@/lib/datetime'
 import { allowedDocstatus } from '@/lib/docstatus'
 import { canonicalDecimal, normalizeDecimal } from '@/lib/decimal'
 import { formatDuration, parseDuration } from '@/lib/duration'
 import { normalizeTime } from '@/lib/fieldrules'
-import { currencySymbol, dateFromIso, datePattern, isoFromDate, optionLabel } from '@/lib/format'
+import { currencySymbol, optionLabel } from '@/lib/format'
 import { intlLocale, t } from '@/i18n'
 import type { FieldMeta } from '@/lib/types'
 
@@ -48,14 +48,9 @@ function settleDecimal(): void {
   const canon = canonicalDecimal(asText.value, decimals.value)
   if (canon !== null && canon !== asText.value) set(canon)
 }
-const asDate = computed(() => dateFromIso(typeof props.modelValue === 'string' ? props.modelValue : null))
 
 // Texte formaté : le bon clavier sur un téléphone (e-mail, numérique, adresse web) et la validation du navigateur en plus de la nôtre.
 const textType = computed(() => (props.field.format ? ({ email: 'email', phone: 'tel', url: 'url' } as const)[props.field.format] : 'text'))
-
-// Datetime : l'utilisateur lit et saisit l'heure LOCALE, la valeur envoyée est en UTC (lib/datetime.ts).
-const asDatetime = computed(() => dateFromUtc(typeof props.modelValue === 'string' ? props.modelValue : null))
-const setDatetime = (v: unknown) => set(v instanceof Date ? utcFromDate(new Date(new Date(v).setSeconds(0, 0))) : null)
 
 // Rating : des étoiles cliquables ; recliquer la note choisie l'efface. Flèches gauche et droite au clavier.
 const stars = computed(() => props.field.stars ?? 5)
@@ -230,35 +225,11 @@ const asColor = computed(() => (typeof props.modelValue === 'string' && /^#[0-9a
     <button v-if="asText" type="button" class="link-button" :aria-label="t.delete" data-testid="color-clear" @click="set(null)">✕</button>
   </div>
 
-  <DatePicker
-    v-else-if="field.fieldtype === 'Datetime'"
-    :input-id="inputId"
-    :model-value="asDatetime"
-    :invalid="invalid"
-    :date-format="datePattern()"
-    show-time
-    hour-format="24"
-    show-icon
-    icon-display="input"
-    show-button-bar
-    fluid
-    @update:model-value="setDatetime"
-  />
+  <DatetimeInput v-else-if="field.fieldtype === 'Datetime'" :input-id="inputId" :model-value="modelValue" :invalid="invalid" @update:model-value="set" />
 
   <Checkbox v-else-if="field.fieldtype === 'Boolean'" :input-id="inputId" :model-value="modelValue === true" binary :invalid="invalid" @update:model-value="set($event)" />
 
-  <DatePicker
-    v-else-if="field.fieldtype === 'Date'"
-    :input-id="inputId"
-    :model-value="asDate"
-    :invalid="invalid"
-    :date-format="datePattern()"
-    show-icon
-    icon-display="input"
-    show-button-bar
-    fluid
-    @update:model-value="set($event instanceof Date ? isoFromDate($event) : null)"
-  />
+  <DateInput v-else-if="field.fieldtype === 'Date'" :input-id="inputId" :model-value="modelValue" :invalid="invalid" @update:model-value="set" />
 
   <Select
     v-else-if="field.fieldtype === 'Select'"

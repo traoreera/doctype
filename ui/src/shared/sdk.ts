@@ -39,8 +39,15 @@ export function useDesk(): ExtensionContext {
   return ctx
 }
 
+/** Dans une page d'extension : la query de l'adresse, réactive, et de quoi l'écrire sans remonter la page (`const { query, setQuery } = useQuery()`). */
+export { useQuery } from '@/extensions/query'
+export type { QueryHandle } from '@/extensions/query'
+
 // Les composants du Desk qu'une extension peut réutiliser : rendu d'une valeur, saisie d'un champ, choix d'un document lié.
 export { default as CellValue } from '@/components/CellValue.vue'
+// Les champs de date des formulaires, seuls : valeur ISO (`AAAA-MM-JJ`, ou l'instant UTC), format et langue du Desk, `min` / `max`.
+export { default as DateInput } from '@/components/DateInput.vue'
+export { default as DatetimeInput } from '@/components/DatetimeInput.vue'
 export { default as FieldControl } from '@/components/FieldControl.vue'
 export { default as LinkField } from '@/components/LinkField.vue'
 export { describeError } from '@/composables/useNotify'

@@ -28,24 +28,25 @@ export const STYLES: Record<string, RegExp> = {
   height: new RegExp(`^(${LEN})$`),
   left: /^-?\d{1,3}(\.\d{1,2})?mm$/,
   top: /^-?\d{1,3}(\.\d{1,2})?mm$/,
+  'page-break-inside': /^avoid$/,
 }
 const TEXT = ['text-align', 'line-height', 'color', 'background-color', 'font-size']
 export const STYLE_ON: Record<string, string[]> = {
-  p: TEXT,
+  p: [...TEXT, 'page-break-inside'],
   h1: TEXT,
   h2: TEXT,
   h3: TEXT,
   li: ['text-align', 'line-height'],
   span: ['color', 'background-color', 'font-size', 'line-height'],
-  table: ['width', 'min-width'],
+  table: ['width', 'min-width', 'page-break-inside'],
   col: ['width', 'min-width'],
-  td: ['width', 'background-color', 'vertical-align', 'text-align'],
-  th: ['width', 'background-color', 'vertical-align', 'text-align'],
+  td: ['width', 'height', 'background-color', 'vertical-align', 'text-align'],
+  th: ['width', 'height', 'background-color', 'vertical-align', 'text-align'],
   img: ['width', 'height', 'left', 'top'],
 }
 
 function bounded(prop: string, value: string): boolean {
-  if (['text-align', 'vertical-align', 'color', 'background-color'].includes(prop)) return true
+  if (['text-align', 'vertical-align', 'color', 'background-color', 'page-break-inside'].includes(prop)) return true
   const n = parseFloat(value)
   if (prop === 'font-size') return n >= 6 && n <= 96
   if (prop === 'line-height') return n >= 0.5 && n <= 4
