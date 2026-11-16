@@ -11,7 +11,7 @@ import { buildCsv, exportValue } from '@/lib/csv'
 import { flushPromises, mountWith } from './views-fixtures'
 import { CUSTOMER } from './fixtures'
 
-const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: false, in_list_view: false, ...o })
+const f = (o: Partial<FieldMeta> & Pick<FieldMeta, 'fieldname' | 'fieldtype'>): FieldMeta => ({ required: false, hidden: true, in_list_view: false, ...o })
 
 describe('date-heure : stockée en UTC, lue à l’heure locale (le navigateur de test est à Auckland, UTC+13)', () => {
   it('aller-retour sans perte, à la seconde', () => {

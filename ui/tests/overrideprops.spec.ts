@@ -10,7 +10,7 @@ import { propRows, withProp } from '@/lib/overrideprops'
 import type { DocTypeMeta, FieldBase, FieldMeta, FormOverride } from '@/lib/types'
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
-  fieldname, label: fieldname.toUpperCase(), fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
+  fieldname, label: fieldname.toUpperCase(), fieldtype, required: false, hidden: true, in_list_view: false, ...extra,
 })
 
 // Ce que `/meta` envoie : l'habillage enregistré (`SAVED`) y est déjà appliqué (`prio` obligatoire par lui, `title` par le YAML).
@@ -182,13 +182,13 @@ describe('l’éditeur d’habillage en JSON (espaces de travail)', () => {
     expect(JSON.parse(String(w.findComponent(Textarea).props('modelValue')))).toEqual({ label: 'Stock' })
     w.findComponent(Textarea).vm.$emit('update:modelValue', '{ "label": ')
     await flushPromises()
-    ;(cell('override-save') as HTMLButtonElement).click()
+      ; (cell('override-save') as HTMLButtonElement).click()
     await flushPromises()
     expect(cell('override-parse-error')).not.toBeNull()
     expect(w.emitted('save')).toBeUndefined()
     w.findComponent(Textarea).vm.$emit('update:modelValue', '{ "label": "Magasin" }')
     await flushPromises()
-    ;(cell('override-save') as HTMLButtonElement).click()
+      ; (cell('override-save') as HTMLButtonElement).click()
     await flushPromises()
     expect(w.emitted('save')?.[0]?.[0]).toEqual({ label: 'Magasin' })
   })

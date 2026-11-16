@@ -65,7 +65,7 @@ const namingField = computed(() => {
 
 function display(name: string): { label: string; fieldtype: string; mandatory: boolean; readOnly: boolean; hidden: boolean; custom: boolean } {
   const a = addedOf(name)
-  if (a) return { label: a.label || a.fieldname, fieldtype: a.fieldtype, mandatory: !!a.required, readOnly: false, hidden: false, custom: true }
+  if (a) return { label: a.label || a.fieldname, fieldtype: a.fieldtype, mandatory: !!a.required, readOnly: false, hidden: true, custom: true }
   const r = rowOf(name)
   const tw = config.value.fields?.[name]
   return {

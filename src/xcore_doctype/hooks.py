@@ -35,6 +35,7 @@ from .schema import ACTION_HOOK_RE, TRUSTED_HOOK_RE
 HookName = Literal[
     "validate", "before_save", "after_save", "on_submit", "on_cancel",
     "before_insert", "after_insert", "on_trash", "after_delete", "before_cancel", "on_update_after_submit",
+    "after_submit", "after_cancel",
 ]
 
 # Codes qu'xcore renvoie quand l'APPEL échoue, par opposition à un refus voulu par le hook.
@@ -180,6 +181,10 @@ class HookEvent:
     - `on_update_after_submit` : un document SOUMIS dont un champ `allow_on_submit` vient d'être modifié ; dans la transaction, `old` est l'ancien contenu.
     - `on_trash` : dans la transaction, juste avant la suppression du document (`data` = ce qu'il contient, `tx` disponible) ; un refus l'empêche.
       `after_delete` : après le commit, `data` est ce que le document contenait.
+    - `after_submit` / `after_cancel` : APRÈS le commit de la transition, avec le document final. Ni `tx`, ni droit de refuser (une
+      erreur est journalisée, comme pour `after_save`) : l'état est déjà durable. C'est LÀ que se fait un effet EXTÉRIEUR — envoyer
+      un courriel, appeler une API, publier un webhook. Fait dans `on_submit`, le même effet ne pourrait plus être défait si une
+      écriture suivante échouait : le courriel serait parti et le document resterait brouillon.
     `old` vaut `None` à la création. `name` vaut `None` pendant `validate`, `before_save` et `before_insert` d'une CRÉATION dans une série de
     numérotation ou nommée par un champ (`naming: {field: …}`) : le nom est attribué en dernier, juste avant l'insertion (pour la série, afin de ne
     tenir le compteur que le temps du commit, naming.py). `after_save` et `after_insert` reçoivent toujours le nom définitif.
@@ -199,6 +204,9 @@ class HookEvent:
     _get: Callable[[str, str], Awaitable[dict[str, Any] | None]]
     tx: HookTransaction | None = None  # seulement pour `on_submit`, `on_cancel`, `before_cancel`, `on_update_after_submit` et `on_trash`
     reads: HookReadings | None = None  # `find` / `sum` : tous les hooks de la transaction ; `tx` les porte quand il est là
+    # `record` : seulement pour `after_submit` / `after_cancel`, qui n'ont plus de transaction mais doivent pouvoir dire ce qu'ils
+    # ont fait (l'état d'un envoi, sa date, sa raison d'échec).
+    _record: Callable[..., Awaitable[dict[str, Any]]] | None = None
 
     def __post_init__(self) -> None:
         if self.reads is None:
@@ -231,6 +239,23 @@ class HookEvent:
         champ. Même réserve que `find` sur la concurrence : la somme est juste au moment où elle est lue, et rien n'empêche une
         écriture parallèle de la périmer avant le commit."""
         return await self._readings().sum(doctype, field, filters)
+
+    async def record(self, **changes: Any) -> dict[str, Any]:
+        """Pose sur SON document ce que ce hook a fait : l'état d'un envoi, sa date, sa raison d'échec.
+
+        Réservé à `after_submit` / `after_cancel`. Un effet extérieur doit pouvoir dire s'il a réussi, sinon rien ne distingue
+        « envoyé » de « jamais tenté » — et après le commit, `doctype_writer` ne peut pas l'écrire : il a les droits d'un CLIENT,
+        donc un champ `read_only` comme un état lui est refusé. Cette porte écrit comme un hook, dans sa propre petite
+        transaction, et reste bornée aux champs `allow_on_submit` du document : le reste est figé par la soumission.
+        """
+        if self._record is None:
+            raise DoctypeError(
+                "not_after_transition",
+                f"{self.event} ne peut pas enregistrer de résultat : `record` n'existe que pour `after_submit` et "
+                "`after_cancel`, qui n'ont plus de transaction. Dans un hook qui en a une, écrivez par `event.tx`",
+                status=500,
+            )
+        return await self._record(**changes)
 
     def _readings(self) -> HookReadings:
         if self.reads is None:

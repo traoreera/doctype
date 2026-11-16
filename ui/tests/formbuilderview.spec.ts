@@ -13,7 +13,7 @@ import type { DocTypeMeta, FieldBase, FieldMeta, FormOverride } from '@/lib/type
 import FormBuilderView from '@/views/FormBuilderView.vue'
 
 const field = (fieldname: string, fieldtype: FieldMeta['fieldtype'], extra: Partial<FieldMeta> = {}): FieldMeta => ({
-  fieldname, label: fieldname.toUpperCase(), fieldtype, required: false, hidden: false, in_list_view: false, ...extra,
+  fieldname, label: fieldname.toUpperCase(), fieldtype, required: false, hidden: true, in_list_view: false, ...extra,
 })
 // Ce que `/meta` envoie : l'habillage enregistré y est déjà appliqué (`prio` obligatoire par lui, `title` par le YAML).
 const FIELDS: FieldMeta[] = [
@@ -53,7 +53,7 @@ async function open(opts: { rights?: DocTypeMeta['rights']; config?: FormOverrid
     doctypes: vi.fn(async () => []),
     formOverride: vi.fn(async () => ({ doctype: 'Ticket', config: opts.config ?? SAVED, definition: DEFINITION, labels: LABELS })),
     saveFormOverride: vi.fn(opts.save ?? (async (_d: string, c: FormOverride) => ({ doctype: 'Ticket', config: c }))),
-    removeFormOverride: vi.fn(async () => {}),
+    removeFormOverride: vi.fn(async () => { }),
   }
   const router = createRouter({
     history: createMemoryHistory(),
