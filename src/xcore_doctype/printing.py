@@ -39,6 +39,7 @@ MAX_PRINT_BLOCKS = 100
 MAX_PRINT_COLUMNS = 12
 MAX_PRINT_FIELDS = 60  # champs d'un bloc `fields`
 MAX_TEXT = 2000
+MIN_BAND_MARGIN = 8  # mm : la marge où un en-tête ou un pied de page tient
 
 # Ce qu'un bloc ne peut pas imprimer : un secret, un fichier, une table (elle a son bloc), une structure.
 UNPRINTABLE = ("Password", "JSON", "TextEditor", *FILE_TYPES)
@@ -189,6 +190,34 @@ class _Model(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+_BandText = Annotated[str, StringConstraints(min_length=1, max_length=200)]
+_PAGE_COUNTER = re.compile(r"\{(page|pages)\}")
+
+
+class PageBand(_Model):
+    """Ce qui se répète en haut ou en bas de CHAQUE page (traoreera/doctype#63) : trois zones, à gauche, au centre, à droite.
+
+    Du texte, avec la substitution des blocs de texte (`{{ name }}`, `{{ doctype }}`, `{{ doc.<champ> }}`) et deux compteurs que le
+    moteur de rendu remplit page par page : `{page}` et `{pages}` — « Page {page} / {pages} ». Une seule ligne : c'est une marge.
+    """
+
+    left: _BandText | None = None
+    center: _BandText | None = None
+    right: _BandText | None = None
+
+    @model_validator(mode="after")
+    def _some(self) -> "PageBand":
+        if self.left is None and self.center is None and self.right is None:
+            raise ValueError("au moins une zone (left, center ou right)")
+        for zone in ("left", "center", "right"):
+            if "\n" in (getattr(self, zone) or "") or "\r" in (getattr(self, zone) or ""):
+                raise ValueError(f"{zone}: une seule ligne (c'est une marge de page)")
+        return self
+
+    def zones(self) -> list[tuple[str, str]]:
+        return [(z, getattr(self, z)) for z in ("left", "center", "right") if getattr(self, z) is not None]
+
+
 class PageSetup(_Model):
     size: Literal["A3", "A4", "A5", "B4", "B5", "Letter", "Legal", "Ledger"] = "A4"
     orientation: Literal["portrait", "landscape"] = "portrait"
@@ -197,6 +226,20 @@ class PageSetup(_Model):
     bottom: Annotated[int, PydanticField(ge=0, le=100)] = 20
     left: Annotated[int, PydanticField(ge=0, le=100)] = 15
     right: Annotated[int, PydanticField(ge=0, le=100)] = 15
+    # En-tête et pied de page, imprimés DANS les marges haute et basse de chaque page (`PageBand`).
+    header: PageBand | None = None
+    footer: PageBand | None = None
+
+    @model_validator(mode="after")
+    def _room(self) -> "PageSetup":
+        # Une bande s'écrit dans la marge : sans marge, elle sortirait de la feuille ou recouvrirait le contenu.
+        for band, margin, name in ((self.header, self.top, "top"), (self.footer, self.bottom, "bottom")):
+            if band is not None and margin < MIN_BAND_MARGIN:
+                raise ValueError(f"{'header' if name == 'top' else 'footer'}: exige une marge `{name}` d'au moins {MIN_BAND_MARGIN} mm (elle s'imprime dedans)")
+        return self
+
+    def bands(self) -> list[tuple[str, PageBand]]:
+        return [(edge, band) for edge, band in (("top", self.header), ("bottom", self.footer)) if band is not None]
 
 
 class TitleBlock(_Model):
@@ -380,6 +423,14 @@ def template_fields_problems(template: PrintTemplate, definition: DocTypeDef, ch
         elif allow is not None and f.fieldtype not in allow:
             problems.append(f"{where}: {name!r} est un {f.fieldtype}, attendu : {', '.join(allow)}")
 
+    for edge, band in template.page.bands():
+        for zone, text in band.zones():
+            at = f"page.{'header' if edge == 'top' else 'footer'}.{zone}"
+            problems += [f"{at}: {p}" for p in template_problems(text, fields)]
+            for m in _TOKEN.finditer(text):
+                if m.group(1).strip() in _OUT_OF_PLACE:
+                    problems.append(f"{at}: {{{{ {m.group(1).strip()} }}}} n'existe pas sur un document imprimé "
+                                    f"(disponibles : {', '.join(PRINT_SPECIALS)} ou doc.<champ>)")
     if template.document is not None:
         for name in print_document.values_cited(template.document.root):
             check_field("content", name)
@@ -570,6 +621,7 @@ def render_html(
         + escape(f"{definition.label or definition.name} {name}")
         + "</title><style>"
         + _stylesheet(template.page)
+        + page_bands_css(template.page, values, _readable(data, fields, fmt))
         + (print_document.STYLESHEET if template.document is not None else "")
         + escape(css_extra, quote=False)
         + "</style></head><body>"
@@ -737,6 +789,37 @@ def _render_table(block: TableBlock, data: Mapping[str, Any], child: Any, titles
             out.append('<tr class="sub">' + "".join(cells) + "</tr>")
     label = f"<h2>{escape(block.label)}</h2>" if block.label else ""
     return f'{label}<table class="lines {block.style} {block.density}">{thead}<tbody>{"".join(out)}</tbody></table>'
+
+
+def _css_string(text: str) -> str:
+    """Un texte dans une chaîne CSS, TOUT caractère non alphanumérique écrit `\\HHHHHH` (six chiffres : aucun séparateur à ajouter,
+    donc aucune espace avalée après l'échappement). Ni guillemet, ni `<`, ni `&` ne sort tel quel : la chaîne ne peut ni se fermer,
+    ni fermer la balise <style>, ni être relue comme une entité — le nom d'une société « Durand & Fils » s'imprime tel quel."""
+    return '"' + "".join(c if c.isascii() and c.isalnum() else f"\\{ord(c):06x}" for c in text) + '"'
+
+
+def page_bands_css(page: PageSetup, values: Mapping[str, str], data: Mapping[str, Any]) -> str:
+    """Les boîtes de marge `@page` de l'en-tête et du pied de page. `{page}` / `{pages}` deviennent les compteurs du moteur de
+    rendu (`counter(page)`, `counter(pages)`) ; le reste passe par la substitution bornée des textes, puis par `_css_string`."""
+    out: list[str] = []
+    for edge, band in page.bands():
+        for zone, text in band.zones():
+            shown = render_text(text, values, data)
+            pieces: list[str] = []
+            at = 0
+            for m in _PAGE_COUNTER.finditer(shown):
+                if m.start() > at:
+                    pieces.append(_css_string(shown[at : m.start()]))
+                pieces.append(f"counter({m.group(1)})")
+                at = m.end()
+            if at < len(shown):
+                pieces.append(_css_string(shown[at:]))
+            if pieces:
+                # `no-contextual` ICI AUSSI : une boîte de marge n'hérite pas de `body`, et sans lui le tiret entre deux chiffres
+                # d'un numéro (« FA-2026-00001 ») sortait en glyphe sans correspondance Unicode — introuvable dans le PDF (mesuré).
+                out.append(f"@{edge}-{zone}{{content:{' '.join(pieces)};font-family:sans-serif;font-size:8pt;color:#555;"
+                           "font-variant-ligatures:no-contextual}")
+    return f"@page{{{''.join(out)}}}" if out else ""
 
 
 def _stylesheet(page: PageSetup) -> str:

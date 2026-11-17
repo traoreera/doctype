@@ -74,6 +74,30 @@ export interface Page {
   bottom: number
   left: number
   right: number
+  /** Ce qui se répète en haut / en bas de chaque page, dans la marge (`printing.PageBand`). */
+  header?: PageBand | null
+  footer?: PageBand | null
+}
+
+/** Trois zones d'une ligne ; `{page}` et `{pages}` sont remplis par le moteur de rendu. */
+export interface PageBand {
+  left?: string | null
+  center?: string | null
+  right?: string | null
+}
+
+export const BAND_ZONES = ['left', 'center', 'right'] as const
+/** La marge (mm) où une bande tient : le jumeau de `printing.MIN_BAND_MARGIN`. */
+export const MIN_BAND_MARGIN = 8
+
+/** Une bande après la saisie d'une zone : un texte vide retire la zone, une bande sans zone disparaît (le serveur la refuserait). */
+export function withBandZone(band: PageBand | null | undefined, zone: (typeof BAND_ZONES)[number], text: string): PageBand | null {
+  const next: PageBand = {}
+  for (const z of BAND_ZONES) {
+    const value = (z === zone ? text : (band?.[z] ?? '')).replace(/[\r\n]+/g, ' ').trim().slice(0, 200)
+    if (value) next[z] = value
+  }
+  return Object.keys(next).length ? next : null
 }
 
 export interface Draft {

@@ -164,6 +164,20 @@ class TestThePaginatedCss:
         assert len(trailing) == len(without)
         assert len(followed) == len(without) + 1 and "Conditions générales" in followed[-1]
 
+    def test_a_footer_and_a_header_print_on_every_page_with_its_number(self):
+        """Les boîtes de marge `@page` et leurs compteurs sont du moteur, pas de nous (traoreera/doctype#63) : à mesurer."""
+        text = pages(engine.to_pdf(invoice_html(lines=140, page={
+            "header": {"center": "Grand livre {{ name }}"},
+            "footer": {"left": "{{ doc.client }} — relevé d'un tiers", "right": "Page {page} / {pages}"},
+        })))
+        total = len(text)
+        assert total > 2, "il faut plusieurs pages pour que la question se pose"
+        for number, page_text in enumerate(text, start=1):
+            flat = " ".join(page_text.split())
+            assert f"Page {number} / {total}" in flat, flat[-200:]
+            assert "Société Durand & Fils — relevé d'un tiers" in flat  # ni « &amp; », ni espace avalée après un échappement
+            assert "Grand livre FA-2026-00001" in flat
+
     def test_the_subtotals_and_groups_are_there(self):
         text = "".join(pages(engine.to_pdf(invoice_html(lines=9))))
         assert text.count("Dépôt") >= 3  # trois groupes, dans l'ordre de saisie

@@ -513,3 +513,68 @@ class TestAFreeDocumentReservesRoomAndKeepsBlocksWhole:
     def test_anything_else_is_still_refused(self, content):
         with pytest.raises(InvalidDefinition):
             self.doc(content)
+
+
+# ── En-tête et pied de page, numéros de page (traoreera/doctype#63) ──────────────────────────────────────────────────────────────────
+
+
+def banded(**page):
+    return template(page=page)
+
+
+class TestHeaderAndFooterOnEveryPage:
+    def test_a_footer_becomes_page_margin_boxes_with_the_engines_counters(self):
+        out = html(banded(footer={"left": "{{ doc.client }} — {{ doctype }} {{ name }}", "right": "Page {page} / {pages}"}))
+        assert "@page{@bottom-left{content:" in out and "@bottom-right{content:" in out
+        right = out.split("@bottom-right{content:")[1].split(";")[0]
+        assert right == '"Page\\000020" counter(page) "\\000020\\00002f\\000020" counter(pages)'
+        left = out.split("@bottom-left{content:")[1].split(";")[0]
+        assert left.startswith('"Acme\\000020SA\\000020\\002014\\000020Facture\\000020FA') and "counter(" not in left
+
+    def test_a_header_goes_in_the_top_margin_and_zones_are_independent(self):
+        out = html(banded(header={"center": "Relevé d'un tiers"}))
+        assert "@top-center{content:" in out and "@top-left" not in out and "@bottom" not in out
+        # L'espace après un échappement n'est PAS avalée : chaque caractère a ses six chiffres, sans séparateur.
+        assert '"Relev\\0000e9\\000020d\\000027un\\000020tiers"' in out
+
+    def test_nothing_of_a_value_escapes_the_css_string_or_the_style_tag(self):
+        nasty = 'Durand & Fils "</style><script>alert(1)</script> \\ } @import url(x)'
+        out = html(banded(footer={"left": "{{ doc.client }}"}), {**DATA, "client": nasty})
+        box = out.split("@bottom-left{content:")[1].split(";font-family")[0]
+        assert box.count('"') == 2  # la chaîne s'ouvre et se ferme, rien ne la referme avant
+        assert not any(c in box[1:-1] for c in '<>&{}@();" ')
+        assert out.count("</style>") == 1 and "<script>alert" not in out
+
+    def test_numbers_and_dates_read_like_the_rest_of_the_document(self):
+        out = render_html(banded(footer={"left": "Du {{ doc.date_piece }}, total {{ doc.total }}"}), INVOICE, BIG, name="FA-1", children=CHILDREN, formats=FR)
+        left = out.split("@bottom-left{content:")[1].split(";")[0]
+        assert "27\\00002f10\\00002f2026" in left and "1\\0000a0234\\0000a0567\\00002c50" in left
+
+    def test_without_bands_the_stylesheet_is_what_it_was(self):
+        assert "@top-" not in html() and "@bottom-" not in html()
+
+    @pytest.mark.parametrize("page, why", [
+        ({"footer": {}}, "au moins une zone"),
+        ({"footer": {"left": "a\nb"}}, "une seule ligne"),
+        ({"footer": {"left": "x" * 201}}, "200"),
+        ({"footer": {"left": "Page {page}"}, "bottom": 5}, "marge `bottom` d'au moins 8 mm"),
+        ({"header": {"left": "x"}, "top": 0}, "marge `top`"),
+        ({"footer": {"middle": "x"}}, "middle"),
+    ])
+    def test_a_malformed_band_is_refused(self, page, why):
+        with pytest.raises(InvalidDefinition, match=why):
+            banded(**page)
+
+    @pytest.mark.parametrize("text, why", [
+        ("{{ doc.inconnu }}", "champ inconnu"),
+        ("{{ doc.mot_de_passe }}", "ne se cite pas"),
+        ("{{ actor }}", "n'existe pas sur un document imprimé"),
+    ])
+    def test_a_wrong_substitution_is_a_load_error(self, text, why):
+        problems = template_fields_problems(banded(footer={"right": text}), INVOICE, CHILDREN.get)
+        assert problems and all("page.footer.right" in p for p in problems) and any(why in p for p in problems)
+
+    def test_a_free_document_takes_bands_too(self):
+        tpl = parse_template({"schema_version": 1, "doctype": "Facture", "content": "<p>Grand livre</p>",
+                              "page": {"footer": {"right": "{page}/{pages}"}}})
+        assert '@bottom-right{content:counter(page) "\\00002f" counter(pages)' in render_html(tpl, INVOICE, DATA, name="GL")

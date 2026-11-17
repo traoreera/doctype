@@ -7,6 +7,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  withBandZone,
   DEFAULT_PAGE,
   MAX_COLUMNS,
   addColumn,
@@ -174,3 +175,18 @@ describe('régler le bloc au panneau', () => {
     expect(widths(setColumnWidth(d, table.key, amount!.key, 60))).toEqual([50, 20, 30])
   })
 })
+
+describe('en-tête et pied de page (`withBandZone`)', () => {
+  it('pose une zone, garde les autres, et une seule ligne de 200 caractères au plus', () => {
+    expect(withBandZone(null, 'right', ' Page {page} / {pages} ')).toEqual({ right: 'Page {page} / {pages}' })
+    expect(withBandZone({ left: 'Acme' }, 'right', 'Page {page}')).toEqual({ left: 'Acme', right: 'Page {page}' })
+    expect(withBandZone(null, 'left', 'a\nb')).toEqual({ left: 'a b' })
+    expect(withBandZone(null, 'left', 'x'.repeat(300))!.left).toHaveLength(200)
+  })
+
+  it('vider une zone la retire, et une bande sans zone disparaît (le serveur la refuserait)', () => {
+    expect(withBandZone({ left: 'Acme', right: 'Page {page}' }, 'left', '')).toEqual({ right: 'Page {page}' })
+    expect(withBandZone({ left: 'Acme' }, 'left', '   ')).toBeNull()
+  })
+})
+
