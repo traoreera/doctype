@@ -84,6 +84,10 @@ MODULES: tuple[Module, ...] = (
         "xmailler",
         "extensions/xmailler",
         excludes=(".gitignore",),
+        # Pièces jointes (traoreera/doctype#82) et réglages de la file de réessai que `main.py` lisait sans que `config.py` les
+        # déclare : `config.py`, `main.py` et `smtp.py` remplacent ceux de l'amont jusqu'à ce qu'il les reprenne
+        # (`tests/unit/test_mail_attachments.py` échoue dès que l'amont bouge sous cette adaptation).
+        overlay="adaptations/xmailler",
     ),
     Module(
         "xflow",
