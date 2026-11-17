@@ -20,7 +20,7 @@ from .extensions import Extension, merge, parse_extension, target_problem
 from .mapping import mappable_types, same_number_kind
 from .compute import compute_order, compute_problems, parse_compute
 from .printing import parse_template, template_fields_problems
-from .schema import LINK_FILTER_REF, PARENT_PREFIX, DocTypeDef, parse_definition
+from .schema import LINK_FILTER_REF, NAMING_FIELD_TYPES, PARENT_PREFIX, DocTypeDef, NamingTemplate, parse_definition
 from .translations import Translations
 from .workspaces import WorkspaceContribution, WorkspaceDef, parse_contribution, parse_workspace, with_contributions
 
@@ -630,6 +630,7 @@ class DocTypeRegistry:
         for name in (self.names() if only is None else sorted(only)):
             self._check_units(name, problems)
             self._check_currencies(name, problems)
+            self._check_naming_template(name, problems)
             self._check_compute(name, problems)
             self._check_fetch(name, problems)
             self._check_link_filters(name, problems)
@@ -820,6 +821,27 @@ class DocTypeRegistry:
                     problems.append(
                         f"{name}.{f.fieldname}: `target_status` peut viser {option!r}, qui n'est jamais soumettable : aucun document ne satisfera jamais cette contrainte"
                     )
+
+    def _check_naming_template(self, name: str, problems: list[str]) -> None:
+        """`naming: {template}` : un jeton `{lien.champ}` doit désigner un champ simple d'une cible STOCKÉE (le serveur la relit pour
+        composer le nom). Cible pas encore chargée : tolérée (pairs), le contrôle se refait à son arrivée."""
+        d = self._items[name].definition
+        if not isinstance(d.naming, NamingTemplate):
+            return
+        for first, rest in d.naming.tokens:
+            if rest is None:
+                continue
+            target = self._items.get(str(d.field_map[first].options))
+            if target is None:
+                continue
+            where = f"{name}: naming.template {{{first}.{rest}}}"
+            cited = target.definition.field_map.get(rest)
+            if target.definition.source is not None:
+                problems.append(f"{where} : {target.definition.name} est un DocType virtuel, le serveur ne peut pas y lire le nom")
+            elif cited is None:
+                problems.append(f"{where} : le DocType {target.definition.name!r} n'a pas de champ {rest!r}")
+            elif cited.fieldtype not in NAMING_FIELD_TYPES:
+                problems.append(f"{where} : {target.definition.name}.{rest} doit être de type {', '.join(NAMING_FIELD_TYPES)} (c'est un {cited.fieldtype})")
 
     def _check_units(self, name: str, problems: list[str]) -> None:
         """`unit_from` doit désigner un champ qui existe : `uom` (même document ou même ligne) ou `item.uom` (champ Link, puis champ de la cible)."""

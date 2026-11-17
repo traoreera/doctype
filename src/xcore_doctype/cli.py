@@ -329,6 +329,8 @@ def check(directories: Sequence[Path], owner: str | None, needs: Sequence[Path] 
                 kind = "nom = utilisateur"
             elif d.naming == "prompt":
                 kind = "nom saisi"
+            elif hasattr(d.naming, "template"):
+                kind = f"nom composé {d.naming.template}"
             elif not isinstance(d.naming, str):
                 kind = f"nom = champ {d.naming.field}"  # NamingField (la série a été traitée plus haut)
             else:

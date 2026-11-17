@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import date
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Callable, Literal
 
 from pydantic import (
     BaseModel,
@@ -749,6 +749,39 @@ class NamingField(BaseModel):
     field: _Fieldname
 
 
+_NAMING_TOKEN = re.compile(r"\{([a-z][a-z0-9_]{0,62})(?:\.([a-z][a-z0-9_]{0,62}))?\}")
+
+
+class NamingTemplate(BaseModel):
+    """`naming: {template: "{account_number} - {company.abbr}"}` : le nom est COMPOSÉ par le serveur (traoreera/doctype#69).
+
+    Du texte fixe et des jetons : `{champ}` (une valeur du document) ou `{lien.champ}` (un champ du document qu'un Link désigne, un
+    seul saut). Calculé à la création, une fois les hooks passés (ils voient `name is None`, comme pour une série) ; un jeton vide
+    refuse la création en nommant le champ, et un nom déjà pris la refuse aussi (409) : le nom est unique par construction. Les champs
+    cités ne changent plus ensuite, comme le champ de `naming: {field: …}` — le nom doit continuer de dire ce que le document contient.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    template: Annotated[str, StringConstraints(min_length=3, max_length=200)]
+
+    @model_validator(mode="after")
+    def _parse(self) -> "NamingTemplate":
+        if not self.tokens:
+            raise ValueError("naming.template: au moins un jeton `{champ}` ou `{lien.champ}` (un nom fixe nommerait UN seul document)")
+        if "{" in _NAMING_TOKEN.sub("", self.template) or "}" in _NAMING_TOKEN.sub("", self.template):
+            raise ValueError("naming.template: accolade hors d'un jeton `{champ}` ou `{lien.champ}` (minuscules, chiffres, `_`)")
+        return self
+
+    @property
+    def tokens(self) -> list[tuple[str, str | None]]:
+        """Les jetons, dans l'ordre : (champ du document, champ de la cible ou None)."""
+        return [(m.group(1), m.group(2)) for m in _NAMING_TOKEN.finditer(self.template)]
+
+    def render(self, value: Callable[[str, str | None], str]) -> str:
+        return _NAMING_TOKEN.sub(lambda m: value(m.group(1), m.group(2)), self.template)
+
+
 class NamingSeries(BaseModel):
     """`naming: {series: "FA-{YYYY}-{#####}"}` : les noms viennent d'un compteur par tenant (voir naming.py, D7)."""
 
@@ -849,7 +882,8 @@ class DocTypeDef(BaseModel):
     module: _Module | None = None
     # `hash` : identifiant aléatoire. `prompt` : l'utilisateur le choisit à la création. `{field: x}` : la valeur du champ `x`. `owner` : l'identifiant de celui qui crée (un document PAR utilisateur : son profil ; une seconde création est refusée,
     # 409). `{series: ...}` : numéro séquentiel par tenant, sans doublon ni trou (naming.py).
-    naming: Literal["hash", "owner", "prompt"] | NamingField | NamingSeries = "hash"
+    # `{template: "{numero} - {societe.abbr}"}` : composé par le serveur depuis des champs (`NamingTemplate`).
+    naming: Literal["hash", "owner", "prompt"] | NamingField | NamingSeries | NamingTemplate = "hash"
     # Renommer un document (`POST …/rename`) : son nom change et tous les Link qui le citent le suivent. Pas pour un nom qui n'est pas libre (`owner`, `field`, série).
     allow_rename: StrictBool = False
     # L'automate métier du document (process/programme.md §3.2) : des états, des transitions, et qui a le droit de les faire.
@@ -1045,9 +1079,19 @@ class DocTypeDef(BaseModel):
                 raise ValueError(f"naming.field: {naming.field!r} doit être `required: true`, sans `depends_on`, de type {', '.join(NAMING_FIELD_TYPES)}")
             if target.fetch_from is not None:
                 raise ValueError(f"naming.field: {naming.field!r} ne peut pas être rempli par `fetch_from` (le nom doit exister avant l'écriture)")
+        if isinstance(naming, NamingTemplate):
+            for first, rest in naming.tokens:
+                target = by_name.get(first)
+                if target is None:
+                    raise ValueError(f"naming.template: champ inconnu {first!r}")
+                if rest is not None and target.fieldtype != "Link":
+                    raise ValueError(f"naming.template: {{{first}.{rest}}} exige que {first!r} soit un Link (c'est un {target.fieldtype})")
+                if rest is None and target.fieldtype not in NAMING_FIELD_TYPES:
+                    raise ValueError(f"naming.template: {first!r} doit être de type {', '.join(NAMING_FIELD_TYPES)} (c'est un {target.fieldtype})")
         if self.allow_rename:
             bad = [k for k, v in {"istable": self.istable, "single": self.single, "source": self.source is not None,
-                                  "naming owner": naming == "owner", "naming series": isinstance(naming, NamingSeries), "naming field": isinstance(naming, NamingField)}.items() if v]
+                                  "naming owner": naming == "owner", "naming series": isinstance(naming, NamingSeries), "naming field": isinstance(naming, NamingField),
+                                  "naming template": isinstance(naming, NamingTemplate)}.items() if v]
             if bad:
                 raise ValueError(f"allow_rename: n'a pas de sens avec {', '.join(bad)} (le nom n'est pas libre)")
         return self
@@ -1358,6 +1402,15 @@ class DocTypeDef(BaseModel):
     @property
     def series(self) -> SeriesPattern | None:
         return SeriesPattern.parse(self.naming.series) if isinstance(self.naming, NamingSeries) else None
+
+    @property
+    def naming_fields(self) -> frozenset[str]:
+        """Les champs du document dont son NOM est tiré (`naming: {field}` ou `{template}`) : figés une fois le document créé."""
+        if isinstance(self.naming, NamingField):
+            return frozenset({self.naming.field})
+        if isinstance(self.naming, NamingTemplate):
+            return frozenset(first for first, _ in self.naming.tokens)
+        return frozenset()
 
     @property
     def field_map(self) -> dict[str, FieldDef]:

@@ -381,8 +381,7 @@ def _no_default(compiled: Any, f: FieldDef) -> str | None:
         return why
     if f.fieldtype in NO_DEFAULT_TYPES:
         return f"un champ {f.fieldtype} n'a pas de valeur par défaut"
-    naming = compiled.definition.naming
-    if f.unique or (isinstance(naming, NamingField) and naming.field == f.fieldname):
+    if f.unique or f.fieldname in compiled.definition.naming_fields:
         # Chaque création sans valeur recevrait la même : la seconde serait refusée (doublon, ou nom déjà pris).
         return "une valeur unique (ou qui nomme le document) ne se devine pas"
     return None

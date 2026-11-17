@@ -18,7 +18,7 @@ export interface DevField {
   [key: string]: unknown
 }
 
-export type Naming = 'hash' | 'owner' | 'prompt' | { series: string } | { field: string }
+export type Naming = 'hash' | 'owner' | 'prompt' | { series: string } | { field: string } | { template: string }
 
 /** Une définition de DocType (le schéma du serveur, `schema.DocTypeDef`) ; le reste des clés est gardé tel quel. */
 export interface DevDefinition {
