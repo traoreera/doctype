@@ -6,7 +6,8 @@ import SelectButton from 'primevue/selectbutton'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { t } from '@/i18n'
-import type { Letterhead, Page } from '@/lib/printedit'
+import InputText from 'primevue/inputtext'
+import { BAND_ZONES, MIN_BAND_MARGIN, withBandZone, type Letterhead, type Page } from '@/lib/printedit'
 
 /**
  * La PAGE, dans le panneau de droite quand rien n'est choisi : format, orientation, marges, et le FOND PDF PROPRE
@@ -45,6 +46,15 @@ const pagesChoices = [
   { value: 'all', label: t.printBuilder.pdfAll },
 ]
 const sides = ['top', 'right', 'bottom', 'left'] as const
+// En-tête et pied de page : dans la marge du haut / du bas, donc trop étroite elle est élargie avec la bande.
+const bands = [
+  { key: 'header', margin: 'top', label: t.printBuilder.header },
+  { key: 'footer', margin: 'bottom', label: t.printBuilder.footer },
+] as const
+function setBand(key: 'header' | 'footer', margin: 'top' | 'bottom', zone: (typeof BAND_ZONES)[number], text: string): void {
+  const band = withBandZone(props.page[key], zone, text)
+  emit('page', { [key]: band, ...(band && props.page[margin] < MIN_BAND_MARGIN ? { [margin]: MIN_BAND_MARGIN } : {}) })
+}
 const fileInput = ref<HTMLInputElement | null>(null)
 
 function picked(event: Event): void {
@@ -76,6 +86,23 @@ const setBackground = (patch: Partial<Letterhead>) => emit('letterhead', { ...(p
         <InputNumber :model-value="page[side]" :min="0" :max="100" :disabled="!editable" size="small" fluid :data-testid="`pb-margin-${side}`" @update:model-value="emit('page', { [side]: $event ?? 0 })" />
       </label>
     </fieldset>
+
+    <fieldset v-for="band in bands" :key="band.key" class="pp-band">
+      <legend>{{ band.label }}</legend>
+      <label v-for="zone in BAND_ZONES" :key="zone" class="pp-field">
+        <span>{{ t.printBuilder.bandZones[zone] }}</span>
+        <InputText
+          :model-value="page[band.key]?.[zone] ?? ''"
+          :disabled="!editable"
+          size="small"
+          fluid
+          maxlength="200"
+          :data-testid="`pb-${band.key}-${zone}`"
+          @change="setBand(band.key, band.margin, zone, ($event.target as HTMLInputElement).value)"
+        />
+      </label>
+    </fieldset>
+    <p class="pp-hint">{{ t.printBuilder.bandHint }}</p>
 
     <h2 class="pp-title">{{ t.printBuilder.background }}</h2>
     <p class="desk-muted pp-hint">{{ t.printBuilder.backgroundHint }}</p>
@@ -162,6 +189,22 @@ const setBackground = (patch: Partial<Letterhead>) => emit('letterhead', { ...(p
 }
 
 .pp-margins > legend {
+  font-size: 0.8rem;
+  color: var(--p-text-muted-color);
+  padding: 0;
+  margin-bottom: 0.25rem;
+}
+
+.pp-band {
+  display: grid;
+  gap: 0.4rem;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.pp-band > legend {
   font-size: 0.8rem;
   color: var(--p-text-muted-color);
   padding: 0;

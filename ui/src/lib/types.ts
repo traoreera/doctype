@@ -520,7 +520,7 @@ export interface DocTypeMeta {
   /** Fuseau de l'organisation : « aujourd'hui » (défaut `today` des dates) s'y lit, comme sur le serveur. */
   timezone?: string
   /** `"hash"` : un identifiant aléatoire (sans sens pour un humain) ; `{series}` : un numéro lisible (`FA-2026-00001`). */
-  naming?: 'hash' | 'owner' | 'prompt' | { series: string } | { field: string }
+  naming?: 'hash' | 'owner' | 'prompt' | { series: string } | { field: string } | { template: string }
   /** Le document se renomme (`POST …/rename`) : les documents qui le citent suivent. */
   allow_rename?: boolean
   /** Par nom de DocType enfant, pour les champs Table de ce DocType. */

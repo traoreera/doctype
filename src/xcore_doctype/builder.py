@@ -30,7 +30,7 @@ from . import fieldtypes
 from .decimals import canonical
 from .errors import ValidationFailed
 from .expr import Node, compile_expr, evaluate
-from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef, NamingField
+from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef
 from .sealing import kept
 from .tags import TAG_FILTER, TAG_OPS, normalize_tag
 
@@ -416,8 +416,7 @@ class CompiledDocType:
         return errors
 
     def _set_once(self, f: FieldDef) -> bool:
-        naming = self.definition.naming
-        return f.set_only_once or (isinstance(naming, NamingField) and naming.field == f.fieldname)
+        return f.set_only_once or f.fieldname in self.definition.naming_fields
 
     def _row_errors(self, clean: Mapping[str, Any]) -> list[dict[str, str]]:
         """Les conditions des champs de ligne, réévaluées côté serveur : une cellule rendue obligatoire par la nature du document

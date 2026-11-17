@@ -165,9 +165,9 @@ export function recordValues(meta: DocTypeMeta, rec: DocRecord): Values {
 export function duplicateValues(meta: DocTypeMeta, rec: DocRecord): Values {
   const source = recordValues(meta, rec)
   const out = newValues(meta)
-  const naming = namingField(meta)
+  const naming = namingFields(meta)
   const skip = (f: FieldMeta): boolean =>
-    !!f.no_copy || !!f.unique || !!f.fetch_from || !!f.compute || f.fieldtype === 'Password' || f.fieldtype === 'Image' || f.fieldtype === 'Attach' || f.fieldname === naming
+    !!f.no_copy || !!f.unique || !!f.fetch_from || !!f.compute || f.fieldtype === 'Password' || f.fieldtype === 'Image' || f.fieldtype === 'Attach' || naming.includes(f.fieldname)
   for (const f of meta.fields) {
     if (skip(f)) continue
     const child = childOf(meta, f)
@@ -259,16 +259,28 @@ export const fetchSource = (f: FieldMeta): string => f.fetch_from?.split('.')[1]
 export const namingField = (meta: DocTypeMeta): string | null => (typeof meta.naming === 'object' && 'field' in meta.naming ? meta.naming.field : null)
 
 /**
+ * TOUS les champs dont le nom du document est tiré : celui de `naming: {field}`, ou ceux que cite `naming: {template: "{a} - {b.c}"}`
+ * (le jeton `{b.c}` lit le document que le Link `b` désigne : c'est `b` qui est figé). Le jumeau de `DocTypeDef.naming_fields`.
+ */
+export function namingFields(meta: DocTypeMeta): string[] {
+  const naming = meta.naming
+  if (typeof naming !== 'object' || naming === null) return []
+  if ('field' in naming) return [naming.field]
+  if ('template' in naming) return [...new Set([...naming.template.matchAll(/\{([a-z][a-z0-9_]{0,62})(?:\.[a-z][a-z0-9_]{0,62})?\}/g)].map((m) => m[1]!))]
+  return []
+}
+
+/**
  * `status` : l'état du document (`docstatus`). Soumis, il est figé SAUF ses champs `allow_on_submit` ; le serveur le revérifie.
  * Un champ `fetch_from` n'est jamais saisi (le serveur l'écrase), un `set_only_once` se fige dès qu'il a une valeur ENREGISTRÉE.
  */
 export function fieldStates(meta: DocTypeMeta, values: Values, saved: Values | null, status: number = DRAFT): FieldStates {
   const out: FieldStates = {}
-  const naming = namingField(meta)
+  const naming = namingFields(meta)
   for (const f of meta.fields) {
     const conditionVisible = f.depends_on ? evaluate(f.depends_on, values) : true
     const mandatory = f.mandatory_depends_on ? evaluate(f.mandatory_depends_on, values) : false
-    const lockedOnce = saved !== null && (f.set_only_once === true || f.fieldname === naming) && !isEmpty(saved[f.fieldname])
+    const lockedOnce = saved !== null && (f.set_only_once === true || naming.includes(f.fieldname)) && !isEmpty(saved[f.fieldname])
     const frozenField = status === SUBMITTED && f.allow_on_submit !== true
     // Un document existant : le serveur évalue la lecture seule sur l'état d'AVANT. Un nouveau : l'interface suit les valeurs.
     // `compute` comme `fetch_from` : le serveur écrit la valeur, le champ se lit et ne se saisit pas.

@@ -72,7 +72,7 @@ from .permissions import ACTIONS, Action, Facts, Scope, require, scope_for, stor
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .mapping import already_done, map_document, nothing_left
-from .schema import DECIMAL_TYPES, FILE_TYPES, LINK_FILTER_REF, MAX_MAPPING_SOURCES, TODAY, DocTypeDef, FieldDef, NamingField
+from .schema import DECIMAL_TYPES, FILE_TYPES, LINK_FILTER_REF, MAX_MAPPING_SOURCES, TODAY, DocTypeDef, FieldDef, NamingField, NamingTemplate
 from .sealing import MASK, PREFIX as SEALED_PREFIX, Sealer
 from .sources import DocumentSource, DocumentSources
 from .overrides import (
@@ -1132,9 +1132,10 @@ class DocumentService:
         clean = finalize(self._with_today(compiled, self._with_defaults(compiled, data, rules)), rules=rules)
         series = None if name else compiled.definition.series
         by_field = naming if isinstance(naming, NamingField) and not name else None
+        by_template = naming if isinstance(naming, NamingTemplate) and not name else None
         # `hash` : le nom existe d'emblée. `owner` : l'identifiant de celui qui crée (un document par utilisateur ; le second est refusé, 409).
         # Série : il n'existe qu'à l'insertion (voir plus bas), les hooks reçoivent `None` ; un nom tiré d'un champ n'existe qu'une fois les hooks passés (ils peuvent le changer).
-        name = name or (ctx.owner_id if naming == "owner" else None if (series or by_field) else secrets.token_hex(6))
+        name = name or (ctx.owner_id if naming == "owner" else None if (series or by_field or by_template) else secrets.token_hex(6))
         clean = await self._action_phase(ctx, compiled, name, clean, None, finalize)
         async with self._query(ctx) as q:
             clean = await self._fetched(ctx, q, compiled, clean, None, finalize)
@@ -1143,6 +1144,9 @@ class DocumentService:
             if by_field is not None:
                 name = valid_name(str(clean[by_field.field]), by_field.field)
                 chosen = True
+            if by_template is not None:
+                name = await self._templated_name(q, compiled, by_template, clean, ctx)
+                chosen = True  # composé de valeurs que le client envoie : il se juge comme un nom choisi
             # Une permission utilisateur sur CE type vaut aussi pour le nom qu'on choisit : ni créer hors de ce qu'on voit, ni sonder par le
             # 409 d'un nom déjà pris quels documents cachés existent. Avant l'insertion, donc avant toute réponse « existe déjà ». Un nom
             # engendré (aléatoire, série, propriétaire) ne se choisit pas : il ne sonde rien.
@@ -1183,6 +1187,43 @@ class DocumentService:
             await self._record(q, ctx, compiled, doc, "restore" if restoring is not None else "create", None, doc.data)
         await self._after_save(ctx, compiled, doc, None)
         return self._present(doc)
+
+    async def _templated_name(
+        self, q: Query, compiled: CompiledDocType, naming: NamingTemplate, clean: Mapping[str, Any], ctx: RequestContext | None,
+    ) -> str:
+        """Le nom d'un DocType `naming: {template}` : ses jetons remplacés par les valeurs du document, ou du document qu'un Link désigne.
+
+        Un jeton vide refuse la création en nommant le champ (`naming_incomplete`) : un nom « 411 -  » ne nommerait rien. La cible
+        d'un saut se lit avec le périmètre de LECTURE de l'appelant (`ctx`), comme `fetch_from` : une cible qu'il ne lit pas est
+        « introuvable », exactement comme le contrôle des liens le dira. `ctx` absent : un hook (`tx.create`), périmètre système.
+        """
+        fields = compiled.definition.field_map
+        targets: dict[str, StoredDoc | None] = {}
+
+        def missing(field: str, msg: str) -> ValidationFailed:
+            return ValidationFailed(details=[{"field": field, "msg": msg, "type": "naming_incomplete"}])
+
+        parts: dict[tuple[str, str | None], str] = {}
+        for first, rest in naming.tokens:
+            value = clean.get(first)
+            if value is None or value == "":
+                raise missing(first, "Ce champ compose le nom du document : il est obligatoire")
+            if rest is None:
+                parts[(first, None)] = str(value)
+                continue
+            target_type = str(fields[first].options)
+            if first not in targets:
+                tscope = Scope.everything("read") if ctx is None else scope_for(self._registry.get(target_type).definition, ctx, "read")
+                targets[first] = await q.get(target_type, str(value), scope=tscope) if tscope.granted else None
+            target = targets[first]
+            if target is None:
+                raise ValidationFailed(details=[{"field": first, "msg": f"{self._registry.get(target_type).definition.label or target_type} introuvable : {value!r}", "type": "link_not_found"}])
+            cited = target.data.get(rest)
+            if cited is None or cited == "":
+                label = self._registry.get(target_type).definition.field_map[rest].label or rest
+                raise missing(first, f"Le nom du document reprend « {label} » de ce {self._registry.get(target_type).definition.label or target_type}, qui est vide")
+            parts[(first, rest)] = str(cited)
+        return valid_name(naming.render(lambda first, rest: parts[(first, rest)]), next(iter(naming.tokens))[0])
 
     async def update(
         self, ctx: RequestContext, doctype: str, name: str, data: Any, version: Any
@@ -3238,8 +3279,12 @@ class _Transaction(_Readings):
         series = compiled.definition.series
         owner_named = compiled.definition.naming == "owner"
         # Le nom que les hooks du type voient : celui qu'on impose, sinon aucun pour une série (il n'existe qu'à l'insertion), comme pour un client.
-        known = name or (self._ctx.owner_id if owner_named else None if series else secrets.token_hex(6))
+        naming = compiled.definition.naming
+        templated = naming if isinstance(naming, NamingTemplate) and not name else None
+        known = name or (self._ctx.owner_id if owner_named else None if (series or templated) else secrets.token_hex(6))
         clean = await self._prepare(compiled, self._svc._with_today(compiled, data), None, known)
+        if templated is not None:  # composé une fois les hooks du type passés, comme pour un client
+            known = await self._svc._templated_name(self._q, compiled, templated, clean, None)
         if known is None and series:
             now = self._svc._clock().astimezone(self._svc._timezone)
             known = series.render(now, await self._q.next_number(doctype, series.key(now)))

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError, type ApiErrorDetail } from '@/lib/api'
-import { duplicateValues, fieldStates, isDirty, isEmpty, isValidIsoDate, mapServerErrors, newValues, quickEntryFields, recordValues, resolveLinkFilters, toPayload, validate } from '@/lib/form'
+import { duplicateValues, fieldStates, isDirty, isEmpty, isValidIsoDate, mapServerErrors, namingFields, newValues, quickEntryFields, recordValues, resolveLinkFilters, toPayload, validate } from '@/lib/form'
 import type { DocRecord, DocTypeMeta } from '@/lib/types'
 import { CUSTOMER, STOCK_ENTRY } from './fixtures'
 
@@ -275,5 +275,39 @@ describe('un champ calculé (`compute:`) est écrit par le serveur', () => {
   it('n’est jamais proposé à la saisie rapide', () => {
     const fields = quickEntryFields(INVOICE)
     expect(fields?.map((f) => f.fieldname) ?? []).not.toContain('total')
+  })
+})
+
+describe('un nom composé par le serveur (`naming: {template}`)', () => {
+  const ACCOUNT: DocTypeMeta = {
+    name: 'Account', label: 'Compte', module: 'erp', timezone: 'UTC',
+    naming: { template: '{account_number} - {company.abbr}' },
+    fields: [
+      { fieldname: 'account_number', fieldtype: 'Int', required: false, hidden: false, in_list_view: true },
+      { fieldname: 'label', fieldtype: 'Text', required: false, hidden: false, in_list_view: true },
+      { fieldname: 'company', fieldtype: 'Link', options: 'Company', required: false, hidden: false, in_list_view: true },
+    ],
+    layout: [], list_columns: [], rights: { read: 'all', write: 'all', create: 'all', delete: 'all', submit: 'none', cancel: 'none' },
+  }
+
+  it('les champs cités sont ceux du document : le jeton `{lien.champ}` fige le lien', () => {
+    expect(namingFields(ACCOUNT)).toEqual(['account_number', 'company'])
+    expect(namingFields({ ...ACCOUNT, naming: { field: 'label' } })).toEqual(['label'])
+    expect(namingFields({ ...ACCOUNT, naming: 'hash' })).toEqual([])
+  })
+
+  it('ils se saisissent à la création, puis se figent ; les autres restent libres', () => {
+    const saved = { account_number: 401, label: 'Fournisseurs', company: 'ACME' }
+    const created = fieldStates(ACCOUNT, saved, null)
+    expect(created.account_number!.readOnly).toBe(false)
+    const existing = fieldStates(ACCOUNT, saved, saved)
+    expect([existing.account_number!.readOnly, existing.company!.readOnly, existing.label!.readOnly]).toEqual([true, true, false])
+  })
+
+  it('une copie ne reprend pas ce qui nomme l’original', () => {
+    const copy = duplicateValues(ACCOUNT, { name: '401 - ACME', data: { account_number: 401, label: 'Fournisseurs', company: 'ACME' } } as never)
+    expect(copy.label).toBe('Fournisseurs')
+    expect(copy.account_number).toBeNull()
+    expect(copy.company).toBeNull()
   })
 })
