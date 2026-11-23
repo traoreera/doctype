@@ -18,6 +18,7 @@ import {
   moveColumn,
   moveFieldInBlock,
   printableFields,
+  qrFields,
   rawBlock,
   removeColumn,
   setColumnWidth,
@@ -54,6 +55,19 @@ describe('aller et retour', () => {
     expect(d.blocks).toEqual([])
     expect(d.page).toEqual(DEFAULT_PAGE)
     expect(d.name).toBe('standard')
+  })
+
+  it('un QR garde son champ, sa taille et sa place, et rien d’autre', () => {
+    let d = fromTemplate({ blocks: [{ type: 'qr', field: 'note', size: 25, align: 'right' }] })
+    d = updateBlock(d, d.blocks[0]!.key, { text: 'perdu', style: 'plain', fields: ['total'] })
+    expect(rawBlock(d.blocks[0]!)).toEqual({ type: 'qr', field: 'note', size: 25, align: 'right' })
+  })
+
+  it('un QR propose les champs TEXTE, cachés compris, ceux qui disent « qr » d’abord', () => {
+    const meta = { ...INVOICE, fields: [...INVOICE.fields,
+      { ...INVOICE.fields[0]!, fieldname: 'note', label: 'Note', fieldtype: 'LongText' as const, options: undefined },
+      { ...INVOICE.fields[0]!, fieldname: 'mcf_qr', label: 'QR', fieldtype: 'LongText' as const, options: undefined, hidden: true }] }
+    expect(qrFields(meta).map((f) => f.fieldname)).toEqual(['mcf_qr', 'note'])
   })
 
   it('n’envoie pas les propriétés d’un autre genre de bloc', () => {

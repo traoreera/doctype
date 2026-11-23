@@ -588,6 +588,25 @@ defineExpose({ editor })
   border: 1px dashed var(--desk-paper-rule);
 }
 
+.pd-body :deep(.pd-qr-box) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1mm;
+  padding: 1mm;
+  box-sizing: border-box;
+  border: 1px dashed var(--desk-paper-rule);
+  color: var(--desk-paper-muted);
+  font-size: 7pt;
+  text-align: center;
+  overflow: hidden;
+}
+
+.pd-body :deep(.pd-qr-box .pi) {
+  font-size: 2.5em;
+}
+
 .pd-body :deep(.pd-break) {
   margin: 2mm 0;
   border-top: 2px dashed var(--desk-paper-rule);

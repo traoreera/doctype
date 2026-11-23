@@ -91,6 +91,13 @@ describe('les éléments neufs', () => {
     expect(b.columns).toEqual([{ field: 'article' }, { field: 'entrepot' }, { field: 'qty', align: 'right' }, { field: 'amount', align: 'right' }])
   })
 
+  it('un QR neuf vise le premier champ texte, à 30 mm, et se range dans le document comme un bloc incorporé', () => {
+    const meta = { ...INVOICE, fields: [...INVOICE.fields, { ...INVOICE.fields[0]!, fieldname: 'qr_dgi', label: 'QR', fieldtype: 'LongText' as const, options: undefined }] }
+    const b = newEmbedded('qr', meta)
+    expect(b).toEqual({ type: 'qr', field: 'qr_dgi', size: 30, align: 'left' })
+    expect(blocksToContent([b], meta)).toBe(`<div data-block="${JSON.stringify(b).replace(/"/g, '&quot;')}"></div>`)
+  })
+
   it('les totaux ne prennent que des nombres', () => {
     expect(newEmbedded('totals', INVOICE)).toEqual({ type: 'totals', fields: ['total'] })
   })

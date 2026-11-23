@@ -298,7 +298,7 @@ function valueDrag(e: DragEvent, token: string): void {
   e.dataTransfer.setData('text/html', tokenHtml(token, meta.value))
   e.dataTransfer.setData('text/plain', values.value.find((v) => v.token === token)?.label ?? token)
 }
-function insertBlock(type: 'table' | 'totals' | 'fields', tableField?: string): void {
+function insertBlock(type: 'table' | 'totals' | 'fields' | 'qr', tableField?: string): void {
   if (!meta.value) return
   insert({ type: 'embeddedBlock', attrs: { block: newEmbedded(type, meta.value, tableField) } })
 }
@@ -473,6 +473,7 @@ const embedded = computed<Block | null>(() => blockDraft.value?.blocks[0] ?? nul
         </button>
         <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-totals" @click="insertBlock('totals')"><i class="pi pi-calculator" aria-hidden="true" />{{ t.printDoc.totals }}</button>
         <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-fields" @click="insertBlock('fields')"><i class="pi pi-th-large" aria-hidden="true" />{{ t.printDoc.fieldsGrid }}</button>
+        <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-qr" @click="insertBlock('qr')"><i class="pi pi-qrcode" aria-hidden="true" />{{ t.printDoc.qr }}</button>
         <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-table" @click="insertTable"><i class="pi pi-objects-column" aria-hidden="true" />{{ t.printDoc.layoutTable }}</button>
         <button type="button" class="pb-item" :disabled="!editable" data-testid="pd-insert-break" @click="insertBreak"><i class="pi pi-minus" aria-hidden="true" />{{ t.printDoc.pageBreak }}</button>
         <h3 class="pb-group">{{ t.printDoc.values }}</h3>

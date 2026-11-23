@@ -10,7 +10,7 @@
  *   sur ce qui s'imprime aujourd'hui, pas sur une page blanche ;
  * - **la page** : ses dimensions en millimètres, pour dessiner la feuille à l'échelle et placer une image.
  */
-import { NUMERIC, UNPRINTABLE } from './printedit'
+import { NUMERIC, UNPRINTABLE, qrFields } from './printedit'
 import type { DocTypeMeta, FieldMeta } from './types'
 
 // ── Les styles permis (le jumeau de `print_document.STYLES` / `_STYLE_ON`) ──
@@ -143,7 +143,7 @@ export function blocksToContent(blocks: Record<string, unknown>[], meta: DocType
     else if (type === 'text') out.push(`<p>${textToHtml(String(b.text ?? ''), meta)}</p>`)
     else if (type === 'spacer') out.push('<p></p>')
     else if (type === 'page_break') out.push('<div data-page-break=""></div>')
-    else if (type === 'fields' || type === 'table' || type === 'totals') out.push(`<div data-block="${esc(JSON.stringify(b))}"></div>`)
+    else if (type === 'fields' || type === 'table' || type === 'totals' || type === 'qr') out.push(`<div data-block="${esc(JSON.stringify(b))}"></div>`)
   }
   return out.join('') || '<p></p>'
 }
@@ -152,7 +152,8 @@ export function blocksToContent(blocks: Record<string, unknown>[], meta: DocType
 const printable = (f: FieldMeta): boolean => f.fieldtype !== 'Table' && !UNPRINTABLE.includes(f.fieldtype as never) && !f.hidden
 const numeric = (f: FieldMeta): boolean => NUMERIC.includes(f.fieldtype as never)
 
-export function newEmbedded(type: 'table' | 'totals' | 'fields', meta: DocTypeMeta, tableField?: string): Record<string, unknown> {
+export function newEmbedded(type: 'table' | 'totals' | 'fields' | 'qr', meta: DocTypeMeta, tableField?: string): Record<string, unknown> {
+  if (type === 'qr') return { type, field: qrFields(meta)[0]?.fieldname, size: 30, align: 'left' }
   if (type === 'totals') return { type, fields: meta.fields.filter(numeric).slice(-3).map((f) => f.fieldname) }
   if (type === 'fields') return { type, columns: 2, fields: meta.fields.filter(printable).slice(0, 4).map((f) => f.fieldname) }
   const table = meta.fields.find((f) => f.fieldtype === 'Table' && (!tableField || f.fieldname === tableField))

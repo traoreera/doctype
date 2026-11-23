@@ -21,7 +21,9 @@ export const UNPRINTABLE = ['Password', 'JSON', 'TextEditor', 'Image', 'Attach']
 export const NUMERIC = ['Number', 'Int', 'Percent', 'Decimal', 'Currency'] as const
 export const GROUPABLE = ['Text', 'Select', 'Link', 'DynamicLink', 'Date', 'Boolean', 'Int'] as const
 
-export type BlockKind = 'title' | 'fields' | 'table' | 'totals' | 'text' | 'spacer' | 'page_break'
+export type BlockKind = 'title' | 'fields' | 'table' | 'totals' | 'text' | 'spacer' | 'page_break' | 'qr'
+/** Les champs dont la valeur devient un QR code (`printing.QR_TYPES`). */
+export const QR_TYPES = ['Text', 'LongText'] as const
 
 export interface Column {
   key: string
@@ -53,8 +55,10 @@ export interface Block {
   repeat_header?: boolean
   group_by?: string | null
   subtotal?: string[]
-  /** `spacer` : millimètres. */
+  /** `spacer` : millimètres ; `qr` : le côté du QR, en millimètres (15 à 80). */
   size?: number
+  /** `qr` : sa place sur la ligne. */
+  align?: 'left' | 'center' | 'right'
 }
 
 export interface Letterhead {
@@ -147,7 +151,7 @@ export function rawBlock(b: Block): Record<string, unknown> {
   const out: Record<string, unknown> = { ...rest }
   if (Array.isArray(b.columns)) out.columns = b.columns.map(({ key: _ck, ...c }) => prune(c as unknown as Record<string, unknown>))
   if (b.type !== 'table') {
-    delete out.field
+    if (b.type !== 'qr') delete out.field  // un QR imprime la valeur d'UN champ
     // `columns` d'un bloc `fields` est son NOMBRE de colonnes (1-4), qu'il faut envoyer : le retirer ici
     // rendait le réglage « Colonnes » sans effet à l'impression.
     if (b.type !== 'fields' || typeof b.columns !== 'number') delete out.columns
@@ -158,7 +162,8 @@ export function rawBlock(b: Block): Record<string, unknown> {
     delete out.subtotal
   }
   if (b.type !== 'fields' && b.type !== 'totals') delete out.fields
-  if (b.type !== 'spacer') delete out.size
+  if (b.type !== 'spacer' && b.type !== 'qr') delete out.size
+  if (b.type !== 'qr') delete out.align
   if (b.type !== 'title' && b.type !== 'text') delete out.text
   return prune(out)
 }
@@ -287,5 +292,15 @@ export const KIND_LABELS: Record<BlockKind, string> = {
   text: 'Texte',
   spacer: 'Espace',
   page_break: 'Saut de page',
+  qr: 'QR code',
 }
 
+
+/**
+ * Les champs qu'un QR peut imprimer : du TEXTE, y compris un champ CACHÉ — le contenu d'un QR est fait pour une machine (le QR
+ * qu'un boîtier fiscal renvoie), et c'est justement un champ qu'on ne montre pas sur la fiche. Ceux dont le nom dit « qr » d'abord.
+ */
+export function qrFields(meta: DocTypeMeta): FieldMeta[] {
+  const text = meta.fields.filter((f) => (QR_TYPES as readonly string[]).includes(f.fieldtype))
+  return [...text.filter((f) => /qr/i.test(f.fieldname)), ...text.filter((f) => !/qr/i.test(f.fieldname))]
+}
