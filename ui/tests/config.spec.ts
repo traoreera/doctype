@@ -91,6 +91,44 @@ describe('configuration', () => {
     expect(cfg.baseUrl).toBe('https://erp.exemple.fr/app/xcore-doctype')
   })
 
+  it('les capacités annoncées par l’hôte sont gardées (sinon un Desk embarqué démarrait sans rien)', async () => {
+    window.__DESK_CONFIG__ = {
+      baseUrl: 'https://erp.exemple.fr/app/xcore-doctype',
+      extensions: [{ name: 'sales', url: 'desk/ext/sales/index.js?v=abc' }],
+      developer: true,
+      realtime: true,
+      automations: true,
+    }
+    const cfg = await loadConfig(transport({ status: 500, json: null }), at('/'))
+    expect(cfg.extensions).toEqual([{ name: 'sales', url: 'https://erp.exemple.fr/app/xcore-doctype/desk/ext/sales/index.js?v=abc' }])
+    expect([cfg.developer, cfg.realtime, cfg.automations]).toEqual([true, true, true])
+  })
+
+  it('une capacité que l’hôte n’annonce pas exactement `true` reste fermée', async () => {
+    for (const value of ['true', 1, null, undefined]) {
+      window.__DESK_CONFIG__ = { baseUrl: '/p', realtime: value as never, developer: value as never, automations: value as never }
+      const cfg = await loadConfig(transport({ status: 500, json: null }), at('/'))
+      expect([cfg.developer, cfg.realtime, cfg.automations, cfg.extensions]).toEqual([false, false, false, []])
+    }
+  })
+
+  it('une extension de l’hôte servie ailleurs que par l’API annoncée est écartée', async () => {
+    window.__DESK_CONFIG__ = {
+      baseUrl: 'https://erp.exemple.fr/app/xcore-doctype',
+      extensions: [{ name: 'sales', url: 'desk/ext/sales/index.js' }, { name: 'evil', url: 'https://cdn.example.net/x.js' }],
+    }
+    const cfg = await loadConfig(transport({ status: 500, json: null }), at('/'))
+    expect(cfg.extensions?.map((e) => e.name)).toEqual(['sales'])
+  })
+
+  it('une adresse de page inutilisable ne casse pas le démarrage : aucune extension, le Desk ouvre quand même', async () => {
+    window.__DESK_CONFIG__ = { baseUrl: '/app/xcore-doctype', extensions: [{ name: 'sales', url: 'x.js' }], realtime: true }
+    const cfg = await loadConfig(transport({ status: 500, json: null }), { pathname: '/', href: '' })
+    expect(cfg.baseUrl).toBe('/app/xcore-doctype')
+    expect(cfg.extensions).toEqual([])
+    expect(cfg.realtime).toBe(true)
+  })
+
   it('refuse une réponse mal formée', async () => {
     const cfg = await loadConfig(transport({ status: 200, json: { api_base: 5 } }), at('/p/desk/'))
     expect(cfg.baseUrl).toBe('/p')

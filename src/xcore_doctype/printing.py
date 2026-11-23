@@ -607,7 +607,7 @@ def render_html(
 
     `children` : par champ Table, la définition du DocType de ses lignes (pour les libellés et les échelles).
     `css_extra` : ce qui passe APRÈS la feuille de style, donc ce qui gagne (les marges
-    réservées par un fond PDF, `reserved_margins_css`).
+    réservées par un fond PDF, `reserved_margins_css`). Écrit tel quel, à un refus près (`_checked_css`).
     """
     fields = definition.field_map
     values = {"doctype": definition.label or definition.name, "name": name}
@@ -640,7 +640,7 @@ def render_html(
         + _stylesheet(template.page)
         + page_bands_css(template.page, values, _readable(data, fields, fmt))
         + (print_document.STYLESHEET if template.document is not None else "")
-        + escape(css_extra, quote=False)
+        + _checked_css(css_extra)
         + "</style></head><body>"
         + "".join(body)
         + "</body></html>"
@@ -828,6 +828,25 @@ def _css_string(text: str) -> str:
     donc aucune espace avalée après l'échappement). Ni guillemet, ni `<`, ni `&` ne sort tel quel : la chaîne ne peut ni se fermer,
     ni fermer la balise <style>, ni être relue comme une entité — le nom d'une société « Durand & Fils » s'imprime tel quel."""
     return '"' + "".join(c if c.isascii() and c.isalnum() else f"\\{ord(c):06x}" for c in text) + '"'
+
+
+# La SEULE suite qui termine un élément de texte brut : voir `_checked_css`. Insensible à la casse, comme le tokenizer HTML.
+_CLOSES_STYLE = re.compile(r"</style", re.IGNORECASE)
+
+
+def _checked_css(css: str) -> str:
+    """Du CSS d'appelant (`render_html(css_extra=…)`), posé TEL QUEL dans le <style>.
+
+    Il était échappé en HTML, et c'était une faute : <style> est un élément de TEXTE BRUT, où les entités ne sont pas
+    relues. L'échappement ne protégeait donc de rien et cassait le CSS — « &amp; » imprimé pour le `&` d'un `content:`,
+    « &gt; » pour un sélecteur enfant, « &lt; » pour un `@media (width < 600px)`. C'est ce qui obligeait l'appelant à
+    échapper lui-même ses chaînes (traoreera/doctype#63, qui a réglé le cas des bandes de page avec `_css_string`).
+
+    Ce qui protège, c'est de refuser la seule suite capable de fermer la balise. Aucun CSS ne contient `</style` : on le
+    refuse au lieu de le nettoyer, comme le reste du moteur (`print_document` refuse un style, il ne le corrige pas)."""
+    if _CLOSES_STYLE.search(css):
+        raise ValueError("css_extra ne peut pas contenir `</style` : il fermerait la feuille de style")
+    return css
 
 
 def page_bands_css(page: PageSetup, values: Mapping[str, str], data: Mapping[str, Any]) -> str:

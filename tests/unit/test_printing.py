@@ -375,6 +375,33 @@ class TestTheReservedMargins:
         assert out.index("@page{size:") < out.index("@page{margin-top:65mm}")
 
 
+class TestCssExtraIsCssNotHtml:
+    """`css_extra` arrive dans un <style>, un élément de TEXTE BRUT : les entités n'y sont pas relues, donc l'échapper en HTML
+    ne protégeait de rien et cassait le CSS. Seule la suite qui fermerait la balise est refusée (`_checked_css`)."""
+
+    def css(self, extra: str) -> str:
+        out = render_html(template(), INVOICE, DATA, name="FA-1", children=CHILDREN, css_extra=extra)
+        return out[out.index("<style>") + len("<style>"):out.index("</style>")]
+
+    @pytest.mark.parametrize("extra", [
+        '@page{@bottom-left{content:"Durand & Fils"}}',  # le « & » d'une raison sociale : « &amp; » s'imprimait tel quel
+        ".doc > table{width:100%}",                      # un sélecteur enfant
+        "@media (width < 600px){p{font-size:9pt}}",       # une requête de média par intervalle
+        "div::after{content:'<'}",
+    ])
+    def test_the_css_arrives_verbatim(self, extra):
+        assert extra in self.css(extra)
+
+    def test_the_engines_own_reserved_margins_still_pass(self):
+        assert "@page{margin-top:65mm}" in self.css("@page{margin-top:65mm}")
+
+    @pytest.mark.parametrize("extra", ["p{}</style><script>x()</script>", "p{}</STYLE ", "p{}</style/"])
+    def test_what_would_close_the_stylesheet_is_refused(self, extra):
+        """Refusé, jamais nettoyé : c'est la faute de l'appelant, et un CSS n'a aucune raison de contenir `</style`."""
+        with pytest.raises(ValueError, match="style"):
+            self.css(extra)
+
+
 # ── Nombres et dates selon la langue (traoreera/doctype#62) ───────────────────────────────────────────────────────────────────────────
 
 NBSP = " "

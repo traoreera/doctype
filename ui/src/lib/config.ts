@@ -99,6 +99,20 @@ async function fromPlugin(transport: Transport, raw: string, baseUrl: string, hr
 }
 
 /**
+ * Les extensions déclarées par un hôte, relues sous l'origine de l'API qu'il annonce (absolue si l'hôte l'a donnée ainsi,
+ * sinon résolue contre la page) : en bureau, la page n'est pas sur une origine http et c'est l'API qui les sert, comme pour
+ * un Desk monté ailleurs (`fromPlugin`). Une adresse de page inutilisable ne doit pas empêcher le Desk de démarrer : aucune
+ * extension alors, comme un plugin injoignable.
+ */
+function hostExtensions(raw: unknown, baseUrl: string, href: string): { name: string; url: string }[] {
+  try {
+    return readExtensions(raw, new URL(`${baseUrl}/`, href).toString())
+  } catch {
+    return []
+  }
+}
+
+/**
  * Où est l'API ? Par ordre : l'hôte (application desktop) ; `config.json` servi à côté de l'application par le plugin, qui
  * connaît son préfixe ; à défaut, ce qu'on déduit de l'URL de la page. En développement (Vite), le plugin ne tourne pas à
  * côté : on retombe sur le chemin habituel, relayé par le proxy de Vite.
@@ -109,7 +123,19 @@ export async function loadConfig(
   opts: { dev?: boolean } = {},
 ): Promise<DeskConfig> {
   const host = typeof window !== 'undefined' ? window.__DESK_CONFIG__ : undefined
-  if (host?.baseUrl) return { baseUrl: trimSlash(host.baseUrl), loginUrl: host.loginUrl ?? null }
+  if (host?.baseUrl) {
+    // L'hôte annonce ses CAPACITÉS comme un `config.json` le fait : sans elles, un Desk embarqué démarrait sans extension,
+    // sans temps réel, sans automatisations et sans mode développeur, quoi que l'hôte ait déclaré.
+    const baseUrl = trimSlash(host.baseUrl)
+    return {
+      baseUrl,
+      loginUrl: host.loginUrl ?? null,
+      extensions: hostExtensions(host.extensions, baseUrl, where.href),
+      developer: host.developer === true,
+      realtime: host.realtime === true,
+      automations: host.automations === true,
+    }
+  }
 
   try {
     const res = await transport.request({ method: 'GET', url: new URL('config.json', where.href).toString(), headers: { Accept: 'application/json' } })
