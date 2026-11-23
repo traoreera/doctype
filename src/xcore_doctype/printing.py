@@ -28,7 +28,7 @@ from typing import Annotated, Any, Literal, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field as PydanticField, PrivateAttr, StringConstraints, TypeAdapter, ValidationError, model_validator
 
-from . import print_document
+from . import print_document, qrcodes
 from .decimals import canonical, to_decimal
 from .errors import InvalidDefinition
 from .notification_rules import SPECIALS, render as render_text, template_problems
@@ -316,11 +316,26 @@ class PageBreakBlock(_Model):
     type: Literal["page_break"]
 
 
-PrintBlock = TitleBlock | FieldsBlock | TableBlock | TotalsBlock | TextBlock | SpacerBlock | PageBreakBlock
+class QrBlock(_Model):
+    """Le QR code de la valeur d'un champ texte (`qrcodes.py`) : celui d'une facture certifiée, un lien de paiement, une référence.
+
+    Le contenu est la valeur du champ, telle quelle — jamais un texte composé dans le gabarit : un QR se LIT par une machine, et un
+    gabarit qui lui ajouterait un mot le rendrait faux. Un champ vide n'imprime rien (une facture pas encore certifiée)."""
+
+    type: Literal["qr"]
+    field: _Fieldname
+    size: Annotated[int, PydanticField(ge=15, le=80)] = 30  # millimètres de côté, zone calme comprise
+    align: Literal["left", "center", "right"] = "left"
+    label: Annotated[str, StringConstraints(max_length=140)] | None = None  # une légende sous le QR
+
+
+PrintBlock = TitleBlock | FieldsBlock | TableBlock | TotalsBlock | TextBlock | SpacerBlock | PageBreakBlock | QrBlock
+# Les champs dont la valeur peut devenir un QR : du texte.
+QR_TYPES = ("Text", "LongText")
 # Ce qu'un document libre peut INCORPORER : ce qui exige un calcul ou une répétition (le tableau des lignes et ses
 # sous-totaux, les totaux, une grille de champs). Le texte, lui, s'écrit directement dans le document.
 EMBEDDED_BLOCK: TypeAdapter[Any] = TypeAdapter(
-    Annotated[FieldsBlock | TableBlock | TotalsBlock, PydanticField(discriminator="type")]
+    Annotated[FieldsBlock | TableBlock | TotalsBlock | QrBlock, PydanticField(discriminator="type")]
 )
 
 
@@ -451,6 +466,8 @@ def template_fields_problems(template: PrintTemplate, definition: DocTypeDef, ch
                 check_field(at, name, allow=NUMERIC)
         elif isinstance(block, TableBlock):
             problems += _table_problems(at, block, definition, child_of)
+        elif isinstance(block, QrBlock):
+            check_field(at, block.field, allow=QR_TYPES)
     return problems
 
 
@@ -707,7 +724,22 @@ def _render_block(block: PrintBlock, definition: DocTypeDef, data: Mapping[str, 
         return _render_totals(block, data, fields, titles, money, fmt)
     if isinstance(block, TableBlock):
         return _render_table(block, data, children.get(block.field), titles, money, fmt)
+    if isinstance(block, QrBlock):
+        return _render_qr(block, data)
     return ""
+
+
+def _render_qr(block: QrBlock, data: Mapping[str, Any]) -> str:
+    value = data.get(block.field)
+    if not isinstance(value, str) or not value.strip():
+        return ""
+    try:
+        src = qrcodes.data_uri(value)
+    except ValueError:  # trop long pour un QR lisible : rien plutôt qu'une image fausse (la limite est dite dans `qrcodes`)
+        return ""
+    caption = f'<div class="qr-label">{escape(block.label)}</div>' if block.label else ""
+    return (f'<div class="qr" style="text-align:{block.align}"><img src="{src}" alt="QR" '
+            f'style="width:{block.size}mm;height:{block.size}mm">{caption}</div>')
 
 
 def _readable(data: Mapping[str, Any], fields: Mapping[str, Any], fmt: Formats | None) -> Mapping[str, Any]:
@@ -834,6 +866,7 @@ def _stylesheet(page: PageSetup) -> str:
         "h1{font-size:16pt;margin:0 0 5mm}h2{font-size:11pt;margin:5mm 0 2mm}"
         "p.t{margin:2mm 0;white-space:pre-wrap}"
         "span.k{font-size:8pt;color:#555}"
+        "div.qr{margin:2mm 0;break-inside:avoid}div.qr img{image-rendering:pixelated}div.qr-label{font-size:7pt;color:#555}"
         "table.fields{width:100%;border-collapse:collapse;margin-bottom:4mm}"
         "table.fields td{padding:1mm 2mm 1mm 0;vertical-align:top}"
         "table.lines{width:100%;border-collapse:collapse}"

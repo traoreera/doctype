@@ -334,8 +334,8 @@ def _embedded(raw: str, adapter: TypeAdapter[Any] | None, fault: Callable[[str],
     except ValueError:
         fault("bloc incorporé : data-block n'est pas du JSON")
         return None
-    if not isinstance(data, dict) or data.get("type") not in ("table", "totals", "fields"):
-        fault("bloc incorporé : seulement un tableau des lignes, des totaux ou une grille de champs")
+    if not isinstance(data, dict) or data.get("type") not in ("table", "totals", "fields", "qr"):
+        fault("bloc incorporé : seulement un tableau des lignes, des totaux, une grille de champs ou un QR code")
         return None
     if adapter is None:
         return data

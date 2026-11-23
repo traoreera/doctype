@@ -14,6 +14,7 @@ import {
   fieldColumns,
   groupableColumns,
   printableFields,
+  qrFields,
   tableColumns,
   totalFields,
   type Block,
@@ -49,6 +50,7 @@ const kind = computed(() => (props.block ? KIND_LABELS[props.block.type] : ''))
 const available = computed(() => (props.block?.type === 'totals' ? totalFields(props.meta) : printableFields(props.meta)))
 const chosen = computed(() => props.block?.fields ?? [])
 const tables = computed(() => props.meta.fields.filter((f) => f.fieldtype === 'Table'))
+const qrOptions = computed(() => qrFields(props.meta).map((f) => ({ value: f.fieldname, label: f.label || f.fieldname })))
 const columns = computed(() => columnFields(props.meta, props.block?.field))
 const groupable = computed(() => groupableColumns(props.meta, props.block?.field))
 const used = computed(() => new Set(props.block ? tableColumns(props.block).map((c) => c.field) : []))
@@ -238,8 +240,36 @@ const groupOptions = computed(() => [
         </fieldset>
       </template>
 
+      <!-- Le QR : quel champ, quelle taille, où. Son contenu est la valeur du champ, jamais un texte du gabarit. -->
+      <template v-if="block.type === 'qr'">
+        <label class="pb-field">
+          <span>{{ t.printBuilder.qrField }}</span>
+          <Select
+            :model-value="block.field"
+            :options="qrOptions"
+            option-label="label"
+            option-value="value"
+            :disabled="!editable"
+            size="small"
+            data-testid="pb-qr-field"
+            @update:model-value="emit('update', { field: $event })"
+          />
+          <small class="desk-muted">{{ t.printBuilder.qrHint }}</small>
+        </label>
+        <div class="pb-col-pair">
+          <label class="pb-field">
+            <span>{{ t.printBuilder.qrSize }}</span>
+            <InputNumber :model-value="block.size ?? 30" :min="15" :max="80" :disabled="!editable" size="small" fluid data-testid="pb-qr-size" @update:model-value="emit('update', { size: $event ?? 30 })" />
+          </label>
+          <label class="pb-field">
+            <span>{{ t.printBuilder.qrAlign }}</span>
+            <Select :model-value="block.align ?? 'left'" :options="alignOptions" option-label="label" option-value="value" :disabled="!editable" size="small" fluid data-testid="pb-qr-align" @update:model-value="emit('update', { align: $event })" />
+          </label>
+        </div>
+      </template>
+
       <label v-if="block.type !== 'spacer' && block.type !== 'page_break' && block.type !== 'title' && block.type !== 'text'" class="pb-field">
-        <span>{{ t.printBuilder.blockLabel }}</span>
+        <span>{{ block.type === 'qr' ? t.printBuilder.qrLabel : t.printBuilder.blockLabel }}</span>
         <InputText :model-value="block.label ?? ''" :disabled="!editable" maxlength="140" fluid data-testid="pb-label" @update:model-value="emit('update', { label: $event || null })" />
       </label>
 

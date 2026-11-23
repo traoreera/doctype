@@ -14,7 +14,7 @@ import { docContext } from './extensions'
  * le panneau de droite après l'avoir cliqué ; on le déplace en le glissant par sa poignée.
  */
 interface Column { field: string; label?: string | null; align?: string | null; width?: number | null }
-interface Block { type: 'table' | 'totals' | 'fields'; field?: string; fields?: string[]; columns?: Column[] | number; label?: string | null; style?: string; density?: string; group_by?: string | null; subtotal?: string[] }
+interface Block { type: 'table' | 'totals' | 'fields' | 'qr'; size?: number; align?: 'left' | 'center' | 'right'; field?: string; fields?: string[]; columns?: Column[] | number; label?: string | null; style?: string; density?: string; group_by?: string | null; subtotal?: string[] }
 
 const props = defineProps(nodeViewProps)
 const ctx = computed(() => docContext(props.editor))
@@ -82,6 +82,14 @@ const fields = computed(() => block.value.fields ?? [])
       </tbody>
     </table>
 
+    <!-- Le QR : un carré à sa taille et à sa place. Le Desk ne calcule pas de QR ; « Aperçu imprimé » montre le vrai, rendu par le serveur. -->
+    <div v-else-if="block.type === 'qr'" class="pd-qr" :style="{ textAlign: block.align ?? 'left' }" data-testid="pd-qr">
+      <span class="pd-qr-box" :style="{ width: `${block.size ?? 30}mm`, height: `${block.size ?? 30}mm` }">
+        <i class="pi pi-qrcode" aria-hidden="true" />
+        <small>{{ block.field ? t.printDoc.qrOf(labelOf(block.field)) : t.printDoc.noQrField }}</small>
+      </span>
+    </div>
+
     <table v-else class="fields">
       <tbody>
         <tr v-for="(r, i) in grid.rows" :key="i">
@@ -89,6 +97,6 @@ const fields = computed(() => block.value.fields ?? [])
         </tr>
       </tbody>
     </table>
-    <p v-if="block.type !== 'table' && !fields.length" class="pd-hint">{{ t.printDoc.noFields }}</p>
+    <p v-if="block.type !== 'table' && block.type !== 'qr' && !fields.length" class="pd-hint">{{ t.printDoc.noFields }}</p>
   </NodeViewWrapper>
 </template>

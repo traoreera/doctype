@@ -340,3 +340,19 @@ class TestAFreeDocumentPlacesItsImagesExactly:
         # Derrière un titre ET un paragraphe : leurs marges ne doivent rien changer à la position.
         x, y, w = self.placed(f"<h2>Titre</h2><p>Client {image}</p>", page)
         assert (x, y, w) == (135.0, 50.0, 40.0)  # 15 + 120, 20 + 30
+
+
+class TestAQrCodePrints:
+    def test_the_qr_reaches_the_pdf_as_an_image_of_its_modules(self):
+        """Le QR d'une facture certifiée : une image `data:` comme le logo, donc à l'abri du verrou réseau, et à la taille de
+        sa matrice (un module = `SCALE` pixels) — c'est l'XObject qui le prouve, pas le poids du PDF."""
+        from xcore_doctype import qrcodes
+
+        text = "BFSECEF01;DT02200401;FV;20261123120000;SECEF-0001;118000"
+        defn = parse_definition({"schema_version": 1, "name": "Facture", "module": "ventes",
+                                 "fields": [{"fieldname": "qr", "fieldtype": "LongText"}]})
+        tpl = parse_template({"schema_version": 1, "doctype": "Facture",
+                              "blocks": [{"type": "title", "text": "Facture {{ name }}"}, {"type": "qr", "field": "qr", "size": 30}]})
+        pdf = engine.to_pdf(render_html(tpl, defn, {"qr": text}, name="FA-1"))
+        side = len(qrcodes.matrix(text)) * qrcodes.SCALE
+        assert images(pdf) == [(side, side)]
