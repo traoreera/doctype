@@ -31,7 +31,7 @@ from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING, Any
 
 from .decimals import canonical
-from .errors import DoctypeError, ValidationFailed
+from .errors import DoctypeError, FieldNotWritable, ValidationFailed
 from .overrides import KIND_FORM
 from .schema import DECIMAL_TYPES, FILE_TYPES, FieldDef
 
@@ -268,6 +268,9 @@ async def import_csv(documents: "DocumentService", ctx: "RequestContext", doctyp
     view, _ = await documents._tenant_view(ctx, compiled)
     columns = map_columns(view.definition, header, mode, await _organisation_labels(documents, ctx, doctype))
     known = view.definition.field_map
+    # Droits par champ : une colonne que l'appelant ne peut pas écrire refuse l'import d'emblée, une fois (pas mille lignes en échec).
+    if reserved := sorted({c.fieldname for c in columns if isinstance(c, FieldDef)} & documents._access(ctx, compiled).locked):
+        raise FieldNotWritable(reserved)
     results: list[dict[str, Any]] = []
     deadline = _clock() + MAX_SECONDS
     for number, row in rows:

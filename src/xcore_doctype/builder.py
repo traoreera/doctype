@@ -29,7 +29,7 @@ from pydantic import (
 from . import fieldtypes
 from .decimals import canonical
 from .errors import ValidationFailed
-from .expr import Node, compile_expr, evaluate
+from .expr import ExprError, Node, compile_expr, evaluate, referenced_fields
 from .schema import DECIMAL_TYPES, MAX_TABLE_ROWS, PARENT_PREFIX, TODAY, DocTypeDef, FieldDef
 from .sealing import kept
 from .tags import TAG_FILTER, TAG_OPS, normalize_tag
@@ -349,8 +349,10 @@ class CompiledDocType:
         row_models = {name: build_model(child) for name, child in children.items()}
         parent_names = [PARENT_PREFIX + p.fieldname for p in defn.fields if p.fieldtype != "Table" and p.fieldtype not in DECIMAL_TYPES]
         row_conditions: dict[str, dict[str, dict[str, Node]]] = {}
+        by_name = defn.field_map
         for cname, child in children.items():
             row_names = [f.fieldname for f in child.fields] + parent_names
+            holders = [f for f in defn.fields if f.fieldtype == "Table" and str(f.options) == cname]
             per_field = {}
             for cf in child.fields:
                 mine = {
@@ -358,6 +360,17 @@ class CompiledDocType:
                     for kind in ("depends_on", "mandatory_depends_on")
                     if getattr(cf, kind) is not None
                 }
+                # Droits par champ : la condition d'une cellule qui lit le PARENT (`parent_x`) se voit dans la table. Si `x` est réservé
+                # en lecture, le champ Table doit l'être au moins autant (une ligne suit le droit de sa table), sinon elle le révèle.
+                for kind, tree in mine.items():
+                    for used in sorted(referenced_fields(tree)):
+                        source = by_name.get(used[len(PARENT_PREFIX):]) if used.startswith(PARENT_PREFIX) else None
+                        for holder in holders if source is not None else ():
+                            if not holder.covers(source):
+                                raise ExprError(
+                                    f"{cname}.{cf.fieldname}.{kind} lit {used!r}, réservé en lecture : la table {holder.fieldname!r} doit l'être "
+                                    f"au moins autant (`permissions.read` parmi : {', '.join(sorted(source.read_grants or []))})"
+                                )
                 if mine:
                     per_field[cf.fieldname] = mine
             if per_field:

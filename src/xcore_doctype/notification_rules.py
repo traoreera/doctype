@@ -65,6 +65,10 @@ RECIPIENT_FIELD_TYPES = ("Text", "Link", "Select")
 SPECIALS = ("doctype", "name", "event", "actor", "link")
 # Linéaire : aucun quantificateur qui se chevauche (un `\s*` de part et d'autre d'un groupe qui accepte aussi les blancs revenait en arrière en
 # O(n³) sur « {{ » suivi de blancs : une seule règle figeait la boucle d'événements de tout le processus). Le nom se nettoie ensuite (`strip`).
+# Droits par champ (traoreera/doctype#74) : une règle diffuse à des DESTINATAIRES dont le moteur ne connaît pas les grants. Un champ
+# réservé en lecture n'y entre donc par aucun bout (ni surveillé, ni dans la condition, ni cité dans le message, ni comme destinataire) :
+# refusé à l'enregistrement de la règle, et une règle que la définition a rendue fautive depuis est écartée à l'évaluation, comme les autres.
+RESERVED_FIELD = "Ce champ est réservé en lecture (droits par champ) : une règle de notification le diffuserait à qui ne le lit pas"
 _PLACEHOLDER = re.compile(r"\{\{([^{}]*)\}\}")
 _DOC_FIELD = re.compile(r"doc\.([a-z][a-z0-9_]*)")
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
@@ -165,6 +169,8 @@ def rule_problems(registry: Any, data: Mapping[str, Any], channels: ChannelRegis
             bad("value_field", "Champ inconnu dans ce type")
         elif fields[watched].fieldtype in ("Password", "Table"):
             bad("value_field", "Ce champ ne se surveille pas")
+        elif fields[watched].read_grants is not None:
+            bad("value_field", RESERVED_FIELD)
     condition = data.get("condition")
     if isinstance(condition, str) and condition.strip():
         try:
@@ -175,6 +181,8 @@ def rule_problems(registry: Any, data: Mapping[str, Any], channels: ChannelRegis
             opaque = sorted(n for n in used if fields[n].fieldtype in ("Table", "Password", "JSON", *DECIMAL_TYPES))
             if opaque:
                 bad("condition", f"{', '.join(opaque)} ne peut pas servir dans une condition (table, secret, JSON ou décimal)")
+            elif any(fields[n].read_grants is not None for n in used):
+                bad("condition", RESERVED_FIELD)
     plugin_channel = data.get("plugin_channel")
     if plugin_channel is not None and plugin_channel != "":
         if not isinstance(plugin_channel, str) or not CHANNEL_NAME_RE.fullmatch(plugin_channel):
@@ -188,6 +196,8 @@ def rule_problems(registry: Any, data: Mapping[str, Any], channels: ChannelRegis
     if isinstance(recipient, str) and recipient:
         if recipient not in fields or fields[recipient].fieldtype not in RECIPIENT_FIELD_TYPES:
             bad("recipient_field", "Il faut un champ texte ou lien de ce type (qui contient l'e-mail ou l'identifiant d'un membre)")
+        elif fields[recipient].read_grants is not None:
+            bad("recipient_field", RESERVED_FIELD)
     if not (data.get("notify_owner") or data.get("notify_assignees") or recipient or data.get("recipients")):
         bad("recipients", "Personne n'est prévenu : cochez l'auteur ou les personnes assignées, nommez un champ ou des membres")
     for key, limit in (("subject", MAX_SUBJECT), ("message", MAX_MESSAGE)):
@@ -197,6 +207,9 @@ def rule_problems(registry: Any, data: Mapping[str, Any], channels: ChannelRegis
         elif isinstance(text, str):
             for problem in template_problems(text, fields):
                 bad(key, problem)
+            # Ici et pas dans `template_problems`, que l'impression partage : un gabarit, lui, est rendu pour UN lecteur, avec ses droits.
+            if any(n in fields and fields[n].read_grants is not None for n in _DOC_FIELD.findall(text)):
+                bad(key, RESERVED_FIELD)
     return errors
 
 

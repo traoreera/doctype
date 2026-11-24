@@ -771,6 +771,12 @@ class DocTypeRegistry:
                 continue
             if (why := fetch_incompatible(f, source)) is not None:
                 problems.append(f"{where} : {why}")
+            elif not f.covers(source):
+                # Droits par champ : la copie est faite par le serveur, pour tous. Moins réservée que sa source, elle la publierait.
+                problems.append(
+                    f"{where} : {link.options}.{source_name} est réservé en lecture ; {f.fieldname!r} doit l'être au moins autant "
+                    f"(`permissions.read` parmi : {', '.join(sorted(source.read_grants or []))})"
+                )
 
     def _check_link_filters(self, name: str, problems: list[str]) -> None:
         """`link_filters` (D29) : les champs filtrés existent chez la CIBLE, s'y filtrent, et la valeur donnée leur convient.
@@ -791,6 +797,10 @@ class DocTypeRegistry:
                 filtered = target.definition.field_map.get(key)
                 if filtered is None and key not in SYSTEM_FILTERS:
                     problems.append(f"{where} : le DocType {f.options!r} n'a pas de champ {key!r}")
+                    continue
+                if filtered is not None and filtered.read_grants is not None:
+                    # Le contrôle à l'écriture (`link_filtered`) dirait à qui choisit le lien si la cible vérifie le filtre : une lecture du champ réservé.
+                    problems.append(f"{where} : {f.options}.{key} est réservé en lecture (`permissions.read`), un filtre de lien le révélerait")
                     continue
                 if isinstance(value, str) and value.startswith(LINK_FILTER_REF):
                     source = d.field_map[value[len(LINK_FILTER_REF):]]  # présence vérifiée par le schéma
@@ -842,6 +852,8 @@ class DocTypeRegistry:
                 problems.append(f"{where} : le DocType {target.definition.name!r} n'a pas de champ {rest!r}")
             elif cited.fieldtype not in NAMING_FIELD_TYPES:
                 problems.append(f"{where} : {target.definition.name}.{rest} doit être de type {', '.join(NAMING_FIELD_TYPES)} (c'est un {cited.fieldtype})")
+            elif cited.read_grants is not None:
+                problems.append(f"{where} : {target.definition.name}.{rest} est réservé en lecture (`permissions.read`), le nom du document le publierait")
 
     def _check_units(self, name: str, problems: list[str]) -> None:
         """`unit_from` doit désigner un champ qui existe : `uom` (même document ou même ligne) ou `item.uom` (champ Link, puis champ de la cible)."""

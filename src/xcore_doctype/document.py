@@ -55,6 +55,8 @@ from .errors import (
     AlreadyExists,
     DoctypeError,
     DocumentCited,
+    FieldNotReadable,
+    FieldNotWritable,
     DocumentInUse,
     DocumentLocked,
     DocumentValidationError,
@@ -68,7 +70,7 @@ from .errors import (
 from .hooks import ActionHooks, HookEvent, HookRegistry, HookSettings
 from .notification_rules import DocEvent
 from .files import ATTACHMENT_FIELD
-from .permissions import ACTIONS, Action, Facts, Scope, require, scope_for, stored_kind, within_restrictions
+from .permissions import ACTIONS, EVERY_FIELD, Action, Facts, FieldAccess, Scope, field_access, require, scope_for, stored_kind, within_restrictions
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .mapping import already_done, map_document, nothing_left
@@ -256,6 +258,8 @@ class DocumentService:
             if d is None:
                 return None
             out = b.model_dump(mode="json", exclude_none=True)
+            if _cites_hidden(out, field_access(d, ctx).hidden):
+                return None  # il mesure ou filtre sur un champ que l'appelant ne lit pas (droits par champ)
             if isinstance(b, QuickListBlock):
                 out.update(title_field=d.title_field, submittable=d.submittable, doctype_label=d.label or d.name)
             return out
@@ -457,6 +461,7 @@ class DocumentService:
         if dashboard and apply_dashboard_override(meta, dashboard, d.name):
             meta["views"]["dashboard_layer"] = dashboard_layer  # d'où vient ce tableau de bord : `user` (le sien) ou `org`
         meta["views"]["dashboard_shareable"] = rights["write"] != "none"  # il peut l'enregistrer pour toute l'organisation
+        _restrict_meta(meta, self._access(ctx, compiled))
         return meta
 
     # ── Lecture ───────────────────────────────────────────────
@@ -468,7 +473,7 @@ class DocumentService:
             found = await self._peek(ctx, compiled, None, name, scope, source)
             if found is None:
                 raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
-            return self._present(found)
+            return self._present(found, ctx)
         virtual = compiled.definition.single and name == doctype
         override = None
         async with self._query(ctx) as q:
@@ -476,10 +481,11 @@ class DocumentService:
             if doc is None and virtual:
                 override = await q.get_override(KIND_FORM, doctype)  # ses défauts sont aussi ceux de l'habillage de l'organisation
         if doc is None and virtual:
-            return self._virtual_single(compiled, form_rules(compiled, (override or {}).get("config")))  # jamais enregistré : ses défauts, version 0
+            made = self._virtual_single(compiled, form_rules(compiled, (override or {}).get("config")))  # jamais enregistré : ses défauts, version 0
+            return {**made, "data": self._access(ctx, compiled).readable(made["data"])}  # même un défaut : un champ caché n'a pas de clé
         if doc is None:
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     def _virtual_single(self, compiled: CompiledDocType, rules: FormRules = NO_RULES) -> dict[str, Any]:
         """Un document unique qu'on n'a pas encore enregistré : une page de réglages doit s'ouvrir, pleine de ses valeurs par défaut. `version: 0`
@@ -515,14 +521,17 @@ class DocumentService:
             raise ValidationFailed("offset doit être un entier positif ou nul")
         if order_by not in SYSTEM_SORTABLE and order_by not in compiled.definition.field_map:
             raise ValidationFailed(f"tri impossible sur {order_by!r}")
+        hidden = self._access(ctx, compiled).hidden
+        if order_by in hidden:
+            raise FieldNotReadable([order_by], "Tri")  # l'ORDRE d'une liste est une valeur : trier sur un champ caché le lirait
         tables = {f.fieldname for f in compiled.definition.fields if f.fieldtype == "Table"}
         if filters is None or isinstance(filters, Mapping):
             if order_by in tables:
                 raise ValidationFailed(f"tri impossible sur {order_by!r} : un champ Table n'a pas d'ordre")
-        coerced = aggregation.validate_filters(compiled, filters)
+        coerced = aggregation.validate_filters(compiled, filters, hidden=hidden)
         if (source := self._source(compiled)) is not None:
             chosen = memory.order(compiled.definition, memory.select(compiled.definition, memory.visible(await self._source_docs(ctx, compiled, source), scope), coerced), order_by, descending)
-            return {"items": [self._present(d) for d in memory.page(chosen, limit, offset)], "total": len(chosen), "limit": limit, "offset": offset}
+            return {"items": [self._present(d, ctx) for d in memory.page(chosen, limit, offset)], "total": len(chosen), "limit": limit, "offset": offset}
         async with self._query(ctx) as q:
             docs, total = await q.list(
                 compiled.definition,
@@ -533,7 +542,7 @@ class DocumentService:
                 offset=offset,
                 scope=scope,
             )
-        return {"items": [self._present(d) for d in docs], "total": total, "limit": limit, "offset": offset}
+        return {"items": [self._present(d, ctx) for d in docs], "total": total, "limit": limit, "offset": offset}
 
     async def aggregate(
         self,
@@ -555,10 +564,11 @@ class DocumentService:
         self._enter(ctx, "doc.aggregate", doctype)
         compiled = self._doctype(doctype)
         scope = self._scope(ctx, compiled, "read")
+        hidden = self._access(ctx, compiled).hidden
         spec = aggregation.resolve(
-            compiled.definition, group_by=group_by, bucket=bucket, metrics=metrics, periods=periods, limit=limit
+            compiled.definition, group_by=group_by, bucket=bucket, metrics=metrics, periods=periods, limit=limit, hidden=hidden
         )
-        coerced = aggregation.validate_filters(compiled, filters)
+        coerced = aggregation.validate_filters(compiled, filters, hidden=hidden)
         keys = aggregation.window(spec, now=self._clock(), tz=self._timezone)
         if (source := self._source(compiled)) is not None:
             chosen = memory.select(compiled.definition, memory.visible(await self._source_docs(ctx, compiled, source), scope), coerced)
@@ -585,7 +595,7 @@ class DocumentService:
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_SEARCH:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_SEARCH}")
         states = _search_states(docstatus)
-        coerced = aggregation.validate_filters(compiled, filters)
+        coerced = aggregation.validate_filters(compiled, filters, hidden=self._access(ctx, compiled).hidden)
         if (source := self._source(compiled)) is not None:
             visible = memory.visible(await self._source_docs(ctx, compiled, source), scope)
             chosen = memory.select(compiled.definition, visible, coerced)
@@ -674,7 +684,10 @@ class DocumentService:
         for ref in self._registry.referrers(doctype):
             if ref.doctype not in scopes:
                 scopes[ref.doctype] = scope_for(self._registry.get(ref.doctype).definition, ctx, "read")
-            if scopes[ref.doctype].granted:
+            # Un champ de lien que l'appelant ne lit pas ne se COMPTE pas non plus : « 3 fiches citent ce responsable » dirait ce que le champ cache.
+            # (Dans une ligne, c'est le champ Table qui porte le droit ; un DynamicLink dépend aussi du champ qui dit son type.)
+            unread = self._access(ctx, self._registry.get(ref.doctype)).hidden
+            if scopes[ref.doctype].granted and (ref.table or ref.fieldname) not in unread and (ref.table or ref.type_field) not in unread:
                 usable.append(ref)
         async with self._query(ctx) as q:
             if await self._peek(ctx, compiled, q, name, read) is None:
@@ -723,6 +736,10 @@ class DocumentService:
                 if gone is None or not read.allows(gone["owner"], snapshot(gone["changes"]), name=name, facts=await q.permission_facts(read, name)):
                     raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
             items, total = await q.versions(doctype, name, limit=limit, offset=offset, deleted=deleted)
+        if hidden := self._access(ctx, compiled).hidden:
+            # L'historique garde les anciennes ET les nouvelles valeurs : celles d'un champ que l'appelant ne lit pas n'en sortent pas plus
+            # que du document. L'entrée reste (qui, quand, quelle action) ; une modification qui ne touchait QUE ces champs se montre vide.
+            items = [{**item, "changes": {k: v for k, v in item["changes"].items() if k not in hidden}} for item in items]
         return {"items": items, "total": total, "limit": limit, "offset": offset}
 
     # ── Vues sauvegardées (phase C) ───────────────────────────
@@ -749,7 +766,7 @@ class DocumentService:
             raise ValidationFailed(f"vue {kind!r} indisponible pour {doctype!r}")
         if not isinstance(is_default, bool):
             raise ValidationFailed("is_default doit être un booléen")
-        cleaned = _view_config(compiled, config)
+        cleaned = _view_config(compiled, config, self._access(ctx, compiled).hidden)
         async with self._query(ctx) as q:
             if previous is not None and previous != name:
                 await q.delete_saved_view(doctype, _view_name(previous), ctx.owner_id)  # renommage : l'ancien nom disparaît
@@ -813,13 +830,14 @@ class DocumentService:
         self._scope(ctx, compiled, "read")
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
+        hidden = self._access(ctx, compiled).hidden
         return {
             "doctype": doctype,
             "config": (found or {}).get("config", {}),
-            "definition": form_base(compiled),
+            "definition": {name: base for name, base in form_base(compiled).items() if name not in hidden},
             # Le libellé de chaque champ selon l'APPLICATION : le Form Builder le montre à côté de celui que l'organisation a pu donner (`/meta`
-            # ne sert plus que le second), et le rend quand on vide la retouche.
-            "labels": {f.fieldname: f.label or f.fieldname for f in compiled.definition.fields},
+            # ne sert plus que le second), et le rend quand on vide la retouche. Comme `/meta` : sans les champs que l'appelant ne lit pas.
+            "labels": {f.fieldname: f.label or f.fieldname for f in compiled.definition.fields if f.fieldname not in hidden},
         }
 
     async def save_form_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
@@ -844,6 +862,10 @@ class DocumentService:
         async with self._query(ctx) as q:
             found = await q.get_override(KIND_FORM, doctype)
             self._check_rule_author(write, compiled, (found or {}).get("config"), cleaned, restricted=await q.restricted(write))
+            # Poser un défaut, une obligation ou un verrou sur un champ, c'est en décider la valeur pour tous : pas sur un champ réservé
+            # que l'auteur ne peut pas écrire lui-même (droits par champ).
+            if reserved := sorted(self._access(ctx, compiled).locked & set(changed_rules(compiled, (found or {}).get("config"), cleaned))):
+                raise FieldNotWritable(reserved)
             made = await q.put_override(KIND_FORM, doctype, owner=ctx.owner_id, config=cleaned)
         return {"doctype": doctype, "config": made["config"]}
 
@@ -1119,6 +1141,10 @@ class DocumentService:
             name = self._requested_name(compiled, requested)
         facts = await self._facts(ctx, scope, None)
         finalize = self._finalizer(compiled, scope, ctx.owner_id, facts)
+        # Droits par champ : la SAISIE d'un client. Un amendement et une restauration recopient ce qui était enregistré (le serveur
+        # copie, personne ne saisit) : les champs réservés y reviennent tels quels, sans que l'appelant les ait vus.
+        access = EVERY_FIELD if amended_from is not None or restoring is not None else self._access(ctx, compiled)
+        data = self._guard_fields(access, compiled, data, None)
         chosen = name is not None and amended_from is None  # un nom que le CLIENT choisit (`naming: prompt`) ; un nom tiré d'un champ l'est aussi
         if restoring is not None:
             # Une restauration recopie ce qui était enregistré : ses liens ne se rejugent pas sur l'état de leur cible (comme un
@@ -1130,6 +1156,8 @@ class DocumentService:
             # l'exigent). L'exiger ici rendrait l'amendement impossible, la copie se faisant sans saisie. Ses défauts, eux, s'appliquent.
             rules = replace(rules, mandatory=frozenset())
         clean = finalize(self._with_today(compiled, self._with_defaults(compiled, data, rules)), rules=rules)
+        if access.read_only:
+            self._check_field_writes(access, compiled, clean, self._server_defaults(access, compiled, data, rules), sent=data)
         series = None if name else compiled.definition.series
         by_field = naming if isinstance(naming, NamingField) and not name else None
         by_template = naming if isinstance(naming, NamingTemplate) and not name else None
@@ -1186,7 +1214,7 @@ class DocumentService:
             await self._sync_unique(q, compiled, doc)
             await self._record(q, ctx, compiled, doc, "restore" if restoring is not None else "create", None, doc.data)
         await self._after_save(ctx, compiled, doc, None)
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     async def _templated_name(
         self, q: Query, compiled: CompiledDocType, naming: NamingTemplate, clean: Mapping[str, Any], ctx: RequestContext | None,
@@ -1261,7 +1289,9 @@ class DocumentService:
             # Soumis, seuls ses champs `allow_on_submit` se changent encore : l'obligation de l'habillage ne vaut que pour eux. Un champ figé
             # qu'on a rendu obligatoire après la soumission ne se remplira plus, le document resterait sinon immodifiable.
             rules = replace(rules, mandatory=rules.mandatory & frozenset(compiled.definition.editable_after_submit))
-        clean = finalize(data, old=current.data, rules=rules)
+        access = self._access(ctx, compiled)
+        clean = finalize(self._guard_fields(access, compiled, data, current.data), old=current.data, rules=rules)
+        self._check_field_writes(access, compiled, clean, current.data)
         if after_submit:
             self._check_frozen(compiled, clean, current.data)
         clean = await self._action_phase(ctx, compiled, name, clean, current.data, finalize)
@@ -1286,7 +1316,7 @@ class DocumentService:
         await self._after_save(ctx, compiled, doc, current.data)
         await self._settle(ctx, written)
         await self._release_files(ctx, compiled, current.data, doc.data)  # un fichier remplacé ou retiré n'a plus de raison d'exister
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     async def delete(self, ctx: RequestContext, doctype: str, name: str) -> None:
         self._enter(ctx, "doc.delete", doctype, name)
@@ -1365,7 +1395,9 @@ class DocumentService:
         read = replace(self._scope(ctx, compiled, "read"), share=False)  # les partages sont partis avec le document
         async with self._query(ctx) as q:
             rows, total = await q.trash_page(doctype, scope=read, offset=offset, limit=limit)
-        return {"items": [self._trash_item(compiled, r) for r in rows], "total": total, "offset": offset, "limit": limit}
+        access = self._access(ctx, compiled)  # la corbeille montre le document tel qu'il était : sans ce qu'il n'aurait pas lu
+        items = [self._trash_item(compiled, r) for r in rows]
+        return {"items": [{**i, "data": access.readable(i["data"])} for i in items], "total": total, "offset": offset, "limit": limit}
 
     async def _trashed(self, ctx: RequestContext, q: Query, compiled: CompiledDocType, trash_id: Any, *, lock: bool = False) -> dict[str, Any]:
         if not isinstance(trash_id, str) or not trash_id:
@@ -1456,6 +1488,8 @@ class DocumentService:
         patch: dict[str, Any] = {}
         if action == "update":
             patch = self._bulk_patch(compiled, data, await self._form_rules(ctx, compiled))
+            if reserved := sorted(self._access(ctx, compiled).locked & set(patch)):
+                raise FieldNotWritable(reserved)  # une fois, d'emblée : pas cent refus identiques, un par document
         results = []
         for name in dict.fromkeys(names):
             try:
@@ -1541,7 +1575,7 @@ class DocumentService:
         )
         self._dispatch(relinked)  # les documents qui le citaient ont changé de valeur (le renommé lui-même : un changement de nom, pas une modification)
         await self.realtime.doc_changed(ctx.tenant_id, {e.doctype for e in relinked})
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     # ── Soumission (documents soumettables) ───────────────────
     async def submit(self, ctx: RequestContext, doctype: str, name: str, version: Any) -> dict[str, Any]:
@@ -1665,7 +1699,7 @@ class DocumentService:
                 entry = {"doctype": target.definition.name, "label": m.label or target.definition.label or target.definition.name}
                 if any(lines.quantity is not None for lines in m.lines.values()):
                     values = map_document(
-                        target.definition, source.definition, m, doc.data, source_name=name,
+                        target.definition, source.definition, m, self._access(ctx, source).readable(doc.data), source_name=name,
                         children=self._mapping_children(target, source, m),
                         done=await self._mapping_done(q, target, m, name),
                     )
@@ -1696,8 +1730,9 @@ class DocumentService:
                     f"{source_doctype} {name!r} est {STATUS_WORDS[doc.docstatus]} : il faut qu'il soit "
                     f"{'soumis' if m.source_status == 'submitted' else 'brouillon'} pour en créer un {target_doctype}"
                 )
+            # Recopier, c'est MONTRER : un champ de la source que l'appelant ne lit pas ne passe pas dans le brouillon qu'on lui rend.
             values = map_document(
-                target.definition, source.definition, m, doc.data, source_name=name,
+                target.definition, source.definition, m, self._access(ctx, source).readable(doc.data), source_name=name,
                 children=self._mapping_children(target, source, m),
                 done=await self._mapping_done(q, target, m, name),
             )
@@ -1836,7 +1871,7 @@ class DocumentService:
                 "doctype": doctype, "name": doc.name, "version": doc.version, "docstatus": doc.docstatus,
                 "action": transition.action, "from": state, "to": transition.to, "user": ctx.user_id,
             })
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     async def _transition(self, ctx: RequestContext, doctype: str, name: str, version: Any, action: str) -> dict[str, Any]:
         self._enter(ctx, f"doc.{action}", doctype, name)
@@ -1896,7 +1931,7 @@ class DocumentService:
         self._rules(ctx, compiled, doc, action, None)
         await self._settle(ctx, written)
         await self._after_transition(ctx, compiled, doc, action)
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     async def _after_transition(self, ctx: RequestContext, compiled: CompiledDocType, doc: StoredDoc, action: str) -> None:
         """`after_submit` / `after_cancel`, APRÈS le commit de la transition. Les erreurs sont journalisées, jamais levées (D2).
@@ -2191,15 +2226,68 @@ class DocumentService:
         return out
 
     # ── Secrets (champs Password : sealing.py) ────────────────
-    def _present(self, doc: StoredDoc) -> dict[str, Any]:
+    def _present(self, doc: StoredDoc, ctx: RequestContext | None = None) -> dict[str, Any]:
         """Un document tel que l'API le rend : un secret posé s'y lit `********`, jamais en clair ni chiffré.
+
+        `ctx` : celui à qui on RÉPOND. Les champs qu'il ne lit pas (droits par champ, `permissions.field_access`) quittent `data` ici,
+        à la seule sortie des documents : fiche, liste, résultat d'une écriture, et tout ce qui passe par `get`/`list` (impression,
+        import, lot, titres de liens). Sans `ctx` : un hook de confiance relit le document, il voit tout.
 
         Une valeur CHIFFRÉE est masquée même si son champ n'est plus dans la définition (le champ Password d'une extension dont le plugin
         est parti, D26) : la lecture est tolérante aux clés inconnues, elle ne doit pas l'être pour un secret.
         """
         out = doc.as_dict()
-        out["data"] = self._masked(self._registry.get(doc.doctype).definition.secret_fields, doc.data)
+        definition = self._registry.get(doc.doctype).definition
+        out["data"] = self._masked(definition.secret_fields, doc.data)
+        if ctx is not None and (access := field_access(definition, ctx)).hidden:
+            out["data"] = access.readable(out["data"])
         return out
+
+    def _access(self, ctx: RequestContext, compiled: CompiledDocType) -> FieldAccess:
+        """Ce que les droits par champ ferment à cet appelant sur ce type (rien pour un type sans champ réservé, ni en contexte système)."""
+        return field_access(compiled.definition, ctx)
+
+    def _guard_fields(self, access: FieldAccess, compiled: CompiledDocType, data: Any, old: Mapping[str, Any] | None) -> Any:
+        """L'entrée d'un CLIENT, avant validation : un champ qu'il ne LIT pas ne s'envoie pas — même avec la bonne valeur, sinon le
+        refus ou l'acceptation dirait laquelle c'est —, et le serveur y remet ce qui est enregistré (une mise à jour REMPLACE `data` :
+        sans cela, enregistrer la fiche effacerait ce qu'il ne voit pas). `old` : le document avant (rien à la création)."""
+        if not access.hidden or not isinstance(data, dict):
+            return data
+        if sent := sorted(access.hidden & set(data)):
+            raise FieldNotWritable(sent)
+        secrets_ = compiled.definition.secret_fields
+        kept = {k: (MASK if k in secrets_ else v) for k, v in (old or {}).items() if k in access.hidden}  # un secret repart MASQUÉ : « inchangé » (`_seal`)
+        return {**data, **kept}
+
+    def _check_field_writes(
+        self, access: FieldAccess, compiled: CompiledDocType, clean: Mapping[str, Any], base: Mapping[str, Any], *, sent: Any = None,
+    ) -> None:
+        """Après validation : un champ qu'il lit sans pouvoir l'écrire doit valoir ce qu'il valait (`base` : le document enregistré). La
+        comparaison canonique de `read_only` (`builder.same_value`), et le même sort pour un champ que le serveur écrit (`compute`,
+        `fetch_from`) : il n'est pas comparé. Une mise à jour remplace `data` : l'OMETTRE, c'est le vider, donc le changer.
+
+        `sent` (la création) : seuls les champs que le client a ENVOYÉS se jugent, contre ce que le serveur aurait posé de lui-même
+        (`base` : les défauts du YAML et de l'organisation) — ce qu'il n'envoie pas reçoit ces défauts, et ce n'est pas lui qui écrit."""
+        if not access.read_only:
+            return
+        secrets_ = compiled.definition.secret_fields
+        changed = [
+            f.fieldname for f in compiled.definition.fields
+            if f.fieldname in access.read_only and f.compute is None and f.fetch_from is None
+            and (sent is None or (isinstance(sent, dict) and f.fieldname in sent))
+            and not same_value(f, clean.get(f.fieldname), base.get(f.fieldname), secret=f.fieldname in secrets_)
+        ]
+        if changed:
+            raise FieldNotWritable(changed)
+
+    def _server_defaults(self, access: FieldAccess, compiled: CompiledDocType, data: Any, rules: FormRules) -> dict[str, Any]:
+        """Ce que cette création contiendrait si l'appelant n'avait RIEN envoyé dans les champs qu'il ne peut pas écrire : les défauts
+        de l'organisation puis du YAML. La base à laquelle `_check_field_writes` compare ce qu'il a envoyé."""
+        without = {k: v for k, v in data.items() if k not in access.read_only} if isinstance(data, dict) else {}
+        try:
+            return compiled.model.model_validate(self._with_today(compiled, self._with_defaults(compiled, without, rules))).model_dump(mode="json", exclude_none=True)
+        except ValueError:  # sans ces champs le modèle ne valide pas (l'un d'eux est exigé) : le serveur n'y pose rien de lui-même
+            return {}
 
     @staticmethod
     def _masked(secret_fields: Sequence[str], data: Mapping[str, Any]) -> dict[str, Any]:
@@ -2971,23 +3059,29 @@ class DocumentService:
         Aucune connexion n'est tenue pendant l'appel de la source (elle peut appeler un autre plugin, voire écrire dans la même base)."""
         finalize = self._finalizer(compiled, scope, ctx.owner_id)
         rules = await self._form_rules(ctx, compiled)
+        access = self._access(ctx, compiled)
+        data = self._guard_fields(access, compiled, data, None)
         clean = finalize(self._with_today(compiled, self._with_defaults(compiled, data, rules)), rules=rules)
+        if access.read_only:
+            self._check_field_writes(access, compiled, clean, self._server_defaults(access, compiled, data, rules), sent=data)
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, None)
             await self._check_link_filters(ctx, q, compiled, clean, None)
         doc = self._checked(compiled, await self._call_source(compiled, source.insert(ctx, compiled.definition, clean)))
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     async def _update_virtual(
         self, ctx: RequestContext, compiled: CompiledDocType, write: Scope, current: StoredDoc, data: Any, version: int, source: DocumentSource
     ) -> dict[str, Any]:
         finalize = self._finalizer(compiled, write, current.owner)
-        clean = finalize(data, old=current.data, rules=await self._form_rules(ctx, compiled))
+        access = self._access(ctx, compiled)
+        clean = finalize(self._guard_fields(access, compiled, data, current.data), old=current.data, rules=await self._form_rules(ctx, compiled))
+        self._check_field_writes(access, compiled, clean, current.data)
         async with self._query(ctx) as q:
             await self._check_links(ctx, q, compiled, clean, current.data)
             await self._check_link_filters(ctx, q, compiled, clean, current.data)
         doc = self._checked(compiled, await self._call_source(compiled, source.update(ctx, compiled.definition, current.name, clean, version)))
-        return self._present(doc)
+        return self._present(doc, ctx)
 
     @asynccontextmanager
     async def _query(self, ctx: RequestContext) -> AsyncIterator[Query]:
@@ -2996,6 +3090,60 @@ class DocumentService:
             if self._rls:
                 await bind_tenant(session, ctx.tenant_id)  # AVANT toute autre instruction : sans lui, la politique ne laisse rien passer
             yield Query(session, ctx, self._tables)
+
+
+def _cites_hidden(block: Mapping[str, Any], hidden: frozenset[str]) -> bool:
+    """Ce bloc (carte de nombre, graphique, liste rapide) mesure, regroupe ou filtre-t-il sur un champ que l'appelant ne lit pas ? Il
+    n'est alors pas servi : sa requête serait refusée (`field_not_readable`), et son seul libellé (« Masse salariale ») promettrait un chiffre."""
+    cited = {block.get("field"), block.get("group_by")} | {str(k).split(".", 1)[0] for k in (block.get("filters") or {})}
+    return bool(cited & hidden)
+
+
+def _restrict_meta(meta: dict[str, Any], access: FieldAccess) -> None:
+    """Le méta tel que CET appelant doit le recevoir, en place (droits par champ, traoreera/doctype#74).
+
+    Un champ qu'il ne lit pas n'y est pas du tout — ni dans `fields`, ni dans la disposition, ni dans les colonnes de la liste, ni les
+    lignes d'une table cachée : le Desk n'a rien à masquer, il ne sait pas que le champ existe. Un champ qu'il lit sans pouvoir l'écrire
+    porte `read_only: true`, que le Desk applique déjà. Chaque champ RÉSERVÉ qui reste dit ce qu'il en a : `access: read | write`. Les
+    grants eux-mêmes ne sortent jamais (comme les `permissions` du type). Ce n'est qu'un affichage : chaque porte du serveur rejuge.
+    """
+    hidden = access.hidden
+    kept = []
+    for field in meta["fields"]:
+        reserved = field.pop("permissions", None) is not None
+        name = field["fieldname"]
+        if name in hidden:
+            continue
+        if reserved:
+            field["access"] = "read" if name in access.read_only else "write"
+        if name in access.read_only:
+            field["read_only"] = True
+        kept.append(field)
+    for child in (meta.get("children") or {}).values():
+        for field in child["fields"]:
+            field.pop("permissions", None)  # jamais posé (refusé au chargement) : ceinture
+    if not hidden:
+        return
+    meta["fields"] = kept
+    sections = []
+    for section in meta.get("layout") or []:
+        columns = [[n for n in column if n not in hidden] for column in section.get("columns", [])]
+        columns = [c for c in columns if c]
+        if columns:
+            sections.append({**section, "columns": columns})
+    meta["layout"] = sections
+    columns = [c for c in meta.get("list_columns") or [] if c not in hidden]
+    meta["list_columns"] = columns or [f["fieldname"] for f in kept if not f.get("hidden") and f["fieldtype"] != "Table"][:4]
+    if "children" in meta:
+        used = {str(f.get("options")) for f in kept if f["fieldtype"] == "Table"}
+        meta["children"] = {name: child for name, child in meta["children"].items() if name in used}
+        if not meta["children"]:
+            del meta["children"]
+    views = meta.get("views") or {}
+    if isinstance(views.get("dashboard"), list):
+        views["dashboard"] = [b for b in views["dashboard"] if not _cites_hidden(b, hidden)]
+    for extension in meta.get("extended_by") or []:
+        extension["fields"] = [n for n in extension["fields"] if n not in hidden]
 
 
 def _canonical_defaults(fields: list[dict[str, Any]]) -> None:
@@ -3021,7 +3169,7 @@ def _view_name(name: Any) -> str:
     return clean
 
 
-def _view_config(compiled: CompiledDocType, config: Any) -> dict[str, Any]:
+def _view_config(compiled: CompiledDocType, config: Any, hidden: frozenset[str] = frozenset()) -> dict[str, Any]:
     """Valide la configuration d'une liste (colonnes, filtres, tri) contre la definition : rien d'inconnu n'est stocke.
 
     Les filtres passent par le meme validateur que la liste (`aggregation.validate_filters`) : une vue enregistree ne peut pas
@@ -3050,7 +3198,9 @@ def _view_config(compiled: CompiledDocType, config: Any) -> dict[str, Any]:
     descending = config.get("descending", True)
     if not isinstance(descending, bool):
         raise ValidationFailed("config.descending doit être un booléen")
-    filters = aggregation.validate_filters(compiled, config.get("filters"))
+    if secret := sorted(({order_by} | set(columns)) & hidden):
+        raise FieldNotReadable(secret, "Vue")  # une vue ne garde pas un tri ou une colonne que la liste refuserait de servir
+    filters = aggregation.validate_filters(compiled, config.get("filters"), hidden=hidden)
     return {"columns": columns, "order_by": order_by, "descending": descending, "filters": filters}
 
 
