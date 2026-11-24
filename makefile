@@ -143,6 +143,20 @@ install-check: vendor-sync build-ui ## Le wheel dans un venv vierge + une instan
 
 check: vendor-sync build-ui test test-ui ## Tout vérifier : types, build, tests Python (e2e et livraison compris) et tests du Desk
 
+# Application de bureau (Tauri, ui/src-tauri) : docs/desktop.md. Hors de `make check` : il faut Rust et les bibliothèques du système.
+desktop-dev: $(UI)/node_modules ## Application de bureau en développement (Tauri + Vite :5174) ; le serveur doit tourner
+	@pnpm -C $(UI) tauri dev
+
+desktop-build: $(UI)/node_modules ## Construire le paquet de bureau du système (ui/src-tauri/target/release/bundle/)
+	@pnpm -C $(UI) tauri build
+
+desktop-test: ## Tests du processus de bureau (coffre de session, politiques) : cargo test
+	@cargo test --manifest-path $(UI)/src-tauri/Cargo.toml
+
+desktop-smoke: $(UI)/node_modules ## Test de fumée sur la VRAIE application (WebDriver ; sans écran : xvfb-run -a dbus-run-session -- make desktop-smoke)
+	@pnpm -C $(UI) tauri build --debug --no-bundle --config src-tauri/tauri.smoke.conf.json
+	@pnpm -C $(UI) desktop:smoke
+
 expr-vectors: ## Régénérer tests/vectors/expr_asts.json après un changement de la grammaire des conditions
 	@poetry run python scripts/gen_expr_asts.py
 
@@ -166,4 +180,5 @@ clean-all: clean clean-ui ## clean + clean-ui + node_modules (puis `make install
         vendor-init vendor-sync \
         build-ui build release-check \
         test test-unit test-pg test-ui typecheck-ui e2e install-check check expr-vectors \
+        desktop-dev desktop-build desktop-test desktop-smoke \
         clean clean-ui clean-all
