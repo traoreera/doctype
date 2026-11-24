@@ -181,7 +181,10 @@ class TestChannel:
         # le Desk afficherait, pour qu'un plugin l'écrive aussi sur un état imprimé au lieu de relire les catalogues lui-même.
         # `doctype_label` est la seule à toucher le registre, et elle n'en sort que le `label` d'un type — pas sa définition, pas
         # ses champs, pas ses permissions : la règle que ce test défend (on ne LIT pas les définitions compilées par le canal) tient.
-        assert public == {"load_dir", "load_workspaces", "load_print_templates", "load_extensions", "load_desk",
+        # `load_print_sources` / `register_print_source` (traoreera/doctype#61) DÉPOSENT le schéma d'un état imprimable, retiré avec
+        # le plugin : un dépôt de plus, qui ne rend que le nom déposé.
+        assert public == {"load_dir", "load_workspaces", "load_print_templates", "load_print_sources", "register_print_source",
+                          "load_extensions", "load_desk",
                           "load_translations", "declare_xflow", "unregister_owner", "settled", "has",
                           "translate", "doctype_label", "languages"}
 

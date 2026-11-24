@@ -311,6 +311,46 @@ Blocs : `title`, `fields`, `table`, `totals`, `text`, `spacer`, `page_break`. Au
 `{{ doc.<champ> }}` seulement. Sans gabarit, le moteur en fabrique un depuis le `layout` : aucun document n'est inimprimable. Chaque
 organisation peut ensuite le refaire à l'écran (« Personnaliser l'impression ») ; le fond PDF vient de ses Paramètres.
 
+#### Imprimer un état : des données qui ne sont pas un document
+
+Une balance, un grand livre ou un livre de paie se **calculent** : ce ne sont pas des documents, mais ils s'impriment par la même
+chaîne (gabarits, éditeur du Desk, langue et papier de l'organisation). Le plugin déclare leur **schéma** — pas un DocType : ni
+stockage, ni droits, ni route — dans `print-sources/balance.yaml` :
+
+```yaml
+schema_version: 1
+name: compta.balance            # <plugin>.<état>
+label: Balance générale
+grant: "compta:report:write"    # qui édite le gabarit de son organisation au Desk (absent : personne)
+fields:
+  - { fieldname: company, fieldtype: Text, label: Société }
+  - { fieldname: total_debit, fieldtype: Currency, decimals: 2, options: XOF }
+  - fieldname: lines
+    fieldtype: Table
+    columns:
+      - { fieldname: account, fieldtype: Text, label: Compte }
+      - { fieldname: debit, fieldtype: Decimal, decimals: 2, label: Débit }
+example: { company: "Exemple SARL", lines: [{ account: "411000", debit: "100.00" }] }   # l'aperçu de l'éditeur
+```
+
+```python
+registry.load_print_sources(self.ctx.name, dossier / "print-sources")   # AVANT load_print_templates
+registry.load_print_templates(self.ctx.name, dossier / "print")         # un gabarit dit `doctype: compta.balance`
+
+@router.get("/balance.pdf")
+async def balance(request: Request):
+    printer = await self.get_service("doctype_print").as_request(request)   # 401/403 comme l'API
+    data = await compute_balance(...)            # VOTRE route juge qui voit l'état : c'est elle qui le calcule
+    content, filename = await printer.pdf("compta.balance", data, title="Balance au 30/11/2026")
+    return Response(content, media_type="application/pdf")
+```
+
+`printer.html(...)` rend l'aperçu (sans le moteur PDF) ; `doctype_print.system(tenant, raison)` sert une tâche planifiée. Types
+admis : `Text`, `LongText`, `Int`, `Number`, `Percent`, `Decimal`, `Currency`, `Date`, `Datetime`, `Boolean`, `Select`, et `Table`
+(5 000 lignes au plus). Un gabarit qui cite un champ absent est refusé **au chargement** ; des données qui portent une clé
+inconnue du schéma sont refusées (`422 print_data_invalid`) plutôt qu'imprimées comme une case vide. L'éditeur s'ouvre sur
+`#/print/compta.balance` pour qui porte le `grant`.
+
 ### 2.6 Une extension du Desk (`desk/index.js`)
 
 ```bash
@@ -354,10 +394,11 @@ Puis : lien symbolique dans `app/` (`ln -s ../mon_module app/mon_module`), relan
 
 | Service | À quoi il sert |
 |---|---|
-| `doctype_registry` | charger ses définitions (`load_dir`, `load_workspaces`, `load_print_templates`, `load_extensions`, `load_translations`, `load_desk`) et les retirer (`unregister_owner`) |
+| `doctype_registry` | charger ses définitions (`load_dir`, `load_workspaces`, `load_print_sources`, `load_print_templates`, `load_extensions`, `load_translations`, `load_desk`) et les retirer (`unregister_owner`) |
 | `doctype_hooks` | enregistrer ses hooks par nom (`register(nom, coroutine, owner=…)`) |
 | `doctype_grants` | la liste des grants de ses DocTypes, prête pour `rbac.declare` (`for_plugin(nom)`) |
 | `doctype_writer` | **écrire** : `await writer.as_request(request)` dans une route du plugin (droits de l'utilisateur), `writer.system(plugin, tenant, raison)` pour une tâche planifiée (seulement les types du plugin) |
+| `doctype_print` | **imprimer un état** (des données calculées, pas un document) : `await printers.as_request(request)` puis `.html(source, data, title=…)` / `.pdf(…)`, voir §2.5 |
 | `doctype_documents` | **lire** en contexte système, nommé par sa raison : `system(tenant, raison).list(…) / .get(…)` |
 | `doctype_sources` | brancher une source externe pour un DocType virtuel (`source: <nom>`) |
 | `doctype_channels` | déclarer un **canal de notification** (WhatsApp, SMS…) : `register(plugin, nom, coroutine, listen_all=…)`, voir §3.6 |

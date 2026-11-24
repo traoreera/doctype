@@ -34,7 +34,7 @@ from .document import DocumentService, SystemReaders
 from .writer import DocumentWriters
 from .file_library import FileLibrary
 from .file_service import FileService
-from .print_service import PrintService
+from .print_service import DataPrinters, PrintService
 from .files import BlobStore, LocalBlobStore, UrlSigner
 from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
 from .collaboration import CollaborationService
@@ -59,6 +59,7 @@ from .sources import DocumentSources
 HOOKS_SERVICE = "doctype_hooks"  # service exporté : `self.get_service("doctype_hooks").register(...)`
 GRANTS_SERVICE = "doctype_grants"  # service exporté : `self.get_service("doctype_grants").for_plugin(nom)`
 CHANNELS_SERVICE = "doctype_channels"  # service exporté : les canaux de notification des plugins (WhatsApp, SMS…), voir channels.py
+PRINT_SERVICE = "doctype_print"  # service exporté : imprimer un ÉTAT (des données qui ne sont pas un document), `.as_request(request)` ou `.system(tenant, raison)`
 WRITER_SERVICE = "doctype_writer"  # service exporté : écriture des plugins, `.as_request(request)` (bouton) ou `.system(plugin, tenant, raison)` (tâche)
 DOCUMENTS_SERVICE = "doctype_documents"  # service exporté : lecture système, `.system(tenant, raison)` (contrôles, rapports)
 SOURCES_SERVICE = "doctype_sources"  # service exporté : `self.get_service("doctype_sources").register(nom_plugin, "ma_source", source)` (DocTypes virtuels)
@@ -294,6 +295,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         self.ctx.services[DOCUMENTS_SERVICE] = SystemReaders(self.documents)
         # ...et y écrivent : un bouton avec les droits de l'utilisateur, une tâche en système sur les types de son module (M4).
         self.ctx.services[WRITER_SERVICE] = DocumentWriters(self.documents, self._settings)
+        self.ctx.services[PRINT_SERVICE] = DataPrinters(self.printer, self._settings)
         # ...et y déclarent un canal de notification (WhatsApp…) : ce que la cloche reçoit, et ce que les règles leur adressent.
         self.ctx.services[CHANNELS_SERVICE] = self.channels
         # Un champ `unique` posé sur un type qui a déjà des documents refuse le chargement si des valeurs sont déjà en double (D25).
@@ -417,6 +419,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             self.ctx.services.pop(REGISTRY_SERVICE, None)
             self.ctx.services.pop(DOCUMENTS_SERVICE, None)
             self.ctx.services.pop(WRITER_SERVICE, None)
+            self.ctx.services.pop(PRINT_SERVICE, None)
         self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = self.printer = self.channels = None
 
     def get_router(self) -> APIRouter | None:

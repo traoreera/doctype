@@ -135,6 +135,12 @@ export interface PrintOverride {
   source: 'organisation' | 'plugin' | 'fabriqué'
   editable: boolean
   templates: PrintTemplateChoice[]
+  /**
+   * Un ÉTAT (`<plugin>.<état>` : une balance, un livre de paie — des données calculées, pas un document) n'a pas de `/meta` :
+   * le serveur joint ici ses champs, dans la forme d'un méta réduite à ce que l'éditeur lit, et ses données d'exemple.
+   */
+  data_source?: { name: string; label: string; fields: FieldMeta[]; children: Record<string, ChildMeta> }
+  example?: DocData
 }
 
 /** Le document rendu en HTML. `background` : un fond PDF complète ce rendu, mais seulement dans le PDF. */

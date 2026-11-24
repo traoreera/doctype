@@ -19,6 +19,7 @@ from .expr import ExprError
 from .extensions import Extension, merge, parse_extension, target_problem
 from .mapping import mappable_types, same_number_kind
 from .compute import compute_order, compute_problems, parse_compute
+from .print_data import PrintSource, compile_source
 from .printing import parse_template, template_fields_problems
 from .schema import LINK_FILTER_REF, NAMING_FIELD_TYPES, PARENT_PREFIX, DocTypeDef, NamingTemplate, parse_definition
 from .translations import Translations
@@ -116,6 +117,9 @@ class DocTypeRegistry:
         # Gabarits d'impression LIVRÉS par un plugin (process/impression.md §2) : (DocType, nom) -> (gabarit, source, propriétaire).
         # L'habillage d'une organisation, lui, vit en base et PRIME sur ceux-ci : il n'a rien à faire dans le registre.
         self._print_templates: dict[tuple[str, str], tuple[Any, str, str]] = {}
+        # États : des données calculées par un plugin, qu'il imprime sans qu'elles soient un DocType (`print_data.py`, §15).
+        # Nom `<plugin>.<état>` -> source compilée. Un gabarit livré peut viser un état comme il vise un type.
+        self._print_sources: dict[str, PrintSource] = {}
         self._waiting: dict[str, tuple[DocTypeDef, str, str | None]] = {}  # DocType -> (définition d'origine, source, propriétaire)
         self._broken: dict[str, list[str]] = {}
         self._peered: set[str] = set()  # chargés avec `peers=True` : eux seuls peuvent être incomplets (une cible absente ailleurs est une erreur de chargement)
@@ -362,6 +366,8 @@ class DocTypeRegistry:
         self._broken = {n: why for n, why in self._broken.items() if n in self._items}
         for key in [k for k, (_, _, who) in self._print_templates.items() if who == owner]:
             del self._print_templates[key]
+        for name in [n for n, s in self._print_sources.items() if s.owner == owner]:
+            del self._print_sources[name]
         self._drop_extensions(owner)
         for name in [n for n, who in self._workspace_owners.items() if who == owner]:
             self._workspaces.pop(name, None)
@@ -453,9 +459,13 @@ class DocTypeRegistry:
             except (OSError, ValueError, yaml.YAMLError) as e:
                 raise InvalidDefinition(f"{path}: illisible ({e})") from e
             template = parse_template(raw, source=str(path))
-            compiled = self._items.get(template.doctype)
+            compiled: Any = self._print_sources.get(template.doctype)  # un ÉTAT (`<plugin>.<état>`) se met en page comme un type
+            if compiled is not None and compiled.owner != owner:
+                raise InvalidDefinition(f"{path}: l'état {template.doctype!r} appartient au plugin {compiled.owner!r} : lui seul en livre les gabarits")
             if compiled is None:
-                raise InvalidDefinition(f"{path}: DocType {template.doctype!r} inconnu (chargez-le avant, ou nommez-le dans `requires`)")
+                compiled = self._items.get(template.doctype)
+            if compiled is None:
+                raise InvalidDefinition(f"{path}: DocType ou état {template.doctype!r} inconnu (chargez-le avant, ou nommez-le dans `requires`)")
             d = compiled.definition
             if d.istable or d.single or d.source is not None:
                 what = "enfant" if d.istable else ("unique" if d.single else "virtuel")
@@ -472,6 +482,47 @@ class DocTypeRegistry:
         for template, source in parsed:
             self._print_templates[(template.doctype, template.name)] = (template, source, owner)
         return [f"{t.doctype}:{t.name}" for t, _ in parsed]
+
+    def load_print_sources(self, directory: Path, *, owner: str) -> list[str]:
+        """Charge les ÉTATS d'un plugin (`<plugin>/print-sources/*.yaml`) : des schémas légers, pas des DocTypes (§15).
+
+        Tout ou rien, comme `load_dir`. À appeler AVANT `load_print_templates`, dont les gabarits peuvent viser ces états.
+        Un état porte le nom de son plugin (`<plugin>.<état>`) : un plugin ne décrit pas l'état d'un autre.
+        """
+        if not _OWNER_RE.match(owner):
+            raise InvalidDefinition(f"plugin {owner!r}: son nom ne peut pas apporter d'état imprimable")
+        directory = Path(directory)
+        if not directory.is_dir():
+            raise InvalidDefinition(f"dossier d'états imprimables introuvable : {directory}")
+        parsed: dict[str, PrintSource] = {}
+        for path in sorted(p for p in directory.iterdir() if p.suffix in _SUFFIXES):
+            try:
+                text = path.read_text(encoding="utf-8")
+                raw = json.loads(text) if path.suffix == ".json" else yaml.safe_load(text)
+            except (OSError, ValueError, yaml.YAMLError) as e:
+                raise InvalidDefinition(f"{path}: illisible ({e})") from e
+            made = compile_source(raw, owner=owner, source=str(path))
+            if made.name in parsed or made.name in self._print_sources:
+                raise InvalidDefinition(f"{path}: l'état {made.name!r} est déjà déclaré")
+            parsed[made.name] = made
+        self._print_sources.update(parsed)
+        return sorted(parsed)
+
+    def register_print_source(self, raw: object, *, owner: str) -> PrintSource:
+        """Un état déclaré en CODE (le schéma est un dict) : pour un plugin qui construit ses colonnes au chargement."""
+        if not _OWNER_RE.match(owner):
+            raise InvalidDefinition(f"plugin {owner!r}: son nom ne peut pas apporter d'état imprimable")
+        made = compile_source(raw, owner=owner, source=f"état de {owner}")
+        if made.name in self._print_sources:
+            raise InvalidDefinition(f"l'état {made.name!r} est déjà déclaré")
+        self._print_sources[made.name] = made
+        return made
+
+    def print_source(self, name: str) -> PrintSource | None:
+        return self._print_sources.get(name)
+
+    def print_sources(self) -> list[PrintSource]:
+        return [self._print_sources[n] for n in sorted(self._print_sources)]
 
     def print_templates(self, doctype: str) -> list[Any]:
         """Les gabarits LIVRÉS pour ce type, par nom. Le service y ajoute l'habillage de l'organisation et, à défaut, le gabarit fabriqué."""
@@ -1127,6 +1178,22 @@ class DocTypeChannel:
         if self._log is not None:
             self._log.info("print templates registered by plugin", plugin=owner, templates=names)
         return names
+
+    def load_print_sources(self, owner: str, directory: str | Path) -> list[str]:
+        """Les ÉTATS imprimables de ce plugin (process/impression.md §15) : `…load_print_sources(self.ctx.name, dossier / "print-sources")`,
+        AVANT `load_print_templates`. Un état est un schéma léger (`print_data.DataSchema`), nommé `<plugin>.<état>` ; il s'imprime par
+        le service `doctype_print`."""
+        names = self._registry.load_print_sources(Path(directory), owner=owner)
+        if self._log is not None:
+            self._log.info("print sources registered by plugin", plugin=owner, sources=names)
+        return names
+
+    def register_print_source(self, owner: str, schema: Mapping[str, Any]) -> str:
+        """Le même état, déclaré en code : `…register_print_source(self.ctx.name, {"schema_version": 1, "name": "accounts.balance", …})`."""
+        made = self._registry.register_print_source(schema, owner=owner)
+        if self._log is not None:
+            self._log.info("print sources registered by plugin", plugin=owner, sources=[made.name])
+        return made.name
 
     def load_extensions(self, owner: str, directory: str | Path) -> list[str]:
         """Des champs et des hooks ajoutés aux DocTypes d'AUTRES plugins (D26) : `…load_extensions(self.ctx.name, dossier / "extends")`, APRÈS
