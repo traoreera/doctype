@@ -2,6 +2,7 @@
  * Charger les extensions que `config.json` annonce (D28) : une par une, chacune isolée. Un module qui ne se charge pas, qui ne respecte
  * pas le contrat ou dont le `setup` lève (ou ne finit pas à temps) est ÉCARTÉ : ce qu'il avait enregistré est retiré, le Desk démarre.
  */
+import type { Transport } from '@/lib/transport'
 import type { ExtensionHost } from './host'
 import { EXTENSION_API_VERSION, type ExtensionDefinition } from './types'
 
@@ -30,9 +31,15 @@ function contract(mod: { default?: unknown } | null | undefined, name: string): 
   return def as ExtensionDefinition
 }
 
-const browserProbe: Prober = async (url) => {
-  const r = await fetch(url, { cache: 'no-store', credentials: 'same-origin' })
-  return { ok: r.ok, status: r.status, contentType: r.headers.get('content-type') ?? '' }
+/**
+ * Le diagnostic lit par le `Transport`, comme tout le reste du Desk (jamais un `fetch` direct : un hôte de bureau n'a pas le
+ * réseau du navigateur). Une lecture `binary` rend le type de contenu d'une réponse réussie ; un échec ne rend que son statut.
+ */
+export function transportProbe(transport: Transport): Prober {
+  return async (url) => {
+    const r = await transport.request({ method: 'GET', url, headers: { Accept: '*/*' }, binary: true })
+    return { ok: r.status >= 200 && r.status < 300, status: r.status, contentType: r.contentType ?? '' }
+  }
 }
 
 /** Les modules que l'import map du Desk désigne (`vue`, `@xcore-doctype/desk`), résolus comme le navigateur les résout. */
@@ -51,7 +58,7 @@ function importMapTargets(): [string, string][] {
  * partagés qu'elle importe par l'import map. On les relit pour le dire. Un serveur de développement répond souvent 200 avec une page HTML
  * à une adresse inconnue : ce n'est pas un module, et c'est ce que le navigateur refuse.
  */
-export async function diagnoseImport(url: string, probe: Prober = browserProbe): Promise<string | null> {
+export async function diagnoseImport(url: string, probe: Prober): Promise<string | null> {
   const isModule = (contentType: string) => /javascript|ecmascript/i.test(contentType)
   const check = async (label: string, target: string): Promise<string | null> => {
     try {
@@ -100,7 +107,8 @@ export async function loadExtensions(
       host.drop(entry.name)
       let reason = e instanceof Error ? e.message : String(e)
       // Un module introuvable : on cherche lequel (entrée ou import partagé), sans jamais faire échouer le démarrage pour autant.
-      if (/dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(reason)) {
+      // Sans sonde fournie (un test, un hôte sans réseau), pas de diagnostic : la raison du navigateur reste telle quelle.
+      if (opts.probe && /dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(reason)) {
         const found = await diagnoseImport(entry.url, opts.probe).catch(() => null)
         if (found) reason = found
       }

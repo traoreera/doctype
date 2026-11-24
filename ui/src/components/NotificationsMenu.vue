@@ -3,6 +3,7 @@ import Button from 'primevue/button'
 import Popover from 'primevue/popover'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import { t } from '@/i18n'
 import { relativeTime } from '@/lib/format'
@@ -11,6 +12,7 @@ import { decodeEntities, safeTarget, useNotifications } from '@/stores/notificat
 
 /** La cloche : les notifications d'xauth, relues dès qu'xpulse signale une nouvelle (temps réel), et toutes les minutes tant que l'onglet est visible. */
 const store = useNotifications()
+const host = useHost()
 const offBell = useServices().realtime?.onBell(() => void store.refresh())
 const router = useRouter()
 const pop = ref()
@@ -39,7 +41,8 @@ async function follow(n: AuthNotification): Promise<void> {
   if (!target) return
   pop.value.hide()
   if (target.kind === 'desk') await router.push(target.path)
-  else globalThis.open(target.url, '_blank', 'noopener,noreferrer')
+  // Un lien externe s'ouvre À CÔTÉ du Desk (nouvel onglet ; en bureau, le navigateur du système). Un hôte qui refuse le dit dans la console.
+  else await host.openExternal(target.url).catch((e) => console.error('[notifications] lien non ouvert', e))
 }
 </script>
 

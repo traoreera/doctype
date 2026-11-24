@@ -12,9 +12,9 @@ import FileThumb from '@/components/FileThumb.vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
-import { downloadUrl } from '@/lib/download'
 import { FILE_SORTS, type FileSort, citationKey, detachTarget, detailLines, isImage, sortQuery } from '@/lib/filelibrary'
 import { formatBytes, formatTimestamp, relativeTime } from '@/lib/format'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import type { FileLibraryItem, FileLibraryResult } from '@/lib/types'
 import { useFiles } from '@/stores/files'
@@ -28,6 +28,7 @@ import { useUsers } from '@/stores/users'
  * tel que le serveur l'a dit. Le contenu se télécharge par un lien signé de courte durée, redemandé s'il a expiré pendant que la page restait ouverte.
  */
 const { api } = useServices()
+const host = useHost()
 const confirm = useConfirm()
 const notify = useNotify()
 const files = useFiles()
@@ -113,7 +114,7 @@ async function download(e: MouseEvent, f: FileLibraryItem): Promise<void> {
   e.preventDefault()
   await files.resolve([f.file_id], { force: true })
   const url = files.url(f.file_id)
-  if (url) downloadUrl(url, f.filename)
+  if (url) await host.saveUrl(url, f.filename).catch((err) => notify.error(err))
   else notify.warn(t.fileLibrary.gone)
 }
 

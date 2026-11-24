@@ -1,3 +1,4 @@
+import { HostRefusal } from '@/lib/host'
 import { useToast } from 'primevue/usetoast'
 import { ApiError } from '@/lib/api'
 import { t } from '@/i18n'
@@ -21,6 +22,8 @@ export class UserMessage extends Error {
 /** Message lisible pour n'importe quelle erreur qui remonte d'un appel d'API. */
 export function describeError(e: unknown): string {
   if (e instanceof UserMessage) return e.message || t.errors.generic
+  // Un refus de l'HÔTE (`lib/host.ts` : adresse non ouverte, téléchargement refusé) est écrit pour être lu, comme un `UserMessage`.
+  if (e instanceof HostRefusal) return e.message || t.errors.generic
   if (e instanceof ApiError) {
     // Un module hors abonnement ou une licence à renouveler : la raison du serveur dit quoi faire (s'abonner), un « interdit » ne le dirait pas.
     if (e.isModuleNotLicensed || e.code === 'license_required') return e.message || t.errors.generic

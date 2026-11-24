@@ -47,4 +47,4 @@ Tests vitest (`tests/*.spec.ts`) : `rows`, `home`, `appshell`, `theme`, `recents
 - **Saisie** : pas de duplication d'un document, pas de réordonnancement des lignes, pas de valeurs par défaut calculées autres que `today`.
 - **Renouvellement** : deux onglets qui partagent un jeton de renouvellement (onglet dupliqué) se le disputent (il est à usage unique) ; le second est déconnecté. Pas de MFA.
 - **Accueil** : pas de compteurs ni d'alertes (seuil de réapprovisionnement : phase C).
-- **Tauri** : la couche de transport reste remplaçable, mais rien n'a été essayé hors navigateur.
+- **Tauri** : ~~la couche de transport reste remplaçable, mais rien n'a été essayé hors navigateur.~~ Porté le 24 nov. 2026 (traoreera/doctype#73) : transport natif, hôte de bureau, coffre de session, liens profonds, test de fumée sur l'application réelle — **vérifié sous Linux seulement**. Décisions, limites et ce qui reste à vérifier (macOS, Windows, un vrai serveur) : `docs/desktop.md`.

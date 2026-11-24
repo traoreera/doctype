@@ -9,9 +9,11 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { t } from '@/i18n'
 import { safeNext } from '@/router'
+import { useHost } from '@/lib/host'
 import { useSession, type LoginOutcome, type TenantChoice } from '@/stores/session'
 
 const session = useSession()
+const host = useHost()
 const route = useRoute()
 const router = useRouter()
 
@@ -40,8 +42,9 @@ function providerLabel(provider: string): string {
 async function oauth(provider: string): Promise<void> {
   error.value = null
   const url = await session.oauthAuthorizeUrl(provider)
-  if (url) globalThis.location.assign(url)
-  else error.value = t.login.oauthFailed
+  if (!url) return void (error.value = t.login.oauthFailed)
+  // En bureau, c'est le navigateur du système qui ouvre le fournisseur : s'il refuse, l'écran le dit (l'hôte nomme la cause).
+  await host.leave(url).catch(() => (error.value = t.login.oauthFailed))
 }
 
 async function done(): Promise<void> {

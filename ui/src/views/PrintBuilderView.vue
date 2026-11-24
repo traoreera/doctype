@@ -12,7 +12,6 @@ import { RouterLink } from 'vue-router'
 import BlockPanel from '@/components/printbuilder/BlockPanel.vue'
 import PrintDocEditor, { type Selected } from '@/components/printdoc/PrintDocEditor.vue'
 import { describeError, useNotify, UserMessage } from '@/composables/useNotify'
-import { downloadBytes } from '@/lib/download'
 import type { TableCommand, TableStyle } from '@/lib/tablestyles'
 import { t } from '@/i18n'
 import { PX_PER_MM, blocksToContent, newEmbedded, round1, tokenHtml } from '@/lib/printdoc'
@@ -36,6 +35,7 @@ import {
   type Draft,
   type Letterhead,
 } from '@/lib/printedit'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import type { DocData, DocTypeMeta, PrintOverride } from '@/lib/types'
 import { useFiles } from '@/stores/files'
@@ -61,6 +61,7 @@ import { useMeta } from '@/stores/meta'
  */
 const props = defineProps<{ doctype: string }>()
 const { api } = useServices()
+const host = useHost()
 const notify = useNotify()
 const metaStore = useMeta()
 const links = useLinks()
@@ -275,7 +276,7 @@ async function previewPdf(): Promise<void> {
   pdfPreviewing.value = true
   try {
     const file = await api.printPreviewPdf(props.doctype, example.value, payload.value)
-    downloadBytes(file.filename, file.bytes, 'application/pdf')
+    await host.saveBytes(file.filename, file.bytes, 'application/pdf')
   } catch (e) {
     notify.error(e)
   } finally {

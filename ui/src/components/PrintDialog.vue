@@ -6,7 +6,7 @@ import Select from 'primevue/select'
 import { computed, ref, watch } from 'vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
-import { downloadBytes } from '@/lib/download'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import type { PrintTemplates, PrintedDocument } from '@/lib/types'
 
@@ -36,6 +36,7 @@ import type { PrintTemplates, PrintedDocument } from '@/lib/types'
 const props = defineProps<{ doctype: string; name: string; label: string }>()
 const visible = defineModel<boolean>('visible', { required: true })
 const { api } = useServices()
+const host = useHost()
 const notify = useNotify()
 
 const templates = ref<PrintTemplates | null>(null)
@@ -136,8 +137,8 @@ async function pdf(): Promise<void> {
   failure.value = ''
   try {
     const file = await api.printPdf(props.doctype, props.name, { template: chosen.value, letterhead: letterhead.value || undefined })
-    downloadBytes(file.filename, file.bytes, 'application/pdf')
-    notify.success(t.print.pdfDone)
+    // « cancelled » : l'utilisateur a refermé le dialogue d'enregistrement (bureau) — rien n'est fait, rien n'est annoncé.
+    if ((await host.saveBytes(file.filename, file.bytes, 'application/pdf')) === 'saved') notify.success(t.print.pdfDone)
   } catch (e) {
     failure.value = describeError(e)
   } finally {
