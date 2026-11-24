@@ -54,7 +54,7 @@ export { default as DateInput } from '@/components/DateInput.vue'
 export { default as DatetimeInput } from '@/components/DatetimeInput.vue'
 export { default as FieldControl } from '@/components/FieldControl.vue'
 export { default as LinkField } from '@/components/LinkField.vue'
-export { describeError } from '@/composables/useNotify'
+export { describeError, UserMessage } from '@/composables/useNotify'
 export { t } from '@/i18n'
 export { piIcon } from '@/lib/icons'
 

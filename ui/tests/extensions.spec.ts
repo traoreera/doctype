@@ -25,7 +25,7 @@ import { menuItem, openMore } from './menu'
 const Dummy = defineComponent({ props: { label: { type: String, default: null } }, render() { return h('p', { 'data-testid': 'dummy' }, `bloc ${this.label ?? ''}`) } })
 
 function makeHost(router?: Router) {
-  const notify = { success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  const notify = { success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fail: vi.fn() }
   const r = router ?? createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: Dummy }] })
   const plugin = vi.fn((name: string) => ({ name }) as never)
   const host = new ExtensionHost({ api: {} as never, router: r, notify, plugin })
@@ -412,7 +412,7 @@ describe('desk.realtime : les messages temps réel des plugins', () => {
     const listeners = new Set<(m: RealtimeMessage) => void>()
     const realtime = { onMessage: (cb: (m: RealtimeMessage) => void) => (listeners.add(cb), () => listeners.delete(cb)) }
     const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: Dummy }] })
-    const notify = { success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+    const notify = { success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fail: vi.fn() }
     const host = new ExtensionHost({ api: {} as never, router, notify, plugin: () => ({}) as never, realtime: realtime as never })
     const emit = (m: Partial<RealtimeMessage>) => listeners.forEach((cb) => cb({ scope: 'personal', type: 'message', text: null, data: {}, ...m }))
     return { host, emit, listeners }

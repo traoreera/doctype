@@ -559,6 +559,7 @@ export const fr = {
     done: 'Terminé',
     hint: 'Glissez les cartes pour les déplacer, choisissez leur largeur, modifiez-les ou ajoutez-en. Rien n’est enregistré avant « Enregistrer ».',
     dirty: 'Modifications non enregistrées',
+    tooManyBlocks: (limit: number) => `${limit} blocs au plus`,
     add: 'Ajouter',
     json: 'JSON',
     reset: 'Revenir à la disposition d’origine',

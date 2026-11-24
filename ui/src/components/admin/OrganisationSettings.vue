@@ -83,7 +83,7 @@ async function open(id: string): Promise<void> {
   try {
     const out = await session.switchTenant(id)
     if (out.status === 'ok') globalThis.location.reload()
-    else notify.error(out.message)
+    else notify.fail(out.message)
   } finally {
     switching.value = false
   }

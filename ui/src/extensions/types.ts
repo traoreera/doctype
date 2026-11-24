@@ -44,8 +44,10 @@ export interface Notifier {
   success(message: string): void
   info(message: string): void
   warn(message: string): void
-  /** Une erreur d'API devient un message lisible (comme partout dans le Desk). */
+  /** Une erreur ATTRAPÉE : une erreur d'API devient un message lisible (comme partout dans le Desk), le reste un message générique. */
   error(error: unknown): void
+  /** Un refus dont l'extension a écrit la raison : le texte arrive tel quel à l'écran. */
+  fail(text: string | null | undefined): void
 }
 
 /** Ce qu'une action reçoit en plus de ce qu'elle regarde : de quoi parler au serveur et à l'utilisateur. */

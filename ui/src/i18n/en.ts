@@ -561,6 +561,7 @@ export const en: Messages = {
     done: 'Done',
     hint: 'Drag the cards to move them, choose their width, edit them or add new ones. Nothing is saved before “Save”.',
     dirty: 'Unsaved changes',
+    tooManyBlocks: (limit: number) => `${limit} blocks at most`,
     add: 'Add',
     json: 'JSON',
     reset: 'Back to the original layout',

@@ -21,7 +21,7 @@ async function test(): Promise<void> {
   sending.value = true
   try {
     const r = await auth.mailTest(to.value.trim())
-    if (!r.sent) notify.error(new Error(t.admin.mail.notSent))
+    if (!r.sent) notify.fail(t.admin.mail.notSent)
     else notify.success(r.simulated ? t.admin.mail.sentSimulated : t.admin.mail.sentReal)
     await status.reload()
   } catch (e) {

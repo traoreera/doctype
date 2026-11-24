@@ -266,7 +266,7 @@ async function switchTenant(tenantId: string): Promise<void> {
   try {
     const out = await session.switchTenant(tenantId)
     if (out.status === 'ok') globalThis.location.reload()
-    else notify.error(out.message)
+    else notify.fail(out.message)
   } finally {
     switching.value = false
   }

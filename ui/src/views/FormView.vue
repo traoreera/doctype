@@ -456,7 +456,7 @@ async function save(): Promise<void> {
  */
 function askToPay(why: string): void {
   const code = String(values.value.module ?? '').trim()
-  if (!license || !code) return void notify.error(new Error(why))
+  if (!license || !code) return void notify.fail(why)
   confirm.require({
     header: t.billing.payHeader,
     message: why && why !== 'payment_required' ? why : t.billing.payNeeded, // xlicense rend un code sans phrase

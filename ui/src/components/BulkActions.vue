@@ -14,7 +14,6 @@ import { describeError, useNotify } from '@/composables/useNotify'
 import { useExtensions } from '@/extensions/host'
 import { piIcon } from '@/lib/icons'
 import { t } from '@/i18n'
-import { ApiError } from '@/lib/api'
 import { toPayload } from '@/lib/form'
 import { sameTag, supportsTags } from '@/lib/tags'
 import { useServices } from '@/lib/services'
@@ -80,7 +79,7 @@ const reason = (r: BulkItem): string => r.details?.find((d) => d.msg)?.msg ?? r.
 function finish(verb: string, result: BulkResult): void {
   const refused = result.results.find((r) => !r.ok)
   if (result.failed === 0) notify.success(t.bulk.allDone(verb, result.done))
-  else if (result.done === 0 && result.failed === 1 && refused) notify.error(new ApiError(422, refused.code ?? 'refused', reason(refused), [])) // un seul document, refusé : son message suffit, pas de compte rendu
+  else if (result.done === 0 && result.failed === 1 && refused) notify.fail(reason(refused)) // un seul document, refusé : son message suffit, pas de compte rendu
   else report.value = { verb, result }
   if (result.done > 0) emit('done')
 }
