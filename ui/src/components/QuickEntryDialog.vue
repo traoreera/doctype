@@ -8,7 +8,7 @@ import FieldControl from '@/components/FieldControl.vue'
 import { describeError } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
-import { fieldStates, mapServerErrors, quickEntryFields, startValues, toPayload, validate, type Values } from '@/lib/form'
+import { fieldStates, mapServerErrors, quickEntryFields, startValues, creationPayload, validate, type Values } from '@/lib/form'
 import { useServices } from '@/lib/services'
 import type { DocRecord, DocTypeMeta } from '@/lib/types'
 import { useMeta } from '@/stores/meta'
@@ -82,7 +82,7 @@ async function save(): Promise<void> {
   }
   saving.value = true
   try {
-    const data = toPayload(m, values.value)
+    const data = creationPayload(m, values.value)
     const rec = prompt.value ? await api.create(props.doctype, data, name.value.trim()) : await api.create(props.doctype, data)
     emit('created', rec)
     emit('update:visible', false)

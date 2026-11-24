@@ -374,6 +374,12 @@ export interface FieldMeta {
   in_list_view: boolean
   /** Montré mais jamais modifiable par l'utilisateur (le serveur refuse une mise à jour qui le change). */
   read_only?: boolean
+  /**
+   * Droits par champ (traoreera/doctype#74) : ce que CET utilisateur peut faire d'un champ RÉSERVÉ — `read` (le voir, pas le changer :
+   * le serveur pose alors aussi `read_only`) ou `write`. Absent sur un champ ordinaire. Un champ qu'il ne peut pas lire n'est pas dans
+   * `fields` du tout : le Desk n'a rien à masquer. Ce n'est qu'un affichage, le serveur rejuge chaque requête.
+   */
+  access?: 'read' | 'write'
   /** Table seulement : une sélection multiple (des étiquettes à saisir et à retirer) au lieu d'une grille. */
   multiselect?: boolean
   /** Une valeur ne se retrouve jamais sur deux documents (le serveur refuse le doublon). */
