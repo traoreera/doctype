@@ -79,6 +79,8 @@ export type LoginOutcome =
   | { status: 'tenant'; tenants: TenantChoice[] }
   | { status: 'mfa' }
   | { status: 'onboarding' }
+  /** Mot de passe PROVISOIRE : le serveur n'a ouvert aucune session ; `token` ne sert qu'à choisir un mot de passe. */
+  | { status: 'password'; token: string }
   | { status: 'error'; message: string }
 
 /** Le résultat d'une opération d'authentification secondaire (inscription, mot de passe, invitation, changement d'organisation). */
@@ -100,6 +102,8 @@ interface LoginBody {
   mfa_required?: unknown
   mfa_token?: unknown
   onboarding_required?: unknown
+  password_change_required?: unknown
+  password_change_token?: unknown
   tenants?: { id?: unknown; name?: unknown; slug?: unknown }[] | null
 }
 
@@ -211,6 +215,12 @@ export const useSession = defineStore('session', () => {
     if (res.status === 429) return { status: 'error', message: t.login.tooMany }
     const body = (res.json ?? {}) as LoginBody
     if (res.status !== 200) return { status: 'error', message: t.login.refused }
+    // Compte créé pour lui avec un mot de passe provisoire : AUCUN jeton n'est rendu (rien à adopter), seulement de quoi choisir le sien.
+    // Jugé avant tout le reste : sans ce cas, la réponse sans jeton passait pour un refus et l'employé ne pouvait jamais entrer.
+    if (body.password_change_required) {
+      if (typeof body.password_change_token === 'string' && body.password_change_token) return { status: 'password', token: body.password_change_token }
+      return { status: 'error', message: t.login.refused }
+    }
     // Plusieurs organisations : le serveur a DÉJÀ ouvert la session (le refresh_token rendu la représente) ; on choisit, on ne refait pas un login.
     const choices = (body.tenants ?? []).filter((x) => typeof x.id === 'string')
     if (!body.tenant_id && choices.length) {
