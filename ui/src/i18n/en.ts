@@ -825,6 +825,7 @@ export const en: Messages = {
     reset: {
       title: 'New password',
       intro: 'Choose a new password for your account.',
+      firstIntro: 'Your password is temporary: choose your own to get in. It must differ from the temporary one.',
       newPassword: 'New password',
       confirm: 'Confirm the password',
       mismatch: 'The two passwords are not the same.',

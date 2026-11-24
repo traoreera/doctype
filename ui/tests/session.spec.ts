@@ -83,6 +83,19 @@ describe('connexion par e-mail et mot de passe', () => {
     expect(session.refreshToken).toBe('r0')
   })
 
+  it('mot de passe provisoire : aucune session, seulement de quoi choisir le sien', async () => {
+    // Le serveur ne rend AUCUN jeton pour un compte créé avec un mot de passe provisoire (xauth `must_change_password`).
+    const { session } = setup({ status: 200, json: { access_token: '', refresh_token: '', password_change_required: true, password_change_token: 'chg' } })
+    expect(await session.login('fatou@exemple.ci', 'Provisoire1')).toEqual({ status: 'password', token: 'chg' })
+    expect(session.token).toBeNull()
+  })
+
+  it('mot de passe provisoire sans jeton de changement : un refus, jamais une session', async () => {
+    const { session } = setup({ status: 200, json: { access_token: 'x', password_change_required: true } })
+    expect((await session.login('fatou@exemple.ci', 'Provisoire1')).status).toBe('error')
+    expect(session.token).toBeNull()
+  })
+
   it.each([
     ['double authentification sans défi', { mfa_required: true, access_token: 'x' }, /double authentification/],
     ['réponse sans jeton', { tenant_id: 't1' }, /refusé/],
@@ -151,7 +164,7 @@ describe('jeton collé et session', () => {
     const { session } = setup()
     session.useToken(token({ sub: 'u', exp: future() }))
     session.expire()
-    expect(session.authenticated).toBe(false)
+    expect(session.token).toBeNull()
     expect(session.notice).toMatch(/session a expiré/)
     session.expire() // sans jeton : sans effet, pas de message écrasé
     expect(session.notice).toMatch(/session a expiré/)

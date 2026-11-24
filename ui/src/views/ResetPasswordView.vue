@@ -13,6 +13,8 @@ const route = useRoute()
 const router = useRouter()
 
 const token = computed(() => (typeof route.query.token === 'string' ? route.query.token : ''))
+/** Arrivé ici depuis la CONNEXION, avec un mot de passe provisoire : le même geste, expliqué autrement (rien n'a été « oublié »). */
+const first = computed(() => route.query.first === '1')
 const password = ref('')
 const confirm = ref('')
 const error = ref<string | null>(null)
@@ -40,7 +42,7 @@ async function submit(): Promise<void> {
   <div class="login-wrap">
     <div class="desk-card login-card">
       <h1>{{ t.login.reset.title }}</h1>
-      <p class="hint">{{ t.login.reset.intro }}</p>
+      <p class="hint" :data-testid="first ? 'reset-first' : undefined">{{ first ? t.login.reset.firstIntro : t.login.reset.intro }}</p>
       <Message v-if="!token" severity="warn" class="banner-error" data-testid="reset-missing">{{ t.login.reset.missing }}</Message>
       <Message v-if="error" severity="error" class="banner-error" data-testid="reset-error">{{ error }}</Message>
       <Message v-if="done" severity="success" data-testid="reset-done">{{ t.login.reset.done }}</Message>

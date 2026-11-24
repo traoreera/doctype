@@ -823,6 +823,7 @@ export const fr = {
     reset: {
       title: 'Nouveau mot de passe',
       intro: 'Choisissez un nouveau mot de passe pour votre compte.',
+      firstIntro: 'Votre mot de passe est provisoire : choisissez le vôtre pour entrer. Il doit être différent du mot de passe provisoire.',
       newPassword: 'Nouveau mot de passe',
       confirm: 'Confirmer le mot de passe',
       mismatch: 'Les deux mots de passe ne sont pas identiques.',

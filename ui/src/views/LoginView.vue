@@ -65,6 +65,8 @@ async function handle(out: LoginOutcome): Promise<void> {
     return
   }
   if (out.status === 'onboarding') return void router.replace({ name: 'onboarding' })
+  // Mot de passe provisoire : pas de session tant qu'il n'a pas choisi le sien. L'écran de réinitialisation fait ce travail.
+  if (out.status === 'password') return void router.replace({ name: 'reset', query: { token: out.token, first: '1' } })
   error.value = out.message
 }
 
