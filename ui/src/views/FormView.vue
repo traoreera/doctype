@@ -26,7 +26,7 @@ import type { FormAction, FormContext } from '@/extensions/types'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
-import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchSource, fieldStates, formTabs, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, resolveLinkFilters, startValues, tabOfField, toPayload, validate, type Row, type Values } from '@/lib/form'
+import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchSource, fieldStates, formTabs, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, resolveLinkFilters, startValues, tabOfField, toPayload, creationPayload, validate, type Row, type Values } from '@/lib/form'
 import { actionLabel, formatTimestamp, relativeTime, stateLabel } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
 import { useServices } from '@/lib/services'
@@ -416,7 +416,7 @@ async function save(): Promise<void> {
   const current = record.value
   const here = () => props.doctype === target.doctype && props.name === target.name
   try {
-    const data = toPayload(m, values.value)
+    const data = target.name === null ? creationPayload(m, values.value) : toPayload(m, values.value)
     if (target.name === null) {
       const rec = isPrompt.value ? await api.create(target.doctype, data, newName.value.trim()) : await api.create(target.doctype, data)
       notify.success(t.form.createdToast)

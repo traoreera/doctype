@@ -323,7 +323,7 @@ class CollaborationService:
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_TAG_SUGGESTIONS:
             raise ValidationFailed(f"limit doit être entre 1 et {MAX_TAG_SUGGESTIONS}")
         read = self._docs._scope(ctx, compiled, "read")
-        coerced = aggregation.validate_filters(compiled, filters)
+        coerced = aggregation.validate_filters(compiled, filters, hidden=self._docs._access(ctx, compiled).hidden)
         async with self._docs._query(ctx) as query:
             items = await query.tag_counts(compiled.definition, filters=coerced, scope=read, q=text, limit=limit)
         return {"items": items}

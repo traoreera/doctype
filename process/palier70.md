@@ -45,7 +45,7 @@ Légende : **✔** fait (palier 20 % ou phase A) · **A-F** planifié au palier 
 | DocType arborescent (Tree) | ◐ (I ; recompte du 22 oct. : rien ne refuse une boucle, pas d'arbre de plus de 200 nœuds) |
 | Renommer un document (et suivre ses liens) | ✔ (H2) |
 | Dupliquer un document | ✔ (H2) |
-| Niveaux de permission par champ (permlevel), masquage de champs | F |
+| Niveaux de permission par champ (permlevel), masquage de champs | ✔ (F, 24 nov. : par GRANT et non par niveau, `process/champs-reserves.md` ; le décompte de ce fichier n'a pas été refait) |
 | Hooks : `before_insert`, `after_insert`, `on_trash`, `after_delete`, `before_cancel`, `on_update_after_submit` | ✔ (H2, avec validate, before_save, after_save, on_submit, on_cancel) |
 | DocType virtuel (données hors base) | ✔ **hors décompte** (c'était ✖ ; fait pour xauth, `process/iam.md`) |
 

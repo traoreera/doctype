@@ -212,6 +212,7 @@ Un montant est un `Decimal`/`Currency` (avec `decimals:`), jamais un `Number` : 
 | Onglets dans le formulaire | `tab:` sur les sections du `layout` |
 | Vues | `views: { kanban, calendar, gantt, dashboard }` |
 | Droits autres que la convention | `permissions: { read: [...], write: [...], create: [...], delete: [...] }` |
+| Champ réservé à certains (un salaire, une marge) | `permissions: { read: [...], write: [...] }` sur le CHAMP : voir 2.8 |
 
 **Droits par convention** (sans bloc `permissions`) : `<module>:<doctype>:read`, `…:write` (créer et modifier), `…:delete`, et pour un
 type soumettable `…:submit` / `…:cancel`. Le nom du type est mis en minuscules, les espaces deviennent `_` (`Stock Entry` →
@@ -386,6 +387,38 @@ xcore-doctype check ./sales/doctypes --owner sales --with ./stock/doctypes    # 
 Puis : lien symbolique dans `app/` (`ln -s ../mon_module app/mon_module`), relance, et attribuez les grants `mon_module:*` à un rôle
 (Paramètres › Système › Rôles). L'organisation qui crée son espace les reçoit d'office.
 
+### 2.8 Réserver un champ (droits par champ)
+
+Masquer un champ dans le Desk (`hidden`, `depends_on`) n'est pas une protection : la valeur reste dans la réponse de l'API. Pour qu'un
+champ ne soit lu ou écrit que par certains, on le dit dans le YAML, et c'est le SERVEUR qui l'applique à chaque porte :
+
+```yaml
+fields:
+  - fieldname: salaire
+    label: Salaire
+    fieldtype: Currency
+    permissions:
+      read:  [mon_module:employe:salaire_lire]        # en plus de pouvoir lire le document
+      write: [mon_module:employe:salaire_ecrire]      # en plus de le lire ; absent : qui le lit l'écrit
+  - { fieldname: echelon, fieldtype: Text, permissions: { write: [mon_module:employe:echelon_ecrire] } }   # lu par tous
+  - { fieldname: primes, fieldtype: Table, options: Prime, permissions: { read: [mon_module:employe:salaire_lire] } }   # la table entière
+```
+
+- Les grants sont déclarés avec les autres par `doctype_grants.for_plugin(...)` : rien à ajouter dans `main.py`. Donnez-les ensuite à
+  un rôle. `[]` ne l'ouvre à personne (seuls vos hooks y écrivent).
+- Qui n'a pas le grant de lecture **ne reçoit pas la valeur** : fiche, liste, historique, corbeille, impression, fichier, connexions.
+  Filtrer, trier, sommer ou regrouper sur ce champ répond `403 field_not_readable`. Écrire un champ réservé sans le grant répond
+  `403 field_not_writable` (API, lot, import CSV) ; enregistrer la fiche ne vide pas ce qu'on ne voit pas, le serveur le garde.
+- `/meta` ne contient pas un champ que l'utilisateur ne lit pas, et marque `access: read | write` ceux qui sont réservés : le Desk
+  suit, sans rien décider.
+- Au chargement, ce qui révélerait le champ par un détour est refusé : il ne peut pas être le titre, le nom, un champ de vue ni une
+  condition de transition ; un calcul, une condition, un `fetch_from` ou un `link_filters` qui le lit doit être au moins aussi réservé.
+- Dans une table, on réserve le champ `Table` du parent, pas une colonne (un champ de ligne refuse `permissions`).
+- Vos **hooks** voient et écrivent tout (c'est là que vit la règle métier). Une **route** de votre plugin qui rend un document passe
+  par `doctype_writer.as_request(request)` pour que ces droits s'appliquent ; `writer.system` et `doctype_documents` voient tout.
+
+Le contrat complet, porte par porte, et ses limites : `process/champs-reserves.md`.
+
 ---
 
 ## 3. Utiliser xcore-doctype
@@ -480,8 +513,9 @@ Toutes les routes sont sous `<plugin_prefix>/xcore-doctype` et exigent `Authoriz
 
 Filtres : un objet JSON, `{"statut": "En cours"}` pour l'égalité, `{"date": [">=", "2026-01-01"]}` sinon (`=`, `!=`, `<`, `>`, `<=`,
 `>=`, `like`, `in` selon le type du champ : pas d'ordre sur un texte, `like` insensible à la casse, `in` jusqu'à 100 valeurs). Les erreurs ont la forme `{"detail": {"code": "…", "msg": "…", "details": [...]}}` ;
-un document hors de vos droits répond 404, comme s'il n'existait pas. Chaque route a sa jumelle en action IPC (`doc.save`, `doc.list`,
-`doc.print`…).
+un document hors de vos droits répond 404, comme s'il n'existait pas. Un champ réservé (2.8) que vous ne lisez pas est absent de `data` ;
+le citer dans un filtre, un tri ou un agrégat répond `403 field_not_readable`, l'écrire `403 field_not_writable`. Chaque route a sa
+jumelle en action IPC (`doc.save`, `doc.list`, `doc.print`…).
 
 ### 3.4 Par le Desk
 
