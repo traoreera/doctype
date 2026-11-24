@@ -143,6 +143,24 @@ export interface PrintOverride {
   example?: DocData
 }
 
+/** L'état d'une tâche de fond du serveur (`jobs.py`). Jamais son contenu : seulement où elle en est. */
+export type JobStatus = 'pending' | 'running' | 'done' | 'failed'
+export interface Job {
+  id: string
+  /** `<plugin>.<tâche>` */
+  name: string
+  key: string | null
+  status: JobStatus
+  attempts: number
+  max_attempts: number
+  /** L'avancement dit par la tâche pendant qu'elle tourne, puis la raison de son dernier échec. */
+  message: string | null
+  owner: string
+  creation: string | null
+  started_at: string | null
+  finished_at: string | null
+}
+
 /** Le document rendu en HTML. `background` : un fond PDF complète ce rendu, mais seulement dans le PDF. */
 export interface PrintedDocument {
   doctype: string

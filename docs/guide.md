@@ -399,6 +399,7 @@ Puis : lien symbolique dans `app/` (`ln -s ../mon_module app/mon_module`), relan
 | `doctype_grants` | la liste des grants de ses DocTypes, prête pour `rbac.declare` (`for_plugin(nom)`) |
 | `doctype_writer` | **écrire** : `await writer.as_request(request)` dans une route du plugin (droits de l'utilisateur), `writer.system(plugin, tenant, raison)` pour une tâche planifiée (seulement les types du plugin) |
 | `doctype_print` | **imprimer un état** (des données calculées, pas un document) : `await printers.as_request(request)` puis `.html(source, data, title=…)` / `.pdf(…)`, voir §2.5 |
+| `doctype_jobs` | **tâches de fond avec reprise** : `register(plugin, tâche, coroutine)` puis `await jobs.enqueue(tenant, "<plugin>.<tâche>", payload, key=…)`, voir ci-dessous |
 | `doctype_documents` | **lire** en contexte système, nommé par sa raison : `system(tenant, raison).list(…) / .get(…)` |
 | `doctype_sources` | brancher une source externe pour un DocType virtuel (`source: <nom>`) |
 | `doctype_channels` | déclarer un **canal de notification** (WhatsApp, SMS…) : `register(plugin, nom, coroutine, listen_all=…)`, voir §3.6 |
@@ -413,6 +414,36 @@ async def reception(request: Request, body: dict):
     entry = await docs.create("Stock Entry", {"purpose": "Réception", "items": body["items"]})
     return await docs.submit("Stock Entry", entry["name"], version=entry["version"])
 ```
+
+#### Un travail long : les tâches de fond
+
+Un hook a un délai. Ce qui est long (installer un plan comptable, une paie en lot, un import) ou sort du système (un courriel)
+se dépose comme **tâche de fond** : exécutée hors de la requête, avec un état lisible, et **reprise après un arrêt du serveur**.
+
+```python
+async def on_load(self):
+    jobs = self.get_service("doctype_jobs")
+    jobs.register(self.ctx.name, "install_chart", self.install_chart, grant="accounts:company:write")
+
+async def install_chart(self, job):            # job.payload, job.tenant_id, job.attempt, job.writer
+    for i, account in enumerate(accounts_of(job.payload["company"])):
+        await job.writer.ensure("Account", account, unique="code")     # REJOUABLE : pas de doublon à la reprise
+        await job.progress(f"{i + 1}/{len(accounts)} comptes")
+
+# depuis un hook d'après-commit ou une route :
+job = await jobs.enqueue(tenant, "accounts.install_chart", {"company": name}, key=f"chart:{name}", owner=user)
+# depuis un hook transactionnel (on_submit…) : la tâche part ou tombe AVEC le document
+await event.tx.enqueue("accounts.send_invoice", {"invoice": event.name}, key=f"mail:{event.name}")
+```
+
+- `key` : tant qu'une tâche de cette clé est en attente ou en cours, `enqueue` la **rend** au lieu d'en créer une autre.
+- États `pending` → `running` → `done` | `failed`. Un essai qui échoue est retenté plus tard (recul doublé à chaque fois), `max_attempts`
+  fois au plus (5 par défaut), reprises après arrêt comprises.
+- `job.writer` est `doctype_writer.system(<plugin>, tenant, "job:<nom>")` : il n'écrit que les types du plugin.
+- Une tâche s'exécute **au moins une fois** : écrivez-la rejouable (`ensure`, un champ `unique`). `job.attempt > 1` signale une reprise.
+- Le payload porte des identifiants (64 Ko au plus) et n'est jamais rendu par l'API.
+- Au Desk : `#/jobs` montre les tâches que l'utilisateur peut voir (les siennes, et celles dont il porte le `grant`) ; `useJob(api, () => id)`
+  du SDK suit une tâche jusqu'à sa fin dans une extension. API : `GET /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/retry`.
 
 ### 3.2 Les hooks
 

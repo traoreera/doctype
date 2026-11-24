@@ -121,6 +121,10 @@ EXPECTED_ROUTES = sorted(
         ("GET", "/devtools/doctype/{doctype}"),
         ("POST", "/devtools/check"),
         ("DELETE", "/doc/{doctype}/{name}"),
+        # Tâches de fond (traoreera/doctype#71) : lire leur état, relancer un échec. Rien ne se dépose par HTTP.
+        ("GET", "/jobs"),
+        ("GET", "/jobs/{job_id}"),
+        ("POST", "/jobs/{job_id}/retry"),
     ]
 )
 

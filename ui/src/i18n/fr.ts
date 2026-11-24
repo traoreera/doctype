@@ -1762,6 +1762,18 @@ export const fr = {
     taken: (label: string) => `« ${label} » est ajouté à votre organisation.`,
     dropped: (label: string) => `« ${label} » est rendu.`,
   },
+  jobs: {
+    title: 'Tâches de fond',
+    empty: 'Aucune tâche de fond à montrer.',
+    refresh: 'Actualiser',
+    retry: 'Relancer',
+    retried: 'Tâche relancée',
+    pending: 'En attente',
+    running: 'En cours',
+    done: 'Terminée',
+    failed: 'Échouée',
+    attempts: (n: number, max: number) => `essai ${n}/${max}`,
+  },
   errors: {
     forbidden: 'Vous n’avez pas le droit d’effectuer cette action',
     unreachable: 'Le serveur est injoignable',

@@ -202,6 +202,7 @@ class DocumentService:
         # émise le 1er janvier à 00 h 30 ne doit pas porter l'année précédente. `clock` est injectable pour les tests.
         self._timezone, self._clock = timezone, clock
         self.files: Any = None  # le `FileService`, posé par le plugin après coup (il a besoin de ce service)
+        self.jobs: Any = None  # les tâches de fond (`jobs.JobService`), posées par le plugin : `event.tx.enqueue` passe par elles
         self.notifications: Any = None  # les règles de notification (`NotificationRules`), posées par le plugin après coup
         self.realtime: Any = NoRealtime()  # les signaux temps réel (`realtime.Realtime` sur ext.pubsub), posés par le plugin s'il y a un bus
         self.flows: Any = NoFlows()  # les flux xflow qui suivent une transition (`flows.FlowLauncher`), posés par le plugin
@@ -1981,6 +1982,8 @@ class DocumentService:
         """Après le commit, ce que les hooks ont écrit dans la transaction : les règles de notification le voient, et les hooks `after_insert` /
         `after_save` des documents écrits s'exécutent (journalisés en cas d'échec, comme ceux d'une écriture ordinaire). Jamais si la transaction échoue."""
         self._dispatch(writes.events)
+        if writes.jobs and self.jobs is not None:
+            self.jobs.wake()  # les tâches déposées dans la transaction sont maintenant visibles de l'exécuteur
         await self.realtime.doc_changed(ctx.tenant_id, {e.doctype for e in writes.events})  # ce que les hooks ont écrit change aussi à l'écran
         for compiled, doc, old in writes.saved:
             await self._after_hooks(ctx, compiled, doc, old)
@@ -3172,10 +3175,12 @@ class _TxWrites:
 
     events: list[DocEvent] = field(default_factory=list)
     saved: list[tuple[CompiledDocType, StoredDoc, Mapping[str, Any] | None]] = field(default_factory=list)
+    jobs: bool = False  # une tâche de fond a été déposée (`tx.enqueue`) : l'exécuteur est réveillé au commit
 
     def extend(self, other: _TxWrites) -> None:
         self.events += other.events
         self.saved += other.saved
+        self.jobs = self.jobs or other.jobs
 
 
 class _Readings:
@@ -3291,6 +3296,16 @@ class _Transaction(_Readings):
         doc = await self._q.insert(doctype, known or secrets.token_hex(6), clean)
         await self._done(compiled, doc, None, "create")
         return self._svc._present(doc)
+
+    async def enqueue(self, job: str, payload: Mapping[str, Any] | None = None, *, key: str | None = None, delay: float = 0.0) -> dict[str, Any]:
+        """Dépose une tâche de fond DANS cette transaction (traoreera/doctype#71) : elle existe si et seulement si le document est
+        validé. Un courriel « après soumission » ne part donc jamais pour un document resté brouillon, et n'est jamais perdu si le
+        processus meurt juste après le commit — c'est l'exécuteur, plus tard, qui le prend dans la base."""
+        if self._svc.jobs is None:
+            raise DoctypeError("jobs_unavailable", "Les tâches de fond ne sont pas disponibles sur cette installation", status=503)
+        made = await self._svc.jobs.enqueue_in(self._q._session, self._ctx.tenant_id, job, payload, key=key, owner=self._ctx.owner_id, delay=delay)
+        self.writes.jobs = True  # au commit : réveiller l'exécuteur plutôt que d'attendre son prochain tour
+        return made
 
     async def ensure(self, doctype: str, name: str, data: Mapping[str, Any]) -> bool:
         compiled = self._writable(doctype)

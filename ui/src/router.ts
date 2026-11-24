@@ -50,6 +50,8 @@ export function createDeskRouter(pinia: Pinia): Router {
       { path: '/settings/~automations', redirect: { name: 'automations' } },
       // Les fichiers des documents que je peux lire (champs Image/Attach, pièces jointes) : lister, télécharger, détacher.
       { path: '/files', name: 'files', component: () => import('@/views/FilesView.vue') },
+      // Les tâches de fond du serveur que je peux voir (une installation longue, un envoi) : leur état, et relancer un échec.
+      { path: '/jobs', name: 'jobs', component: () => import('@/views/JobsView.vue') },
       { path: '/api/:doctype?', name: 'api-docs', component: () => import('@/views/ApiDocsView.vue'), props: true },
       { path: '/dev/doctype/:doctype?', name: 'dev-doctype', component: () => import('@/views/DoctypeBuilderView.vue'), props: true },
       { path: '/customize/:doctype', name: 'customize', component: () => import('@/views/FormBuilderView.vue'), props: true },

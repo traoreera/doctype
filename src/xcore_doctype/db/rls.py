@@ -24,11 +24,14 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..errors import ConfigurationError
-from .tables import SystemTables
+from .tables import JOB_TABLE, SystemTables
 
 POLICY = "xdt_tenant_isolation"
 SETTING = "xdt.tenant_id"
 _PREDICATE = f"tenant_id = current_setting('{SETTING}', true)"
+
+
+RLS_EXEMPT = frozenset({JOB_TABLE})
 
 
 async def ensure_rls(db: Any, tables: SystemTables, dialect: str) -> list[str]:
@@ -38,7 +41,10 @@ async def ensure_rls(db: Any, tables: SystemTables, dialect: str) -> list[str]:
             f"doctype.rls est vrai mais la base est {dialect!r} : la RLS n'existe que sur PostgreSQL. "
             "Désactivez doctype.rls (la couche de requêtes isole déjà les tenants) ou utilisez PostgreSQL"
         )
-    names = [t.name for t in tables.metadata.sorted_tables]
+    # `xdt_job` reste HORS de la RLS : l'exécuteur des tâches de fond découvre ce qui est prêt tous tenants confondus (il n'agit
+    # pour personne), et une politique par tenant rendrait cette découverte — donc la reprise après un arrêt — impossible. Son
+    # isolation est celle de la couche de requêtes (`jobs.JobStore._scope`), comme pour toute installation sans RLS.
+    names = [t.name for t in tables.metadata.sorted_tables if t.name not in RLS_EXEMPT]
     try:
         async with db.session() as session:
             role = (

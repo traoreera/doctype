@@ -54,6 +54,14 @@ doctype:
     provider: xauth # xauth | none
     email: true
     # desk_url: https://erp.example.com/app/xcore-doctype/desk/
+  # Tâches de fond (jobs.py) : un travail trop long pour un hook, déposé par `doctype_jobs.enqueue` ou `event.tx.enqueue`, exécuté par
+  # CE processus et repris après un arrêt (le bail `lease_seconds` d'un processus mort expire, un autre reprend la tâche).
+  # `enabled: false` : ce processus dépose mais n'exécute pas (un autre s'en charge).
+  # jobs:
+  #   enabled: true
+  #   poll_seconds: 2
+  #   lease_seconds: 120
+  #   max_parallel: 2
   # Le Desk (interface Vue, voir ui/) est servi sous <préfixe du plugin>/desk/. Routes publiques : fichiers statiques seulement.
   desk:
     enabled: true

@@ -1759,6 +1759,18 @@ export const en: Messages = {
     taken: (label: string) => `“${label}” has been added to your organisation.`,
     dropped: (label: string) => `“${label}” has been returned.`,
   },
+  jobs: {
+    title: 'Background jobs',
+    empty: 'No background job to show.',
+    refresh: 'Refresh',
+    retry: 'Retry',
+    retried: 'Job relaunched',
+    pending: 'Pending',
+    running: 'Running',
+    done: 'Done',
+    failed: 'Failed',
+    attempts: (n: number, max: number) => `attempt ${n}/${max}`,
+  },
   errors: {
     forbidden: 'You are not allowed to perform this action',
     unreachable: 'The server cannot be reached',

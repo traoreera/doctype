@@ -143,6 +143,11 @@ class HookTransaction(Protocol):
     async def ensure(self, doctype: str, name: str, data: Mapping[str, Any]) -> bool:
         """Crée le document s'il n'existe pas, atomiquement (vrai si c'est cet appel qui l'a créé). Ne modifie jamais l'existant."""
 
+    async def enqueue(self, job: str, payload: Mapping[str, Any] | None = None, *, key: str | None = None, delay: float = 0.0) -> dict[str, Any]:
+        """Dépose une tâche de fond (`<plugin>.<tâche>`, déclarée par `doctype_jobs.register`) DANS cette transaction : elle part
+        ou tombe avec le document. `key` : pas deux tâches actives de la même clé. Pour ce qui est long ou sort du système
+        (un courriel, un appel externe) et ne doit ni bloquer la soumission ni partir pour un document annulé."""
+
     async def update(self, doctype: str, name: str, data: Mapping[str, Any], version: int) -> dict[str, Any]:
         """Remplace le contenu d'un document, avec le contrôle de version habituel (409 si le document a changé). Un document SOUMIS ne laisse
         changer que ses champs `allow_on_submit` (un autre champ changé : 500 `hook_invalid_write`) et son `on_update_after_submit` tourne ;
