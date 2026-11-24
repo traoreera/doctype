@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { describeError, useNotify } from '@/composables/useNotify'
+import { useNotify } from '@/composables/useNotify'
 import { PROFILE_DOCTYPE, useProfile } from '@/stores/profile'
 import { useSession } from '@/stores/session'
 
@@ -17,7 +17,7 @@ onMounted(async () => {
     if (me && (await profile.exists())) await router.replace({ name: 'form', params: { doctype: PROFILE_DOCTYPE, name: me } })
     else await router.replace({ name: 'new', params: { doctype: PROFILE_DOCTYPE } })
   } catch (e) {
-    notify.error(describeError(e))
+    notify.error(e)
     await router.replace({ name: 'home' })
   }
 })
