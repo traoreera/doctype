@@ -18,6 +18,8 @@ import { SERVICES } from '@/lib/services'
 import type { DocRecord } from '@/lib/types'
 import type { HttpRequest, Transport } from '@/lib/transport'
 import FormView from '@/views/FormView.vue'
+import ListView from '@/views/ListView.vue'
+import { listProps } from '@/router'
 import { defineExtension, useDesk } from '@/shared/sdk'
 import { CUSTOMER } from './fixtures'
 import { menuItem, openMore } from './menu'
@@ -126,6 +128,40 @@ describe('ce que le Desk lit de l’hôte', () => {
     const d = host.handle('sales')
     d.list.action({ doctype: '*', label: 'Partout', when: ({ doctype }) => doctype === 'Invoice', run: () => {} })
     expect(host.hasListActions({ doctype: 'Invoice', meta: CUSTOMER })).toBe(true)
+    expect(host.hasListActions({ doctype: 'Customer', meta: CUSTOMER })).toBe(false)
+  })
+
+  it('`selection` sépare les deux sortes d’actions de liste, et c’est un vocabulaire fermé', () => {
+    const { host } = makeHost()
+    const d = host.handle('sales')
+    d.list.action({ doctype: 'Customer', label: 'Grouper', run: () => {} }) // sans `selection` : l'ancien comportement
+    d.list.action({ doctype: 'Customer', label: 'Importer', selection: 'none', run: () => {} })
+    const ctx = { doctype: 'Customer', meta: CUSTOMER, names: ['c1'] }
+    // La barre groupée ne montre que ce qui porte sur les documents cochés ; la liste, que ce qui ne demande rien.
+    expect(host.listActions(ctx).map((a) => a.label)).toEqual(['Grouper'])
+    expect(host.listPageActions(ctx).map((a) => a.label)).toEqual(['Importer'])
+    expect(() => d.list.action({ doctype: 'Customer', label: 'X', selection: 'toutes' as never, run: () => {} })).toThrow(/selection/)
+  })
+
+  it('une action de LIGNE se juge sur CE document, et la colonne n’existe que si le type en a', () => {
+    const { host } = makeHost()
+    const d = host.handle('sales')
+    d.list.rowAction({ doctype: 'Customer', label: 'Relancer', run: () => {} })
+    d.list.rowAction({ doctype: 'Customer', label: 'Rouvrir', when: ({ record }) => record.docstatus === 2, run: () => {} })
+    d.list.rowAction({ doctype: 'Invoice', label: 'Ailleurs', run: () => {} })
+    const row = (docstatus: number): DocRecord => ({ doctype: 'Customer', name: 'c1', owner: 'u', creation: '2026-01-01T00:00:00+00:00', modified: '2026-01-01T00:00:00+00:00', version: 1, docstatus, amended_from: null, data: {} })
+    expect(host.rowActions({ doctype: 'Customer', meta: CUSTOMER, record: row(0) }).map((a) => a.label)).toEqual(['Relancer'])
+    expect(host.rowActions({ doctype: 'Customer', meta: CUSTOMER, record: row(2) }).map((a) => a.label)).toEqual(['Relancer', 'Rouvrir'])
+    // La colonne se décide SANS document (il y a une ligne par document) : elle existe dès que le type est visé.
+    expect(host.hasRowActions({ doctype: 'Customer', meta: CUSTOMER })).toBe(true)
+    expect(host.hasRowActions({ doctype: 'Order', meta: CUSTOMER })).toBe(false)
+    expect(() => d.list.rowAction({ doctype: 'Customer', label: '', run: () => {} })).toThrow(/rowAction/)
+  })
+
+  it('une action qui ne lit pas la sélection n’offre JAMAIS les cases à cocher', () => {
+    const { host } = makeHost()
+    host.handle('sales').list.action({ doctype: 'Customer', label: 'Importer', selection: 'none', run: () => {} })
+    // Cocher ne lui servirait à rien : la colonne de cases resterait là sans raison.
     expect(host.hasListActions({ doctype: 'Customer', meta: CUSTOMER })).toBe(false)
   })
 
@@ -311,6 +347,101 @@ describe('les composants des extensions dans le Desk', () => {
     await router.push('/app/Customer/c2')
     await flushPromises()
     expect(w.find('[data-testid="balance"]').text()).toBe('encours de c2 : sales')
+    w.unmount()
+  })
+
+  it('la LISTE montre les actions qui ne demandent aucune sélection : un bouton si `primary`, sinon le menu « ⋯ »', async () => {
+    const api = {
+      meta: vi.fn(async () => CUSTOMER),
+      list: vi.fn(async () => ({ items: [], total: 0, limit: 20, offset: 0 })),
+      aggregate: vi.fn(async () => ({ group: null, metrics: [], rows: [], truncated: false })),
+      listViews: vi.fn(async () => []),
+      tagsUsed: vi.fn(async () => false),
+    }
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/app/:doctype', name: 'list', component: ListView, props: listProps },
+        { path: '/app/:doctype/new', name: 'new', component: Dummy },
+        { path: '/app/:doctype/:name', name: 'form', component: Dummy },
+      ],
+    })
+    const { host } = makeHost(router)
+    const seen: unknown[] = []
+    const d = host.handle('sales')
+    d.list.action({ doctype: 'Customer', label: 'Importer', selection: 'none', primary: true, run: (ctx) => void seen.push(['bouton', ctx.doctype, [...ctx.names]]) })
+    d.list.action({ doctype: 'Customer', label: 'Synchroniser', selection: 'none', run: (ctx) => void seen.push(['menu', ctx.doctype]) })
+    d.list.action({ doctype: 'Customer', label: 'Grouper', run: () => void seen.push(['groupée']) })
+    await router.push('/app/Customer')
+    const w = mount(defineComponent({ render: () => h(RouterView) }), {
+      attachTo: document.body,
+      global: {
+        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
+        provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api }, [EXTENSIONS as symbol]: host },
+      },
+    })
+    await flushPromises()
+
+    // Rien n'est coché, et pourtant les deux sont là : c'est tout l'objet de `selection: 'none'`.
+    await w.find('[data-testid="ext-action-sales-Importer"]').trigger('click')
+    await openMore(w)
+    menuItem('ext-action-sales-Synchroniser')!.click()
+    await flushPromises()
+    expect(seen).toEqual([['bouton', 'Customer', []], ['menu', 'Customer']])
+
+    // L'action de SÉLECTION, elle, n'a rien à faire ici : elle attend qu'on coche (barre groupée).
+    expect(w.find('[data-testid="ext-action-sales-Grouper"]').exists()).toBe(false)
+    await openMore(w)
+    expect(menuItem('ext-action-sales-Grouper')).toBeNull()
+    w.unmount()
+  })
+
+  it('chaque LIGNE a son menu d’actions, et l’action reçoit CE document', async () => {
+    const rows = [
+      { doctype: 'Customer', name: 'c1', owner: 'u', creation: '2026-01-01T00:00:00+00:00', modified: '2026-01-01T00:00:00+00:00', version: 1, docstatus: 0, amended_from: null, data: { customer_name: 'Acme' } },
+      { doctype: 'Customer', name: 'c2', owner: 'u', creation: '2026-01-01T00:00:00+00:00', modified: '2026-01-01T00:00:00+00:00', version: 1, docstatus: 2, amended_from: null, data: { customer_name: 'Globex' } },
+    ] as DocRecord[]
+    const api = {
+      meta: vi.fn(async () => CUSTOMER),
+      list: vi.fn(async () => ({ items: rows, total: 2, limit: 20, offset: 0 })),
+      aggregate: vi.fn(async () => ({ group: null, metrics: [], rows: [], truncated: false })),
+      listViews: vi.fn(async () => []),
+      tagsUsed: vi.fn(async () => false),
+    }
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/app/:doctype', name: 'list', component: ListView, props: listProps },
+        { path: '/app/:doctype/new', name: 'new', component: Dummy },
+        { path: '/app/:doctype/:name', name: 'form', component: Dummy },
+      ],
+    })
+    const { host } = makeHost(router)
+    const seen: unknown[] = []
+    const d = host.handle('sales')
+    d.list.rowAction({ doctype: 'Customer', label: 'Relancer', run: (ctx) => void seen.push(ctx.record.name) })
+    // Celle-ci ne vaut que pour un document ANNULÉ : la première ligne ne doit pas l'offrir.
+    d.list.rowAction({ doctype: 'Customer', label: 'Rouvrir', when: ({ record }) => record.docstatus === 2, run: (ctx) => void seen.push(`rouvrir ${ctx.record.name}`) })
+    await router.push('/app/Customer')
+    const w = mount(defineComponent({ render: () => h(RouterView) }), {
+      attachTo: document.body,
+      global: {
+        plugins: [PrimeVue, ToastService, ConfirmationService, createPinia(), router],
+        provide: { [SERVICES as symbol]: { transport: {}, config: { baseUrl: '', loginUrl: null }, api }, [EXTENSIONS as symbol]: host },
+      },
+    })
+    await flushPromises()
+
+    await w.find('[data-testid="row-actions-c2"]').trigger('click')
+    await flushPromises()
+    menuItem('ext-row-sales-Rouvrir')!.click()
+    await w.find('[data-testid="row-actions-c1"]').trigger('click')
+    await flushPromises()
+    // Le MÊME menu sert les deux lignes : son contenu est celui de la ligne ouverte en dernier.
+    expect(menuItem('ext-row-sales-Rouvrir')).toBeNull()
+    menuItem('ext-row-sales-Relancer')!.click()
+    await flushPromises()
+    expect(seen).toEqual(['rouvrir c2', 'c1'])
     w.unmount()
   })
 

@@ -51,6 +51,30 @@ try {
     await page.waitForURL(/#\/app\/Invoice\/new\?customer=/)
   }, page)
 
+  await r.step('une action de LISTE qui ne demande aucune sélection est un bouton, sans rien cocher', async () => {
+    await page.goto(`${cfg.desk}#/app/Invoice`)
+    await page.getByTestId('list-title').waitFor()
+    // Rien n'est coché — et la barre groupée n'existe donc pas. C'est tout l'objet de `selection: 'none'`.
+    assert(!(await page.getByTestId('selection-bar').isVisible()), 'aucune ligne cochée : la barre groupée ne doit pas être là')
+    await page.getByTestId('ext-action-sales-Synthèse').click()
+    await page.waitForURL(/#\/x\/sales\/overview$/)
+  }, page)
+
+  await r.step('une action de LIGNE ouvre le menu de CETTE ligne et reçoit son document', async () => {
+    const item = await api(cfg, 'POST', '/doc/Item', { data: { item_name: 'Vis inox', uom: 'pcs' } })
+    const client = await api(cfg, 'POST', '/doc/Customer', { data: { customer_name: 'Durand', type: 'Particulier' } })
+    const made = await api(cfg, 'POST', '/doc/Invoice', {
+      data: { customer: client.json.name, posting_date: '2026-11-24', items: [{ item: item.json.name, qty: 1, rate: 10 }] },
+    })
+    assert(made.status === 201, `facture : ${made.status} ${JSON.stringify(made.json)}`)
+
+    await page.goto(`${cfg.desk}#/app/Invoice`)
+    await page.getByTestId(`row-actions-${made.json.name}`).click()
+    await page.getByTestId('ext-row-sales-Ouvrir le client').click()
+    await page.waitForURL(new RegExp(`#/app/Customer/${client.json.name}$`))
+    await r.shot(page, 'ext-03-row-action')
+  }, page)
+
   await r.step('la barre de commande propose la commande de l’extension', async () => {
     await page.goto(`${cfg.desk}#/`)
     await page.keyboard.press('Control+k')

@@ -102,11 +102,44 @@ export interface ListContext {
 }
 
 export interface ListAction {
+  /** Le type de document visé, ou `*` pour tous. */
   doctype: string
   label: string
   icon?: string
+  /**
+   * Ce que l'action a besoin qu'on COCHE.
+   *
+   * `some` (le défaut, et l'ancien comportement) : elle porte sur les documents cochés, et n'apparaît donc que dans la
+   * barre groupée. `none` : elle ne demande aucune sélection et vit sur la LISTE elle-même — un bouton si `primary`,
+   * sinon le menu « ⋯ » —, donc atteignable sans rien cocher ; `names` est alors vide. Sans ce second cas, une action
+   * qui ne porte sur aucun document en particulier (ouvrir un écran, lancer une synchronisation, importer d'ailleurs)
+   * n'avait aucune place dans une liste.
+   */
+  selection?: 'some' | 'none'
+  /** Rangée dans la barre de la liste plutôt que dans le menu « ⋯ ». Sans effet sur une action de sélection, qui vit dans la barre groupée. */
+  primary?: boolean
+  danger?: boolean
+  /** Montrer ou cacher : ne protège rien, le serveur juge chaque appel. */
   when?(ctx: ListContext): boolean
   run(ctx: ListContext & Tools & { reload(): void }): unknown
+}
+
+export interface RowContext {
+  doctype: string
+  meta: DocTypeMeta
+  /** LE document de la ligne — pas une sélection : c'est toute la différence avec une `ListAction`. */
+  record: DocRecord
+}
+
+export interface RowAction {
+  /** Le type de document visé, ou `*` pour tous. */
+  doctype: string
+  label: string
+  icon?: string
+  danger?: boolean
+  /** Montrer ou cacher, pour CETTE ligne (son état, son propriétaire…) : ne protège rien, le serveur juge chaque appel. */
+  when?(ctx: RowContext): boolean
+  run(ctx: RowContext & Tools & { reload(): void }): unknown
 }
 
 export interface RouteContribution {
@@ -145,7 +178,8 @@ export interface DeskHandle {
   routes: { add(route: RouteContribution): void }
   sidebar: { add(link: SidebarLink): void }
   form: { action(action: FormAction): void; panel(panel: FormPanel): void }
-  list: { action(action: ListAction): void }
+  /** `action` : sur la liste ou les documents cochés (voir `ListAction.selection`). `rowAction` : sur UNE ligne, dans son menu « ⋯ ». */
+  list: { action(action: ListAction): void; rowAction(action: RowAction): void }
   /** Un bloc d'espace `{ type: extension, component: <plugin>.<nom> }` ; le composant reçoit `props` (et `label`). */
   blocks: { add(name: string, component: Component): void }
   commands: { add(command: CommandContribution): void }

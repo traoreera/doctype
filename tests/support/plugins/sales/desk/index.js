@@ -62,6 +62,24 @@ export default defineExtension({
       when: ({ record }) => !!record,
       run: ({ record, router }) => router.push({ name: 'new', params: { doctype: 'Invoice' }, query: { customer: record.name } }),
     })
+    // Une action sur la LISTE qui ne porte sur aucun document en particulier : elle ouvre la synthèse. `selection: 'none'`
+    // la rend atteignable sans rien cocher (`primary` : un bouton de la barre, sinon le menu « ⋯ »).
+    desk.list.action({
+      doctype: 'Invoice',
+      label: 'Synthèse',
+      icon: 'chart-bar',
+      selection: 'none',
+      primary: true,
+      run: ({ router }) => router.push('/x/sales/overview'),
+    })
+    // Une action sur UNE ligne : elle reçoit CE document, et ouvre le client de cette facture.
+    desk.list.rowAction({
+      doctype: 'Invoice',
+      label: 'Ouvrir le client',
+      icon: 'user',
+      when: ({ record }) => typeof record.data.customer === 'string',
+      run: ({ record, router }) => router.push({ name: 'form', params: { doctype: 'Customer', name: record.data.customer } }),
+    })
     desk.routes.add({ path: 'overview', title: 'Synthèse des ventes', component: Overview })
     desk.sidebar.add({ workspace: 'sales', label: 'Synthèse', icon: 'chart-bar', to: '/x/sales/overview' })
     desk.commands.add({ label: 'Synthèse des ventes', icon: 'chart-bar', keywords: 'ventes resume', run: ({ router }) => router.push('/x/sales/overview') })

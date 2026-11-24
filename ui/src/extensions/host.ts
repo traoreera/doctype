@@ -22,6 +22,8 @@ import {
   type PluginClient,
   type RealtimeHandle,
   type RouteContribution,
+  type RowAction,
+  type RowContext,
   type SidebarLink,
   type Tools,
 } from './types'
@@ -70,6 +72,7 @@ export class ExtensionHost {
   readonly formActionItems = shallowReactive<Owned<FormAction>[]>([])
   readonly formPanelItems = shallowReactive<Owned<FormPanel>[]>([])
   readonly listActionItems = shallowReactive<Owned<ListAction>[]>([])
+  readonly rowActionItems = shallowReactive<Owned<RowAction>[]>([])
   readonly sidebarItems = shallowReactive<Owned<SidebarLink>[]>([])
   readonly commandItems = shallowReactive<Owned<CommandContribution>[]>([])
   readonly routeItems = shallowReactive<Owned<RouteContribution & { fullPath: string }>[]>([])
@@ -173,7 +176,13 @@ export class ExtensionHost {
       list: {
         action(action: ListAction) {
           need(text(action?.label) && typeof action.doctype === 'string' && typeof action.run === 'function', 'list.action : doctype, libellé et run attendus')
+          // Vocabulaire FERMÉ : une valeur inventée rangerait l'action nulle part, et personne ne verrait pourquoi.
+          need(action.selection === undefined || action.selection === 'some' || action.selection === 'none', "list.action : `selection` vaut 'some' ou 'none'")
           add(host.listActionItems, { ...action, extension: name })
+        },
+        rowAction(action: RowAction) {
+          need(text(action?.label) && typeof action.doctype === 'string' && typeof action.run === 'function', 'list.rowAction : doctype, libellé et run attendus')
+          add(host.rowActionItems, { ...action, extension: name })
         },
       },
       blocks: {
@@ -227,13 +236,37 @@ export class ExtensionHost {
     return this.formPanelItems.filter((p) => matches(p.doctype, ctx.doctype) && shown(p, ctx))
   }
 
+  /** Les actions qui portent sur les documents COCHÉS (la barre groupée). Celles qui ne demandent rien sont ailleurs (`listPageActions`). */
   listActions(ctx: ListContext): Owned<ListAction>[] {
-    return this.listActionItems.filter((a) => matches(a.doctype, ctx.doctype) && shown(a, ctx))
+    return this.listActionItems.filter((a) => (a.selection ?? 'some') === 'some' && matches(a.doctype, ctx.doctype) && shown(a, ctx))
+  }
+
+  /**
+   * Les actions de la LISTE elle-même (`selection: 'none'`) : un bouton de la barre si `primary`, sinon le menu « ⋯ ».
+   * Atteignables sans rien cocher, à la façon des actions de fiche.
+   */
+  listPageActions(ctx: ListContext): Owned<ListAction>[] {
+    return this.listActionItems.filter((a) => a.selection === 'none' && matches(a.doctype, ctx.doctype) && shown(a, ctx))
+  }
+
+  /** Les actions d'UNE ligne (son menu « ⋯ ») : `when` est jugé sur CE document. */
+  rowActions(ctx: RowContext): Owned<RowAction>[] {
+    return this.rowActionItems.filter((a) => matches(a.doctype, ctx.doctype) && shown(a, ctx))
+  }
+
+  /**
+   * Ce type a-t-il des actions de ligne ? La colonne qui les porte n'existe que si oui — une colonne vide par ligne
+   * serait de la place prise pour rien. `when` n'est pas jugé ici (il demande un document) : la colonne peut donc
+   * exister pour des lignes dont aucune action ne s'affiche, et chaque ligne sans action ne montre pas de bouton.
+   */
+  hasRowActions(ctx: Omit<RowContext, 'record'>): boolean {
+    return this.rowActionItems.some((a) => matches(a.doctype, ctx.doctype))
   }
 
   /** Un type a-t-il des actions de liste d'extension (pour offrir la sélection même sans droit d'écriture) ? */
   hasListActions(ctx: Omit<ListContext, 'names'>): boolean {
     // `when` est évalué avec une sélection VIDE : une action qui se cache pour ce type n'offre pas, à elle seule, les cases à cocher.
+    // Une action `selection: 'none'` n'en offre JAMAIS : elle ne lit pas ce qui est coché, les cases ne lui serviraient à rien.
     return this.listActions({ ...ctx, names: [] }).length > 0
   }
 
