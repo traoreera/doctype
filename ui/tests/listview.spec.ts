@@ -7,6 +7,7 @@ import ToastService from 'primevue/toastservice'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { listProps } from '@/router'
+import { readListColumns, writeListColumns } from '@/lib/viewprefs'
 import ListView from '@/views/ListView.vue'
 import { SERVICES } from '@/lib/services'
 import type { DocTypeMeta, SavedView } from '@/lib/types'
@@ -71,6 +72,73 @@ async function open(path: string, metas: Record<string, DocTypeMeta> = { Task: T
   await flushPromises()
   return { w, router: real, list, aggregate }
 }
+
+describe('choisir ses colonnes', () => {
+  /** Les en-têtes de la table, dans l'ordre, sans les colonnes que la liste pose d'elle-même. */
+  const headers = (w: ReturnType<typeof mount>): string[] =>
+    w.findAll('th').map((th) => th.text()).filter((h) => h && !['', 'Modifié', 'État', 'Numéro'].includes(h))
+
+  it('le type décide par défaut, et le choix de l’appareil est relu à la visite suivante', async () => {
+    const first = await open('/app/Task')
+    expect(headers(first.w)).toEqual(['Titre', 'Heures'])
+
+    // Le geste de l'utilisateur : il ne garde que « Titre ».
+    const select = first.w.findComponent({ name: 'MultiSelect' })
+    await select.setValue(['title'])
+    await flushPromises()
+    expect(headers(first.w)).toEqual(['Titre'])
+    first.w.unmount()
+    document.body.innerHTML = ''
+
+    // Une autre visite, même appareil : son choix est encore là (localStorage, comme celui du rapport).
+    const again = await open('/app/Task')
+    expect(headers(again.w)).toEqual(['Titre'])
+  })
+
+  it('« Colonnes du type » oublie le choix, pour cette visite et les suivantes', async () => {
+    const { w } = await open('/app/Task')
+    await w.findComponent({ name: 'MultiSelect' }).setValue(['hours'])
+    await flushPromises()
+    expect(headers(w)).toEqual(['Heures'])
+    await w.find('[data-testid="list-columns-reset"]').trigger('click')
+    await flushPromises()
+    expect(headers(w)).toEqual(['Titre', 'Heures'])
+    expect(readListColumns('Task')).toBeNull()
+  })
+
+  it('l’ORDRE des colonnes est celui du choix, pas celui des champs du type', async () => {
+    // PrimeVue ajoute une option cochée À LA FIN du modèle : l'ordre est donc celui des clics, et décocher
+    // puis recocher suffit à réordonner. Trier le modèle (par champ, par libellé) le casserait en silence.
+    const { w } = await open('/app/Task')
+    await w.findComponent({ name: 'MultiSelect' }).setValue(['hours', 'title'])
+    await flushPromises()
+    expect(headers(w)).toEqual(['Heures', 'Titre'])
+  })
+
+  it('tout décocher revient aux colonnes du type : jamais une table sans colonne', async () => {
+    const { w } = await open('/app/Task')
+    await w.findComponent({ name: 'MultiSelect' }).setValue([])
+    await flushPromises()
+    expect(headers(w)).toEqual(['Titre', 'Heures'])
+  })
+
+  it('un champ que le type n’a plus est ignoré, et la liste s’ouvre quand même', async () => {
+    writeListColumns('Task', ['title', 'parti'])
+    const { w } = await open('/app/Task')
+    expect(headers(w)).toEqual(['Titre'])
+  })
+
+  it('une vue sauvegardée l’emporte sur le choix de l’appareil', async () => {
+    writeListColumns('Task', ['hours'])
+    const views: SavedView[] = [{
+      name: 'v1', label: 'À faire', kind: 'list', is_default: true, owner: 'me',
+      creation: '2026-10-17T00:00:00+00:00', modified: '2026-10-17T00:00:00+00:00',
+      config: { columns: ['title'], filters: {}, order_by: 'modified', descending: true },
+    }]
+    const { w } = await open('/app/Task', { Task: TASK }, { listViews: vi.fn(async () => views) })
+    expect(headers(w)).toEqual(['Titre'])
+  })
+})
 
 describe('la page d’un type : le choix de la vue', () => {
   it('un type qui ne propose que la liste n’affiche pas de sélecteur', async () => {

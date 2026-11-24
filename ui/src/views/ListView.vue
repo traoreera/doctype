@@ -8,6 +8,7 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import InputText from 'primevue/inputtext'
 import Menu from 'primevue/menu'
+import MultiSelect from 'primevue/multiselect'
 import Message from 'primevue/message'
 import Paginator from 'primevue/paginator'
 import Skeleton from 'primevue/skeleton'
@@ -43,8 +44,10 @@ import { useServices } from '@/lib/services'
 import { sidebarFields } from '@/lib/sidebar'
 import { TAG_FILTER, sameTag, supportsTags, tagFilterLabel, type TagFilter } from '@/lib/tags'
 import { unitLinks, unitOf } from '@/lib/units'
+import type { ListContext } from '@/extensions/types'
+import { piIcon } from '@/lib/icons'
 import type { DocRecord, DocTypeMeta, FieldMeta, Filters, LayoutScope, SavedView, ViewName } from '@/lib/types'
-import { pickView, readView, writeView } from '@/lib/viewprefs'
+import { pickView, readListColumns, readView, writeListColumns, writeView } from '@/lib/viewprefs'
 import { useFiles } from '@/stores/files'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -131,6 +134,34 @@ const columns = computed<FieldMeta[]>(() => {
   const names = viewColumns.value ?? m.list_columns
   return names.map((n) => m.fields.find((f) => f.fieldname === n)).filter((f): f is FieldMeta => !!f)
 })
+/**
+ * CHOISIR ses colonnes. Le serveur savait déjà les stocker dans une vue sauvegardée (`config.columns`, validées) et la liste
+ * savait les lire : il ne manquait que le geste. Les choix offerts sont les CHAMPS du type (ni cachés, ni Table) — ceux dont
+ * `list_columns` est tiré ; la table montre déjà le numéro, l'état et la date de modification à part, les offrir ici les
+ * imprimerait deux fois. Le choix tient sur l'appareil (`viewprefs`, comme celui du rapport, sous sa propre clé) et une vue
+ * sauvegardée l'emporte quand elle s'applique.
+ */
+const columnChoices = computed(() =>
+  (meta.value?.fields ?? [])
+    .filter((f) => !f.hidden && f.fieldtype !== 'Table')
+    .map((f) => ({ value: f.fieldname, label: f.label ?? f.fieldname })),
+)
+const defaultColumns = (): string[] => meta.value?.list_columns ?? []
+const chosenColumns = computed<string[]>({
+  get: () => columns.value.map((f) => f.fieldname),
+  set: (names) => {
+    const known = new Set(columnChoices.value.map((c) => c.value))
+    const kept = names.filter((n) => known.has(n))
+    // Aucune colonne cochée : on revient à celles du type plutôt que de servir une table sans colonne.
+    viewColumns.value = kept.length ? kept : null
+    writeListColumns(props.doctype, kept)
+  },
+})
+const customColumns = computed(() => chosenColumns.value.join() !== defaultColumns().join())
+function resetColumns(): void {
+  viewColumns.value = null
+  writeListColumns(props.doctype, [])
+}
 /** Un DocType numéroté (factures, mouvements) montre son numéro en première colonne : sans lui, deux lignes ne se distinguent pas. */
 const numbered = computed(() => hasReadableName(meta.value))
 const canCreate = computed(() => meta.value?.rights.create !== 'none')
@@ -209,7 +240,7 @@ function applyView(v: SavedView): void {
 /** Revient à la liste « nue » : tri par défaut, colonnes du type, aucun filtre. */
 function clearView(): void {
   activeView.value = null
-  viewColumns.value = null
+  resetColumns() // « nue » veut dire les colonnes du type, y compris pour les prochaines visites
   filterRows.value = []
   status.value = null
   quick.value = ''
@@ -462,6 +493,9 @@ async function open(): Promise<void> {
     if (current.value !== 'list') loading.value = false
     return
   }
+  // Pas de vue par défaut : les colonnes que CET appareil avait choisies pour ce type (filtrées par ce que le type a encore).
+  const remembered = readListColumns(props.doctype)?.filter((n) => meta.value!.fields.some((f) => f.fieldname === n && !f.hidden && f.fieldtype !== 'Table'))
+  if (remembered?.length) viewColumns.value = remembered
   if (current.value === 'list') await fetchPage()
   else loading.value = false
 }
@@ -555,6 +589,41 @@ function onRowClick(e: DataTableRowClickEvent): void {
 const canImport = computed(() => !!meta.value && !meta.value.single && (meta.value.rights.create !== 'none' || meta.value.rights.write !== 'none'))
 const importing = ref(false)
 const moreMenu = ref<InstanceType<typeof Menu> | null>(null)
+/**
+ * D28 : les actions que les extensions posent sur la LISTE (`selection: 'none'`), atteignables sans rien cocher —
+ * `primary` dans la barre, les autres dans le menu « ⋯ », comme sur la fiche. Celles qui portent sur des documents
+ * cochés restent dans la barre groupée (`BulkActions`).
+ */
+const extPageContext = computed<ListContext | null>(() => (meta.value ? { doctype: props.doctype, meta: meta.value, names: [] } : null))
+const extPageActions = computed(() => (extPageContext.value ? extensions.listPageActions(extPageContext.value) : []))
+const extPrimary = computed(() => extPageActions.value.filter((a) => a.primary))
+function runExtAction(a: (typeof extPageActions.value)[number]): void {
+  const ctx = extPageContext.value
+  if (!ctx) return
+  void extensions.run(a.extension, (tools) => a.run({ ...ctx, ...tools, reload: () => void fetchPage() }))
+}
+/**
+ * Les actions d'extension sur UNE ligne, dans un menu « ⋯ » en fin de ligne (et sur la carte, sous 700 px). UN seul
+ * `Menu`, dont le modèle est posé à l'ouverture : un composant par ligne coûterait cher sur une page de cent documents.
+ * La colonne n'existe que si le type a des actions de ligne.
+ */
+const hasRowActions = computed(() => !!meta.value && extensions.hasRowActions({ doctype: props.doctype, meta: meta.value }))
+const rowMenu = ref<InstanceType<typeof Menu> | null>(null)
+const rowMenuItems = ref<MenuItem[]>([])
+function rowActionsFor(row: DocRecord): MenuItem[] {
+  if (!meta.value) return []
+  const ctx = { doctype: props.doctype, meta: meta.value, record: row }
+  return extensions.rowActions(ctx).map<MenuItem>((a) => ({
+    label: a.label,
+    icon: piIcon(a.icon, 'bolt'),
+    testid: `ext-row-${a.extension}-${a.label}`,
+    command: () => void extensions.run(a.extension, (tools) => a.run({ ...ctx, ...tools, reload: () => void fetchPage() })),
+  }))
+}
+function openRowMenu(event: Event, row: DocRecord): void {
+  rowMenuItems.value = rowActionsFor(row)
+  if (rowMenuItems.value.length) rowMenu.value?.show(event)
+}
 const moreItems = computed<MenuItem[]>(() => [
   { label: t.list.refresh, icon: 'pi pi-refresh', command: () => void fetchPage(), disabled: current.value !== 'list' },
   { label: t.sidebar.toggle, icon: 'pi pi-align-left', command: toggleSidebar, disabled: current.value !== 'list' },
@@ -566,6 +635,16 @@ const moreItems = computed<MenuItem[]>(() => [
   { label: t.printBuilder.menu, icon: 'pi pi-file-edit', testid: 'list-print', command: () => void router.push({ name: 'print-builder', params: { doctype: props.doctype } }), visible: !!meta.value && !meta.value.single && !meta.value.virtual },
   { separator: true },
   { label: t.apiDocs.title, icon: 'pi pi-code', command: () => void router.push(`/api/${encodeURIComponent(props.doctype)}`) },
+  // Les actions d'extension non `primary`, après un séparateur : le menu garde d'abord ce qui est au Desk.
+  ...(extPageActions.value.some((a) => !a.primary) ? [{ separator: true } as MenuItem] : []),
+  ...extPageActions.value
+    .filter((a) => !a.primary)
+    .map<MenuItem>((a) => ({
+      label: a.label,
+      icon: piIcon(a.icon, 'bolt'), // un nom inconnu retombe sur l'icône par défaut au lieu de laisser un trou
+      testid: `ext-action-${a.extension}-${a.label}`,
+      command: () => runExtAction(a),
+    })),
 ])
 /** Aucun filtre ne cache de documents : la liste est vide pour de bon, on propose d'en créer un. */
 const trulyEmpty = computed(() => !loading.value && !total.value && !quick.value && !activeFilters.value && status.value === null)
@@ -611,8 +690,27 @@ function title(r: DocRecord): string {
       <h1 data-testid="list-title">{{ label }}</h1>
       <ViewSwitcher v-if="meta && views.length > 1" :views="views" :model-value="current" @update:model-value="choose" />
       <span class="desk-spacer" />
+      <Button
+        v-for="a in extPrimary"
+        :key="`${a.extension}:${a.label}`"
+        :label="a.label"
+        :icon="piIcon(a.icon, 'bolt')"
+        :severity="a.danger ? 'danger' : 'secondary'"
+        outlined
+        size="small"
+        :data-testid="`ext-action-${a.extension}-${a.label}`"
+        @click="runExtAction(a)"
+      />
       <Button v-if="meta" icon="pi pi-ellipsis-h" text severity="secondary" size="small" :aria-label="t.list.more" :title="t.list.more" aria-haspopup="menu" data-testid="more-actions" @click="moreMenu?.toggle($event)" />
       <Menu ref="moreMenu" :model="moreItems" popup>
+        <template #item="{ item, props: slot }">
+          <a v-bind="slot.action" :data-testid="item.testid">
+            <span :class="item.icon" aria-hidden="true" />
+            <span class="p-menu-item-label">{{ item.label }}</span>
+          </a>
+        </template>
+      </Menu>
+      <Menu ref="rowMenu" :model="rowMenuItems" popup>
         <template #item="{ item, props: slot }">
           <a v-bind="slot.action" :data-testid="item.testid">
             <span :class="item.icon" aria-hidden="true" />
@@ -654,6 +752,30 @@ function title(r: DocRecord): string {
             :aria-label="t.list.status"
             data-testid="status-filter"
             @update:model-value="pickStatus"
+          />
+          <MultiSelect
+            v-if="current === 'list'"
+            v-model="chosenColumns"
+            :options="columnChoices"
+            option-label="label"
+            option-value="value"
+            display="chip"
+            :max-selected-labels="0"
+            :placeholder="t.list.columns"
+            :selected-items-label="`${t.list.columns} · {0}`"
+            :aria-label="t.list.columns"
+            size="small"
+            class="list-columns"
+            data-testid="list-columns"
+          />
+          <Button
+            v-if="current === 'list' && customColumns"
+            :label="t.list.resetColumns"
+            text
+            size="small"
+            severity="secondary"
+            data-testid="list-columns-reset"
+            @click="resetColumns"
           />
           <Button
             v-if="current === 'list'"
@@ -707,7 +829,7 @@ function title(r: DocRecord): string {
           <Skeleton v-for="n in 6" :key="n" height="1.4rem" :width="`${96 - n * 3}%`" />
         </div>
         <template v-else-if="compact">
-          <RecordCards v-if="rows.length" v-model:selection="selection" :doctype="doctype" :meta="meta" :rows="rows" :columns="columns" :selectable="selectable" :cell="cell" :title="title" @open="openRow" />
+          <RecordCards v-if="rows.length" v-model:selection="selection" :doctype="doctype" :meta="meta" :rows="rows" :columns="columns" :selectable="selectable" :cell="cell" :title="title" :row-actions="rowActionsFor" @open="openRow" @row-menu="openRowMenu" />
           <div v-else class="empty-state" data-testid="list-empty">
             <p class="desk-muted">{{ quick || activeFilters || status !== null || tagFilter ? t.list.emptyFiltered : t.list.empty(label) }}</p>
             <Button v-if="trulyEmpty && canCreate" :as="RouterLink" :to="{ name: 'new', params: { doctype } }" :label="t.list.createFirst(label)" icon="pi pi-plus" size="small" data-testid="create-first" />
@@ -778,6 +900,21 @@ function title(r: DocRecord): string {
           </Column>
           <Column v-if="!meta.virtual" field="modified" sort-field="modified" :header="t.list.modified" sortable>
             <template #body="{ data }"><span class="desk-muted">{{ relativeTime(data.modified) }}</span></template>
+          </Column>
+          <Column v-if="hasRowActions" class="row-actions-cell">
+            <template #body="{ data }">
+              <Button
+                v-if="rowActionsFor(data).length"
+                icon="pi pi-ellipsis-v"
+                text
+                severity="secondary"
+                size="small"
+                :aria-label="t.list.rowActions(title(data))"
+                aria-haspopup="menu"
+                :data-testid="`row-actions-${data.name}`"
+                @click="openRowMenu($event, data)"
+              />
+            </template>
           </Column>
           <template #empty>
             <div class="empty-state" data-testid="list-empty">

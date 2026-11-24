@@ -1370,6 +1370,53 @@ table.grid tr:last-child td {
   border-bottom: 0;
 }
 
+/* La FICHE d'une ligne : tous les champs de la ligne, empilés, quand la grille n'en montre qu'une poignée. Une colonne
+   suffit — une boîte de dialogue est étroite, et deux colonnes y rendraient les libellés illisibles sur un téléphone. */
+.row-sheet {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+/* Libellé à GAUCHE, valeur à droite : un champ tient sur UNE ligne. Empilés, les 64 champs d'une ligne de bon de
+   livraison faisaient 128 lignes à faire défiler. Le filet aide l'œil à aller du nom à sa valeur. */
+.row-sheet-field {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) 1fr;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.row-sheet-field:last-child {
+  border-bottom: 0;
+}
+
+.row-sheet-field>dt {
+  font-size: 0.9rem;
+  color: var(--p-text-muted-color);
+  overflow-wrap: anywhere;
+}
+
+.row-sheet-field>dd {
+  margin: 0;
+  min-width: 0;
+}
+
+/* Sur un téléphone, deux colonnes écraseraient le libellé comme la valeur : on empile. */
+@media (max-width: 600px) {
+  .row-sheet-field {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
+
+/* Les deux boutons de fin de ligne (ouvrir, supprimer) tiennent côte à côte sans élargir la colonne. */
+table.grid td.act {
+  white-space: nowrap;
+}
+
 /* Une quantité et son unité : le champ prend la place, l'unité suit sans le déformer. */
 .cell-input {
   display: flex;

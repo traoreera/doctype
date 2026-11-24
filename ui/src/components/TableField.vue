@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
 import { computed, nextTick, ref, watch } from 'vue'
-import FieldInput from '@/components/FieldInput.vue'
+import TableCell from '@/components/TableCell.vue'
 import LinkField from '@/components/LinkField.vue'
 import { t } from '@/i18n'
 import { allowedDocstatus } from '@/lib/docstatus'
-import { cellKey, cellStates, newRow, resolveLinkFilters, type Row, type Values } from '@/lib/form'
-import { formatCell, isNumeric } from '@/lib/format'
+import { cellKey, cellStates, isEmpty, newRow, resolveLinkFilters, type Row, type Values } from '@/lib/form'
+import { isNumeric } from '@/lib/format'
 import { unitLinks, unitOf } from '@/lib/units'
 import type { ChildMeta, FieldMeta } from '@/lib/types'
 import { useLinks } from '@/stores/links'
@@ -46,7 +47,7 @@ const dynamicOf = (c: FieldMeta, row: Row): string | null => (c.fieldtype === 'D
  * Une colonne que PERSONNE ne peut remplir (l'entrepôt source d'une réception) disparaît : elle n'a pas de sens pour cette nature. Sans ligne,
  * on juge d'après le seul document (une ligne vide), pour que les bonnes colonnes soient déjà là quand on ajoute la première.
  */
-const columns = computed(() =>
+const visibleColumns = computed(() =>
   props.child.fields.filter((c) => {
     if (c.hidden) return false
     if (!c.depends_on) return true
@@ -54,6 +55,48 @@ const columns = computed(() =>
     return states.value.some((s) => s[c.fieldname]!.visible)
   }),
 )
+/**
+ * La GRILLE ne montre que les colonnes que la DÉFINITION désigne (`in_list_view`), sinon les premières — la règle du moteur
+ * pour la liste d'un type (`schema.list_columns`). Mesuré sur le jeu ERP : une ligne de facture a 70 champs visibles et en
+ * désigne 5 ; les rendre tous donnait une table illisible et inéditable, et 287 des 293 tables enfants déclarent déjà leurs
+ * colonnes. Le RESTE n'est pas perdu : chaque ligne s'ouvre en fiche, où tous ses champs se lisent et se saisissent.
+ */
+const GRID_COLUMNS = 4
+const columns = computed(() => {
+  const flagged = visibleColumns.value.filter((c) => c.in_list_view)
+  return flagged.length ? flagged : visibleColumns.value.slice(0, GRID_COLUMNS)
+})
+/** Combien de champs la grille ne montre pas : ce que le bouton de la ligne promet d'ouvrir. */
+const foldedCount = computed(() => visibleColumns.value.length - columns.value.length)
+
+// ── La fiche d'une LIGNE : tous ses champs, quand la grille n'en montre qu'une poignée ──────
+const editing = ref<number | null>(null)
+const editingRow = computed(() => (editing.value === null ? null : (rows.value[editing.value] ?? null)))
+/**
+ * En LECTURE, un champ vide n'apprend rien : la fiche ne montre que ce qui est renseigné. Sur une ligne de bon de
+ * livraison, cela passe de 64 entrées à une vingtaine. On compte ce qu'on cache et on offre de le montrer : cacher en
+ * silence ferait chercher un champ qu'on croirait disparu. En SAISIE on ne cache rien — un champ vide est justement
+ * celui qu'on vient remplir.
+ */
+const showEmpty = ref(false)
+const sheetColumns = computed(() => {
+  const row = editingRow.value
+  if (!props.readOnly || showEmpty.value || !row) return visibleColumns.value
+  const i = editing.value ?? 0
+  // Une cellule que la nature du document écarte (`depends_on`) n'affiche qu'un tiret : elle est vide elle aussi.
+  return visibleColumns.value.filter((c) => !isEmpty(row[c.fieldname]) && cellState(i, c)?.visible)
+})
+const emptyCount = computed(() => visibleColumns.value.length - sheetColumns.value.length)
+function openRow(i: number): void {
+  showEmpty.value = false // chaque ouverture repart de la fiche courte
+  editing.value = i
+}
+/** Supprimer la ligne ouverte depuis sa fiche : on ferme d'abord, sinon la fiche montrerait la ligne suivante. */
+function removeOpenRow(): void {
+  const i = editing.value
+  editing.value = null
+  if (i !== null) remove(i)
+}
 /** L'étoile de l'en-tête : obligatoire d'office, ou rendue obligatoire par la nature du document pour au moins une ligne. */
 const columnRequired = (c: FieldMeta) =>
   c.required || (!!c.mandatory_depends_on && (rows.value.length ? states.value.some((s) => s[c.fieldname]!.required) : cellStates(props.child, {}, props.parentValues)[c.fieldname]!.required))
@@ -160,51 +203,104 @@ function remove(i: number): void {
             <th v-for="c in columns" :key="c.fieldname">
               {{ c.label ?? c.fieldname }}<span v-if="columnRequired(c) && !readOnly" class="req" aria-hidden="true">*</span>
             </th>
-            <th v-if="!readOnly" class="act" />
+            <th class="act" />
           </tr>
         </thead>
         <tbody>
           <tr v-if="!rows.length">
-            <td :colspan="columns.length + (readOnly ? 1 : 2)" class="desk-muted empty" data-testid="table-empty">{{ t.table.empty }}</td>
+            <td :colspan="columns.length + 2" class="desk-muted empty" data-testid="table-empty">{{ t.table.empty }}</td>
           </tr>
           <tr v-for="(row, i) in rows" :key="keys[i] ?? i" :data-row="i" :class="{ bad: rowsWithErrors.has(i) }">
             <td class="idx">{{ i + 1 }}</td>
             <td v-for="c in columns" :key="c.fieldname" :data-col="c.fieldname" :data-label="c.label ?? c.fieldname" :class="{ num: isNumeric(c) }">
-              <!-- Une colonne qui existe pour d'autres lignes mais pas pour celle-ci : une cellule vide, pas un champ à remplir. -->
-              <span v-if="!cellState(i, c)?.visible" class="desk-muted" :data-testid="`na-${i}-${c.fieldname}`">—</span>
-              <template v-else-if="readOnly">
-                <!-- Un document figé montre le TITRE de l'article, pas son identifiant. -->
-                <LinkField v-if="c.fieldtype === 'Link' && typeof c.options === 'string' && row[c.fieldname]" :model-value="row[c.fieldname]" :target="c.options" readonly />
-                <LinkField v-else-if="c.fieldtype === 'DynamicLink' && dynamicOf(c, row) && row[c.fieldname]" :model-value="row[c.fieldname]" :target="dynamicOf(c, row)!" readonly />
-                <template v-else>{{ formatCell(c, row[c.fieldname]) || t.form.noValue }}</template>
-                <span v-if="unit(c, row) && row[c.fieldname]" class="unit">{{ unit(c, row) }}</span>
-              </template>
-              <!-- Une cellule remplie par le SERVEUR — copiée (`fetch_from`) ou calculée (`compute`) — se lit,
-                   elle ne se saisit pas. Un montant de ligne (`qty * rate`) est de ceux-là. -->
-              <span v-else-if="c.fetch_from || c.compute" class="value" :data-testid="`fetched-${i}-${c.fieldname}`">{{ formatCell(c, row[c.fieldname]) || t.form.noValue }}</span>
-              <template v-else>
-                <div class="cell-input">
-                  <FieldInput
-                    :field="c"
-                    :model-value="row[c.fieldname]"
-                    :input-id="`${formId}-${field.fieldname}-${i}-${c.fieldname}`"
-                    :invalid="!!cellError(i, c)"
-                    :dynamic-target="dynamicOf(c, row)"
-                    :link-filters="resolveLinkFilters(c, row)"
-                    @update:model-value="emit('cell', i, c.fieldname, $event)"
-                  />
-                  <span v-if="unit(c, row)" class="unit" :data-testid="`unit-${i}-${c.fieldname}`">{{ unit(c, row) }}</span>
-                </div>
-                <span v-if="cellError(i, c)" class="error" role="alert" :data-testid="`error-${cellKey(field.fieldname, i, c.fieldname)}`">{{ cellError(i, c) }}</span>
-              </template>
+              <TableCell
+                :column="c"
+                :row="row"
+                :index="i"
+                :visible="!!cellState(i, c)?.visible"
+                :read-only="readOnly"
+                :input-id="`${formId}-${field.fieldname}-${i}-${c.fieldname}`"
+                :error="cellError(i, c)"
+                :error-testid="`error-${cellKey(field.fieldname, i, c.fieldname)}`"
+                :unit="unit(c, row)"
+                :dynamic-target="dynamicOf(c, row)"
+                :link-filters="resolveLinkFilters(c, row)"
+                @update="emit('cell', i, c.fieldname, $event)"
+              />
             </td>
-            <td v-if="!readOnly" class="act">
-              <Button icon="pi pi-trash" text severity="secondary" size="small" :aria-label="`${t.table.removeRow} ${i + 1}`" :data-testid="`remove-row-${i}`" @click="remove(i)" />
+            <td class="act">
+              <!-- Ouvrir la LIGNE : tous ses champs, ceux que la grille ne montre pas compris. -->
+              <Button
+                icon="pi pi-pen-to-square"
+                text
+                severity="secondary"
+                size="small"
+                :aria-label="t.table.openRow(i + 1)"
+                :title="foldedCount ? t.table.foldedFields(foldedCount) : t.table.openRow(i + 1)"
+                :data-testid="`open-row-${i}`"
+                @click="openRow(i)"
+              />
+              <Button v-if="!readOnly" icon="pi pi-trash" text severity="secondary" size="small" :aria-label="`${t.table.removeRow} ${i + 1}`" :data-testid="`remove-row-${i}`" @click="remove(i)" />
             </td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <Dialog
+      :visible="editing !== null"
+      modal
+      :header="t.table.rowOf(label, (editing ?? 0) + 1)"
+      :style="{ width: '42rem', maxWidth: '95vw' }"
+      data-testid="row-sheet"
+      @update:visible="editing = null"
+    >
+      <dl v-if="editingRow" class="row-sheet">
+        <!-- TOUS les champs de la ligne, dans l'ordre de la définition : la grille n'en montrait qu'une poignée.
+             DEUX COLONNES, libellé à gauche : empilés, 64 champs faisaient 128 lignes à faire défiler, la moitié
+             droite vide. Une paire nom/valeur est une liste de description, ce qu'un lecteur d'écran annonce comme
+             telle ; en saisie, le nom reste un vrai `label for`, qui donne le champ au clic. -->
+        <div v-for="c in sheetColumns" :key="c.fieldname" class="row-sheet-field" :data-field="c.fieldname">
+          <dt>
+            <label v-if="!readOnly" :for="`${formId}-sheet-${field.fieldname}-${editing}-${c.fieldname}`">
+              {{ c.label ?? c.fieldname }}<span v-if="columnRequired(c)" class="req" aria-hidden="true">*</span>
+            </label>
+            <template v-else>{{ c.label ?? c.fieldname }}</template>
+          </dt>
+          <dd>
+          <TableCell
+            :column="c"
+            :row="editingRow"
+            :index="editing ?? 0"
+            :visible="!!cellState(editing ?? 0, c)?.visible"
+            :read-only="readOnly"
+            :input-id="`${formId}-sheet-${field.fieldname}-${editing}-${c.fieldname}`"
+            :error="cellError(editing ?? 0, c)"
+            :error-testid="`sheet-error-${c.fieldname}`"
+            :unit="unit(c, editingRow)"
+            :dynamic-target="dynamicOf(c, editingRow)"
+            :link-filters="resolveLinkFilters(c, editingRow)"
+            @update="emit('cell', editing ?? 0, c.fieldname, $event)"
+          />
+            <span v-if="c.description" class="hint">{{ c.description }}</span>
+          </dd>
+        </div>
+      </dl>
+      <template #footer>
+        <Button
+          v-if="readOnly && (emptyCount > 0 || showEmpty)"
+          :label="showEmpty ? t.table.hideEmpty : t.table.showEmpty(emptyCount)"
+          :icon="showEmpty ? 'pi pi-eye-slash' : 'pi pi-eye'"
+          text
+          severity="secondary"
+          size="small"
+          data-testid="row-sheet-empty"
+          @click="showEmpty = !showEmpty"
+        />
+        <Button v-if="!readOnly" :label="t.table.removeRow" icon="pi pi-trash" text severity="danger" size="small" data-testid="row-sheet-remove" @click="removeOpenRow" />
+        <Button :label="t.close" icon="pi pi-check" size="small" data-testid="row-sheet-close" @click="editing = null" />
+      </template>
+    </Dialog>
 
     <span v-if="tableError" class="error" role="alert" :data-testid="`error-${field.fieldname}`">{{ tableError }}</span>
     <div v-if="!readOnly" class="form-table-foot">

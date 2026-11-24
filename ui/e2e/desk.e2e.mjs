@@ -240,6 +240,23 @@ try {
     await typeInto(cell(1, 'qty').locator('input'), '3')
     await typeInto(cell(1, 'rate').locator('input'), '2')
     await r.shot(page, '12-invoice-form')
+
+    // La FICHE d'une ligne : tous ses champs, en DEUX COLONNES. Mesuré, pas supposé — un nom et sa valeur doivent
+    // être sur la MÊME ligne. Empilés, les 64 champs d'une ligne de bon de livraison faisaient 128 lignes à dérouler.
+    await page.getByTestId('open-row-1').click()
+    const sheet = page.getByTestId('row-sheet')
+    await sheet.waitFor()
+    const side = await sheet.locator('.row-sheet-field').first().evaluate((el) => {
+      const [name, value] = [el.querySelector('dt'), el.querySelector('dd')]
+      const [a, b] = [name.getBoundingClientRect(), value.getBoundingClientRect()]
+      return { sameLine: Math.abs(a.top - b.top) < 12, valueRight: b.left > a.right }
+    })
+    assert(side.sameLine, 'le nom et sa valeur ne sont pas sur la même ligne')
+    assert(side.valueRight, 'la valeur n’est pas à droite du nom')
+    await r.shot(page, '12b-row-sheet')
+    await page.getByTestId('row-sheet-close').click()
+    await sheet.waitFor({ state: 'hidden' })
+
     await page.getByTestId('save').click()
     await toast('Document créé')
     await page.waitForURL(/#\/app\/Invoice\/FA-\d{4}-00001$/)

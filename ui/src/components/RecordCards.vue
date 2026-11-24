@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import { computed } from 'vue'
 import CellValue from '@/components/CellValue.vue'
@@ -22,8 +23,10 @@ const props = defineProps<{
   /** Le texte d'une cellule (unité comprise), calculé par la liste. */
   cell: (field: FieldMeta, row: DocRecord) => string
   title: (row: DocRecord) => string
+  /** Les actions d'extension de CETTE ligne (la liste tient le menu : un seul pour la page). Vide : pas de bouton. */
+  rowActions?: (row: DocRecord) => unknown[]
 }>()
-const emit = defineEmits<{ 'update:selection': [value: DocRecord[]]; open: [row: DocRecord] }>()
+const emit = defineEmits<{ 'update:selection': [value: DocRecord[]]; open: [row: DocRecord]; 'row-menu': [event: Event, row: DocRecord] }>()
 
 const MAX_FIELDS = 3
 /** Les champs montrés sous le titre : les premières colonnes après la première (qui sert de titre), jamais plus de trois. */
@@ -52,6 +55,17 @@ function onCard(e: Event, row: DocRecord): void {
         <FileThumb v-if="meta.image_field && r.data[meta.image_field]" :id="r.data[meta.image_field] as string" :size="32" round />
         <RouterLink class="card-title" :to="{ name: 'form', params: { doctype, name: r.name } }" :data-testid="`open-${r.name}`">{{ columns[0] ? cell(columns[0], r) || title(r) : title(r) }}</RouterLink>
         <span v-if="meta.submittable" :class="['status-pill', statusTone(r.docstatus)]">{{ statusLabel(r.docstatus) }}</span>
+        <Button
+          v-if="rowActions && rowActions(r).length"
+          icon="pi pi-ellipsis-v"
+          text
+          severity="secondary"
+          size="small"
+          :aria-label="t.list.rowActions(title(r))"
+          aria-haspopup="menu"
+          :data-testid="`row-actions-${r.name}`"
+          @click="emit('row-menu', $event, r)"
+        />
       </div>
       <dl v-if="details.length" class="card-fields">
         <template v-for="f in details" :key="f.fieldname">
