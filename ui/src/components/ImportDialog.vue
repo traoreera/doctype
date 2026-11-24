@@ -8,8 +8,8 @@ import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { csvFilename } from '@/lib/csv'
 import { decodeCsv, templateCsv, type ImportMode } from '@/lib/csvimport'
-import { downloadText } from '@/lib/download'
 import { todayIn } from '@/lib/format'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import type { DocTypeMeta, ImportItem, ImportResult } from '@/lib/types'
 
@@ -21,6 +21,7 @@ const props = defineProps<{ doctype: string; meta: DocTypeMeta }>()
 const visible = defineModel<boolean>('visible', { required: true })
 const emit = defineEmits<{ imported: [] }>()
 const { api } = useServices()
+const host = useHost()
 const notify = useNotify()
 
 const modes = computed(() =>
@@ -50,8 +51,8 @@ function pick(e: Event): void {
   result.value = null
 }
 
-function template(): void {
-  downloadText(csvFilename(`${props.doctype}-modele`, todayIn(props.meta.timezone)), templateCsv(props.meta, mode.value))
+async function template(): Promise<void> {
+  await host.saveText(csvFilename(`${props.doctype}-modele`, todayIn(props.meta.timezone)), templateCsv(props.meta, mode.value))
 }
 
 const reason = (r: ImportItem): string => {

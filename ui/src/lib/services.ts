@@ -1,6 +1,7 @@
 import { inject, type InjectionKey } from 'vue'
 import type { ApiClient, PluginClient } from './api'
 import type { DeskConfig } from './config'
+import type { DeskHost } from './host'
 import type { RealtimeClient } from './realtime'
 import type { TabSync } from './tabsync'
 import type { Transport } from './transport'
@@ -23,6 +24,8 @@ export interface Services {
   automations?: PluginClient | null
   /** Ce que les onglets d'une même session se passent (jeton de renouvellement, déconnexion) ; défaut : le navigateur (`lib/tabsync`). */
   tabs?: TabSync
+  /** L'hôte (`lib/host.ts`) : stockage de session, sorties vers l'extérieur, enregistrement de fichiers ; défaut : le navigateur. */
+  host?: DeskHost
 }
 
 export const SERVICES: InjectionKey<Services> = Symbol('desk-services')

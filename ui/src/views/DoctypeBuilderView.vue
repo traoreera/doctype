@@ -16,8 +16,8 @@ import { ApiError } from '@/lib/api'
 import {
   FIELD_GROUPS, addField, assemble, boardOf, emptyDefinition, patchField, removeField, renameField, retypeField, yamlFileName, type DevDefinition, type DevField,
 } from '@/lib/doctypebuilder'
-import { downloadText } from '@/lib/download'
 import { DRAG_FIELD, boardProblems, locate, moveField, nudge, placed, unplace, type Board, type Nudge } from '@/lib/formbuilder'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import type { FieldType } from '@/lib/types'
 import { useMeta } from '@/stores/meta'
@@ -36,6 +36,7 @@ import { useMeta } from '@/stores/meta'
  */
 const props = defineProps<{ doctype?: string }>()
 const { api } = useServices()
+const host = useHost()
 const metaStore = useMeta()
 
 const def = ref<DevDefinition>(emptyDefinition())
@@ -196,7 +197,7 @@ async function check(): Promise<boolean> {
 }
 async function download(): Promise<void> {
   if (!(await check()) || verdict.value?.ok !== true) return
-  downloadText(yamlFileName(def.value), verdict.value.yaml, 'application/yaml;charset=utf-8')
+  if ((await host.saveText(yamlFileName(def.value), verdict.value.yaml, 'application/yaml;charset=utf-8')) !== 'saved') return
   initial.value = JSON.stringify(assembled.value) // téléchargé : plus rien à perdre en quittant
 }
 // Le verdict vaut pour la définition jugée : on la change, il ne dit plus rien.

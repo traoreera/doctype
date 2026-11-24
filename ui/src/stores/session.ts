@@ -5,36 +5,19 @@ import { authUrl } from '@/lib/config'
 import { decodeClaims, displayName, isExpired, tenantOf } from '@/lib/token'
 import { NetworkError } from '@/lib/transport'
 import { useServices } from '@/lib/services'
-import { browserTabSync, SHARED_TTL_MS, type TabMessage } from '@/lib/tabsync'
+import { browserHost } from '@/lib/host'
+import { SHARED_TTL_MS, type TabMessage } from '@/lib/tabsync'
 
 const STORAGE_KEY = 'xdt.desk.token'
 const REFRESH_KEY = 'xdt.desk.refresh'
 /** La LIGNÉE de la session : un identifiant tiré à chaque connexion, que l'onglet dupliqué copie avec les jetons (`lib/tabsync`). */
 const LINEAGE_KEY = 'xdt.desk.lineage'
-/** Le nonce `app_state` d'une connexion OAuth en cours : vérifié au retour du fournisseur (contre un callback forgé). */
+/** Le nonce `app_state` d'une connexion OAuth en cours : vérifié au retour du fournisseur (contre un callback forgé). Propre à la fenêtre (`host.flow`). */
 const OAUTH_STATE_KEY = 'xdt.desk.oauth'
 /** Le jeton est renouvelé UNE minute avant son expiration ; sans renouvellement possible, on prévient DEUX minutes avant. */
 const RENEW_BEFORE_MS = 60_000
 const WARN_BEFORE_MS = 120_000
 const RETRY_OFFLINE_MS = 30_000
-
-/** Le jeton reste dans l'onglet (sessionStorage) : il disparaît à sa fermeture et n'est jamais partagé entre onglets. */
-function readStored(key = STORAGE_KEY): string | null {
-  try {
-    return sessionStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function writeStored(token: string | null, key = STORAGE_KEY): void {
-  try {
-    if (token) sessionStorage.setItem(key, token)
-    else sessionStorage.removeItem(key)
-  } catch {
-    // stockage indisponible (navigation privée…) : la session ne survivra pas à un rechargement, rien de plus
-  }
-}
 
 /** Le jeton d'accès expire-t-il dans moins de `ms` (ou ne se lit-il pas) ? */
 function expiresWithin(access: string | null, ms: number): boolean {
@@ -121,8 +104,15 @@ interface LoginBody {
 }
 
 export const useSession = defineStore('session', () => {
-  const { transport, config, tabs: injected } = useServices()
-  const tabs = injected ?? browserTabSync()
+  const { transport, config, tabs: injected, host: given } = useServices()
+  /**
+   * Où vivent les jetons est l'affaire de l'HÔTE (`lib/host.ts`). Navigateur : dans l'onglet (`sessionStorage` : le jeton disparaît à
+   * sa fermeture et n'est jamais partagé entre onglets). Bureau : dans le coffre du processus, commun à toutes les fenêtres.
+   */
+  const host = given ?? browserHost()
+  const tabs = injected ?? host.tabs()
+  const readStored = (key = STORAGE_KEY): string | null => host.session.get(key)
+  const writeStored = (value: string | null, key = STORAGE_KEY): void => host.session.set(key, value)
   const token = ref<string | null>(readStored())
   /** Un jeton de renouvellement à usage unique (xauth le fait tourner à chaque usage). Dans l'onglet, comme le jeton d'accès. */
   const refreshToken = ref<string | null>(readStored(REFRESH_KEY))
@@ -403,7 +393,7 @@ export const useSession = defineStore('session', () => {
     }
   }
 
-  /** L'origine web du Desk : le retour OAuth y revient (`…#/oauth?access_token=…`), jamais un deep-link. */
+  /** L'origine web du Desk : dans un navigateur, le retour OAuth y revient (`…#/oauth?access_token=…`) ; en bureau, l'hôte donne un lien profond. */
   function deskBase(): string {
     const base = config.baseUrl.replace(/\/+$/, '')
     return /^https?:\/\//i.test(base) ? base : `${globalThis.location.origin}${base}`
@@ -414,8 +404,8 @@ export const useSession = defineStore('session', () => {
     const url = authUrl(config.loginUrl, `oauth/${encodeURIComponent(provider)}/authorize`)
     if (!url) return null
     const state = randomState()
-    writeStored(state, OAUTH_STATE_KEY)
-    const query = `?redirect=${encodeURIComponent(`${deskBase()}/desk/#/oauth`)}&app_state=${encodeURIComponent(state)}`
+    host.flow.set(OAUTH_STATE_KEY, state)
+    const query = `?redirect=${encodeURIComponent(host.oauth.redirect ?? `${deskBase()}/desk/#/oauth`)}&app_state=${encodeURIComponent(state)}`
     let res
     try {
       res = await transport.request({ method: 'GET', url: `${url}${query}`, headers: { Accept: 'application/json' } })
@@ -425,15 +415,23 @@ export const useSession = defineStore('session', () => {
     }
     const body = res.json as { auth_url?: unknown } | null
     if (res.status === 200 && body && typeof body.auth_url === 'string') return body.auth_url
-    writeStored(null, OAUTH_STATE_KEY)
+    host.flow.set(OAUTH_STATE_KEY, null)
     return null
+  }
+
+  /** Cette fenêtre attend-elle un retour OAuth ? Un lien profond arrive à TOUTES les fenêtres : seule celle qui a ouvert le fournisseur le traite. */
+  function oauthPending(): boolean {
+    return !!host.flow.get(OAUTH_STATE_KEY)
   }
 
   /** Au retour du fournisseur (`#/oauth?…`) : vérifie le nonce puis adopte la session, ou avance d'une étape (MFA, organisation à créer). */
   function completeOAuth(query: Record<string, unknown>): LoginOutcome {
     const text = (key: string) => (typeof query[key] === 'string' ? (query[key] as string) : '')
-    const expected = readStored(OAUTH_STATE_KEY)
-    writeStored(null, OAUTH_STATE_KEY)
+    const expected = host.flow.get(OAUTH_STATE_KEY)
+    host.flow.set(OAUTH_STATE_KEY, null)
+    // Un hôte STRICT (bureau : le retour est un lien profond, que tout programme de la machine peut invoquer) exige le nonce des deux
+    // côtés : sans connexion en cours ici, ou sans `app_state` rendu, ce n'est pas notre retour. Le navigateur garde sa tolérance.
+    if (host.oauth.strict && (!expected || text('app_state') !== expected)) return { status: 'error', message: t.login.oauthState }
     if (expected && text('app_state') && text('app_state') !== expected) return { status: 'error', message: t.login.oauthState }
     if (text('error')) return { status: 'error', message: t.login.oauthFailed }
     if (text('mfa_required') === 'true') {
@@ -581,14 +579,37 @@ export const useSession = defineStore('session', () => {
     if (shared && shared.refresh !== refreshToken.value) setToken(shared.access, shared.refresh, 'quiet')
   }
 
+  /**
+   * Le stockage de session a changé AILLEURS (bureau : une autre fenêtre s'est connectée, a changé d'organisation, a renouvelé ou s'est
+   * déconnectée). L'application n'a qu'UNE session : cette fenêtre prend ce que le coffre contient, sans rien réécrire (ce serait
+   * renvoyer le même changement aux autres). Jamais appelé dans le navigateur, où chaque onglet a son `sessionStorage`.
+   */
+  function onStorage(): void {
+    const stored = readStored()
+    const storedRefresh = stored ? readStored(REFRESH_KEY) : null
+    // La lignée est écrite APRÈS les jetons (trois clés, trois annonces) : elle se suit à part, sans attendre que les jetons rechangent.
+    lineage.value = stored && storedRefresh ? readStored(LINEAGE_KEY) : null
+    if (stored === token.value && storedRefresh === refreshToken.value) return
+    const had = !!token.value
+    token.value = stored
+    refreshToken.value = storedRefresh
+    expiringSoon.value = false
+    pendingRefresh.value = null
+    mfaToken.value = null
+    tenants.value = []
+    notice.value = !stored && had ? t.login.loggedOutElsewhere : null
+  }
+
   /** À appeler une fois au démarrage : le calendrier suit le jeton, quelle que soit la façon dont il change ; l'onglet écoute les autres. */
   function start(): () => void {
     tabs.prune(SHARED_TTL_MS, Date.now())
     const stopTabs = tabs.subscribe(onTab)
+    const stopStorage = host.session.subscribe?.(onStorage) ?? (() => {})
     const stop = watch([token, refreshToken], schedule, { immediate: true })
     return () => {
       stop()
       stopTabs()
+      stopStorage()
       clearTimeout(timer)
     }
   }
@@ -651,6 +672,7 @@ export const useSession = defineStore('session', () => {
     acceptInvite,
     oauthProviders,
     oauthAuthorizeUrl,
+    oauthPending,
     completeOAuth,
     loadTenants,
     switchTenant,

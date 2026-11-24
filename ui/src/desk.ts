@@ -7,9 +7,10 @@ import type { Router } from 'vue-router'
 import App from '@/App.vue'
 import { useNotify } from '@/composables/useNotify'
 import { EXTENSIONS, ExtensionHost } from '@/extensions/host'
-import { loadExtensions, type Importer } from '@/extensions/loader'
+import { loadExtensions, transportProbe, type Importer } from '@/extensions/loader'
 import { ApiClient, PluginClient, pluginBase } from '@/lib/api'
 import type { DeskConfig } from '@/lib/config'
+import { browserHost, HOST_CAPABILITIES, type DeskHost, type HostCapability } from '@/lib/host'
 import { SERVICES, type Services } from '@/lib/services'
 import type { Transport } from '@/lib/transport'
 import { createDeskRouter } from '@/router'
@@ -32,16 +33,23 @@ export interface Desk {
   router: Router
   services: Services
   extensions: ExtensionHost
+  /** Ce que l'hôte n'offre pas, avec sa raison : désactivé ICI, une fois, et annoncé (jamais tenté puis raté en silence). */
+  unavailable: { capability: HostCapability; reason: string }[]
   /** Charge les extensions que `config.json` annonce (D28) : AVANT la première navigation, pour que leurs pages répondent aux liens directs. */
   loadExtensions(importer?: Importer): Promise<void>
 }
 
 /**
- * Assemble l'application à partir de ce que l'hôte fournit : un transport réseau et une configuration. Le navigateur lui
- * donne `FetchTransport` et `config.json` ; une application desktop lui donnera un transport Tauri et l'URL de son serveur.
+ * Assemble l'application à partir de ce que l'hôte fournit : un transport réseau, une configuration, et l'hôte lui-même
+ * (`lib/host.ts` : stockage de session, sorties, fichiers). Le navigateur donne `FetchTransport`, `config.json` et `browserHost()` ;
+ * l'application de bureau (`desktop/main.ts`) donne `NativeTransport`, la configuration lue chez son serveur et `desktopHost()`.
  */
-export function createDesk(transport: Transport, config: DeskConfig): Desk {
+export function createDesk(transport: Transport, config: DeskConfig, host: DeskHost = browserHost()): Desk {
   const pinia = createPinia()
+  const unavailable = HOST_CAPABILITIES.flatMap((capability) => {
+    const reason = host.unavailable[capability]
+    return reason ? [{ capability, reason }] : []
+  })
   const api = new ApiClient(
     transport,
     () => {
@@ -93,7 +101,8 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
   // xpulse : le flux temps réel, sous le même préfixe d'hôte que l'API (`…/xcore-doctype` -> `…/xpulse`). Non annoncé : aucun client, le
   // Desk relit comme avant (jamais de requête vers un flux absent).
   // Seulement quand le serveur l'annonce (`config.json` `realtime` : le moteur publie ET xpulse est chargé).
-  const pulseRoot = config.realtime && /\/xcore-doctype\/?$/.test(config.baseUrl) ? pluginBase(config.baseUrl.replace(/\/+$/, ''), 'xpulse') : null
+  // ET quand l'hôte sait tenir un flux (`host.unavailable.realtime`).
+  const pulseRoot = config.realtime && !host.unavailable.realtime && /\/xcore-doctype\/?$/.test(config.baseUrl) ? pluginBase(config.baseUrl.replace(/\/+$/, ''), 'xpulse') : null
   const realtime = pulseRoot === null ? null : new RealtimeClient({
     transport,
     context: () => {
@@ -126,7 +135,7 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
     return client
   }
   const automations = config.automations ? pluginClient('xflow') : null
-  const services: Services = { transport, config, api, auth, license, realtime, automations }
+  const services: Services = { transport, config, api, auth, license, realtime, automations, host }
 
   const router = createDeskRouter(pinia)
   const app = createApp(App)
@@ -171,6 +180,17 @@ export function createDesk(transport: Transport, config: DeskConfig): Desk {
     router,
     services,
     extensions,
-    loadExtensions: (importer) => loadExtensions(extensions, config.extensions ?? [], importer ? { importer } : {}),
+    unavailable,
+    async loadExtensions(importer) {
+      const entries = config.extensions ?? []
+      // Un hôte qui ne charge pas d'extension n'essaie pas : chacune est ÉCARTÉE avec la raison de l'hôte, par la même voie qu'un
+      // module qui ne se charge pas (l'utilisateur est prévenu au démarrage, `AppShell`).
+      const refused = host.unavailable.extensions
+      if (refused) {
+        for (const e of entries) extensions.failures.push({ name: e.name, reason: refused })
+        return
+      }
+      await loadExtensions(extensions, entries, { probe: transportProbe(transport), ...(importer ? { importer } : {}) })
+    },
   }
 }
