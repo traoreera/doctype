@@ -249,7 +249,7 @@ async function uploadBackground(file: File): Promise<void> {
     // Un papier à en-tête est un `Letter Head` OU un fond PDF (le serveur refuse les deux) : le fond remplace.
     setLetterhead({ pdf: made.id, pages: was?.pages ?? 'all', offset_top: was?.offset_top ?? 0, offset_bottom: was?.offset_bottom ?? 0 })
   } catch (e) {
-    notify.error(describeError(e))
+    notify.error(e)
   } finally {
     backgroundBusy.value = false
   }
@@ -262,7 +262,7 @@ async function previewPdf(): Promise<void> {
     const file = await api.printPreviewPdf(props.doctype, example.value, payload.value)
     downloadBytes(file.filename, file.bytes, 'application/pdf')
   } catch (e) {
-    notify.error(describeError(e))
+    notify.error(e)
   } finally {
     pdfPreviewing.value = false
   }
@@ -340,7 +340,7 @@ async function uploadImage(event: Event): Promise<void> {
     await files.resolve([made.id], { force: true })
     insert({ type: 'printImage', attrs: { file: made.id, wrap: 'inline', width: 40, left: 0, top: 0 } })
   } catch (e) {
-    notify.error(describeError(e))
+    notify.error(e)
   } finally {
     uploading.value = false
   }

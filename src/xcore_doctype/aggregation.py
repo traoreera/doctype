@@ -262,7 +262,10 @@ def validate_filters(compiled: Any, filters: Mapping[str, Any] | None) -> dict[s
     # Filtrer par état sur un type sans workflow ne rendrait jamais rien : mieux vaut le dire que de servir une liste vide.
     if "workflow_state" in filters and defn.workflow is None:
         raise ValidationFailed(f"{defn.name} n'a pas de workflow : filtrer par état n'a pas de sens", code="no_workflow")
-    unknown = sorted(set(filters) - set(compiled.adapters) - set(SYSTEM_FILTERS) - tagged)
+    # `items.article` : les LIGNES d'une table enfant, « au moins une vérifie » (traoreera/doctype#58). Elles ne se
+    # regroupent ni ne se trient (`_group_expr`, `_sort_expr` ne connaissent que les champs du document) : on ne filtre.
+    rows = set(compiled.row_targets)
+    unknown = sorted(set(filters) - set(compiled.adapters) - set(SYSTEM_FILTERS) - tagged - rows)
     if unknown:
         raise ValidationFailed(f"filtre sur des champs inconnus : {unknown}")
     return {k: compiled.coerce_filter(k, v) for k, v in filters.items()}

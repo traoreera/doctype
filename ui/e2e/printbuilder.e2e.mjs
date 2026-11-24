@@ -172,11 +172,14 @@ try {
     await page.getByTestId('pb-background-top').locator('input').press('Tab')
     await r.shot(page, 'printbuilder-02c-fond')
     // L'aperçu PDF du BROUILLON : un téléchargement si le moteur est là, sinon le refus 503 dit en notification.
+    // Les DEUX sont guettés AVANT le clic : le refus arrive en une fraction de seconde et la notification ne vit
+    // que 6 s (`useNotify`), donc la chercher après l'expiration du téléchargement (15 s) ne la trouvait jamais.
     const download = page.waitForEvent('download', { timeout: 15000 }).catch(() => null)
+    const refused = page.getByText(/plutoprint/).waitFor({ timeout: 15000 }).then(() => true).catch(() => false)
     await page.getByTestId('pb-background-preview').click()
     const got = await download
     if (got) assert(/\(aperçu\)\.pdf$/.test(got.suggestedFilename()), `nom : ${got.suggestedFilename()}`)
-    else await page.getByText(/plutoprint/).waitFor()
+    else assert(await refused, 'sans moteur PDF, le refus du serveur doit s’afficher (il nomme le paquet à installer)')
   }, page)
 
   await r.step('ENREGISTRER : l’impression et le PDF emploient ce document', async () => {
