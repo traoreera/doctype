@@ -204,6 +204,38 @@ class Filter:
     value: Any
 
 
+# Séparateur d'un filtre de LIGNE : `items.article` désigne le champ `article` des lignes du champ Table `items`.
+ROW_SEP = "."
+# `!=` est refusé sur une ligne, et c'est la seule différence d'opérateurs avec un champ de premier niveau. « Au moins une
+# ligne dont l'article n'est pas X » est vrai d'une facture qui contient AUSSI X — or qui l'écrit veut « aucune ligne ne
+# cite X », un ∀ que l'existentiel ne sait pas dire. On refuse en expliquant plutôt que de choisir une lecture en silence.
+ROW_REFUSED = frozenset({"!="})
+
+
+@dataclass(frozen=True, slots=True)
+class RowTarget:
+    """Ce qu'une clé `table.champ` désigne, préparé une fois à la compilation (un `TypeAdapter` ne se construit pas par requête)."""
+
+    table: str
+    field: FieldDef
+    adapter: TypeAdapter
+
+
+@dataclass(frozen=True, slots=True)
+class RowFilter:
+    """Un filtre sur les LIGNES d'une table enfant (traoreera/doctype#58), au sens « AU MOINS UNE ligne vérifie ».
+
+    `test` est une valeur (égalité) ou un `Filter`, validé avec le type du champ de ligne. Tout ce qu'il faut pour juger
+    voyage ici — `table`, la DÉFINITION du champ de ligne (son type porte la conversion) et le test —, parce que ni
+    `Query._filter_conds` ni `memory.select` ne reçoivent les définitions des enfants. C'est le choix déjà fait pour le
+    filtre d'étiquette : la valeur validée se suffit, l'interpréteur n'a pas de contexte à retrouver.
+    """
+
+    table: str
+    field: FieldDef
+    test: Any
+
+
 @dataclass(frozen=True, slots=True)
 class FormRules:
     """Ce que l'habillage de formulaire d'une ORGANISATION resserre à l'écriture (`overrides.form_rules`), par-dessus le YAML.
@@ -295,6 +327,9 @@ class CompiledDocType:
     row_conditions: Mapping[str, Mapping[str, Mapping[str, Node]]] = dataclass_field(default_factory=dict)
     # Conditions des transitions du workflow : action -> arbre, jugé sur le document STOCKÉ (`DocumentService.transition_open`).
     transition_conditions: Mapping[str, Node] = dataclass_field(default_factory=dict)
+    # Les filtres de LIGNE possibles : `"items.article"` -> ce qu'il désigne (traoreera/doctype#58). C'est l'équivalent
+    # d'`adapters` pour les lignes, et ce qui dit à `aggregation.validate_filters` qu'une telle clé n'est pas inconnue.
+    row_targets: Mapping[str, RowTarget] = dataclass_field(default_factory=dict)
 
     @classmethod
     def compile(cls, defn: DocTypeDef, children: Mapping[str, DocTypeDef] | None = None) -> "CompiledDocType":
@@ -331,6 +366,14 @@ class CompiledDocType:
         transition_conditions = (
             {t.action: compile_expr(t.condition, names) for t in wf.transitions if t.condition is not None} if wf is not None else {}
         )
+        # Les champs de ligne filtrables, par `table.champ`. Un enfant n'a jamais de champ Table (refusé au chargement) :
+        # il n'y a donc qu'UN niveau, et `items.lignes.qte` n'existe pas.
+        row_targets = {
+            f"{f.fieldname}{ROW_SEP}{cf.fieldname}": RowTarget(f.fieldname, cf, TypeAdapter(python_type(cf)))
+            for f in defn.fields
+            if f.fieldtype == "Table" and (child := children.get(str(f.options))) is not None
+            for cf in child.fields
+        }
         return cls(
             defn,
             build_model(defn, row_models),
@@ -339,6 +382,7 @@ class CompiledDocType:
             children,
             row_conditions,
             transition_conditions,
+            row_targets,
         )
 
     @property
@@ -445,34 +489,47 @@ class CompiledDocType:
         """
         if fieldname == TAG_FILTER:
             return _tag_filter(value)
+        # Une LIGNE de table enfant (`items.article`) : mêmes opérateurs que son type, sauf `!=` (voir ROW_REFUSED).
+        if (target := self.row_targets.get(fieldname)) is not None:
+            ftype = target.field.fieldtype
+            test = _typed_filter(fieldname, target.adapter, ftype, value, FILTER_OPS[ftype] - ROW_REFUSED)
+            return RowFilter(target.table, target.field, test)
         # `name` (l'identifiant du document) se filtre comme un texte : le Desk s'en sert pour retrouver le titre d'un lien.
         adapter = _SYSTEM_ADAPTERS[fieldname] if fieldname in SYSTEM_FILTERS else self.adapters[fieldname]
         ftype = SYSTEM_FILTERS[fieldname] if fieldname in SYSTEM_FILTERS else self.definition.field_map[fieldname].fieldtype
-        try:
-            if isinstance(value, list):
-                if len(value) != 2 or not isinstance(value[0], str):
-                    raise ValueError("un filtre à opérateur s'écrit [opérateur, valeur]")
-                op, operand = value
-                if op not in FILTER_OPS[ftype]:
-                    raise ValueError(f"opérateur {op!r} impossible sur {ftype} (permis : {', '.join(sorted(FILTER_OPS[ftype]))})")
-                if op == "=":
-                    return adapter.validate_python(operand)
-                if op == "like":
-                    if not isinstance(operand, str) or not operand or len(operand) > MAX_LIKE:
-                        raise ValueError(f"`like` exige un texte de 1 à {MAX_LIKE} caractères")
-                    return Filter("like", operand)
-                if op == "in":
-                    if not isinstance(operand, list) or len(operand) > MAX_IN:
-                        raise ValueError(f"`in` exige une liste d'au plus {MAX_IN} valeurs")
-                    return Filter("in", [adapter.validate_python(v) for v in operand])
-                return Filter(op, adapter.validate_python(operand))  # != > >= < <=
-            if "=" not in FILTER_OPS[ftype]:
-                raise ValueError(f"l'égalité est impossible sur {ftype} (permis : {', '.join(sorted(FILTER_OPS[ftype]))})")
-            return adapter.validate_python(value)
-        except ValidationError as e:
-            raise ValidationFailed(f"filtre invalide sur {fieldname!r}", details=_errors(e)) from e
-        except ValueError as e:
-            raise ValidationFailed(f"filtre invalide sur {fieldname!r} : {e}") from None
+        return _typed_filter(fieldname, adapter, ftype, value, FILTER_OPS[ftype])
+
+
+def _typed_filter(fieldname: str, adapter: TypeAdapter, ftype: str, value: Any, allowed: frozenset[str]) -> Any:
+    """La valeur d'un filtre, validée avec le type du champ. `allowed` : les opérateurs permis — ceux du type, moins ce
+    qu'un filtre de LIGNE ne peut pas dire. Un seul endroit valide les opérateurs, pour les deux sortes de filtres."""
+    try:
+        if isinstance(value, list):
+            if len(value) != 2 or not isinstance(value[0], str):
+                raise ValueError("un filtre à opérateur s'écrit [opérateur, valeur]")
+            op, operand = value
+            if op not in allowed:
+                permis = ", ".join(sorted(allowed)) or "aucun"
+                refusé = " (`!=` ne se dit pas sur une ligne : il faudrait « aucune ligne », pas « au moins une »)" if op in ROW_REFUSED else ""
+                raise ValueError(f"opérateur {op!r} impossible sur {ftype} (permis : {permis}){refusé}")
+            if op == "=":
+                return adapter.validate_python(operand)
+            if op == "like":
+                if not isinstance(operand, str) or not operand or len(operand) > MAX_LIKE:
+                    raise ValueError(f"`like` exige un texte de 1 à {MAX_LIKE} caractères")
+                return Filter("like", operand)
+            if op == "in":
+                if not isinstance(operand, list) or len(operand) > MAX_IN:
+                    raise ValueError(f"`in` exige une liste d'au plus {MAX_IN} valeurs")
+                return Filter("in", [adapter.validate_python(v) for v in operand])
+            return Filter(op, adapter.validate_python(operand))  # != > >= < <=
+        if "=" not in allowed:
+            raise ValueError(f"l'égalité est impossible sur {ftype} (permis : {', '.join(sorted(allowed)) or 'aucun'})")
+        return adapter.validate_python(value)
+    except ValidationError as e:
+        raise ValidationFailed(f"filtre invalide sur {fieldname!r}", details=_errors(e)) from e
+    except ValueError as e:
+        raise ValidationFailed(f"filtre invalide sur {fieldname!r} : {e}") from None
 
 
 def _tag_filter(value: Any) -> Any:

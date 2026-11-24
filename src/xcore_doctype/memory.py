@@ -16,7 +16,7 @@ from decimal import Decimal
 from typing import Any, Mapping, Sequence
 
 from .aggregation import BUCKET_WIDTH, SYSTEM_CATEGORIES, SYSTEM_TIMES, Group, Metric
-from .builder import SYSTEM_FILTERS, Filter
+from .builder import SYSTEM_FILTERS, Filter, RowFilter
 from .errors import ValidationFailed
 from .permissions import Scope
 from .query import SYSTEM_SORTABLE, StoredDoc
@@ -38,10 +38,15 @@ def _value(defn: DocTypeDef, doc: StoredDoc, fieldname: str) -> Any:
         return doc.docstatus
     if fieldname in ("owner", "creation", "modified"):
         return getattr(doc, fieldname)
-    raw = doc.data.get(fieldname)
+    return _cast(defn.field_map[fieldname], doc.data.get(fieldname))
+
+
+def _cast(field: Any, raw: Any) -> Any:
+    """La valeur brute lue selon le TYPE de son champ, comme le SQL la lirait (`Query._typed_node`). Sert au champ du
+    document comme à la cellule d'une LIGNE : une seule conversion, pour que les deux interpréteurs restent d'accord."""
     if raw is None:
         return None
-    match defn.field_map[fieldname].fieldtype:
+    match field.fieldtype:
         case "Number" | "Rating" | "Percent":
             return float(raw)
         case "Int" | "Duration":
@@ -52,6 +57,26 @@ def _value(defn: DocTypeDef, doc: StoredDoc, fieldname: str) -> Any:
             return bool(raw)
         case _:
             return str(raw)
+
+
+def _row_matches(doc: StoredDoc, rf: RowFilter) -> bool:
+    """« AU MOINS UNE ligne vérifie » (traoreera/doctype#58) : le jumeau Python de l'EXISTS de `Query._row_cond`.
+
+    Une table absente, vide, ou dont rien ne répond ne retient pas le document. On s'arrête à la première ligne qui
+    répond : un document ne paraît qu'une fois, comme avec l'EXISTS.
+    """
+    rows = doc.data.get(rf.table)
+    if not isinstance(rows, list):
+        return False
+    test = _typed(rf.field.fieldtype, rf.test)
+    for row in rows:
+        if not isinstance(row, Mapping):
+            continue  # une ligne que le modèle n'aurait pas acceptée : elle ne répond à rien
+        actual = _cast(rf.field, row.get(rf.field.fieldname))
+        ok = _matches(actual, test) if isinstance(test, Filter) else (actual is None if test is None else actual == test)
+        if ok:
+            return True
+    return False
 
 
 def _typed(ftype: str, value: Any) -> Any:
@@ -90,6 +115,10 @@ def select(defn: DocTypeDef, docs: Sequence[StoredDoc], filters: Mapping[str, An
     """Les documents qui passent TOUS les filtres (déjà validés par type, voir `CompiledDocType.coerce_filter`)."""
     checks: list[tuple[str, Any]] = []
     for fieldname, value in filters.items():
+        # Un filtre de LIGNE porte sa cible (`RowFilter`) : sa clé `items.article` n'est pas un champ du document.
+        if isinstance(value, RowFilter):
+            checks.append((fieldname, value))
+            continue
         if fieldname not in SYSTEM_FILTERS and fieldname not in defn.field_map:
             raise ValidationFailed(f"filtre sur un champ inconnu : {fieldname!r}")
         ftype = SYSTEM_FILTERS[fieldname] if fieldname in SYSTEM_FILTERS else defn.field_map[fieldname].fieldtype
@@ -97,11 +126,14 @@ def select(defn: DocTypeDef, docs: Sequence[StoredDoc], filters: Mapping[str, An
     out = []
     for doc in docs:
         for fieldname, value in checks:
-            actual = _value(defn, doc, fieldname)
-            if isinstance(value, Filter):
-                ok = _matches(actual, value)
+            if isinstance(value, RowFilter):
+                ok = _row_matches(doc, value)
             else:
-                ok = actual is None if value is None else actual == value
+                actual = _value(defn, doc, fieldname)
+                if isinstance(value, Filter):
+                    ok = _matches(actual, value)
+                else:
+                    ok = actual is None if value is None else actual == value
             if not ok:
                 break
         else:

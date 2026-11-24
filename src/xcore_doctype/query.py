@@ -19,14 +19,14 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Collection, Mapping, Sequence
 
-from sqlalchemy import Integer, SmallInteger, String, and_, case, cast, delete, exists, false, func, insert, literal, literal_column, null, or_, select, true, update
+from sqlalchemy import JSON, Integer, SmallInteger, String, and_, case, cast, column, delete, exists, false, func, insert, literal, literal_column, null, or_, select, true, update
 from sqlalchemy.dialects import postgresql, sqlite
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .aggregation import BUCKET_WIDTH, SYSTEM_CATEGORIES, SYSTEM_TIMES, Group, Metric
-from .builder import FILTER_OPS, SYSTEM_FILTERS, Filter
+from .builder import FILTER_OPS, SYSTEM_FILTERS, Filter, RowFilter
 from .decimals import MAX_DIGITS
 from .context import RequestContext
 from .db.tables import SystemTables
@@ -1478,6 +1478,11 @@ class Query:
             if fieldname == TAG_FILTER:
                 conds.append(self._tag_cond(value))
                 continue
+            # Un filtre de LIGNE porte tout ce qu'il faut pour être bâti (`RowFilter`) : la clé `items.article` ne
+            # désigne aucun champ du document, et c'est la valeur validée qui dit sur quoi il porte.
+            if isinstance(value, RowFilter):
+                conds.append(self._row_cond(value))
+                continue
             if fieldname not in SYSTEM_FILTERS and fieldname not in fields:
                 raise ValidationFailed(f"filtre sur un champ inconnu : {fieldname!r}")
             # Les colonnes système (`name`, `docstatus`) se filtrent comme un champ du type indiqué (SYSTEM_FILTERS).
@@ -1519,10 +1524,14 @@ class Query:
         return getattr(func, metric.function)(self._json_expr(defn, str(metric.field)))
 
     def _json_expr(self, defn: DocTypeDef, fieldname: str) -> Any:
-        # `as_*` : opérateurs JSON portables (JSON_EXTRACT sur SQLite, ->> sur PostgreSQL).
         # Le nom de champ a été validé contre la définition avant d'arriver ici.
-        node = self._t.c.data[fieldname]
-        field = defn.field_map[fieldname]
+        return self._typed_node(self._t.c.data[fieldname], defn.field_map[fieldname])
+
+    @staticmethod
+    def _typed_node(node: Any, field: Any) -> Any:
+        """Un nœud JSON lu selon le TYPE de son champ. `as_*` : opérateurs JSON portables (JSON_EXTRACT sur SQLite,
+        ->> sur PostgreSQL). Le nœud vient du document (`data[champ]`) ou d'une LIGNE de table (`_row_cond`) : les
+        conversions sont les mêmes, et n'ont donc qu'un seul endroit."""
         match field.fieldtype:
             case "Number" | "Rating" | "Percent":
                 return node.as_float()
@@ -1535,6 +1544,29 @@ class Query:
                 return node.as_boolean()
             case _:
                 return node.as_string()
+
+    def _row_cond(self, rf: RowFilter) -> Any:
+        """« AU MOINS UNE ligne vérifie » : un EXISTS sur les lignes de la table JSON (traoreera/doctype#58).
+
+        Un EXISTS, et non une jointure : un document dont DEUX lignes répondent ne doit paraître qu'une fois dans la
+        liste (et ne compter qu'une fois dans un agrégat). Les deux bases déroulent un tableau JSON avec deux fonctions
+        différentes — c'est le seul écart —, tandis que la CONVERSION de la valeur (`_typed_node`) et l'OPÉRATEUR
+        (`_filter`) sont ceux d'un champ de premier niveau : un filtre de ligne n'a pas de sémantique à lui, sauf
+        l'existentiel. Une table absente ou vide ne donne aucune ligne, donc aucun document : les deux fonctions
+        rendent zéro ligne sur NULL.
+        """
+        if self._session.get_bind().dialect.name == "postgresql":
+            source = func.jsonb_array_elements(cast(self._t.c.data[rf.table].as_json(), JSONB))
+        else:
+            source = func.json_each(self._t.c.data, f"$.{rf.table}")
+        rows = source.table_valued(column("value", JSON), joins_implicitly=True)
+        expr = self._typed_node(rows.c.value[rf.field.fieldname], rf.field)
+        test = _typed(rf.field.fieldtype, rf.test)
+        if isinstance(test, Filter):
+            cond = self._filter(expr, test, rf.field.fieldtype, f"{rf.table}.{rf.field.fieldname}")
+        else:
+            cond = expr.is_(None) if test is None else expr == test
+        return exists(select(literal(1)).select_from(rows).where(cond))
 
     @staticmethod
     def _like_escape(text: str) -> str:
