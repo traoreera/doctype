@@ -32,3 +32,8 @@ alembic.ini
 
 # Build MkDocs de la doc du sous-module doctypes/ (mkdocs.cnf l'y envoie hors de l'arbre)
 /.doctypes-site/
+
+# Application de bureau (Tauri) : build du Desk pour la WebView, artefacts Rust, schémas générés
+/ui/dist-desktop/
+/ui/src-tauri/target/
+/ui/src-tauri/gen/

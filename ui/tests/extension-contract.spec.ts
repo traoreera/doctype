@@ -9,7 +9,7 @@ import { loadExtensions, type Importer } from '@/extensions/loader'
 
 function host() {
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { render: () => null } }] })
-  const notify = { success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  const notify = { success: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fail: vi.fn() }
   return new ExtensionHost({ api: {} as never, router, notify, plugin: () => ({}) as never })
 }
 

@@ -606,6 +606,9 @@ def _condition_problem(compiled: Any, source: str) -> str | None:
     opaque = sorted(n for n in used if fields[n].fieldtype in ("Table", "Password", "JSON", *DECIMAL_TYPES))
     if opaque:
         return f"{', '.join(opaque)} n'a pas de valeur comparable (table, secret, JSON ou décimal)"
+    if reserved := sorted(n for n in used if fields[n].read_grants is not None):
+        # Comme dans le YAML (`DocTypeDef._field_permission_rules`) : une action offerte ou non dit la valeur du champ à qui ne le lit pas.
+        return f"{', '.join(reserved)} est réservé en lecture (`permissions.read`) : une condition de transition le révélerait"
     return None
 
 

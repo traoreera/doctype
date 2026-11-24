@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import date
-from typing import Annotated, Any, Callable, Literal
+from typing import Annotated, Any, Callable, Iterable, Literal
 
 from pydantic import (
     BaseModel,
@@ -134,6 +134,63 @@ MATCH_ENABLED = False
 _DocTypeName = Annotated[str, StringConstraints(pattern=r"^[A-Za-z][A-Za-z0-9 _-]{0,62}$")]
 
 
+class FieldGrant(BaseModel):
+    """Ce qui ouvre un champ réservé : un grant, et de quoi le DÉCLARER à auth (comme `PermissionEntry`, sans `if_owner` ni `match` :
+    le droit sur un champ ne dépend que de l'appelant, jamais du document — c'est ce qui lui évite un second interprète SQL)."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    grant: _Grant
+    description: Annotated[str, StringConstraints(min_length=1, max_length=500)] | None = None
+    tenant_grantable: StrictBool | None = None
+
+    @model_validator(mode="after")
+    def _a_real_grant(self) -> "FieldGrant":
+        if self.grant.split(":", 1)[0] == "role":
+            raise ValueError(f"{self.grant!r}: les rôles ne sont pas pris en charge, citez un grant (auth compose les rôles en grants)")
+        if self.grant == AUTHENTICATED:
+            raise ValueError(f"`{AUTHENTICATED}` ne réserve rien : tout utilisateur identifié l'a (retirez `permissions` du champ)")
+        return self
+
+
+def _field_grant_from_str(value: Any) -> Any:
+    return {"grant": value} if isinstance(value, str) else value
+
+
+_FieldGrant = Annotated[FieldGrant, BeforeValidator(_field_grant_from_str)]
+
+
+class FieldPermissions(BaseModel):
+    """`permissions: {read: [...], write: [...]}` sur un CHAMP (traoreera/doctype#74, process/champs-reserves.md).
+
+    `read` absent : qui lit le document lit le champ. `read: [g1, g2]` : il faut EN PLUS détenir l'un de ces grants ; sinon la valeur
+    ne sort par aucune porte (fiche, liste, historique, corbeille, impression…) et ne sert ni à filtrer, ni à trier, ni à agréger.
+    `write` absent : qui écrit le document et LIT le champ l'écrit. `write: [g]` : il faut en plus l'un de ces grants. Écrire exige
+    toujours de lire. `[]` ne l'ouvre à personne : seuls le serveur (hooks de confiance, `tx`, contexte système) y touchent.
+    Au moins une des deux clés : un bloc vide ne dirait rien.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    read: list[_FieldGrant] | None = None
+    write: list[_FieldGrant] | None = None
+
+    @model_validator(mode="after")
+    def _check(self) -> "FieldPermissions":
+        if self.read is None and self.write is None:
+            raise ValueError("`permissions` d'un champ : donnez `read` et/ou `write` (une liste de grants ; `[]` = personne)")
+        for action in ("read", "write"):
+            names = [e.grant for e in getattr(self, action) or []]
+            if len(set(names)) != len(names):
+                raise ValueError(f"permissions.{action}: un grant est cité deux fois")
+        return self
+
+    def grants(self, action: str) -> frozenset[str] | None:
+        """Les grants qui ouvrent `action` (`read` | `write`) sur ce champ, ou `None` : l'action n'est pas réservée."""
+        entries = getattr(self, action)
+        return None if entries is None else frozenset(e.grant for e in entries)
+
+
 class FieldDef(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -199,6 +256,25 @@ class FieldDef(BaseModel):
     # l'autocomplétion ET le serveur le vérifie à l'écriture (`link_filtered`) : c'est une contrainte, pas une aide d'interface.
     # Un DynamicLink en est exclu : sa cible change d'un document à l'autre, les champs filtrés ne seraient pas contrôlables au chargement.
     link_filters: dict[_Fieldname, Any] | None = None
+    # Droits PAR CHAMP (traoreera/doctype#74) : des grants en plus de ceux du document, pour lire (`read`) ou écrire (`write`) CE champ.
+    # Appliqués par le serveur à chaque porte (`permissions.field_access`) ; sans ce bloc, le champ suit le document, comme avant.
+    permissions: FieldPermissions | None = None
+
+    @property
+    def read_grants(self) -> frozenset[str] | None:
+        """Les grants qu'il faut (l'un d'eux) pour LIRE ce champ, ou `None` : il se lit avec le document."""
+        return None if self.permissions is None else self.permissions.grants("read")
+
+    @property
+    def write_grants(self) -> frozenset[str] | None:
+        """Les grants qu'il faut (l'un d'eux) pour ÉCRIRE ce champ — en plus de pouvoir le lire —, ou `None`."""
+        return None if self.permissions is None else self.permissions.grants("write")
+
+    def covers(self, source: "FieldDef") -> bool:
+        """Ce champ est-il AU MOINS aussi réservé en lecture que `source` ? Vrai quand tout lecteur de ce champ lit aussi `source` :
+        c'est la condition pour qu'une valeur dérivée de `source` (un calcul, une copie, une condition) ne le révèle à personne de plus."""
+        needed = source.read_grants
+        return needed is None or (self.read_grants is not None and self.read_grants <= needed)
 
     @property
     def allowed_docstatus(self) -> frozenset[int] | None:
@@ -1207,6 +1283,79 @@ class DocTypeDef(BaseModel):
         return self
 
     @model_validator(mode="after")
+    def _field_permission_rules(self) -> "DocTypeDef":
+        """Droits par champ (traoreera/doctype#74) : ce que la définition ne doit pas pouvoir révéler par un détour, refusé au chargement.
+
+        Une règle : **rien de visible ne dérive d'un champ réservé en lecture**. Ce qui est montré à tout lecteur du document (son nom,
+        son titre, son image, les champs de ses vues, les actions de son workflow) ne peut pas le citer ; ce qui en dérive pour un champ
+        (un calcul, une condition, un `link_filters`, une copie) doit être AU MOINS aussi réservé que lui (`FieldDef.covers`). Les
+        contrôles qui regardent un AUTRE DocType (`fetch_from`, `link_filters` sur la cible, saut d'un `naming.template`) sont dans le registre.
+        """
+        reserved = {f.fieldname: f for f in self.fields if f.read_grants is not None}
+        if self.istable:
+            if any(f.permissions is not None for f in self.fields):
+                bad = sorted(f.fieldname for f in self.fields if f.permissions is not None)
+                raise ValueError(
+                    f"istable: {', '.join(bad)}: `permissions` n'est pas pris en charge sur un champ de ligne (une ligne n'a pas d'identité : "
+                    "impossible de lui rendre une cellule que l'appelant n'a pas reçue). Réservez le champ Table du parent : ses lignes le suivent"
+                )
+            return self
+        if not reserved:
+            return self
+        by_name = self.field_map
+
+        def refuse(where: str, names: Iterable[str]) -> None:
+            if cited := sorted(set(names) & set(reserved)):
+                raise ValueError(
+                    f"{where}: {', '.join(cited)} est réservé en lecture (`permissions.read`) : tout lecteur du document le verrait par là"
+                )
+
+        refuse("title_field", [self.title_field or ""])
+        refuse("image_field", [self.image_field or ""])
+        refuse("naming", self.naming_fields)
+        v = self.views
+        if v is not None:
+            if v.kanban is not None:
+                refuse("views.kanban", [v.kanban.field, *(v.kanban.card_fields or [])])
+            if v.calendar is not None:
+                refuse("views.calendar", [x for x in (v.calendar.start, v.calendar.end, v.calendar.title, v.calendar.color) if x])
+            if v.gantt is not None:
+                refuse("views.gantt", [x for x in (v.gantt.start, v.gantt.end, v.gantt.title, v.gantt.color) if x])
+            if v.tree is not None:
+                refuse("views.tree", [v.tree.parent])
+        names = [f.fieldname for f in self.fields]
+        for t in self.workflow.transitions if self.workflow is not None else ():
+            if t.condition is not None:
+                refuse(f"workflow.transitions[{t.action}].condition", referenced_fields(compile_expr(t.condition, names)))
+        for action in _ACTIONS:
+            refuse(f"permissions.{action}.match", [e.match.field for e in getattr(self.permissions, action) or [] if e.match is not None])
+
+        def derived(f: FieldDef, what: str, sources: Iterable[str]) -> None:
+            for name in sorted(set(sources)):
+                source = by_name.get(name)
+                if source is None or source is f or f.covers(source):
+                    continue
+                raise ValueError(
+                    f"{f.fieldname}.{what}: lit {name!r}, réservé en lecture ; {f.fieldname!r} doit l'être au moins autant "
+                    f"(`permissions.read` parmi : {', '.join(sorted(source.read_grants or []))}), sinon il le révèle"
+                )
+
+        for f in self.fields:
+            for kind in ("depends_on", "mandatory_depends_on", "read_only_depends_on"):
+                if (src := getattr(f, kind)) is not None:
+                    derived(f, kind, referenced_fields(compile_expr(src, names)))
+            if f.compute is not None:
+                from .compute import parse_compute
+
+                derived(f, "compute", [n for n in parse_compute(f.compute).reads if n in by_name])
+            if f.fetch_from is not None:
+                derived(f, "fetch_from", [f.fetch_from.split(".")[0]])
+            for value in (f.link_filters or {}).values():
+                if isinstance(value, str) and value.startswith(LINK_FILTER_REF):
+                    derived(f, "link_filters", [value[len(LINK_FILTER_REF):]])
+        return self
+
+    @model_validator(mode="after")
     def _check_views(self) -> "DocTypeDef":
         """Chaque vue déclarée désigne des champs qui existent et qui ont le bon type : sinon elle serait vide ou cassée en production."""
         v = self.views
@@ -1366,6 +1515,18 @@ class DocTypeDef(BaseModel):
             mine = explicit.setdefault(grant, {})  # tout nom de `defaults` doit aussi exister ici (voir la construction ci-dessous)
             if t.description is not None:
                 mine.setdefault("description", t.description)
+        # Les droits PAR CHAMP ouvrent aussi leurs grants : sans déclaration, auth ne les connaît pas et le champ resterait fermé à tous.
+        for f in self.fields:
+            for action, verb in (("read", "lire"), ("write", "modifier")):
+                for e in (getattr(f.permissions, action) or []) if f.permissions is not None else []:
+                    defaults.setdefault(e.grant, f"{label} : {verb} « {f.label or f.fieldname} »")
+                    mine = explicit.setdefault(e.grant, {})
+                    for key, value in (("description", e.description), ("tenant_grantable", e.tenant_grantable)):
+                        if value is None:
+                            continue
+                        if key in mine and mine[key] != value:
+                            raise ValueError(f"permissions: {e.grant!r} a un {key} contradictoire ({mine[key]!r} / {value!r})")
+                        mine[key] = value
         return {
             name: GrantSpec(
                 name=name,
@@ -1411,6 +1572,11 @@ class DocTypeDef(BaseModel):
         if isinstance(self.naming, NamingTemplate):
             return frozenset(first for first, _ in self.naming.tokens)
         return frozenset()
+
+    @property
+    def guarded_fields(self) -> tuple[FieldDef, ...]:
+        """Les champs qui portent des droits propres (`permissions`) : vide pour un DocType d'avant, qui ne paie donc rien."""
+        return tuple(f for f in self.fields if f.permissions is not None)
 
     @property
     def field_map(self) -> dict[str, FieldDef]:

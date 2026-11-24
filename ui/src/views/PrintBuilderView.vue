@@ -11,8 +11,7 @@ import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import BlockPanel from '@/components/printbuilder/BlockPanel.vue'
 import PrintDocEditor, { type Selected } from '@/components/printdoc/PrintDocEditor.vue'
-import { describeError, useNotify } from '@/composables/useNotify'
-import { downloadBytes } from '@/lib/download'
+import { describeError, useNotify, UserMessage } from '@/composables/useNotify'
 import type { TableCommand, TableStyle } from '@/lib/tablestyles'
 import { t } from '@/i18n'
 import { PX_PER_MM, blocksToContent, newEmbedded, round1, tokenHtml } from '@/lib/printdoc'
@@ -36,8 +35,9 @@ import {
   type Draft,
   type Letterhead,
 } from '@/lib/printedit'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
-import type { DocTypeMeta } from '@/lib/types'
+import type { DocData, DocTypeMeta, PrintOverride } from '@/lib/types'
 import { useFiles } from '@/stores/files'
 import { useLinks } from '@/stores/links'
 import { useMeta } from '@/stores/meta'
@@ -61,12 +61,20 @@ import { useMeta } from '@/stores/meta'
  */
 const props = defineProps<{ doctype: string }>()
 const { api } = useServices()
+const host = useHost()
 const notify = useNotify()
 const metaStore = useMeta()
 const links = useLinks()
 const files = useFiles()
 
 const meta = ref<DocTypeMeta | null>(null)
+/** Les données d'exemple d'un ÉTAT (`null` pour un DocType, dont l'exemple est un document lu). */
+const stateExample = ref<DocData | null>(null)
+/** Le méta d'un état : ce que le serveur en dit, complété de ce qu'un méta exige et qu'un état n'a pas (ni disposition, ni droits). */
+function stateMeta(source: NonNullable<PrintOverride['data_source']>): DocTypeMeta {
+  const rights: DocTypeMeta['rights'] = { read: 'none', write: 'none', create: 'none', delete: 'none', submit: 'none', cancel: 'none' }
+  return { ...source, layout: [], list_columns: [], rights }
+}
 /** Le nom, le libellé, la page et le papier à en-tête du gabarit (ses blocs éventuels ne servent qu'à l'ouverture). */
 const draft = ref<Draft>(fromTemplate(null))
 const content = ref('')
@@ -143,11 +151,18 @@ async function load(): Promise<void> {
   failure.value = ''
   selected.value = null
   try {
-    meta.value = await metaStore.refresh(props.doctype)
+    // Un ÉTAT (`<plugin>.<état>` : le point n'existe dans aucun nom de DocType) n'a ni méta ni document à lire : ses champs et
+    // son exemple viennent avec le gabarit.
+    const fetched = props.doctype.includes('.') ? null : await metaStore.refresh(props.doctype)
+    if (fetched) meta.value = fetched // dès maintenant, comme avant : la page se dessine pendant que le gabarit arrive
     const current = await api.printOverride(props.doctype)
+    stateExample.value = current.data_source ? (current.example ?? {}) : null
+    const known = current.data_source ? stateMeta(current.data_source) : fetched
+    if (!known) throw new UserMessage(t.errors.unknownDoctype)
+    meta.value = known
     draft.value = fromTemplate(current.template)
     const raw = current.template as { content?: string; blocks?: Record<string, unknown>[] }
-    content.value = typeof raw.content === 'string' ? raw.content : blocksToContent(raw.blocks ?? [], meta.value)
+    content.value = typeof raw.content === 'string' ? raw.content : blocksToContent(raw.blocks ?? [], known)
     const background = draft.value.letterhead?.pdf
     void files.resolve([...[...content.value.matchAll(/data-file="([0-9a-f]{32})"/g)].map((m) => m[1]!), ...(background ? [background] : [])])
     source.value = current.source
@@ -167,6 +182,7 @@ async function load(): Promise<void> {
 async function loadExample(): Promise<void> {
   exampleData.value = null
   if (!example.value || !meta.value) return
+  if (stateExample.value) return void (exampleData.value = stateExample.value)
   try {
     const record = await api.get(props.doctype, example.value)
     exampleData.value = record.data
@@ -260,7 +276,7 @@ async function previewPdf(): Promise<void> {
   pdfPreviewing.value = true
   try {
     const file = await api.printPreviewPdf(props.doctype, example.value, payload.value)
-    downloadBytes(file.filename, file.bytes, 'application/pdf')
+    await host.saveBytes(file.filename, file.bytes, 'application/pdf')
   } catch (e) {
     notify.error(e)
   } finally {

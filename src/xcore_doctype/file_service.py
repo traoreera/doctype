@@ -8,8 +8,8 @@ from typing import Any, Mapping, Sequence
 from . import files as F
 from .context import RequestContext
 from .document import DocumentService
-from .errors import NotFound, PermissionDenied, ValidationFailed
-from .permissions import Scope, scope_for
+from .errors import FieldNotWritable, NotFound, PermissionDenied, ValidationFailed
+from .permissions import Scope, field_access, scope_for
 from .schema import FILE_TYPES, FieldDef
 
 
@@ -52,6 +52,8 @@ class FileService:
         self._docs._enter(ctx, "file.upload", doctype)
         compiled, field = self._file_field(doctype, fieldname)
         definition = compiled.definition
+        if fieldname in field_access(definition, ctx).locked:
+            raise FieldNotWritable([fieldname])  # droits par champ : on ne dépose pas un fichier pour un champ qu'on ne peut pas écrire
         if not (scope_for(definition, ctx, "create").granted or scope_for(definition, ctx, "write").granted):
             # Sans rôle, un document de ce type partagé avec lui en écriture : il peut en remplir les champs fichier.
             write = scope_for(definition, ctx, "write")
@@ -219,6 +221,10 @@ class FileService:
             except NotFound:
                 scopes[doctype] = Scope("read")  # le type a disparu : plus personne ne lit ce fichier (sauf celui qui l'a déposé, plus haut)
         scope = scopes[doctype]
+        # Droits par champ : le fichier EST la valeur de son champ. Lire le document ne suffit pas si ce champ-là lui est fermé.
+        if scope.granted or scope.share:
+            if row["fieldname"] in field_access(self._docs._doctype(doctype).definition, ctx).hidden:
+                return False
         return (scope.granted or scope.share) and await q.file_cited(doctype, row["fieldname"], row["id"], scope=scope)  # un partage ouvre ses fichiers
 
     # ── Servir ────────────────────────────────────────────────

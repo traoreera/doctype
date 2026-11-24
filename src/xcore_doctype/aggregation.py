@@ -19,10 +19,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta, tzinfo
 from decimal import ROUND_HALF_EVEN, Decimal
-from typing import TYPE_CHECKING, Any, Mapping, Sequence
+from typing import TYPE_CHECKING, Any, Collection, Mapping, Sequence
 
 from .decimals import canonical
-from .errors import ValidationFailed
+from .errors import FieldNotReadable, ValidationFailed
 from .tags import TAG_FILTER, supports_tags
 
 if TYPE_CHECKING:  # pragma: no cover - schema importe dashboards, qui importe ce module
@@ -89,10 +89,16 @@ def resolve(
     metrics: Sequence[Metric | str] | None = None,
     periods: int | None = None,
     limit: int = DEFAULT_GROUPS,
+    hidden: Collection[str] = (),
 ) -> AggSpec:
-    """Valide une demande d'agrégat contre la définition du DocType, ou lève `ValidationFailed` (message pour un humain)."""
+    """Valide une demande d'agrégat contre la définition du DocType, ou lève `ValidationFailed` (message pour un humain).
+
+    `hidden` : les champs que l'appelant ne lit pas (`permissions.FieldAccess.hidden`). Une somme, une moyenne, un minimum ou un
+    regroupement sur l'un d'eux est REFUSÉ (`field_not_readable`) : une moyenne des salaires filtrée sur un seul employé est son salaire."""
     fields = defn.field_map
     parsed = tuple(m if isinstance(m, Metric) else Metric.parse(m) for m in (metrics or ["count"]))
+    if secret := sorted({m.field for m in parsed if m.field in hidden} | ({group_by} if group_by in hidden else set())):
+        raise FieldNotReadable(secret, "Agrégat")
     if not 1 <= len(parsed) <= 8:
         raise ValidationFailed("de 1 à 8 mesures")
     if len(set(parsed)) != len(parsed):
@@ -245,15 +251,22 @@ def _key(raw: Any) -> Any:
     return raw if raw is None or isinstance(raw, (bool, int)) else str(raw)
 
 
-def validate_filters(compiled: Any, filters: Mapping[str, Any] | None) -> dict[str, Any]:
-    """Les filtres de la liste, validés par type. `compiled` : le `CompiledDocType` du DocType interrogé."""
-    from .builder import SYSTEM_FILTERS  # import tardif : builder importe schema, comme ce module
+def validate_filters(compiled: Any, filters: Mapping[str, Any] | None, *, hidden: Collection[str] = ()) -> dict[str, Any]:
+    """Les filtres de la liste, validés par type. `compiled` : le `CompiledDocType` du DocType interrogé.
+
+    `hidden` : les champs que l'appelant ne lit pas (droits par champ). Un filtre sur l'un d'eux — ou sur une ligne d'une table
+    cachée (`items.qty`) — est REFUSÉ (`field_not_readable`), pour la liste, les agrégats, la recherche, les vues enregistrées et
+    les compteurs d'étiquettes à la fois (c'est leur seule porte) : « salaire > 5000 » répond à la question sans montrer la colonne.
+    Un hook de confiance (`tx.find`) ne passe rien : il lit tout."""
+    from .builder import ROW_SEP, SYSTEM_FILTERS  # import tardif : builder importe schema, comme ce module
 
     defn = compiled.definition
     if filters is None:
         return {}
     if not isinstance(filters, Mapping):
         raise ValidationFailed("filters doit être un objet")
+    if hidden and (secret := sorted(k for k in filters if isinstance(k, str) and (k in hidden or k.split(ROW_SEP, 1)[0] in hidden))):
+        raise FieldNotReadable(secret, "Filtre")
     tables = {f.fieldname for f in defn.fields if f.fieldtype == "Table"}
     if tables & set(filters):
         raise ValidationFailed(f"filtre impossible sur un champ Table : {sorted(tables & set(filters))}")

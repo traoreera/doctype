@@ -95,7 +95,7 @@ const addItems = kinds.map((kind) => ({ label: t.editor.kinds[kind], command: ()
 
 function add(kind: BlockKind): void {
   const limit = props.doctype ? MAX_BLOCKS : MAX_COMPOSED_BLOCKS // un tableau de bord de type : 100 ; un espace avec ses contributions : davantage
-  if (draft.value.length >= limit) return notify.error(new Error(`${limit} blocs au plus`))
+  if (draft.value.length >= limit) return notify.fail(t.editor.tooManyBlocks(limit))
   const block = blankBlock(kind, props.doctype ?? '')
   if (kind === 'spacer') draft.value = [...draft.value, block]
   else dialog.value = { index: null, block }

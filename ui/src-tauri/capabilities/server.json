@@ -1,0 +1,19 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desk-server",
+  "description": "Le réseau de l'application : le SEUL serveur que le transport natif peut joindre. Écrit par `pnpm desktop:configure <adresse du Desk>` avec desk.json ; à tenir d'accord avec lui.",
+  "windows": [
+    "main",
+    "desk-*"
+  ],
+  "permissions": [
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "http://127.0.0.1:8000/*"
+        }
+      ]
+    }
+  ]
+}

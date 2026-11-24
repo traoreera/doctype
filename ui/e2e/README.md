@@ -1,5 +1,8 @@
 # Scénario de bout en bout du Desk
 
+> L'application de **bureau** (Tauri) a son propre test, `desktop.smoke.mjs` : la vraie application pilotée par WebDriver contre un
+> serveur de contrat. Voir `docs/desktop.md` § 4 et § 9.
+
 `desk.e2e.mjs` pilote un vrai Chromium (Playwright) contre un vrai serveur xcore : connexion, création d'un pays puis d'un
 client, conditions `depends_on`, champ Link, filtres, conflit de version, suppression, puis articles et **facture à lignes**
 (numéro de série, total calculé par le hook du plugin `sales`, lignes incomplètes, garde des modifications non enregistrées,

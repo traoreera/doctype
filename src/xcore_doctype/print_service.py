@@ -27,14 +27,17 @@ import asyncio
 import base64
 from typing import Any, Mapping, NamedTuple
 
+from fastapi import HTTPException, Request
+
 from . import pdf as pdf_engine
 from . import printing
-from .context import RequestContext
+from .context import ContextError, ContextSettings, RequestContext, get_current_user
 from .document import DocumentService
-from .errors import DoctypeError, InvalidDefinition, NotFound, ValidationFailed
+from .errors import DoctypeError, InvalidDefinition, NotFound, PermissionDenied, ValidationFailed
 from .file_service import FileService
 from .overrides import KIND_PRINT, validate_print_override
 from .permissions import scope_for
+from .print_data import PrintSource, data_problems
 from .printing import PrintTemplate
 
 # Le fond PDF de l'ORGANISATION vit dans ses réglages de base. Les champs que l'impression en lit, et AUCUN
@@ -56,6 +59,8 @@ MAX_TITLES = 100
 SOURCE_ORG = "organisation"
 SOURCE_PLUGIN = "plugin"
 SOURCE_GENERATED = "fabriqué"
+# Le « document d'exemple » d'un état, pour l'aperçu de l'éditeur : il n'y en a qu'un, ses données d'exemple.
+EXAMPLE_NAME = "exemple"
 
 
 class Background(NamedTuple):
@@ -86,7 +91,7 @@ class PrintService:
         """Les gabarits de ce type, pour peupler le menu « Imprimer » du Desk. Il faut pouvoir LIRE le type."""
         self._docs._enter(ctx, "doc.print.templates", doctype)
         compiled = self._printable(doctype)
-        self._docs._scope(ctx, compiled, "read")
+        self._reader(ctx, compiled)
         chosen = await self._all(ctx, compiled)
         return {
             "doctype": compiled.definition.name,
@@ -131,12 +136,99 @@ class PrintService:
         return "standard" if "standard" in chosen else next(iter(chosen))
 
     def _printable(self, doctype: str) -> Any:
+        """Le type compilé, ou — pour un nom `<plugin>.<état>` — la SOURCE d'impression d'un état (§15), qui porte
+        ce que ce service lit d'un type (`definition`, `children`, `children_by_field`). Le point n'existe dans aucun
+        nom de DocType : les deux espaces ne se recouvrent pas."""
+        source = self._docs._registry.print_source(doctype)
+        if source is not None:
+            return source
         compiled = self._docs._doctype(doctype)  # type inconnu ou enfant : 404, comme partout
         d = compiled.definition
         if d.single or d.source is not None:
             what = "unique" if d.single else "virtuel"
             raise ValidationFailed(f"{d.name} est un DocType {what} : il ne s'imprime pas", code="not_printable")
         return compiled
+
+    # ── Les droits : un type, ou un état ──────────────────────
+    @staticmethod
+    def _holds(ctx: RequestContext, source: PrintSource) -> bool:
+        """L'appelant porte-t-il le grant qui ouvre le gabarit de cet état ? Un état sans `grant` n'a pas de gabarit
+        d'organisation : personne ne l'édite au Desk (le système, lui, passe — il est explicite et journalisé, D20)."""
+        return ctx.is_system or (source.grant is not None and source.grant in ctx.permissions)
+
+    def _reader(self, ctx: RequestContext, compiled: Any) -> None:
+        """Qui voit les gabarits : un lecteur du TYPE ; pour un état, le porteur de son grant (un état n'a ni
+        documents ni périmètre de lecture — le droit de VOIR l'état est jugé par la route du plugin qui le calcule)."""
+        if isinstance(compiled, PrintSource):
+            if not self._holds(ctx, compiled):
+                raise PermissionDenied()
+            return
+        self._docs._scope(ctx, compiled, "read")
+
+    async def _author(self, ctx: RequestContext, compiled: Any) -> None:
+        """Qui ENREGISTRE un gabarit ou y dépose un fichier : le verrou de `_check_author` pour un type, le grant pour un état."""
+        if isinstance(compiled, PrintSource):
+            if not self._holds(ctx, compiled):
+                raise PermissionDenied()
+            return
+        write = self._docs._scope(ctx, compiled, "write")
+        async with self._docs._query(ctx) as q:
+            self._check_author(write, compiled, restricted=await q.restricted(write))
+
+    # ── Un état : des données qui ne sont pas un document (§15) ──
+    async def render_data(
+        self, ctx: RequestContext, source: str, data: Mapping[str, Any], *, title: str | None = None, template: Any = None, letterhead: Any = None
+    ) -> dict[str, Any]:
+        """Un ÉTAT en HTML : les données que le plugin a calculées, mises en page par la chaîne des pièces.
+
+        Les trois niveaux de gabarit valent ici comme pour un type (l'organisation, le plugin, le fabriqué), ainsi que
+        la langue, le format de date et le fond PDF de l'organisation. `title` est ce que `{{ name }}` imprime
+        (« Balance au 30/11/2026 ») ; à défaut, le libellé de l'état.
+
+        **Aucun droit n'est jugé ici** : un état n'a pas de documents, donc pas de périmètre de lecture que le moteur
+        saurait appliquer. C'est la ROUTE du plugin qui décide qui voit ces données — elle les a calculées, avec les
+        droits de son appelant. Ce service ne lit rien d'autre que l'habillage de l'organisation de `ctx`.
+        """
+        html, found, background = await self._data_html(ctx, source, data, title=title, template=template, letterhead=letterhead)
+        return {"source": source, "template": found.name, "html": html, "background": background is not None}
+
+    async def render_data_pdf(
+        self, ctx: RequestContext, source: str, data: Mapping[str, Any], *, title: str | None = None, template: Any = None, letterhead: Any = None
+    ) -> tuple[bytes, str]:
+        """Le même état en PDF, rendu hors de la boucle d'événements, et son nom de fichier. `503 pdf_engine_missing` sans le paquet."""
+        html, found, background = await self._data_html(ctx, source, data, title=title, template=template, letterhead=letterhead)
+        compiled = self._source(source)
+        return await _render_pdf(html, background), _filename(compiled.definition.label or source, title or "", found).replace(" .pdf", ".pdf")
+
+    def _source(self, name: Any) -> PrintSource:
+        found = self._docs._registry.print_source(name) if isinstance(name, str) else None
+        if found is None:
+            raise NotFound("print_source_not_found", f"État imprimable {name!r} inconnu (déclarez-le : doctype_registry.load_print_sources)")
+        return found
+
+    async def _data_html(
+        self, ctx: RequestContext, source: str, data: Mapping[str, Any], *, title: str | None, template: Any, letterhead: Any
+    ) -> tuple[str, PrintTemplate, Background | None]:
+        self._docs._enter(ctx, "doc.print.data", source)
+        compiled = self._source(source)
+        if template is not None and not isinstance(template, str):
+            raise ValidationFailed("template doit être un texte (le nom d'un gabarit)")
+        if title is not None and not isinstance(title, str):
+            raise ValidationFailed("title doit être un texte")
+        if problems := data_problems(compiled, data):
+            raise ValidationFailed(
+                f"Les données ne suivent pas le schéma de l'état {source} : " + " ; ".join(problems[:5]),
+                code="print_data_invalid",
+                details=[{"field": p.split(":")[0].split(" ")[0], "msg": p, "type": "print_data_invalid"} for p in problems[:20]],
+            )
+        chosen = await self._all(ctx, compiled)
+        wanted = template or self._default_name(chosen)
+        if wanted not in chosen:
+            raise NotFound("print_template_not_found", f"Gabarit {wanted!r} introuvable pour {source}")
+        found = chosen[wanted][0]
+        record = {"name": title or compiled.definition.label or source, "data": dict(data)}
+        html, background = await self._compose(ctx, compiled, found, record, letterhead)
+        return html, found, background
 
     # ── L'aperçu HTML ─────────────────────────────────────────
     async def render(self, ctx: RequestContext, doctype: str, name: str, *, template: Any = None, letterhead: Any = None) -> dict[str, Any]:
@@ -270,33 +362,36 @@ class PrintService:
         """
         self._docs._enter(ctx, "doc.print.override.get", doctype)
         compiled = self._printable(doctype)
-        self._docs._scope(ctx, compiled, "read")
+        self._reader(ctx, compiled)
         chosen = await self._all(ctx, compiled)
         wanted = template if isinstance(template, str) and template else self._default_name(chosen)
         if wanted not in chosen:
             raise NotFound("print_template_not_found", f"Gabarit {wanted!r} introuvable pour {doctype}")
         found, source = chosen[wanted]
+        out = {
+            "doctype": compiled.definition.name,
+            "template": found.model_dump(mode="json", exclude_none=True),
+            "source": source,
+            "templates": [{"name": n, "label": t.label or n, "source": s} for n, (t, s) in chosen.items()],
+        }
+        if isinstance(compiled, PrintSource):
+            # Un état n'a pas de `/meta` : l'éditeur reçoit ICI ses champs (la forme d'un méta, réduite à ce qu'il lit)
+            # et ses données d'exemple. Qui l'ouvre peut l'enregistrer : c'est le même grant.
+            return {**out, "editable": True, "data_source": source_meta(compiled), "example": compiled.example}
         # Le périmètre d'écriture SANS lever : un lecteur ouvre l'éditeur en lecture seule, il n'est pas refusé
         # (c'est `scope_for` et non `_scope`, comme `/meta` pour ses droits effectifs).
         write = scope_for(compiled.definition, ctx, "write")
         async with self._docs._query(ctx) as q:
             total = write.level == "all" and not await q.restricted(write)
-        return {
-            "doctype": compiled.definition.name,
-            "template": found.model_dump(mode="json", exclude_none=True),
-            "source": source,
-            "editable": total,
-            "templates": [{"name": n, "label": t.label or n, "source": s} for n, (t, s) in chosen.items()],
-        }
+        return {**out, "editable": total}
 
     async def save_override(self, ctx: RequestContext, doctype: str, config: Any) -> dict[str, Any]:
         """Enregistre le gabarit d'une ORGANISATION. Exige un périmètre d'écriture TOTAL sur le type."""
         self._docs._enter(ctx, "doc.print.override.save", doctype)
         compiled = self._printable(doctype)
-        write = self._docs._scope(ctx, compiled, "write")
+        await self._author(ctx, compiled)
         cleaned = validate_print_override(compiled, config)
         async with self._docs._query(ctx) as q:
-            self._check_author(write, compiled, restricted=await q.restricted(write))
             made = await q.put_override(KIND_PRINT, target_of(compiled.definition.name, cleaned["name"]), owner=ctx.owner_id, config=cleaned)
         return {"doctype": compiled.definition.name, "template": made["config"]}
 
@@ -304,10 +399,9 @@ class PrintService:
         """Retire le gabarit de l'organisation : celui du plugin (ou le fabriqué) reprend la main."""
         self._docs._enter(ctx, "doc.print.override.delete", doctype)
         compiled = self._printable(doctype)
-        write = self._docs._scope(ctx, compiled, "write")
+        await self._author(ctx, compiled)
         wanted = template if isinstance(template, str) and template else "standard"
         async with self._docs._query(ctx) as q:
-            self._check_author(write, compiled, restricted=await q.restricted(write))
             await q.delete_override(KIND_PRINT, target_of(compiled.definition.name, wanted))
         return {"doctype": compiled.definition.name, "template": wanted}
 
@@ -354,6 +448,12 @@ class PrintService:
         compiled = self._printable(doctype)
         cleaned = validate_print_override(compiled, config)
         found = printing.parse_template(cleaned, source="gabarit en brouillon")
+        if isinstance(compiled, PrintSource):
+            # Un état n'a pas de document à lire : l'aperçu montre ses données d'EXEMPLE, à qui peut éditer son gabarit.
+            self._reader(ctx, compiled)
+            record = {"name": compiled.definition.label or compiled.name, "data": compiled.example}
+            html, background = await self._compose(ctx, compiled, found, record, letterhead)
+            return html, background, record
         record = await self._docs.get(ctx, doctype, name)  # LE contrôle de droit : lire le document
         html, background = await self._compose(ctx, compiled, found, record, letterhead)
         return html, background, record
@@ -377,9 +477,7 @@ class PrintService:
         sert qu'à un gabarit, et qui ne peut pas l'enregistrer n'a rien à y déposer."""
         self._docs._enter(ctx, action, doctype)
         compiled = self._printable(doctype)
-        write = self._docs._scope(ctx, compiled, "write")
-        async with self._docs._query(ctx) as q:
-            self._check_author(write, compiled, restricted=await q.restricted(write))
+        await self._author(ctx, compiled)
         return await self._files.save_print_file(
             ctx, compiled.definition.name, content=content, filename=filename, content_type=content_type, kind=kind
         )
@@ -404,7 +502,9 @@ class PrintService:
         """
         self._docs._enter(ctx, "doc.print.example", doctype)
         compiled = self._printable(doctype)
-        self._docs._scope(ctx, compiled, "read")
+        self._reader(ctx, compiled)
+        if isinstance(compiled, PrintSource):
+            return {"doctype": compiled.name, "name": EXAMPLE_NAME if compiled.schema.example is not None else None}
         page = await self._docs.list(ctx, doctype, limit=1)
         return {"doctype": compiled.definition.name, "name": page["items"][0]["name"] if page["items"] else None}
 
@@ -483,3 +583,66 @@ def _pdf_bytes(html: str, background: Background | None) -> bytes:
     if background is not None:
         content = pdf_engine.overlay(content, background.content, every_page=background.every_page)
     return content
+
+
+def source_meta(source: PrintSource) -> dict[str, Any]:
+    """Ce que l'éditeur de gabarits lit d'un méta, pour un état : ses champs et ceux de ses tables, rien d'autre."""
+
+    def fields(definition: Any) -> list[dict[str, Any]]:
+        return [
+            {k: v for k, v in {"fieldname": f.fieldname, "label": f.label or f.fieldname, "fieldtype": f.fieldtype,
+                               "options": f.options, "decimals": f.decimals}.items() if v is not None}
+            for f in definition.fields
+        ]
+
+    return {
+        "name": source.name,
+        "label": source.definition.label or source.name,
+        "fields": fields(source.definition),
+        "children": {name: {"name": name, "fields": fields(child)} for name, child in source.children.items()},
+    }
+
+
+class DataPrinter:
+    """Un contexte (utilisateur ou système) et l'impression d'états : `await printer.html(...)`, `await printer.pdf(...)`."""
+
+    def __init__(self, service: PrintService, ctx: RequestContext) -> None:
+        self._svc, self._ctx = service, ctx
+
+    @property
+    def context(self) -> RequestContext:
+        return self._ctx
+
+    async def html(self, source: str, data: Mapping[str, Any], *, title: str | None = None, template: str | None = None, letterhead: str | None = None) -> str:
+        """L'état en HTML (l'aperçu marche sans le moteur PDF)."""
+        out = await self._svc.render_data(self._ctx, source, data, title=title, template=template, letterhead=letterhead)
+        return str(out["html"])
+
+    async def pdf(self, source: str, data: Mapping[str, Any], *, title: str | None = None, template: str | None = None, letterhead: str | None = None) -> tuple[bytes, str]:
+        """L'état en PDF et son nom de fichier."""
+        return await self._svc.render_data_pdf(self._ctx, source, data, title=title, template=template, letterhead=letterhead)
+
+
+class DataPrinters:
+    """Le service exporté `doctype_print` : la porte d'IMPRESSION des plugins pour ce qui n'est pas un document (§15).
+
+    Les deux portes de `doctype_writer`, et pour les mêmes raisons : `await printers.as_request(request)` dans une route du
+    plugin (l'utilisateur de la requête, vérifié comme `http_context` ; son organisation décide du gabarit, de la langue et
+    du papier), `printers.system(tenant, raison)` pour une tâche (un état envoyé par courriel la nuit). Le plugin juge
+    lui-même qui voit l'état : il l'a calculé.
+    """
+
+    def __init__(self, service: PrintService, settings: ContextSettings) -> None:
+        self._svc, self._settings = service, settings
+
+    async def as_request(self, request: Request) -> DataPrinter:
+        user = await get_current_user(request, None)  # 401 sans jeton valable, comme toute route protégée
+        try:
+            ctx = RequestContext.from_http(request, user, self._settings)
+            ctx.require_identity()
+        except ContextError as e:
+            raise HTTPException(status_code=e.status, detail=e.as_detail()) from e
+        return DataPrinter(self._svc, ctx)
+
+    def system(self, tenant_id: str, reason: str) -> DataPrinter:
+        return DataPrinter(self._svc, RequestContext.system(tenant_id, reason))

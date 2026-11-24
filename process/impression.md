@@ -748,3 +748,39 @@ moteur d'impression, lui, reste dans le moteur (le sortir dans un plugin était 
 
 Reste : les dates s'impriment en ISO (`2026-11-04`), le défaut de `printing._cell` déjà noté au §10 ter.
 
+
+## 16. Imprimer des données qui ne sont pas un document : les états (24 nov., traoreera/doctype#61)
+
+**Le manque.** `print_service._printable` refuse ce qu'il ne stocke pas. Un état comptable (balance, bilan, grand livre) ou un
+registre (livre de paie) est CALCULÉ : l'ERP fabriquait une définition de type déduite des données (« 1234.56 » → Currency),
+appelait `printing.render_html` directement, réimplémentait `template_fields_problems`, et écrivait le livre de paie en HTML à la
+main. Quatorze états hors de la chaîne des pièces, donc hors de l'éditeur de gabarits.
+
+**La décision : une source d'impression, pas un DocType de plus.** `print_data.py` (pur) : un schéma léger (`DataSchema` : champs,
+types fermés `DATA_TYPES`, tables de colonnes) compilé une fois en définitions TRANSITOIRES par le même analyseur qu'un DocType
+(`parse_definition` : mêmes refus, `decimals` manquant compris). `PrintSource` porte ce que le service lit d'un type compilé
+(`definition`, `children`, `children_by_field`) : `render_html`, `template_fields_problems`, `generated_template` et
+`validate_print_override` servent tels quels. Aucun second moteur de rendu, aucun second contrôle.
+
+- **Nom `<plugin>.<état>`.** Le point n'existe dans aucun nom de DocType : pas de collision possible avec un type, ni pour la
+  cible de l'habillage (`<source>:<gabarit>`). Le préfixe doit être le plugin qui dépose (`compile_source`).
+- **Pas de `Link`.** Un lien demanderait un titre, donc une lecture, donc un droit. Un état imprime des valeurs déjà résolues.
+- **Les droits.** Imprimer un état ne juge AUCUN droit : il n'y a pas de document, donc pas de périmètre que le moteur saurait
+  appliquer. La route du plugin décide qui voit ces données — elle les calcule. En revanche l'éditeur de gabarits a un verrou :
+  le `grant` que le schéma nomme (un grant que le plugin déclare déjà). Qui le porte ouvre, enregistre, retire, dépose une image ;
+  sans lui, 403 partout ; un état sans `grant` n'a pas de gabarit d'organisation. Ce n'est pas `_check_author` (périmètre
+  d'écriture total), qui n'a pas de sens sans documents.
+- **Les données suivent le schéma** (`data_problems`) : une clé inconnue ou une table mal formée est refusée
+  (`print_data_invalid`), jamais imprimée vide. Les valeurs ne sont pas converties (imprimer c'est lire). 5 000 lignes au plus.
+- **L'aperçu de l'éditeur** montre l'`example` du schéma (validé au chargement) : un état n'a pas de « dernier document ».
+  `GET /override/print/<source>` joint `data_source` (les champs, dans la forme d'un méta) et `example` ; le Desk
+  (`PrintBuilderView`) s'en sert au lieu de `/meta` et de `api.get`.
+- **Les routes** sont celles des types (`/override/print/…`, `/print-preview/…`, `/print-example/…`, `/print-image/…`) : pas de
+  surface nouvelle. `GET /print/<source>/<nom>` répond 404 — il n'y a pas de document.
+- **La porte des plugins** : le service `doctype_print` (`DataPrinters`), les deux portes de `doctype_writer` (`as_request`,
+  `system`), puis `html(source, data, title=…)` / `pdf(…)`. Le PDF passe par `pdf.off_loop` comme les autres.
+
+Preuves : `tests/unit/test_print_data.py` (même chaîne qu'une pièce, fautes au chargement, gabarit d'organisation cloisonné par
+tenant, chaque porte fermée sans le grant), `ui/tests/printdoc.spec.ts` (l'éditeur ouvre un état sans `/meta` ni document).
+
+Non fait : le menu qui mène à `#/print/<source>` (une extension du plugin le pose) ; pas de test Chromium pour un état.

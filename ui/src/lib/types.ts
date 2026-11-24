@@ -135,6 +135,30 @@ export interface PrintOverride {
   source: 'organisation' | 'plugin' | 'fabriqué'
   editable: boolean
   templates: PrintTemplateChoice[]
+  /**
+   * Un ÉTAT (`<plugin>.<état>` : une balance, un livre de paie — des données calculées, pas un document) n'a pas de `/meta` :
+   * le serveur joint ici ses champs, dans la forme d'un méta réduite à ce que l'éditeur lit, et ses données d'exemple.
+   */
+  data_source?: { name: string; label: string; fields: FieldMeta[]; children: Record<string, ChildMeta> }
+  example?: DocData
+}
+
+/** L'état d'une tâche de fond du serveur (`jobs.py`). Jamais son contenu : seulement où elle en est. */
+export type JobStatus = 'pending' | 'running' | 'done' | 'failed'
+export interface Job {
+  id: string
+  /** `<plugin>.<tâche>` */
+  name: string
+  key: string | null
+  status: JobStatus
+  attempts: number
+  max_attempts: number
+  /** L'avancement dit par la tâche pendant qu'elle tourne, puis la raison de son dernier échec. */
+  message: string | null
+  owner: string
+  creation: string | null
+  started_at: string | null
+  finished_at: string | null
 }
 
 /** Le document rendu en HTML. `background` : un fond PDF complète ce rendu, mais seulement dans le PDF. */
@@ -374,6 +398,12 @@ export interface FieldMeta {
   in_list_view: boolean
   /** Montré mais jamais modifiable par l'utilisateur (le serveur refuse une mise à jour qui le change). */
   read_only?: boolean
+  /**
+   * Droits par champ (traoreera/doctype#74) : ce que CET utilisateur peut faire d'un champ RÉSERVÉ — `read` (le voir, pas le changer :
+   * le serveur pose alors aussi `read_only`) ou `write`. Absent sur un champ ordinaire. Un champ qu'il ne peut pas lire n'est pas dans
+   * `fields` du tout : le Desk n'a rien à masquer. Ce n'est qu'un affichage, le serveur rejuge chaque requête.
+   */
+  access?: 'read' | 'write'
   /** Table seulement : une sélection multiple (des étiquettes à saisir et à retirer) au lieu d'une grille. */
   multiselect?: boolean
   /** Une valeur ne se retrouve jamais sur deux documents (le serveur refuse le doublon). */

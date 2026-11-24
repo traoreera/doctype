@@ -26,9 +26,10 @@ import type { FormAction, FormContext } from '@/extensions/types'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { statusLabel, statusTone, transitionsFor, isFrozen } from '@/lib/docstatus'
-import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchSource, fieldStates, formTabs, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, resolveLinkFilters, startValues, tabOfField, toPayload, validate, type Row, type Values } from '@/lib/form'
+import { cellKey, childOf, duplicateValues, errorsByTab, fetchDependents, fetchSource, fieldStates, formTabs, isAutoSection, isDirty, mapServerErrors, namingField, recordValues, resolveLinkFilters, startValues, tabOfField, toPayload, creationPayload, validate, type Row, type Values } from '@/lib/form'
 import { actionLabel, formatTimestamp, relativeTime, stateLabel } from '@/lib/format'
 import { piIcon } from '@/lib/icons'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import { SUBMITTED, type AvailableMapping, type AvailableTransition, type AvailableTransitions, type DocRecord, type DocTypeMeta, type FieldMeta, type LayoutSection } from '@/lib/types'
 import { unitLinks, unitOf } from '@/lib/units'
@@ -47,6 +48,7 @@ const props = defineProps<{
 const emit = defineEmits<{ dirty: [value: boolean]; saved: [record: DocRecord] }>()
 
 const { api, license } = useServices()
+const host = useHost()
 const metaStore = useMeta()
 const router = useRouter()
 const route = useRoute()
@@ -416,7 +418,7 @@ async function save(): Promise<void> {
   const current = record.value
   const here = () => props.doctype === target.doctype && props.name === target.name
   try {
-    const data = toPayload(m, values.value)
+    const data = target.name === null ? creationPayload(m, values.value) : toPayload(m, values.value)
     if (target.name === null) {
       const rec = isPrompt.value ? await api.create(target.doctype, data, newName.value.trim()) : await api.create(target.doctype, data)
       notify.success(t.form.createdToast)
@@ -456,7 +458,7 @@ async function save(): Promise<void> {
  */
 function askToPay(why: string): void {
   const code = String(values.value.module ?? '').trim()
-  if (!license || !code) return void notify.error(new Error(why))
+  if (!license || !code) return void notify.fail(why)
   confirm.require({
     header: t.billing.payHeader,
     message: why && why !== 'payment_required' ? why : t.billing.payNeeded, // xlicense rend un code sans phrase
@@ -465,7 +467,7 @@ function askToPay(why: string): void {
     accept: async () => {
       try {
         const { url } = await license.checkout(code)
-        window.location.assign(url)
+        await host.leave(url)
       } catch (e) {
         notify.error(e)
       }

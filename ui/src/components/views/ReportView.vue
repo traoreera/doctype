@@ -11,9 +11,9 @@ import { describeError, useNotify } from '@/composables/useNotify'
 import { t } from '@/i18n'
 import { formatMetric, groupLabel, metricSpec } from '@/lib/aggregate'
 import { buildCsv, csvFilename, exportValue, isTextualColumn } from '@/lib/csv'
-import { downloadText } from '@/lib/download'
 import { statusLabel, statusTone } from '@/lib/docstatus'
 import { formatCell, formatTimestamp, isNumeric, todayIn } from '@/lib/format'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import type { AggregateResult, DocRecord, DocTypeMeta, FieldMeta, Filters } from '@/lib/types'
 import { readColumns, writeColumns } from '@/lib/viewprefs'
@@ -31,6 +31,7 @@ const EXPORT_CAP = 10_000
 const PAGE = 200
 const MAX_SUMS = 7 // une mesure `count` + sept sommes : le plafond d'une demande d'agrégat est de huit
 const { api } = useServices()
+const host = useHost()
 const links = useLinks()
 const notify = useNotify()
 
@@ -232,7 +233,7 @@ async function exportCsv(): Promise<void> {
   exporting.value = true
   try {
     const table = groupBy.value && grouped.value ? groupedTable() : await documentsTable()
-    downloadText(csvFilename(props.doctype, todayIn(props.meta.timezone)), buildCsv(table.headers, table.rows, table.textual))
+    if ((await host.saveText(csvFilename(props.doctype, todayIn(props.meta.timezone)), buildCsv(table.headers, table.rows, table.textual))) !== 'saved') return
     if (table.capped) notify.warn(t.report.exportCapped(EXPORT_CAP))
     else notify.success(t.report.exported(table.rows.length - (groupBy.value ? 1 : 0)))
   } catch (e) {

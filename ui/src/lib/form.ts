@@ -166,8 +166,9 @@ export function duplicateValues(meta: DocTypeMeta, rec: DocRecord): Values {
   const source = recordValues(meta, rec)
   const out = newValues(meta)
   const naming = namingFields(meta)
+  // `access: 'read'` : un champ réservé qu'il voit sans pouvoir l'écrire. Le recopier ferait refuser la création (`field_not_writable`).
   const skip = (f: FieldMeta): boolean =>
-    !!f.no_copy || !!f.unique || !!f.fetch_from || !!f.compute || f.fieldtype === 'Password' || f.fieldtype === 'Image' || f.fieldtype === 'Attach' || naming.includes(f.fieldname)
+    f.access === 'read' || !!f.no_copy || !!f.unique || !!f.fetch_from || !!f.compute || f.fieldtype === 'Password' || f.fieldtype === 'Image' || f.fieldtype === 'Attach' || naming.includes(f.fieldname)
   for (const f of meta.fields) {
     if (skip(f)) continue
     const child = childOf(meta, f)
@@ -471,6 +472,17 @@ export function toPayload(meta: DocTypeMeta, values: Values): DocData {
   return out
 }
 
+/**
+ * Ce qu'une CRÉATION envoie : comme `toPayload`, sans les champs réservés que l'utilisateur voit sans pouvoir les écrire (`access: 'read'`).
+ * Le serveur y pose lui-même leur défaut ; les envoyer ne servirait qu'à se faire refuser dès qu'ils diffèrent (un défaut « maintenant »
+ * résolu ici à une autre seconde que là-bas). Une mise à jour, elle, les renvoie tels quels : elle REMPLACE le document.
+ */
+export function creationPayload(meta: DocTypeMeta, values: Values): DocData {
+  const out = toPayload(meta, values)
+  for (const f of meta.fields) if (f.access === 'read') delete out[f.fieldname]
+  return out
+}
+
 export function isDirty(meta: DocTypeMeta, values: Values, original: Values): boolean {
   return JSON.stringify(toPayload(meta, values)) !== JSON.stringify(toPayload(meta, original))
 }
@@ -514,6 +526,12 @@ export function mapServerErrors(err: ApiError, meta: DocTypeMeta): MappedErrors 
     case 'permission_denied':
       general = t.errors.forbidden
       break
+    case 'field_not_writable':
+      general = t.errors.fieldNotWritable
+      break
+    case 'field_not_readable':
+      general = t.errors.fieldNotReadable
+      break
     default:
       general = err.message || t.errors.generic
   }
@@ -524,6 +542,7 @@ export function mapServerErrors(err: ApiError, meta: DocTypeMeta): MappedErrors 
 function translateServerMessage(d: { type?: string; msg?: string }, msg: string): string {
   if (d.type === 'missing') return t.form.required
   if (d.type === 'read_only') return t.form.readOnly
+  if (d.type === 'field_not_writable') return t.form.reservedField
   // Types Pydantic courants : le message anglais n'aide pas l'utilisateur.
   if (d.type && /^(literal_error|string_type|bool_type|date|value_error|extra_forbidden)/.test(d.type)) return t.form.invalid
   return msg

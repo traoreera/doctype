@@ -23,6 +23,10 @@ Deux clauses de plus (groupe 2 du programme, `process/programme.md` §2.1), pour
 - le **partage** ÉLARGIT (OU) : un document partagé avec l'utilisateur (`xdt_share`) lui est ouvert en lecture, et en écriture si le
   partage le dit, même sans rôle sur le type et malgré ses restrictions. Ni suppression, ni soumission, ni annulation par un partage.
 
+Les droits PAR CHAMP (`FieldAccess`, plus bas ; traoreera/doctype#74, `process/champs-reserves.md`) sont une autre question, posée
+APRÈS celle-ci : parmi les champs d'un document qu'il peut viser, lesquels cet appelant lit-il et écrit-il ? La réponse ne dépend
+que de ses grants, jamais du document : elle n'a donc qu'un interprète, et aucun SQL.
+
 Le SQL lit restrictions et partages en sous-requêtes (aucun cache : une restriction ajoutée vaut à la requête suivante). Le Python, qui
 juge une valeur pas encore en base, reçoit ces faits chargés par l'appelant (`Facts`) et refuse de répondre sans eux.
 """
@@ -113,6 +117,56 @@ def within_restrictions(restrict: tuple[tuple[str, str | None], ...], allowed: M
         if value not in values:
             return False
     return True
+
+
+@dataclass(frozen=True, slots=True)
+class FieldAccess:
+    """Ce que les droits PAR CHAMP retirent à UN appelant sur UN DocType (traoreera/doctype#74, process/champs-reserves.md).
+
+    `hidden` : les champs qu'il ne lit pas — donc qu'il n'écrit pas non plus ; `read_only` : ceux qu'il lit sans pouvoir les changer.
+    Contrairement à `Scope`, ce droit ne dépend QUE de l'appelant (ses grants), jamais du document : il n'a donc qu'un interprète, en
+    Python, appliqué AVANT la requête (un filtre, un tri ou un agrégat sur un champ caché est refusé, il n'atteint jamais le SQL ni
+    son jumeau en mémoire) et APRÈS elle (la valeur est retirée de ce qui sort). Rien à garder équivalent entre deux langages.
+    """
+
+    hidden: frozenset[str] = frozenset()
+    read_only: frozenset[str] = frozenset()
+
+    @property
+    def locked(self) -> frozenset[str]:
+        """Tout ce qu'il ne peut pas écrire."""
+        return self.hidden | self.read_only
+
+    def __bool__(self) -> bool:
+        return bool(self.hidden or self.read_only)
+
+    def readable(self, data: Mapping[str, object]) -> dict[str, object]:
+        """`data` sans les champs cachés : la clé DISPARAÎT (jamais `null`, jamais un masque — une clé absente ne dit rien de la valeur,
+        pas même qu'il y en a une)."""
+        if not self.hidden:
+            return dict(data)
+        return {k: v for k, v in data.items() if k not in self.hidden}
+
+
+EVERY_FIELD = FieldAccess()
+
+
+def field_access(defn: DocTypeDef, ctx: RequestContext) -> FieldAccess:
+    """Les champs de `defn` fermés à cet appelant. Le contexte SYSTÈME (hooks de confiance, `tx`, tâches, lecteurs internes) voit et
+    écrit tout : c'est du code du serveur, pas une réponse faite à quelqu'un. Écrire exige de lire ; `[]` ne l'ouvre à personne."""
+    guarded = defn.guarded_fields
+    if ctx.is_system or not guarded:
+        return EVERY_FIELD
+    held = ctx.permissions
+    hidden: set[str] = set()
+    read_only: set[str] = set()
+    for f in guarded:
+        read, write = f.read_grants, f.write_grants
+        if read is not None and not (read & held):
+            hidden.add(f.fieldname)
+        elif write is not None and not (write & held):
+            read_only.add(f.fieldname)
+    return FieldAccess(frozenset(hidden), frozenset(read_only))
 
 
 def stored_kind(defn: DocTypeDef) -> bool:

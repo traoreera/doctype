@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "desk",
+  "description": "Ce que la page du Desk peut demander au processus : écouter ses annonces (coffre, liens profonds) et lire le lien de lancement. Les commandes de l'application (desk_config, vault_*, open_external, save_file, open_window) sont les seuls autres gestes natifs ; rien du système de fichiers, du shell ni des fenêtres n'est accordé.",
+  "windows": ["main", "desk-*"],
+  "permissions": ["core:event:allow-listen", "core:event:allow-unlisten", "deep-link:allow-get-current"]
+}

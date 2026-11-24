@@ -18,10 +18,12 @@ import ProgressSpinner from 'primevue/progressspinner'
 import { t } from '@/i18n'
 import { ApiError } from '@/lib/api'
 import { describeError, useNotify } from '@/composables/useNotify'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 
 const route = useRoute()
 const { license } = useServices()
+const host = useHost()
 const notify = useNotify()
 
 type State = 'idle' | 'working' | 'done' | 'cancelled' | 'failed'
@@ -52,7 +54,7 @@ onMounted(async () => {
 async function openPortal(): Promise<void> {
   if (!license) return
   try {
-    window.location.assign(await license.portal())
+    await host.leave(await license.portal())
   } catch (e) {
     notify.error(e)
   }

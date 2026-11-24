@@ -156,6 +156,49 @@ describe('la page « Personnaliser l’impression »', () => {
     expect(content.textContent).toContain('37,50') // un montant formaté comme une pièce
   })
 
+  it('ouvre le gabarit d’un ÉTAT : ses champs et son exemple viennent avec le gabarit, sans méta ni document à lire (#61)', async () => {
+    const meta = vi.fn(async () => {
+      throw new Error('un état n’a pas de /meta')
+    })
+    const get = vi.fn(async () => {
+      throw new Error('un état n’a pas de document')
+    })
+    const api = {
+      meta,
+      get,
+      printOverride: vi.fn(async () => ({
+        doctype: 'accounts.balance',
+        template: { schema_version: 1, doctype: 'accounts.balance', name: 'standard', blocks: [{ type: 'title', text: 'Balance {{ doc.company }}' }, { type: 'fields', fields: ['company'] }] },
+        source: 'plugin' as const,
+        editable: true,
+        templates: [{ name: 'standard', label: 'Balance', source: 'plugin' as const }],
+        data_source: {
+          name: 'accounts.balance',
+          label: 'Balance générale',
+          fields: [
+            { fieldname: 'company', label: 'Société', fieldtype: 'Text' },
+            { fieldname: 'lines', label: 'Comptes', fieldtype: 'Table', options: 'Etat lines' },
+          ],
+          children: { 'Etat lines': { name: 'Etat lines', fields: [{ fieldname: 'account', label: 'Compte', fieldtype: 'Text' }] } },
+        },
+        example: { company: 'Kounandy SARL', lines: [{ account: '411000' }] },
+      })),
+      printExample: vi.fn(async () => ({ doctype: 'accounts.balance', name: 'exemple' })),
+      list: vi.fn(async () => ({ items: [], total: 0 })),
+      fileLinks: vi.fn(async () => ({})),
+      printPreview: vi.fn(async () => ({ doctype: 'accounts.balance', name: 'exemple', html: '<html><body>APERÇU</body></html>', background: false })),
+    }
+    mountWith(PrintBuilderView, { doctype: 'accounts.balance' }, api)
+    await new Promise((r) => setTimeout(r, 0))
+    await new Promise((r) => setTimeout(r, 0))
+    await new Promise((r) => setTimeout(r, 0))
+    const content = find('pd-content')!
+    expect(content.textContent).toContain('Kounandy SARL') // la valeur de l'exemple de l'état, sur la feuille
+    expect(meta).not.toHaveBeenCalled()
+    expect(get).not.toHaveBeenCalled()
+    expect(api.printPreview).toHaveBeenCalledWith('accounts.balance', 'exemple', expect.anything())
+  })
+
   it('enregistre un DOCUMENT libre, jamais la pile d’origine', async () => {
     const { w, api } = await open()
     const view = w.findComponent(PrintBuilderView).vm as unknown as { content: string }

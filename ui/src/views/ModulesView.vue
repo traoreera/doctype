@@ -17,12 +17,14 @@ import { computed, onMounted, ref } from 'vue'
 import { describeError, useNotify } from '@/composables/useNotify'
 import { intlLocale, t } from '@/i18n'
 import { formatTimestamp } from '@/lib/format'
+import { useHost } from '@/lib/host'
 import { useServices } from '@/lib/services'
 import { moduleAction, type MarketModule, type ModuleAction, type MyModules } from '@/lib/xlicense'
 
 /** `embedded` : rubrique « Abonnement › Mes modules » des Paramètres, qui porte déjà le titre. */
 defineProps<{ embedded?: boolean }>()
 const { license } = useServices()
+const host = useHost()
 const notify = useNotify()
 const confirm = useConfirm()
 
@@ -97,8 +99,8 @@ async function run(m: MarketModule): Promise<void> {
       reloadDesk()
     })
   }
-  if (what === 'subscribe') return act(m, async () => window.location.assign((await license.checkout(m.code)).url))
-  if (what === 'portal') return act(m, async () => window.location.assign(await license.portal()))
+  if (what === 'subscribe') return act(m, async () => host.leave((await license.checkout(m.code)).url))
+  if (what === 'portal') return act(m, async () => host.leave(await license.portal()))
 }
 
 async function act(m: MarketModule, work: () => Promise<void>): Promise<void> {

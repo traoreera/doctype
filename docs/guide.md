@@ -212,6 +212,7 @@ Un montant est un `Decimal`/`Currency` (avec `decimals:`), jamais un `Number` : 
 | Onglets dans le formulaire | `tab:` sur les sections du `layout` |
 | Vues | `views: { kanban, calendar, gantt, dashboard }` |
 | Droits autres que la convention | `permissions: { read: [...], write: [...], create: [...], delete: [...] }` |
+| Champ réservé à certains (un salaire, une marge) | `permissions: { read: [...], write: [...] }` sur le CHAMP : voir 2.8 |
 
 **Droits par convention** (sans bloc `permissions`) : `<module>:<doctype>:read`, `…:write` (créer et modifier), `…:delete`, et pour un
 type soumettable `…:submit` / `…:cancel`. Le nom du type est mis en minuscules, les espaces deviennent `_` (`Stock Entry` →
@@ -311,6 +312,46 @@ Blocs : `title`, `fields`, `table`, `totals`, `text`, `spacer`, `page_break`. Au
 `{{ doc.<champ> }}` seulement. Sans gabarit, le moteur en fabrique un depuis le `layout` : aucun document n'est inimprimable. Chaque
 organisation peut ensuite le refaire à l'écran (« Personnaliser l'impression ») ; le fond PDF vient de ses Paramètres.
 
+#### Imprimer un état : des données qui ne sont pas un document
+
+Une balance, un grand livre ou un livre de paie se **calculent** : ce ne sont pas des documents, mais ils s'impriment par la même
+chaîne (gabarits, éditeur du Desk, langue et papier de l'organisation). Le plugin déclare leur **schéma** — pas un DocType : ni
+stockage, ni droits, ni route — dans `print-sources/balance.yaml` :
+
+```yaml
+schema_version: 1
+name: compta.balance            # <plugin>.<état>
+label: Balance générale
+grant: "compta:report:write"    # qui édite le gabarit de son organisation au Desk (absent : personne)
+fields:
+  - { fieldname: company, fieldtype: Text, label: Société }
+  - { fieldname: total_debit, fieldtype: Currency, decimals: 2, options: XOF }
+  - fieldname: lines
+    fieldtype: Table
+    columns:
+      - { fieldname: account, fieldtype: Text, label: Compte }
+      - { fieldname: debit, fieldtype: Decimal, decimals: 2, label: Débit }
+example: { company: "Exemple SARL", lines: [{ account: "411000", debit: "100.00" }] }   # l'aperçu de l'éditeur
+```
+
+```python
+registry.load_print_sources(self.ctx.name, dossier / "print-sources")   # AVANT load_print_templates
+registry.load_print_templates(self.ctx.name, dossier / "print")         # un gabarit dit `doctype: compta.balance`
+
+@router.get("/balance.pdf")
+async def balance(request: Request):
+    printer = await self.get_service("doctype_print").as_request(request)   # 401/403 comme l'API
+    data = await compute_balance(...)            # VOTRE route juge qui voit l'état : c'est elle qui le calcule
+    content, filename = await printer.pdf("compta.balance", data, title="Balance au 30/11/2026")
+    return Response(content, media_type="application/pdf")
+```
+
+`printer.html(...)` rend l'aperçu (sans le moteur PDF) ; `doctype_print.system(tenant, raison)` sert une tâche planifiée. Types
+admis : `Text`, `LongText`, `Int`, `Number`, `Percent`, `Decimal`, `Currency`, `Date`, `Datetime`, `Boolean`, `Select`, et `Table`
+(5 000 lignes au plus). Un gabarit qui cite un champ absent est refusé **au chargement** ; des données qui portent une clé
+inconnue du schéma sont refusées (`422 print_data_invalid`) plutôt qu'imprimées comme une case vide. L'éditeur s'ouvre sur
+`#/print/compta.balance` pour qui porte le `grant`.
+
 ### 2.6 Une extension du Desk (`desk/index.js`)
 
 ```bash
@@ -346,6 +387,38 @@ xcore-doctype check ./sales/doctypes --owner sales --with ./stock/doctypes    # 
 Puis : lien symbolique dans `app/` (`ln -s ../mon_module app/mon_module`), relance, et attribuez les grants `mon_module:*` à un rôle
 (Paramètres › Système › Rôles). L'organisation qui crée son espace les reçoit d'office.
 
+### 2.8 Réserver un champ (droits par champ)
+
+Masquer un champ dans le Desk (`hidden`, `depends_on`) n'est pas une protection : la valeur reste dans la réponse de l'API. Pour qu'un
+champ ne soit lu ou écrit que par certains, on le dit dans le YAML, et c'est le SERVEUR qui l'applique à chaque porte :
+
+```yaml
+fields:
+  - fieldname: salaire
+    label: Salaire
+    fieldtype: Currency
+    permissions:
+      read:  [mon_module:employe:salaire_lire]        # en plus de pouvoir lire le document
+      write: [mon_module:employe:salaire_ecrire]      # en plus de le lire ; absent : qui le lit l'écrit
+  - { fieldname: echelon, fieldtype: Text, permissions: { write: [mon_module:employe:echelon_ecrire] } }   # lu par tous
+  - { fieldname: primes, fieldtype: Table, options: Prime, permissions: { read: [mon_module:employe:salaire_lire] } }   # la table entière
+```
+
+- Les grants sont déclarés avec les autres par `doctype_grants.for_plugin(...)` : rien à ajouter dans `main.py`. Donnez-les ensuite à
+  un rôle. `[]` ne l'ouvre à personne (seuls vos hooks y écrivent).
+- Qui n'a pas le grant de lecture **ne reçoit pas la valeur** : fiche, liste, historique, corbeille, impression, fichier, connexions.
+  Filtrer, trier, sommer ou regrouper sur ce champ répond `403 field_not_readable`. Écrire un champ réservé sans le grant répond
+  `403 field_not_writable` (API, lot, import CSV) ; enregistrer la fiche ne vide pas ce qu'on ne voit pas, le serveur le garde.
+- `/meta` ne contient pas un champ que l'utilisateur ne lit pas, et marque `access: read | write` ceux qui sont réservés : le Desk
+  suit, sans rien décider.
+- Au chargement, ce qui révélerait le champ par un détour est refusé : il ne peut pas être le titre, le nom, un champ de vue ni une
+  condition de transition ; un calcul, une condition, un `fetch_from` ou un `link_filters` qui le lit doit être au moins aussi réservé.
+- Dans une table, on réserve le champ `Table` du parent, pas une colonne (un champ de ligne refuse `permissions`).
+- Vos **hooks** voient et écrivent tout (c'est là que vit la règle métier). Une **route** de votre plugin qui rend un document passe
+  par `doctype_writer.as_request(request)` pour que ces droits s'appliquent ; `writer.system` et `doctype_documents` voient tout.
+
+Le contrat complet, porte par porte, et ses limites : `process/champs-reserves.md`.
+
 ---
 
 ## 3. Utiliser xcore-doctype
@@ -354,10 +427,12 @@ Puis : lien symbolique dans `app/` (`ln -s ../mon_module app/mon_module`), relan
 
 | Service | À quoi il sert |
 |---|---|
-| `doctype_registry` | charger ses définitions (`load_dir`, `load_workspaces`, `load_print_templates`, `load_extensions`, `load_translations`, `load_desk`) et les retirer (`unregister_owner`) |
+| `doctype_registry` | charger ses définitions (`load_dir`, `load_workspaces`, `load_print_sources`, `load_print_templates`, `load_extensions`, `load_translations`, `load_desk`) et les retirer (`unregister_owner`) |
 | `doctype_hooks` | enregistrer ses hooks par nom (`register(nom, coroutine, owner=…)`) |
 | `doctype_grants` | la liste des grants de ses DocTypes, prête pour `rbac.declare` (`for_plugin(nom)`) |
 | `doctype_writer` | **écrire** : `await writer.as_request(request)` dans une route du plugin (droits de l'utilisateur), `writer.system(plugin, tenant, raison)` pour une tâche planifiée (seulement les types du plugin) |
+| `doctype_print` | **imprimer un état** (des données calculées, pas un document) : `await printers.as_request(request)` puis `.html(source, data, title=…)` / `.pdf(…)`, voir §2.5 |
+| `doctype_jobs` | **tâches de fond avec reprise** : `register(plugin, tâche, coroutine)` puis `await jobs.enqueue(tenant, "<plugin>.<tâche>", payload, key=…)`, voir ci-dessous |
 | `doctype_documents` | **lire** en contexte système, nommé par sa raison : `system(tenant, raison).list(…) / .get(…)` |
 | `doctype_sources` | brancher une source externe pour un DocType virtuel (`source: <nom>`) |
 | `doctype_channels` | déclarer un **canal de notification** (WhatsApp, SMS…) : `register(plugin, nom, coroutine, listen_all=…)`, voir §3.6 |
@@ -372,6 +447,36 @@ async def reception(request: Request, body: dict):
     entry = await docs.create("Stock Entry", {"purpose": "Réception", "items": body["items"]})
     return await docs.submit("Stock Entry", entry["name"], version=entry["version"])
 ```
+
+#### Un travail long : les tâches de fond
+
+Un hook a un délai. Ce qui est long (installer un plan comptable, une paie en lot, un import) ou sort du système (un courriel)
+se dépose comme **tâche de fond** : exécutée hors de la requête, avec un état lisible, et **reprise après un arrêt du serveur**.
+
+```python
+async def on_load(self):
+    jobs = self.get_service("doctype_jobs")
+    jobs.register(self.ctx.name, "install_chart", self.install_chart, grant="accounts:company:write")
+
+async def install_chart(self, job):            # job.payload, job.tenant_id, job.attempt, job.writer
+    for i, account in enumerate(accounts_of(job.payload["company"])):
+        await job.writer.ensure("Account", account, unique="code")     # REJOUABLE : pas de doublon à la reprise
+        await job.progress(f"{i + 1}/{len(accounts)} comptes")
+
+# depuis un hook d'après-commit ou une route :
+job = await jobs.enqueue(tenant, "accounts.install_chart", {"company": name}, key=f"chart:{name}", owner=user)
+# depuis un hook transactionnel (on_submit…) : la tâche part ou tombe AVEC le document
+await event.tx.enqueue("accounts.send_invoice", {"invoice": event.name}, key=f"mail:{event.name}")
+```
+
+- `key` : tant qu'une tâche de cette clé est en attente ou en cours, `enqueue` la **rend** au lieu d'en créer une autre.
+- États `pending` → `running` → `done` | `failed`. Un essai qui échoue est retenté plus tard (recul doublé à chaque fois), `max_attempts`
+  fois au plus (5 par défaut), reprises après arrêt comprises.
+- `job.writer` est `doctype_writer.system(<plugin>, tenant, "job:<nom>")` : il n'écrit que les types du plugin.
+- Une tâche s'exécute **au moins une fois** : écrivez-la rejouable (`ensure`, un champ `unique`). `job.attempt > 1` signale une reprise.
+- Le payload porte des identifiants (64 Ko au plus) et n'est jamais rendu par l'API.
+- Au Desk : `#/jobs` montre les tâches que l'utilisateur peut voir (les siennes, et celles dont il porte le `grant`) ; `useJob(api, () => id)`
+  du SDK suit une tâche jusqu'à sa fin dans une extension. API : `GET /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/retry`.
 
 ### 3.2 Les hooks
 
@@ -408,8 +513,9 @@ Toutes les routes sont sous `<plugin_prefix>/xcore-doctype` et exigent `Authoriz
 
 Filtres : un objet JSON, `{"statut": "En cours"}` pour l'égalité, `{"date": [">=", "2026-01-01"]}` sinon (`=`, `!=`, `<`, `>`, `<=`,
 `>=`, `like`, `in` selon le type du champ : pas d'ordre sur un texte, `like` insensible à la casse, `in` jusqu'à 100 valeurs). Les erreurs ont la forme `{"detail": {"code": "…", "msg": "…", "details": [...]}}` ;
-un document hors de vos droits répond 404, comme s'il n'existait pas. Chaque route a sa jumelle en action IPC (`doc.save`, `doc.list`,
-`doc.print`…).
+un document hors de vos droits répond 404, comme s'il n'existait pas. Un champ réservé (2.8) que vous ne lisez pas est absent de `data` ;
+le citer dans un filtre, un tri ou un agrégat répond `403 field_not_readable`, l'écrire `403 field_not_writable`. Chaque route a sa
+jumelle en action IPC (`doc.save`, `doc.list`, `doc.print`…).
 
 ### 3.4 Par le Desk
 

@@ -43,6 +43,30 @@ class PermissionDenied(DoctypeError):
         super().__init__("permission_denied", "Accès refusé", status=403)
 
 
+class FieldNotReadable(DoctypeError):
+    """Un filtre, un tri, un regroupement ou une mesure cite un champ que l'appelant ne lit pas (droits par champ, traoreera/doctype#74).
+
+    Refusé EXPLICITEMENT, jamais servi « sans ce champ » : une liste filtrée ou triée sur une valeur cachée la révélerait bit par bit.
+    Les champs sont nommés (leur existence n'est pas un secret : elle est dans la définition), jamais leur valeur."""
+
+    def __init__(self, fields: list[str], what: str) -> None:
+        super().__init__(
+            "field_not_readable", f"{what} impossible sur un champ que vous ne pouvez pas lire : {', '.join(fields)}", status=403,
+            details=[{"field": f, "msg": "Champ réservé : vous ne pouvez pas le lire", "type": "field_not_readable"} for f in fields],
+        )
+
+
+class FieldNotWritable(DoctypeError):
+    """Une écriture touche un champ que l'appelant ne peut pas écrire (droits par champ). Le même refus pour un champ qu'il ne lit pas
+    et pour un champ qu'il lit sans pouvoir le changer : la réponse ne dit jamais si la valeur envoyée était la bonne."""
+
+    def __init__(self, fields: list[str]) -> None:
+        super().__init__(
+            "field_not_writable", f"Vous ne pouvez pas modifier : {', '.join(fields)}", status=403,
+            details=[{"field": f, "msg": "Champ réservé : vous ne pouvez pas le modifier", "type": "field_not_writable"} for f in fields],
+        )
+
+
 class NotFound(DoctypeError):
     def __init__(self, code: str = "not_found", message: str | None = None) -> None:
         super().__init__(code, message, status=404)

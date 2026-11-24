@@ -1,4 +1,4 @@
-import type { AggregateQuery, AggregateResult, AssignmentItem, AssignmentStatus, AttachmentItem, AvailableMappings, AvailableTransitions, BulkResult, Collab, CommentItem, Connection, DetachTarget, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, Filters, FormOverride, GlobalSearchItem, HistoryResult, ImportResult, LayoutScope, ListQuery, ListResult, MappedDraft, OrgPreferences, Person, PrintedDocument, PrintOverride, PrintTemplates, SavedView, SavedViewInput, SearchItem, SharedDoc, SharesResult, TagCount, TrashResult, TreeResult, WorkflowDef, WorkflowOverride, Workspace, WorkspaceOverride } from './types'
+import type { AggregateQuery, AggregateResult, AssignmentItem, AssignmentStatus, AttachmentItem, AvailableMappings, AvailableTransitions, BulkResult, Collab, CommentItem, Connection, DetachTarget, DocData, DocRecord, DocTypeMeta, DocTypeSummary, FieldBase, FileLibraryQuery, FileLibraryResult, FileLink, FileMeta, Filters, FormOverride, GlobalSearchItem, HistoryResult, ImportResult, Job, JobStatus, LayoutScope, ListQuery, ListResult, MappedDraft, OrgPreferences, Person, PrintedDocument, PrintOverride, PrintTemplates, SavedView, SavedViewInput, SearchItem, SharedDoc, SharesResult, TagCount, TrashResult, TreeResult, WorkflowDef, WorkflowOverride, Workspace, WorkspaceOverride } from './types'
 import { language } from '@/i18n'
 import type { HttpMethod, HttpResponse, Transport } from './transport'
 import type { DevDefinition } from './doctypebuilder'
@@ -457,6 +457,26 @@ export class ApiClient {
   async printPreviewPdf(doctype: string, name: string, template: Record<string, unknown>): Promise<{ bytes: Uint8Array; filename: string }> {
     const res = await this.bytes('POST', `/print-preview/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}/pdf`, { body: { template } })
     return { bytes: res.bytes, filename: filenameFromDisposition(res.disposition) ?? `${doctype} ${name}.pdf` }
+  }
+
+  /** Les tâches de fond que je peux voir (les miennes, et celles dont je porte le grant), les plus récentes d'abord. */
+  async jobs(query: { name?: string; key?: string; status?: JobStatus; limit?: number } = {}): Promise<Job[]> {
+    const params = new URLSearchParams()
+    if (query.name) params.set('name', query.name)
+    if (query.key) params.set('key', query.key)
+    if (query.status) params.set('status', query.status)
+    if (query.limit) params.set('limit', String(query.limit))
+    return (await this.call<{ items: Job[] }>('GET', '/jobs', { params })).items
+  }
+
+  /** L'état d'une tâche de fond. */
+  job(id: string): Promise<Job> {
+    return this.call('GET', `/jobs/${encodeURIComponent(id)}`)
+  }
+
+  /** Relance une tâche ÉCHOUÉE. Réservé à qui porte le grant de la tâche. */
+  retryJob(id: string): Promise<Job> {
+    return this.call('POST', `/jobs/${encodeURIComponent(id)}/retry`)
   }
 
   /** Un document d'exemple pour l'aperçu, ou `null` : le gabarit s'édite alors sans aperçu. */

@@ -23,7 +23,7 @@ from .context import RequestContext
 from .document import DEFAULT_PAGE, MAX_PAGE, DocumentService
 from .errors import DoctypeError, NotFound, ValidationFailed
 from .memory import visible
-from .permissions import scope_for
+from .permissions import field_access, scope_for
 from .query import DRAFT, FILE_SORTABLE, SUBMITTED, FileCiters
 from .schema import FILE_TYPES
 from .sealing import MASK
@@ -99,7 +99,9 @@ class FileLibrary:
             if d.source is not None:
                 virtual[name] = (compiled, read, write)
                 continue
-            fields = tuple(f.fieldname for f in d.fields if f.fieldtype in FILE_TYPES)
+            # Droits par champ : un fichier d'un champ que l'appelant ne lit pas n'est pas à lui montrer (ni compté).
+            unread = field_access(d, ctx).hidden
+            fields = tuple(f.fieldname for f in d.fields if f.fieldtype in FILE_TYPES and f.fieldname not in unread)
             if fields or not d.single:  # un document unique n'a pas de pièce jointe (collaboration.py)
                 stored.append(FileCiters(name, read, write, fields=fields, attachments=not d.single))
         unavailable: list[str] = []
@@ -130,7 +132,10 @@ class FileLibrary:
             field_label = f.label or f.fieldname
             # Vider le champ est une modification : il faut pouvoir écrire CE document, qu'il soit encore modifiable et que le champ puisse être vide.
             editable = row["docstatus"] == DRAFT or (row["docstatus"] == SUBMITTED and f.fieldname in d.editable_after_submit)
-            can_detach = row["writable"] and editable and self._may_empty(compiled, f.fieldname, row["data"] or {}, rules)
+            can_detach = (
+                row["writable"] and editable and f.fieldname not in field_access(d, ctx).locked
+                and self._may_empty(compiled, f.fieldname, row["data"] or {}, rules)
+            )
         return {
             "file_id": row["file_id"],
             "filename": row["filename"],
@@ -194,7 +199,8 @@ class FileLibrary:
         read = self._docs._scope(ctx, compiled, "read")
         async with self._docs._query(ctx) as q:
             current = await self._docs.read_document(ctx, q, doctype, name, read)
-        if current is None:
+        access = field_access(d, ctx)
+        if current is None or field in access.hidden:  # un champ qu'il ne lit pas : rien à en dire, pas même qu'il cite ce fichier
             raise NotFound("document_not_found", f"{doctype} {name!r} introuvable")
         if current.data.get(field) != file_id:
             raise DoctypeError("file_not_cited", "Ce document ne cite plus ce fichier (il a changé depuis) : rechargez la liste", status=409)
@@ -202,6 +208,7 @@ class FileLibrary:
         # repartent (une valeur laissée par une extension retirée serait refusée par le schéma strict) ; un secret part MASQUÉ, ce qui veut dire « inchangé »
         # (`DocumentService._seal`) : jamais sa forme chiffrée, qu'une écriture prendrait pour un nouveau secret.
         secrets = set(d.secret_fields)
-        data = {k: (MASK if k in secrets else v) for k, v in current.data.items() if k in d.field_map and k != field}
+        # (Les champs qu'il ne lit pas ne repartent pas : le serveur les garde, `DocumentService._guard_fields`.)
+        data = {k: (MASK if k in secrets else v) for k, v in current.data.items() if k in d.field_map and k != field and k not in access.hidden}
         doc = await self._docs.update(ctx, doctype, name, data, version)
         return {"detached": "field", "version": doc["version"]}

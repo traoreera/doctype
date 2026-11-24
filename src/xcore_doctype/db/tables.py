@@ -21,6 +21,8 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Table,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -39,6 +41,7 @@ UNIQUE_TABLE = "xdt_unique"
 TAG_TABLE = "xdt_tag"
 SHARE_TABLE = "xdt_share"
 TRASH_TABLE = "xdt_trash"
+JOB_TABLE = "xdt_job"
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +60,7 @@ class SystemTables:
     tags: Table
     shares: Table
     trash: Table
+    jobs: Table
 
 
 def build_system_tables() -> SystemTables:
@@ -281,6 +285,35 @@ def build_system_tables() -> SystemTables:
         PrimaryKeyConstraint("tenant_id", "id", name="pk_xdt_trash"),
         Index("ix_xdt_trash_list", "tenant_id", "doctype", "deleted_at"),
     )
+    # Tâches de fond (jobs.py, traoreera/doctype#71) : un travail trop long pour un hook, avec son état et sa reprise. `active_key` porte la
+    # clé d'unicité TANT QUE la tâche est en attente ou en cours, puis NULL : la contrainte unique interdit deux installations simultanées
+    # du même plan comptable (deux NULL ne se heurtent pas), sans index partiel — portable SQLite/PostgreSQL. `locked_until` est le bail du
+    # processus qui l'exécute : passé ce délai sans renouvellement (le serveur s'est arrêté), un autre la reprend.
+    jobs = Table(
+        JOB_TABLE,
+        md,
+        Column("tenant_id", String(63), nullable=False),
+        Column("id", String(32), nullable=False),
+        Column("name", String(140), nullable=False),  # `<plugin>.<tâche>`
+        Column("key", String(255), nullable=True),
+        Column("active_key", String(255), nullable=True),
+        Column("payload", JsonType, nullable=False),
+        Column("status", String(16), nullable=False),
+        Column("attempts", Integer, nullable=False, default=0),
+        Column("max_attempts", Integer, nullable=False),
+        Column("message", Text, nullable=True),
+        Column("owner", String(255), nullable=False),
+        Column("creation", DateTime(timezone=True), nullable=False),
+        Column("next_attempt_at", DateTime(timezone=True), nullable=False),
+        Column("started_at", DateTime(timezone=True), nullable=True),
+        Column("finished_at", DateTime(timezone=True), nullable=True),
+        Column("locked_until", DateTime(timezone=True), nullable=True),
+        Column("locked_by", String(32), nullable=True),
+        PrimaryKeyConstraint("tenant_id", "id", name="pk_xdt_job"),
+        UniqueConstraint("tenant_id", "name", "active_key", name="uq_xdt_job_active"),
+        Index("ix_xdt_job_ready", "status", "next_attempt_at"),
+        Index("ix_xdt_job_list", "tenant_id", "name", "creation"),
+    )
     return SystemTables(
-        md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags, shares, trash
+        md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags, shares, trash, jobs
     )

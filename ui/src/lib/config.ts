@@ -138,22 +138,31 @@ export async function loadConfig(
   }
 
   try {
-    const res = await transport.request({ method: 'GET', url: new URL('config.json', where.href).toString(), headers: { Accept: 'application/json' } })
-    const body = res.json as ConfigBody | null
-    if (res.status === 200 && body && typeof body.api_base === 'string') {
-      const config: DeskConfig = {
-        baseUrl: trimSlash(body.api_base),
-        loginUrl: typeof body.login_url === 'string' ? body.login_url : null,
-        extensions: readExtensions(body.extensions, where.href),
-        developer: body.developer === true,
-        realtime: body.realtime === true,
-        automations: body.automations === true,
-      }
-      if (typeof body.extensions_from === 'string') Object.assign(config, await fromPlugin(transport, body.extensions_from, config.baseUrl, where.href))
-      return config
-    }
+    const served = await readServedConfig(transport, where.href)
+    if (served) return served
   } catch {
     // injoignable ou pas du JSON : on retombe sur le défaut
   }
   return { baseUrl: opts.dev ? '/app/xcore-doctype' : fromLocation(where.pathname), loginUrl: null }
+}
+
+/**
+ * Le `config.json` servi à côté du Desk dont `href` est l'adresse, tel que le plugin (ou un montage) l'annonce ; `null` s'il n'y en a
+ * pas ou s'il ne décrit pas une API. Laisse passer une `NetworkError` : le navigateur retombe sur son défaut (`loadConfig`), une
+ * application de bureau, qui n'a pas d'URL de page d'où deviner, s'arrête en disant pourquoi (`desktop/config.loadServerConfig`).
+ */
+export async function readServedConfig(transport: Transport, href: string): Promise<DeskConfig | null> {
+  const res = await transport.request({ method: 'GET', url: new URL('config.json', href).toString(), headers: { Accept: 'application/json' } })
+  const body = res.json as ConfigBody | null
+  if (res.status !== 200 || !body || typeof body.api_base !== 'string') return null
+  const config: DeskConfig = {
+    baseUrl: trimSlash(body.api_base),
+    loginUrl: typeof body.login_url === 'string' ? body.login_url : null,
+    extensions: readExtensions(body.extensions, href),
+    developer: body.developer === true,
+    realtime: body.realtime === true,
+    automations: body.automations === true,
+  }
+  if (typeof body.extensions_from === 'string') Object.assign(config, await fromPlugin(transport, body.extensions_from, config.baseUrl, href))
+  return config
 }

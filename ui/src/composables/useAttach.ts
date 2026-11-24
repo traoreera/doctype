@@ -19,7 +19,7 @@ export function useAttach(doc: () => { doctype: string; name: string }, done: ()
     try {
       for (const file of list) {
         if (file.size > ATTACH_MAX_MB * 1024 * 1024) {
-          notify.error(new Error(t.collab.tooLarge(ATTACH_MAX_MB)))
+          notify.fail(t.collab.tooLarge(ATTACH_MAX_MB))
           continue
         }
         await api.attach(doctype, name, file)

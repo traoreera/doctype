@@ -1,0 +1,37 @@
+[package]
+name = "xcore-doctype-desk"
+version = "0.4.0"
+description = "Le Desk de xcore-doctype en application de bureau (Tauri 2)"
+edition = "2021"
+rust-version = "1.77.2"
+license = "MIT"
+publish = false
+
+[lib]
+name = "desk_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+serde_json = "1"
+tauri = { version = "2.12", features = [] }
+tauri-plugin-deep-link = "2.6"
+tauri-plugin-dialog = "2.8"
+# SANS la fonction `cookies` (activée par défaut) : xauth pose aussi le jeton d'accès en cookie à la connexion. Le plugin
+# l'écrirait dans un fichier de l'application et le renverrait aux requêtes sans `Authorization` — y compris après une
+# déconnexion. L'application ne s'authentifie que par l'en-tête ; le test de fumée vérifie qu'aucun cookie ne repart.
+tauri-plugin-http = { version = "2.9", default-features = false, features = ["rustls-tls", "http2", "charset", "system-proxy"] }
+tauri-plugin-opener = "2.7"
+url = "2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = { version = "2.5", features = ["deep-link"] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

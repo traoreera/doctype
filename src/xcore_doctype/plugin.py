@@ -25,6 +25,7 @@ from .desk_extensions import DeskExtensions
 from .api.collab import build_collab_router
 from .api.files import build_file_library_router, build_files_router, build_preferences_router, build_public_files_router
 from .api.http import build_router
+from .api.jobs import build_jobs_router
 from .api.print import build_print_router
 from .context import ContextSettings, RequestContext, ipc_operator
 from .db.access import create_system_tables, ensure_async_database
@@ -34,7 +35,8 @@ from .document import DocumentService, SystemReaders
 from .writer import DocumentWriters
 from .file_library import FileLibrary
 from .file_service import FileService
-from .print_service import PrintService
+from .jobs import JobService
+from .print_service import DataPrinters, PrintService
 from .files import BlobStore, LocalBlobStore, UrlSigner
 from .errors import ConfigurationError, DoctypeError, NotFound, ValidationFailed
 from .collaboration import CollaborationService
@@ -59,6 +61,8 @@ from .sources import DocumentSources
 HOOKS_SERVICE = "doctype_hooks"  # service exporté : `self.get_service("doctype_hooks").register(...)`
 GRANTS_SERVICE = "doctype_grants"  # service exporté : `self.get_service("doctype_grants").for_plugin(nom)`
 CHANNELS_SERVICE = "doctype_channels"  # service exporté : les canaux de notification des plugins (WhatsApp, SMS…), voir channels.py
+JOBS_SERVICE = "doctype_jobs"  # service exporté : tâches de fond avec reprise, `.register(plugin, tâche, coroutine)` puis `await .enqueue(tenant, "<plugin>.<tâche>", payload, key=…)`
+PRINT_SERVICE = "doctype_print"  # service exporté : imprimer un ÉTAT (des données qui ne sont pas un document), `.as_request(request)` ou `.system(tenant, raison)`
 WRITER_SERVICE = "doctype_writer"  # service exporté : écriture des plugins, `.as_request(request)` (bouton) ou `.system(plugin, tenant, raison)` (tâche)
 DOCUMENTS_SERVICE = "doctype_documents"  # service exporté : lecture système, `.system(tenant, raison)` (contrôles, rapports)
 SOURCES_SERVICE = "doctype_sources"  # service exporté : `self.get_service("doctype_sources").register(nom_plugin, "ma_source", source)` (DocTypes virtuels)
@@ -85,6 +89,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
     _developer: bool = False  # `doctype.desk.developer_mode` (devtools.py) : fermé tant que le manifeste ne l'ouvre pas
     file_library: FileLibrary | None = None
     printer: PrintService | None = None
+    jobs: JobService | None = None
     channels: ChannelRegistry | None = None
     documents: DocumentService | None = None
     _tables: SystemTables | None = None
@@ -294,6 +299,19 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         self.ctx.services[DOCUMENTS_SERVICE] = SystemReaders(self.documents)
         # ...et y écrivent : un bouton avec les droits de l'utilisateur, une tâche en système sur les types de son module (M4).
         self.ctx.services[WRITER_SERVICE] = DocumentWriters(self.documents, self._settings)
+        self.ctx.services[PRINT_SERVICE] = DataPrinters(self.printer, self._settings)
+        # ...et y déposent un travail trop long pour un hook : exécuté en tâche de fond, avec son état, et repris après un arrêt.
+        jobs_block = block.get("jobs") if isinstance(block.get("jobs"), dict) else {}
+        self.jobs = JobService(
+            db, self._tables, self.logger, writers=self.ctx.services[WRITER_SERVICE],
+            poll_seconds=float(jobs_block.get("poll_seconds", 2.0)), lease_seconds=float(jobs_block.get("lease_seconds", 120.0)),
+            max_parallel=int(jobs_block.get("max_parallel", 2)),
+        )
+        self.documents.jobs = self.jobs
+        self.ctx.services[JOBS_SERVICE] = self.jobs
+        root.include_router(build_jobs_router(self.jobs, self._settings))
+        if jobs_block.get("enabled", True) is not False:
+            self.jobs.start()  # c'est aussi la REPRISE : ce qu'un arrêt a laissé en cours repart ici
         # ...et y déclarent un canal de notification (WhatsApp…) : ce que la cloche reçoit, et ce que les règles leur adressent.
         self.ctx.services[CHANNELS_SERVICE] = self.channels
         # Un champ `unique` posé sur un type qui a déjà des documents refuse le chargement si des valeurs sont déjà en double (D25).
@@ -399,6 +417,10 @@ class Plugin(AutoDispatchMixin, TrustedBase):
         return UrlSigner(secret)
 
     async def on_unload(self) -> None:
+        if self.jobs is not None:
+            await self.jobs.close()  # AVANT le reste : une tâche en cours est rendue tant que ses services existent encore
+            self.ctx.services.pop(JOBS_SERVICE, None)
+            self.jobs = None
         if self.documents is not None and self.documents.notifications is not None:
             await self.documents.notifications.close()
         if self.documents is not None:
@@ -417,6 +439,7 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             self.ctx.services.pop(REGISTRY_SERVICE, None)
             self.ctx.services.pop(DOCUMENTS_SERVICE, None)
             self.ctx.services.pop(WRITER_SERVICE, None)
+            self.ctx.services.pop(PRINT_SERVICE, None)
         self.registry = self.hook_registry = self.grant_catalog = self.documents = self._tables = self._router = self.collaboration = self.file_library = self.printer = self.channels = None
 
     def get_router(self) -> APIRouter | None:
