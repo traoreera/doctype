@@ -17,8 +17,8 @@ from xcore.services.database.adapters.async_sql import AsyncSQLAdapter
 from tests.conftest import CUSTOMER_GRANTS, PG_URL, make_ctx
 from tests.unit.test_query_leak import SCENARIOS, Env, check_isolation
 from xcore_doctype.db.access import create_system_tables
-from xcore_doctype.db.rls import POLICY, bind_tenant, ensure_rls
-from xcore_doctype.db.tables import NAMING_TABLE, VERSION_TABLE, build_system_tables
+from xcore_doctype.db.rls import POLICY, RLS_EXEMPT, bind_tenant, ensure_rls
+from xcore_doctype.db.tables import JOB_TABLE, NAMING_TABLE, VERSION_TABLE, build_system_tables
 from xcore_doctype.document import DocumentService
 from xcore_doctype.errors import ConfigurationError, DocumentInUse
 from xcore_doctype.query import Query
@@ -60,14 +60,30 @@ class RlsEnv(Env):
         return bound()
 
 
+def protected(tables) -> set[str]:
+    """Les tables qui portent la politique : toutes les tables système, sauf celles que `ensure_rls` exempte exprès."""
+    return {t.name for t in tables.metadata.sorted_tables if t.name not in RLS_EXEMPT}
+
+
 class TestStartup:
     async def test_every_system_table_gets_the_policy_and_is_forced(self, app):
         adapter, tables = app
         async with adapter.session() as s:
             policies = {r[0] for r in (await s.execute(text("SELECT tablename FROM pg_policies WHERE policyname = :p"), {"p": POLICY})).all()}
             flags = (await s.execute(text("SELECT relname, relrowsecurity, relforcerowsecurity FROM pg_class WHERE relname LIKE 'xdt\\_%' AND relkind = 'r'"))).all()
-        assert policies == {t.name for t in tables.metadata.sorted_tables} >= {NAMING_TABLE, VERSION_TABLE}
-        assert flags and all(enabled and forced for _, enabled, forced in flags)
+        assert policies == protected(tables) >= {NAMING_TABLE, VERSION_TABLE}
+        assert flags and all(enabled and forced for name, enabled, forced in flags if name not in RLS_EXEMPT)
+
+    async def test_the_job_table_stays_outside_on_purpose(self, app):
+        """`xdt_job` n'a PAS la politique : l'exécuteur des tâches découvre ce qui est prêt tous tenants confondus, et la reprise
+        après un arrêt en dépend (`ensure_rls`, `RLS_EXEMPT`). Son isolation est celle de la couche de requêtes (`JobStore._scope`)."""
+        adapter, tables = app
+        async with adapter.session() as s:
+            row = (await s.execute(text("SELECT relrowsecurity FROM pg_class WHERE relname = :t AND relkind = 'r'"),
+                                   {"t": JOB_TABLE})).one()
+            policy = (await s.execute(text("SELECT count(*) FROM pg_policies WHERE tablename = :t"), {"t": JOB_TABLE})).scalar_one()
+        assert JOB_TABLE in {t.name for t in tables.metadata.sorted_tables}
+        assert (row.relrowsecurity, policy) == (False, 0)
 
     async def test_it_is_idempotent(self, app):
         adapter, tables = app
@@ -75,7 +91,7 @@ class TestStartup:
         await ensure_rls(adapter, tables, "postgresql")
         async with adapter.session() as s:
             n = (await s.execute(text("SELECT count(*) FROM pg_policies WHERE policyname = :p"), {"p": POLICY})).scalar_one()
-        assert n == len(tables.metadata.sorted_tables)
+        assert n == len(protected(tables))
 
     async def test_a_superuser_connection_is_refused_because_it_would_protect_nothing(self, db, tables):
         if db.backend != "postgres":
