@@ -5,6 +5,7 @@ import Message from 'primevue/message'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { t } from '@/i18n'
+import { inviteToken } from '@/lib/invite'
 import { useSession, type LoginOutcome } from '@/stores/session'
 
 /**
@@ -26,7 +27,7 @@ async function submit(): Promise<void> {
   busy.value = true
   try {
     const out: LoginOutcome =
-      tab.value === 'create' ? await session.setupCreate(name.value.trim(), slug.value.trim()) : await session.setupJoin(invite.value.trim())
+      tab.value === 'create' ? await session.setupCreate(name.value.trim(), slug.value.trim()) : await session.setupJoin(inviteToken(invite.value) ?? invite.value.trim())  // le lien entier se colle aussi
     if (out.status === 'ok') return void router.replace('/')
     error.value = out.status === 'error' ? out.message : t.login.onboarding.failed
   } finally {

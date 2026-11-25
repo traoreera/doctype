@@ -425,7 +425,8 @@ describe('inscription, mot de passe, invitations, OAuth, organisations', () => {
     expect(sent[0]!.headers.Authorization).toBeUndefined()
     session.useToken(token({ sub: 'u', exp: future() }))
     expect(await session.acceptInvite('inv 1')).toEqual({ status: 'ok' })
-    expect(sent[1]).toMatchObject({ method: 'POST', url: '/app/auth/invites/accept', body: { token: 'inv 1' } })
+    // xauth exige `user_id` dans le corps (sinon 422, mesuré sur le vrai xauth) : celui de la session.
+    expect(sent[1]).toMatchObject({ method: 'POST', url: '/app/auth/invites/accept', body: { token: 'inv 1', user_id: 'u' } })
     expect(sent[1]!.headers.Authorization).toBe(`Bearer ${session.token}`)
   })
 

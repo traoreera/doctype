@@ -8,6 +8,7 @@ import Textarea from 'primevue/textarea'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { t } from '@/i18n'
+import { inviteTokenOfNext } from '@/lib/invite'
 import { safeNext } from '@/router'
 import { useHost } from '@/lib/host'
 import { useSession, type LoginOutcome, type TenantChoice } from '@/stores/session'
@@ -64,7 +65,16 @@ async function handle(out: LoginOutcome): Promise<void> {
     error.value = null
     return
   }
-  if (out.status === 'onboarding') return void router.replace({ name: 'onboarding' })
+  if (out.status === 'onboarding') {
+    // Un compte sans organisation qui arrive d'un LIEN D'INVITATION (`next` = `/invite?token=…`) rejoint directement
+    // l'organisation de l'invitation (`/setup/join`). Sans cela, il atterrissait sur « Créer une organisation », le lien perdu.
+    const invite = inviteTokenOfNext(route.query.next)
+    if (!invite) return void router.replace({ name: 'onboarding' })
+    const joined = await session.setupJoin(invite)
+    if (joined.status === 'ok') return void (await router.replace('/'))
+    error.value = joined.status === 'error' ? joined.message : t.login.onboarding.failed
+    return
+  }
   // Mot de passe provisoire : pas de session tant qu'il n'a pas choisi le sien. L'écran de réinitialisation fait ce travail.
   if (out.status === 'password') return void router.replace({ name: 'reset', query: { token: out.token, first: '1' } })
   error.value = out.message
