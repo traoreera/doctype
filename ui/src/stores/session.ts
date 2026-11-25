@@ -381,7 +381,11 @@ export const useSession = defineStore('session', () => {
     if (!url) return { status: 'error', message: t.login.unreachable }
     let res
     try {
-      res = await transport.request({ method: 'POST', url, headers: jsonHeaders(token.value), body: { token: inviteToken } })
+      // xauth exige `user_id` dans le corps (`AcceptInviteRequest`), alors qu'il prend l'identité dans le jeton : sans lui, 422 à
+      // chaque acceptation. On envoie celle de la session, la seule qu'il accepte de toute façon.
+      res = await transport.request({
+        method: 'POST', url, headers: jsonHeaders(token.value), body: { token: inviteToken, user_id: String(claims.value?.sub ?? '') },
+      })
     } catch (e) {
       if (e instanceof NetworkError) return { status: 'error', message: t.login.unreachable }
       throw e
