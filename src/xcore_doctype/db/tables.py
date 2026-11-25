@@ -42,6 +42,8 @@ TAG_TABLE = "xdt_tag"
 SHARE_TABLE = "xdt_share"
 TRASH_TABLE = "xdt_trash"
 JOB_TABLE = "xdt_job"
+PRESENCE_TABLE = "xdt_presence"
+SCHEDULE_TABLE = "xdt_job_schedule"
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +63,8 @@ class SystemTables:
     shares: Table
     trash: Table
     jobs: Table
+    presence: Table
+    schedules: Table
 
 
 def build_system_tables() -> SystemTables:
@@ -314,6 +318,32 @@ def build_system_tables() -> SystemTables:
         Index("ix_xdt_job_ready", "status", "next_attempt_at"),
         Index("ix_xdt_job_list", "tenant_id", "name", "creation"),
     )
+    # Présence (presence.py) : quelles organisations ont des documents de quels types. C'est ce qui permet à une tâche RÉCURRENTE de
+    # savoir pour qui tourner — le moteur ne connaissait aucune liste d'organisations —, sans parcourir `xdt_document` à chaque
+    # période. Une ligne par (organisation, type), posée à la première écriture ; jamais retirée (un type vidé ne coûte qu'une tâche
+    # qui ne trouve rien). La ligne (`*`, `*`) marque que les documents d'AVANT cette table ont été repris.
+    presence = Table(
+        PRESENCE_TABLE,
+        md,
+        Column("tenant_id", String(63), nullable=False),
+        Column("doctype", String(140), nullable=False),
+        Column("first_seen", DateTime(timezone=True), nullable=False),
+        PrimaryKeyConstraint("tenant_id", "doctype", name="pk_xdt_presence"),
+        Index("ix_xdt_presence_doctype", "doctype", "tenant_id"),
+    )
+    # La dernière PÉRIODE déposée d'une tâche récurrente, par organisation (jobs.py) : la clé d'unicité de `xdt_job` ne tient que tant
+    # que la tâche est active, donc sans cette ligne un second processus redéposerait la tâche du jour une fois la première finie.
+    # Une écriture CONDITIONNELLE (`period` plus récente) : un seul processus prend la période, la base tranche.
+    schedules = Table(
+        SCHEDULE_TABLE,
+        md,
+        Column("tenant_id", String(63), nullable=False),
+        Column("name", String(140), nullable=False),  # `<plugin>.<tâche>`
+        Column("period", String(32), nullable=False),  # `2026-11-26` (chaque jour) ou `2026-11-26T02:30:00Z` (toutes les n secondes)
+        Column("claimed_at", DateTime(timezone=True), nullable=False),
+        PrimaryKeyConstraint("tenant_id", "name", name="pk_xdt_job_schedule"),
+    )
     return SystemTables(
-        md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags, shares, trash, jobs
+        md, documents, naming, versions, saved_views, overrides, files, comments, assignments, attachments, uniques, tags, shares, trash, jobs,
+        presence, schedules,
     )

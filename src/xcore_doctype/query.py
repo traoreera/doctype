@@ -139,6 +139,9 @@ class Query:
         self._tags = tables.tags
         self._shares = tables.shares
         self._trash = tables.trash
+        # Les types dont CETTE transaction a écrit un document (création, modification). Le service s'en sert APRÈS le commit pour
+        # noter la présence de l'organisation (presence.py) : rien n'est noté pour une écriture annulée.
+        self.touched: set[str] = set()
 
     # ── Lecture ───────────────────────────────────────────────
     async def get(self, doctype: str, name: str, *, scope: Scope, lock: bool = False) -> StoredDoc | None:
@@ -275,6 +278,7 @@ class Query:
             await self._session.execute(insert(self._t).values(**values))
         except IntegrityError as e:
             raise AlreadyExists(f"{doctype} {name!r} existe déjà") from e
+        self.touched.add(doctype)
         return self._doc(values)
 
     async def insert_if_absent(self, doctype: str, name: str, data: dict[str, Any]) -> bool:
@@ -288,7 +292,10 @@ class Query:
         stmt = insert_for(self._t).values(**self._new_row(doctype, name, data, None)).on_conflict_do_nothing(
             index_elements=[self._t.c.tenant_id, self._t.c.doctype, self._t.c.name]
         )
-        return (await self._session.execute(stmt)).rowcount > 0
+        created = (await self._session.execute(stmt)).rowcount > 0
+        if created:
+            self.touched.add(doctype)
+        return created
 
     def _new_row(self, doctype: str, name: str, data: dict[str, Any], amended_from: str | None, workflow_state: str | None = None) -> dict[str, Any]:
         now = datetime.now(UTC)
@@ -330,6 +337,7 @@ class Query:
         result = await self._session.execute(stmt)
         if result.rowcount == 0:
             await self._explain_miss(doctype, name, expected_version, locked=True, expected_status=docstatus)
+        self.touched.add(doctype)
         return await self._reload(doctype, name)
 
     async def workflow_transition(

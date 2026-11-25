@@ -71,6 +71,7 @@ from .hooks import ActionHooks, HookEvent, HookRegistry, HookSettings
 from .notification_rules import DocEvent
 from .files import ATTACHMENT_FIELD
 from .permissions import ACTIONS, EVERY_FIELD, Action, Facts, FieldAccess, Scope, field_access, require, scope_for, stored_kind, within_restrictions
+from .presence import Presence
 from .query import CANCELLED, DRAFT, STATUS_WORDS, SUBMITTED, SYSTEM_SORTABLE, Query, StoredDoc, UniqueViolation
 from .registry import DocTypeRegistry
 from .mapping import already_done, map_document, nothing_left
@@ -213,6 +214,9 @@ class DocumentService:
         self.flow_catalog = FlowCatalog()  # les nœuds et événements xflow que les plugins ouvrent à l'éditeur (`flownodes.py`)
         self.translations = Translations()  # les catalogues des plugins (translations.py) : libellés dans la langue de la requête
         self._rls = rls  # PostgreSQL : le tenant du contexte est posé dans chaque transaction (db/rls.py)
+        # Quelles organisations ont des documents de quels types : noté après chaque écriture validée (`_query`), lu par les tâches
+        # récurrentes pour savoir pour qui tourner (presence.py).
+        self.presence = Presence(db, tables, logger, rls=rls)
 
     # ── Méta ──────────────────────────────────────────────────
     def list_meta(self, ctx: RequestContext) -> list[dict[str, Any]]:
@@ -3092,7 +3096,12 @@ class DocumentService:
         async with self._db.session() as session:
             if self._rls:
                 await bind_tenant(session, ctx.tenant_id)  # AVANT toute autre instruction : sans lui, la politique ne laisse rien passer
-            yield Query(session, ctx, self._tables)
+            q = Query(session, ctx, self._tables)
+            yield q
+        # Ici la transaction est VALIDÉE (une erreur dans le bloc, ou au commit, ne passe pas par cette ligne) : on note que cette
+        # organisation a des documents de ces types. C'est ce qui dit aux tâches récurrentes pour qui tourner (presence.py).
+        if q.touched:
+            await self.presence.record(ctx.tenant_id, q.touched)
 
 
 def _cites_hidden(block: Mapping[str, Any], hidden: frozenset[str]) -> bool:

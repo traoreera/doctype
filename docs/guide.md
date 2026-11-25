@@ -432,7 +432,7 @@ Le contrat complet, porte par porte, et ses limites : `process/champs-reserves.m
 | `doctype_grants` | la liste des grants de ses DocTypes, prête pour `rbac.declare` (`for_plugin(nom)`) |
 | `doctype_writer` | **écrire** : `await writer.as_request(request)` dans une route du plugin (droits de l'utilisateur), `writer.system(plugin, tenant, raison)` pour une tâche planifiée (seulement les types du plugin) |
 | `doctype_print` | **imprimer un état** (des données calculées, pas un document) : `await printers.as_request(request)` puis `.html(source, data, title=…)` / `.pdf(…)`, voir §2.5 |
-| `doctype_jobs` | **tâches de fond avec reprise** : `register(plugin, tâche, coroutine)` puis `await jobs.enqueue(tenant, "<plugin>.<tâche>", payload, key=…)`, voir ci-dessous |
+| `doctype_jobs` | **tâches de fond avec reprise, et tâches récurrentes** (`daily_at=`, `every=`) : `register(plugin, tâche, coroutine)` puis `await jobs.enqueue(tenant, "<plugin>.<tâche>", payload, key=…)`, voir ci-dessous |
 | `doctype_documents` | **lire** en contexte système, nommé par sa raison : `system(tenant, raison).list(…) / .get(…)` |
 | `doctype_sources` | brancher une source externe pour un DocType virtuel (`source: <nom>`) |
 | `doctype_channels` | déclarer un **canal de notification** (WhatsApp, SMS…) : `register(plugin, nom, coroutine, listen_all=…)`, voir §3.6 |
@@ -477,6 +477,37 @@ await event.tx.enqueue("accounts.send_invoice", {"invoice": event.name}, key=f"m
 - Le payload porte des identifiants (64 Ko au plus) et n'est jamais rendu par l'API.
 - Au Desk : `#/jobs` montre les tâches que l'utilisateur peut voir (les siennes, et celles dont il porte le `grant`) ; `useJob(api, () => id)`
   du SDK suit une tâche jusqu'à sa fin dans une extension. API : `GET /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/retry`.
+
+#### Une tâche qui revient : chaque nuit, toutes les quinze minutes
+
+Ce qui dépend d'une DATE ne doit pas attendre que quelqu'un touche la pièce : une facture échue hier est en retard ce matin. Une
+tâche se déclare avec son rythme, et c'est le moteur qui la dépose — une fois par organisation et par période :
+
+```python
+async def on_load(self):
+    jobs = self.get_service("doctype_jobs")
+    jobs.register(self.ctx.name, "daily", self.daily, daily_at="02:30")     # chaque jour, à l'heure de `doctype.timezone`
+    jobs.register(self.ctx.name, "fetch", self.fetch, every=900)            # toutes les 15 minutes (60 secondes au moins)
+
+async def daily(self, job):                    # job.tenant_id : l'organisation ; job.period : « 2026-11-26 » ; job.writer
+    ...
+```
+
+- **Pour qui** : les organisations qui ont au moins un document d'un type de VOTRE plugin. Rien à déclarer, rien à tenir à jour :
+  le moteur le note à chaque écriture (table `xdt_presence`), et reprend d'une instruction les documents écrits avant cette version.
+  Une organisation qui apparaît en cours de période attend la suivante.
+- **Une fois par période, quel que soit le nombre de processus** : c'est la base qui tranche (`xdt_job_schedule`). Il n'y a ni
+  Redis ni verrou à installer, et l'ordonnanceur d'xcore n'est pas employé.
+- **Écrivez la tâche sur l'ÉTAT, jamais sur l'événement** : « tout ce qui est échu », pas « ce qui échoit aujourd'hui ». Un serveur
+  arrêté trois nuits dépose UNE tâche à son retour, pas trois ; et une tâche encore en cours quand la période suivante arrive n'est
+  pas doublée. `job.period` dit ce qui l'a déclenchée, il ne dit pas quoi traiter.
+- **Pour changer l'état d'une pièce SOUMISE**, la tâche soumet SA pièce (un « arrêté du jour » de votre module, nommé par sa
+  date : le rejouer ne crée rien), dont le hook `on_submit` écrit le reste par `event.tx`. `job.writer` seul ne le peut pas : il a
+  les droits d'un client, et un champ d'état est en lecture seule.
+- **Son journal est borné** : ses tâches finies sont gardées `keep_days` jours (30 par défaut), puis retirées.
+- **Un bouton « lancer maintenant »** dépose la même tâche avec la clé de l'ordonnanceur — elle ne doublera pas celle qui tourne :
+  `await jobs.enqueue(tenant, "<plugin>.daily", key=RECURRING_KEY, owner=user)` (`from xcore_doctype.jobs import RECURRING_KEY`).
+- `doctype.jobs.recurring: false` les suspend toutes (une maintenance) ; les autres tâches continuent.
 
 ### 3.2 Les hooks
 
