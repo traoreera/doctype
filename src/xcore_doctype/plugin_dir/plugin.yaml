@@ -57,8 +57,12 @@ doctype:
   # Tâches de fond (jobs.py) : un travail trop long pour un hook, déposé par `doctype_jobs.enqueue` ou `event.tx.enqueue`, exécuté par
   # CE processus et repris après un arrêt (le bail `lease_seconds` d'un processus mort expire, un autre reprend la tâche).
   # `enabled: false` : ce processus dépose mais n'exécute pas (un autre s'en charge).
+  # Les tâches RÉCURRENTES qu'un plugin déclare (« chaque jour à 02:30 », « toutes les 15 minutes ») sont déposées par le moteur, une
+  # fois par organisation et par période quel que soit le nombre de processus (c'est la base qui tranche : aucun Redis à installer).
+  # L'heure se lit dans `timezone` ci-dessus. `recurring: false` les suspend (une maintenance) ; les autres tâches continuent.
   # jobs:
   #   enabled: true
+  #   recurring: true
   #   poll_seconds: 2
   #   lease_seconds: 120
   #   max_parallel: 2

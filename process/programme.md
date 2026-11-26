@@ -306,6 +306,16 @@ documents le job a écrits), `duration_ms`.
 - **Rétention** : `doctype.jobs.keep_runs` (défaut 30 jours), purgé à l'écriture d'une nouvelle ligne du même `job_id`, dans la
   même transaction — exactement ce que `purge_versions` fait déjà pour l'historique. Pas de job pour purger le journal des jobs.
 
+**Mise à jour du 25 novembre 2026 — les tâches récurrentes sont livrées, sans D30.** D30 date d'avant `doctype_jobs` (24 nov.,
+traoreera/doctype#71), qui a apporté ce que cette étude voulait obtenir de Redis : un bail en base, une clé d'unicité tranchée par
+la base, la reprise après un arrêt. Il manquait le DÉCLENCHEUR, et la liste des organisations pour qui déclencher. Les deux sont
+dans le moteur (`jobs.py`, `presence.py`, CLAUDE.md « Recurring jobs ») : `register(…, daily_at="02:30" | every=900)`, une tâche
+par organisation qui a des documents du plugin et par période, la période prise par une écriture conditionnelle dans la
+transaction qui dépose la tâche. Deux processus, ou dix, déposent donc UNE tâche : il n'y a ni Redis à exiger ni démarrage à
+refuser, et l'ordonnanceur d'xcore n'est pas employé. D31 (un journal d'exécution) est tenu par les tâches elles-mêmes : état,
+message, essais, dates, purgées après `keep_days`. Les deux « décisions proposées » ci-dessous sont celles qui ont été retenues :
+pas de dédoublement (une clé par tâche et par organisation), des écritures rejouables par un nom déterministe.
+
 #### Décisions proposées, non confirmées
 
 - **Un job qui déborde sur son exécution suivante** : `max_instances=1` et `coalesce=True`. Une exécution qui dure plus longtemps

@@ -33,11 +33,35 @@ Au moins une fois : un processus qui meurt après avoir fini mais avant de l'éc
 REJOUABLE par construction (`writer.ensure`, une clé `unique`, un nom choisi) — la règle des tâches planifiées, déjà écrite
 dans `writer.py`.
 
-Le tenant est une colonne, et tout ce qui LIT ou ÉCRIT une tâche passe par `JobStore._scope`, qui l'impose. Une seule
-requête ne le porte pas, à dessein : `JobStore.ready`, par laquelle l'exécuteur découvre quelles tâches sont prêtes — tous
-tenants confondus, puisqu'il n'agit pour personne. Elle ne rend que (tenant, id) ; la tâche se lit ensuite sous son tenant.
-C'est aussi pourquoi `xdt_job` est hors de la RLS optionnelle (`db/rls.py`) : une politique par tenant rendrait cette
-découverte impossible.
+**Tâches RÉCURRENTES** (25 nov. 2026). Rien ne tournait seul : la file savait exécuter, pas déclencher, et le moteur ne
+connaissait aucune liste d'organisations. Une tâche se déclare maintenant avec son rythme :
+
+    jobs.register(self.ctx.name, "daily", self.daily, daily_at="02:30")      # chaque jour, à l'heure de `doctype.timezone`
+    jobs.register(self.ctx.name, "fetch", self.fetch, every=900)             # toutes les 15 minutes
+
+    async def daily(self, job):                     # une fois par organisation et par période ; `job.period` dit laquelle
+        ...                                         # écrite sur l'ÉTAT (« tout ce qui est échu »), jamais sur l'événement
+
+- **Pour qui.** Les organisations qui ont au moins un document d'un type du plugin (`presence.py`) : l'arrêté d'une
+  comptabilité ne tourne pas là où personne n'en tient.
+- **Une fois par période, quel que soit le nombre de processus.** `xdt_job_schedule` garde la dernière période déposée de
+  chaque (organisation, tâche) ; la prendre est une écriture CONDITIONNELLE, dans la transaction qui dépose la tâche : un
+  seul processus l'obtient, et la tâche existe si et seulement si la période est prise. Aucun verrou réparti à installer.
+- **Rattrapage, sans empilement.** La période est celle qui est DUE maintenant : un serveur arrêté trois nuits dépose UNE
+  tâche à son retour, pas trois. Une tâche encore en cours quand la période suivante arrive n'est pas doublée (la même clé
+  `@recurring` : la base rend celle qui tourne). C'est pourquoi une tâche récurrente se lit sur l'état, pas sur sa période.
+- **Un journal borné.** Les tâches récurrentes finies depuis plus de `keep_days` (30 par défaut) sont retirées.
+
+Pour la lancer à la main (un bouton) : `enqueue(tenant, nom, {"period": …}, key=RECURRING_KEY)` — elle ne doublera pas
+celle qui tourne.
+
+Le tenant est une colonne, et tout ce qui LIT ou ÉCRIT une tâche passe par `JobStore._scope`, qui l'impose. Trois
+instructions ne le portent pas, à dessein, parce que l'exécuteur et l'ordonnanceur n'agissent pour personne :
+`JobStore.ready` (quelles tâches sont prêtes : elle ne rend que (tenant, id), la tâche se lit ensuite sous son tenant),
+`JobStore.claim_period` (prendre la période de PLUSIEURS organisations d'un coup : elle n'écrit que l'échéancier) et
+`JobStore.purge` (retirer les tâches récurrentes finies depuis longtemps). Aucune ne lit ni ne rend un `payload`. C'est
+aussi pourquoi `xdt_job` et `xdt_job_schedule` sont hors de la RLS optionnelle (`db/rls.py`) : une politique par tenant
+rendrait cette découverte impossible.
 """
 
 from __future__ import annotations
@@ -48,15 +72,16 @@ import inspect
 import re
 import secrets
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
-from typing import Any, Awaitable, Callable, Mapping
+from datetime import UTC, datetime, time, timedelta, tzinfo
+from typing import Any, Awaitable, Callable, Mapping, Sequence
 
-from sqlalchemy import and_, or_, select, update
+from sqlalchemy import and_, delete, or_, select, update
 from sqlalchemy.dialects import postgresql, sqlite
 
 from .context import RequestContext
 from .db.tables import SystemTables
 from .errors import DoctypeError, NotFound, PermissionDenied, ValidationFailed
+from .presence import Presence
 
 PENDING, RUNNING, DONE, FAILED = "pending", "running", "done", "failed"
 ACTIVE = (PENDING, RUNNING)
@@ -66,6 +91,11 @@ MAX_KEY = 255
 MAX_MESSAGE = 2000
 MAX_PAYLOAD_BYTES = 64 * 1024  # une tâche porte des identifiants, pas des données : elle relit ce dont elle a besoin
 MAX_LIST = 100
+RECURRING_KEY = "@recurring"  # la clé de toute tâche déposée par l'ordonnanceur : une seule active par (organisation, tâche)
+MIN_EVERY, MAX_EVERY = 60.0, 31 * 86400.0  # secondes : sous la minute ce n'est plus une tâche de fond, au-delà du mois une tâche du jour suffit
+MAX_KEEP_DAYS = 3650
+SCHEDULE_CHUNK = 200  # organisations par transaction de dépôt
+_DAILY_AT = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 Handler = Callable[["JobRun"], Awaitable[Any]]
 Clock = Callable[[], datetime]
@@ -73,6 +103,46 @@ Clock = Callable[[], datetime]
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+@dataclass(frozen=True)
+class Recurrence:
+    """Le rythme d'une tâche récurrente : `every` secondes, OU chaque jour à `daily_at` (heure du fuseau du moteur)."""
+
+    every: float | None
+    daily_at: time | None
+    keep_days: int  # ses tâches finies sont gardées ce nombre de jours
+
+    def period(self, now: datetime, tz: tzinfo) -> str:
+        """La période DUE à cet instant — la dernière qui a commencé, jamais une liste de périodes manquées. Deux périodes d'une
+        même tâche se comparent comme des textes : c'est ce que fait la base pour n'en prendre qu'une plus récente."""
+        if self.every is not None:
+            start = (now.timestamp() // self.every) * self.every  # des créneaux alignés sur l'horloge : tous les processus voient le même
+            return datetime.fromtimestamp(start, UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        assert self.daily_at is not None
+        local = now.astimezone(tz)
+        due_today = (local.hour, local.minute) >= (self.daily_at.hour, self.daily_at.minute)
+        return (local.date() if due_today else local.date() - timedelta(days=1)).isoformat()
+
+    def describe(self) -> dict[str, Any]:
+        return {"every": self.every, "daily_at": self.daily_at.strftime("%H:%M") if self.daily_at else None, "keep_days": self.keep_days}
+
+
+def _recurrence(name: str, every: Any, daily_at: Any, keep_days: Any) -> Recurrence | None:
+    if every is None and daily_at is None:
+        return None
+    if every is not None and daily_at is not None:
+        raise ValueError(f"tâche {name} : `every` OU `daily_at`, pas les deux")
+    if not isinstance(keep_days, int) or isinstance(keep_days, bool) or not 1 <= keep_days <= MAX_KEEP_DAYS:
+        raise ValueError(f"keep_days : de 1 à {MAX_KEEP_DAYS} jours")
+    if every is not None:
+        if isinstance(every, bool) or not isinstance(every, (int, float)) or not MIN_EVERY <= every <= MAX_EVERY:
+            raise ValueError(f"every : de {MIN_EVERY:.0f} à {MAX_EVERY:.0f} secondes")
+        return Recurrence(float(every), None, keep_days)
+    found = _DAILY_AT.match(daily_at) if isinstance(daily_at, str) else None
+    if found is None:
+        raise ValueError('daily_at : une heure « HH:MM » sur 24 heures (ex. "02:30")')
+    return Recurrence(None, time(int(found[1]), int(found[2])), keep_days)
 
 
 @dataclass(frozen=True)
@@ -85,6 +155,7 @@ class JobSpec:
     max_attempts: int
     timeout: float  # secondes : au-delà l'essai est abandonné et compté
     grant: str | None  # qui, en plus de son auteur, lit l'état de ces tâches (un grant que le plugin déclare déjà)
+    recurrence: Recurrence | None = None  # son rythme, si le moteur la déclenche lui-même
 
 
 class JobRun:
@@ -100,6 +171,10 @@ class JobRun:
         self.attempt: int = row["attempts"]  # 1 au premier essai ; > 1 : c'est une REPRISE, ne refaites pas ce qui est fait
         self.owner: str = row["owner"]
         self.writer = writer  # `doctype_writer.system(<plugin>, tenant, "job:<nom>")`, ou None sans service d'écriture
+        # Tâche récurrente : la période qui l'a déclenchée (`2026-11-26`, ou le début de son créneau). Pour dire ce qu'elle a traité,
+        # pas pour choisir quoi traiter : une période manquée ne revient pas, c'est l'état qu'il faut lire.
+        period = self.payload.get("period")
+        self.period: str | None = period if self.key == RECURRING_KEY and isinstance(period, str) else None
 
     async def progress(self, message: str) -> None:
         """Dit où en est la tâche (« 42/100 comptes ») : lisible tout de suite par qui regarde son état."""
@@ -110,7 +185,11 @@ class JobStore:
     """Tout le SQL des tâches. `_scope` est le point de passage du tenant, comme `Query._scope` pour les documents."""
 
     def __init__(self, db: Any, tables: SystemTables, clock: Clock = _now) -> None:
-        self._db, self._t, self._clock = db, tables.jobs, clock
+        self._db, self._t, self._schedules, self._clock = db, tables.jobs, tables.schedules, clock
+
+    def session(self) -> Any:
+        """Une transaction à soi (l'ordonnanceur y prend une période ET y dépose ses tâches : les deux, ou rien)."""
+        return self._db.session()
 
     def _scope(self, tenant_id: str, *conds: Any) -> Any:
         return and_(self._t.c.tenant_id == tenant_id, *conds)
@@ -236,6 +315,34 @@ class JobStore:
             values["attempts"] = self._t.c.attempts - 1
         return await self._mine(tenant_id, job_id, owner_id, **values)
 
+    # ── L'ordonnanceur ────────────────────────────────────────
+    async def claim_period(self, session: Any, name: str, period: str, tenants: Sequence[str]) -> list[str]:
+        """Prend `period` pour ces organisations, et rend celles pour qui c'est CET appel qui l'a prise.
+
+        Une écriture CONDITIONNELLE par ligne (`period` plus récente que celle déjà prise) : deux processus qui arrivent ensemble
+        ne l'obtiennent pas tous les deux, et la période d'hier ne reprend jamais celle d'aujourd'hui. Elle porte plusieurs
+        tenants à la fois — c'est l'ordonnanceur, il n'agit pour personne — et n'écrit que l'échéancier.
+        """
+        if not tenants:
+            return []
+        s, now = self._schedules, self._clock()
+        insert_for = postgresql.insert if session.get_bind().dialect.name == "postgresql" else sqlite.insert
+        stmt = insert_for(s).values([{"tenant_id": t, "name": name, "period": period, "claimed_at": now} for t in tenants])
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[s.c.tenant_id, s.c.name],
+            set_={"period": stmt.excluded.period, "claimed_at": stmt.excluded.claimed_at},
+            where=s.c.period < stmt.excluded.period,
+        ).returning(s.c.tenant_id)
+        return sorted(r[0] for r in await session.execute(stmt))
+
+    async def purge(self, name: str, before: datetime) -> int:
+        """Retire les tâches RÉCURRENTES de ce nom finies avant `before`, tous tenants confondus. Jamais une tâche active, ni une
+        tâche qu'un plugin a déposée lui-même sous une autre clé : celles-là sont le journal de quelqu'un."""
+        t = self._t
+        stmt = delete(t).where(t.c.name == name, t.c.key == RECURRING_KEY, t.c.status.in_((DONE, FAILED)), t.c.finished_at < before)
+        async with self._db.session() as session:
+            return (await session.execute(stmt)).rowcount
+
     async def revive(self, tenant_id: str, job_id: str) -> bool:
         """Relance une tâche ÉCHOUÉE, compteur à zéro. Refusée (False) si une autre tâche de sa clé est déjà active : la base tranche."""
         t = self._t
@@ -260,10 +367,18 @@ class JobService:
     """Le service exporté `doctype_jobs` : déclarer, déposer, lire, et exécuter les tâches de fond."""
 
     def __init__(self, db: Any, tables: SystemTables, log: Any, *, writers: Any = None, clock: Clock = _now, poll_seconds: float = 2.0,
-                 lease_seconds: float = 120.0, max_parallel: int = 2, backoff_seconds: float = 30.0, max_backoff_seconds: float = 3600.0) -> None:
+                 lease_seconds: float = 120.0, max_parallel: int = 2, backoff_seconds: float = 30.0, max_backoff_seconds: float = 3600.0,
+                 presence: Presence | None = None, types_of: Callable[[str], Sequence[str]] | None = None, timezone: tzinfo = UTC,
+                 recurring: bool = True) -> None:
         self._store = JobStore(db, tables, clock)
-        self._log, self._writers = log, writers
+        self._log, self._writers, self._clock = log, writers, clock
         self._specs: dict[str, JobSpec] = {}
+        # Les tâches récurrentes : pour qui (`presence`, et `types_of(plugin)` = les types stockés de ce plugin), dans quel fuseau
+        # tombe « chaque jour à 02:30 », et ce que CE processus a déjà déposé (une requête par période, pas par tour de boucle).
+        self._presence = presence if presence is not None else Presence(db, tables, log, clock=clock)
+        self._types_of, self._tz, self._recurring = types_of, timezone, recurring
+        self._scheduled: dict[str, str] = {}
+        self._purged: dict[str, str] = {}
         self._poll, self._lease = max(0.05, poll_seconds), max(1.0, lease_seconds)
         self._max_parallel = max(1, max_parallel)
         self._backoff, self._max_backoff = backoff_seconds, max_backoff_seconds
@@ -277,12 +392,16 @@ class JobService:
         return self._store
 
     # ── Ce qu'un plugin déclare ───────────────────────────────
-    def register(self, plugin: str, task: str, handler: Handler, *, max_attempts: int = 5, timeout: float = 900.0, grant: str | None = None) -> str:
+    def register(self, plugin: str, task: str, handler: Handler, *, max_attempts: int = 5, timeout: float = 900.0, grant: str | None = None,
+                 every: float | None = None, daily_at: str | None = None, keep_days: int = 30) -> str:
         """Déclare une tâche : `register(self.ctx.name, "install_chart", self.install_chart)` → `accounts.install_chart`.
 
         `max_attempts` borne les essais, reprises après arrêt comprises. `timeout` (secondes) abandonne un essai qui ne rend
         pas la main. `grant` : un grant que le plugin déclare déjà, dont les porteurs lisent l'état de ces tâches (leur auteur
         le lit toujours).
+
+        `every` (secondes) OU `daily_at` (« HH:MM », fuseau `doctype.timezone`) en font une tâche RÉCURRENTE : le moteur la dépose
+        lui-même, une fois par période, pour chaque organisation qui a des documents de ce plugin. `keep_days` borne son journal.
         """
         if not isinstance(plugin, str) or not _TASK.match(plugin) or not isinstance(task, str) or not _TASK.match(task):
             raise ValueError(f"tâche {plugin!r}.{task!r} : plugin et tâche s'écrivent [a-z][a-z0-9_]*")
@@ -293,7 +412,8 @@ class JobService:
         name = f"{plugin}.{task}"
         if name in self._specs:
             raise ValueError(f"tâche {name!r} déjà déclarée")
-        self._specs[name] = JobSpec(name, plugin, handler, int(max_attempts), float(timeout), grant)
+        recurrence = _recurrence(name, every, daily_at, keep_days)
+        self._specs[name] = JobSpec(name, plugin, handler, int(max_attempts), float(timeout), grant, recurrence)
         self._wake.set()  # des tâches de ce nom attendaient peut-être leur plugin
         return name
 
@@ -301,6 +421,12 @@ class JobService:
         """Retire les tâches d'un plugin qui s'en va. Celles déjà déposées restent en attente : elles repartiront avec lui."""
         for name in [n for n, s in self._specs.items() if s.plugin == plugin]:
             del self._specs[name]
+            self._scheduled.pop(name, None)  # s'il revient, sa période se rejuge (la base dira qu'elle est déjà prise)
+            self._purged.pop(name, None)
+
+    def recurring(self) -> list[dict[str, Any]]:
+        """Les tâches que le moteur déclenche lui-même, avec leur rythme (pour un diagnostic : rien n'y est secret)."""
+        return [{"name": s.name, **s.recurrence.describe()} for s in sorted(self._specs.values(), key=lambda s: s.name) if s.recurrence]
 
     def _spec(self, name: Any) -> JobSpec:
         spec = self._specs.get(name) if isinstance(name, str) else None
@@ -417,9 +543,60 @@ class JobService:
             t.cancel()
         await asyncio.gather(*running, return_exceptions=True)
         self._specs.clear()
+        self._scheduled.clear()
+        self._purged.clear()
+
+    async def schedule_once(self) -> int:
+        """Dépose ce que les tâches récurrentes doivent à cet instant. Rend le nombre de tâches DÉPOSÉES par cet appel.
+
+        Appelée à chaque tour de la boucle, elle ne touche la base que lorsqu'une période commence (ou au démarrage du
+        processus) : le reste du temps elle compare deux textes. Une organisation qui apparaît en cours de période attend la
+        suivante.
+        """
+        now, made = self._clock(), 0
+        for spec in [s for s in self._specs.values() if s.recurrence is not None]:
+            period = spec.recurrence.period(now, self._tz)
+            if self._scheduled.get(spec.name) == period:
+                continue  # CE processus a déjà déposé cette période
+            types = tuple(self._types_of(spec.plugin)) if self._types_of is not None else ()
+            if not types:
+                continue  # le plugin n'a (encore) aucun type stocké : personne à servir, et rien à retenir de cette période
+            await self._presence.backfill()  # une fois par base : les organisations écrites avant la table de présence
+            tenants = await self._presence.tenants(types)
+            created = 0
+            for i in range(0, len(tenants), SCHEDULE_CHUNK):
+                created += await self._deposit(spec, period, tenants[i:i + SCHEDULE_CHUNK])
+            day = now.astimezone(UTC).date().isoformat()
+            if self._purged.get(spec.name) != day:  # au plus une fois par jour : c'est un balayage de la table
+                await self._store.purge(spec.name, now - timedelta(days=spec.recurrence.keep_days))
+                self._purged[spec.name] = day
+            self._scheduled[spec.name] = period
+            if created:
+                self._log.info("recurring job scheduled", job=spec.name, period=period, organisations=created)
+            made += created
+        if made:
+            self._wake.set()
+        return made
+
+    async def _deposit(self, spec: JobSpec, period: str, tenants: Sequence[str]) -> int:
+        """Une transaction : la période est prise ET la tâche est déposée, ou rien. Un processus qui meurt au milieu ne laisse pas
+        une période « prise » sans sa tâche — elle ne serait plus jamais déposée."""
+        created = 0
+        async with self._store.session() as session:
+            for tenant in await self._store.claim_period(session, spec.name, period, tenants):
+                _, new = await self._store.insert(session, tenant, spec, {"period": period}, key=RECURRING_KEY, owner="system")
+                created += int(new)  # faux : celle de la période d'avant tourne encore, on ne l'empile pas
+        return created
 
     async def _run(self) -> None:
         while True:
+            if self._recurring:
+                try:
+                    await self.schedule_once()
+                except asyncio.CancelledError:
+                    raise
+                except Exception as e:  # noqa: BLE001 - l'ordonnanceur en panne n'empêche pas d'exécuter ce qui est déposé
+                    self._log.warning("job scheduler failed", error=str(e))
             try:
                 started = await self.run_once()
             except asyncio.CancelledError:

@@ -306,6 +306,10 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             db, self._tables, self.logger, writers=self.ctx.services[WRITER_SERVICE],
             poll_seconds=float(jobs_block.get("poll_seconds", 2.0)), lease_seconds=float(jobs_block.get("lease_seconds", 120.0)),
             max_parallel=int(jobs_block.get("max_parallel", 2)),
+            # Les tâches RÉCURRENTES : une par organisation qui a des documents du plugin, à l'heure du fuseau des séries.
+            # `doctype.jobs.recurring: false` les suspend (maintenance) sans empêcher les plugins de les déclarer.
+            presence=self.documents.presence, types_of=_stored_types(registry), timezone=_timezone(block.get("timezone", "UTC")),
+            recurring=jobs_block.get("recurring", True) is not False,
         )
         self.documents.jobs = self.jobs
         self.ctx.services[JOBS_SERVICE] = self.jobs
@@ -1130,6 +1134,21 @@ class Plugin(AutoDispatchMixin, TrustedBase):
             # `str(e)`, soit ici le SQL et ses paramètres liés. On journalise côté serveur seulement.
             self.logger.error("action failed", action=action_name, error=repr(e))
             return error("Erreur interne", "internal_error")
+
+
+def _stored_types(registry: DocTypeRegistry) -> Callable[[str], tuple[str, ...]]:
+    """`plugin → ses types dont les documents sont en base` : ni une table de lignes (elle vit dans son parent), ni un type virtuel
+    (ses documents sont ailleurs). C'est par eux qu'une tâche récurrente sait quelles organisations ce plugin concerne."""
+
+    def of(plugin: str) -> tuple[str, ...]:
+        found = []
+        for name in registry.names():
+            definition = registry.get(name).definition
+            if definition.module == plugin and not definition.istable and definition.source is None:
+                found.append(name)
+        return tuple(found)
+
+    return of
 
 
 def _timezone(name: Any) -> ZoneInfo:

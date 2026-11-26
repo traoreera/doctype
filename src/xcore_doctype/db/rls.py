@@ -24,14 +24,17 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..errors import ConfigurationError
-from .tables import JOB_TABLE, SystemTables
+from .tables import JOB_TABLE, PRESENCE_TABLE, SCHEDULE_TABLE, SystemTables
 
 POLICY = "xdt_tenant_isolation"
 SETTING = "xdt.tenant_id"
 _PREDICATE = f"tenant_id = current_setting('{SETTING}', true)"
 
 
-RLS_EXEMPT = frozenset({JOB_TABLE})
+# Les tables que le moteur lit TOUS TENANTS CONFONDUS, parce qu'il n'y agit pour personne : les tâches de fond (l'exécuteur découvre
+# ce qui est prêt), et ce qui dit aux tâches récurrentes pour quelles organisations tourner (la présence) et lesquelles ont déjà eu
+# leur période (l'échéancier). Aucune ne porte le contenu d'un document.
+RLS_EXEMPT = frozenset({JOB_TABLE, PRESENCE_TABLE, SCHEDULE_TABLE})
 
 
 async def ensure_rls(db: Any, tables: SystemTables, dialect: str) -> list[str]:
@@ -43,7 +46,8 @@ async def ensure_rls(db: Any, tables: SystemTables, dialect: str) -> list[str]:
         )
     # `xdt_job` reste HORS de la RLS : l'exécuteur des tâches de fond découvre ce qui est prêt tous tenants confondus (il n'agit
     # pour personne), et une politique par tenant rendrait cette découverte — donc la reprise après un arrêt — impossible. Son
-    # isolation est celle de la couche de requêtes (`jobs.JobStore._scope`), comme pour toute installation sans RLS.
+    # isolation est celle de la couche de requêtes (`jobs.JobStore._scope`), comme pour toute installation sans RLS. Même raison
+    # pour `xdt_presence` et `xdt_job_schedule` : déposer la tâche du jour de CHAQUE organisation, c'est d'abord les énumérer.
     names = [t.name for t in tables.metadata.sorted_tables if t.name not in RLS_EXEMPT]
     try:
         async with db.session() as session:
